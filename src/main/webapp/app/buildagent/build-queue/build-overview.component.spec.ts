@@ -229,7 +229,7 @@ describe('BuildQueueComponent', () => {
             buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
-            buildDuration: undefined,
+            buildDuration: '0.000s',
             commitHash: 'abc127',
         },
         {
@@ -246,7 +246,7 @@ describe('BuildQueueComponent', () => {
             triggeredByPushTo: TriggeredByPushTo.USER,
             buildStartDate: dayjs('2023-01-06'),
             buildCompletionDate: dayjs('2023-01-06'),
-            buildDuration: undefined,
+            buildDuration: '0.000s',
             commitHash: 'abc128',
         },
     ];
@@ -345,9 +345,9 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).not.toHaveBeenCalled();
 
         // Expectations: The component's properties are set with the mock data
-        expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
-        expect(component.runningBuildJobs).toEqual(mockRunningJobs);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
+        expect(component.runningBuildJobs()).toEqual(mockRunningJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should initialize with course data', () => {
@@ -368,9 +368,9 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
 
         // Expectations: The component's properties are set with the mock data
-        expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
-        expect(component.runningBuildJobs).toEqual(mockRunningJobs);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
+        expect(component.runningBuildJobs()).toEqual(mockRunningJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should refresh data', () => {
@@ -389,10 +389,10 @@ describe('BuildQueueComponent', () => {
 
         // Initialize the component and update the build job duration
         component.ngOnInit();
-        component.runningBuildJobs = component.updateBuildJobDuration(component.runningBuildJobs); // This method is called in ngOnInit in interval callback, but we call it to add coverage
+        component.runningBuildJobs.set(component.updateBuildJobDuration(component.runningBuildJobs())); // This method is called in ngOnInit in interval callback, but we call it to add coverage
 
         // Expectations: The build job duration is calculated and set for each running build job
-        for (const runningBuildJob of component.runningBuildJobs) {
+        for (const runningBuildJob of component.runningBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = runningBuildJob.jobTimingInfo!;
             if (buildDuration && buildCompletionDate && buildStartDate) {
                 expect(buildDuration).toBeLessThanOrEqual(buildCompletionDate.diff(buildStartDate, 'seconds'));
@@ -515,7 +515,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should load finished build jobs for a specific course on initialization', () => {
@@ -527,7 +527,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should trigger refresh on search term change', async () => {
@@ -556,7 +556,7 @@ describe('BuildQueueComponent', () => {
 
         component.ngOnInit();
 
-        for (const finishedBuildJob of component.finishedBuildJobs) {
+        for (const finishedBuildJob of component.finishedBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
                 expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
@@ -574,14 +574,14 @@ describe('BuildQueueComponent', () => {
             result: Promise.resolve('close'),
         } as NgbModalRef;
         const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
-        component.finishedBuildJobs = mockFinishedJobs;
+        component.finishedBuildJobs.set(mockFinishedJobs);
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
 
         component.openFilterModal();
 
         expect(openSpy).toHaveBeenCalledOnce();
         expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
-        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs);
+        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs());
         expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
     });
 

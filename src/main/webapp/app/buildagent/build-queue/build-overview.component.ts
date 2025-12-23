@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -73,18 +73,17 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private buildQueueService = inject(BuildOverviewService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
-    private changeDetectorRef = inject(ChangeDetectorRef);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     /** List of build jobs waiting in the queue to be processed */
-    queuedBuildJobs: BuildJob[] = [];
+    queuedBuildJobs = signal<BuildJob[]>([]);
 
     /** List of build jobs currently being executed by build agents */
-    runningBuildJobs: BuildJob[] = [];
+    runningBuildJobs = signal<BuildJob[]>([]);
 
     /** List of completed build jobs with pagination support */
-    finishedBuildJobs: FinishedBuildJob[] = [];
+    finishedBuildJobs = signal<FinishedBuildJob[]>([]);
 
     /** Active WebSocket subscriptions for cleanup on destroy */
     websocketSubscriptions: Subscription[] = [];
@@ -96,9 +95,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faSync = faSync;
-
-    /** Total number of finished build jobs (used for pagination) */
-    totalItems = 0;
 
     /** Signal indicating if more finished build jobs are available for pagination */
     hasMore = signal(true);
@@ -125,7 +121,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     finishedJobsSearchTrigger = new Subject<void>();
 
     /** Flag indicating if finished build jobs are currently being loaded */
-    isLoading = false;
+    isLoading = signal(false);
 
     /** Current search term for filtering finished build jobs */
     searchTerm?: string = undefined;
@@ -157,7 +153,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
         this.loadQueue();
         this.buildDurationInterval = setInterval(() => {
-            this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
+            this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
         }, 1000); // 1 second
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
@@ -165,19 +161,17 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         this.searchSubscription = this.finishedJobsSearchTrigger
             .pipe(
                 debounceTime(UI_RELOAD_TIME),
-                tap(() => (this.isLoading = true)),
+                tap(() => this.isLoading.set(true)),
                 switchMap(() => this.fetchFinishedBuildJobs()),
             )
             .subscribe({
                 next: (response: HttpResponse<FinishedBuildJob[]>) => {
                     this.onSuccess(response.body || [], response.headers);
-                    this.isLoading = false;
-                    this.changeDetectorRef.markForCheck();
+                    this.isLoading.set(false);
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);
-                    this.isLoading = false;
-                    this.changeDetectorRef.markForCheck();
+                    this.isLoading.set(false);
                 },
             });
     }
@@ -211,28 +205,24 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             const runningJobsTopic = `/topic/courses/${this.courseId}/running-jobs`;
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(queuedJobsTopic).subscribe((queuedBuildJobs: BuildJob[]) => {
-                    this.queuedBuildJobs = queuedBuildJobs;
-                    this.changeDetectorRef.markForCheck();
+                    this.queuedBuildJobs.set(queuedBuildJobs);
                 }),
             );
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(runningJobsTopic).subscribe((runningBuildJobs: BuildJob[]) => {
-                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                    this.changeDetectorRef.markForCheck();
+                    this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
                 }),
             );
         } else {
             // Admin mode: subscribe to global admin channels for all courses
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs: BuildJob[]) => {
-                    this.queuedBuildJobs = queuedBuildJobs;
-                    this.changeDetectorRef.markForCheck();
+                    this.queuedBuildJobs.set(queuedBuildJobs);
                 }),
             );
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(`/topic/admin/running-jobs`).subscribe((runningBuildJobs: BuildJob[]) => {
-                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                    this.changeDetectorRef.markForCheck();
+                    this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
                 }),
             );
         }
@@ -247,22 +237,18 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         if (this.courseId) {
             // Course mode: fetch only jobs for this specific course
             this.buildQueueService.getQueuedBuildJobsByCourseId(this.courseId).subscribe((queuedBuildJobs) => {
-                this.queuedBuildJobs = queuedBuildJobs;
-                this.changeDetectorRef.markForCheck();
+                this.queuedBuildJobs.set(queuedBuildJobs);
             });
             this.buildQueueService.getRunningBuildJobsByCourseId(this.courseId).subscribe((runningBuildJobs) => {
-                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                this.changeDetectorRef.markForCheck();
+                this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
             });
         } else {
             // Admin mode: fetch all jobs across all courses
             this.buildQueueService.getQueuedBuildJobs().subscribe((queuedBuildJobs) => {
-                this.queuedBuildJobs = queuedBuildJobs;
-                this.changeDetectorRef.markForCheck();
+                this.queuedBuildJobs.set(queuedBuildJobs);
             });
             this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
-                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                this.changeDetectorRef.markForCheck();
+                this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
             });
         }
     }
@@ -332,13 +318,11 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         this.fetchFinishedBuildJobs().subscribe({
             next: (response: HttpResponse<FinishedBuildJob[]>) => {
                 this.onSuccess(response.body || [], response.headers);
-                this.isLoading = false;
-                this.changeDetectorRef.markForCheck();
+                this.isLoading.set(false);
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isLoading = false;
-                this.changeDetectorRef.markForCheck();
+                this.isLoading.set(false);
             },
         });
     }
@@ -362,8 +346,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      */
     private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
         this.hasMore.set(headers.get('x-has-next') === 'true');
-        this.finishedBuildJobs = finishedBuildJobs;
-        this.setFinishedBuildJobsDuration();
+        this.finishedBuildJobs.set(this.calculateFinishedBuildJobsDuration(finishedBuildJobs));
     }
 
     /**
@@ -402,18 +385,19 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Set the duration of the finished build jobs
+     * Calculate the duration of the finished build jobs
+     * @param finishedBuildJobs The list of finished build jobs
+     * @returns A new list with calculated build durations
      */
-    setFinishedBuildJobsDuration() {
-        if (this.finishedBuildJobs) {
-            for (const buildJob of this.finishedBuildJobs) {
-                if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
-                    const start = dayjs(buildJob.buildStartDate);
-                    const end = dayjs(buildJob.buildCompletionDate);
-                    buildJob.buildDuration = (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's';
-                }
+    private calculateFinishedBuildJobsDuration(finishedBuildJobs: FinishedBuildJob[]): FinishedBuildJob[] {
+        return finishedBuildJobs.map((buildJob) => {
+            if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
+                const start = dayjs(buildJob.buildStartDate);
+                const end = dayjs(buildJob.buildCompletionDate);
+                return { ...buildJob, buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' };
             }
-        }
+            return buildJob;
+        });
     }
 
     /**
@@ -455,7 +439,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         const modalRef = this.modalService.open(FinishedBuildsFilterModalComponent as Component);
         modalRef.componentInstance.finishedBuildJobFilter = this.finishedBuildJobFilter;
         modalRef.componentInstance.buildAgentFilterable = true;
-        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs;
+        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs();
         modalRef.result
             .then((result: FinishedBuildJobFilter) => {
                 this.finishedBuildJobFilter = result;
