@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
@@ -89,7 +90,7 @@ public class ExamRoomService {
             ZipEntry entry;
 
             while ((entry = zis.getNextEntry()) != null) {
-                String entryName = entry.getName();
+                String entryName = FileUtil.sanitizeFilename(entry.getName());
 
                 // validate file type
                 if (entry.isDirectory() || !entryName.endsWith(".json")) {
