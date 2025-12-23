@@ -85,10 +85,10 @@ describe('AdminPasskeyManagementService', () => {
 
             try {
                 await promise;
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally (just for easier understanding of the test results if it fails)
                 throw new Error('should have failed with 500 error');
             } catch (error: any) {
-                expect(error.status).toBe(500);
-                expect(error.error).toBe(errorMessage);
+                expect(error.message).toBe('Http failure response for api/core/passkey/admin: 500 Internal Server Error');
             }
         });
     });
@@ -151,6 +151,7 @@ describe('AdminPasskeyManagementService', () => {
 
             try {
                 await promise;
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally (just for easier understanding of the test results if it fails)
                 throw new Error('should have failed with 500 error');
             } catch (error: any) {
                 expect(error.status).toBe(500);
@@ -169,6 +170,7 @@ describe('AdminPasskeyManagementService', () => {
 
             try {
                 await promise;
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally (just for easier understanding of the test results if it fails)
                 throw new Error('should have failed with 404 error');
             } catch (error: any) {
                 expect(error.status).toBe(404);
