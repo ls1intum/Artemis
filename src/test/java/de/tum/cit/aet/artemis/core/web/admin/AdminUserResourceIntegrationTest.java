@@ -44,7 +44,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     // ==================== Admin trying to escalate privileges - Update User ====================
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_setSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create a regular user first
         User regularUser = userUtilService.createAndSaveUser("regularuser");
@@ -58,7 +58,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_revokeSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create and persist an existing super-admin user
         userUtilService.addSuperAdmin("test");
@@ -73,7 +73,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_addAdminRoleByAdmin_success() throws Exception {
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser("regularuser2");
@@ -91,7 +91,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     // ==================== Admin trying to escalate privileges - Create User ====================
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newsuperadmin");
         managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.toString()));
@@ -104,7 +104,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createAdminByAdmin_success() throws Exception {
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newadmin");
         managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
@@ -119,7 +119,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createRegularUserByAdmin_success() throws Exception {
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newstudent");
         managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
