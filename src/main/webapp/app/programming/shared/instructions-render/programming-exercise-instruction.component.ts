@@ -89,6 +89,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public tasks: TaskArray;
     // Track dynamically created task components for proper cleanup
     private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
+    // Cache to skip re-rendering when content hasn't changed
+    private lastRenderedProblemStatement?: string;
 
     get latestResult() {
         return this.latestResultValue;
@@ -235,11 +237,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Render the markdown into html.
      */
     updateMarkdown() {
-        // Destroy previously created task components to prevent memory leaks
+        // Skip re-render if problem statement hasn't changed (optimization for live preview)
+        const currentProblemStatement = this.exercise?.problemStatement?.trim();
+        if (currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
+            return;
+        }
+        this.lastRenderedProblemStatement = currentProblemStatement;
+
         this.destroyTaskComponents();
         // Reset task index to start fresh for this render
         this.taskIndex = 0;
-        // Reset PlantUML index as well
         this.programmingExercisePlantUmlWrapper.resetIndex();
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
@@ -254,8 +261,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     private destroyTaskComponents(): void {
         this.taskComponentRefs.forEach((ref) => {
-            this.appRef.detachView(ref.hostView);
-            ref.destroy();
+            // Only detach if the view hasn't been destroyed yet (e.g., during test cleanup)
+            if (!ref.hostView.destroyed) {
+                this.appRef.detachView(ref.hostView);
+                ref.destroy();
+            }
         });
         this.taskComponentRefs = [];
     }
