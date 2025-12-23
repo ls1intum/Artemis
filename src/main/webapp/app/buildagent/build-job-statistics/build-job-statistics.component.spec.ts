@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
@@ -11,13 +13,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
 describe('BuildJobStatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: BuildJobStatisticsComponent;
     let fixture: ComponentFixture<BuildJobStatisticsComponent>;
     const mockActivatedRoute: any = {};
 
     const mockBuildQueueService = {
-        getBuildJobStatistics: jest.fn(),
-        getBuildJobStatisticsForCourse: jest.fn(),
+        getBuildJobStatistics: vi.fn(),
+        getBuildJobStatisticsForCourse: vi.fn(),
     };
 
     const mockBuildJobStatistics: BuildJobStatistics = {
@@ -97,7 +101,7 @@ describe('BuildJobStatisticsComponent', () => {
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(0);
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledTimes(0);
         expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-        expect(component.displayMissingBuilds).toBeFalse();
-        expect(component.displaySpanSelector).toBeFalse();
+        expect(component.displayMissingBuilds).toBeFalsy();
+        expect(component.displaySpanSelector).toBeFalsy();
     });
 });
