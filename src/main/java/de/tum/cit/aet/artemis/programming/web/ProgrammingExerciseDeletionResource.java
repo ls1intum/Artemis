@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
@@ -157,6 +159,22 @@ public class ProgrammingExerciseDeletionResource {
         programmingExerciseDeletionService.deleteTasks(exercise.getId());
         exerciseVersionService.createExerciseVersion(exercise);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/deletion-summary : Get a summary of the deletion of a programming exercise.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the programming exercise
+     */
+    @GetMapping("programming-exercises/{exerciseId}/deletion-summary")
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<ProgrammingExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
+        log.debug("REST request to get deletion summary for programming exercise : {}", exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        return ResponseEntity.ok(programmingExerciseDeletionService.getProgrammingExerciseDeletionSummary(exerciseId));
     }
 
 }

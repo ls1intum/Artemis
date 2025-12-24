@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -118,5 +119,16 @@ public class ProgrammingExerciseDeletionService {
     public void deleteTasks(long exerciseId) {
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
         programmingExerciseTaskRepository.deleteAll(tasks);
+    }
+
+    /**
+     * Get a summary of the deletion of a programming exercise.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the summary of the deletion of the programming exercise
+     */
+    public ProgrammingExerciseDeletionSummaryDTO getProgrammingExerciseDeletionSummary(long exerciseId) {
+        long numberOfStudentParticipations = programmingExerciseRepository.countStudentParticipationsByExerciseId(exerciseId);
+        return new ProgrammingExerciseDeletionSummaryDTO(numberOfStudentParticipations);
     }
 }
