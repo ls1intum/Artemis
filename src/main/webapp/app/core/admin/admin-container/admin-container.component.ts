@@ -45,9 +45,9 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     readonly atlasEnabled = signal(false);
     readonly examEnabled = signal(false);
     readonly standardizedCompetenciesEnabled = signal(false);
-    passkeyEnabled = false;
-    passkeyRequiredForAdmin = false;
-    isSuperAdmin = signal<boolean>(false);
+    readonly passkeyEnabled = signal(false);
+    readonly passkeyRequiredForAdmin = signal(false);
+    readonly isSuperAdmin = signal(false);
 
     private standardizedCompetencySubscription?: Subscription;
     private routerSubscription?: Subscription;
@@ -58,8 +58,8 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.examEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM));
         this.localCIActive.set(profileInfo.activeProfiles.includes(PROFILE_LOCALCI));
         this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
-        this.passkeyEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY);
-        this.passkeyRequiredForAdmin = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+        this.passkeyEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY));
+        this.passkeyRequiredForAdmin.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN));
         this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
