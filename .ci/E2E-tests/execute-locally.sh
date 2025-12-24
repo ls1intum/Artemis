@@ -56,10 +56,14 @@ export HOST_HOSTNAME="nginx"
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 
 # Set platform for ARM64 Macs (Apple Silicon)
+# Note: We keep DOCKER_DEFAULT_PLATFORM for building the Artemis app natively on ARM,
+# but we do NOT set ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE. This allows LocalCI
+# to use amd64 images (the default) which Docker Desktop can emulate via Rosetta.
+# This is necessary because some exercise images (e.g., sharingcodeability/fact) only provide amd64.
 if [ "$(uname -m)" = "arm64" ]; then
     export DOCKER_DEFAULT_PLATFORM="linux/arm64"
-    export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE="arm64"
-    echo "Detected ARM64 architecture, using linux/arm64 platform"
+    echo "Detected ARM64 architecture, using linux/arm64 platform for Artemis build"
+    echo "LocalCI will use amd64 images (emulated via Rosetta when needed)"
 fi
 
 # Change to docker directory
@@ -134,16 +138,19 @@ TOTAL_SKIPPED=0
 
 for xml_file in "$REPORT_DIR"/results*.xml; do
     if [ -f "$xml_file" ]; then
-        # Extract test counts from JUnit XML
-        tests=$(grep -o 'tests="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
-        failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
-        errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
-        skipped=$(grep -o 'skipped="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
+        # Extract and sum test counts from ALL testsuites in the JUnit XML
+        # Each spec file creates a separate <testsuite> element
+        while IFS= read -r line; do
+            tests=$(echo "$line" | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
+            failures=$(echo "$line" | grep -o 'failures="[0-9]*"' | grep -o '[0-9]*')
+            errors=$(echo "$line" | grep -o 'errors="[0-9]*"' | grep -o '[0-9]*')
+            skipped=$(echo "$line" | grep -o 'skipped="[0-9]*"' | grep -o '[0-9]*')
 
-        TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
-        TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
-        TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
-        TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
+            TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
+            TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
+            TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
+            TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
+        done < <(grep '<testsuite ' "$xml_file")
     fi
 done
 

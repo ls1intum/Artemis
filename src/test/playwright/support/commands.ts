@@ -58,7 +58,16 @@ export class Commands {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
             } catch (error) {
-                await page.reload();
+                // Check if the page is still open before reloading
+                if (page.isClosed()) {
+                    throw new Error(`Page was closed while waiting for element matching "${locator}"`);
+                }
+                try {
+                    await page.reload();
+                } catch (reloadError) {
+                    // If reload fails (e.g., page closed), throw a descriptive error
+                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`);
+                }
             }
         }
 

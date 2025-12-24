@@ -100,6 +100,14 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         });
 
         test.describe('Programming exercise participation using SSH', () => {
+            // Clean up SSH keys before each test to ensure clean state
+            // This is defensive - the afterEach should clean up, but if it fails or
+            // there's server-side caching, this ensures we start with no SSH key
+            test.beforeEach('Ensure no SSH key exists', async ({ login, accountManagementAPIRequests }) => {
+                await login(studentOne);
+                await accountManagementAPIRequests.deleteSshPublicKey();
+            });
+
             for (const sshAlgorithm of [SshEncryptionAlgorithm.rsa, SshEncryptionAlgorithm.ed25519]) {
                 test(`Makes a git submission using SSH with ${sshAlgorithm} key`, async ({ page, programmingExerciseOverview }) => {
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);

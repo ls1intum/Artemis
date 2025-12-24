@@ -5,6 +5,7 @@ import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateUUID } from '../../support/utils';
+import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
@@ -102,13 +103,13 @@ test.describe('Exam Results', () => {
                         switch (testCase.exerciseType) {
                             case ExerciseType.TEXT:
                                 await login(tutor);
-                                await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+                                await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
                                 await examAssessment.addNewFeedback(7, 'Good job');
                                 await examAssessment.submitTextAssessment();
                                 break;
                             case ExerciseType.MODELING:
                                 await login(tutor);
-                                await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+                                await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
                                 await modelingExerciseAssessment.addNewFeedback(5, 'Good');
                                 await modelingExerciseAssessment.openAssessmentForComponent(0);
                                 await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
