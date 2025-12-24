@@ -15,6 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -29,7 +30,7 @@ const cssClasses = {
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, RouterLink, DataTableComponent, NgxDatatableModule, FaIconComponent, DeleteButtonDirective],
+    imports: [TranslateDirective, RouterLink, DataTableComponent, NgxDatatableModule, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);

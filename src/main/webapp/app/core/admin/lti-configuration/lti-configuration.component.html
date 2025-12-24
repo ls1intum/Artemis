@@ -1,7 +1,5 @@
 <form name="editForm" role="form" novalidate>
-    <div class="modal-header" style="margin-bottom: 20px">
-        <h4 class="modal-title" jhiTranslate="artemisApp.lti.version13Configuration"></h4>
-    </div>
+    <h5 *adminTitleBarTitle id="lti-configuration-heading" class="mb-0" jhiTranslate="artemisApp.lti.version13Configuration"></h5>
     <nav ngbNav #nav="ngbNav" [activeId]="activeTab()" (activeIdChange)="activeTab.set($event)" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration"></a>
