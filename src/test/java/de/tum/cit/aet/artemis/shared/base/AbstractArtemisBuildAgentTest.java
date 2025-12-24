@@ -103,7 +103,7 @@ public abstract class AbstractArtemisBuildAgentTest {
             return null;
         }).when(startContainerCmd).exec();
 
-        when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
         dockerClient = dockerClientMock;
     }
 

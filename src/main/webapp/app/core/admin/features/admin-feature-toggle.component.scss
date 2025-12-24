@@ -1,0 +1,101 @@
+.feature-toggle-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+}
+
+.feature-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: var(--feature-card-bg, #e8f5e9);
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        border-color: var(--bs-primary);
+    }
+
+    &.disabled {
+        background-color: var(--feature-card-disabled-bg, #ffebee);
+    }
+}
+
+.feature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.feature-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.feature-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--feature-card-heading-color, var(--bs-body-color));
+}
+
+.documentation-link {
+    color: var(--bs-primary);
+    font-size: 0.875rem;
+
+    &:hover {
+        color: var(--bs-primary-text-emphasis);
+    }
+}
+
+.form-switch {
+    padding-left: 2.5rem;
+
+    .form-check-input {
+        width: 2.5rem;
+        height: 1.25rem;
+        cursor: pointer;
+
+        &:checked {
+            background-color: var(--bs-success);
+            border-color: var(--bs-success);
+        }
+
+        &:not(:checked) {
+            background-color: var(--bs-danger);
+            border-color: var(--bs-danger);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+        }
+    }
+}
+
+.feature-description {
+    color: var(--bs-secondary-color);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.feature-warning {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--bs-warning-bg-subtle);
+    border: 1px solid var(--bs-warning-border-subtle);
+    border-radius: 0.25rem;
+    color: var(--bs-warning-text-emphasis);
+    font-size: 0.8rem;
+    line-height: 1.4;
+
+    fa-icon {
+        margin-top: 0.1rem;
+        flex-shrink: 0;
+    }
+}
