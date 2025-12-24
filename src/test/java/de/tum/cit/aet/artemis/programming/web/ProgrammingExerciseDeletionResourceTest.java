@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "programmingexercisedeletionresource";
+    private static final String TEST_PREFIX = "progexdelresource";
 
     @Autowired
     private RequestUtilService request;
