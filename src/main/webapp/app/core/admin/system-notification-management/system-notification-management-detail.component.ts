@@ -5,6 +5,7 @@ import { SystemNotification } from 'app/core/shared/entities/system-notification
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component for displaying system notification details.
@@ -13,7 +14,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-system-notification-management-detail',
     templateUrl: './system-notification-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, AdminTitleBarTitleDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementDetailComponent implements OnInit {

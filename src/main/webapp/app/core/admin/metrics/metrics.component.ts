@@ -14,6 +14,8 @@ import { MetricsRequestComponent } from './blocks/metrics-request/metrics-reques
 import { MetricsEndpointsRequestsComponent } from './blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
 import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.component';
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-metrics',
@@ -30,6 +32,8 @@ import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-
         MetricsEndpointsRequestsComponent,
         MetricsCacheComponent,
         MetricsDatasourceComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
 })
 export class MetricsComponent implements OnInit {

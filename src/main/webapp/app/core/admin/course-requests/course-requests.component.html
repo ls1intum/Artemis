@@ -1,13 +1,12 @@
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <h2 class="mb-1" jhiTranslate="artemisApp.courseRequest.admin.title"></h2>
-            <p class="text-secondary mb-0" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
-        </div>
-        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faSync" (click)="load()" [disabled]="loading()">
-            {{ 'global.form.refresh' | artemisTranslate }}
-        </jhi-button>
+    <h5 *adminTitleBarTitle id="course-requests-heading" class="mb-0" jhiTranslate="artemisApp.courseRequest.admin.title"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-primary btn-sm" (click)="load()" [disabled]="loading()">
+            <fa-icon [icon]="faSync" />
+            <span jhiTranslate="health.refresh.button"></span>
+        </button>
     </div>
+    <p class="text-secondary mb-3" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
 
     <!-- Pending Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.pendingTitle"></h4>

@@ -7,6 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 type FeatureToggleInfo = {
     feature: FeatureToggle;
@@ -23,7 +24,7 @@ type FeatureToggleInfo = {
     templateUrl: './admin-feature-toggle.component.html',
     styleUrl: './admin-feature-toggle.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, NgbTooltip],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, NgbTooltip, AdminTitleBarTitleDirective],
 })
 export class AdminFeatureToggleComponent implements OnInit {
     private readonly featureToggleService = inject(FeatureToggleService);

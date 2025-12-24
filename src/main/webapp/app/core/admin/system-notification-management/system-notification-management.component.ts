@@ -23,6 +23,8 @@ import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Enum representing the state of a system notification.
@@ -40,7 +42,19 @@ enum NotificationState {
 @Component({
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective, ItemCountComponent, NgbPagination, ArtemisDatePipe],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        SortDirective,
+        SortByDirective,
+        DeleteButtonDirective,
+        ItemCountComponent,
+        NgbPagination,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {

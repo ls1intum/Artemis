@@ -1,11 +1,11 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
+        @if (user.id === undefined) {
+            <h5 *adminTitleBarTitle id="createUser" class="mb-0" jhiTranslate="artemisApp.userManagement.home.createLabel"></h5>
+        } @else {
+            <h5 *adminTitleBarTitle id="editUser" class="mb-0" jhiTranslate="artemisApp.userManagement.home.editLabel"></h5>
+        }
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
-            @if (user.id === undefined) {
-                <h2 id="createUser" jhiTranslate="artemisApp.userManagement.home.createLabel"></h2>
-            } @else {
-                <h2 id="editUser" jhiTranslate="artemisApp.userManagement.home.editLabel"></h2>
-            }
             <div>
                 <div class="form-group">
                     <label for="login" class="form-control-label" jhiTranslate="artemisApp.userManagement.login"></label>

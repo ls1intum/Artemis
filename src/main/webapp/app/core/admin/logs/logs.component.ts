@@ -8,6 +8,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, SlicePipe } from '@angular/common';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component for managing application log levels.
@@ -17,7 +18,7 @@ import { NgClass, SlicePipe } from '@angular/common';
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
     styleUrls: ['./logs.component.scss'],
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe],
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe, AdminTitleBarTitleDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LogsComponent implements OnInit {
