@@ -106,8 +106,13 @@ public class BuildJobExecutionService {
     }
 
     private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
+        Path reposPath = Path.of(checkedOutReposPath);
+        if (!Files.exists(reposPath)) {
+            log.info("Checked-out repos directory {} does not exist (yet), skipping cleanup", checkedOutReposPath);
+            return;
+        }
         log.debug("Cleaning up temporary directories in {}", checkedOutReposPath);
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(checkedOutReposPath))) {
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(reposPath)) {
             for (Path path : directoryStream) {
                 try {
                     ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), currentTime.getZone());

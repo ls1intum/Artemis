@@ -293,9 +293,15 @@ public class BuildAgentDockerService {
      * @param buildLogsMap         a map for appending log entries related to the build process
      */
     private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
-        if (!imageArchitecture.equals(inspectImageResponse.getArch())) {
-            var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '"
-                    + inspectImageResponse.getArch() + "'";
+        String actualArch = inspectImageResponse.getArch();
+        // Skip check if the image doesn't report its architecture (empty or null)
+        // This can happen with some multi-arch images or when architecture metadata is missing
+        if (actualArch == null || actualArch.isEmpty()) {
+            log.warn("Docker image {} does not report its architecture, skipping architecture check", imageName);
+            return;
+        }
+        if (!imageArchitecture.equals(actualArch)) {
+            var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '" + actualArch + "'";
             log.error(msg);
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             throw new LocalCIException(msg);
