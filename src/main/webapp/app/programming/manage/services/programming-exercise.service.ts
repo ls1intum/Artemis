@@ -21,6 +21,7 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -546,5 +547,13 @@ export class ProgrammingExerciseService {
                 checkoutSolution: checkoutSolution,
             },
         });
+    }
+
+    /**
+     * Get a summary of the deletion of a programming exercise.
+     * @param exerciseId the id of the programming exercise
+     */
+    getDeletionSummary(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseDeletionSummaryDTO>> {
+        return this.http.get<ProgrammingExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' });
     }
 }

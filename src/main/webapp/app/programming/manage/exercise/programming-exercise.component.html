@@ -191,6 +191,8 @@
                                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                             jhiDeleteButton
                                             [entityTitle]="programmingExercise.title!"
+                                            entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+                                            [fetchEntitySummary]="fetchExerciseDeletionSummary(programmingExercise.id!)"
                                             deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"

@@ -1,11 +1,12 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
-import { merge } from 'rxjs';
+import { Observable, merge } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -216,5 +217,19 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     checkConsistencies() {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
+    }
+
+    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.programmingExerciseService.getDeletionSummary(exerciseId).pipe(
+            map((response) => {
+                const summary = response.body;
+                if (!summary) {
+                    return {};
+                }
+                return {
+                    'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
+                };
+            }),
+        );
     }
 }

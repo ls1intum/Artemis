@@ -16,6 +16,10 @@
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
+                "summary": {
+                    "title": "Programming Exercise Summary",
+                    "numberOfStudentParticipations": "Number of Student Participations"
+                },
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
                 "questionLocalVC": {
                     "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",

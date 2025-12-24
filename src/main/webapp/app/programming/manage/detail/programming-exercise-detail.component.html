@@ -123,6 +123,8 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="programmingExercise.title || ''"
+                                entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+                                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"
