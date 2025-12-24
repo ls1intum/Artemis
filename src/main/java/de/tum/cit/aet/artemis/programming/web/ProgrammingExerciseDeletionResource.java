@@ -172,7 +172,7 @@ public class ProgrammingExerciseDeletionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
         log.debug("REST request to get deletion summary for programming exercise : {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         return ResponseEntity.ok(programmingExerciseDeletionService.getProgrammingExerciseDeletionSummary(exerciseId));
     }

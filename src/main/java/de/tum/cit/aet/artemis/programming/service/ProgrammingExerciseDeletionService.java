@@ -147,13 +147,13 @@ public class ProgrammingExerciseDeletionService {
      * @return the summary of the deletion of the programming exercise
      */
     public ProgrammingExerciseDeletionSummaryDTO getProgrammingExerciseDeletionSummary(long exerciseId) {
-        long numberOfStudentParticipations = programmingExerciseRepository.countStudentParticipationsByExerciseId(exerciseId);
-        long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId));
+        final long numberOfStudentParticipations = programmingExerciseRepository.countStudentParticipationsByExerciseId(exerciseId);
+        final long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId));
 
         long numberOfCommunicationPosts = 0;
         long numberOfAnswerPosts = 0;
 
-        Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
+        final Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
         if (channel != null) {
             long conversationId = channel.getId();
             numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
