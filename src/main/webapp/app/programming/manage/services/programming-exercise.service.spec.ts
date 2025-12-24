@@ -270,6 +270,19 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
 
+        it('should make get request for deletion summary', fakeAsync(() => {
+            const returnedFromService = {
+                numberOfStudentParticipations: 5,
+                numberOfBuilds: 10,
+                numberOfCommunicationPosts: 3,
+                numberOfAnswerPosts: 2,
+            };
+            service.getDeletionSummary(123).subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/deletion-summary` });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
         it('should make get request', fakeAsync(() => {
             const expectedBlob = new Blob(['abc', 'cfe']);
             service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));

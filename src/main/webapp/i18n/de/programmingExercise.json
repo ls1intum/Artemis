@@ -18,7 +18,10 @@
             "delete": {
                 "summary": {
                     "title": "Programmieraufgaben-Zusammenfassung",
-                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen"
+                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
+                    "numberOfBuilds": "Anzahl der Builds",
+                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
+                    "numberOfAnswerPosts": "Anzahl der Antworten"
                 },
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {

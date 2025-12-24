@@ -18,7 +18,10 @@
             "delete": {
                 "summary": {
                     "title": "Programming Exercise Summary",
-                    "numberOfStudentParticipations": "Number of Student Participations"
+                    "numberOfStudentParticipations": "Number of Student Participations",
+                    "numberOfBuilds": "Number of Builds",
+                    "numberOfCommunicationPosts": "Number of Communication Posts",
+                    "numberOfAnswerPosts": "Number of Answer Posts"
                 },
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
                 "questionLocalVC": {

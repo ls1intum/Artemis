@@ -100,5 +100,8 @@ export const hasDueDatePassed = (exercise: ProgrammingExercise) => {
 export const createEntitySummary = (summary: ProgrammingExerciseDeletionSummaryDTO): EntitySummary => {
     return {
         'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
+        'artemisApp.programmingExercise.delete.summary.numberOfBuilds': summary.numberOfBuilds,
+        'artemisApp.programmingExercise.delete.summary.numberOfCommunicationPosts': summary.numberOfCommunicationPosts,
+        'artemisApp.programmingExercise.delete.summary.numberOfAnswerPosts': summary.numberOfAnswerPosts,
     };
 };
