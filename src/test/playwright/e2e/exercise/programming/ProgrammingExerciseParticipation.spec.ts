@@ -71,8 +71,9 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCodeEditor(exercise.id!);
                     await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                        const resultScore = await programmingExerciseEditor.getResultScore();
-                        await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                        // Use exercise-scoped locator and check for text content
+                        const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
+                        await expect(resultScore).toContainText(submission.expectedResult, { timeout: 30000 });
                     });
                 });
 

@@ -171,10 +171,10 @@ if [ $TOTAL_TESTS -gt 0 ]; then
         echo "-------------"
         for xml_file in "$REPORT_DIR"/results*.xml; do
             if [ -f "$xml_file" ]; then
-                # Extract failed test names from testcase elements with failure/error children
-                grep -B1 '<failure\|<error' "$xml_file" 2>/dev/null | \
-                    grep 'testcase' | \
-                    sed 's/.*name="\([^"]*\)".*/  - \1/' || true
+                # Extract failed test names from failure message attributes
+                # The message attribute contains the test file and name
+                grep '<failure message=' "$xml_file" 2>/dev/null | \
+                    sed 's/.*message="\([^"]*\)".*/  - \1/' || true
             fi
         done
         echo ""
@@ -184,13 +184,17 @@ else
     echo "========================================"
 fi
 
-# Use exit code as primary indicator of pass/fail
+# Use test results as primary indicator of pass/fail (not just exit code)
 echo ""
-if [ $EXIT_CODE -eq 0 ]; then
+if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $EXIT_CODE -eq 0 ]; then
     echo "All tests passed!"
 else
-    echo "Tests failed (exit code: $EXIT_CODE). View HTML report:"
+    echo "Tests failed! View HTML report:"
     echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
 fi
 
+# Exit with failure if any tests failed
+if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ]; then
+    exit 1
+fi
 exit $EXIT_CODE

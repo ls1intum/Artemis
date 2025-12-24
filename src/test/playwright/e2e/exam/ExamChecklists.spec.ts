@@ -20,6 +20,7 @@ test.describe('Exam Checklists', async () => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
     });
 
     test.describe('Exercise group checks', { tag: '@fast' }, () => {

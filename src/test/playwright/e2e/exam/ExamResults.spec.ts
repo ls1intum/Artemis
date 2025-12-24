@@ -4,7 +4,7 @@ import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, waitForExamEnd } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
@@ -100,6 +100,7 @@ test.describe('Exam Results', () => {
                 test.beforeEach(
                     'Assess student submission',
                     async ({ page, login, examManagement, examAssessment, courseAssessment, exerciseAssessment, modelingExerciseAssessment, exerciseAPIRequests }) => {
+                        await waitForExamEnd(examEndDate, page);
                         switch (testCase.exerciseType) {
                             case ExerciseType.TEXT:
                                 await login(tutor);
@@ -201,11 +202,4 @@ async function startAssessing(
     await exerciseAssessment.clickHaveReadInstructionsButton();
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
-}
-
-async function waitForExamEnd(examEndDate: dayjs.Dayjs, page: Page) {
-    if (examEndDate > dayjs()) {
-        const timeToWait = examEndDate.diff(dayjs());
-        await page.waitForTimeout(timeToWait);
-    }
 }
