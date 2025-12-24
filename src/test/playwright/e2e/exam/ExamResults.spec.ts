@@ -50,7 +50,10 @@ test.describe('Exam Results', () => {
                     await login(admin);
 
                     if (testCase.exerciseType === ExerciseType.PROGRAMMING) {
-                        examEndDate = dayjs().add(1, 'minutes').add(30, 'seconds');
+                        // Programming exercises need more time for the build to complete
+                        // Use 60s to leave sufficient margin within the sequential timeout
+                        // and account for potentially slow CI build agents
+                        examEndDate = dayjs().add(60, 'seconds');
                     } else {
                         examEndDate = dayjs().add(30, 'seconds');
                     }
@@ -172,8 +175,10 @@ test.describe('Exam Results', () => {
                 );
 
                 if (testCase.exerciseType === ExerciseType.TEXT) {
-                    test('Check exam result overview', async ({ page, login, examAPIRequests, examResultsPage }) => {
+                    // This test needs @slow tag because it runs all beforeEach hooks including assessment
+                    test('Check exam result overview', { tag: '@slow' }, async ({ page, login, examAPIRequests, examResultsPage }) => {
                         await login(studentOne);
+                        await waitForExamEnd(examEndDate, page);
                         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
                         const gradeSummary = await examAPIRequests.getGradeSummary(exam, studentExam);
                         await examResultsPage.checkGradeSummary(gradeSummary);
