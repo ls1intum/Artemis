@@ -201,7 +201,7 @@ jobs:
         - name: Install Dependencies
           run: npm install
         - name: Compile TypeScript Test Files With Typechecking
-          run: npm run compile:ts:tests
+          run: npm run compile:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
         - name: Upload Client Test Coverage Report
@@ -244,7 +244,7 @@ jobs:
           - name: Install Dependencies
             run: npm install
           - name: Compile TypeScript Test Files With Typechecking
-            run: npm run compile:ts:tests
+            run: npm run compile:tests
           - name: TypeScript Test (Selection) Without Typechecking
             run: npm run test-diff:ci
 
@@ -279,5 +279,5 @@ jobs:
     - name: Install Dependencies
       run: npm install
     - name: Compile TypeScript Files With Typechecking
-      run: npm run compile:ts
+      run: npm run compile
 

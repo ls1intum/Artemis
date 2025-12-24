@@ -31,9 +31,9 @@ export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOver
                 data: { text: exercise.title },
             },
             {
-                type: DetailType.Text,
+                type: DetailType.ExerciseCategories,
                 title: 'artemisApp.exercise.categories',
-                data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                data: { categories: exercise.categories },
             },
         ],
     };
