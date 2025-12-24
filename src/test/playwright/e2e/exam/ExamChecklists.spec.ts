@@ -230,9 +230,7 @@ test.describe('Exam Checklists', async () => {
         },
     );
 
-    // This test is skipped for now because it currently fails due to a known issue:
-    // https://github.com/ls1intum/Artemis/issues/10074
-    test.skip(
+    test(
         'Student makes a quiz submission and unassessed quizzes check is marked for instructor after assessment',
         { tag: '@slow' },
         async ({ page, login, examDetails, examAPIRequests }) => {
@@ -246,9 +244,7 @@ test.describe('Exam Checklists', async () => {
         },
     );
 
-    // This test is skipped for now because it currently fails due to a known issue:
-    // https://github.com/ls1intum/Artemis/issues/10076
-    test.skip(
+    test(
         'Student does not submit the exam on time and corresponding check is marked',
         { tag: '@slow' },
         async ({ page, login, examDetails, examAPIRequests, examExerciseGroupCreation, examParticipation }) => {
