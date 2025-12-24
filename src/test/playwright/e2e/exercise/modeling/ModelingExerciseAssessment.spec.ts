@@ -31,7 +31,9 @@ test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
         const participation = await response.json();
         await exerciseAPIRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation);
         await Commands.login(page, instructor);
-        await exerciseAPIRequests.updateModelingExerciseDueDate(modelingExercise, dayjs().subtract(1, 'second'));
+        // Use current time (not past) to ensure submissionDate < dueDate for rated result
+        // The dueDate will be in the past by the time the next test runs
+        await exerciseAPIRequests.updateModelingExerciseDueDate(modelingExercise, dayjs());
     });
 
     test.describe.serial('Handling complaints', () => {

@@ -128,7 +128,11 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     async saveQuiz() {
         const saveButton = this.page.locator('#quiz-save');
         await saveButton.scrollIntoViewIfNeeded();
-        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
+        // Wait for the save button to be enabled before clicking
+        await saveButton.waitFor({ state: 'visible', timeout: 30000 });
+        // Ensure the page has finished any pending operations
+        await this.page.waitForLoadState('networkidle');
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION, { timeout: 60000 });
         await saveButton.click();
         return await responsePromise;
     }

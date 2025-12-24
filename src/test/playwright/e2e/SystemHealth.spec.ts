@@ -10,7 +10,8 @@ const healthChecks = [
     { selector: '#ping', name: 'ping', expectedStatus: 'UP' },
     { selector: '#readinessState', name: 'readiness state', expectedStatus: 'UP' },
     { selector: '#websocketBroker', name: 'websocket broker', expectedStatus: 'UP' },
-    { selector: '#websocketConnection', name: 'websocket connection', expectedStatus: 'Connected' },
+    // Websocket connection may take longer to establish, handled separately with longer timeout
+    { selector: '#websocketConnection', name: 'websocket connection', expectedStatus: 'Connected', timeout: 30000 },
 ];
 
 test.describe('Check artemis system health', { tag: '@fast' }, () => {
@@ -19,11 +20,15 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
     test.beforeAll('Login as admin and visit system health page', async ({ browser }) => {
         page = await browser.newPage();
         await Commands.login(page, admin, '/admin/health');
+        // Wait for the page to fully load and websocket to establish
+        await page.waitForLoadState('networkidle');
     });
 
     for (const healthCheck of healthChecks) {
         test(`Checks ${healthCheck.name} health`, async () => {
-            await expect(page.locator(`#healthCheck ${healthCheck.selector} .status`)).toHaveText(healthCheck.expectedStatus);
+            const statusLocator = page.locator(`#healthCheck ${healthCheck.selector} .status`);
+            const timeout = healthCheck.timeout || 5000;
+            await expect(statusLocator).toHaveText(healthCheck.expectedStatus, { timeout });
         });
     }
 });

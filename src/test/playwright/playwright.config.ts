@@ -50,8 +50,11 @@ export default defineConfig({
         baseURL: process.env.BASE_URL || 'http://localhost:9000',
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
-        /* Record video for failed tests. Videos are saved in test-results folder. */
-        video: 'retain-on-failure',
+        /* Record video for all tests (passed and failed). Videos are saved in test-results folder. */
+        video: {
+            mode: 'on',
+            size: { width: 1920, height: 1080 },
+        },
         ignoreHTTPSErrors: true,
     },
 

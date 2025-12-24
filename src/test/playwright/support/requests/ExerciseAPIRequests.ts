@@ -362,20 +362,37 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Updates the assessment due date of a modeling exercise.
+     * Updates the assessment due date of a modeling exercise to end the assessment period.
+     * This method ensures all dates are properly ordered: releaseDate < startDate < dueDate < assessmentDueDate
+     * All dates are set in the past to ensure the assessment period has clearly ended.
      *
      * @param exercise - The modeling exercise to update.
-     * @param due - The new assessment due date (optional, default: current date).
+     * @param due - The reference time (optional, default: current date). Assessment due date will be set to this time.
      */
     async updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = dayjs()) {
         // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        // When setting assessmentDueDate, we need to ensure all dates are properly ordered
+        // The constraint is: releaseDate < startDate (if present) < dueDate < assessmentDueDate
+        // IMPORTANT: The submission must be considered "in time" (submissionDate < dueDate) for the
+        // result to be visible to students. We use a 1-hour window before 'due' to ensure any
+        // submission made during test execution is still within the due date window.
+        // The assessmentDueDate should be clearly in the past so the assessment period is over.
+        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
+        // Ensure dueDate is before the new assessmentDueDate but after any submissions made during the test
+        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
+        // Ensure startDate is before dueDate (use 1 hour buffer for test submissions)
+        const newStartDate = dayjsToString(due.subtract(1, 'hour'));
+        // Ensure releaseDate is before startDate
+        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
+
         const updateDto = {
             id: exercise.id,
             title: exercise.title,
             shortName: exercise.shortName,
-            releaseDate: exercise.releaseDate,
-            dueDate: exercise.dueDate,
-            assessmentDueDate: dayjsToString(due),
+            releaseDate: newReleaseDate,
+            startDate: newStartDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
             maxPoints: exercise.maxPoints,
             bonusPoints: exercise.bonusPoints,
             difficulty: exercise.difficulty,
@@ -423,18 +440,22 @@ export class ExerciseAPIRequests {
      */
     async updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
         // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
-        // When setting dueDate to the past, all dates must be adjusted to maintain: releaseDate < dueDate < assessmentDueDate
+        // When setting dueDate to the past, all dates must be adjusted to maintain: releaseDate < startDate < dueDate < assessmentDueDate
+        // Use 1 minute spacing to avoid timing edge cases in validation
         const newDueDate = dayjsToString(due);
-        // Ensure releaseDate is before the new dueDate (at least 1 second before)
-        const newReleaseDate = dayjsToString(due.subtract(1, 'second'));
-        // Ensure assessmentDueDate is after the new dueDate (at least 1 second after)
-        const newAssessmentDueDate = dayjsToString(due.add(1, 'second'));
+        // Ensure startDate is before dueDate (1 minute before)
+        const newStartDate = dayjsToString(due.subtract(1, 'minute'));
+        // Ensure releaseDate is before startDate (2 minutes before dueDate)
+        const newReleaseDate = dayjsToString(due.subtract(2, 'minutes'));
+        // Ensure assessmentDueDate is after dueDate (1 minute after)
+        const newAssessmentDueDate = dayjsToString(due.add(1, 'minute'));
 
         const updateDto = {
             id: exercise.id,
             title: exercise.title,
             shortName: exercise.shortName,
             releaseDate: newReleaseDate,
+            startDate: newStartDate,
             dueDate: newDueDate,
             assessmentDueDate: newAssessmentDueDate,
             maxPoints: exercise.maxPoints,

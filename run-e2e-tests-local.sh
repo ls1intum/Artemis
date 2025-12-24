@@ -29,7 +29,16 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --skip-build) SKIP_BUILD=true; shift ;;
         --skip-cleanup) SKIP_CLEANUP=true; shift ;;
-        --filter) TEST_FILTER="$2"; shift 2 ;;
+        --filter)
+            if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
+                echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
+                echo "Usage: --filter <pattern>"
+                echo "Example: --filter \"Quiz\" or --filter \"ExamAssessment|SystemHealth\""
+                exit 1
+            fi
+            TEST_FILTER="$2"
+            shift 2
+            ;;
         --help) head -15 "$0" | tail -10; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
