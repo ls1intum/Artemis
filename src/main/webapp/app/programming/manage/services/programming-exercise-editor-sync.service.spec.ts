@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 import {
     ProgrammingExerciseEditorSyncMessage,
@@ -31,7 +31,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
                 {
                     provide: BrowserFingerprintService,
                     useValue: {
-                        instanceIdentifier: { value: 'test-client-instance-123' },
+                        browserInstanceId: new BehaviorSubject<string | undefined>('test-client-instance-123'),
                     },
                 },
             ],
