@@ -1,19 +1,21 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminPasskeyManagementComponent } from './admin-passkey-management.component';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
-import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('AdminPasskeyManagementComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AdminPasskeyManagementComponent;
     let fixture: ComponentFixture<AdminPasskeyManagementComponent>;
     let adminPasskeyManagementService: AdminPasskeyManagementService;
-    let httpMock: HttpTestingController;
 
     const mockPasskeys: AdminPasskeyDTO[] = [
         {
@@ -45,23 +47,21 @@ describe('AdminPasskeyManagementComponent', () => {
                 AdminPasskeyManagementService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(AlertService),
+                AlertService,
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
         // default to an empty resolved promise
-        jest.spyOn(AdminPasskeyManagementService.prototype, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
+        vi.spyOn(AdminPasskeyManagementService.prototype, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
 
         fixture = TestBed.createComponent(AdminPasskeyManagementComponent);
         component = fixture.componentInstance;
         adminPasskeyManagementService = TestBed.inject(AdminPasskeyManagementService);
-        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
-        httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -69,7 +69,7 @@ describe('AdminPasskeyManagementComponent', () => {
     });
 
     it('should load passkeys on init', async () => {
-        const getAllPasskeysSpy = jest.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve(mockPasskeys));
+        const getAllPasskeysSpy = vi.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve(mockPasskeys));
 
         // let Angular run ngOnInit and resolve async Promises
         fixture.detectChanges();
@@ -77,7 +77,7 @@ describe('AdminPasskeyManagementComponent', () => {
 
         expect(getAllPasskeysSpy).toHaveBeenCalledOnce();
         expect(component.passkeys()).toEqual(mockPasskeys);
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should handle error when loading passkeys fails', async () => {
@@ -86,37 +86,37 @@ describe('AdminPasskeyManagementComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
         });
-        jest.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.reject(errorResponse));
+        vi.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.reject(errorResponse));
 
         await component.loadPasskeys();
 
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should toggle approval status successfully', async () => {
         const passkey = { ...mockPasskeys[0] };
         const updatedPasskey = { ...passkey, isSuperAdminApproved: true };
-        jest.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
+        vi.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
 
         component.passkeys.set([passkey]);
 
         await component.onApprovalToggle(passkey);
 
         expect(adminPasskeyManagementService.updatePasskeyApproval).toHaveBeenCalledWith('cred1', true);
-        expect(passkey.isSuperAdminApproved).toBeTrue();
+        expect(passkey.isSuperAdminApproved).toBe(true);
     });
 
     it('should toggle approval status from approved to not approved', async () => {
         const passkey = { ...mockPasskeys[1] };
         const updatedPasskey = { ...passkey, isSuperAdminApproved: false };
-        jest.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
+        vi.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
 
         component.passkeys.set([passkey]);
 
         await component.onApprovalToggle(passkey);
 
         expect(adminPasskeyManagementService.updatePasskeyApproval).toHaveBeenCalledWith('cred2', false);
-        expect(passkey.isSuperAdminApproved).toBeFalse();
+        expect(passkey.isSuperAdminApproved).toBe(false);
     });
 
     it('should handle error when toggling approval status fails', async () => {
@@ -126,7 +126,7 @@ describe('AdminPasskeyManagementComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
         });
-        jest.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.reject(errorResponse));
+        vi.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.reject(errorResponse));
 
         component.passkeys.set([passkey]);
         const originalApprovalStatus = passkey.isSuperAdminApproved;
@@ -137,7 +137,7 @@ describe('AdminPasskeyManagementComponent', () => {
     });
 
     it('should display empty state when no passkeys exist', async () => {
-        jest.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
+        vi.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
 
         fixture.detectChanges();
         await fixture.whenStable();

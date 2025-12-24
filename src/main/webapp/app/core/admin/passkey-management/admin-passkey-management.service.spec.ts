@@ -1,4 +1,9 @@
+/**
+ * Vitest tests for AdminPasskeyManagementService.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
@@ -6,6 +11,8 @@ import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 
 describe('AdminPasskeyManagementService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: AdminPasskeyManagementService;
     let httpMock: HttpTestingController;
 
@@ -109,12 +116,12 @@ describe('AdminPasskeyManagementService', () => {
 
             const req = httpMock.expectOne(`api/core/passkey/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toBeTrue();
+            expect(req.request.body).toBe(true);
             req.flush(mockResponse);
 
             const response = await promise;
             expect(response).toEqual(mockResponse);
-            expect(response.isSuperAdminApproved).toBeTrue();
+            expect(response.isSuperAdminApproved).toBe(true);
         });
 
         it('should update passkey approval status to not approved', async () => {
@@ -132,12 +139,12 @@ describe('AdminPasskeyManagementService', () => {
 
             const req = httpMock.expectOne(`api/core/passkey/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toBeFalse();
+            expect(req.request.body).toBe(false);
             req.flush(mockResponse);
 
             const response = await promise;
             expect(response).toEqual(mockResponse);
-            expect(response.isSuperAdminApproved).toBeFalse();
+            expect(response.isSuperAdminApproved).toBe(false);
         });
 
         it('should handle error when updating approval status fails', async () => {
