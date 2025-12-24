@@ -14,6 +14,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for managing data cleanup operations.
@@ -23,7 +24,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe],
+    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();

@@ -5,6 +5,7 @@ import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/mat
 import { Subscription, filter } from 'rxjs';
 
 import { AdminSidebarComponent } from 'app/core/admin/admin-sidebar/admin-sidebar.component';
+import { AdminTitleBarComponent } from 'app/core/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -22,7 +23,7 @@ import { IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constant
     templateUrl: './admin-container.component.html',
     styleUrls: ['./admin-container.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgClass, MatSidenavContainer, MatSidenavContent, MatSidenav, RouterOutlet, AdminSidebarComponent],
+    imports: [NgClass, MatSidenavContainer, MatSidenavContent, MatSidenav, RouterOutlet, AdminSidebarComponent, AdminTitleBarComponent],
     host: {
         '(window:resize)': 'onResize()',
         '(document:keydown.control.m)': 'onKeyDown($event)',

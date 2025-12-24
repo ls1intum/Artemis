@@ -3,6 +3,8 @@ import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/s
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Component for displaying Artemis statistics with various graph types.
@@ -10,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
-    imports: [TranslateDirective, StatisticsGraphComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, StatisticsGraphComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatisticsComponent {

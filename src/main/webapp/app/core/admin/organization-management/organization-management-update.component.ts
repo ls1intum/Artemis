@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for creating and updating organizations.
@@ -15,7 +16,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent, AdminTitleBarTitleDirective],
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

@@ -27,6 +27,7 @@ import { MatOption } from '@angular/material/core';
 import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
@@ -56,6 +57,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
         AsyncPipe,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
