@@ -15,7 +15,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
+import { createBuildPlanUrl, createEntitySummary } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
@@ -223,12 +223,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         return this.programmingExerciseService.getDeletionSummary(exerciseId).pipe(
             map((response) => {
                 const summary = response.body;
-                if (!summary) {
-                    return {};
-                }
-                return {
-                    'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
-                };
+                return summary ? createEntitySummary(summary) : {};
             }),
         );
     }
