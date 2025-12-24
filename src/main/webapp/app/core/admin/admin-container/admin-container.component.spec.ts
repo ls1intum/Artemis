@@ -15,6 +15,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Build, CompatibleVersions, Git, Java, ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 @Component({ template: '', standalone: true })
 class MockEmptyComponent {}
@@ -74,6 +76,7 @@ describe('AdminContainerComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([{ path: '**', component: MockEmptyComponent }]),
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ProfileService,
                     useValue: {
