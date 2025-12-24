@@ -1,8 +1,8 @@
 <div>
-    <h2>
-        <span id="metrics-page-heading" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></span>
-        <button class="btn btn-primary float-right" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="metrics.refresh.button"></span></button>
-    </h2>
+    <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-primary btn-sm" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="metrics.refresh.button"></span></button>
+    </div>
     <h3 jhiTranslate="metrics.jvm.title"></h3>
     @if (metrics() && !updatingMetrics()) {
         <div class="row">

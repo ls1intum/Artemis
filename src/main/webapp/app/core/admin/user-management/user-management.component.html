@@ -1,17 +1,11 @@
 <div>
-    <div>
-        <div class="d-flex justify-content-between">
-            <h2>
-                <span id="user-management-page-heading" jhiTranslate="artemisApp.userManagement.home.title"></span>
-            </h2>
-            <div>
-                <jhi-user-import-button class="me-1" [adminUserMode]="true" [buttonType]="ButtonType.PRIMARY_OUTLINE" />
-                <a class="btn btn-primary jh-create-entity" [routerLink]="['./new']">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.userManagement.home.createLabel"></span>
-                </a>
-            </div>
-        </div>
+    <h5 *adminTitleBarTitle id="user-management-page-heading" class="mb-0" jhiTranslate="artemisApp.userManagement.home.title"></h5>
+    <div *adminTitleBarActions>
+        <jhi-user-import-button class="me-1" [adminUserMode]="true" [buttonType]="ButtonType.PRIMARY_OUTLINE" [buttonSize]="ButtonSize.SMALL" />
+        <a class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.userManagement.home.createLabel"></span>
+        </a>
     </div>
     @if (users(); as userList) {
         <div class="table-responsive">

@@ -31,6 +31,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { Subject, Subscription } from 'rxjs';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -65,6 +66,7 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
         ArtemisDurationFromSecondsPipe,
         BuildJobStatisticsComponent,
         SliceNavigatorComponent,
+        AdminTitleBarTitleDirective,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {

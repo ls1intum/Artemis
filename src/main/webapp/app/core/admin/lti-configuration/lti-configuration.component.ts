@@ -20,6 +20,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for managing LTI platform configurations.
@@ -47,6 +48,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
         ItemCountComponent,
         NgbPagination,
         NgbNavOutlet,
+        AdminTitleBarTitleDirective,
     ],
 })
 export class LtiConfigurationComponent implements OnInit {

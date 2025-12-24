@@ -9,6 +9,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Form structure for system notification editing.
@@ -30,7 +31,7 @@ interface SystemNotificationForm {
 @Component({
     selector: 'jhi-system-notification-management-update',
     templateUrl: './system-notification-management-update.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
