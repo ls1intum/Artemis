@@ -9,6 +9,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component for viewing application configuration.
@@ -17,7 +18,7 @@ import { JsonPipe, KeyValuePipe } from '@angular/common';
 @Component({
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe],
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigurationComponent implements OnInit {

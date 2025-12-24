@@ -8,6 +8,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component for displaying user details in the admin user management.
@@ -16,7 +17,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 @Component({
     selector: 'jhi-user-management-detail',
     templateUrl: './user-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, ArtemisTranslatePipe, ProfilePictureComponent],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, ArtemisTranslatePipe, ProfilePictureComponent, AdminTitleBarTitleDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementDetailComponent implements OnInit {

@@ -1,10 +1,10 @@
 <div>
-    <h2>
-        <span id="system-notification-management-page-heading" jhiTranslate="artemisApp.systemNotification.systemNotifications"></span>
-        <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
+    <h5 *adminTitleBarTitle id="system-notification-management-page-heading" class="mb-0" jhiTranslate="artemisApp.systemNotification.systemNotifications"></h5>
+    <div *adminTitleBarActions>
+        <a class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
             <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
         </a>
-    </h2>
+    </div>
     @if (notifications(); as notificationList) {
         <div class="table-responsive">
             <table class="table table-striped">

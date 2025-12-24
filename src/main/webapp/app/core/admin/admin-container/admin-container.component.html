@@ -19,8 +19,11 @@
             </mat-sidenav>
 
             <mat-sidenav-content>
-                <div class="admin-body-container ms-2 module-bg rounded-3 scrollable-content p-3">
-                    <router-outlet />
+                <div class="admin-content-wrapper ms-2">
+                    <jhi-admin-title-bar />
+                    <div class="admin-body-container module-bg rounded-3 scrollable-content p-3">
+                        <router-outlet />
+                    </div>
                 </div>
             </mat-sidenav-content>
         </mat-sidenav-container>
