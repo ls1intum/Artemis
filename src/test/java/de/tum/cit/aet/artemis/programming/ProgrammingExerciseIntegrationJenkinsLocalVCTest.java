@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
 // Run tests sequentially to avoid interference with shared LocalVC repositories and temp directories
 @Execution(ExecutionMode.SAME_THREAD)
+@Isolated
 class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "progexjenklocalvc";
