@@ -1,0 +1,89 @@
+---
+title: Coding and Design Guidelines
+sidebar_label: Guidelines Overview
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+
+# Coding and Design Guidelines
+
+Welcome to the Artemis Coding and Design Guidelines. These guidelines help maintain code quality, consistency, and best practices across the project.
+
+## Client Guidelines
+
+Guidelines for Angular/TypeScript frontend development:
+
+- **[Client Development](/staff/guidelines/client)** - Angular development practices, naming conventions, components, and advanced topics
+- **[Client Theming](/staff/guidelines/client-design)** - Theme management, color usage, and styling guidelines
+- **[Client Tests](/staff/guidelines/client-tests)** - Testing practices, mocking strategies, and coverage standards
+
+## Server Guidelines
+
+Guidelines for Spring Boot/Java backend development:
+
+- **[Server Development](/staff/guidelines/server)** - Java best practices, project structure, REST APIs, and authorization
+- **[Server Tests](/staff/guidelines/server-tests)** - Server testing strategies, ArchUnit, and performance tips
+- **[Database](/staff/guidelines/database)** - Database design, relationships, cascade types, and dynamic fetching
+- **[Performance](/staff/guidelines/performance)** - Performance optimization, data economy, paging, and query optimization
+- **[Criteria Builder](/staff/guidelines/criteria-builder)** - Type-safe dynamic queries using JPA Criteria API
+
+## General Guidelines
+
+- **[Language](/staff/guidelines/language)** - Inclusive, diversity-sensitive, and appreciative language guidelines
+
+## Key Principles
+
+<Callout variant={CalloutVariant.info}>
+**Code Quality First**
+
+- Prioritize code quality and test coverage
+- Reuse code and avoid duplication
+- Write meaningful tests
+- Follow established patterns and conventions
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+**Performance Matters**
+
+- Write performant queries that scale to 1000+ objects
+- Use lazy loading by default
+- Implement proper caching strategies
+- Avoid N+1 query problems
+</Callout>
+
+<Callout variant={CalloutVariant.danger}>
+**Security is Critical**
+
+- Never trust user input
+- Always validate and sanitize data
+- Use proper authorization checks
+- Follow the principle of least privilege
+</Callout>
+
+## Getting Started
+
+If you're new to Artemis development:
+
+1. Start with the [Client Development](/staff/guidelines/client) or [Server Development](/staff/guidelines/server) guidelines based on your work focus
+2. Review the [Testing guidelines](/staff/guidelines/client-tests) to understand our testing standards
+3. Familiarize yourself with [Database guidelines](/staff/guidelines/database) for data modeling
+4. Check the [Language guidelines](/staff/guidelines/language) for inclusive communication
+
+## Contributing
+
+When contributing to Artemis:
+
+- Follow the style guides and conventions outlined in these documents
+- Ensure your code passes all linting and formatting checks
+- Write tests for new functionality
+- Document your code appropriately
+- Review related guidelines before making changes
+
+## Questions?
+
+If you have questions about these guidelines or need clarification:
+
+- Check the specific guideline page for detailed information
+- Ask in the development team channels
+- Consult with maintainers or experienced contributors
