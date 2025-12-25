@@ -112,7 +112,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
-    @MockitoBean
+    @MockitoSpyBean
     protected PasskeyAuthenticationService passkeyAuthenticationService;
 
     @BeforeEach

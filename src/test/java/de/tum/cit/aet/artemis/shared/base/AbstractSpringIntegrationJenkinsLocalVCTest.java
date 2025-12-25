@@ -35,7 +35,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
@@ -134,7 +133,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     // Mock PasskeyAuthenticationService to allow admin operations in tests
     // The @EnforceAdmin annotation requires passkey authentication to be mocked
-    @MockitoBean
+    @MockitoSpyBean
     protected PasskeyAuthenticationService passkeyAuthenticationService;
 
     protected URI localVCBaseUri;
