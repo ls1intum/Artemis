@@ -147,18 +147,7 @@
                     </a>
                 }
             </li>
-            <jhi-server-administration
-                class="nav-item"
-                [isExamActive]="isExamActive"
-                [isExamStarted]="isExamStarted"
-                [localCIActive]="localCIActive"
-                [irisEnabled]="irisEnabled"
-                [ltiEnabled]="ltiEnabled"
-                [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
-                [atlasEnabled]="atlasEnabled"
-                [examEnabled]="examEnabled"
-                (collapseNavbarListener)="collapseNavbar()"
-            />
+            <jhi-server-administration class="nav-item" [isExamActive]="isExamActive" [isExamStarted]="isExamStarted" (collapseNavbarListener)="collapseNavbar()" />
             @if (!currAccount && languages && languages.length > 1) {
                 <li ngbDropdown class="nav-item dropdown pointer" display="dynamic">
                     <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">

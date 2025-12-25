@@ -94,7 +94,7 @@ describe('CourseWideSearchComponent', () => {
         component = fixture.componentInstance;
         component.course = course;
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     });
 
     afterEach(() => {
@@ -108,6 +108,8 @@ describe('CourseWideSearchComponent', () => {
 
     it('should set initial values correctly', fakeAsync(() => {
         component.ngOnInit();
+        tick();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.course).toBe(course);
         expect(component.posts).toStrictEqual([examplePost]);
         expect(component.courseWideSearchConfig()).toBe(courseWideSearchConfig);
@@ -115,6 +117,8 @@ describe('CourseWideSearchComponent', () => {
 
     it('should initialize currentPostContextFilter correctly', fakeAsync(() => {
         component.ngOnInit();
+        tick();
+        fixture.changeDetectorRef.detectChanges();
         const conversationsOfUser = conversationDtoArray.map((conversation) => conversation.id);
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
@@ -134,13 +138,15 @@ describe('CourseWideSearchComponent', () => {
 
     it('should update currentPostContextFilter correctly', fakeAsync(() => {
         component.ngOnInit();
+        tick();
+        fixture.changeDetectorRef.detectChanges();
         const conversation = conversationDtoArray[0];
 
         courseWideSearchConfig.searchTerm = 'test';
         courseWideSearchConfig.selectedConversations = [conversation];
         component.onSearch();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
@@ -160,19 +166,21 @@ describe('CourseWideSearchComponent', () => {
 
     it('should set conversationIds back to all conversations if no conversation is selected', fakeAsync(() => {
         component.ngOnInit();
+        tick();
+        fixture.changeDetectorRef.detectChanges();
         const singleConversation = conversationDtoArray[0];
         const allConversationIds = conversationDtoArray.map((conversation) => conversation.id);
 
         courseWideSearchConfig.selectedConversations = [singleConversation];
         component.onSearch();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.currentPostContextFilter?.conversationIds).toEqual([singleConversation.id]);
 
         courseWideSearchConfig.selectedConversations = [];
         component.onSearch();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.currentPostContextFilter?.conversationIds).toEqual(allConversationIds);
     }));
 
@@ -187,13 +195,14 @@ describe('CourseWideSearchComponent', () => {
     it('should initialize formGroup correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.formGroup.get('filterToCourseWide')?.value).toBeFalse();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
     }));
 
     it('Should update filter setting when filterToCourseWide checkbox is checked', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.formGroup.patchValue({
             filterToCourseWide: true,
             filterToUnresolved: false,
@@ -202,14 +211,14 @@ describe('CourseWideSearchComponent', () => {
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToCourseWide]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
     }));
 
     it('should disable the filterToCourseWide if a conversation is selected', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.formGroup.patchValue({
             filterToCourseWide: true,
             filterToUnresolved: false,
@@ -217,7 +226,7 @@ describe('CourseWideSearchComponent', () => {
         });
         component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
         component.onSearchConfigSelectionChange();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
         expect(filterResolvedCheckbox.disabled).toBeTrue();
@@ -225,23 +234,23 @@ describe('CourseWideSearchComponent', () => {
     }));
 
     it('should re-enable the filterToCourseWide if no conversation is selected', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
         component.onSearchConfigSelectionChange();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
         expect(filterResolvedCheckbox.disabled).toBeTrue();
 
         component.courseWideSearchConfig().selectedConversations = [];
         component.onSearchConfigSelectionChange();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(filterResolvedCheckbox.disabled).toBeFalse();
     }));
 
     it('Should update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.formGroup.patchValue({
             filterToCourseWide: false,
             filterToUnresolved: true,
@@ -250,14 +259,14 @@ describe('CourseWideSearchComponent', () => {
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
     }));
 
     it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.formGroup.patchValue({
             filterToUnresolved: false,
             filterToAnsweredOrReacted: true,
@@ -265,13 +274,13 @@ describe('CourseWideSearchComponent', () => {
         const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
         filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeTrue();
     }));
 
     it('Should update filter setting when all filter checkboxes are checked', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.formGroup.patchValue({
             filterToUnresolved: true,
             filterToAnsweredOrReacted: true,
@@ -281,7 +290,7 @@ describe('CourseWideSearchComponent', () => {
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeTrue();
     }));
@@ -289,14 +298,14 @@ describe('CourseWideSearchComponent', () => {
     it('should initialize sorting direction correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.ASCENDING);
     }));
 
     it('should change sorting direction after clicking the order direction button', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
         expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);

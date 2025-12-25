@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -15,17 +14,14 @@ describe('ExerciseSaveButtonComponent', () => {
     let component: ExerciseSaveButtonComponent;
     let fixture: ComponentFixture<ExerciseSaveButtonComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ExerciseSaveButtonComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseSaveButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseSaveButtonComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseSaveButtonComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -33,14 +29,12 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should create the component', () => {
+        fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
     it('should disable the button if submission is synced', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: true, submitted: false } as Submission);
-        });
-
+        fixture.componentRef.setInput('submission', { isSynced: true, submitted: false } as Submission);
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
@@ -48,9 +42,7 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should enable the button if submission is not synced', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: false, submitted: false } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
@@ -58,9 +50,7 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should display facSaveSuccess icon if submission is synced and submitted', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: true, submitted: true } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: true, submitted: true } as Submission);
         fixture.detectChanges();
 
         const icon = fixture.debugElement.query(By.directive(FaIconComponent));
@@ -68,9 +58,7 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should display faFloppyDisk icon if submission is not synced and submitted', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: false, submitted: false } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
         const icon = fixture.debugElement.query(By.directive(FaIconComponent));
@@ -78,9 +66,7 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should call onSave when the button is clicked and submission is not synced', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: false, submitted: false } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
         const onSaveSpy = jest.spyOn(component, 'onSave');

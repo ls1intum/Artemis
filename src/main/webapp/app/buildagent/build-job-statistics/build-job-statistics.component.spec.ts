@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
@@ -11,13 +13,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
 describe('BuildJobStatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: BuildJobStatisticsComponent;
     let fixture: ComponentFixture<BuildJobStatisticsComponent>;
     const mockActivatedRoute: any = {};
 
     const mockBuildQueueService = {
-        getBuildJobStatistics: jest.fn(),
-        getBuildJobStatisticsForCourse: jest.fn(),
+        getBuildJobStatistics: vi.fn(),
+        getBuildJobStatisticsForCourse: vi.fn(),
     };
 
     const mockBuildJobStatistics: BuildJobStatistics = {
@@ -61,7 +65,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.onTabChange(SpanType.DAY);
 
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(2);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
     });
 
     it('should not get build job statistics when span is the same', () => {
@@ -72,7 +76,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.onTabChange(SpanType.WEEK);
 
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
     });
 
     it('should get build job statistics for course when courseId is present', () => {
@@ -84,7 +88,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.onTabChange(SpanType.WEEK);
 
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenNthCalledWith(1, testCourseId, SpanType.WEEK);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
     });
 
     it('should use stats from input', () => {
@@ -96,8 +100,8 @@ describe('BuildJobStatisticsComponent', () => {
 
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(0);
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledTimes(0);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-        expect(component.displayMissingBuilds).toBeFalse();
-        expect(component.displaySpanSelector).toBeFalse();
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
+        expect(component.displayMissingBuilds).toBeFalsy();
+        expect(component.displaySpanSelector).toBeFalsy();
     });
 });

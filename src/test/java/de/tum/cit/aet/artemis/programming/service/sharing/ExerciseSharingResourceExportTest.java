@@ -30,6 +30,9 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * this class tests all export features of the ExerciseSharingResource class
@@ -49,6 +52,12 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @Autowired
     private RequestUtilService requestUtilService;
 
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
     @BeforeEach
     void startUp() throws Exception {
         sharingPlatformMockProvider.connectRequestFromSharingPlatform();
@@ -66,8 +75,9 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
         programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases(),
                 ProgrammingExercise.class);
-
-        programmingExerciseUtilService.createGitRepository();
+        // Wire LocalVC URIs for base repos and persist so export service can locate them
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise1);
+        programmingExercise1 = programmingExerciseRepository.save(programmingExercise1);
     }
 
     @Test

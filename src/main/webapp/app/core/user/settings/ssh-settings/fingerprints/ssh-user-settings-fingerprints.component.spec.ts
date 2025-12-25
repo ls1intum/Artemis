@@ -33,7 +33,7 @@ describe('SshUserSettingsFingerprintsComponent', () => {
         fixture = TestBed.createComponent(SshUserSettingsFingerprintsComponent);
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
-        translateService.currentLang = 'en';
+        translateService.use('en');
 
         fingerPintsServiceMock.getSshFingerprints.mockImplementation(() => Promise.resolve(mockFingerprints));
     });

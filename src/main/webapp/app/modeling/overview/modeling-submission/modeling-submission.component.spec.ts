@@ -44,6 +44,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -100,6 +101,7 @@ describe('ModelingSubmissionComponent', () => {
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 ResultService,
                 provideHttpClientTesting(),
                 provideHttpClient(),
@@ -208,7 +210,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // WHEN
         comp.isLoading = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('div'))).not.toBeNull();
 
@@ -275,7 +277,7 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.modelingExercise.dueDate = dayjs().subtract(1, 'days');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.isActive).toBeFalse();
     });
 
@@ -390,7 +392,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Emit failed Athena result
         resultSubject.next(failedAthenaResult);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify error was shown
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
@@ -435,7 +437,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Emit Athena result
         resultSubject.next(athenaResult);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify Athena result handling
         expect(comp.assessmentResult).toEqual(athenaResult);
@@ -474,18 +476,18 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService);
+        // @ts-ignore
+        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: 1,
+            id: submission.id,
             model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        const receiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(modelSubmission));
         fixture.detectChanges();
+        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission).toEqual(modelSubmission);
-        expect(receiveStub).toHaveBeenCalledOnce();
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {
@@ -536,7 +538,7 @@ describe('ModelingSubmissionComponent', () => {
         const relationships = [{ id: 4 }, { id: 5 }];
         submission.model = JSON.stringify({ elements, relationships });
         comp.submission = submission;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.calculateNumberOfModelElements()).toBe(elements.length + relationships.length);
     });
 
@@ -565,7 +567,7 @@ describe('ModelingSubmissionComponent', () => {
                 }),
             },
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.onSelectionChanged(selection);
         expect(comp.selectedRelationships).toEqual(['relationShip1', 'relationShip2']);
         expect(comp.selectedEntities).toEqual(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
@@ -577,10 +579,10 @@ describe('ModelingSubmissionComponent', () => {
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
         comp.selectedEntities = [];
         comp.selectedRelationships = [];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = ['3'];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
@@ -591,11 +593,11 @@ describe('ModelingSubmissionComponent', () => {
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
         comp.selectedEntities = [id];
         comp.selectedRelationships = [];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = [];
         comp.selectedRelationships = [id];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 

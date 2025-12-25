@@ -25,6 +25,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
         await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
+        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
     });
 
     const testCases = [
@@ -70,8 +71,9 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCodeEditor(exercise.id!);
                     await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                        const resultScore = await programmingExerciseEditor.getResultScore();
-                        await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                        // Use exercise-scoped locator and check for text content
+                        const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
+                        await expect(resultScore).toContainText(submission.expectedResult, { timeout: 30000 });
                     });
                 });
 
@@ -99,6 +101,14 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         });
 
         test.describe('Programming exercise participation using SSH', () => {
+            // Clean up SSH keys before each test to ensure clean state
+            // This is defensive - the afterEach should clean up, but if it fails or
+            // there's server-side caching, this ensures we start with no SSH key
+            test.beforeEach('Ensure no SSH key exists', async ({ login, accountManagementAPIRequests }) => {
+                await login(studentOne);
+                await accountManagementAPIRequests.deleteSshPublicKey();
+            });
+
             for (const sshAlgorithm of [SshEncryptionAlgorithm.rsa, SshEncryptionAlgorithm.ed25519]) {
                 test(`Makes a git submission using SSH with ${sshAlgorithm} key`, async ({ page, programmingExerciseOverview }) => {
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
@@ -221,17 +231,24 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         });
 
         test.describe('Check team participation', () => {
-            test.beforeEach('Each team member makes a submission', async ({ login, waitForExerciseBuildToFinish, exerciseAPIRequests }) => {
+            test.beforeEach('Each team member makes a submission', async ({ login, waitForParticipationBuildToFinish, exerciseAPIRequests }) => {
+                // Track files that have been created across all submissions (for team exercises, all members share the same repository)
+                const createdFiles = new Set<string>();
                 for (const { student, submission } of submissions) {
                     await login(student);
                     const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
                     participation = await response.json();
+                    // Only create files that haven't been created yet
                     for (const file of submission.files) {
                         const filename = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
-                        await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
+                        if (!createdFiles.has(filename)) {
+                            await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
+                            createdFiles.add(filename);
+                        }
                     }
                     await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
-                    await waitForExerciseBuildToFinish(exercise.id!);
+                    // Use student-accessible endpoint (by participation ID) instead of tutor-only endpoint (by exercise ID)
+                    await waitForParticipationBuildToFinish(participation.id!);
                 }
             });
 

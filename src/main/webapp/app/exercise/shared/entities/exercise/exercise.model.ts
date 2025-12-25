@@ -283,3 +283,15 @@ export function resetForImport(exercise: Exercise) {
 
     exercise.competencyLinks = [];
 }
+
+/**
+ * Checks if the due date of the given exercise is in the past.
+ * @param exercise the exercise to check
+ * @return true if the due date is in the past, false otherwise (including if no due date is set)
+ */
+export function hasDueDatePassed(exercise: Exercise): boolean {
+    if (!exercise.dueDate) {
+        return false;
+    }
+    return exercise.dueDate.isBefore(dayjs());
+}
