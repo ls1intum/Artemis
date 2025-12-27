@@ -183,6 +183,7 @@ data-exports/
 # Docker
 ######################
 /docker/.env
+/docker/playwright-local-override.yml
 /docker/.docker-data/artemis-data/*
 !/docker/.docker-data/artemis-data/.gitkeep
 /docker/.docker-data/artemis-mysql-data/*
@@ -233,3 +234,4 @@ deferredEagerBeanInstantiationViolations.dot
 ######################
 CLAUDE.md
 .claude
+/src/test/playwright/monocart-report

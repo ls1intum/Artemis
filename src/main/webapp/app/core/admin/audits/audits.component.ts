@@ -16,6 +16,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for viewing system audit logs.
@@ -25,7 +26,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, NgbPagination, ArtemisDatePipe],
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, NgbPagination, ArtemisDatePipe, AdminTitleBarTitleDirective],
 })
 export class AuditsComponent implements OnInit {
     private readonly auditsService = inject(AuditsService);
