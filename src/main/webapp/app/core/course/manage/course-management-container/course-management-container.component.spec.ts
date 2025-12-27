@@ -256,6 +256,7 @@ describe('CourseManagementContainerComponent', () => {
                                 numberOfInstructors: 2,
                                 numberOfParticipations: 500,
                                 numberOfSubmissions: 1000,
+                                numberOfResults: 800,
                                 numberOfConversations: 5,
                                 numberOfPosts: 20,
                                 numberOfAnswerPosts: 15,

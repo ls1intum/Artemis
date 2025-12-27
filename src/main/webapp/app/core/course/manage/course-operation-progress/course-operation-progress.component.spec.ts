@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CourseOperationProgressComponent', () => {
     let component: CourseOperationProgressComponent;
@@ -31,7 +30,7 @@ describe('CourseOperationProgressComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseOperationProgressComponent, NoopAnimationsModule],
+            imports: [CourseOperationProgressComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(CourseOperationProgressComponent, {

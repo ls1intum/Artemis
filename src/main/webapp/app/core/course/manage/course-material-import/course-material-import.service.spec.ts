@@ -16,6 +16,7 @@ describe('CourseMaterialImportService', () => {
         numberOfInstructors: 3,
         numberOfParticipations: 500,
         numberOfSubmissions: 1000,
+        numberOfResults: 800,
         numberOfConversations: 50,
         numberOfPosts: 200,
         numberOfAnswerPosts: 150,
