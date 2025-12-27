@@ -17,12 +17,12 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.quiz.api.QuizQuestionApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 
 @Profile(PROFILE_CORE)
@@ -36,21 +36,21 @@ public class QuizTrainingLeaderboardService {
 
     private final UserRepository userRepository;
 
-    private final QuizQuestionRepository quizQuestionRepository;
-
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
+
+    private final QuizQuestionApi quizQuestionApi;
 
     private static final int BRONZE_LEAGUE = 5;
 
     private static final int DEFAULT_LEAGUE = 0; // Default league value used for the current user entry that is just used for the scorecard not the leaderboard itself
 
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
-            QuizQuestionRepository quizQuestionRepository, QuizQuestionProgressRepository quizQuestionProgressRepository) {
+            QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionApi quizQuestionApi) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.quizQuestionRepository = quizQuestionRepository;
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
+        this.quizQuestionApi = quizQuestionApi;
     }
 
     /**
@@ -61,7 +61,7 @@ public class QuizTrainingLeaderboardService {
      * @return a list of leaderboard entry DTOs
      */
     public LeaderboardWithCurrentUserEntryDTO getLeaderboard(long userId, long courseId) {
-        long totalQuestions = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long totalQuestions = quizQuestionApi.countAllQuizQuestionsByCourseIdAvailableForPractice(courseId);
         int league;
         league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
 
@@ -171,7 +171,7 @@ public class QuizTrainingLeaderboardService {
      * @return the earliest due date found or the current time if none exists
      */
     private ZonedDateTime findEarliestDueDate(long userId, long courseId) {
-        long totalQuestionCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long totalQuestionCount = quizQuestionApi.countAllQuizQuestionsByCourseIdAvailableForPractice(courseId);
         long progressCount = quizQuestionProgressRepository.countByUserIdAndCourseId(userId, courseId);
 
         boolean hasUnansweredNewQuestions = totalQuestionCount > progressCount;

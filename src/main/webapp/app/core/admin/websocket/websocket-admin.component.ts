@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPlug, faPowerOff, faSync } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
@@ -22,7 +23,7 @@ import { map } from 'rxjs/operators';
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
     standalone: true,
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgClass, DatePipe],
+    imports: [TranslateDirective, FormsModule, FaIconComponent, NgClass, DatePipe, AdminTitleBarTitleDirective],
 })
 export class WebsocketAdminComponent implements OnInit, OnDestroy {
     protected readonly faPlug = faPlug;

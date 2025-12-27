@@ -62,7 +62,7 @@
                 "none": "None"
             },
             "home": {
-                "title": "Users",
+                "title": "User Management",
                 "createLabel": "Create a new user",
                 "editLabel": "Edit user"
             },
@@ -90,7 +90,14 @@
             "registrationNumber": "Registration Number",
             "activated": "Activated",
             "deactivated": "Deactivated",
-            "profiles": "Profiles",
+            "globalRoles": "Global Roles",
+            "roles": {
+                "admin": "Admin",
+                "instructor": "Instructor",
+                "editor": "Editor",
+                "tutor": "Tutor",
+                "user": "Student"
+            },
             "langKey": "Language",
             "passwordTooltip": "This setting can only be changed for new users. Notice, that you can only set or change passwords for internal users.",
             "internal": "Internal",

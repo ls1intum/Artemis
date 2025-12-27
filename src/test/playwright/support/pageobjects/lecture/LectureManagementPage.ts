@@ -178,7 +178,7 @@ export class LectureManagementPage {
 /**
  * Enum for unit types, mapping to their respective button selectors.
  */
-enum UnitType {
+export enum UnitType {
     TEXT = '#createTextUnitButton',
     EXERCISE = '#createExerciseUnitButton',
     VIDEO = '#createVideoUnitButton',

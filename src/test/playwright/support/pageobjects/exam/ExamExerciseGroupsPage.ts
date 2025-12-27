@@ -45,19 +45,27 @@ export class ExamExerciseGroupsPage {
     }
 
     async clickAddTextExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-text-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-text-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddModelingExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-modeling-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-modeling-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddQuizExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-quiz-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-quiz-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddProgrammingExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-programming-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-programming-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickEditExercise(groupID: number, exerciseID: number) {
@@ -69,8 +77,12 @@ export class ExamExerciseGroupsPage {
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {
+        // Wait for the exercise groups page to fully load
+        await this.page.waitForLoadState('networkidle');
         const exerciseElement = this.page.locator(`#group-${groupID} #exercises`, { hasText: exerciseTitle });
+        // Wait for the element to be attached to DOM first, with a longer timeout
+        await exerciseElement.waitFor({ state: 'attached', timeout: 30000 });
         await exerciseElement.scrollIntoViewIfNeeded();
-        await expect(exerciseElement).toBeVisible();
+        await expect(exerciseElement).toBeVisible({ timeout: 10000 });
     }
 }

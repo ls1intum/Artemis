@@ -8,8 +8,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { AccountService } from 'app/core/auth/account.service';
-import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 @Component({ template: '' })
 class MockEmptyComponent {}
@@ -17,8 +15,6 @@ class MockEmptyComponent {}
 describe('ServerAdministrationComponent', () => {
     let component: ServerAdministrationComponent;
     let fixture: ComponentFixture<ServerAdministrationComponent>;
-    let accountService: AccountService;
-    let passkeyGuard: PasskeyAuthenticationGuard;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -33,8 +29,6 @@ describe('ServerAdministrationComponent', () => {
 
         fixture = TestBed.createComponent(ServerAdministrationComponent);
         component = fixture.componentInstance;
-        accountService = TestBed.inject(AccountService);
-        passkeyGuard = TestBed.inject(PasskeyAuthenticationGuard);
     });
 
     it('should create', () => {
@@ -89,59 +83,11 @@ describe('ServerAdministrationComponent', () => {
         expect(adminLink).toBeTruthy();
     });
 
-    describe('Passkey Authentication', () => {
-        beforeEach(() => {
-            fixture.detectChanges();
-        });
+    it('should collapse navbar when link is clicked', () => {
+        const collapseNavbarSpy = jest.spyOn(component.collapseNavbarListener, 'emit');
 
-        it('should not show modal when passkey enforcement is disabled', () => {
-            jest.spyOn(passkeyGuard, 'shouldEnforcePasskeyForAdminFeatures').mockReturnValue(false);
+        component.onLinkClick();
 
-            const result = component['showModalForPasskeyLogin']();
-
-            expect(result).toBeFalse();
-            expect(component.loginWithPasskeyModal().showModal).toBeFalse();
-        });
-
-        it('should not show modal when user is already logged in with approved passkey', () => {
-            jest.spyOn(passkeyGuard, 'shouldEnforcePasskeyForAdminFeatures').mockReturnValue(true);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-
-            const result = component['showModalForPasskeyLogin']();
-
-            expect(result).toBeFalse();
-            expect(component.loginWithPasskeyModal().showModal).toBeFalse();
-        });
-
-        it('should show modal when passkey enforcement is enabled and user not logged in with passkey', () => {
-            jest.spyOn(passkeyGuard, 'shouldEnforcePasskeyForAdminFeatures').mockReturnValue(true);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
-
-            const result = component['showModalForPasskeyLogin']();
-
-            expect(result).toBeTrue();
-            expect(component.loginWithPasskeyModal().showModal).toBeTrue();
-        });
-
-        it('should prevent link click when passkey modal needs to be shown', () => {
-            jest.spyOn(passkeyGuard, 'shouldEnforcePasskeyForAdminFeatures').mockReturnValue(true);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
-
-            const mockEvent = { preventDefault: jest.fn() } as unknown as Event;
-            component.onLinkClick(mockEvent);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-        });
-
-        it('should collapse navbar when passkey modal does not need to be shown', () => {
-            jest.spyOn(passkeyGuard, 'shouldEnforcePasskeyForAdminFeatures').mockReturnValue(false);
-            const collapseNavbarSpy = jest.spyOn(component.collapseNavbarListener, 'emit');
-
-            const mockEvent = { preventDefault: jest.fn() } as unknown as Event;
-            component.onLinkClick(mockEvent);
-
-            expect(mockEvent.preventDefault).not.toHaveBeenCalled();
-            expect(collapseNavbarSpy).toHaveBeenCalled();
-        });
+        expect(collapseNavbarSpy).toHaveBeenCalled();
     });
 });
