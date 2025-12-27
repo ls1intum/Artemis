@@ -644,7 +644,7 @@ describe('BuildQueueComponent', () => {
             fixture.detectChanges();
 
             // Assert: view type
-            expect(component.isAdministrationView()).toBe(true);
+            expect(component.isAdministrationView).toBe(true);
 
             // Assert: queued/running (data-level)
             expect(component.queuedBuildJobs().every((j) => j.courseId !== undefined)).toBe(true);
@@ -676,7 +676,7 @@ describe('BuildQueueComponent', () => {
             fixture.detectChanges();
 
             // Assert: view type
-            expect(component.isAdministrationView()).toBe(false);
+            expect(component.isAdministrationView).toBe(false);
 
             // Assert: queued/running (data-level) still has courseId as field, but UI must not show it
             // (keep this part optional; remove if reviewers dislike it)
