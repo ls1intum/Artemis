@@ -144,11 +144,11 @@ public class TutorialGroupResource {
     }
 
     /**
-     * GET /courses/:courseId/tutorial-groups/campus-values : gets the campus values used for the tutorial groups of all tutorials where user is instructor
+     * GET /courses/:courseId/tutorial-groups/campus-values : gets the unique campus values used for tutorial groups in the specified course
      * Note: Used for autocomplete in the client tutorial form
      *
      * @param courseId the id of the course to which the tutorial groups belong to
-     * @return ResponseEntity with status 200 (OK) and with body containing the unique campus values of all tutorials where user is instructor
+     * @return ResponseEntity with status 200 (OK) and with body containing the unique campus values of tutorial groups in the course
      */
     @GetMapping("courses/{courseId}/tutorial-groups/campus-values")
     @EnforceAtLeastInstructor
@@ -157,15 +157,15 @@ public class TutorialGroupResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueCampusValuesInRegisteredCourse(user.getGroups()));
+        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueCampusValuesByCourseId(courseId));
     }
 
     /**
-     * GET /courses/:courseId/tutorial-groups/language-values : gets the language values used for the tutorial groups of all tutorials where user is instructor
+     * GET /courses/:courseId/tutorial-groups/language-values : gets the unique language values used for tutorial groups in the specified course
      * Note: Used for autocomplete in the client tutorial form
      *
      * @param courseId the id of the course to which the tutorial groups belong to
-     * @return ResponseEntity with status 200 (OK) and with body containing the unique language values of all tutorials where user is instructor
+     * @return ResponseEntity with status 200 (OK) and with body containing the unique language values of tutorial groups in the course
      */
     @GetMapping("courses/{courseId}/tutorial-groups/language-values")
     @EnforceAtLeastInstructor
@@ -174,7 +174,7 @@ public class TutorialGroupResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueLanguageValuesInRegisteredCourse(user.getGroups()));
+        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueLanguageValuesByCourseId(courseId));
     }
 
     /**
