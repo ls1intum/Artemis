@@ -589,6 +589,10 @@ public class BuildJobContainerService {
                     copyToContainerCommand.exec();
                     log.debug("Successfully copied tar archive to container {}", containerId);
                 }
+                catch (RuntimeException e) {
+                    // Wrap runtime exceptions (e.g., Docker connectivity issues) for retry handling
+                    throw new IOException("Failed to copy archive to container: " + e.getMessage(), e);
+                }
                 return null;
             }, "Copy to container " + containerId, buildJobId);
         }

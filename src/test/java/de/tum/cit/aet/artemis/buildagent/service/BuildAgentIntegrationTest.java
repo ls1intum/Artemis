@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
@@ -422,5 +425,73 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testSpringAIAutoConfigurationsExcluded() {
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> applicationContext.getBean(AzureOpenAiChatAutoConfiguration.class));
+    }
+
+    /**
+     * Test that the build agent successfully completes a build job when the tar archive copy operation
+     * fails transiently but succeeds after retry. This simulates the scenario observed under high load
+     * where "Could not create tar archive" exceptions occur due to transient I/O issues.
+     */
+    @Test
+    void testBuildAgentRetryOnTarArchiveFailure() {
+        // Mock copyArchiveToContainerCmd to fail on first 2 attempts, then succeed on 3rd attempt
+        CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
+        when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(copyArchiveToContainerCmd);
+        when(copyArchiveToContainerCmd.withRemotePath(anyString())).thenReturn(copyArchiveToContainerCmd);
+        when(copyArchiveToContainerCmd.withTarInputStream(any())).thenReturn(copyArchiveToContainerCmd);
+
+        AtomicInteger copyAttempts = new AtomicInteger(0);
+        doAnswer(invocation -> {
+            int attempt = copyAttempts.incrementAndGet();
+            // Fail on first 2 attempts (simulating transient I/O failure under load)
+            // Since there are multiple copy operations (test repo, assignment repo, etc.),
+            // we fail the first 2 calls to exec() across all copy operations
+            if (attempt <= 2) {
+                throw new RuntimeException("Simulated transient I/O failure: Could not create tar archive");
+            }
+            return null;
+        }).when(copyArchiveToContainerCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // The build should eventually succeed after retries
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // Verify that retries occurred (more than the minimum required calls)
+        // Each repository copy requires one call, so if retries happened, we should have more calls
+        assertThat(copyAttempts.get()).isGreaterThan(2);
+    }
+
+    /**
+     * Test that the build agent properly fails a build job when all retry attempts for
+     * tar archive operations are exhausted. This ensures proper error handling when
+     * the infrastructure issue persists beyond the retry limit.
+     */
+    @Test
+    void testBuildAgentFailsAfterAllTarArchiveRetriesExhausted() {
+        // Mock copyArchiveToContainerCmd to always fail (simulating persistent I/O failure)
+        CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
+        when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(copyArchiveToContainerCmd);
+        when(copyArchiveToContainerCmd.withRemotePath(anyString())).thenReturn(copyArchiveToContainerCmd);
+        when(copyArchiveToContainerCmd.withTarInputStream(any())).thenReturn(copyArchiveToContainerCmd);
+
+        // Always throw exception to simulate persistent failure
+        doAnswer(invocation -> {
+            throw new RuntimeException("Simulated persistent I/O failure: Could not create tar archive");
+        }).when(copyArchiveToContainerCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // The build should fail after all retries are exhausted
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
+        });
     }
 }
