@@ -392,7 +392,7 @@ public class BuildJobExecutionService {
             // Delete the cloned repositories
             deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id(), assignmentRepositoryPath);
             deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id(), testsRepositoryPath);
-            // do not try to delete the temp repository if it does not exist or is the same as the assignment repository
+            // do not try to delete the solution repository if it does not exist or is the same as the assignment repository
             if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
                 deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id(), solutionRepositoryPath);
             }
