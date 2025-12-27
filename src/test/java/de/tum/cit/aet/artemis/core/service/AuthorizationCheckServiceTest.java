@@ -274,4 +274,91 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
     }
+
+    @Nested
+    class IsSuperAdminTest {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsSuperAdmin_withSuperAdminRole_shouldReturnTrue() {
+            boolean isSuperAdmin = authCheckService.isSuperAdmin();
+            assertThat(isSuperAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+        void testIsSuperAdmin_withAdminRole_shouldReturnFalse() {
+            boolean isSuperAdmin = authCheckService.isSuperAdmin();
+            assertThat(isSuperAdmin).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsSuperAdmin_withStudentRole_shouldReturnFalse() {
+            boolean isSuperAdmin = authCheckService.isSuperAdmin();
+            assertThat(isSuperAdmin).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsSuperAdminWithUser_superAdminUser_shouldReturnTrue() {
+            userUtilService.addSuperAdmin(TEST_PREFIX);
+            User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+            boolean isSuperAdmin = authCheckService.isSuperAdmin(superAdmin);
+            assertThat(isSuperAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsSuperAdminWithUser_regularUser_shouldReturnFalse() {
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+            boolean isSuperAdmin = authCheckService.isSuperAdmin(student);
+            assertThat(isSuperAdmin).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsSuperAdminWithUser_nullUser_shouldUseCurrent() {
+            boolean isSuperAdmin = authCheckService.isSuperAdmin((User) null);
+            assertThat(isSuperAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsSuperAdminWithLogin_superAdminLogin_shouldReturnTrue() {
+            userUtilService.addSuperAdmin(TEST_PREFIX);
+            String login = TEST_PREFIX + "superadmin";
+
+            boolean isSuperAdmin = authCheckService.isSuperAdmin(login);
+            assertThat(isSuperAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsSuperAdminWithLogin_regularUserLogin_shouldReturnFalse() {
+            String login = TEST_PREFIX + "student1";
+
+            boolean isSuperAdmin = authCheckService.isSuperAdmin(login);
+            assertThat(isSuperAdmin).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testCheckIsSuperAdminElseThrow_superAdminUser_shouldNotThrow() {
+            userUtilService.addSuperAdmin(TEST_PREFIX);
+            User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+            assertThatCode(() -> authCheckService.checkIsSuperAdminElseThrow(superAdmin)).doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testCheckIsSuperAdminElseThrow_regularUser_shouldThrow() {
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkIsSuperAdminElseThrow(student));
+        }
+    }
 }
