@@ -1,7 +1,37 @@
 <section>
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
-    @if (isEditFieldDisplayedRecord().problemStatement) {
+    <!-- User Prompt Input -->
+    @if (!programmingExercise()?.id && hyperionEnabled) {
+        <div class="mb-4">
+            <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
+            <textarea
+                id="userPrompt"
+                [(ngModel)]="userPrompt"
+                class="form-control"
+                rows="4"
+                [placeholder]="isGenerating ? userPrompt : getTranslatedPlaceholder()"
+                [disabled]="isGenerating"
+            >
+            </textarea>
+        </div>
+        <div class="d-flex justify-content-start gap-2">
+            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating" (click)="generateProblemStatement()">
+                @if (isGenerating) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                } @else {
+                    <fa-icon [icon]="facArtemisIntelligence" />
+                }
+                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+            </button>
+            <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()">
+                <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
+                <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
+            </button>
+        </div>
+    }
+    @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
@@ -20,8 +50,8 @@
             }
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
                 <jhi-programming-exercise-instructions
-                    [exercise]="programmingExercise"
-                    [participation]="programmingExercise.templateParticipation!"
+                    [exercise]="programmingExercise()!"
+                    [participation]="programmingExercise()?.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
@@ -31,27 +61,29 @@
                 !programmingExerciseCreationConfig.isImportFromExistingExercise
             ) {
                 <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise.templateParticipation!"
-                    [(exercise)]="exercise"
+                    [participation]="programmingExercise()?.templateParticipation!"
+                    [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [showStatus]="!!programmingExercise?.id"
-                    [editMode]="!!programmingExercise?.id"
+                    [showStatus]="!!programmingExercise()?.id"
+                    [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
                     (instructionChange)="problemStatementChange.emit($event)"
+                    (exerciseChange)="programmingExerciseChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
                     class="form__editable-instructions"
                 />
             }
         </div>
     }
-    @if (isEditFieldDisplayedRecord().linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
+    @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
         <div class="form-group">
             <jhi-competency-selection
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                [exerciseDescription]="programmingExercise.problemStatement || programmingExercise.title"
-                [(ngModel)]="programmingExercise.competencyLinks"
+                [exerciseDescription]="programmingExercise()?.problemStatement || programmingExercise()?.title"
+                [ngModel]="programmingExercise()?.competencyLinks"
+                (valueChange)="onCompetencyLinksChange($event)"
                 name="competencyLinks"
             />
         </div>

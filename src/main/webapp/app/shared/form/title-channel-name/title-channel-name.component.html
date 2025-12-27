@@ -1,6 +1,6 @@
-<div>
+<div class="row">
     @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
-        <div class="form-group">
+        <div class="form-group col-12" [class.col-lg-6]="isChannelFieldDisplayed()">
             @if (!hideTitleLabel()) {
                 <label [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
             }
@@ -24,7 +24,7 @@
         </div>
     }
     @if (isChannelFieldDisplayed()) {
-        <div class="form-group">
+        <div class="form-group col-lg-6">
             <div>
                 <label
                     [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')"

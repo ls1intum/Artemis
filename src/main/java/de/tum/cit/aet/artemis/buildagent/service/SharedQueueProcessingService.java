@@ -120,7 +120,6 @@ public class SharedQueueProcessingService {
      * <ul>
      * <li>Listener attach/detach</li>
      * <li>Scheduler start/stop</li>
-     * <li>Result publication gating ({@link #processResults})</li>
      * <li>Graceful wait for jobs, then cancellation + requeue</li>
      * </ul>
      */
@@ -138,12 +137,6 @@ public class SharedQueueProcessingService {
      */
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
-    /**
-     * Flag to indicate whether the build agent should process build results. This is necessary to differentiate between when the build agent is paused and grace period is not over
-     * yet.
-     */
-    private final AtomicBoolean processResults = new AtomicBoolean(true);
-
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
     private int pauseGracePeriodSeconds;
 
@@ -152,6 +145,26 @@ public class SharedQueueProcessingService {
 
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
+
+    /**
+     * Returns whether the build agent is currently paused.
+     *
+     * @return true if the build agent is paused, false otherwise
+     */
+    public boolean isPaused() {
+        return isPaused.get();
+    }
+
+    /**
+     * Resets the internal pause state of the build agent. This method should ONLY be used in tests
+     * to ensure proper test isolation when tests manipulate the pause/resume state.
+     * <p>
+     * This method resets both the {@code isPaused} flag and the {@code processResults} flag
+     * to their default (non-paused) state.
+     */
+    public void resetPauseState() {
+        isPaused.set(false);
+    }
 
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
             TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
@@ -390,7 +403,7 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            enqueueBuildResult(resultQueueItem, buildJob);
+            enqueueBuildResult(resultQueueItem);
             removeProcessingJob(buildJob);
 
             buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
@@ -406,7 +419,7 @@ public class SharedQueueProcessingService {
 
             ZonedDateTime completionDate = ZonedDateTime.now();
 
-            BuildJobQueueItem job;
+            BuildJobQueueItem finishedBuildJob;
             BuildStatus status;
 
             if (isCausedByTimeoutException(ex, buildJob.id())) {
@@ -426,7 +439,7 @@ public class SharedQueueProcessingService {
                 }
             }
 
-            job = new BuildJobQueueItem(buildJob, completionDate, status);
+            finishedBuildJob = new BuildJobQueueItem(buildJob, completionDate, status);
 
             List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
@@ -434,11 +447,11 @@ public class SharedQueueProcessingService {
             BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
                     buildLogs, false);
 
-            ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
-            enqueueBuildResult(resultQueueItem, buildJob);
+            ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
+            enqueueBuildResult(resultQueueItem);
             removeProcessingJob(buildJob);
 
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false, consecutiveBuildJobFailures.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedBuildJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
             if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
                 log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
@@ -456,15 +469,16 @@ public class SharedQueueProcessingService {
      * If the build agent is paused, the result will not be added to the queue.
      *
      * @param resultQueueItem the build result to enqueue
-     * @param buildJob        the build job that was processed
      */
-    private void enqueueBuildResult(ResultQueueItem resultQueueItem, BuildJobQueueItem buildJob) {
-        if (processResults.get()) {
-            distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
+    private void enqueueBuildResult(ResultQueueItem resultQueueItem) {
+        // Log build duration for performance monitoring
+        var finishedJob = resultQueueItem.buildJobQueueItem();
+        var timingInfo = finishedJob.jobTimingInfo();
+        if (timingInfo.buildStartDate() != null && timingInfo.buildCompletionDate() != null) {
+            double durationSeconds = java.time.Duration.between(timingInfo.buildStartDate(), timingInfo.buildCompletionDate()).toMillis() / 1000.0;
+            log.info("Build finished for participation {} in {} s (name: {})", finishedJob.participationId(), String.format("%.1f", durationSeconds), finishedJob.name());
         }
-        else {
-            log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
-        }
+        distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
     }
 
     /**
@@ -583,7 +597,6 @@ public class SharedQueueProcessingService {
         }
         log.info("Grace period exceeded. Cancelling running build jobs.");
 
-        processResults.set(false);
         Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
         List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod).values()
                 .stream().toList();
@@ -642,7 +655,6 @@ public class SharedQueueProcessingService {
 
             // Mark the agent as running again and enable result processing.
             isPaused.set(false);
-            processResults.set(true);
 
             // Re-open the underlying services (executors, Docker client, etc.) required to run jobs.
             buildAgentConfiguration.openBuildAgentServices();

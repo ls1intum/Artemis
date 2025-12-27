@@ -42,7 +42,7 @@ describe('OrganizationSelectorComponent', () => {
         component.organizations = [organization1];
         jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component).not.toBeNull();
         expect(component.availableOrganizations[0]).toBe(organization2);
     }));

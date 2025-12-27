@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
@@ -56,18 +57,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private LocalRepository testsRepository;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws Exception {
         // Create assignment repository
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
-        // Create template repository
-        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-exercise");
-
-        // Create solution repository
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-solution");
-
-        // Create tests repository
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
+        // Create and wire base repositories using the shared helper
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        templateRepository = baseRepositories.templateRepository();
+        solutionRepository = baseRepositories.solutionRepository();
+        testsRepository = baseRepositories.testsRepository();
     }
 
     @Override
@@ -93,9 +91,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Delete the remote repository.
         someRepository.remoteBareGitRepo.close();
         try {
-            FileUtils.deleteDirectory(someRepository.remoteBareGitRepoFile);
+            RepositoryExportTestUtil.safeDeleteDirectory(someRepository.remoteBareGitRepoFile.toPath());
         }
-        catch (IOException exception) {
+        catch (Exception exception) {
             // JGit creates a lock file in each repository that could cause deletion problems.
             if (exception.getMessage().contains("gc.log.lock")) {
                 return;
@@ -312,7 +310,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Cleanup
         secondLocalGit.close();
-        FileUtils.deleteDirectory(tempDirectory.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(tempDirectory);
 
         return remoteRefUpdate;
     }

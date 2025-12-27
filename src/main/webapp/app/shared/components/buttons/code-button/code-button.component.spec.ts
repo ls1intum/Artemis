@@ -185,7 +185,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
         component.isTeamParticipation = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.onClick();
 
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
@@ -201,7 +201,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Password;
         component.isTeamParticipation = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -249,7 +249,7 @@ describe('CodeButtonComponent', () => {
 
         component.isTeamParticipation = false;
         component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -262,7 +262,7 @@ describe('CodeButtonComponent', () => {
 
         component.isTeamParticipation = false;
         component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri(false, false, true);
         expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -296,7 +296,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
         fixture.componentRef.setInput('participations', []);
         component.activeParticipation = undefined;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.isTeamParticipation).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
@@ -324,24 +324,34 @@ describe('CodeButtonComponent', () => {
 
         component.activeParticipation = participation;
         component.sshEnabled = true;
+        component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
+        component.authenticationMechanisms = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+        fixture.detectChanges();
         tick();
-        fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
+
+        const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));
+        expect(useSSHButton).not.toBeNull();
+        useSSHButton.nativeElement.click();
         tick();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
         expect(component.useSsh).toBeTrue();
 
-        fixture.debugElement.query(By.css('#useHTTPSButton')).nativeElement.click();
+        const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
+        expect(useHTTPSButton).not.toBeNull();
+        useHTTPSButton.nativeElement.click();
         tick();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
         expect(component.useSsh).toBeFalse();
 
-        fixture.debugElement.query(By.css('#useHTTPSWithTokenButton')).nativeElement.click();
+        const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
+        expect(useHTTPSWithTokenButton).not.toBeNull();
+        useHTTPSWithTokenButton.nativeElement.click();
         tick();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh).toBeFalse();
@@ -534,7 +544,7 @@ describe('CodeButtonComponent', () => {
         component.sshTemplateUrl = 'https://ssh.repo.url';
         component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         await component.startOnlineIDE();
         expect(getToolTokenSpy).toHaveBeenCalledOnce();

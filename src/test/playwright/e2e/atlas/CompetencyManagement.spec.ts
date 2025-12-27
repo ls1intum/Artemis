@@ -5,12 +5,74 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
 
-async function selectDateInPicker(page: Page, monthsAhead: number, day: number) {
-    await page.locator('.btn.position-absolute').first().click();
-    for (let i = 0; i < monthsAhead; i++) {
-        await page.getByRole('button', { name: 'Next month' }).click();
+async function selectTaxonomy(page: Page, taxonomy: string) {
+    const select = page.locator('#taxonomy');
+    await expect(select).toBeVisible();
+
+    const optionValue = await page.locator('#taxonomy option').evaluateAll((options, desired) => {
+        const wanted = String(desired).trim().toLowerCase();
+        for (const option of options) {
+            const text = (option.textContent ?? '').trim();
+            const lowerText = text.toLowerCase();
+
+            const normalized = lowerText.replace(/^\d+\s*:\s*/, '').trim();
+            if (normalized === wanted || normalized.includes(wanted) || lowerText.includes(wanted)) {
+                return (option as HTMLOptionElement).value;
+            }
+        }
+        return null;
+    }, taxonomy);
+
+    if (optionValue === null) {
+        throw new Error(`Could not find taxonomy option ending with '${taxonomy}'`);
     }
-    await page.getByText(String(day)).first().click();
+
+    await select.selectOption(optionValue);
+}
+
+async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {
+    const picker = page.locator(`jhi-date-time-picker#${pickerId}`);
+    await expect(picker).toHaveCount(1);
+
+    const input = picker.locator('input#date-input-field');
+    await expect(input).toBeVisible();
+    await input.click();
+
+    const panel = page.locator('.owl-dt-container:visible');
+    try {
+        await expect(panel).toBeVisible({ timeout: 2000 });
+    } catch {
+        await picker.getByRole('button').first().click();
+        await expect(panel).toBeVisible();
+    }
+
+    for (let i = 0; i < monthsAhead; i++) {
+        await panel.getByRole('button', { name: 'Next month' }).click();
+    }
+
+    const targetDate = dayjs().add(monthsAhead, 'months').date(day);
+    await panel.getByRole('cell', { name: targetDate.date().toString() }).click();
+}
+
+async function setMarkdownDescription(page: Page, text: string) {
+    const monaco = page.locator('jhi-markdown-editor-monaco#description .monaco-editor');
+    if (await monaco.count()) {
+        await monaco.click();
+        await monaco.press('Control+A').catch(() => {});
+        await monaco.press('Meta+A').catch(() => {});
+        await monaco.press('Backspace');
+
+        const monacoWithPressSequentially = monaco as unknown as { pressSequentially?: (value: string) => Promise<void> };
+        if (typeof monacoWithPressSequentially.pressSequentially === 'function') {
+            await monacoWithPressSequentially.pressSequentially(text);
+        } else {
+            await monaco.fill(text);
+        }
+    } else {
+        const fallback = page.getByRole('textbox', { name: 'Editor content' });
+        await fallback.click();
+        await fallback.fill(text);
+    }
 }
 
 test.describe('Competency Management', { tag: '@fast' }, () => {
@@ -35,22 +97,18 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
 
         await competencyManagement.goto(course!.id!);
 
-        // Create competency
-        await page.getByRole('link', { name: 'Create competency' }).click();
+        // Create competency via UI
+        await page.locator('a[href*="/competency-management/create"]').click();
         await page.getByRole('textbox', { name: 'Title' }).fill(competencyData.title);
-        await page.getByRole('textbox', { name: 'Editor content' }).fill(competencyData.description);
+        await setMarkdownDescription(page, competencyData.description);
 
-        // Set soft due date
-        await selectDateInPicker(page, 2, 15);
-
-        // Set taxonomy
-        await page.getByLabel('Taxonomy').selectOption(`2: ${competencyData.taxonomy}`);
-
-        // Submit
+        await selectDateInPicker(page, 'softDueDate', 2, 15);
+        await selectTaxonomy(page, competencyData.taxonomy);
         await page.getByRole('button', { name: 'Submit' }).click();
 
         // Verify creation
-        await expect(page.getByRole('cell', { name: 'Multiplication' })).toContainText(competencyData.title);
+        await page.waitForLoadState('networkidle');
+        await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible();
         await expect(page.locator('.markdown-preview')).toContainText(competencyData.description);
         await expect(page.getByRole('cell', { name: competencyData.taxonomy })).toBeVisible();
     });
@@ -64,13 +122,10 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         };
 
         test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
-
             await competencyManagement.goto(course!.id!);
-
-            // Verify creation
-            await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
+            await page.waitForLoadState('networkidle');
+            await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible();
         });
 
         test('Edits a competency', async ({ page }) => {
@@ -80,27 +135,17 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
                 taxonomy: 'APPLY',
             };
 
-            // Scope edit to the row containing our competency title
-            const row = page.locator('tr', { has: page.getByRole('cell', { name: competencyData.title }) });
-            await row.getByRole('link', { name: 'Edit' }).click();
+            const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
+            await row.locator('a[href*="/competency-management/"][href$="/edit"]').click();
 
             // Update fields
             await page.getByRole('textbox', { name: 'Title' }).fill(updatedCompetencyData.title);
-            // Ensure editor is cleared before entering new description (some editors append by default)
-            const competencyEditor = page.getByRole('textbox', { name: 'Editor content' });
-            await competencyEditor.press('Control+A').catch(() => {});
-            await competencyEditor.press('Meta+A').catch(() => {});
-            await competencyEditor.press('Backspace');
-            await competencyEditor.type(updatedCompetencyData.description);
-
-            // Update taxonomy
-            await page.getByLabel('Taxonomy').selectOption(`3: ${updatedCompetencyData.taxonomy}`);
-
-            // Submit
+            await setMarkdownDescription(page, updatedCompetencyData.description);
+            await selectTaxonomy(page, updatedCompetencyData.taxonomy);
             await page.getByRole('button', { name: 'Submit' }).click();
 
             // Verify update
-            await expect(page.getByRole('cell', { name: updatedCompetencyData.title })).toBeVisible();
+            await expect(page.getByRole('link', { name: updatedCompetencyData.title })).toBeVisible();
             await expect(page.locator('.markdown-preview')).toContainText(updatedCompetencyData.description);
             await expect(page.getByText(new RegExp(updatedCompetencyData.taxonomy, 'i'))).toBeVisible();
         });
@@ -114,24 +159,23 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         };
 
         test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
             await competencyManagement.goto(course!.id!);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
         });
 
         test('Deletes a competency', async ({ page }) => {
-            const row = page.locator('tr', { has: page.getByRole('cell', { name: competencyData.title }) });
+            const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
             await row.locator('button[jhideletebutton]').click();
 
-            // Confirm delete modal
             await expect(page.locator('#delete')).toBeDisabled();
             await page.locator('#confirm-entity-name').fill(competencyData.title);
             await page.locator('#delete').click();
 
             // Verify removal
-            await expect(page.locator('tr', { has: page.getByRole('cell', { name: competencyData.title }) })).toHaveCount(0);
+            await expect(page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) })).toHaveCount(0);
         });
     });
 });
@@ -158,20 +202,16 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await competencyManagement.goto(course!.id!);
 
         // Create prerequisite
-        await page.getByRole('link', { name: 'Create prerequisite' }).click();
+        await page.locator('a[href*="/prerequisite-management/create"]').click();
         await page.getByRole('textbox', { name: 'Prerequisites' }).fill(prerequisiteData.title);
-        await page.getByRole('textbox', { name: 'Editor content' }).fill(prerequisiteData.description);
+        await setMarkdownDescription(page, prerequisiteData.description);
 
-        // Set soft due date
-        await selectDateInPicker(page, 1, 15);
-
-        // Set taxonomy
-        await page.getByLabel('Taxonomy').selectOption(`2: ${prerequisiteData.taxonomy}`);
-
-        // Submit
+        await selectDateInPicker(page, 'softDueDate', 1, 15);
+        await selectTaxonomy(page, prerequisiteData.taxonomy);
         await page.getByRole('button', { name: 'Submit' }).click();
 
         // Verify creation
+        await page.waitForLoadState('networkidle');
         await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
         await expect(page.locator('.markdown-preview')).toContainText(prerequisiteData.description);
         await expect(page.getByText(new RegExp(prerequisiteData.taxonomy, 'i'))).toBeVisible();
@@ -181,10 +221,9 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         test.beforeEach('Create prerequisite', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
-
             await competencyManagement.goto(course!.id!);
 
-            // Verify prerequisite was created
+            await page.waitForLoadState('networkidle');
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
         });
 
@@ -195,27 +234,17 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
                 softDueDate: dayjs().add(2, 'months').endOf('month'),
                 taxonomy: 'APPLY',
             };
-
             // Edit prerequisite
-            await page.getByRole('link', { name: 'Edit' }).first().click();
+            await page.locator('a[href*="/prerequisite-management/"][href$="/edit"]').first().click();
             await page.getByRole('textbox', { name: 'Prerequisites' }).fill(updatedPrerequisiteData.title);
-            // Ensure editor is cleared before entering new description (some editors append by default)
-            const prereqEditor = page.getByRole('textbox', { name: 'Editor content' });
-            await prereqEditor.press('Control+A').catch(() => {});
-            await prereqEditor.press('Meta+A').catch(() => {});
-            await prereqEditor.press('Backspace');
-            await prereqEditor.type(updatedPrerequisiteData.description);
+            await setMarkdownDescription(page, updatedPrerequisiteData.description);
 
-            // Set updated soft due date
-            await selectDateInPicker(page, 2, 15);
-
-            // Set updated taxonomy
-            await page.getByLabel('Taxonomy').selectOption(`3: ${updatedPrerequisiteData.taxonomy}`);
-
-            // Submit
+            await selectDateInPicker(page, 'softDueDate', 2, 15);
+            await selectTaxonomy(page, updatedPrerequisiteData.taxonomy);
             await page.getByRole('button', { name: 'Submit' }).click();
 
             // Verify update
+            await page.waitForLoadState('networkidle');
             await expect(page.getByRole('link', { name: updatedPrerequisiteData.title })).toBeVisible();
             await expect(page.locator('.markdown-preview')).toContainText(updatedPrerequisiteData.description);
             await expect(page.getByText(new RegExp(updatedPrerequisiteData.taxonomy, 'i'))).toBeVisible();
@@ -230,10 +259,10 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         };
 
         test.beforeEach('Create prerequisite to delete', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
             await competencyManagement.goto(course!.id!);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
         });
 

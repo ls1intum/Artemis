@@ -187,7 +187,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         // WHEN
         component.exportResults(false, false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // THEN
         expect(getResultsStub).toHaveBeenCalledOnce();
@@ -249,7 +249,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         // WHEN
         component.exportResults(false, false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // THEN
         expect(getResultsStub).toHaveBeenCalledTimes(2);
@@ -297,7 +297,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         // WHEN
         component.exportResults(withTestCases, withFeedback);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // THEN
         expect(getResultsStub).toHaveBeenCalledOnce();

@@ -51,6 +51,8 @@
         "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
         "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
         "oneActivePlagiarismCheck": "Please wait until the current plagiarism check in this course has finished until you start another one.",
+        "incorrectPassword": "The current password is incorrect.",
+        "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
         "internalServerError": "Internal server error",
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
@@ -135,7 +137,13 @@
             "invalidLayout": "The layout {{ layoutName }} in room {{ roomNumber }} is invalid",
             "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
             "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",
-            "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout"
+            "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout",
+            "notFound": "The specified room does not exist",
+            "alreadyInRoom": "The student already sits in this room",
+            "noFreeSeats": "There are no free seats available",
+            "seatTaken": "{{ studentLogin }} already sits here",
+            "noRoomProvided": "Please specify a room",
+            "noAutomaticSeat": "Can't automatically determine seat of unpersisted room"
         },
         "examUser": {
             "service": {
@@ -168,6 +176,23 @@
             "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
             "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
             "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
+        },
+        "CourseCompetency": {
+            "wrongCourse": "The competency does not belong to the exercise's course.",
+            "atlasDisabled": "Competency links require Atlas to be enabled."
+        },
+        "CompetencyExerciseLink": {
+            "isNull": "No competency link was provided.",
+            "competencyMissing": "The competency link must reference a competency.",
+            "courseMissing": "The competency referenced by this link is not associated with a course."
+        },
+        "ModelingExercise": {
+            "isNull": "No modeling exercise was provided.",
+            "idMissing": "The modeling exercise must be saved before it can be converted.",
+            "titleLengthInvalid": "The title is not set or is too short.",
+            "titlePatternInvalid": "The title is invalid.",
+            "courseIdMissing": "The courseId is required.",
+            "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         }
     }
 }

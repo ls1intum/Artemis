@@ -129,9 +129,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
-    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
@@ -190,6 +187,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Set<Course> findOnlineCoursesWithRegistrationIdEager(@Param("registrationId") String registrationId);
 
     List<Course> findAllByShortName(String shortName);
+
+    boolean existsByShortNameIgnoreCase(String shortName);
 
     /**
      * Returns the title of the course with the given id.
@@ -433,11 +432,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NonNull
-    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
-    }
-
-    @NonNull
     default Course findByIdForUpdateElseThrow(long courseId) {
         return getValueElseThrow(findForUpdateById(courseId), courseId);
     }
@@ -548,4 +542,17 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 WHERE course.id = :courseId
             """)
     Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
+
+    /**
+     * Counts the number of courses where the user is an instructor based on their group memberships.
+     *
+     * @param userGroups the groups the user belongs to
+     * @return the count of courses where the user is an instructor
+     */
+    @Query("""
+            SELECT COUNT(c)
+            FROM Course c
+            WHERE c.instructorGroupName IN :userGroups
+            """)
+    long countCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups);
 }

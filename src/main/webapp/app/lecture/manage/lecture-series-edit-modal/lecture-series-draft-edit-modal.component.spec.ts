@@ -7,8 +7,6 @@ import { LectureSeriesDraftEditModalComponent } from './lecture-series-draft-edi
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-
 describe('LectureSeriesEditModal', () => {
     let component: LectureSeriesDraftEditModalComponent;
     let fixture: ComponentFixture<LectureSeriesDraftEditModalComponent>;
@@ -21,7 +19,7 @@ describe('LectureSeriesEditModal', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureSeriesDraftEditModalComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimations()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         jest.spyOn(globalUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('de'));
@@ -39,7 +37,7 @@ describe('LectureSeriesEditModal', () => {
         const draft: LectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, dto: new LectureSeriesCreateLectureDTO(testTitle, testStartDate, testEndDate) };
 
         component.open(draft);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.show()).toBeTrue();
@@ -54,11 +52,11 @@ describe('LectureSeriesEditModal', () => {
         component.startDate.set(testStartDate.toDate());
         component.endDate.set(testEndDate.toDate());
         component.show.set(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         component.cancel();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.show()).toBeFalse();
@@ -78,11 +76,11 @@ describe('LectureSeriesEditModal', () => {
         component.startDate.set(newStartDate);
         component.endDate.set(newEndDate);
         component.show.set(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         component.save();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.show()).toBeFalse();

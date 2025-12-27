@@ -1,4 +1,7 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
@@ -18,41 +21,50 @@ import * as DownloadUtil from '../../shared/util/download.util';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
+    private paramMap$ = new BehaviorSubject(convertToParamMap({}));
     params = this.params$.asObservable();
+    paramMap = this.paramMap$.asObservable();
     snapshot = { paramMap: convertToParamMap({}) };
+    url = of([{ path: 'build-queue' }]);
 
     setParamMap(params: Record<string, any>) {
         this.params$.next(params);
-        this.snapshot = { paramMap: convertToParamMap(params) };
+        const paramMapValue = convertToParamMap(params);
+        this.paramMap$.next(paramMapValue);
+        this.snapshot = { paramMap: paramMapValue };
     }
 }
 
 describe('BuildQueueComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: BuildOverviewComponent;
     let fixture: ComponentFixture<BuildOverviewComponent>;
 
     const mockBuildQueueService = {
-        getQueuedBuildJobsByCourseId: jest.fn(),
-        getRunningBuildJobsByCourseId: jest.fn(),
-        getQueuedBuildJobs: jest.fn(),
-        getRunningBuildJobs: jest.fn(),
-        cancelBuildJobInCourse: jest.fn(),
-        cancelBuildJob: jest.fn(),
-        cancelAllQueuedBuildJobsInCourse: jest.fn(),
-        cancelAllRunningBuildJobsInCourse: jest.fn(),
-        cancelAllQueuedBuildJobs: jest.fn(),
-        cancelAllRunningBuildJobs: jest.fn(),
-        getFinishedBuildJobsByCourseId: jest.fn(),
-        getFinishedBuildJobs: jest.fn(),
-        getBuildJobStatistics: jest.fn(),
-        getBuildJobStatisticsForCourse: jest.fn(),
-        getBuildJobLogs: jest.fn(),
+        getQueuedBuildJobsByCourseId: vi.fn(),
+        getRunningBuildJobsByCourseId: vi.fn(),
+        getQueuedBuildJobs: vi.fn(),
+        getRunningBuildJobs: vi.fn(),
+        cancelBuildJobInCourse: vi.fn(),
+        cancelBuildJob: vi.fn(),
+        cancelAllQueuedBuildJobsInCourse: vi.fn(),
+        cancelAllRunningBuildJobsInCourse: vi.fn(),
+        cancelAllQueuedBuildJobs: vi.fn(),
+        cancelAllRunningBuildJobs: vi.fn(),
+        getFinishedBuildJobsByCourseId: vi.fn(),
+        getFinishedBuildJobs: vi.fn(),
+        getBuildJobStatistics: vi.fn(),
+        getBuildJobStatisticsForCourse: vi.fn(),
+        getBuildJobLogs: vi.fn(),
     };
 
-    const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
+    const accountServiceMock = { identity: vi.fn(), getAuthenticationState: vi.fn() };
 
     const testCourseId = 123;
 
@@ -217,7 +229,7 @@ describe('BuildQueueComponent', () => {
             buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
-            buildDuration: undefined,
+            buildDuration: '0.000s',
             commitHash: 'abc127',
         },
         {
@@ -234,7 +246,7 @@ describe('BuildQueueComponent', () => {
             triggeredByPushTo: TriggeredByPushTo.USER,
             buildStartDate: dayjs('2023-01-06'),
             buildCompletionDate: dayjs('2023-01-06'),
-            buildDuration: undefined,
+            buildDuration: '0.000s',
             commitHash: 'abc128',
         },
     ];
@@ -262,14 +274,23 @@ describe('BuildQueueComponent', () => {
         numberOfAppliedFilters: 0,
     };
 
-    let alertService: AlertService;
-    let alertServiceErrorStub: jest.SpyInstance;
     let modalService: NgbModal;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
+        // Set default return values for all methods
+        mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of([]));
+        mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of([]));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(new HttpResponse({ body: [] })));
+        mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of([]));
+        mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of([]));
+        mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(new HttpResponse({ body: [] })));
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of({}));
+        mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of({}));
+
         TestBed.configureTestingModule({
             imports: [BuildOverviewComponent],
             providers: [
+                { provide: ComponentFixtureAutoDetect, useValue: false },
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: routeStub },
                 { provide: AccountService, useValue: accountServiceMock },
@@ -277,18 +298,20 @@ describe('BuildQueueComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
-        }).compileComponents();
+            schemas: [NO_ERRORS_SCHEMA],
+        });
+
+        await TestBed.compileComponents();
 
         fixture = TestBed.createComponent(BuildOverviewComponent);
         component = fixture.componentInstance;
-        alertService = TestBed.inject(AlertService);
         modalService = TestBed.inject(NgbModal);
-        alertServiceErrorStub = jest.spyOn(alertService, 'error');
-    }));
+    });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize', () => {
@@ -322,9 +345,9 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).not.toHaveBeenCalled();
 
         // Expectations: The component's properties are set with the mock data
-        expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
-        expect(component.runningBuildJobs).toEqual(mockRunningJobs);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
+        expect(component.runningBuildJobs()).toEqual(mockRunningJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should initialize with course data', () => {
@@ -345,14 +368,14 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
 
         // Expectations: The component's properties are set with the mock data
-        expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
-        expect(component.runningBuildJobs).toEqual(mockRunningJobs);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
+        expect(component.runningBuildJobs()).toEqual(mockRunningJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should refresh data', () => {
         routeStub.setParamMap({ courseId: testCourseId.toString() });
-        const spy = jest.spyOn(component, 'ngOnInit');
+        const spy = vi.spyOn(component, 'ngOnInit');
         component.ngOnInit();
         expect(spy).toHaveBeenCalled();
     });
@@ -366,10 +389,10 @@ describe('BuildQueueComponent', () => {
 
         // Initialize the component and update the build job duration
         component.ngOnInit();
-        component.runningBuildJobs = component.updateBuildJobDuration(component.runningBuildJobs); // This method is called in ngOnInit in interval callback, but we call it to add coverage
+        component.runningBuildJobs.set(component.updateBuildJobDuration(component.runningBuildJobs())); // This method is called in ngOnInit in interval callback, but we call it to add coverage
 
         // Expectations: The build job duration is calculated and set for each running build job
-        for (const runningBuildJob of component.runningBuildJobs) {
+        for (const runningBuildJob of component.runningBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = runningBuildJob.jobTimingInfo!;
             if (buildDuration && buildCompletionDate && buildStartDate) {
                 expect(buildDuration).toBeLessThanOrEqual(buildCompletionDate.diff(buildStartDate, 'seconds'));
@@ -492,7 +515,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should load finished build jobs for a specific course on initialization', () => {
@@ -504,7 +527,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
     });
 
     it('should trigger refresh on search term change', async () => {
@@ -533,7 +556,7 @@ describe('BuildQueueComponent', () => {
 
         component.ngOnInit();
 
-        for (const finishedBuildJob of component.finishedBuildJobs) {
+        for (const finishedBuildJob of component.finishedBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
                 expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
@@ -550,23 +573,23 @@ describe('BuildQueueComponent', () => {
             },
             result: Promise.resolve('close'),
         } as NgbModalRef;
-        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
-        component.finishedBuildJobs = mockFinishedJobs;
+        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        component.finishedBuildJobs.set(mockFinishedJobs);
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
 
         component.openFilterModal();
 
         expect(openSpy).toHaveBeenCalledOnce();
         expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
-        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs);
-        expect(modalRef.componentInstance.buildAgentFilterable).toBeTrue();
+        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs());
+        expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
     });
 
     it('should download build logs', () => {
         const buildJobId = '1';
 
         const buildLogsMultiLines = 'log1\nlog2\nlog3';
-        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogsMultiLines));
+        mockBuildQueueService.getBuildJobLogs = vi.fn().mockReturnValue(of(buildLogsMultiLines));
 
         component.viewBuildLogs(undefined, buildJobId);
 
@@ -575,16 +598,16 @@ describe('BuildQueueComponent', () => {
 
         const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
 
-        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
+        // Mock URL.createObjectURL to ensure consistent behavior across environments
+        global.URL.createObjectURL = vi.fn(() => 'mockedURL');
+        global.URL.revokeObjectURL = vi.fn();
+
+        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
 
         component.downloadBuildLogs();
 
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
-        expect(alertServiceErrorStub).toHaveBeenCalled();
-
-        global.URL.createObjectURL = jest.fn(() => 'mockedURL');
-        global.URL.revokeObjectURL = jest.fn();
 
         component.downloadBuildLogs();
 

@@ -24,8 +24,7 @@ describe('CourseNotificationWebsocketService', () => {
     beforeEach(() => {
         websocketReceiveSubject = new Subject<CourseNotification>();
         websocketServiceMock = {
-            subscribe: jest.fn().mockReturnThis(),
-            receive: jest.fn().mockReturnValue(websocketReceiveSubject.asObservable()),
+            subscribe: jest.fn().mockReturnValue(websocketReceiveSubject.asObservable()),
         } as unknown as jest.Mocked<WebsocketService>;
 
         courseNotificationServiceMock = {
@@ -78,15 +77,13 @@ describe('CourseNotificationWebsocketService', () => {
             expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(2);
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
-            expect(websocketServiceMock.receive).toHaveBeenCalledTimes(2);
-            expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/1');
-            expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/2');
         });
 
         it('should not resubscribe to same course twice', () => {
             const user = { id: 'user1' } as unknown as User;
             userSubject.next(user);
             jest.clearAllMocks();
+            websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
 
             const courses = [{ id: 1, title: 'Course 1' }] as Course[];
 
@@ -94,7 +91,6 @@ describe('CourseNotificationWebsocketService', () => {
             coursesSubject.next(courses);
 
             expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
-            expect(websocketServiceMock.receive).toHaveBeenCalledOnce();
         });
 
         it('should handle incoming notifications and pass them to the notification service', () => {
@@ -193,6 +189,7 @@ describe('CourseNotificationWebsocketService', () => {
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
 
             jest.clearAllMocks();
+            websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
 
             const user2 = { id: 'user2' } as unknown as User;
             userSubject.next(user2);
@@ -216,6 +213,7 @@ describe('CourseNotificationWebsocketService', () => {
             expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
 
             jest.clearAllMocks();
+            websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
 
             userSubject.next(user);
 

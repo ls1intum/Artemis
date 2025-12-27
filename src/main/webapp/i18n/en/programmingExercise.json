@@ -229,7 +229,27 @@
                 "title": "Problem Statement",
                 "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
-                "tasksOfExercise": "Tasks:"
+                "tasksOfExercise": "Tasks:",
+                "generationAssistance": "Generate Draft Problem Statement",
+                "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
+                "yourRequirements": "Your Requirements",
+                "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
+                "generationSuccess": "Problem statement has been successfully generated.",
+                "generationError": "Failed to generate problem statement. Please try again."
+            },
+            "codeGeneration": {
+                "creationAssistance": "Creation Assistance",
+                "generateCode": "Generate Code",
+                "generating": "Generating...",
+                "description": "Generate solution, template, and test code using AI",
+                "tooltip": "AI Code Generation - Generate solution, template, and test code",
+                "confirmTitle": "Confirm Code Generation",
+                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
+                "success": "{{repositoryType}} code generation completed successfully!",
+                "partialSuccess": "{{repositoryType}} code generation completed with some issues. Please review the generated code.",
+                "error": "{{repositoryType}} code generation failed. Please try again later.",
+                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
+                "attempts": "Attempts made: {{attempts}}"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",

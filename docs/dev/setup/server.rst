@@ -45,16 +45,11 @@ You only need to modify them if your specific work or production environments re
                                 # Use the bcrypt benchmark tool to determine an optimal value: https://github.com/ls1intum/bcrypt-Benchmark
 
        user-management:
-           use-external: true
+           use-external: true # enables ldap authentication
            password-reset:
                 links:
                     en: '<link>'
                     de: '<link>'
-           external:
-               url: https://external.ase.in.tum.de
-               user: <username>  # Example: ga12abc
-               password: <password>
-               admin-group-name: tumuser
            ldap:
                url: <url>
                user-dn: <user-dn>

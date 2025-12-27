@@ -119,7 +119,7 @@ describe('CourseManagementComponent', () => {
         expect(component.showOnlyActive).toBeTrue();
         component.toggleShowOnlyActive();
         expect(component.showOnlyActive).toBeFalse();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component).not.toBeNull();
     });
 

@@ -12,7 +12,6 @@ import {
     faFileSignature,
     faListAlt,
     faPencilAlt,
-    faRobot,
     faTable,
     faTrash,
     faUndo,
@@ -22,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_IRIS, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -30,8 +29,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
@@ -106,7 +103,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
-    private irisSettingsService = inject(IrisSettingsService);
     private aeolusService = inject(AeolusService);
     private sharingService = inject(ProgrammingExerciseSharingService);
 
@@ -134,7 +130,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
     protected readonly faUserCheck = faUserCheck;
-    protected readonly faRobot = faRobot;
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
@@ -163,8 +158,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
     localCIEnabled = true;
-    irisEnabled = false;
-    irisChatEnabled = false;
     plagiarismEnabled = false;
 
     isExportToSharingEnabled = false;
@@ -176,7 +169,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private activatedRouteSubscription: Subscription;
     private templateAndSolutionParticipationSubscription: Subscription;
-    private irisSettingsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
     private sharingEnabledSubscription: Subscription;
     private diffFetchSubscription?: Subscription;
@@ -222,13 +214,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
                 .pipe(
                     tap((updatedProgrammingExercise) => {
+                        // Preserve categories from the initial exercise as the API might not return them
+                        const categories = this.programmingExercise.categories;
                         this.programmingExercise = updatedProgrammingExercise.body!;
+                        if (!this.programmingExercise.categories?.length && categories?.length) {
+                            this.programmingExercise.categories = categories;
+                        }
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
                     tap(() => {
                         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-                        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
                         const profileInfo = this.profileService.getProfileInfo();
                         if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
                             this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
@@ -246,11 +242,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         }
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
-                        if (this.irisEnabled && !this.isExamExercise) {
-                            this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
-                            });
-                        }
                         this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
                     }),
                     mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
@@ -293,7 +284,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
         this.activatedRouteSubscription?.unsubscribe();
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
-        this.irisSettingsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
@@ -422,9 +412,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
                 { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
                 {
-                    type: DetailType.Text,
+                    type: DetailType.ExerciseCategories,
                     title: 'artemisApp.exercise.categories',
-                    data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                    data: { categories: exercise.categories },
                 },
             ],
         };
@@ -685,14 +675,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.exercise.structuredAssessmentInstructions',
                     data: { gradingCriteria: exercise.gradingCriteria },
                 },
-                this.irisEnabled &&
-                    this.irisChatEnabled &&
-                    exercise.course &&
-                    !this.isExamExercise && {
-                        type: DetailType.ProgrammingIrisEnabled,
-                        title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT },
-                    },
             ],
         };
     }
