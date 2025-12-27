@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -1074,6 +1075,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
         exam2 = examRepository.save(exam2);
+
+        // Verify that unsubmitted exercises exist before automatic assessment
+        ExamChecklistDTO examChecklistDTO = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(examChecklistDTO.existsUnsubmittedExercises()).isTrue();
 
         request.postWithoutLocation("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams",
                 Optional.empty(), HttpStatus.OK, null);

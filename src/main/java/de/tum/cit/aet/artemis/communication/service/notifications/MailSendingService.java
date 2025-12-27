@@ -29,7 +29,6 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -42,11 +41,18 @@ public class MailSendingService {
 
     private static final Logger log = LoggerFactory.getLogger(MailSendingService.class);
 
+    /**
+     * The default mail sender address used by JHipster when no custom configuration is provided.
+     * When this default is detected, email sending is skipped to avoid connection errors in
+     * development and E2E test environments where no mail server is configured.
+     */
+    private static final String DEFAULT_MAIL_FROM = "artemis@localhost";
+
     private final JHipsterProperties jHipsterProperties;
 
     private final JavaMailSender javaMailSender;
 
-    private final ProfileService profileService;
+    private final boolean mailConfigured;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -55,13 +61,19 @@ public class MailSendingService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, ProfileService profileService, MessageSource messageSource,
-            SpringTemplateEngine templateEngine) {
+    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
-        this.profileService = profileService;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
+
+        // Check if mail is properly configured (not using the default placeholder)
+        String mailFrom = jHipsterProperties.getMail().getFrom();
+        this.mailConfigured = mailFrom != null && !mailFrom.isBlank() && !mailFrom.equals(DEFAULT_MAIL_FROM);
+
+        if (!this.mailConfigured) {
+            log.warn("Email sending is disabled. To enable, configure 'jhipster.mail.from' in application.yml");
+        }
     }
 
     /**
@@ -178,9 +190,8 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        // NOTE: comment this out if you want to send / test emails in development mode
-        if (profileService.isDevActive()) {
-            log.debug("Skipping sending email in development mode");
+        if (!mailConfigured) {
+            log.debug("Skipping email to '{}' - mail not configured", recipient.getEmail());
             return;
         }
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);

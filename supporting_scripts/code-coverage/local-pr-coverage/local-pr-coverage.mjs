@@ -710,14 +710,14 @@ function getClientFileCoverage(filePath, jestCoverageSummary, vitestCoverageSumm
 }
 
 /**
- * Parse JaCoCo XML report to get coverage for a specific class
+ * Parse JaCoCo XML report to get coverage for a specific source file.
+ * Uses the <sourcefile> element which aggregates coverage across all classes
+ * in the file (including inner classes and anonymous classes).
  */
 function getServerFileCoverage(filePath, moduleName) {
-    // Convert file path to package/class format
-    const withoutJava = filePath.replace('.java', '');
-    const parts = withoutJava.split('/');
-    const className = parts[parts.length - 1];
-    const packagePath = parts.slice(0, -1).join('.');
+    // Extract just the filename (e.g., "BuildJobContainerService.java")
+    const parts = filePath.split('/');
+    const fileName = parts[parts.length - 1];
 
     // Try module-specific report first, then aggregated
     const reportPaths = [path.join(SERVER_COVERAGE_DIR, moduleName, 'jacocoTestReport.xml'), path.join(SERVER_COVERAGE_DIR, 'aggregated', 'jacocoTestReport.xml')];
@@ -730,33 +730,34 @@ function getServerFileCoverage(filePath, moduleName) {
         try {
             const xmlContent = fs.readFileSync(reportPath, 'utf-8');
 
-            // Search by sourcefilename to find the class in JaCoCo XML
-            const sourceFileRegex = new RegExp(`<class[^>]*sourcefilename="${className}\\.java"[^>]*>([\\s\\S]*?)</class>`, 'gi');
+            // Search for <sourcefile name="FileName.java"> element which contains
+            // aggregated coverage for the entire source file (all classes within it)
+            const sourceFileRegex = new RegExp(`<sourcefile[^>]*name="${escapeRegex(fileName)}"[^>]*>([\\s\\S]*?)</sourcefile>`, 'gi');
 
-            let match = xmlContent.match(sourceFileRegex);
-            if (match) {
-                // Find the class-level LINE counter (the LAST one in the class block, not method-level)
-                for (const classMatch of match) {
-                    // Get ALL LINE counters in this class block
-                    const lineCounterRegex = /<counter[^>]*type="LINE"[^>]*\/?>/gi;
-                    const allLineCounters = classMatch.match(lineCounterRegex);
+            const match = xmlContent.match(sourceFileRegex);
+            if (match && match.length > 0) {
+                // Use the first (and typically only) sourcefile match
+                const sourceFileContent = match[0];
 
-                    if (allLineCounters && allLineCounters.length > 0) {
-                        // The class-level counter is the LAST one (after all method counters)
-                        const classLevelCounter = allLineCounters[allLineCounters.length - 1];
+                // Find the sourcefile-level LINE counter (the LAST one, after all line entries)
+                const lineCounterRegex = /<counter[^>]*type="LINE"[^>]*\/?>/gi;
+                const allLineCounters = sourceFileContent.match(lineCounterRegex);
 
-                        // Extract missed and covered values
-                        const missedMatch = classLevelCounter.match(/missed="(\d+)"/);
-                        const coveredMatch = classLevelCounter.match(/covered="(\d+)"/);
+                if (allLineCounters && allLineCounters.length > 0) {
+                    // The sourcefile-level counter is the LAST one
+                    const sourceFileLevelCounter = allLineCounters[allLineCounters.length - 1];
 
-                        if (missedMatch && coveredMatch) {
-                            const missed = parseInt(missedMatch[1], 10);
-                            const covered = parseInt(coveredMatch[1], 10);
-                            const total = missed + covered;
-                            if (total > 0) {
-                                const percentage = (covered / total) * 100;
-                                return `${percentage.toFixed(2)}%`;
-                            }
+                    // Extract missed and covered values
+                    const missedMatch = sourceFileLevelCounter.match(/missed="(\d+)"/);
+                    const coveredMatch = sourceFileLevelCounter.match(/covered="(\d+)"/);
+
+                    if (missedMatch && coveredMatch) {
+                        const missed = parseInt(missedMatch[1], 10);
+                        const covered = parseInt(coveredMatch[1], 10);
+                        const total = missed + covered;
+                        if (total > 0) {
+                            const percentage = (covered / total) * 100;
+                            return `${percentage.toFixed(2)}%`;
                         }
                     }
                 }

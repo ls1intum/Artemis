@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -16,8 +18,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean quizStarted, boolean quizEnded, boolean isEditable, int duration, double maxPoints,
-        ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, @NotNull IncludedInOverallScore includedInOverallScore, Set<QuizBatchForCourseDTO> quizBatches,
-        @NotNull QuizMode quizMode, Set<String> categories) {
+        ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, @NotNull IncludedInOverallScore includedInOverallScore,
+        @Nullable Set<QuizBatchForCourseDTO> quizBatches, @NotNull QuizMode quizMode, Set<String> categories) {
 
     /**
      * Converts a QuizExercise to a QuizExerciseForCourseDTO
@@ -28,7 +30,7 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
      */
     public static QuizExerciseForCourseDTO of(QuizExercise quizExercise, boolean isEditable) {
         Set<QuizBatchForCourseDTO> batches = null;
-        if (quizExercise.getQuizBatches() != null) {
+        if (quizExercise.getQuizBatches() != null && !quizExercise.getQuizBatches().isEmpty()) {
             batches = quizExercise.getQuizBatches().stream().map(QuizBatchForCourseDTO::of).collect(Collectors.toSet());
         }
         return new QuizExerciseForCourseDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.isQuizStarted(), quizExercise.isQuizEnded(), isEditable,
