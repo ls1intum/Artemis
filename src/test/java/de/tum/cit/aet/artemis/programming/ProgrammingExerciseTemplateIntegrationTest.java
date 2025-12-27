@@ -191,6 +191,30 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
+
+        // Clean up repositories to prevent state leaking between tests
+        if (exercise != null && exercise.getId() != null) {
+            try {
+                gitServiceSpy.deleteLocalRepository(exercise.getRepositoryURI(RepositoryType.TEMPLATE));
+            }
+            catch (Exception e) {
+                log.debug("Failed to clean up template repository", e);
+            }
+
+            try {
+                gitServiceSpy.deleteLocalRepository(exercise.getRepositoryURI(RepositoryType.SOLUTION));
+            }
+            catch (Exception e) {
+                log.debug("Failed to clean up solution repository", e);
+            }
+
+            try {
+                gitServiceSpy.deleteLocalRepository(exercise.getRepositoryURI(RepositoryType.TESTS));
+            }
+            catch (Exception e) {
+                log.debug("Failed to clean up tests repository", e);
+            }
+        }
     }
 
     /**
@@ -252,8 +276,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
-        Repository assignmentRepository = gitService.getOrCheckoutRepository(assignmentUri, true, true);
-        Repository testRepository = gitService.getOrCheckoutRepository(testUri, true, true);
+        Repository assignmentRepository = gitServiceSpy.getOrCheckoutRepository(assignmentUri, true, true);
+        Repository testRepository = gitServiceSpy.getOrCheckoutRepository(testUri, true, true);
         moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
         int exitCode;
         if (projectType != null && projectType.isGradle()) {
@@ -377,9 +401,27 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
     }
 
-    private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) {
+    private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) throws InterruptedException {
         File reportFolder = testRepositoryPath.resolve(testResultPath).toFile();
-        assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles, "the report folder should contain test reports");
+
+        // Retry logic to handle timing issues where test reports might not be immediately available
+        int maxRetries = 5;
+        int retryDelayMs = 500;
+        boolean hasReports = false;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            if (SurefireReportParser.hasReportFiles(reportFolder)) {
+                hasReports = true;
+                break;
+            }
+            if (attempt < maxRetries) {
+                log.debug("Test reports not yet available in {} (attempt {}/{}), waiting {} ms...", reportFolder, attempt, maxRetries, retryDelayMs);
+                Thread.sleep(retryDelayMs);
+            }
+        }
+
+        assertThat(hasReports).as("test reports generated after " + maxRetries + " retries")
+                .withFailMessage("The report folder %s should contain test reports but none were found after %d attempts", reportFolder, maxRetries).isTrue();
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods
         SurefireReportParser reportParser = new SurefireReportParser(List.of(reportFolder), new PrintStreamLogger(System.out));
