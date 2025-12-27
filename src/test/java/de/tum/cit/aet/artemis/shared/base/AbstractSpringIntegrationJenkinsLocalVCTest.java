@@ -13,7 +13,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -150,8 +150,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @BeforeEach
     protected void setupPasskeyAuthenticationMock() {
         // Mock passkey authentication to always return true for admin operations in tests
-        // Use doReturn instead of when().thenReturn() because the method throws an exception
-        doReturn(true).when(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
     }
 
     @AfterEach
