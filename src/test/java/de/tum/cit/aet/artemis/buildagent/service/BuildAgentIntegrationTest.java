@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
+import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
@@ -484,6 +485,101 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         doAnswer(invocation -> {
             throw new RuntimeException("Simulated persistent I/O failure: Could not create tar archive");
         }).when(copyArchiveToContainerCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // The build should fail after all retries are exhausted
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
+        });
+    }
+
+    /**
+     * Test that the build agent successfully retrieves test results when the getArchiveFromContainer
+     * operation fails transiently but succeeds after retry. This tests the retry mechanism for
+     * copying archives FROM the container (as opposed to TO the container).
+     */
+    @Test
+    void testBuildAgentRetryOnGetArchiveFromContainerFailure() throws IOException {
+        // Mock copyArchiveFromContainerCmd to fail on first attempt, then succeed
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
+        when(dockerClient.copyArchiveFromContainerCmd(anyString(), anyString())).thenReturn(copyArchiveFromContainerCmd);
+
+        AtomicInteger getArchiveAttempts = new AtomicInteger(0);
+        doAnswer(invocation -> {
+            int attempt = getArchiveAttempts.incrementAndGet();
+            if (attempt == 1) {
+                // Fail on first attempt
+                throw new RuntimeException("Simulated transient failure retrieving archive from container");
+            }
+            // Succeed on subsequent attempts - return valid test results
+            return dockerClientTestService.createInputStreamForTarArchiveFromMap(dockerClientTestService.createMapFromTestResultsFolder(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH));
+        }).when(copyArchiveFromContainerCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // The build should eventually succeed after retry
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // Verify that at least one retry occurred
+        assertThat(getArchiveAttempts.get()).isGreaterThan(1);
+    }
+
+    /**
+     * Test that the build agent properly handles the case when copyArchiveFromContainerCmd
+     * returns a null InputStream. This should be treated as a failure and trigger retry logic.
+     */
+    @Test
+    void testBuildAgentHandlesNullInputStreamFromContainer() throws IOException {
+        // Mock copyArchiveFromContainerCmd to return null on first attempt, then return valid stream
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
+        when(dockerClient.copyArchiveFromContainerCmd(anyString(), anyString())).thenReturn(copyArchiveFromContainerCmd);
+
+        AtomicInteger attempts = new AtomicInteger(0);
+        doAnswer(invocation -> {
+            int attempt = attempts.incrementAndGet();
+            if (attempt == 1) {
+                // Return null on first attempt to simulate edge case
+                return null;
+            }
+            // Return valid stream on subsequent attempts
+            return dockerClientTestService.createInputStreamForTarArchiveFromMap(dockerClientTestService.createMapFromTestResultsFolder(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH));
+        }).when(copyArchiveFromContainerCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // The build should eventually succeed after retry handles the null case
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // Verify that retry occurred after null was returned
+        assertThat(attempts.get()).isGreaterThan(1);
+    }
+
+    /**
+     * Test that the build agent fails gracefully when getArchiveFromContainer consistently
+     * fails after all retry attempts are exhausted.
+     */
+    @Test
+    void testBuildAgentFailsAfterGetArchiveFromContainerRetriesExhausted() {
+        // Mock copyArchiveFromContainerCmd to always fail
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
+        when(dockerClient.copyArchiveFromContainerCmd(anyString(), anyString())).thenReturn(copyArchiveFromContainerCmd);
+
+        doAnswer(invocation -> {
+            throw new RuntimeException("Simulated persistent failure retrieving archive from container");
+        }).when(copyArchiveFromContainerCmd).exec();
 
         var queueItem = createBaseBuildJobQueueItemForTrigger();
         buildJobQueue.add(queueItem);
