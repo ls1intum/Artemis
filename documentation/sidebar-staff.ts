@@ -4,7 +4,17 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
-        'spring-ai'
+        'spring-ai',
+        {
+            type: 'category',
+            label: 'Contributor Guide',
+            items: [
+                'development-process',
+                'reviewer-guidelines',
+                'local-user-management',
+                'builds-and-dependencies',
+            ],
+        },
     ],
 };
 

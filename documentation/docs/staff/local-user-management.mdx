@@ -1,0 +1,31 @@
+---
+id: local-user-management
+title: Using Local User Management
+sidebar_label: Local User Management
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Using Local User Management
+
+If you want to test in a local environment using different users, it makes sense to rely on local instead of external user management.
+
+## Configuration
+
+Go to the `application-artemis.yml` file, and set `use-external` in the `user-management` section to `false`.
+
+```yaml title="src/main/resources/config/application-artemis.yml"
+artemis:
+  user-management:
+    use-external: false
+```
+
+<Callout variant={CalloutVariant.info}>
+When using local user management, Artemis will manage user accounts internally instead of delegating authentication to an external system like LDAP.
+This is particularly useful for development and testing environments.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+Local user management is intended for development and testing purposes only. For production environments, use external user management systems with proper security configurations.
+</Callout>

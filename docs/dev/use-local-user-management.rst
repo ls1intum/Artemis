@@ -1,7 +1,7 @@
 Using local user management
 ===========================
 
-If you want to test in a local environment using different users, it makes sense to rely on local instead of
-external user management.
+.. attention::
+   This documentation has been migrated to the new documentation system.
 
-Go to the ``application-artemis.yml`` file, and set ``use-external`` in the ``user-management`` section to ``false``.
+   Please visit: `Using Local User Management <https://ls1intum.github.io/Artemis/staff/local-user-management>`_

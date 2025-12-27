@@ -3,6 +3,12 @@
 Server Setup
 ------------
 
+.. attention::
+   Parts of this documentation have been migrated to the new documentation system.
+
+   For detailed information about Spring profiles, Gradle builds, and Docker setup, please visit:
+   `Builds and Dependency Management <https://ls1intum.github.io/Artemis/staff/builds-and-dependencies>`_
+
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
 Make sure to install the **Spring Boot** plugins for IntelliJ IDEA, this will make it easier to run the server.
 

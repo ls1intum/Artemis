@@ -3,6 +3,12 @@
 Setup Guide
 ===========
 
+.. attention::
+   Parts of this documentation have been migrated to the new documentation system.
+
+   For information about builds, dependency management, Spring profiles, and Docker setup, please visit:
+   `Builds and Dependency Management <https://ls1intum.github.io/Artemis/staff/builds-and-dependencies>`_
+
 This guide explains how to set up Artemis in your development environment or a demo production environment. For production setups, you would need to additionally consider topics discussed in the :ref:`administration setup <admin_setup>`.
 Running Artemis consists of two main steps:
 

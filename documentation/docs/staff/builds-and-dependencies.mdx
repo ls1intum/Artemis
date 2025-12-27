@@ -1,0 +1,293 @@
+---
+id: builds-and-dependencies
+title: Builds and Dependency Management
+sidebar_label: Builds & Dependencies
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Builds and Dependency Management
+
+This guide covers how Artemis manages builds, dependencies, and Spring profiles for both development and production environments.
+
+## Technology Stack
+
+Artemis is based on [JHipster](https://jhipster.github.io), combining:
+
+- [Spring Boot](http://projects.spring.io/spring-boot) (Java 25) for the application server
+- [Angular 20](https://angular.dev) (TypeScript) for the web application that serves the user interface
+
+For an overview of the technology stack, visit the [JHipster Technology Stack](https://jhipster.github.io/tech-stack) and refer to other tutorials on the JHipster homepage.
+
+## Required Dependencies
+
+Before running Artemis, ensure you have the following installed:
+
+### Core Dependencies
+
+1. **Java JDK 25**
+   - Download and install Java, e.g. from [Oracle JDK](https://www.oracle.com/java/technologies/javase-downloads.html)
+
+2. **Database Server**
+   - Artemis uses Hibernate for database interactions and Liquibase for schema migrations
+   - You can either use MySQL or PostgreSQL as the database server
+   - Refer to the Database Setup guide for detailed configuration
+
+3. **Node.js (LTS >=24.7.0 < 25)**
+   - Download from [Node.js](https://nodejs.org/en/download)
+   - Required for compiling and running the Angular client
+
+4. **npm (>=11.5.1)**
+   - Installed automatically with Node.js but can be updated separately
+
+5. **Graphviz (Optional, but Recommended for Production Setups)**
+   - Install from [Graphviz](https://www.graphviz.org/download/) to enable graph generation in exercise descriptions
+
+<Callout variant={CalloutVariant.warning}>
+If Graphviz is missing in production, errors will appear when rendering exercise descriptions that contain graphs.
+</Callout>
+
+## Build System: Gradle
+
+Artemis uses Gradle as its build system. The project includes a Gradle wrapper, so you don't need to install Gradle separately.
+
+### Common Gradle Commands
+
+```bash
+# Run the application
+./gradlew bootRun
+
+# Build the application
+./gradlew build
+
+# Run tests
+./gradlew test
+
+# Production build (server + client)
+./gradlew -Pprod -Pwar clean bootWar
+
+# Code quality checks
+./gradlew checkstyleMain
+./gradlew spotlessCheck
+./gradlew spotlessApply
+```
+
+### Running with Gradle Wrapper
+
+If you want to run the application via the command line, make sure to pass the active profiles to the `gradlew` command:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+```
+
+<Callout variant={CalloutVariant.info}>
+The Gradle wrapper ensures all developers use the same Gradle version, improving build reproducibility.
+</Callout>
+
+## Spring Profiles
+
+Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments.
+
+### Available Profiles
+
+For development purposes, the following profiles are commonly used:
+
+- **dev**: Development mode with additional debugging features
+- **localci**: Local continuous integration
+- **localvc**: Local version control
+- **artemis**: Artemis-specific configuration
+- **scheduling**: Enables scheduled tasks
+- **buildagent**: Build agent functionality
+- **core**: Core functionality
+- **atlas**: Atlas/competency features
+- **ldap**: LDAP authentication
+- **local**: Local development overrides
+
+### Common Profile Combinations
+
+#### Local Development with LocalVC and LocalCI
+```
+dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,local
+```
+
+#### Local Development with LocalVC and Jenkins
+```
+dev,jenkins,localvc,artemis,scheduling,core,atlas,local
+```
+
+#### Production
+```
+prod
+```
+
+### Configuring Spring Profiles
+
+#### In IntelliJ Ultimate
+
+1. Choose `Run | Edit Configurations...`
+2. Go to the `Configuration Tab`
+3. Add the following entry to the section `Active Profiles` (within `Spring Boot`):
+   ```
+   dev,jenkins,localvc,artemis,scheduling
+   ```
+
+#### In IntelliJ Community
+
+1. Choose `Run | Edit Configurations...`
+2. Go to the `Configuration Tab`
+3. Expand the `Environment` section to reveal `VM Options` and set them to:
+   ```
+   -Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling
+   ```
+
+#### Via Command Line
+
+Pass profiles as program arguments when running the application:
+
+```bash
+--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling
+```
+
+<Callout variant={CalloutVariant.info}>
+The application requires specific profiles to run. Always include at least the `dev` and `artemis` profiles for local development.
+</Callout>
+
+## Docker Setup
+
+Artemis provides Docker support for quick demonstration and production deployments.
+
+### Docker Image
+
+Artemis provides a Docker image named `ghcr.io/ls1intum/artemis:<TAG/VERSION>`:
+
+- **Current develop branch**: Available under the tag `develop`
+- **Latest stable release**: Can be retrieved using the tag `latest`
+- **Specific releases**: Such as `7.10.8`, can be accessed with `ghcr.io/ls1intum/artemis:7.10.8`
+- **Pull request branches**: Can be obtained using `PR-<PR NUMBER>`
+
+### Dockerfile Structure
+
+You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
+
+The Dockerfile has [multiple stages](https://docs.docker.com/build/building/multi-stage/):
+- A **builder** stage, building the `.war` file
+- An optional **external_builder** stage to import a pre-built `.war` file
+- A **war_file** stage to choose between the builder stages via build argument
+- A **runtime** stage with minimal dependencies just for running Artemis
+
+### Docker Volumes
+
+The Dockerfile defines three Docker volumes at the specified paths inside the container:
+
+#### /opt/artemis/config
+
+This can be used to store additional configurations of Artemis in YAML files.
+The usage is optional, and we recommend using environment files for overriding your custom configurations instead of using `src/main/resources/application-local.yml` as such an additional configuration file.
+
+<Callout variant={CalloutVariant.success}>
+Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the [Spring relaxed binding](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables).
+
+You can either place those environment variables directly in the `environment` section, or create a [.env-file](https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file).
+
+When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the `--env-file` option.
+
+To ease the transition of an existing set of YAML configuration files into the environment variable style, a [helper script](https://github.com/b-fein/spring-yaml-to-env) can be used.
+</Callout>
+
+#### /opt/artemis/data
+
+This directory should be used for any data (e.g., local clone of repositories).
+This is preconfigured in the `docker` Java Spring profile (which sets the following values:
+`artemis.repo-clone-path`, `artemis.repo-download-clone-path`, `artemis.course-archives-path`, `artemis.submission-export-path`, `artemis.legal-path`, and `artemis.file-upload-path`).
+
+#### /opt/artemis/public/content
+
+This directory will be used for branding. You can specify a favicon here.
+
+### File System Locale Requirements
+
+The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings:
+
+- LC_ALL: `en_US.UTF-8`
+- LANG: `en_US.UTF-8`
+- LANGUAGE: `en_US.UTF-8`
+
+<Callout variant={CalloutVariant.warning}>
+**ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space.
+On an Apple M1, we had to set the **Docker Desktop** memory limit to 12GB or more.
+</Callout>
+
+### Docker Debugging
+
+The Docker containers have the possibility to enable Java Remote Debugging via Java environment variables.
+Java Remote Debugging lets you use your preferred debugger connected to port 5005.
+For IntelliJ, you can use the `Remote Java Debugging for Docker` profile shipped in the git repository.
+
+With the following Java environment variable, you can configure the Remote Java Debugging inside a container:
+
+```bash
+_JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+```
+
+This is already pre-set in the Docker Compose **Artemis-Dev-MySQL** Setup.
+For issues at the startup, you might have to suspend the java command until a Debugger is connected.
+This is possible by setting `suspend=y`.
+
+<Callout variant={CalloutVariant.info}>
+Running Artemis via Docker is **not recommended** for development, as it does not support code modifications or debugging as effectively as running directly.
+Use Docker primarily for demonstration purposes or production deployments.
+</Callout>
+
+## Dependency Management
+
+### Server Dependencies
+
+Server dependencies are managed via Gradle and are specified in the `build.gradle` file.
+Dependency versions are centralized in `gradle.properties` for easier maintenance.
+
+If you use a password for authentication with the database, update it in `gradle/liquibase.gradle`.
+
+### Client Dependencies
+
+Client dependencies are managed via npm and are specified in `package.json`.
+
+#### Installing Client Dependencies
+
+```bash
+npm install
+```
+
+#### Pre-build Step
+
+Many npm commands require a pre-build step to generate necessary files:
+
+```bash
+npm run prebuild
+```
+
+<Callout variant={CalloutVariant.warning}>
+Always run `npm run prebuild` before running tests or building the client for the first time.
+</Callout>
+
+## IDE Setup
+
+We recommend using [IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) for development.
+Refer to JHipster's guide on configuring an IDE: [JHipster IDE Setup](https://jhipster.github.io/configuring-ide).
+
+<Callout variant={CalloutVariant.info}>
+The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html) for details.
+</Callout>
+
+## Production Considerations
+
+For production setups, additional steps are required to ensure security and performance:
+
+- Use the `prod` profile instead of `dev`
+- Configure external database connections securely
+- Set up proper logging and monitoring
+- Configure reverse proxy (nginx) for HTTPS
+- Set appropriate JVM memory settings
+- Configure backup strategies for data directories
+
+Refer to the [Production Setup Guide](https://ls1intum.github.io/Artemis/admin/production-setup) for detailed production configuration steps.
