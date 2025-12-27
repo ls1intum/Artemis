@@ -333,6 +333,9 @@ describe('BuildQueueComponent', () => {
         // Initialize the component
         component.ngOnInit();
 
+        // Admin view should be enabled when no courseId is present
+        expect(component.isAdministrationView).toBe(true);
+
         // Expectations: The service methods for general build jobs are called
         expect(mockBuildQueueService.getQueuedBuildJobs).toHaveBeenCalled();
         expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalled();
@@ -350,7 +353,7 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should initialize with course data', () => {
-        // Mock ActivatedRoute to return a specific course ID
+        // Course view: courseId present
         routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         // Mock BuildQueueService to return mock data
@@ -361,10 +364,18 @@ describe('BuildQueueComponent', () => {
         // Initialize the component
         component.ngOnInit();
 
+        // Admin view should be disabled when courseId is present
+        expect(component.isAdministrationView).toBe(false);
+
         // Expectations: The service methods are called with the test course ID
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
+
+        // Expectations: Admin endpoints are NOT called in course view
+        expect(mockBuildQueueService.getQueuedBuildJobs).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getRunningBuildJobs).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
@@ -582,50 +593,6 @@ describe('BuildQueueComponent', () => {
         expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
         expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs());
         expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
-    });
-
-    it('should use admin endpoints when no courseId is present', () => {
-        routeStub.setParamMap({});
-
-        mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
-        mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
-        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
-
-        component.ngOnInit();
-
-        expect(component.isAdministrationView).toBe(true);
-
-        expect(mockBuildQueueService.getQueuedBuildJobs).toHaveBeenCalledOnce();
-        expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalledOnce();
-        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
-
-        expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).not.toHaveBeenCalled();
-        expect(mockBuildQueueService.getRunningBuildJobsByCourseId).not.toHaveBeenCalled();
-        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).not.toHaveBeenCalled();
-    });
-
-    it('should use course endpoints when courseId is present', () => {
-        routeStub.setParamMap({ courseId: String(testCourseId) }); // course view
-
-        mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
-        mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
-        mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
-
-        component.ngOnInit();
-
-        expect(component.isAdministrationView).toBe(false);
-
-        expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
-        expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
-
-        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalled();
-        const [calledCourseId, calledRequest] = mockBuildQueueService.getFinishedBuildJobsByCourseId.mock.calls[0];
-        expect(calledCourseId).toBe(testCourseId);
-        expect(calledRequest).toMatchObject(request);
-
-        expect(mockBuildQueueService.getQueuedBuildJobs).not.toHaveBeenCalled();
-        expect(mockBuildQueueService.getRunningBuildJobs).not.toHaveBeenCalled();
-        expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
     });
 
     describe('BuildOverviewComponent Download Logs', () => {
