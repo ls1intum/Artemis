@@ -62,26 +62,34 @@ export class CourseManagementPage {
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
-        expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
+        // Verify test course indicator is shown in the delete question text
+        if (expectedCourseSummary.isTestCourse) {
+            await expect(this.page.locator('strong', { hasText: 'test course' })).toBeVisible();
+        }
 
-        const exerciseTypes = [
-            { label: 'Number of Students', expected: expectedCourseSummary.students },
-            { label: 'Number of Tutors', expected: expectedCourseSummary.tutors },
-            { label: 'Number of Editors', expected: expectedCourseSummary.editors },
-            { label: 'Number of Instructors', expected: expectedCourseSummary.instructors },
-            { label: 'Number of Exams', expected: expectedCourseSummary.exams },
-            { label: 'Number of Lectures', expected: expectedCourseSummary.lectures },
-            { label: 'Number of Programming Exercises', expected: expectedCourseSummary.programingExercises },
-            { label: 'Number of Modeling Exercises', expected: expectedCourseSummary.modelingExercises },
-            { label: 'Number of Quiz Exercises', expected: expectedCourseSummary.quizExercises },
-            { label: 'Number of Text Exercises', expected: expectedCourseSummary.textExercises },
-            { label: 'Number of File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
-            { label: 'Number of Communication Posts', expected: expectedCourseSummary.communicationPosts },
+        // The delete dialog now shows a table with label/value pairs in cells
+        // Each row has: label cell, value cell, (optional second pair: label cell, value cell)
+        const summaryItems = [
+            { label: 'Students', expected: expectedCourseSummary.students },
+            { label: 'Tutors', expected: expectedCourseSummary.tutors },
+            { label: 'Editors', expected: expectedCourseSummary.editors },
+            { label: 'Instructors', expected: expectedCourseSummary.instructors },
+            { label: 'Exams', expected: expectedCourseSummary.exams },
+            { label: 'Lectures', expected: expectedCourseSummary.lectures },
+            { label: 'Programming Exercises', expected: expectedCourseSummary.programingExercises },
+            { label: 'Modeling Exercises', expected: expectedCourseSummary.modelingExercises },
+            { label: 'Quiz Exercises', expected: expectedCourseSummary.quizExercises },
+            { label: 'Text Exercises', expected: expectedCourseSummary.textExercises },
+            { label: 'File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
+            { label: 'Posts', expected: expectedCourseSummary.communicationPosts },
         ];
 
-        for (const { label, expected } of exerciseTypes) {
-            const actual = Number((await this.page.locator(`text=/${label}: \\d+/`).innerText()).split(':')[1].trim());
-            expect(actual).toBe(expected);
+        for (const { label, expected } of summaryItems) {
+            // Find the label cell and get the value from the next sibling cell
+            const labelCell = this.page.locator('.item-label-cell', { hasText: label }).first();
+            const valueCell = labelCell.locator('+ .item-value-cell');
+            const actualValue = await valueCell.innerText();
+            expect(Number(actualValue)).toBe(expected);
         }
     }
 
