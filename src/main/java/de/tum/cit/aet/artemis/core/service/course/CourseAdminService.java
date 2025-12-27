@@ -138,7 +138,7 @@ public class CourseAdminService {
 
         // Learning Data
         long numberOfCompetencies = competencyApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
-        long numberOfCompetencyProgress = competencyProgressApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+        long numberOfCompetencyProgress = competencyProgressApi.map(api -> api.countCompetencyProgressByCourseId(courseId)).orElse(0L);
         long numberOfLearnerProfiles = learnerProfileApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
 
         // AI Data

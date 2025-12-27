@@ -469,9 +469,17 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Accepts the code of conduct by clicking the respective button.
+     * Accepts the code of conduct by clicking the respective button if it's visible.
+     * If the user has already accepted the code of conduct, the button won't be present.
      */
     async acceptCodeOfConductButton() {
-        await this.page.locator('#acceptCodeOfConductButton').click();
+        const button = this.page.locator('#acceptCodeOfConductButton');
+        // Wait a short time for the page to load and determine if the button should be shown
+        await this.page.waitForLoadState('networkidle');
+        if (await button.isVisible()) {
+            await button.click();
+            // Wait for the acceptance to be processed
+            await this.page.waitForLoadState('networkidle');
+        }
     }
 }

@@ -61,7 +61,7 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
         competencyProgressService.updateProgressByLearningObjectSync(learningObject, users);
     }
 
-    public long countByCourseId(long courseId) {
+    public long countCompetencyProgressByCourseId(long courseId) {
         return competencyProgressRepository.countByCourseId(courseId);
     }
 
