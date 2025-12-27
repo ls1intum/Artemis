@@ -73,4 +73,8 @@ public class LectureRepositoryApi extends AbstractLectureApi {
     public Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
         return lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
     }
+
+    public Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(long courseId) {
+        return lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+    }
 }

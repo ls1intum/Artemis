@@ -12,6 +12,8 @@ import { of } from 'rxjs';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('TutorialGroupManagementDetailComponent', () => {
     let fixture: ComponentFixture<ManagementTutorialGroupDetailContainerComponent>;
@@ -24,6 +26,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                { provide: DialogService, useClass: MockDialogService },
                 mockedActivatedRoute(
                     {
                         tutorialGroupId: 1,

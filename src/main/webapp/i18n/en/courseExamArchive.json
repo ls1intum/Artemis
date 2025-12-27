@@ -17,7 +17,8 @@
                 "course": {
                     "title": "Confirm Archive Course Operation",
                     "question": "Are you sure you want to archive the course <strong>{{ title }}</strong>?",
-                    "statement1": "The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the course and in all its exams."
+                    "statement1": "The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the course and in all its exams.",
+                    "statement1b": "Additionally, the archive will include comprehensive student data: course and exam scores, participation results with feedback, posts and messages, competency progress, learner profiles, tutorial group registrations, Iris chat sessions, and LLM token usage traces."
                 },
                 "exam": {
                     "title": "Confirm Archive Exam Operation",

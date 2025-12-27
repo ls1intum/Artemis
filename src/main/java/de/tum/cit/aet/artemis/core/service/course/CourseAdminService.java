@@ -11,18 +11,29 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 /**
  * Service for administrative operations on courses.
@@ -49,9 +60,34 @@ public class CourseAdminService {
 
     private final CourseRepository courseRepository;
 
+    private final ParticipationRepository participationRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
+    private final FaqRepository faqRepository;
+
+    private final ConversationRepository conversationRepository;
+
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
+
+    private final Optional<CompetencyApi> competencyApi;
+
     public CourseAdminService(BuildJobRepository buildJobRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<ExamMetricsApi> examMetricsApi, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LearnerProfileApi> learnerProfileApi,
+            Optional<IrisSettingsApi> irisSettingsApi, FaqRepository faqRepository, ConversationRepository conversationRepository, Optional<TutorialGroupApi> tutorialGroupApi,
+            Optional<CompetencyApi> competencyApi) {
         this.buildJobRepository = buildJobRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -60,37 +96,77 @@ public class CourseAdminService {
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
+        this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
+        this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
+        this.competencyProgressApi = competencyProgressApi;
+        this.learnerProfileApi = learnerProfileApi;
+        this.irisSettingsApi = irisSettingsApi;
+        this.faqRepository = faqRepository;
+        this.conversationRepository = conversationRepository;
+        this.tutorialGroupApi = tutorialGroupApi;
+        this.competencyApi = competencyApi;
     }
 
     /**
-     * Get the course deletion summary for the given course.
+     * Get a comprehensive summary of all course data.
+     * This summary is used for both deletion and reset operations to provide
+     * administrators with an overview of what will be affected.
      *
-     * @param courseId the id of the course for which to get the deletion summary
-     * @return the course deletion summary
+     * @param courseId the id of the course for which to get the summary
+     * @return the course summary containing counts of all relevant data
      */
-    public CourseDeletionSummaryDTO getDeletionSummary(long courseId) {
+    public CourseSummaryDTO getCourseSummary(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
+
+        // Users
         long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         long numberOfTutors = userRepository.countUserInGroup(course.getTeachingAssistantGroupName());
         long numberOfEditors = userRepository.countUserInGroup(course.getEditorGroupName());
         long numberOfInstructors = userRepository.countUserInGroup(course.getInstructorGroupName());
 
+        // Student Work
+        long numberOfParticipations = participationRepository.countByCourseId(courseId);
+        long numberOfSubmissions = submissionRepository.countByCourseId(courseId);
+        long numberOfResults = resultRepository.countByCourseId(courseId);
+
+        // Communication
+        long numberOfConversations = conversationRepository.countByCourseId(courseId);
+        long numberOfPosts = postRepository.countPostsByCourseId(courseId);
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByCourseId(courseId);
+
+        // Learning Data
+        long numberOfCompetencies = competencyApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+        long numberOfCompetencyProgress = competencyProgressApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+        long numberOfLearnerProfiles = learnerProfileApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+
+        // AI Data
+        long numberOfIrisChatSessions = irisSettingsApi.map(api -> api.countCourseChatSessionsByCourseId(courseId)).orElse(0L);
+        long numberOfLLMTraces = llmTokenUsageTraceRepository.countByCourseId(courseId);
+
+        // Infrastructure
         long numberOfBuilds = buildJobRepository.countBuildJobsByCourseId(courseId);
 
-        long numberOfCommunicationPosts = postRepository.countPostsByCourseId(courseId);
-        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByCourseId(courseId);
-        long numberLectures = lectureRepositoryApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
-        long numberExams = examMetricsApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+        // Course Structure
+        long numberOfExams = examMetricsApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+        long numberOfLectures = lectureRepositoryApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
+        long numberOfFaqs = faqRepository.countByCourseId(courseId);
+        long numberOfTutorialGroups = tutorialGroupApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
 
+        // Exercises
         Map<ExerciseType, Long> countByExerciseType = countByCourseIdGroupByType(courseId);
-        long numberProgrammingExercises = countByExerciseType.get(ExerciseType.PROGRAMMING);
-        long numberTextExercises = countByExerciseType.get(ExerciseType.TEXT);
-        long numberQuizExercises = countByExerciseType.get(ExerciseType.QUIZ);
-        long numberFileUploadExercises = countByExerciseType.get(ExerciseType.FILE_UPLOAD);
-        long numberModelingExercises = countByExerciseType.get(ExerciseType.MODELING);
+        long numberOfProgrammingExercises = countByExerciseType.get(ExerciseType.PROGRAMMING);
+        long numberOfTextExercises = countByExerciseType.get(ExerciseType.TEXT);
+        long numberOfModelingExercises = countByExerciseType.get(ExerciseType.MODELING);
+        long numberOfQuizExercises = countByExerciseType.get(ExerciseType.QUIZ);
+        long numberOfFileUploadExercises = countByExerciseType.get(ExerciseType.FILE_UPLOAD);
+        long numberOfExercises = countByExerciseType.values().stream().mapToLong(Long::longValue).sum();
 
-        return new CourseDeletionSummaryDTO(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors, numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts,
-                numberProgrammingExercises, numberTextExercises, numberFileUploadExercises, numberModelingExercises, numberQuizExercises, numberExams, numberLectures);
+        return new CourseSummaryDTO(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors, numberOfParticipations, numberOfSubmissions, numberOfResults,
+                numberOfConversations, numberOfPosts, numberOfAnswerPosts, numberOfCompetencies, numberOfCompetencyProgress, numberOfLearnerProfiles, numberOfIrisChatSessions,
+                numberOfLLMTraces, numberOfBuilds, numberOfExams, numberOfExercises, numberOfProgrammingExercises, numberOfTextExercises, numberOfModelingExercises,
+                numberOfQuizExercises, numberOfFileUploadExercises, numberOfLectures, numberOfFaqs, numberOfTutorialGroups);
     }
 
     /**

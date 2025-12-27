@@ -250,6 +250,7 @@
         "test": "npm run prebuild && ng test --coverage --log-heap-usage -w=4",
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
         "test:one": "npm run prebuild && ng test",
+        "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
         "vitest:ci": "vitest run --coverage --reporter=default --reporter=junit --outputFile=build/test-results/vitest/junit.xml",

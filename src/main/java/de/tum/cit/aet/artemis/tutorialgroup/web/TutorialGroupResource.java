@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -240,15 +241,15 @@ public class TutorialGroupResource {
     /**
      * POST /courses/:courseId/tutorial-groups : creates a new tutorial group.
      *
-     * @param courseId      the id of the course to which the tutorial group should be added
-     * @param tutorialGroup the tutorial group that should be created
+     * @param courseId         the id of the course to which the tutorial group should be added
+     * @param tutorialGroupDTO the DTO containing the tutorial group data
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group
      */
     @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
-        log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroup, courseId);
-        if (tutorialGroup.getId() != null) {
+    public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupDTO tutorialGroupDTO) throws URISyntaxException {
+        log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroupDTO, courseId);
+        if (tutorialGroupDTO.id() != null) {
             throw new BadRequestException("A new tutorial group cannot already have an ID");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -264,36 +265,33 @@ public class TutorialGroupResource {
             throw new BadRequestException("The course has no time zone");
         }
 
+        // Convert DTO to entity
+        TutorialGroup tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
+        tutorialGroup.setTitle(tutorialGroupDTO.title());
+        tutorialGroup.setAdditionalInformation(tutorialGroupDTO.additionalInformation());
+        tutorialGroup.setCapacity(tutorialGroupDTO.capacity());
+        tutorialGroup.setIsOnline(tutorialGroupDTO.isOnline());
+        tutorialGroup.setLanguage(tutorialGroupDTO.language());
+        tutorialGroup.setCampus(tutorialGroupDTO.campus());
+
+        // Look up teaching assistant from database if provided
+        User teachingAssistant = null;
+        if (tutorialGroupDTO.teachingAssistant() != null && tutorialGroupDTO.teachingAssistant().login() != null) {
+            teachingAssistant = userRepository.findOneByLogin(tutorialGroupDTO.teachingAssistant().login()).orElse(null);
+            tutorialGroup.setTeachingAssistant(teachingAssistant);
+        }
+
         trimStringFields(tutorialGroup);
         checkTitleIsValid(tutorialGroup);
-
-        // persist first without schedule
-        TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
-        if (tutorialGroupSchedule != null) {
-            checkScheduleDateAndTimeFormatAreValid(tutorialGroupSchedule);
-        }
 
         tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
-        // persist the schedule and generate the sessions
-        if (tutorialGroupSchedule != null) {
-            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, persistedTutorialGroup, tutorialGroupSchedule);
-            persistedTutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
-        }
-
-        if (tutorialGroup.getTeachingAssistant() != null) {
-            // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
-            var taFromDatabase = userRepository.findOneByLogin(tutorialGroup.getTeachingAssistant().getLogin());
-            taFromDatabase.ifPresent(user -> {
-                if (!Objects.equals(user.getId(), responsibleUser.getId())) {
-                    var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
-                            tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
-
-                    courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(user));
-                }
-            });
+        if (teachingAssistant != null && !Objects.equals(teachingAssistant.getId(), responsibleUser.getId())) {
+            var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), tutorialGroup.getTitle(),
+                    persistedTutorialGroup.getId(), responsibleUser.getName());
+            courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(teachingAssistant));
         }
 
         if (configuration.getUseTutorialGroupChannels()) {
@@ -318,7 +316,8 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroupFromDatabase);
+        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroupFromDatabase.getId());
+        // Sessions are deleted via cascade (CascadeType.REMOVE on TutorialGroup.tutorialGroupSessions)
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
 
         // Notify users

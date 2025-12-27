@@ -1,116 +1,125 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
-    <div class="modal-header">
-        <h4 class="modal-title">
-            @switch (actionType) {
-                @case (actionTypes.Delete) {
-                    <span jhiTranslate="entity.delete.title"></span>
-                }
-                @case (actionTypes.Reset) {
-                    <span jhiTranslate="entity.reset.title"></span>
-                }
-                @case (actionTypes.Cleanup) {
-                    <span jhiTranslate="entity.cleanup.title"></span>
-                }
-                @case (actionTypes.Remove) {
-                    <span jhiTranslate="entity.remove.title"></span>
-                }
-                @case (actionTypes.Unlink) {
-                    <span jhiTranslate="entity.unlink.title"></span>
-                }
-                @case (actionTypes.NoButtonTextDelete) {
-                    <span jhiTranslate="entity.noButtonTextDelete.title"></span>
-                }
-                @case (actionTypes.EndNow) {
-                    <span jhiTranslate="entity.endNow.title"></span>
-                }
-            }
-        </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
-    </div>
-    <div class="modal-body">
+    <div class="dialog-content">
         <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">
             <span jhiTranslate="entity.action.deleteQuestion"></span>
         </p>
 
         @if (entitySummaryTitle) {
-            <b [jhiTranslate]="entitySummaryTitle"></b>
+            <div class="mb-2"><span [jhiTranslate]="entitySummaryTitle"></span></div>
         }
-        @if (entitySummary) {
-            <ul>
-                @for (summaryKey of objectKeys(entitySummary); track summaryKey; let i = $index) {
-                    @if (entitySummary[summaryKey] !== undefined) {
-                        <li>
-                            <span [jhiTranslate]="summaryKey"></span>: <span>{{ entitySummary[summaryKey] }}</span>
-                        </li>
-                    }
-                }
-            </ul>
+        @if (isLoadingSummary()) {
+            <div class="summary-loading-container">
+                <p-progressSpinner [style]="{ width: '24px', height: '24px' }" strokeWidth="4" />
+                <span class="ms-2" jhiTranslate="loading"></span>
+            </div>
+        } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {
+            <div class="entity-summary-table">
+                <p-table [value]="categorizedEntitySummary()!" styleClass="p-datatable-sm p-datatable-gridlines">
+                    <ng-template #body let-category>
+                        <tr class="category-header-row">
+                            <td colspan="4" class="category-header-cell">
+                                <span [jhiTranslate]="category.titleKey"></span>
+                            </td>
+                        </tr>
+                        @for (pair of getItemPairs(category.items); track pair[0].labelKey) {
+                            <tr class="summary-item-row">
+                                <td class="item-label-cell">
+                                    <span [jhiTranslate]="pair[0].labelKey"></span>
+                                </td>
+                                <td class="item-value-cell">{{ pair[0].value }}</td>
+                                @if (pair[1]) {
+                                    <td class="item-label-cell">
+                                        <span [jhiTranslate]="pair[1].labelKey"></span>
+                                    </td>
+                                    <td class="item-value-cell">{{ pair[1].value }}</td>
+                                } @else {
+                                    <td class="item-label-cell"></td>
+                                    <td class="item-value-cell"></td>
+                                }
+                            </tr>
+                        }
+                    </ng-template>
+                </p-table>
+            </div>
+        } @else if (entitySummary() && objectKeys(entitySummary()!).length > 0) {
+            <div class="entity-summary-table">
+                <p-table [value]="[entitySummary()!]" styleClass="p-datatable-sm p-datatable-gridlines">
+                    <ng-template #body let-summary>
+                        @for (summaryKey of objectKeys(summary); track summaryKey) {
+                            @if (summary[summaryKey] !== undefined) {
+                                <tr class="summary-item-row">
+                                    <td class="item-label-cell">
+                                        <span [jhiTranslate]="summaryKey"></span>
+                                    </td>
+                                    <td class="item-value-cell">{{ summary[summaryKey] }}</td>
+                                </tr>
+                            }
+                        }
+                    </ng-template>
+                </p-table>
+            </div>
         }
 
         @if (additionalChecks) {
-            <div>
+            <div class="additional-checks">
                 @for (checkKey of objectKeys(additionalChecks); track checkKey; let i = $index) {
-                    <div>
-                        @if (additionalChecks[checkKey]) {
-                            <div class="checkbox">
-                                <div class="control-label text-danger form-check">
-                                    <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
-                                    <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                    @if (additionalChecks[checkKey]) {
+                        <div class="check-item">
+                            <p-checkbox [inputId]="'additional-check-' + i" [(ngModel)]="additionalChecksValues[checkKey]" [name]="'checkbox-' + i" [binary]="true" />
+                            <label [for]="'additional-check-' + i" class="check-label text-danger">
+                                {{ additionalChecks[checkKey] | artemisTranslate }}
+                            </label>
+                        </div>
+                    }
                 }
             </div>
         }
         @if (deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)) {
-            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText" [entityName]="entityTitle" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
+            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText" [entityName]="entityTitle()" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
         }
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
-        <button
+
+    <div class="dialog-footer">
+        <p-button severity="secondary" (onClick)="clear()" [disabled]="submitDisabled()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </p-button>
+        <p-button
             id="delete"
             type="submit"
-            [ngClass]="['btn', buttonType]"
-            [style.cursor]="deleteForm.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
-            [disabled]="deleteForm.invalid || submitDisabled"
+            [severity]="buttonType() === 'btn-danger' ? 'danger' : 'primary'"
+            [disabled]="deleteForm.invalid || submitDisabled()"
+            [loading]="submitDisabled()"
         >
-            @if (submitDisabled) {
-                <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
-            }
             @switch (actionType) {
                 @case (actionTypes.Delete) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" class="me-1" />
                     <span jhiTranslate="entity.action.delete"></span>
                 }
                 @case (actionTypes.Reset) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo" class="me-1" />
                     <span jhiTranslate="entity.action.reset"></span>
                 }
                 @case (actionTypes.Cleanup) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" class="me-1" />
                     <span jhiTranslate="entity.action.cleanup"></span>
                 }
                 @case (actionTypes.Remove) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" class="me-1" />
                     <span jhiTranslate="entity.action.remove"></span>
                 }
                 @case (actionTypes.Unlink) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" class="me-1" />
                     <span jhiTranslate="entity.action.unlink"></span>
                 }
                 @case (actionTypes.NoButtonTextDelete) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" class="me-1" />
                     <span jhiTranslate="entity.action.delete"></span>
                 }
                 @case (actionTypes.EndNow) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" class="me-1" />
                     <span jhiTranslate="entity.action.endNow"></span>
                 }
             }
-        </button>
+        </p-button>
     </div>
 </form>

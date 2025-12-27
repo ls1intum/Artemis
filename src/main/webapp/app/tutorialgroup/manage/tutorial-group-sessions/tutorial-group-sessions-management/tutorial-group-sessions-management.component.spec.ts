@@ -24,6 +24,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
@@ -63,6 +65,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 MockProvider(NgbModal),
                 SortService,
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),

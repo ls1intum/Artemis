@@ -120,11 +120,11 @@ public abstract class SubmissionExportService {
         // Select the participations that should be exported
         List<StudentParticipation> exportedStudentParticipations;
 
-        if (submissionExportOptions.isExportAllParticipants()) {
+        if (submissionExportOptions.exportAllParticipants()) {
             exportedStudentParticipations = new ArrayList<>(exercise.getStudentParticipations());
         }
         else {
-            Set<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toSet());
+            Set<String> participantIds = Arrays.stream(submissionExportOptions.participantIdentifierList().split(",")).map(String::trim).collect(Collectors.toSet());
 
             exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
                     .collect(Collectors.toCollection(ArrayList::new));
@@ -132,12 +132,12 @@ public abstract class SubmissionExportService {
 
         boolean enableFilterAfterDueDate = false;
         ZonedDateTime filterLateSubmissionsDate = null;
-        if (submissionExportOptions.isFilterLateSubmissions()) {
-            if (submissionExportOptions.getFilterLateSubmissionsDate() == null) {
+        if (submissionExportOptions.filterLateSubmissions()) {
+            if (submissionExportOptions.filterLateSubmissionsDate() == null) {
                 enableFilterAfterDueDate = true;
             }
             else {
-                filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
+                filterLateSubmissionsDate = submissionExportOptions.filterLateSubmissionsDate();
             }
         }
 
