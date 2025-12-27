@@ -239,7 +239,20 @@ public class BuildJobContainerService {
                     if (archiveStream == null) {
                         throw new IOException("Failed to retrieve archive from container " + containerId + " at path " + path + ": exec() returned null InputStream");
                     }
-                    TarArchiveInputStream result = new TarArchiveInputStream(archiveStream);
+                    TarArchiveInputStream result;
+                    try {
+                        result = new TarArchiveInputStream(archiveStream);
+                    }
+                    catch (Exception e) {
+                        // Ensure archiveStream is closed if TarArchiveInputStream constructor fails
+                        try {
+                            archiveStream.close();
+                        }
+                        catch (IOException closeException) {
+                            e.addSuppressed(closeException);
+                        }
+                        throw e;
+                    }
                     log.debug("Successfully retrieved archive from container {} at path {}", containerId, path);
                     return result;
                 }
