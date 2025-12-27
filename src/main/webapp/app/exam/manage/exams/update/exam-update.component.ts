@@ -3,9 +3,9 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, inject, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -19,7 +19,7 @@ import { DocumentationType } from 'app/shared/components/buttons/documentation-b
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -29,6 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -47,6 +48,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
+        ConfirmEntityNameComponent,
+        ReactiveFormsModule,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -75,7 +78,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private originalEndDate?: dayjs.Dayjs;
 
+    private activeModalRef: NgbModalRef | null = null;
+
     private componentActive = true;
+
+    confirmEntityNameValue = signal('');
+
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
@@ -248,13 +256,23 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
 
         if (datesChanged && this.isOngoingExam) {
+            this.confirmEntityNameValue.set('');
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            this.activeModalRef = modalRef;
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
             modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent();
+            modalRef.componentInstance.confirmDisabled = true;
             modalRef.result.then(this.save.bind(this));
         } else {
             this.save();
+        }
+    }
+
+    onConfirmNameChange(value: string) {
+        this.confirmEntityNameValue.set(value);
+        if (this.activeModalRef) {
+            this.activeModalRef.componentInstance.confirmDisabled = value !== this.exam.title;
         }
     }
 
