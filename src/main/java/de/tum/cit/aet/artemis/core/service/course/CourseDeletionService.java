@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
@@ -50,6 +50,8 @@ public class CourseDeletionService {
     private static final Logger log = LoggerFactory.getLogger(CourseDeletionService.class);
 
     private final ExerciseDeletionService exerciseDeletionService;
+
+    private final ExerciseRepository exerciseRepository;
 
     private final UserService userService;
 
@@ -89,7 +91,7 @@ public class CourseDeletionService {
 
     private final CourseRequestRepository courseRequestRepository;
 
-    public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, UserService userService, Optional<LectureApi> lectureApi,
+    public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, UserService userService, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
@@ -98,6 +100,7 @@ public class CourseDeletionService {
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
+        this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.lectureApi = lectureApi;
         this.tutorialGroupApi = tutorialGroupApi;
@@ -222,8 +225,11 @@ public class CourseDeletionService {
     }
 
     private void deleteExercisesOfCourse(Course course) {
-        for (Exercise exercise : course.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), true);
+        // Fetch all exercise IDs directly from database to include unreleased exercises
+        // (course.getExercises() may only contain released exercises based on how the course was loaded)
+        var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(course.getId());
+        for (Long exerciseId : exerciseIds) {
+            exerciseDeletionService.delete(exerciseId, true);
         }
     }
 
