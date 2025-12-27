@@ -274,7 +274,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private String getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         try {
-            return gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+            if (latestHash == null) {
+                throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved - repository may have no commits");
+            }
+            return latestHash.getName();
         }
         catch (EntityNotFoundException ex) {
             var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
@@ -299,7 +303,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
             try {
-                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri()).getName();
+                var latestHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
+                if (latestHash == null) {
+                    throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId()
+                            + " could not be retrieved - repository may have no commits");
+                }
+                commitHash = latestHash.getName();
             }
             catch (EntityNotFoundException ex) {
                 throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
@@ -539,8 +548,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param participation       Template or Solution Participation
      */
     private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
-        ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
         var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+        if (latestHash == null) {
+            log.warn("Could not retrieve last commit hash for participation {} - skipping initial submission creation", participation.getId());
+            return;
+        }
+        ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
         submission.setCommitHash(latestHash.getName());
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);
