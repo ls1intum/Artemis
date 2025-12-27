@@ -380,7 +380,14 @@ public class BuildJobExecutionService {
             }
 
             // Always attempt to stop the container to prevent resource leaks
-            buildJobContainerService.stopContainer(containerName);
+            try {
+                buildJobContainerService.stopContainer(containerName);
+            }
+            catch (Exception e) {
+                msg = "Could not stop container " + containerName;
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                log.error(msg, e);
+            }
 
             // Delete the cloned repositories
             deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id(), assignmentRepositoryPath);
