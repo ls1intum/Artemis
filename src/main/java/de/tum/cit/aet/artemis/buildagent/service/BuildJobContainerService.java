@@ -50,8 +50,39 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.RepositoryCheckoutPath;
 
 /**
- * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
- * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
+ * Service responsible for managing Docker container lifecycle and file operations during build job execution.
+ * <p>
+ * This service handles all Docker container interactions for the local CI system, including:
+ * <ul>
+ * <li>Creating and configuring containers with appropriate resource limits and environment variables</li>
+ * <li>Starting containers and executing build scripts within them</li>
+ * <li>Copying repository files into containers (via tar archives)</li>
+ * <li>Retrieving build results from containers</li>
+ * <li>Stopping and cleaning up containers (gracefully or forcefully)</li>
+ * </ul>
+ * <p>
+ * <b>Architecture:</b> This service works in conjunction with:
+ * <ul>
+ * <li>{@link BuildJobExecutionService} - orchestrates the overall build job flow and calls this service for container operations</li>
+ * <li>{@link BuildAgentConfiguration} - provides Docker client and host configuration</li>
+ * <li>{@link BuildLogsMap} - stores build logs that are captured from container output</li>
+ * </ul>
+ * <p>
+ * <b>Container Lifecycle:</b>
+ * <ol>
+ * <li>{@link #configureContainer} - creates container with resource limits and build script</li>
+ * <li>{@link #startContainer} - starts the container</li>
+ * <li>{@link #populateBuildJobContainer} - copies repositories into container</li>
+ * <li>{@link #runScriptInContainer} - executes the build script</li>
+ * <li>{@link #getArchiveFromContainer} - retrieves build results</li>
+ * <li>{@link #stopContainer} or {@link #stopUnresponsiveContainer} - stops and removes container</li>
+ * </ol>
+ * <p>
+ * <b>Retry Logic:</b> File operations (tar creation, archive retrieval) include retry logic with exponential
+ * backoff to handle transient failures. See {@link #executeWithRetry} for details.
+ *
+ * @see BuildJobExecutionService
+ * @see BuildAgentConfiguration
  */
 @Lazy(false)
 @Service
@@ -60,8 +91,15 @@ public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
+    /**
+     * Maximum number of retry attempts for tar archive operations (creation and retrieval).
+     * Operations will be retried with exponential backoff before failing permanently.
+     */
     private static final int MAX_TAR_OPERATION_RETRIES = 3;
 
+    /**
+     * Base delay in milliseconds for retry backoff. Actual delays are: 100ms, 200ms, 400ms (exponential).
+     */
     private static final int TAR_RETRY_BASE_DELAY_MS = 100;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
@@ -496,16 +534,46 @@ public class BuildJobContainerService {
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
+    /**
+     * Copies a repository into the container and moves its contents to the specified directory.
+     * <p>
+     * This method performs three steps:
+     * <ol>
+     * <li>Copies the repository as a tar archive to the container's working directory</li>
+     * <li>Creates the target directory structure</li>
+     * <li>Moves repository contents from the temporary location to the target directory</li>
+     * </ol>
+     *
+     * @param containerId      the Docker container ID
+     * @param repositoryPath   the local filesystem path to the repository to copy
+     * @param newDirectoryName the target directory path inside the container
+     * @param buildJobId       the build job ID for logging purposes
+     */
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName, String buildJobId) {
         copyToContainer(repositoryPath, containerId, buildJobId);
         addDirectory(containerId, newDirectoryName, true);
         insertRepositoryFiles(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
+    /**
+     * Copies all files from a source directory to a destination directory inside the container.
+     * Uses {@code cp -r source/. destination} to copy contents without creating a nested directory.
+     *
+     * @param containerId the Docker container ID
+     * @param oldName     the source directory path inside the container
+     * @param newName     the destination directory path inside the container
+     */
     private void insertRepositoryFiles(String containerId, String oldName, String newName) {
         executeDockerCommand(containerId, null, false, false, true, "cp", "-r", oldName + (oldName.endsWith("/") ? "." : "/."), newName);
     }
 
+    /**
+     * Creates a directory inside the container.
+     *
+     * @param containerId              the Docker container ID
+     * @param directoryName            the path of the directory to create
+     * @param createParentsIfNecessary if true, creates parent directories as needed (mkdir -p); otherwise fails if parent doesn't exist
+     */
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
         String[] command = createParentsIfNecessary ? new String[] { "mkdir", "-p", directoryName } : new String[] { "mkdir", directoryName };
         executeDockerCommand(containerId, null, false, false, true, command);
@@ -573,6 +641,21 @@ public class BuildJobContainerService {
         throw lastException;
     }
 
+    /**
+     * Copies a local directory to the Docker container as a tar archive.
+     * <p>
+     * This method creates a tar archive of the source path and uploads it to the container's
+     * working directory. The operation includes retry logic to handle transient failures
+     * (e.g., file system race conditions, Docker connectivity issues).
+     * <p>
+     * <b>Important:</b> The source path should be a directory containing repository files.
+     * The entire directory is archived and uploaded, preserving the directory structure.
+     *
+     * @param sourcePath  the local filesystem path to copy (typically a repository directory)
+     * @param containerId the Docker container ID to copy files into
+     * @param buildJobId  the build job ID for logging purposes (can be null)
+     * @throws LocalCIException if the copy operation fails after all retry attempts
+     */
     private void copyToContainer(Path sourcePath, String containerId, String buildJobId) {
         log.debug("Copying source path {} to container {}", sourcePath.toAbsolutePath(), containerId);
 
@@ -609,8 +692,14 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Creates a tar archive with retry logic. This is a wrapper around createTarArchive that handles
-     * LocalCIException by extracting the underlying IOException for retry handling.
+     * Creates a tar archive with retry-compatible exception handling.
+     * <p>
+     * This is a wrapper around {@link #createTarArchive} that converts {@link LocalCIException}
+     * to {@link IOException} to enable the retry mechanism in {@link #executeWithRetry}.
+     *
+     * @param sourcePath the path to archive
+     * @return a ByteArrayOutputStream containing the tar archive data
+     * @throws IOException if archive creation fails (enables retry handling)
      */
     private ByteArrayOutputStream createTarArchiveWithRetry(Path sourcePath) throws IOException {
         try {
@@ -625,12 +714,22 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Creates an in-memory tar archive from a filesystem path.
+     * <p>
+     * The archive is created in memory (ByteArrayOutputStream) to allow for easy upload to Docker.
+     * Uses POSIX long file mode to support files with long names.
+     *
+     * @param sourcePath the path to archive (can be a file or directory)
+     * @return a ByteArrayOutputStream containing the complete tar archive
+     * @throws LocalCIException if any IO error occurs during archive creation
+     */
     private ByteArrayOutputStream createTarArchive(Path sourcePath) {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream)) {
-            // This needs to be done in case the files have a long name
+            // Enable POSIX long file mode to support files with names > 100 characters
             tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
             addFileToTar(tarArchiveOutputStream, sourcePath, "");
@@ -646,12 +745,28 @@ public class BuildJobContainerService {
         return byteArrayOutputStream;
     }
 
+    /**
+     * Recursively adds a file or directory to a tar archive.
+     * <p>
+     * For regular files: reads the file content and writes it to the archive.
+     * For directories: creates a directory entry and recursively processes all children.
+     * <p>
+     * <b>Note:</b> This method can fail with {@link java.nio.file.NoSuchFileException} if files
+     * are deleted during traversal (e.g., by concurrent cleanup operations). The caller should
+     * handle such failures with retry logic.
+     *
+     * @param tarArchiveOutputStream the tar output stream to write to
+     * @param path                   the file or directory to add
+     * @param parent                 the parent path prefix for the archive entry name
+     * @throws IOException if reading files or listing directories fails
+     */
     private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path path, String parent) throws IOException {
         try {
             TarArchiveEntry tarEntry = new TarArchiveEntry(path, parent + path.getFileName());
             tarArchiveOutputStream.putArchiveEntry(tarEntry);
 
             if (Files.isRegularFile(path)) {
+                // For regular files: read content and write to archive
                 try (InputStream is = Files.newInputStream(path)) {
                     byte[] buffer = new byte[1024];
                     int count;
@@ -662,6 +777,7 @@ public class BuildJobContainerService {
                 tarArchiveOutputStream.closeArchiveEntry();
             }
             else {
+                // For directories: close the directory entry and recursively process children
                 tarArchiveOutputStream.closeArchiveEntry();
                 try (Stream<Path> children = Files.list(path)) {
                     for (Path child : children.toList()) {
@@ -676,6 +792,15 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Executes a command in a Docker container without waiting for it to complete (fire-and-forget).
+     * <p>
+     * This is used for commands where we don't need the result, such as creating the stop signal file.
+     * The command is executed in detached mode.
+     *
+     * @param containerId the Docker container ID
+     * @param command     the command and arguments to execute
+     */
     private void executeDockerCommandWithoutAwaitingResponse(String containerId, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (final var createCommand = dockerClient.execCreateCmd(containerId).withCmd(command)) {
@@ -684,6 +809,27 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Executes a command in a Docker container and optionally captures output.
+     * <p>
+     * This method is the core Docker command execution mechanism. It supports:
+     * <ul>
+     * <li>Capturing stdout/stderr output to build logs</li>
+     * <li>Running commands as root user</li>
+     * <li>Synchronous or detached execution</li>
+     * </ul>
+     * <p>
+     * If {@code buildJobId} is provided and output is attached, command output is captured
+     * and stored in the build logs via {@link BuildLogsMap}.
+     *
+     * @param containerId  the Docker container ID
+     * @param buildJobId   the build job ID for logging (can be null if output capture not needed)
+     * @param attachStdout if true, capture stdout from the command
+     * @param attachStderr if true, capture stderr from the command
+     * @param forceRoot    if true, execute the command as root user
+     * @param command      the command and arguments to execute
+     * @throws LocalCIException if the command execution fails or is interrupted
+     */
     private void executeDockerCommand(String containerId, String buildJobId, boolean attachStdout, boolean attachStderr, boolean forceRoot, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         boolean detach = !attachStdout && !attachStderr;
@@ -738,12 +884,34 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Validates a file path to prevent path traversal attacks and injection.
+     * <p>
+     * Rejects paths that:
+     * <ul>
+     * <li>Are null</li>
+     * <li>Contain ".." (parent directory traversal)</li>
+     * <li>Contain characters outside the allowed set (alphanumeric, underscore, asterisk, dot, slash, hyphen)</li>
+     * </ul>
+     *
+     * @param path the path to validate
+     * @throws LocalCIException if the path is invalid or potentially malicious
+     */
     private void checkPath(String path) {
         if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
             throw new LocalCIException("Invalid path: " + path);
         }
     }
 
+    /**
+     * Finds a Docker container by its name.
+     * <p>
+     * Docker container names are prefixed with "/" internally, so this method handles that.
+     * Returns null if the container is not found or if Docker is not available.
+     *
+     * @param containerName the container name (without the "/" prefix)
+     * @return the Container object if found, null otherwise
+     */
     private Container getContainerForName(String containerName) {
         try (final var listContainerCommand = buildAgentConfiguration.getDockerClient().listContainersCmd().withShowAll(true)) {
             List<Container> containers = listContainerCommand.exec();
@@ -760,6 +928,15 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Splits a string by newlines while preserving the newline characters at the end of each segment.
+     * <p>
+     * Uses a look-behind regex pattern to split after (not before) newline characters.
+     * This preserves the newlines in the output, which is useful for log formatting.
+     *
+     * @param input the string to split
+     * @return an array of strings, each potentially ending with a newline character
+     */
     private String[] splitBehindNewLines(String input) {
         String newlineLookBehindPattern = "(?<=\\R)";
         return input.split(newlineLookBehindPattern);
