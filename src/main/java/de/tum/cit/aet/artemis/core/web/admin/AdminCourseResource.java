@@ -191,6 +191,8 @@ public class AdminCourseResource {
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
 
+        // TODO: the course above was fetched with released exercises only which can lead to exceptions. The method below refetches the exercises.
+        // Ideally, the service only loads the ids of related entities to provide a faster deletion experience and avoid issues.
         courseDeletionService.delete(course);
         if (course.getCourseIcon() != null) {
             fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);

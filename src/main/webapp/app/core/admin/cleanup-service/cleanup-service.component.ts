@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/core/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -14,20 +14,27 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
+/**
+ * Admin component for managing data cleanup operations.
+ * Allows scheduling and executing various cleanup tasks like deleting orphaned entities.
+ */
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    private dataCleanupService: DataCleanupService = inject(DataCleanupService);
-    private modalService: NgbModal = inject(NgbModal);
+    private readonly dataCleanupService = inject(DataCleanupService);
+    private readonly modalService = inject(NgbModal);
 
-    cleanupOperations: CleanupOperation[] = [
+    /** Cleanup operations data - uses signal for reactivity */
+    readonly cleanupOperations = signal<CleanupOperation[]>([
         {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(12, 'months'),
@@ -63,7 +70,7 @@ export class CleanupServiceComponent implements OnInit {
             lastExecuted: undefined,
             datesValid: signal(true),
         },
-    ];
+    ]);
 
     ngOnInit(): void {
         this.loadLastExecutions();
@@ -73,12 +80,15 @@ export class CleanupServiceComponent implements OnInit {
         this.dataCleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
             const executionRecords = executionRecordsBody.body!;
             if (executionRecords && executionRecords.length > 0) {
-                this.cleanupOperations.forEach((operation, index) => {
-                    const executionRecord = executionRecords[index];
-                    if (executionRecord && executionRecord.executionDate) {
-                        operation.lastExecuted = convertDateFromServer(executionRecord.executionDate);
-                    }
-                });
+                this.cleanupOperations.update((operations) =>
+                    operations.map((operation, index) => {
+                        const executionRecord = executionRecords[index];
+                        if (executionRecord && executionRecord.executionDate) {
+                            return { ...operation, lastExecuted: convertDateFromServer(executionRecord.executionDate) };
+                        }
+                        return operation;
+                    }),
+                );
             }
         });
     }
