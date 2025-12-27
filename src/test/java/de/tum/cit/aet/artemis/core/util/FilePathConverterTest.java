@@ -34,7 +34,7 @@ class FilePathConverterTest {
     @SuppressWarnings("unchecked")
     private static Path readFileUploadPathFromConfig() {
         Yaml yaml = new Yaml();
-        try (InputStream inputStream = FilePathConverterTest.class.getClassLoader().getResourceAsStream("config/application-local.yml")) {
+        try (InputStream inputStream = FilePathConverterTest.class.getClassLoader().getResourceAsStream("config/application-artemis.yml")) {
             Map<String, Object> config = yaml.load(inputStream);
             Map<String, Object> artemis = (Map<String, Object>) config.get("artemis");
             String fileUploadPath = (String) artemis.get("file-upload-path");
