@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -147,15 +147,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /** Raw build log content as a string for display and download */
     rawBuildLogsString: string = '';
-
-    /**
-     * Indicates whether the user is viewing the global Server Administration view.
-     * (i.e. Server Administration > Build Overview).
-     *
-     * - true:  Show Course ID column (multiple courses visible)
-     * - false: Hide Course ID column (single course context)
-     */
-    isAdministrationView = computed(() => this.courseId === 0);
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -455,5 +446,15 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 this.loadFinishedBuildJobs();
             })
             .catch(() => {});
+    }
+
+    /**
+     * Indicates whether the build overview is displayed in the Server Administration context.
+     *
+     * @returns `true` if the view operates without a specific course context (courseId === 0),
+     *          otherwise `false` when scoped to a single course.
+     */
+    get isAdministrationView(): boolean {
+        return this.courseId === 0;
     }
 }
