@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -92,6 +93,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     @Mock
     private ProgrammingSubmissionService programmingSubmissionService;
 
+    @Mock
+    private ExerciseVersionService exerciseVersionService;
+
     private HyperionCodeGenerationExecutionService service;
 
     private User user;
@@ -103,7 +107,8 @@ class HyperionCodeGenerationExecutionServiceTest {
         MockitoAnnotations.openMocks(this);
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
-                programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService);
+                programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
+                exerciseVersionService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -149,6 +154,44 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isNull();
         verify(publisher, times(1)).error(anyString());
+    }
+
+    @Test
+    void generateAndCompileCode_withSuccessfulRun_createsExerciseVersion() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        ObjectId originalCommitId = mock(ObjectId.class);
+        ObjectId newCommitId = mock(ObjectId.class);
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(originalCommitId.getName()).thenReturn("orig-hash");
+        when(newCommitId.getName()).thenReturn("new-hash");
+        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        doNothing().when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.isSuccessful()).thenReturn(true);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
+
+        Result result = service.generateAndCompileCode(exercise, user, RepositoryType.SOLUTION, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(exerciseVersionService).createExerciseVersion(exercise, user);
     }
 
     @Test
