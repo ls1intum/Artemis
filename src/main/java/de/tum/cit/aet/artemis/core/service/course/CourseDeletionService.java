@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
@@ -105,6 +106,8 @@ public class CourseDeletionService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
+    private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
+
     private final CourseOperationProgressService progressService;
 
     private final CourseAdminService courseAdminService;
@@ -121,8 +124,9 @@ public class CourseDeletionService {
             ConversationRepository conversationRepository, FaqRepository faqRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository,
-            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
-            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
+            CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
+            SubmissionRepository submissionRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
@@ -146,6 +150,7 @@ public class CourseDeletionService {
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.courseRequestRepository = courseRequestRepository;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
+        this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.progressService = progressService;
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
@@ -569,12 +574,15 @@ public class CourseDeletionService {
     }
 
     /**
-     * Deletes all LLM token usage traces for the course.
+     * Deletes all LLM token usage traces and their associated requests for the course.
      * This removes records tracking AI model usage (tokens, costs) for this course.
+     * Requests must be deleted first to avoid foreign key constraint violations.
      *
      * @param courseId the ID of the course whose LLM traces should be deleted
      */
     private void deleteLLMTokenUsageTraces(long courseId) {
+        // Delete requests first to avoid foreign key constraint violations
+        llmTokenUsageRequestRepository.deleteAllByTraceCourseId(courseId);
         llmTokenUsageTraceRepository.deleteAllByCourseId(courseId);
     }
 }

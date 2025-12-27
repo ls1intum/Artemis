@@ -98,6 +98,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -122,6 +123,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportUtil;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
@@ -330,6 +332,9 @@ public class CourseTestService {
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Autowired
+    private LLMTokenUsageRequestTestRepository llmTokenUsageRequestRepository;
 
     @Autowired
     private Optional<CompetencyProgressUtilService> competencyProgressUtilService;
@@ -605,6 +610,7 @@ public class CourseTestService {
             irisCourseChatSessionRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All Iris chat sessions are deleted").isZero());
 
             assertThat(llmTokenUsageTraceRepository.findAllByCourseId(course.getId())).as("All LLM token usage traces are deleted").isEmpty();
+            assertThat(llmTokenUsageRequestRepository.findAllByTraceCourseId(course.getId())).as("All LLM token usage requests are deleted").isEmpty();
 
             competencyProgressRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All competency progress is deleted").isZero());
 
@@ -613,7 +619,9 @@ public class CourseTestService {
     }
 
     /**
-     * Creates an LLM token usage trace for a course.
+     * Creates an LLM token usage trace with associated requests for a course.
+     * This tests that both traces and their child requests are properly deleted
+     * when deleting a course (avoiding foreign key constraint violations).
      *
      * @param course  the course
      * @param student the user
@@ -623,7 +631,28 @@ public class CourseTestService {
         trace.setCourseId(course.getId());
         trace.setUserId(student.getId());
         trace.setServiceType(LLMServiceType.IRIS);
-        llmTokenUsageTraceRepository.save(trace);
+        trace = llmTokenUsageTraceRepository.save(trace);
+
+        // Create associated LLM token usage requests to test proper cascade deletion
+        var request1 = new LLMTokenUsageRequest();
+        request1.setModel("gpt-4");
+        request1.setNumInputTokens(100);
+        request1.setNumOutputTokens(50);
+        request1.setCostPerMillionInputTokens(30.0f);
+        request1.setCostPerMillionOutputTokens(60.0f);
+        request1.setServicePipelineId("test-pipeline");
+        request1.setTrace(trace);
+        llmTokenUsageRequestRepository.save(request1);
+
+        var request2 = new LLMTokenUsageRequest();
+        request2.setModel("gpt-3.5-turbo");
+        request2.setNumInputTokens(200);
+        request2.setNumOutputTokens(100);
+        request2.setCostPerMillionInputTokens(0.5f);
+        request2.setCostPerMillionOutputTokens(1.5f);
+        request2.setServicePipelineId("test-pipeline");
+        request2.setTrace(trace);
+        llmTokenUsageRequestRepository.save(request2);
     }
 
     private void addConversationsToCourse(Course course3) throws Exception {
