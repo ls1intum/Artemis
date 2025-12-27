@@ -1,0 +1,33 @@
+---
+id: test-servers
+title: Test Servers
+sidebar_label: Test Servers
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Test Servers
+
+The following test servers are available for testing Artemis features and configurations:
+
+| Testserver                                   | Connected Systems              | Deployment via | Access              | Admin-Accounts |
+|----------------------------------------------|--------------------------------|----------------|---------------------|----------------|
+| artemis-staging-localci.artemis.cit.tum.de   | - Integrated Code Lifecycle<br/>- LDAP<br/>- LTI<br/>- Apollon<br/>- Iris<br/>- MySQL | Helios | - TUMonline account<br/>- Test accounts | On Demand |
+| https://artemis-test1.artemis.cit.tum.de     | - Integrated Code Lifecycle<br/>- MySQL<br/>- 3 Nodes<br/>- Iris<br/>- LTI | Helios | - TUMonline account<br/>- Test accounts | On Demand |
+| https://artemis-test2.artemis.cit.tum.de     | - Integrated Code Lifecycle<br/>- MySQL<br/>- 1 Node<br/>- LTI | Helios | - TUMonline account<br/>- Test accounts | On Demand |
+| https://artemis-test3.artemis.cit.tum.de     | - Integrated Code Lifecycle<br/>- Postgres<br/>- 3 Nodes<br/>- Iris<br/>- LTI | Helios | - TUMonline account<br/>- Test accounts | On Demand |
+| https://artemis-test4.artemis.cit.tum.de     | - Integrated Code Lifecycle<br/>- LDAP<br/>- LTI<br/>- Apollon<br/>- Iris<br/>- MySQL | Helios | - TUMonline account<br/>- Test accounts | On Demand |
+| https://artemis-test5.artemis.cit.tum.de     | - Integrated Code Lifecycle<br/>- Postgres<br/>- 1 Node<br/>- Iris<br/>- LTI | Helios | - TUMonline account<br/>- Test accounts | On Demand |
+
+## GitHub Deployment
+
+[Helios](https://helios.aet.cit.tum.de/) is now the official tool used to manage test server and production deployments.
+
+For instructions, please refer to the official documentation: [Helios User Guide](https://ls1intum.github.io/Helios/user_guide/deployments/testserver/)
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        If the above link is unavailable, go to the <a href="https://ls1intum.github.io/Helios/">Helios documentation homepage</a> and navigate to <strong>User Guide → Helios User Guide</strong>.
+    </p>
+</Callout>
