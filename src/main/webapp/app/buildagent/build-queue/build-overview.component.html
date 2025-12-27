@@ -1,4 +1,7 @@
 <div>
+    @if (!courseId) {
+        <h5 *adminTitleBarTitle id="build-overview-heading" class="mb-0" jhiTranslate="artemisApp.buildQueue.title"></h5>
+    }
     <jhi-build-job-statistics />
 
     <div style="padding-bottom: 60px">

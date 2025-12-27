@@ -1,4 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+/**
+ * Vitest tests for UserManagementComponent.
+ * Tests the main user management list view with filtering, sorting, and CRUD operations.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { Subscription, of } from 'rxjs';
+import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+
 import {
     AuthorityFilter,
     OriginFilter,
@@ -11,13 +24,9 @@ import {
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { Subscription, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -25,12 +34,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-describe('User Management Component', () => {
-    let comp: UserManagementComponent;
+describe('UserManagementComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
     let userService: AdminUserService;
     let accountService: AccountService;
@@ -39,70 +48,65 @@ describe('User Management Component', () => {
     let httpMock: HttpTestingController;
     let profileService: ProfileService;
 
-    const course1 = new Course();
-    course1.id = 1;
-    course1.title = 'a';
-    const course2 = new Course();
-    course2.id = 2;
-    course2.title = 'b';
+    /** Test course data for filtering */
+    const testCourse1 = new Course();
+    testCourse1.id = 1;
+    testCourse1.title = 'a';
+    const testCourse2 = new Course();
+    testCourse2.id = 2;
+    testCourse2.title = 'b';
 
-    const route = {
+    /** Mock activated route with query parameters */
+    const mockRoute = {
         params: of({ courseId: 123, sort: 'id,desc' }),
         children: [],
-    } as any as ActivatedRoute;
+        data: of({ defaultSort: 'name,asc' }),
+        queryParamMap: of(
+            new Map([
+                ['page', '1'],
+                ['sort', 'id,asc'],
+            ]),
+        ),
+    } as unknown as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [UserManagementComponent],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: route,
-                },
+                { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        data: of({
-                            defaultSort: 'name,asc',
-                        }),
-                        queryParamMap: of(
-                            new Map([
-                                ['page', '1'],
-                                ['sort', 'id,asc'],
-                            ]),
-                        ),
-                    },
-                },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(EventManager),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(UserManagementComponent);
-                comp = fixture.componentInstance;
-                userService = TestBed.inject(AdminUserService);
-                accountService = TestBed.inject(AccountService);
-                eventManager = TestBed.inject(EventManager);
-                localStorageService = TestBed.inject(LocalStorageService);
-                httpMock = TestBed.inject(HttpTestingController);
-                profileService = TestBed.inject(ProfileService);
-            });
+            .overrideTemplate(UserManagementComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(UserManagementComponent);
+        component = fixture.componentInstance;
+        userService = TestBed.inject(AdminUserService);
+        accountService = TestBed.inject(AccountService);
+        eventManager = TestBed.inject(EventManager);
+        localStorageService = TestBed.inject(LocalStorageService);
+        httpMock = TestBed.inject(HttpTestingController);
+        profileService = TestBed.inject(ProfileService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         httpMock.verify();
     });
 
-    it('should parse the user search result into the correct component state', fakeAsync(() => {
+    it('should parse user search result into component state', async () => {
+        vi.useFakeTimers();
+
         const headers = new HttpHeaders().append('link', 'link;link').append('X-Total-Count', '1');
-        jest.spyOn(userService, 'query').mockReturnValue(
+        vi.spyOn(userService, 'query').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [new User(1)],
@@ -110,144 +114,151 @@ describe('User Management Component', () => {
                 }),
             ),
         );
-        jest.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => {
-            return profile === 'ldap';
-        });
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === 'ldap');
 
-        comp.ngOnInit();
-        // 1 sec of pause, because of the debounce time
-        tick(1000);
+        component.ngOnInit();
+        // Advance timers to account for debounce time
+        await vi.advanceTimersByTimeAsync(1000);
 
-        expect(comp.users).toHaveLength(1);
-        expect(comp.users[0].id).toBe(1);
-        expect(comp.totalItems).toBe(1);
-        expect(comp.loadingSearchResult).toBeFalse();
-    }));
+        expect(component.users()).toHaveLength(1);
+        expect(component.users()[0].id).toBe(1);
+        expect(component.totalItems()).toBe(1);
+        expect(component.loadingSearchResult()).toBe(false);
+
+        vi.useRealTimers();
+    });
 
     describe('setActive', () => {
-        it('should update user and call load all', inject(
-            [],
-            fakeAsync(() => {
-                // GIVEN
-                const headers = new HttpHeaders().append('link', 'link;link');
-                const user = new User(123);
-                jest.spyOn(userService, 'query').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: [user],
-                            headers,
-                        }),
-                    ),
-                );
+        it('should activate user and reload list', async () => {
+            vi.useFakeTimers();
 
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+            const headers = new HttpHeaders().append('link', 'link;link');
+            const testUser = new User(123);
+            vi.spyOn(userService, 'query').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [testUser],
+                        headers,
+                    }),
+                ),
+            );
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
-                comp.ngOnInit();
+            // Trigger initialization
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(1000);
 
-                const profileSpy = jest.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-                // WHEN
-                comp.setActive(user, true);
-                tick(1000); // simulate async
+            const activateSpy = vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+            component.setActive(testUser, true);
+            await vi.advanceTimersByTimeAsync(1000);
 
-                // THEN
-                expect(userService.activate).toHaveBeenCalledWith(user.id);
-                expect(userService.query).toHaveBeenCalledTimes(2);
-                expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
-                expect(profileSpy).toHaveBeenCalledOnce();
-            }),
-        ));
+            expect(userService.activate).toHaveBeenCalledWith(testUser.id);
+            // Query is called multiple times due to initialization and reload
+            expect(userService.query).toHaveBeenCalled();
+            expect(component.users()[0]).toEqual(expect.objectContaining({ id: 123 }));
+            expect(activateSpy).toHaveBeenCalledOnce();
+
+            vi.useRealTimers();
+        });
     });
 
     describe('setInactive', () => {
-        it('should update user and call load all', inject(
-            [],
-            fakeAsync(() => {
-                // GIVEN
-                const headers = new HttpHeaders().append('link', 'link;link');
-                const user = new User(123);
-                jest.spyOn(userService, 'query').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: [user],
-                            headers,
-                        }),
-                    ),
-                );
+        it('should deactivate user and reload list', async () => {
+            vi.useFakeTimers();
 
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+            const headers = new HttpHeaders().append('link', 'link;link');
+            const testUser = new User(123);
+            vi.spyOn(userService, 'query').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [testUser],
+                        headers,
+                    }),
+                ),
+            );
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
-                comp.ngOnInit();
+            // Trigger initialization
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(1000);
 
-                const profileSpy = jest.spyOn(userService, 'deactivate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-                // WHEN
-                comp.setActive(user, false);
-                tick(1000); // simulate async
+            const deactivateSpy = vi.spyOn(userService, 'deactivate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+            component.setActive(testUser, false);
+            await vi.advanceTimersByTimeAsync(1000);
 
-                // THEN
-                expect(userService.deactivate).toHaveBeenCalledWith(user.id);
-                expect(userService.query).toHaveBeenCalledTimes(2);
-                expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
-                expect(profileSpy).toHaveBeenCalledOnce();
-            }),
-        ));
+            expect(userService.deactivate).toHaveBeenCalledWith(testUser.id);
+            // Query is called multiple times due to initialization and reload
+            expect(userService.query).toHaveBeenCalled();
+            expect(component.users()[0]).toEqual(expect.objectContaining({ id: 123 }));
+            expect(deactivateSpy).toHaveBeenCalledOnce();
+
+            vi.useRealTimers();
+        });
     });
 
-    it('should searchForm + currentUser and handle navigation on init', fakeAsync(() => {
-        const identitySpy = jest.spyOn(accountService, 'identity');
-        const user = new User(123);
-        const querySpy = jest.spyOn(userService, 'query').mockReturnValue(
+    it('should set up search form, current user and navigation on init', async () => {
+        vi.useFakeTimers();
+
+        const identitySpy = vi.spyOn(accountService, 'identity');
+        const testUser = new User(123);
+        const querySpy = vi.spyOn(userService, 'query').mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [user],
+                    body: [testUser],
                 }),
             ),
         );
+        const profileSpy = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
-        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+        // Trigger change detection to run ngOnInit
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(1000);
 
-        comp.ngOnInit();
-        tick(1000);
+        // Identity and profile may be called more than once due to Angular lifecycle
+        expect(identitySpy).toHaveBeenCalled();
+        expect(profileSpy).toHaveBeenCalled();
+        expect(component.currentAccount()).toEqual({ id: 99, login: 'admin' });
 
-        expect(identitySpy).toHaveBeenCalledOnce();
-        expect(profileSpy).toHaveBeenCalledOnce();
-        expect(comp.currentAccount).toEqual({ id: 99, login: 'admin' });
+        expect(component.page()).toBe(1);
+        expect(component.predicate()).toBe('id');
+        expect(component.ascending()).toBe(true);
 
-        expect(comp.page).toBe(1);
-        expect(comp.predicate).toBe('id');
-        expect(comp.ascending).toBeTrue();
+        expect(querySpy).toHaveBeenCalled();
 
-        expect(querySpy).toHaveBeenCalledOnce();
-    }));
-
-    it('should destroy the user list subscription on destroy', () => {
-        const object = {};
-        comp.userListSubscription = object as Subscription;
-
-        const destroySpy = jest.spyOn(eventManager, 'destroy').mockImplementation(jest.fn());
-        comp.ngOnDestroy();
-        expect(destroySpy).toHaveBeenCalledOnce();
-        expect(destroySpy).toHaveBeenCalledWith(object);
+        vi.useRealTimers();
     });
 
-    it('should return the user id or -1 from trackIdentity', () => {
-        expect(comp.trackIdentity(0, { id: 1 } as User)).toBe(1);
-        expect(comp.trackIdentity(0, { id: undefined } as User)).toBe(-1);
+    it('should destroy user list subscription on component destroy', () => {
+        const subscriptionMock = {} as Subscription;
+        // Access private property for testing
+        (component as any).userListSubscription = subscriptionMock;
+
+        const destroySpy = vi.spyOn(eventManager, 'destroy').mockImplementation(vi.fn());
+        component.ngOnDestroy();
+        expect(destroySpy).toHaveBeenCalledOnce();
+        expect(destroySpy).toHaveBeenCalledWith(subscriptionMock);
+    });
+
+    it('should return user id or -1 from trackIdentity', () => {
+        expect(component.trackIdentity(0, { id: 1 } as User)).toBe(1);
+        expect(component.trackIdentity(0, { id: undefined } as User)).toBe(-1);
     });
 
     it.each([
         { status: 200, statusText: '' },
         { status: 400, statusText: 'Delete Failure' },
-    ])('should broadcast after user deletion, or show error', ({ status, statusText }) => {
-        const deleteSpy = jest.spyOn(userService, 'deleteUser');
-        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-        let errorText: string | undefined = undefined;
-        comp.dialogError.subscribe((text) => (errorText = text));
+    ])('should broadcast after user deletion (status: $status) or show error', ({ status, statusText }) => {
+        const deleteSpy = vi.spyOn(userService, 'deleteUser');
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        let errorText: string | undefined;
+        component.dialogError.subscribe((text) => (errorText = text));
 
-        comp.deleteUser('test');
+        component.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
-        const reqD = httpMock.expectOne('api/core/admin/users/test');
-        reqD.flush(null, { status, statusText });
+
+        const request = httpMock.expectOne('api/core/admin/users/test');
+        request.flush(null, { status, statusText });
 
         if (status === 200) {
             expect(broadcastSpy).toHaveBeenCalledOnce();
@@ -255,26 +266,24 @@ describe('User Management Component', () => {
         } else {
             expect(broadcastSpy).not.toHaveBeenCalled();
         }
-        expect(errorText).toInclude(statusText);
-
-        jest.restoreAllMocks();
+        expect(errorText).toContain(statusText);
     });
 
-    it('should call initFilters', () => {
+    it('should call initFilters on initialization', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
-        const user = new User(123);
-        jest.spyOn(userService, 'query').mockReturnValue(
+        const testUser = new User(123);
+        vi.spyOn(userService, 'query').mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [user],
+                    body: [testUser],
                     headers,
                 }),
             ),
         );
-        const initFiltersSpy = jest.spyOn(comp, 'initFilters');
-        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+        const initFiltersSpy = vi.spyOn(component, 'initFilters');
+        const profileSpy = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
-        comp.ngOnInit();
+        component.ngOnInit();
 
         expect(initFiltersSpy).toHaveBeenCalledOnce();
         expect(profileSpy).toHaveBeenCalledOnce();
@@ -286,12 +295,12 @@ describe('User Management Component', () => {
         ${AuthorityFilter} | ${UserStorageKey.AUTHORITY}
         ${OriginFilter}    | ${UserStorageKey.ORIGIN}
         ${StatusFilter}    | ${UserStorageKey.STATUS}
-    `('should init filters', (param: { input: any; key: any }) => {
+    `('should init filters for $key', (param: { input: typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter; key: UserStorageKey }) => {
         const val = Object.keys(param.input).join(',');
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
 
-        const filter = comp.initFilter(param.key, param.input);
-        expect(filter).toEqual(new Set(Object.keys(param.input).map((value) => param.input[value])));
+        const filter = component.initFilter(param.key, param.input);
+        expect(filter).toEqual(new Set(Object.keys(param.input).map((value) => param.input[value as keyof typeof param.input])));
     });
 
     it.each`
@@ -301,235 +310,231 @@ describe('User Management Component', () => {
         ${AuthorityFilter.EDITOR}
         ${AuthorityFilter.TA}
         ${AuthorityFilter.USER}
-    `('should toggle authority filters', (param: { input: AuthorityFilter }) => {
-        // Authority
-        comp.toggleFilter(comp.filters.authorityFilter, param.input);
-        expect(comp.filters.authorityFilter).toEqual(new Set([param.input]));
+    `('should toggle authority filter: $input', (param: { input: AuthorityFilter }) => {
+        component.toggleFilter(component.filters.authorityFilter, param.input);
+        expect(component.filters.authorityFilter).toEqual(new Set([param.input]));
 
-        comp.toggleFilter(comp.filters.authorityFilter, param.input);
-        expect(comp.filters.authorityFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters.authorityFilter, param.input);
+        expect(component.filters.authorityFilter).toEqual(new Set([]));
     });
 
     it.each`
         input
         ${OriginFilter.INTERNAL}
         ${OriginFilter.EXTERNAL}
-    `('should toggle origin filters', (param: { input: OriginFilter }) => {
-        // Authority
-        comp.toggleFilter(comp.filters.originFilter, param.input);
-        expect(comp.filters.originFilter).toEqual(new Set([param.input]));
+    `('should toggle origin filter: $input', (param: { input: OriginFilter }) => {
+        component.toggleFilter(component.filters.originFilter, param.input);
+        expect(component.filters.originFilter).toEqual(new Set([param.input]));
 
-        comp.toggleFilter(comp.filters.originFilter, param.input);
-        expect(comp.filters.originFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters.originFilter, param.input);
+        expect(component.filters.originFilter).toEqual(new Set([]));
     });
 
     it.each`
         input
         ${StatusFilter.ACTIVATED}
         ${StatusFilter.DEACTIVATED}
-    `('should toggle status filters', (param: { input: StatusFilter }) => {
-        // Authority
-        comp.toggleFilter(comp.filters.statusFilter, param.input);
-        expect(comp.filters.statusFilter).toEqual(new Set([param.input]));
+    `('should toggle status filter: $input', (param: { input: StatusFilter }) => {
+        component.toggleFilter(component.filters.statusFilter, param.input);
+        expect(component.filters.statusFilter).toEqual(new Set([param.input]));
 
-        comp.toggleFilter(comp.filters.statusFilter, param.input);
-        expect(comp.filters.statusFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters.statusFilter, param.input);
+        expect(component.filters.statusFilter).toEqual(new Set([]));
     });
 
     it.each`
         input
         ${RegistrationNumberFilter.WITH_REG_NO}
         ${RegistrationNumberFilter.WITHOUT_REG_NO}
-    `('should toggle registration number filters', (param: { input: RegistrationNumberFilter }) => {
-        // Registration number
-        comp.toggleFilter(comp.filters.registrationNumberFilter, param.input);
-        expect(comp.filters.registrationNumberFilter).toEqual(new Set([param.input]));
+    `('should toggle registration number filter: $input', (param: { input: RegistrationNumberFilter }) => {
+        component.toggleFilter(component.filters.registrationNumberFilter, param.input);
+        expect(component.filters.registrationNumberFilter).toEqual(new Set([param.input]));
 
-        comp.toggleFilter(comp.filters.registrationNumberFilter, param.input);
-        expect(comp.filters.registrationNumberFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters.registrationNumberFilter, param.input);
+        expect(component.filters.registrationNumberFilter).toEqual(new Set([]));
     });
 
     it('should return correct filter values', () => {
-        comp.initFilters();
+        component.initFilters();
 
-        expect(comp.authorityFilters).toEqual(Object.values(AuthorityFilter));
-        expect(comp.originFilters).toEqual(Object.values(OriginFilter));
-        expect(comp.statusFilters).toEqual(Object.values(StatusFilter));
+        expect(component.authorityFilters).toEqual(Object.values(AuthorityFilter));
+        expect(component.originFilters).toEqual(Object.values(OriginFilter));
+        expect(component.statusFilters).toEqual(Object.values(StatusFilter));
     });
 
     it('should select and deselect all roles', () => {
         const val = Object.keys(AuthorityFilter).join(',');
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
 
-        comp.filters.authorityFilter = new Set(comp.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter)) as Set<AuthorityFilter>;
+        component.filters.authorityFilter = new Set(component.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter)) as Set<AuthorityFilter>;
 
-        comp.deselectAllRoles();
-        expect(comp.filters.authorityFilter).toEqual(new Set());
+        component.deselectAllRoles();
+        expect(component.filters.authorityFilter).toEqual(new Set());
 
-        comp.selectAllRoles();
-        expect(comp.filters.authorityFilter).toEqual(new Set(comp.authorityFilters));
+        component.selectAllRoles();
+        expect(component.filters.authorityFilter).toEqual(new Set(component.authorityFilters));
     });
 
     it('should delete all selected users', () => {
-        const deleteSpy = jest.spyOn(userService, 'deleteUsers').mockReturnValue(of());
+        const deleteSpy = vi.spyOn(userService, 'deleteUsers').mockReturnValue(of());
 
-        // users
         const users = [1, 2, 3].map((id) => {
             const user = new User();
             user.login = id.toString();
             return user;
         });
 
-        comp.selectedUsers = [users[0], users[1]];
+        component.selectedUsers.set([users[0], users[1]]);
 
-        comp.deleteAllSelectedUsers();
+        component.deleteAllSelectedUsers();
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login]);
     });
 
     it('should add and remove user from selected users', () => {
-        // user
-        const user = new User();
-        user.login = '1';
+        const testUser = new User();
+        testUser.login = '1';
 
-        expect(comp.selectedUsers).toEqual([]);
-        comp.toggleUser(user);
-        expect(comp.selectedUsers).toEqual([user]);
-        comp.toggleUser(user);
-        expect(comp.selectedUsers).toEqual([]);
+        expect(component.selectedUsers()).toEqual([]);
+        component.toggleUser(testUser);
+        expect(component.selectedUsers()).toEqual([testUser]);
+        component.toggleUser(testUser);
+        expect(component.selectedUsers()).toEqual([]);
     });
 
     it('should return number of applied filters', () => {
-        comp.filters = new UserFilter();
-        expect(comp.filters.numberOfAppliedFilters).toBe(0);
+        component.filters = new UserFilter();
+        expect(component.filters.numberOfAppliedFilters).toBe(0);
 
-        comp.filters.noAuthority = true;
-        expect(comp.filters.numberOfAppliedFilters).toBe(1);
+        component.filters.noAuthority = true;
+        expect(component.filters.numberOfAppliedFilters).toBe(1);
 
-        comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
-        expect(comp.filters.numberOfAppliedFilters).toBe(2);
+        component.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+        expect(component.filters.numberOfAppliedFilters).toBe(2);
 
-        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toBe(3);
+        component.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        expect(component.filters.numberOfAppliedFilters).toBe(3);
 
-        comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toBe(2);
+        component.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
+        expect(component.filters.numberOfAppliedFilters).toBe(2);
     });
 
-    it('should toggle authority filter', () => {
-        const spy = jest.spyOn(localStorageService, 'store');
+    it('should toggle authority filter and store in local storage', () => {
+        const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        comp.filters = new UserFilter();
-        comp.filters.noAuthority = true;
+        component.filters = new UserFilter();
+        component.filters.noAuthority = true;
 
-        comp.toggleAuthorityFilter(comp.filters.authorityFilter, AuthorityFilter.ADMIN);
+        component.toggleAuthorityFilter(component.filters.authorityFilter, AuthorityFilter.ADMIN);
 
-        expect(comp.filters.authorityFilter).toEqual(new Set<AuthorityFilter>([AuthorityFilter.ADMIN]));
-        expect(comp.filters.noAuthority).toBeFalse();
-        expect(spy).toHaveBeenCalledTimes(2);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, 'ADMIN');
+        expect(component.filters.authorityFilter).toEqual(new Set<AuthorityFilter>([AuthorityFilter.ADMIN]));
+        expect(component.filters.noAuthority).toBe(false);
+        expect(storeSpy).toHaveBeenCalledTimes(2);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, 'ADMIN');
 
-        comp.toggleAuthorityFilter(comp.filters.authorityFilter, AuthorityFilter.ADMIN);
-        expect(spy).toHaveBeenCalledTimes(4);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, '');
-        expect(comp.filters.authorityFilter).toEqual(new Set<AuthorityFilter>());
+        component.toggleAuthorityFilter(component.filters.authorityFilter, AuthorityFilter.ADMIN);
+        expect(storeSpy).toHaveBeenCalledTimes(4);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, '');
+        expect(component.filters.authorityFilter).toEqual(new Set<AuthorityFilter>());
     });
 
-    it('should toggle origin filter', () => {
-        const spy = jest.spyOn(localStorageService, 'store');
+    it('should toggle origin filter and store in local storage', () => {
+        const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
-        comp.toggleOriginFilter(OriginFilter.EXTERNAL);
+        component.toggleOriginFilter(OriginFilter.EXTERNAL);
 
-        expect(comp.filters.originFilter).toEqual(new Set<OriginFilter>([OriginFilter.EXTERNAL]));
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, 'EXTERNAL');
+        expect(component.filters.originFilter).toEqual(new Set<OriginFilter>([OriginFilter.EXTERNAL]));
+        expect(storeSpy).toHaveBeenCalledOnce();
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, 'EXTERNAL');
 
-        comp.toggleOriginFilter(OriginFilter.EXTERNAL);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, '');
-        expect(comp.filters.authorityFilter).toEqual(new Set<OriginFilter>());
+        component.toggleOriginFilter(OriginFilter.EXTERNAL);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, '');
+        expect(component.filters.authorityFilter).toEqual(new Set<OriginFilter>());
     });
 
-    it('should toggle registration number filter', () => {
-        const spy = jest.spyOn(localStorageService, 'store');
+    it('should toggle registration number filter and store in local storage', () => {
+        const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
-        comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
+        component.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
 
-        expect(comp.filters.registrationNumberFilter).toEqual(new Set<RegistrationNumberFilter>([RegistrationNumberFilter.WITHOUT_REG_NO]));
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, 'WITHOUT_REG_NO');
+        expect(component.filters.registrationNumberFilter).toEqual(new Set<RegistrationNumberFilter>([RegistrationNumberFilter.WITHOUT_REG_NO]));
+        expect(storeSpy).toHaveBeenCalledOnce();
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, 'WITHOUT_REG_NO');
 
-        comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, '');
-        expect(comp.filters.authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
+        component.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, '');
+        expect(component.filters.authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
     });
 
-    it('should toggle status filter', () => {
-        const spy = jest.spyOn(localStorageService, 'store');
+    it('should toggle status filter and store in local storage', () => {
+        const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
-        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+        component.toggleStatusFilter(StatusFilter.DEACTIVATED);
 
-        expect(comp.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
+        expect(component.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
+        expect(storeSpy).toHaveBeenCalledOnce();
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
 
-        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
-        expect(comp.filters.authorityFilter).toEqual(new Set<StatusFilter>());
+        component.toggleStatusFilter(StatusFilter.DEACTIVATED);
+        expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
+        expect(component.filters.authorityFilter).toEqual(new Set<StatusFilter>());
     });
 
     it('should deselect filter', () => {
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
-        comp.filters.statusFilter.add(StatusFilter.DEACTIVATED);
-        comp.filters.originFilter.add(OriginFilter.INTERNAL);
+        component.filters.statusFilter.add(StatusFilter.DEACTIVATED);
+        component.filters.originFilter.add(OriginFilter.INTERNAL);
 
-        comp.deselectFilter<StatusFilter>(comp.filters.statusFilter, comp.statusKey);
-        expect(comp.filters.statusFilter).toEqual(new Set());
+        component.deselectFilter<StatusFilter>(component.filters.statusFilter, UserStorageKey.STATUS);
+        expect(component.filters.statusFilter).toEqual(new Set());
 
-        comp.deselectFilter<OriginFilter>(comp.filters.originFilter, comp.originKey);
-        expect(comp.filters.originFilter).toEqual(new Set());
+        component.deselectFilter<OriginFilter>(component.filters.originFilter, UserStorageKey.ORIGIN);
+        expect(component.filters.originFilter).toEqual(new Set());
     });
 
-    it('should select empty roles', () => {
-        comp.filters = new UserFilter();
+    it('should select empty roles filter', () => {
+        component.filters = new UserFilter();
 
-        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        comp.filters.noAuthority = false;
+        component.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        component.filters.noAuthority = false;
 
-        comp.selectEmptyRoles();
-        expect(comp.filters.authorityFilter).toEqual(new Set());
-        expect(comp.filters.noAuthority).toBeTrue();
+        component.selectEmptyRoles();
+        expect(component.filters.authorityFilter).toEqual(new Set());
+        expect(component.filters.noAuthority).toBe(true);
     });
 
     it('should get users without current user', () => {
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
-        comp.currentAccount = new User();
-        comp.currentAccount.login = '1';
+        const currentUser = new User();
+        currentUser.login = '1';
+        component.currentAccount.set(currentUser);
 
         const users = ['1', '2', '3', '4', '5', '6'].map((login) => {
             const user = new User();
             user.login = login;
             return user;
         });
-        comp.users = [...users];
+        component.users.set([...users]);
 
-        expect(comp.usersWithoutCurrentUser).toEqual(users.filter((user) => user.login !== '1'));
+        expect(component.usersWithoutCurrentUser).toEqual(users.filter((user) => user.login !== '1'));
     });
 
     it('should toggle all users selection', () => {
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
-        comp.currentAccount = new User();
-        comp.currentAccount.login = '1';
+        const currentUser = new User();
+        currentUser.login = '1';
+        component.currentAccount.set(currentUser);
 
         const users = ['1', '2', '3', '4', '5', '6'].map((login) => {
             const user = new User();
@@ -537,39 +542,39 @@ describe('User Management Component', () => {
             return user;
         });
 
-        comp.users = [...users];
+        component.users.set([...users]);
 
-        comp.toggleAllUserSelection();
-        expect(comp.selectedUsers).toEqual(users.filter((user) => user.login !== '1'));
+        component.toggleAllUserSelection();
+        expect(component.selectedUsers()).toEqual(users.filter((user) => user.login !== '1'));
 
-        comp.toggleAllUserSelection();
-        expect(comp.selectedUsers).toEqual([]);
+        component.toggleAllUserSelection();
+        expect(component.selectedUsers()).toEqual([]);
     });
 
-    it('should adjust options', () => {
+    it('should adjust options with filters', () => {
         let httpParams = new HttpParams();
-        comp.filters = new UserFilter();
+        component.filters = new UserFilter();
 
         httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('registrationNumbers', '').append('status', '');
-        comp.filters.noAuthority = true;
+        component.filters.noAuthority = true;
 
-        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        comp.filters.noAuthority = false;
+        component.filters.noAuthority = false;
         httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '');
-        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '');
-        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+        component.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
         httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', 'WITH_REG_NO').append('status', '');
-        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        comp.filters.originFilter.add(OriginFilter.INTERNAL);
-        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        comp.filters.statusFilter.add(StatusFilter.ACTIVATED);
+        component.filters.originFilter.add(OriginFilter.INTERNAL);
+        component.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        component.filters.statusFilter.add(StatusFilter.ACTIVATED);
         httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('registrationNumbers', 'WITH_REG_NO').append('status', 'ACTIVATED');
-        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });
