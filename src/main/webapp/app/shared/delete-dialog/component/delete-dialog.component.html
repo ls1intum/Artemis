@@ -89,6 +89,7 @@
             [severity]="buttonType() === 'btn-danger' ? 'danger' : 'primary'"
             [disabled]="deleteForm.invalid || submitDisabled()"
             [loading]="submitDisabled()"
+            [pt]="{ root: { 'data-testid': 'delete-dialog-confirm-button' } }"
         >
             @switch (actionType) {
                 @case (actionTypes.Delete) {

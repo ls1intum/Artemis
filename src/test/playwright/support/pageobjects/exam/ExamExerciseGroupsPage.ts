@@ -29,7 +29,7 @@ export class ExamExerciseGroupsPage {
 
     async clickDeleteGroup(groupID: number, groupName: string) {
         await this.page.click(`#group-${groupID} .delete-group`);
-        const deleteButton = this.page.locator('#delete');
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', groupName);
         await expect(deleteButton).toBeEnabled();

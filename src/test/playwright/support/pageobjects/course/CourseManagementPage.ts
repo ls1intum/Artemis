@@ -92,7 +92,8 @@ export class CourseManagementPage {
      */
     async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
         await this.page.locator('#delete-course').click();
-        await expect(this.page.locator('#delete')).toBeDisabled();
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
+        await expect(deleteButton).toBeDisabled();
 
         if (expectedCourseSummary) {
             await this.assertCourseSummary(expectedCourseSummary);
@@ -100,7 +101,7 @@ export class CourseManagementPage {
 
         await this.page.locator('#confirm-entity-name').fill(course.title!);
         const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
-        await this.page.locator('#delete').click();
+        await deleteButton.click();
         await responsePromise;
     }
 
@@ -147,7 +148,7 @@ export class CourseManagementPage {
      */
     async removeFirstUser() {
         await this.page.locator('#registered-students button[jhideletebutton]').first().click();
-        await this.page.locator('.modal #delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
     }
 
     async updateCourse(course: Course) {
