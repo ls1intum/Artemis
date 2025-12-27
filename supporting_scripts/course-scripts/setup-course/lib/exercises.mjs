@@ -88,7 +88,7 @@ async function createProgrammingExercise(client, courseId, config) {
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         problemStatement: getProblemStatement(config.title, config.programmingLanguage),
         buildConfig: {
-            buildScript: getBuildScript(config.programmingLanguage),
+            buildScript: getBuildScript(config.programmingLanguage, config.projectType, config.staticCodeAnalysisEnabled),
             checkoutSolutionRepository: false,
         },
     };
@@ -98,7 +98,63 @@ async function createProgrammingExercise(client, courseId, config) {
     return response.data;
 }
 
-function getBuildScript(language) {
+function getBuildScript(language, projectType, staticCodeAnalysisEnabled) {
+    // Java Maven with static code analysis
+    if (language === 'JAVA' && projectType === 'PLAIN_MAVEN' && staticCodeAnalysisEnabled) {
+        return `#!/usr/bin/env bash
+set -e
+export AEOLUS_INITIAL_DIRECTORY=\${PWD}
+maven () {
+  echo '⚙️ executing maven'
+  mvn clean test
+}
+
+static_analysis () {
+  echo '⚙️ executing static_analysis'
+  mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
+}
+
+final_aeolus_post_action () {
+  set +e # from now on, we don't exit on errors
+  echo '⚙️ executing final_aeolus_post_action'
+  cd "\${AEOLUS_INITIAL_DIRECTORY}"
+  static_analysis
+}
+
+main () {
+  if [[ "\${1}" == "aeolus_sourcing" ]]; then
+    return 0 # just source to use the methods in the subshell, no execution
+  fi
+  local _script_name
+  _script_name=\${BASH_SOURCE[0]:-$0}
+  trap final_aeolus_post_action EXIT
+
+  cd "\${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source \${_script_name} aeolus_sourcing; maven"
+}
+
+main "\${@}"
+`;
+    }
+
+    // Java Maven without static code analysis
+    if (language === 'JAVA' && projectType === 'PLAIN_MAVEN') {
+        return `#!/usr/bin/env bash
+set -e
+
+maven () {
+  echo '⚙️ executing maven'
+  mvn clean test
+}
+
+main () {
+  maven
+}
+
+main "\${@}"
+`;
+    }
+
     const scripts = {
         JAVA: `#!/usr/bin/env bash
 set -e
