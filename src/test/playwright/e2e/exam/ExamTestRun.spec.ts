@@ -34,17 +34,15 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
             numberOfExercisesInExam: 4,
         };
         exam = await examAPIRequests.createExam(examConfig);
-        Promise.all([
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+        exerciseArray = await Promise.all([
+            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
+            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
                 submission: javaBuildErrorSubmission,
                 practiceMode: true,
             }),
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-        ]).then((responses) => {
-            exerciseArray = responses;
-        });
+            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
+            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
+        ]);
     });
 
     test('Creates a test run', async ({ login, page, examManagement, examTestRun }) => {
