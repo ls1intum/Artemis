@@ -24,7 +24,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideRouter } from '@angular/router';
-import { input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -52,8 +51,8 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), FaIconComponent],
-            declarations: [StudentExamDetailTableRowComponent, MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), FaIconComponent, StudentExamDetailTableRowComponent],
+            declarations: [MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
         })
             .compileComponents()
@@ -90,15 +89,13 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.MODELING,
             exerciseGroup: { id: 12 },
         };
-        TestBed.runInInjectionContext(() => {
-            studentExamDetailTableRowComponent.exercise = input(modelingExercise);
-            studentExamDetailTableRowComponent.examId = input(exam1.id!);
-            studentExamDetailTableRowComponent.isTestRun = input(false);
-            studentExamDetailTableRowComponent.course = input(course);
-            studentExamDetailTableRowComponent.busy = input(false);
-            studentExamDetailTableRowComponent.studentExam = input({} as StudentExam);
-            studentExamDetailTableRowComponent.achievedPointsPerExercise = input({ 1: 1 });
-        });
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('exercise', modelingExercise);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('examId', exam1.id!);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('isTestRun', false);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('course', course);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('busy', false);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('studentExam', {} as StudentExam);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('achievedPointsPerExercise', { 1: 1 });
         studentExamDetailTableRowComponentFixture.detectChanges();
         studentExamDetailTableRowComponent.courseId = 23;
 

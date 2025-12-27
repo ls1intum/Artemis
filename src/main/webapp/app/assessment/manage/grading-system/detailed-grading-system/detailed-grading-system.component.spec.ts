@@ -112,7 +112,7 @@ describe('Detailed Grading System Component', () => {
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
         const findExamStub = jest.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isExam).toBeTrue();
         expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
@@ -127,7 +127,7 @@ describe('Detailed Grading System Component', () => {
             .spyOn(gradingSystemService, 'findGradingScaleForExam')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenCalledOnce();

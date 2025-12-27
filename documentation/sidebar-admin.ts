@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
             ]
         },
         'hyperion',
+        'adaptive-learning',
     ],
 };
 

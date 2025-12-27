@@ -30,6 +30,7 @@ describe('QuizExercise Details Component', () => {
     quizExercise.quizQuestions = [];
     quizExercise.isAtLeastEditor = true;
     quizExercise.dueDate = dayjs() as Dayjs;
+    quizExercise.isEditable = undefined;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 12, exerciseGroupId: 23 }) } } as any as ActivatedRoute;
 

@@ -10,7 +10,6 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
-    faExclamationTriangle,
     faFile,
     faFileArchive,
     faFileCode,
@@ -23,7 +22,6 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
-    faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -34,7 +32,6 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
-
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
@@ -44,8 +41,6 @@ import { map } from 'rxjs/operators';
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
-    protected readonly faSpinner = faSpinner;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);

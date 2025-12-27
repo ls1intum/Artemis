@@ -1,10 +1,17 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LogsService } from 'app/core/admin/logs/logs.service';
-import { Log } from 'app/core/admin/logs/log.model';
+/**
+ * Vitest tests for LogsService.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { LogsService } from 'app/core/admin/logs/logs.service';
+import { Log } from 'app/core/admin/logs/log.model';
 
-describe('Logs Service', () => {
+describe('LogsService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: LogsService;
     let httpMock: HttpTestingController;
 
@@ -21,35 +28,40 @@ describe('Logs Service', () => {
         httpMock.verify();
     });
 
-    describe('Service methods', () => {
-        it('should call correct URL', fakeAsync(() => {
-            const resourceUrl = 'management/loggers';
+    it('should call correct URL for findAll', () => {
+        const resourceUrl = 'management/loggers';
 
-            service.findAll().subscribe(() => {});
+        service.findAll().subscribe();
 
-            const req = httpMock.expectOne({ method: 'GET' });
-            expect(req.request.url).toEqual(resourceUrl);
-            tick();
-        }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(resourceUrl);
+    });
 
-        it('should return Logs', fakeAsync(() => {
-            const log = new Log('main', 'ERROR');
+    it('should return loggers response', () => {
+        const mockResponse = {
+            loggers: {
+                main: { effectiveLevel: 'ERROR' },
+            },
+        };
 
-            service.findAll().subscribe((resp) => expect(resp).toEqual(log));
+        service.findAll().subscribe((resp) => {
+            expect(resp).toEqual(mockResponse);
+        });
 
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(log);
-            tick();
-        }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(mockResponse);
+    });
 
-        it('should change log level', fakeAsync(() => {
-            const log = new Log('new', 'ERROR');
+    it('should change log level', () => {
+        const log = new Log('test', 'ERROR');
 
-            service.changeLevel(log.name, log.level).subscribe((received) => expect(received).toEqual(log));
+        service.changeLevel(log.name, log.level).subscribe((received) => {
+            expect(received).toEqual(log);
+        });
 
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(log);
-            tick();
-        }));
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.url).toBe('management/loggers/test');
+        expect(req.request.body).toEqual({ configuredLevel: 'ERROR' });
+        req.flush(log);
     });
 });

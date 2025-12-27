@@ -37,7 +37,7 @@ describe('DataExportConfirmationDialogComponent', () => {
         comp.expectedLogin = 'login';
         comp.expectedLoginOfOtherUser = 'other login';
         comp.dialogError = new Observable<string>();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const cancelButton = debugElement.query(By.css('.btn.btn-secondary'));
         const closeButton = debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
@@ -56,25 +56,25 @@ describe('DataExportConfirmationDialogComponent', () => {
         comp.expectedLogin = 'login';
         comp.enteredLogin = '';
         comp.dialogError = new Observable<string>();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
         expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered incorrect login --> button is disabled
         comp.enteredLogin = 'my login';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
         expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered correct login --> button is enabled
         comp.enteredLogin = 'login';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.dataExportConfirmationForm.invalid).toBeFalse();
         expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
     }));
@@ -85,19 +85,19 @@ describe('DataExportConfirmationDialogComponent', () => {
         const dialogErrorSource = new Subject<string>();
         comp.dialogError = dialogErrorSource.asObservable();
         comp.dataExportRequest = new EventEmitter<void>();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
         expect(confirmButton.nativeElement.disabled).toBeFalse();
 
         // external component request method was executed
         comp.confirmDataExportRequest();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         confirmButton = debugElement.query(By.css('.btn.btn-primary'));
         expect(confirmButton.nativeElement.disabled).toBeTrue();
 
         // external component emits error to the dialog
         dialogErrorSource.next('example error');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         confirmButton = debugElement.query(By.css('.btn.btn-primary'));
         expect(confirmButton.nativeElement.disabled).toBeFalse();
 

@@ -1,11 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,6 +9,7 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,10 +21,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 
-// TODO: it does not make sense to inherit from independent test. Git is only available when LocalVC is enabled, so this test should inherit from a LocalVC based test class
-class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
+class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexgitintegration";
 
@@ -60,23 +57,17 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         TestFileUtil.writeEmptyJsonFileToPath(testJsonFilePath3);
         GitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(LocalVCRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
-        doNothing().when(gitService).fetchAll(any());
-        var objectId = localGit.reflog().call().iterator().next().getNewId();
-        doReturn(objectId).when(gitService).getLastCommitHash(any());
-        doNothing().when(gitService).resetToOriginHead(any());
-        doNothing().when(gitService).pullIgnoreConflicts(any());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
+        // No Mockito stubs; subsequent test uses real LocalVC-backed GitService interactions.
     }
 
     @AfterEach
     void tearDown() throws IOException {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         if (localGit != null) {
             localGit.close();
         }
         if (localRepoPath != null && localRepoPath.toFile().exists()) {
-            FileUtils.deleteDirectory(localRepoPath.toFile());
+            RepositoryExportTestUtil.safeDeleteDirectory(localRepoPath);
         }
     }
 
@@ -100,5 +91,52 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testGitOperationsWithLocalVC() throws Exception {
+        // Create a LocalVC repository (acts as remote) and seed with an initial commit
+        var projectKey = "PROGEXGIT";
+        var repoSlug = projectKey.toLowerCase() + "-tests";
+
+        LocalRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
+
+        // Write a file and commit on the remote working copy, then push to origin
+        var readmePath = remoteRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
+        FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
+        remoteRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(remoteRepo.workingCopyGitRepo).setMessage("Initial commit").call();
+        remoteRepo.workingCopyGitRepo.push().setRemote("origin").call();
+
+        // Build the LocalVC URI and checkout to a separate target path
+        LocalVCRepositoryUri repoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repoSlug));
+        Path targetPath = tempPath.resolve("lcvc-checkout").resolve("student-checkout");
+        var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
+
+        try {
+            // Verify we can fetch and read last commit hash from the remote
+            gitService.fetchAll(checkedOut);
+            var lastHash = gitService.getLastCommitHash(repoUri);
+            assertThat(lastHash).as("last commit hash should exist on remote").isNotNull().isInstanceOf(ObjectId.class);
+
+            // Create a local change, commit and push via GitService
+            var localFile = targetPath.resolve("hello.txt");
+            Files.createDirectories(localFile.getParent());
+            FileUtils.writeStringToFile(localFile.toFile(), "hello world", java.nio.charset.StandardCharsets.UTF_8);
+            gitService.stageAllChanges(checkedOut);
+            gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
+
+            // Pull and reset operations should not throw
+            gitService.pullIgnoreConflicts(checkedOut);
+            gitService.resetToOriginHead(checkedOut);
+        }
+        finally {
+            // Ensure repository handle is closed and the local clone is deleted even on failures
+            if (checkedOut != null) {
+                checkedOut.close();
+            }
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
     }
 }

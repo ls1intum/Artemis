@@ -57,6 +57,9 @@ describe('CalendarService', () => {
 
     const translateServiceMock = {
         currentLang: 'en',
+        getCurrentLang(): string {
+            return this.currentLang;
+        },
         onLangChange: of({ lang: 'en' }),
     };
 

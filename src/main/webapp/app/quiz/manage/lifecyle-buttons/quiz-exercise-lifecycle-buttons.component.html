@@ -1,9 +1,3 @@
-@if (quizExercise().status === QuizStatus.CLOSED && quizExercise().isAtLeastEditor) {
-    <button type="submit" (click)="openForPractice()" class="btn btn-warning btn-sm me-1 mb-1">
-        <fa-icon [icon]="faPlayCircle" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
-    </button>
-}
 @if (
     (quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.INVISIBLE) &&
     quizExercise().quizMode === QuizMode.SYNCHRONIZED &&

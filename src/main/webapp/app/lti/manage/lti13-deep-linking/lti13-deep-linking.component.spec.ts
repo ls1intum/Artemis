@@ -11,13 +11,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { TranslateService } from '@ngx-translate/core';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
-
-function HttpLoaderFactory(http: HttpClient) {
-    return new TranslateHttpLoader(http);
-}
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Lti13DeepLinkingComponent', () => {
     let component: Lti13DeepLinkingComponent;
@@ -40,16 +36,7 @@ describe('Lti13DeepLinkingComponent', () => {
         activatedRouteMock = { params: of({ courseId: '123' }) };
 
         TestBed.configureTestingModule({
-            imports: [
-                Lti13DeepLinkingComponent,
-                TranslateModule.forRoot({
-                    loader: {
-                        provide: TranslateLoader,
-                        useFactory: HttpLoaderFactory,
-                        deps: [HttpClient],
-                    },
-                }),
-            ],
+            imports: [Lti13DeepLinkingComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: Router, useValue: routerMock },
@@ -59,7 +46,7 @@ describe('Lti13DeepLinkingComponent', () => {
                 { provide: SortService, useValue: sortServiceMock },
                 SessionStorageService,
                 { provide: AlertService, useValue: alertServiceMock },
-                TranslateService,
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
         jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -420,7 +407,7 @@ describe('Lti13DeepLinkingComponent', () => {
     }));
 
     it('should invoke account service using jhiHasAnyAuthority directive', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     });
 });

@@ -185,7 +185,7 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" [participation]="gradedStudentParticipation" />
                     </div>
                 }
-                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisProgrammingExerciseChatSettings?.enabled) {
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisEnabled && irisChatEnabled) {
                     <jhi-exercise-chatbot-button [mode]="ChatServiceMode.PROGRAMMING_EXERCISE" />
                 }
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {

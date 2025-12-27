@@ -1,10 +1,11 @@
 /**
  * video-player.component.spec.ts
- * Tests for VideoPlayerComponent (HLS.js + transcript sync)
+ * Tests for VideoPlayerComponent (HLS.js + transcript sync + resizer)
  *
  * - Mocks `hls.js` library
+ * - Mocks `interactjs` library
  * - Minimal template with <video #videoRef>
- * - Covers init/no-init, timeupdate syncing + scrolling, seeking, and teardown
+ * - Covers init/no-init, timeupdate syncing + scrolling, seeking, resizer, and teardown
  */
 
 // ---- Mock hls.js BEFORE importing the component ----
@@ -38,6 +39,32 @@ jest.mock('hls.js', () => ({
     default: MockHlsClass,
 }));
 
+// ---- Mock interactjs ----
+const mockInteractInstance = {
+    draggable: jest.fn().mockReturnThis(),
+    unset: jest.fn(),
+};
+
+const mockInteract = jest.fn(() => mockInteractInstance);
+
+jest.mock('interactjs', () => ({
+    __esModule: true,
+    default: mockInteract,
+}));
+
+// ---- Mock ResizeObserver ----
+class MockResizeObserver {
+    callback: ResizeObserverCallback;
+    constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+    }
+    observe = jest.fn();
+    unobserve = jest.fn();
+    disconnect = jest.fn();
+}
+
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
 // ---- Imports AFTER the mock ----
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VideoPlayerComponent } from './video-player.component';
@@ -57,13 +84,26 @@ describe('VideoPlayerComponent', () => {
         mockHls.startLoad.mockClear();
         mockHls.recoverMediaError.mockClear();
 
+        mockInteract.mockClear();
+        mockInteractInstance.draggable.mockClear();
+        mockInteractInstance.unset.mockClear();
+
         TestBed.configureTestingModule({
             imports: [VideoPlayerComponent],
         });
 
-        // Override template to a minimal one for testing
+        // Override template to a minimal one for testing (includes resizer elements)
         TestBed.overrideComponent(VideoPlayerComponent, {
-            set: { template: '<video #videoRef></video>' },
+            set: {
+                template: `
+                    <div #videoWrapper class="video-wrapper">
+                        <div #videoColumn class="video-column">
+                            <video #videoRef></video>
+                        </div>
+                        <div #resizerHandle class="resizer-handle"></div>
+                    </div>
+                `,
+            },
         });
 
         await TestBed.compileComponents();
@@ -177,5 +217,177 @@ describe('VideoPlayerComponent', () => {
 
         fixture.destroy();
         expect(mockHls.destroy).toHaveBeenCalled();
+    });
+
+    describe('Resizer functionality', () => {
+        it('initializes interact.js on the resizer handle', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const resizerEl = component.resizerHandle()?.nativeElement;
+            expect(mockInteract).toHaveBeenCalledWith(resizerEl);
+            expect(mockInteractInstance.draggable).toHaveBeenCalled();
+        });
+
+        it('configures draggable with move listener and cursor checker', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            expect(mockInteractInstance.draggable).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    listeners: expect.objectContaining({
+                        move: expect.any(Function),
+                    }),
+                    cursorChecker: expect.any(Function),
+                }),
+            );
+
+            // Verify cursorChecker returns 'col-resize'
+            const draggableConfig = mockInteractInstance.draggable.mock.calls[0][0];
+            expect(draggableConfig.cursorChecker()).toBe('col-resize');
+        });
+
+        it('resizes video column on drag move', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+
+            // Mock getBoundingClientRect for wrapper
+            jest.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+
+            // Get the move listener and call it
+            const draggableConfig = mockInteractInstance.draggable.mock.calls[0][0];
+            const moveListener = draggableConfig.listeners.move;
+
+            // Simulate drag to position 600px from left
+            moveListener({ clientX: 600 });
+
+            // Browser normalizes 'none' to '0 0 auto'
+            expect(videoColumnEl.style.flex).toBe('0 0 auto');
+            expect(videoColumnEl.style.width).toBe('600px');
+        });
+
+        it('clamps video column width to minimum', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+
+            jest.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+
+            const draggableConfig = mockInteractInstance.draggable.mock.calls[0][0];
+            const moveListener = draggableConfig.listeners.move;
+
+            // Try to drag below minimum (300px)
+            moveListener({ clientX: 100 });
+
+            expect(videoColumnEl.style.width).toBe('300px');
+        });
+
+        it('clamps video column width to maximum', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+
+            jest.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+
+            const draggableConfig = mockInteractInstance.draggable.mock.calls[0][0];
+            const moveListener = draggableConfig.listeners.move;
+
+            // Try to drag beyond maximum (1000 - 250 = 750px)
+            moveListener({ clientX: 900 });
+
+            expect(videoColumnEl.style.width).toBe('750px');
+        });
+
+        it('resets video column styles on window resize', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+
+            jest.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+
+            // First, simulate a drag to set custom width
+            const draggableConfig = mockInteractInstance.draggable.mock.calls[0][0];
+            draggableConfig.listeners.move({ clientX: 500 });
+
+            // Browser normalizes 'none' to '0 0 auto'
+            expect(videoColumnEl.style.flex).toBe('0 0 auto');
+            expect(videoColumnEl.style.width).toBe('500px');
+
+            // Trigger window resize
+            window.dispatchEvent(new Event('resize'));
+
+            // Styles should be reset to empty
+            expect(videoColumnEl.style.flex).toBe('');
+            expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('cleans up interact instance on destroy', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            fixture.destroy();
+
+            expect(mockInteractInstance.unset).toHaveBeenCalled();
+        });
+
+        it('removes window resize listener on destroy', async () => {
+            const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            fixture.destroy();
+
+            expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+        });
     });
 });

@@ -28,7 +28,7 @@
                 "REJECTED": "Rejected"
             },
             "admin": {
-                "title": "Course requests",
+                "title": "Course Requests",
                 "subtitle": "Review course requests submitted by users and create the course with one click.",
                 "pendingTitle": "Pending Requests",
                 "decidedTitle": "Decided Requests",

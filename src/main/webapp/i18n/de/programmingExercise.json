@@ -237,6 +237,20 @@
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
             },
+            "codeGeneration": {
+                "creationAssistance": "Erstellungsassistenz",
+                "generateCode": "Code generieren",
+                "generating": "Generiere...",
+                "description": "Generiere Lösung, Template und Test-Code mit KI",
+                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
+                "confirmTitle": "Code-Generierung bestätigen",
+                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
+                "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
+                "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
+                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
+                "attempts": "Versuche: {{attempts}}"
+            },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
                 "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."

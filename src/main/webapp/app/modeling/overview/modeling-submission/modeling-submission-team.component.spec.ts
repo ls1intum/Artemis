@@ -186,7 +186,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // WHEN
         comp.isLoading = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('div'))).not.toBeNull();
 
@@ -245,7 +245,7 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.modelingExercise.dueDate = dayjs().subtract(1, 'days');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.isActive).toBeFalse();
     });
 
@@ -354,7 +354,7 @@ describe('ModelingSubmissionComponent', () => {
         const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.submit();
         expect(updateStub).toHaveBeenCalledOnce();
         expect(comp.submission).toEqual(submission);
@@ -365,7 +365,7 @@ describe('ModelingSubmissionComponent', () => {
         const relationships = [{ id: 4 }, { id: 5 }];
         submission.model = JSON.stringify({ elements, relationships });
         comp.submission = submission;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.calculateNumberOfModelElements()).toBe(elements.length + relationships.length);
     });
 
@@ -392,7 +392,7 @@ describe('ModelingSubmissionComponent', () => {
                 }),
             },
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.onSelectionChanged(selection);
         expect(comp.selectedRelationships).toEqual(['relationShip1', 'relationShip2']);
         expect(comp.selectedEntities).toEqual(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
@@ -402,10 +402,10 @@ describe('ModelingSubmissionComponent', () => {
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
         comp.selectedEntities = [];
         comp.selectedRelationships = [];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = ['3'];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
@@ -414,11 +414,11 @@ describe('ModelingSubmissionComponent', () => {
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
         comp.selectedEntities = [id];
         comp.selectedRelationships = [];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = [];
         comp.selectedRelationships = [id];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
@@ -491,7 +491,7 @@ describe('ModelingSubmissionComponent', () => {
         jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.saveDiagram();
         expect(comp.isChanged).toBeFalse();
     });
@@ -553,7 +553,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.inputSubmission = modelingSubmission;
         comp.inputParticipation = participation;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
         expect(comp.modelingExercise).toEqual(participation.exercise);
