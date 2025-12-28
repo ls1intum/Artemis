@@ -104,7 +104,7 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
      * @param courseId The ID of the course.
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteAllByCourseId(long courseId);
 
     /**

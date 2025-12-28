@@ -25,7 +25,7 @@ public interface LLMTokenUsageRequestRepository extends ArtemisJpaRepository<LLM
      * @param courseId The ID of the course.
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     @Query("DELETE FROM LLMTokenUsageRequest r WHERE r.trace.courseId = :courseId")
     void deleteAllByTraceCourseId(@Param("courseId") Long courseId);
 }

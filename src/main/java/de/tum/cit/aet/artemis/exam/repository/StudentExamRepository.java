@@ -380,7 +380,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param examId the ID of the exam whose student exams should be deleted
      */
     @Modifying
-    @Transactional // ok because of modifying query
+    @Transactional // ok because of delete
     @Query("DELETE FROM StudentExam se WHERE se.exam.id = :examId AND se.testRun = FALSE")
     void deleteAllByExamId(@Param("examId") long examId);
 

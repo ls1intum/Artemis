@@ -1425,7 +1425,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return the number of rows deleted
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of modifying query
     @Query(value = """
             DELETE FROM user_groups ug
             WHERE ug.user_groups = :groupName
