@@ -25,8 +25,8 @@ export class TextAssessmentAreaComponent {
     // inputs
     submission = input.required<TextSubmission>();
     textBlockRefs = model.required<TextBlockRef[]>();
-    readOnly = input.required<boolean>();
-    highlightDifferences = input.required<boolean>();
+    readOnly = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
     criteria = input<GradingCriterion[]>();
     allowManualBlockSelection = input<boolean>(true);
 

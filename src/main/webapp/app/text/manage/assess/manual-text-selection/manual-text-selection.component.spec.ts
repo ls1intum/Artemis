@@ -1,10 +1,4 @@
-/**
- * Vitest tests for ManualTextSelectionComponent.
- * Tests manual text block selection functionality.
- */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ManualTextSelectionComponent } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -22,8 +16,6 @@ import { ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ManualTextSelectionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ManualTextSelectionComponent;
     let fixture: ComponentFixture<ManualTextSelectionComponent>;
 
@@ -67,7 +59,7 @@ describe('ManualTextSelectionComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should set words correctly', () => {
@@ -91,7 +83,7 @@ describe('ManualTextSelectionComponent', () => {
 
     it('should send assessment event when selecting text block manually', () => {
         component.ready = true;
-        const sendAssessmentEventSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEventSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.selectWord('lastWord');
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEventSpy).toHaveBeenCalledOnce();

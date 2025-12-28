@@ -50,8 +50,8 @@ export class TextExerciseComponent extends ExerciseComponent {
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
 
-    textExercisesInput = input<TextExercise[]>([], { alias: 'textExercises' });
-    textExercises: TextExercise[] = [];
+    textExercises = input<TextExercise[]>([]);
+    internalTextExercises: TextExercise[] = [];
     filteredTextExercises: TextExercise[] = [];
 
     // Icons
@@ -63,37 +63,37 @@ export class TextExerciseComponent extends ExerciseComponent {
         super();
         // Sync input to internal state
         effect(() => {
-            const inputValue = this.textExercisesInput();
+            const inputValue = this.textExercises();
             if (inputValue && inputValue.length > 0) {
-                this.textExercises = inputValue;
+                this.internalTextExercises = inputValue;
             }
         });
     }
 
     protected get exercises() {
-        return this.textExercises;
+        return this.internalTextExercises;
     }
 
     protected loadExercises(): void {
         this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe({
             next: (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body!;
+                this.internalTextExercises = res.body!;
 
                 // reconnect exercise with course
-                this.textExercises.forEach((exercise) => {
+                this.internalTextExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.selectedExercises = [];
                 });
                 this.applyFilter();
-                this.emitExerciseCount(this.textExercises.length);
+                this.emitExerciseCount(this.internalTextExercises.length);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     protected applyFilter(): void {
-        this.filteredTextExercises = this.textExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        this.filteredTextExercises = this.internalTextExercises.filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredTextExercises.length);
     }
 
@@ -111,7 +111,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.textExercises, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.internalTextExercises, this.predicate, this.reverse);
         this.applyFilter();
     }
 

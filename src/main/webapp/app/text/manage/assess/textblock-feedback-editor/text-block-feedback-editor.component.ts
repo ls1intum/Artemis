@@ -52,8 +52,8 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     onFocus = output<void>();
     textareaRef = viewChild.required<ElementRef>('detailText');
     confirmIconComponent = viewChild.required(ConfirmIconComponent);
-    readOnly = input<boolean>();
-    highlightDifferences = input<boolean>();
+    readOnly = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
     criteria = input<GradingCriterion[]>();
     private textareaElement: HTMLTextAreaElement;
 

@@ -34,9 +34,8 @@ export class FeedbackTextComponent implements OnInit {
     }
 
     private loadLongFeedback() {
-        if (this.feedback().feedbackReference.id) {
-            const feedbackId = this.feedback().feedbackReference.id;
-
+        const feedbackId = this.feedback().feedbackReference.id;
+        if (feedbackId) {
             this.longFeedbackService.find(feedbackId).subscribe((longFeedbackResponse) => {
                 const longFeedback = longFeedbackResponse.body!;
                 const textLength = longFeedback.length ?? 0;

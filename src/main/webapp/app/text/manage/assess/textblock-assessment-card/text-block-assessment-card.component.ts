@@ -24,9 +24,9 @@ export class TextBlockAssessmentCardComponent {
 
     textBlockRef = input.required<TextBlockRef>();
     selected = input<boolean>(false);
-    readOnly = input.required<boolean>();
-    isMissedFeedback = input<boolean>();
-    highlightDifferences = input<boolean>();
+    readOnly = input<boolean>(false);
+    isMissedFeedback = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
     criteria = input<GradingCriterion[]>();
 
     didSelect = output<OptionalTextBlockRef>();

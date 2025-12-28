@@ -151,7 +151,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             imports: [FaIconComponent],
             declarations: [
                 TextSubmissionAssessmentComponent,
-                TextAssessmentAreaComponent,
+                MockComponent(TextAssessmentAreaComponent),
                 MockComponent(TextBlockAssessmentCardComponent),
                 MockComponent(TextBlockFeedbackEditorComponent),
                 MockComponent(ManualTextblockSelectionComponent),
@@ -221,11 +221,11 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.changeDetectorRef.detectChanges();
 
-        const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        const textAssessmentAreaComponent = textAssessmentArea.componentInstance as TextAssessmentAreaComponent;
-        const textBlockRef = textAssessmentAreaComponent.textBlockRefs[0];
+        // Modify the text block ref directly on the component under test
+        const textBlockRef = component.textBlockRefs[0];
         textBlockRef.feedback!.credits = 42;
-        textAssessmentAreaComponent.textBlockRefsChangeEmit();
+        // Call validateFeedback which updates the total score
+        component.validateFeedback();
 
         expect(component.totalScore).toBe(42);
     });

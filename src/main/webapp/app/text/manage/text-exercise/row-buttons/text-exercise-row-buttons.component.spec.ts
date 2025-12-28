@@ -1,10 +1,4 @@
-/**
- * Vitest tests for TextExerciseRowButtonsComponent.
- * Tests the row action buttons for text exercises.
- */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -13,8 +7,6 @@ import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-
 import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('TextExercise Row Buttons Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TextExerciseRowButtonsComponent;
     let fixture: ComponentFixture<TextExerciseRowButtonsComponent>;
     let textExerciseService: TextExerciseService;
@@ -25,8 +17,8 @@ describe('TextExercise Row Buttons Component', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
-                { provide: TextExerciseService, useValue: { delete: vi.fn() } },
-                { provide: EventManager, useValue: { broadcast: vi.fn() } },
+                { provide: TextExerciseService, useValue: { delete: jest.fn() } },
+                { provide: EventManager, useValue: { broadcast: jest.fn() } },
             ],
         }).compileComponents();
 
@@ -37,12 +29,12 @@ describe('TextExercise Row Buttons Component', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should delete exercise', () => {
-        const broadCastSpy = vi.spyOn(eventManagerService, 'broadcast').mockReturnValue();
-        vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        const broadCastSpy = jest.spyOn(eventManagerService, 'broadcast').mockReturnValue();
+        jest.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         // Use setInput for signal inputs
         fixture.componentRef.setInput('exercise', textExercise);
         fixture.componentRef.setInput('courseId', 1);

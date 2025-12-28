@@ -1,10 +1,4 @@
-/**
- * Vitest tests for FeedbackTextComponent.
- * Tests the feedback text display functionality including long feedback handling.
- */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackTextComponent } from 'app/exercise/feedback/text/feedback-text.component';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
@@ -15,12 +9,10 @@ import { of } from 'rxjs';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('FeedbackTextComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FeedbackTextComponent>;
     let comp: FeedbackTextComponent;
 
-    let getLongFeedbackStub: ReturnType<typeof vi.spyOn>;
+    let getLongFeedbackStub: ReturnType<typeof jest.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -32,12 +24,12 @@ describe('FeedbackTextComponent', () => {
                 comp = fixture.componentInstance;
 
                 const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
-                getLongFeedbackStub = vi.spyOn(longFeedbackTextService, 'find');
+                getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'find');
             });
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should set an empty text if there is no feedback text', () => {

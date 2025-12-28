@@ -1,10 +1,4 @@
-/**
- * Vitest tests for ManualTextblockSelectionComponent.
- * Tests manual text block selection and grouping functionality.
- */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -17,8 +11,6 @@ import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextSelectDirective } from 'app/text/manage/assess/directive/text-select.directive';
 
 describe('ManualTextblockSelectionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ManualTextblockSelectionComponent;
     let fixture: ComponentFixture<ManualTextblockSelectionComponent>;
 
@@ -87,7 +79,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should add TextBlockRefGroup correctly', () => {
@@ -105,7 +97,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should handle manual text selection correctly', () => {
-        const emitSpy = vi.spyOn(component.textBlockRefAdded, 'emit');
+        const emitSpy = jest.spyOn(component.textBlockRefAdded, 'emit');
         const firstWord: wordSelection = { word: 'Fifth', index: 50 };
         const lastWord: wordSelection = { word: 'sixth', index: 56 };
         const selectedWords = [firstWord, lastWord];

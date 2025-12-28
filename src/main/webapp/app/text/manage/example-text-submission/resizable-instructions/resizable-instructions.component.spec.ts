@@ -1,11 +1,5 @@
-/**
- * Vitest tests for ResizableInstructionsComponent.
- * Tests the resizable instructions panel functionality.
- */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, Directive, Input, Pipe, PipeTransform } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -44,12 +38,10 @@ class StructuredLayoutStubComponent {
     standalone: true,
 })
 class HtmlForMarkdownPipeStub implements PipeTransform {
-    transform = vi.fn((value: string) => `converted:${value}`);
+    transform = jest.fn((value: string) => `converted:${value}`);
 }
 
 describe('ResizableInstructionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, HtmlForMarkdownPipeStub],
@@ -84,7 +76,7 @@ describe('ResizableInstructionsComponent', () => {
 
     it('should toggle collapse with provided id', () => {
         const fixture = TestBed.createComponent(ResizableInstructionsComponent);
-        const toggleSpy = vi.fn();
+        const toggleSpy = jest.fn();
         // Use setInput for signal inputs
         fixture.componentRef.setInput('toggleCollapse', toggleSpy);
         fixture.componentRef.setInput('toggleCollapseId', 'instructions');
@@ -109,6 +101,6 @@ describe('ResizableInstructionsComponent', () => {
 
         const layout = fixture.debugElement.query(By.directive(StructuredLayoutStubComponent)).componentInstance as StructuredLayoutStubComponent;
         expect(layout.criteria).toEqual(criteria);
-        expect(layout.readonly).toBe(true);
+        expect(layout.readonly).toBeTrue();
     });
 });

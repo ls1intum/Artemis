@@ -1,10 +1,4 @@
-/**
- * Vitest tests for TextResultComponent.
- * Tests the text result display functionality.
- */
-import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -22,8 +16,6 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TextResultComponent>;
     let component: TextResultComponent;
 
@@ -243,6 +235,6 @@ describe('TextResultComponent', () => {
         expect(component.textResults[0].feedback).toBeDefined();
         expect(component.textResults[0].feedback!.isSubsequent).toBeUndefined();
         expect(component.textResults[1].feedback).toBeDefined();
-        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
+        expect(component.textResults[1].feedback!.isSubsequent).toBeTrue();
     });
 });
