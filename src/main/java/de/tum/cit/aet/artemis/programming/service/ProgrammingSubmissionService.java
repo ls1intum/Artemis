@@ -541,6 +541,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
         var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+        if (latestHash == null) {
+            log.warn("Could not create initial submission for participation {} of programming exercise {} because no commit hash could be found.", participation.getId(),
+                    programmingExercise.getId());
+            return;
+        }
         submission.setCommitHash(latestHash.getName());
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);

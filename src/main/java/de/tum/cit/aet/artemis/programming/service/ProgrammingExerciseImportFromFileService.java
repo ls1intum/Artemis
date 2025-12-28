@@ -102,7 +102,7 @@ public class ProgrammingExerciseImportFromFileService {
      * @return the imported programming exercise
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user,
-            boolean isImportFromSharing) throws IOException, GitAPIException, URISyntaxException {
+            boolean isImportFromSharing) throws IOException, GitAPIException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
