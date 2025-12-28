@@ -103,8 +103,12 @@ public abstract class AbstractArtemisBuildAgentTest {
             return null;
         }).when(startContainerCmd).exec();
 
-        when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
         dockerClient = dockerClientMock;
+
+        // Ensure build executor is initialized before each test to prevent flaky tests
+        // caused by previous tests calling closeBuildAgentServices() (e.g., during pause/resume)
+        buildAgentConfiguration.openBuildAgentServices();
     }
 
     protected void mockBuildJobGitService() {

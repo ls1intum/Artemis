@@ -42,6 +42,7 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingCheckoutDirectories = 'detail-checkout-directories',
+    ExerciseCategories = 'detail-exercise-categories',
 }
 
 @Component({

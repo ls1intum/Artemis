@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
                 'exercises/team-exercise',
             ]
         },
+        'lectures',
         'lecture-series',
         'assessment',
         {

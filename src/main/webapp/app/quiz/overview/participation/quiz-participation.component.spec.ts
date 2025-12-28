@@ -83,7 +83,6 @@ const quizExerciseForPractice: QuizExercise = {
     dueDate: dayjs(now).subtract(2, 'minutes'),
     quizStarted: true,
     quizEnded: true,
-    isOpenForPractice: true,
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: false,
     studentAssignedTeamIdComputed: false,

@@ -45,7 +45,7 @@
     }
 
     &.attachment {
-        margin-top: 20px;
+        // margin-top is set dynamically via getContainerMarginTop() based on badge count
 
         .lecture-unit-type-container .unit-badges {
             > div {
