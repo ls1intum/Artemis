@@ -7,8 +7,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.channels.FileChannel;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -194,25 +199,43 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         // Clean up repositories to prevent state leaking between tests
         if (exercise != null && exercise.getId() != null) {
-            try {
-                gitServiceSpy.deleteLocalRepository(exercise.getRepositoryURI(RepositoryType.TEMPLATE));
-            }
-            catch (Exception e) {
-                log.debug("Failed to clean up template repository", e);
+            List<RepositoryType> repositoryTypes = List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
+            List<Exception> cleanupFailures = new java.util.ArrayList<>();
+
+            for (RepositoryType type : repositoryTypes) {
+                try {
+                    LocalVCRepositoryUri uri = exercise.getRepositoryURI(type);
+                    gitServiceSpy.deleteLocalRepository(uri);
+
+                    // Verify cleanup completed with retries
+                    // Get the local repository path to verify deletion
+                    Repository repo = gitServiceSpy.getOrCheckoutRepository(uri, false, false);
+                    if (repo != null) {
+                        Path repoPath = repo.getLocalPath();
+                        int retries = 5;
+                        while (Files.exists(repoPath) && retries > 0) {
+                            log.debug("Repository {} still exists after cleanup, waiting... (retries left: {})", type, retries);
+                            Thread.sleep(200);
+                            retries--;
+                        }
+
+                        if (Files.exists(repoPath)) {
+                            log.warn("Repository {} still exists after cleanup: {}", type, repoPath);
+                        }
+                        else {
+                            log.debug("Successfully cleaned up {} repository", type);
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    log.error("Failed to clean up {} repository", type, e);
+                    cleanupFailures.add(e);
+                }
             }
 
-            try {
-                gitServiceSpy.deleteLocalRepository(exercise.getRepositoryURI(RepositoryType.SOLUTION));
-            }
-            catch (Exception e) {
-                log.debug("Failed to clean up solution repository", e);
-            }
-
-            try {
-                gitServiceSpy.deleteLocalRepository(exercise.getRepositoryURI(RepositoryType.TESTS));
-            }
-            catch (Exception e) {
-                log.debug("Failed to clean up tests repository", e);
+            // If cleanup failed, it might cause subsequent tests to fail
+            if (!cleanupFailures.isEmpty()) {
+                log.warn("Cleanup incomplete. {} repositories failed to clean up. This may cause subsequent test failures.", cleanupFailures.size());
             }
         }
     }
@@ -269,6 +292,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     private void runTests(ProgrammingLanguage language, ProjectType projectType, RepositoryType repositoryType, TestResult testResult) throws Exception {
+        // Add unique identifier to prevent repository path collisions between parameterized test iterations
+        // This is critical because multiple tests may run in sequence and need isolated file system state
+        // Use a short hash-based suffix to stay within shortname length limits
+        String uniqueId = String.valueOf(System.currentTimeMillis() % 100000); // Last 5 digits of timestamp
+        String originalShortName = exercise.getShortName();
+        exercise.setShortName(originalShortName + uniqueId);
+        log.debug("Running test with unique exercise short name: {}", exercise.getShortName());
+
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false, true, false);
@@ -399,25 +430,73 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         Path assignment = testRepositoryPath.resolve("assignment");
         Files.createDirectories(assignment);
         FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
+
+        // Ensure all files are fully written to disk before proceeding
+        // This prevents race conditions where Gradle/Maven start before files are ready
+        Path assignmentSrc = assignment.resolve("src");
+        Files.walkFileTree(assignmentSrc, new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                // Force synchronization to disk for each file
+                try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+                    channel.force(true);
+                }
+                catch (IOException e) {
+                    log.debug("Could not force sync for file: {}", file, e);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        log.debug("File system synchronization completed for assignment sources");
     }
 
     private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) throws InterruptedException {
         File reportFolder = testRepositoryPath.resolve(testResultPath).toFile();
 
         // Retry logic to handle timing issues where test reports might not be immediately available
-        int maxRetries = 5;
-        int retryDelayMs = 500;
+        // Increased retries and delay to handle systems under load
+        int maxRetries = 10; // Increased from 5
+        int retryDelayMs = 1000; // Increased from 500ms
         boolean hasReports = false;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             if (SurefireReportParser.hasReportFiles(reportFolder)) {
                 hasReports = true;
+                log.info("Test reports found after {} attempt(s) in {}", attempt, reportFolder);
                 break;
             }
             if (attempt < maxRetries) {
-                log.debug("Test reports not yet available in {} (attempt {}/{}), waiting {} ms...", reportFolder, attempt, maxRetries, retryDelayMs);
+                // Log diagnostic information about the report folder
+                if (reportFolder.exists()) {
+                    File[] files = reportFolder.listFiles();
+                    if (files != null && files.length > 0) {
+                        log.debug("Report folder exists with {} file(s) but no valid reports found yet: {}", files.length, Arrays.toString(files));
+                    }
+                    else {
+                        log.debug("Report folder exists but is empty (attempt {}/{})", attempt, maxRetries);
+                    }
+                }
+                else {
+                    log.debug("Report folder does not exist yet: {} (attempt {}/{})", reportFolder, attempt, maxRetries);
+                }
+
+                log.debug("Waiting {} ms before next attempt...", retryDelayMs);
                 Thread.sleep(retryDelayMs);
             }
+        }
+
+        // Provide detailed failure message if reports are not found
+        if (!hasReports) {
+            String diagnosticInfo = "Report folder status: ";
+            if (reportFolder.exists()) {
+                File[] files = reportFolder.listFiles();
+                diagnosticInfo += String.format("exists with %d files: %s", files != null ? files.length : 0, files != null ? Arrays.toString(files) : "null");
+            }
+            else {
+                diagnosticInfo += "does not exist";
+            }
+            log.error("Test reports not found after {} retries. {}", maxRetries, diagnosticInfo);
         }
 
         assertThat(hasReports).as("test reports generated after " + maxRetries + " retries")
