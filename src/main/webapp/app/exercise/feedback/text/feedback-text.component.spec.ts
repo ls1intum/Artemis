@@ -1,4 +1,10 @@
+/**
+ * Vitest tests for FeedbackTextComponent.
+ * Tests the feedback text display functionality including long feedback handling.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackTextComponent } from 'app/exercise/feedback/text/feedback-text.component';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
@@ -9,13 +15,15 @@ import { of } from 'rxjs';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('FeedbackTextComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FeedbackTextComponent>;
     let comp: FeedbackTextComponent;
 
-    let getLongFeedbackStub: jest.SpyInstance;
+    let getLongFeedbackStub: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(LongFeedbackTextService)],
         })
             .compileComponents()
@@ -24,17 +32,18 @@ describe('FeedbackTextComponent', () => {
                 comp = fixture.componentInstance;
 
                 const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
-                getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'find');
+                getLongFeedbackStub = vi.spyOn(longFeedbackTextService, 'find');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should set an empty text if there is no feedback text', () => {
         const text = undefined;
-        comp.feedback = getFeedbackItem(text, getFeedbackReference(1, 2, false));
+        fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
+        fixture.detectChanges();
 
         comp.ngOnInit();
 
@@ -43,7 +52,8 @@ describe('FeedbackTextComponent', () => {
 
     it('should set the text to the feedback text', () => {
         const text = 'dummy text';
-        comp.feedback = getFeedbackItem(text, getFeedbackReference(1, 2, false));
+        fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
+        fixture.detectChanges();
 
         comp.ngOnInit();
 
@@ -51,7 +61,8 @@ describe('FeedbackTextComponent', () => {
     });
 
     it('should not fetch long feedback if it does not exist', fakeAsync(() => {
-        comp.feedback = getFeedbackItem('', getFeedbackReference(1, 2, false));
+        fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, false)));
+        fixture.detectChanges();
 
         comp.ngOnInit();
         tick();
@@ -63,12 +74,14 @@ describe('FeedbackTextComponent', () => {
         const longFeedbackText: string = 'long feedback text';
         getLongFeedbackStub.mockReturnValue(of(new HttpResponse<string>({ body: longFeedbackText })));
 
-        comp.feedback = getFeedbackItem('', getFeedbackReference(1, 2, true));
+        fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, true)));
+        fixture.detectChanges();
 
         comp.ngOnInit();
         tick();
 
-        expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(2);
+        expect(getLongFeedbackStub).toHaveBeenCalledOnce();
+        expect(getLongFeedbackStub).toHaveBeenCalledWith(2);
         expect(comp.text).toBe(longFeedbackText);
         expect(comp.downloadText).toBeUndefined();
         expect(comp.downloadFilename).toBeUndefined();
@@ -78,7 +91,8 @@ describe('FeedbackTextComponent', () => {
         const longFeedbackText = '0'.repeat(100_000);
         getLongFeedbackStub.mockReturnValue(of(new HttpResponse<string>({ body: longFeedbackText })));
 
-        comp.feedback = getFeedbackItem('short version', getFeedbackReference(1, 2, true));
+        fixture.componentRef.setInput('feedback', getFeedbackItem('short version', getFeedbackReference(1, 2, true)));
+        fixture.detectChanges();
 
         comp.ngOnInit();
         tick();

@@ -1,5 +1,11 @@
+/**
+ * Vitest tests for ResizableInstructionsComponent.
+ * Tests the resizable instructions panel functionality.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, Directive, Input, Pipe, PipeTransform } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -38,10 +44,12 @@ class StructuredLayoutStubComponent {
     standalone: true,
 })
 class HtmlForMarkdownPipeStub implements PipeTransform {
-    transform = jest.fn((value: string) => `converted:${value}`);
+    transform = vi.fn((value: string) => `converted:${value}`);
 }
 
 describe('ResizableInstructionsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, HtmlForMarkdownPipeStub],
@@ -58,9 +66,13 @@ describe('ResizableInstructionsComponent', () => {
 
     it('should render provided instruction sections', () => {
         const fixture = TestBed.createComponent(ResizableInstructionsComponent);
-        fixture.componentInstance.problemStatement = 'problem';
-        fixture.componentInstance.sampleSolution = 'solution';
-        fixture.componentInstance.gradingInstructions = 'grading';
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('problemStatement', 'problem');
+        fixture.componentRef.setInput('sampleSolution', 'solution');
+        fixture.componentRef.setInput('gradingInstructions', 'grading');
+        fixture.componentRef.setInput('criteria', []);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('toggleCollapse', () => {});
         fixture.detectChanges();
 
         const markdownBlocks = fixture.nativeElement.querySelectorAll('.markdown-preview');
@@ -72,9 +84,12 @@ describe('ResizableInstructionsComponent', () => {
 
     it('should toggle collapse with provided id', () => {
         const fixture = TestBed.createComponent(ResizableInstructionsComponent);
-        const toggleSpy = jest.fn();
-        fixture.componentInstance.toggleCollapse = toggleSpy;
-        fixture.componentInstance.toggleCollapseId = 'instructions';
+        const toggleSpy = vi.fn();
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('toggleCollapse', toggleSpy);
+        fixture.componentRef.setInput('toggleCollapseId', 'instructions');
+        fixture.componentRef.setInput('criteria', []);
+        fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
 
         fixture.nativeElement.querySelector('.card-header').dispatchEvent(new Event('click'));
@@ -85,13 +100,15 @@ describe('ResizableInstructionsComponent', () => {
     it('should forward criteria and readonly flag to structured layout', () => {
         const fixture = TestBed.createComponent(ResizableInstructionsComponent);
         const criteria = [{ id: 5 } as GradingCriterion];
-        fixture.componentInstance.criteria = criteria;
-        fixture.componentInstance.readOnly = true;
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('criteria', criteria);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('toggleCollapse', () => {});
 
         fixture.detectChanges();
 
         const layout = fixture.debugElement.query(By.directive(StructuredLayoutStubComponent)).componentInstance as StructuredLayoutStubComponent;
         expect(layout.criteria).toEqual(criteria);
-        expect(layout.readonly).toBeTrue();
+        expect(layout.readonly).toBe(true);
     });
 });

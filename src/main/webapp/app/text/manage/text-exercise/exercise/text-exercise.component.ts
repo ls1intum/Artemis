@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -50,13 +50,25 @@ export class TextExerciseComponent extends ExerciseComponent {
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
 
-    @Input() textExercises: TextExercise[] = [];
+    textExercisesInput = input<TextExercise[]>([], { alias: 'textExercises' });
+    textExercises: TextExercise[] = [];
     filteredTextExercises: TextExercise[] = [];
 
     // Icons
     faSort = faSort;
     faPlus = faPlus;
     faTrash = faTrash;
+
+    constructor() {
+        super();
+        // Sync input to internal state
+        effect(() => {
+            const inputValue = this.textExercisesInput();
+            if (inputValue && inputValue.length > 0) {
+                this.textExercises = inputValue;
+            }
+        });
+    }
 
     protected get exercises() {
         return this.textExercises;

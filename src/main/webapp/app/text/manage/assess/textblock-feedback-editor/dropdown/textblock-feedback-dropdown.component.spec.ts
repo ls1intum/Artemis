@@ -1,4 +1,10 @@
+/**
+ * Vitest tests for TextblockFeedbackDropdownComponent.
+ * Tests the feedback dropdown functionality for grading instructions.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TextblockFeedbackDropdownComponent } from 'app/text/manage/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockComponent } from 'ng-mocks';
@@ -6,6 +12,8 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 describe('TextblockFeedbackDropdownComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TextblockFeedbackDropdownComponent;
     let fixture: ComponentFixture<TextblockFeedbackDropdownComponent>;
 
@@ -21,21 +29,27 @@ describe('TextblockFeedbackDropdownComponent', () => {
         structuredGradingInstructions: [gradingInstruction],
     } as GradingCriterion;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TextblockFeedbackDropdownComponent, MockComponent(HelpIconComponent)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TextblockFeedbackDropdownComponent],
         })
+            .overrideComponent(TextblockFeedbackDropdownComponent, {
+                set: {
+                    imports: [MockComponent(HelpIconComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextblockFeedbackDropdownComponent);
                 component = fixture.componentInstance;
-                component.criterion = criterion;
+                // Use setInput for signal inputs
+                fixture.componentRef.setInput('criterion', criterion);
                 fixture.detectChanges();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -43,11 +57,11 @@ describe('TextblockFeedbackDropdownComponent', () => {
     });
 
     it('should update assessment correctly when using dropdown-menu', () => {
-        const changeSpy = jest.spyOn(component.didChange, 'emit');
+        const changeSpy = vi.spyOn(component.didChange, 'emit');
         component.updateAssessmentWithDropdown(gradingInstruction);
 
         expect(changeSpy).toHaveBeenCalledOnce();
-        expect(component.feedback.gradingInstruction).toEqual(gradingInstruction);
+        expect(component.feedback().gradingInstruction).toEqual(gradingInstruction);
     });
 
     it('should display correct background colors for dropdown elements', () => {

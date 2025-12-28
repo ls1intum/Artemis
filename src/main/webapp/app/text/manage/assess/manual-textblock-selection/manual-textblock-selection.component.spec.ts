@@ -1,4 +1,10 @@
+/**
+ * Vitest tests for ManualTextblockSelectionComponent.
+ * Tests manual text block selection and grouping functionality.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -11,6 +17,8 @@ import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextSelectDirective } from 'app/text/manage/assess/directive/text-select.directive';
 
 describe('ManualTextblockSelectionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ManualTextblockSelectionComponent;
     let fixture: ComponentFixture<ManualTextblockSelectionComponent>;
 
@@ -55,20 +63,31 @@ describe('ManualTextblockSelectionComponent', () => {
     ];
     const textBlockRefs = [new TextBlockRef(blocks[0]), new TextBlockRef(blocks[1]), new TextBlockRef(blocks[2]), new TextBlockRef(blocks[3]), new TextBlockRef(blocks[4])];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ManualTextblockSelectionComponent, MockComponent(TextBlockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ManualTextblockSelectionComponent],
             providers: [MockProvider(TextSelectDirective)], // Not mocking this will cause a leak through the mocked ManualTextSelectionComponent
         })
+            .overrideComponent(ManualTextblockSelectionComponent, {
+                set: {
+                    imports: [MockComponent(TextBlockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ManualTextblockSelectionComponent);
                 component = fixture.componentInstance;
                 textBlockRefs[1].initFeedback();
-                component.textBlockRefs = textBlockRefs;
-                component.submission = submission;
+                // Use setInput for signal inputs
+                fixture.componentRef.setInput('textBlockRefs', textBlockRefs);
+                fixture.componentRef.setInput('submission', submission);
+                fixture.componentRef.setInput('readOnly', false);
                 fixture.detectChanges();
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should add TextBlockRefGroup correctly', () => {
@@ -86,7 +105,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should handle manual text selection correctly', () => {
-        jest.spyOn(component.textBlockRefAdded, 'emit');
+        const emitSpy = vi.spyOn(component.textBlockRefAdded, 'emit');
         const firstWord: wordSelection = { word: 'Fifth', index: 50 };
         const lastWord: wordSelection = { word: 'sixth', index: 56 };
         const selectedWords = [firstWord, lastWord];
@@ -98,6 +117,6 @@ describe('ManualTextblockSelectionComponent', () => {
         textBlockRef.block!.endIndex = 61;
         textBlockRef.block!.setTextFromSubmission(submission);
         textBlockRef.initFeedback();
-        expect(component.textBlockRefAdded.emit).toHaveBeenCalledWith(textBlockRef);
+        expect(emitSpy).toHaveBeenCalledWith(textBlockRef);
     });
 });

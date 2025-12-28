@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, HostListener, effect, inject, input, model, output } from '@angular/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
@@ -19,42 +19,46 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     ],
     imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective],
 })
-export class TextAssessmentAreaComponent implements OnChanges {
+export class TextAssessmentAreaComponent {
     private stringCountService = inject(StringCountService);
 
     // inputs
-    @Input() submission: TextSubmission;
-    @Input() textBlockRefs: TextBlockRef[];
-    @Input() readOnly: boolean;
-    @Input() highlightDifferences: boolean;
-    @Input() criteria?: GradingCriterion[];
-    @Input() allowManualBlockSelection = true;
+    submission = input.required<TextSubmission>();
+    textBlockRefs = model.required<TextBlockRef[]>();
+    readOnly = input.required<boolean>();
+    highlightDifferences = input.required<boolean>();
+    criteria = input<GradingCriterion[]>();
+    allowManualBlockSelection = input<boolean>(true);
 
     // outputs
-    @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
-    @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
+    textBlockRefsAddedRemoved = output<void>();
+
     autoTextBlockAssessment = true;
     selectedRef?: TextBlockRef;
     wordCount = 0;
     characterCount = 0;
 
-    /**
-     * Life cycle hook to indicate component change
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.submission && changes.submission.currentValue) {
-            const { text } = changes.submission.currentValue as TextSubmission;
-            this.wordCount = this.stringCountService.countWords(text);
-            this.characterCount = this.stringCountService.countCharacters(text);
-        }
+    constructor() {
+        // Effect to handle submission changes and sort textBlockRefs
+        effect(() => {
+            const submissionValue = this.submission();
+            if (submissionValue) {
+                const { text } = submissionValue;
+                this.wordCount = this.stringCountService.countWords(text);
+                this.characterCount = this.stringCountService.countCharacters(text);
+            }
 
-        this.textBlockRefs.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
+            const refs = this.textBlockRefs();
+            if (refs) {
+                refs.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
+            }
+        });
     }
 
     @HostListener('document:keydown.alt', ['$event', 'false'])
     @HostListener('document:keyup.alt', ['$event', 'true'])
     onAltToggle(event: Event, toggleValue: boolean) {
-        if (!this.allowManualBlockSelection) {
+        if (!this.allowManualBlockSelection()) {
             return;
         }
         this.autoTextBlockAssessment = toggleValue;
@@ -64,7 +68,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * Emit the reference change of text blocks
      */
     textBlockRefsChangeEmit(): void {
-        this.textBlockRefsChange.emit(this.textBlockRefs);
+        // Trigger model update by setting the same value (forces change detection)
+        this.textBlockRefs.set([...this.textBlockRefs()]);
     }
 
     /**
@@ -72,7 +77,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * @param ref - added text block
      */
     addTextBlockRef(ref: TextBlockRef): void {
-        this.textBlockRefs.push(ref);
+        const currentRefs = this.textBlockRefs();
+        this.textBlockRefs.set([...currentRefs, ref]);
         this.textBlockRefsAddedRemoved.emit();
     }
 
@@ -81,8 +87,11 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * @param ref - TextBlockRef that has a deleted assessment(feedback).
      */
     removeTextBlockRef(ref: TextBlockRef): void {
-        const index = this.textBlockRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
-        this.textBlockRefs.splice(index, 1);
+        const currentRefs = this.textBlockRefs();
+        const index = currentRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
+        const newRefs = [...currentRefs];
+        newRefs.splice(index, 1);
+        this.textBlockRefs.set(newRefs);
         this.textBlockRefsAddedRemoved.emit();
     }
 

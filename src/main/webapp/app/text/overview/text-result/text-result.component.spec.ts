@@ -1,4 +1,10 @@
+/**
+ * Vitest tests for TextResultComponent.
+ * Tests the text result display functionality.
+ */
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -16,6 +22,8 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TextResultComponent>;
     let component: TextResultComponent;
 
@@ -40,11 +48,16 @@ describe('TextResultComponent', () => {
         } as Feedback,
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TextResultComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TextResultComponent],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideComponent(TextResultComponent, {
+                set: {
+                    imports: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextResultComponent);
@@ -91,7 +104,9 @@ describe('TextResultComponent', () => {
         result.submission = submission;
         result.feedbacks = feedbacks;
 
-        component.result = result;
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('result', result);
+        fixture.detectChanges();
 
         expect(component.textResults).toHaveLength(4);
     });
@@ -220,12 +235,14 @@ describe('TextResultComponent', () => {
         result.submission = submission;
         result.feedbacks = feedback;
 
-        component.result = result;
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('result', result);
+        fixture.detectChanges();
 
         expect(component.textResults).toHaveLength(2);
         expect(component.textResults[0].feedback).toBeDefined();
         expect(component.textResults[0].feedback!.isSubsequent).toBeUndefined();
         expect(component.textResults[1].feedback).toBeDefined();
-        expect(component.textResults[1].feedback!.isSubsequent).toBeTrue();
+        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
     });
 });

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -14,13 +14,13 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [FaIconComponent, TranslateDirective, StructuredGradingInstructionsAssessmentLayoutComponent, HtmlForMarkdownPipe],
 })
 export class ResizableInstructionsComponent {
-    @Input() public criteria: GradingCriterion[];
-    @Input() public problemStatement?: string;
-    @Input() public sampleSolution?: string;
-    @Input() public gradingInstructions?: string;
-    @Input() public toggleCollapse: (event: any, type?: string) => void;
-    @Input() public toggleCollapseId?: string;
-    @Input() readOnly: boolean;
+    criteria = input.required<GradingCriterion[]>();
+    problemStatement = input<string>();
+    sampleSolution = input<string>();
+    gradingInstructions = input<string>();
+    toggleCollapse = input.required<(event: any, type?: string) => void>();
+    toggleCollapseId = input<string>();
+    readOnly = input.required<boolean>();
 
     // Icons
     faChevronRight = faChevronRight;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
@@ -24,13 +24,11 @@ export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    @Input() public textBlockRefGroup: TextBlockRefGroup;
-    @Input() submission: TextSubmission;
-    @Output() public didSelectWord = new EventEmitter<wordSelection[]>();
-    @Input() set words(textBlockRefGroup: TextBlockRefGroup) {
-        // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
-        this.submissionWords = textBlockRefGroup.getText(this.submission).replace(LINEBREAK, '\n ').split(SPACE);
-    }
+    textBlockRefGroup = input.required<TextBlockRefGroup>();
+    submission = input.required<TextSubmission>();
+    didSelectWord = output<wordSelection[]>();
+    words = input.required<TextBlockRefGroup>();
+
     public submissionWords: string[] | undefined;
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
@@ -38,10 +36,20 @@ export class ManualTextSelectionComponent {
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
+
+        // Effect to compute submissionWords when words or submission changes
+        effect(() => {
+            const wordsValue = this.words();
+            const submissionValue = this.submission();
+            if (wordsValue && submissionValue) {
+                // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
+                this.submissionWords = wordsValue.getText(submissionValue).replace(LINEBREAK, '\n ').split(SPACE);
+            }
+        });
     }
 
     calculateIndex(index: number): void {
-        let result = this.textBlockRefGroup.startIndex!;
+        let result = this.textBlockRefGroup().startIndex!;
         for (let i = 0; i < index; i++) {
             const space = 1;
             result += this.submissionWords![i].length + space;
