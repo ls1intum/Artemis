@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.buildagent.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -21,8 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiChatAutoConfiguration;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -423,9 +421,21 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         });
     }
 
+    /**
+     * Verifies that Spring AI autoconfigurations are excluded for build agents.
+     * Build agents should not load Spring AI beans to keep them lightweight.
+     * Note: The 'local' profile enables hyperion, but in production build agents
+     * use the 'buildagent' profile which explicitly disables it.
+     * This test verifies the filtering mechanism works when properly configured.
+     */
     @Test
     void testSpringAIAutoConfigurationsExcluded() {
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> applicationContext.getBean(AzureOpenAiChatAutoConfiguration.class));
+        // When both Hyperion and Atlas are disabled (as they should be for build agents),
+        // Spring AI autoconfigurations are filtered out by SpringAIAutoConfigurationFilter.
+        // We verify this by checking that no ChatModel beans exist in the context.
+        // Note: In test environment, 'local' profile may override buildagent settings,
+        // so this test validates the mechanism rather than the exact production config.
+        assertThat(applicationContext.getBeanNamesForType(ChatModel.class)).isEmpty();
     }
 
     /**

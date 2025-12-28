@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -229,12 +228,10 @@ class HyperionCodeGenerationExecutionServiceTest {
     void commitAndGetHash_withSuccessfulCommit_returnsHash() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
-        ObjectId mockCommitId = mock(ObjectId.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
         doNothing().when(repositoryService).commitChanges(mockRepository, user);
-        when(gitService.getLastCommitHash(repositoryUri)).thenReturn(mockCommitId);
-        when(mockCommitId.getName()).thenReturn("new-commit-hash");
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
 
@@ -248,12 +245,10 @@ class HyperionCodeGenerationExecutionServiceTest {
     void commitAndGetHash_withCIException_stillReturnsHash() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
-        ObjectId mockCommitId = mock(ObjectId.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
         doNothing().when(repositoryService).commitChanges(mockRepository, user);
-        when(gitService.getLastCommitHash(repositoryUri)).thenReturn(mockCommitId);
-        when(mockCommitId.getName()).thenReturn("new-commit-hash");
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash",
                 RepositoryType.SOLUTION);
@@ -267,12 +262,10 @@ class HyperionCodeGenerationExecutionServiceTest {
     void commitAndGetHash_withTestsRepositoryType_createsTestSubmissionAndTriggersCI() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
-        ObjectId mockCommitId = mock(ObjectId.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
         doNothing().when(repositoryService).commitChanges(mockRepository, user);
-        when(gitService.getLastCommitHash(repositoryUri)).thenReturn(mockCommitId);
-        when(mockCommitId.getName()).thenReturn("commit-tests");
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("commit-tests");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
 
         String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.TESTS);
