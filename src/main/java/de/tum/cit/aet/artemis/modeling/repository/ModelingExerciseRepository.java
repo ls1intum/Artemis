@@ -69,6 +69,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
                 LEFT JOIN FETCH modelingExercise.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
             WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
