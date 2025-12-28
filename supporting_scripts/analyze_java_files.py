@@ -224,25 +224,43 @@ def display_pr_context(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Analyze Java code for large classes and complex Spring beans.'
+        description='Analyze Java code for large classes and complex Spring beans.',
+        epilog="""
+Examples:
+  # Analyze and report violations without enforcing thresholds:
+  python supporting_scripts/analyze_java_files.py
+
+  # Enforce thresholds (both must be specified together):
+  python supporting_scripts/analyze_java_files.py --max-large-classes 50 --max-complex-beans 30
+
+  # Analyze with custom line and parameter limits:
+  python supporting_scripts/analyze_java_files.py --max-lines 800 --max-params 8 --max-large-classes 40 --max-complex-beans 25
+
+  # Include repository dependencies in constructor parameter count:
+  python supporting_scripts/analyze_java_files.py --include-repo-deps --max-large-classes 50 --max-complex-beans 30
+
+  # Analyze for a pull request:
+  python supporting_scripts/analyze_java_files.py --event-type pull_request --base-branch develop --max-large-classes 50 --max-complex-beans 30
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
         '--dir',
         default='src/main/java/de/tum/cit/aet/artemis',
-        help='Base directory to analyze'
+        help='Base directory to analyze (default: src/main/java/de/tum/cit/aet/artemis)'
     )
     # TODO in the future, we want to lower those thresholds to 800 and 8
     parser.add_argument(
         '--max-lines',
         type=int,
         default=1000,
-        help='Maximum allowed lines per class'
+        help='Maximum allowed lines per class (default: 1000)'
     )
     parser.add_argument(
         '--max-params',
         type=int,
         default=10,
-        help='Maximum allowed constructor parameters'
+        help='Maximum allowed constructor parameters (default: 10)'
     )
     parser.add_argument(
         '--include-repo-deps',
@@ -254,28 +272,42 @@ if __name__ == '__main__':
         '--max-large-classes',
         type=int,
         default=None,
-        help='Maximum allowed number of large classes (fails if exceeded)'
+        help='Maximum allowed number of large classes (fails if exceeded). Must be used together with --max-complex-beans.'
     )
     parser.add_argument(
         '--max-complex-beans',
         type=int,
         default=None,
-        help='Maximum allowed number of complex beans (fails if exceeded)'
+        help='Maximum allowed number of complex beans (fails if exceeded). Must be used together with --max-large-classes.'
     )
     parser.add_argument(
         '--event-type',
         type=str,
         default='push',
         choices=['push', 'pull_request'],
-        help='GitHub event type (push or pull_request)'
+        help='GitHub event type (default: push)'
     )
     parser.add_argument(
         '--base-branch',
         type=str,
         default='develop',
-        help='Base branch for PR diff comparison'
+        help='Base branch for PR diff comparison (default: develop)'
     )
     args = parser.parse_args()
+
+    # Validate that both threshold arguments are provided together or neither is provided
+    has_max_large = args.max_large_classes is not None
+    has_max_complex = args.max_complex_beans is not None
+
+    if has_max_large != has_max_complex:
+        parser.error(
+            "Error: --max-large-classes and --max-complex-beans must be used together.\n\n"
+            "You specified only one threshold argument. Either:\n"
+            "  1. Provide both: --max-large-classes <N> --max-complex-beans <M>\n"
+            "  2. Omit both to only report violations without enforcing thresholds\n\n"
+            "Example usage:\n"
+            "  python supporting_scripts/analyze_java_files.py --max-large-classes 50 --max-complex-beans 30"
+        )
 
     # Run the analysis
     large_classes, complex_beans, large_counts, bean_counts = analyze_java_files(
