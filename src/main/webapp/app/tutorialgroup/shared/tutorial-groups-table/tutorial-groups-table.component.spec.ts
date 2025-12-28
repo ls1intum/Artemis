@@ -169,7 +169,7 @@ describe('TutorialGroupsTableComponent', () => {
         expect(fixture.nativeElement.querySelector('#language-column')).toBeNull();
     });
 
-    it('should show the language column if multiple formats are present', async () => {
+    it('should show the online column if multiple formats are present', async () => {
         // Create new objects to trigger signal change detection
         const groupOnlineOne = { ...tutorialGroupOne, isOnline: true };
         const groupOnlineTwo = { ...tutorialGroupTwo, isOnline: false };
@@ -190,7 +190,7 @@ describe('TutorialGroupsTableComponent', () => {
         expect(fixture.nativeElement.querySelector('#online-column')).toBeNull();
     });
 
-    it('should show the language column if multiple campuses are present', async () => {
+    it('should show the campus column if multiple campuses are present', async () => {
         // Create new objects to trigger signal change detection
         const groupCampusOne = { ...tutorialGroupOne, campus: 'Garching' };
         const groupCampusTwo = { ...tutorialGroupTwo, campus: 'Munich' };

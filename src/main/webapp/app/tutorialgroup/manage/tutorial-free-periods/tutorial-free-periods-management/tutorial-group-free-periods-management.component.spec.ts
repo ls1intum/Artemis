@@ -130,7 +130,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         expect(mockCreateDialog.open).toHaveBeenCalledOnce();
     });
 
-    it('should load all free periods and sort by start date ascending', () => {
+    it('should load all free periods and sort by start date descending', () => {
         expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);

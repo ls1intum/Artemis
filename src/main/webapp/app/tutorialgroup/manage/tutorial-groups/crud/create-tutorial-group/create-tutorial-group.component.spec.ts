@@ -21,7 +21,7 @@ import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-for
 import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, EventEmitter, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -40,7 +40,7 @@ class TutorialGroupFormStubComponent {
     course = input<Course>();
     isEditMode = input<boolean>(false);
 
-    formSubmitted = output<EventEmitter<TutorialGroupFormData>>();
+    formSubmitted = output<TutorialGroupFormData>();
 }
 describe('CreateTutorialGroupComponent', () => {
     setupTestBed({ zoneless: true });

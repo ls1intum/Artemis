@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TutorialGroupsImportButtonComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
-import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -33,17 +32,17 @@ describe('TutorialGroupsImportButtonComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should open the import dialog when the button is clicked', async () => {
-        const mockImportDialog = { open: vi.fn() } as unknown as TutorialGroupsRegistrationImportDialogComponent;
-        vi.spyOn(component, 'importDialog').mockReturnValue(mockImportDialog);
+    it('should open the import dialog when the button is clicked', () => {
+        const importDialog = component.importDialog();
+        const openSpy = vi.spyOn(importDialog!, 'open');
         const openDialogSpy = vi.spyOn(component, 'openTutorialGroupImportDialog');
 
         const importButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
         importButton.click();
 
-        await fixture.whenStable();
+        fixture.detectChanges();
         expect(openDialogSpy).toHaveBeenCalledOnce();
-        expect(mockImportDialog.open).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 
     it('should show warning dialog when import is completed', () => {
