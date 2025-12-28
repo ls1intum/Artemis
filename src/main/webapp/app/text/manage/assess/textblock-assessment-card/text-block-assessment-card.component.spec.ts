@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
@@ -24,12 +26,18 @@ import { ActivatedRoute } from '@angular/router';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+/**
+ * Test suite for TextBlockAssessmentCardComponent.
+ * Tests component creation, selection behavior, autofocus functionality,
+ * text block display, feedback editor integration, and assessment event tracking.
+ */
 describe('TextblockAssessmentCardComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: TextBlockAssessmentCardComponent;
     let fixture: ComponentFixture<TextBlockAssessmentCardComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 TextBlockAssessmentCardComponent,
@@ -48,14 +56,12 @@ describe('TextblockAssessmentCardComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextBlockAssessmentCardComponent);
-                component = fixture.componentInstance;
-                component.textBlockRef = TextBlockRef.new();
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TextBlockAssessmentCardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('textBlockRef', TextBlockRef.new());
+        fixture.detectChanges();
     });
 
     it('should create', () => {
@@ -63,28 +69,29 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('cannot be selected in readOnly mode', () => {
-        component.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
         component.didSelect = new EventEmitter();
-        const selectSpy = jest.spyOn(component.didSelect, 'emit');
+        const selectSpy = vi.spyOn(component.didSelect, 'emit');
         component.select();
         expect(selectSpy).not.toHaveBeenCalled();
     });
 
     it('should autofocus', () => {
-        jest.useFakeTimers();
-        component.readOnly = false;
-        component.textBlockRef = TextBlockRef.new();
-        component.textBlockRef.selectable = true;
-        component.textBlockRef.feedback = {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('readOnly', false);
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.selectable = true;
+        textBlockRef.feedback = {
             type: FeedbackType.MANUAL,
         };
-        component.selected = false;
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('selected', false);
         component.feedbackEditor = {
             focus: () => {},
         } as TextBlockFeedbackEditorComponent;
-        const focusSpy = jest.spyOn(component.feedbackEditor!, 'focus');
+        const focusSpy = vi.spyOn(component.feedbackEditor!, 'focus');
         component.select(true);
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
         expect(focusSpy).toHaveBeenCalled();
     });
 
@@ -114,7 +121,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.initFeedback();
         fixture.changeDetectorRef.detectChanges();
 
-        jest.spyOn(component.didDelete, 'emit');
+        vi.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextBlockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
@@ -129,7 +136,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.deletable = false;
         fixture.changeDetectorRef.detectChanges();
 
-        jest.spyOn(component.didDelete, 'emit');
+        vi.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextBlockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
@@ -139,25 +146,25 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should send assessment event when selecting automatic text block', () => {
-        component.selected = false;
+        fixture.componentRef.setInput('selected', false);
         component.textBlockRef.feedback = {
             type: FeedbackType.MANUAL,
         };
         //@ts-ignore
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = vi.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
     });
 
     it('should not send assessment event when selecting text block that is unselectable', () => {
-        component.selected = false;
+        fixture.componentRef.setInput('selected', false);
         component.textBlockRef.feedback = {
             type: FeedbackType.MANUAL,
         };
         component.textBlockRef.selectable = false;
         //@ts-ignore
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = vi.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).not.toHaveBeenCalled();

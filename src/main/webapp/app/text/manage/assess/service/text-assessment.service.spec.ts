@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -19,7 +21,13 @@ import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 
+/**
+ * Test suite for TextAssessment Service.
+ * Tests assessment CRUD operations, complaint handling, example assessments,
+ * feedback data retrieval, and student participation resolvers.
+ */
 describe('TextAssessment Service', () => {
+    setupTestBed({ zoneless: true });
     let service: TextAssessmentService;
     let httpMock: HttpTestingController;
     const textSubmission = new TextSubmission();
@@ -63,8 +71,8 @@ describe('TextAssessment Service', () => {
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(TextAssessmentService);
@@ -271,7 +279,7 @@ describe('TextAssessment Service', () => {
     it('should resolve new StudentParticipations for TextSubmissionAssessmentComponent', () => {
         const resolver = TestBed.inject(NewStudentParticipationResolver);
         const textSubmissionService = TestBed.inject(TextSubmissionService);
-        const newStudentParticipationStub = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
+        const newStudentParticipationStub = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
 
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1 }),
@@ -286,7 +294,7 @@ describe('TextAssessment Service', () => {
 
     it('should resolve the needed StudentParticipations for TextSubmissionAssessmentComponent', () => {
         const resolver = TestBed.inject(StudentParticipationResolver);
-        const studentParticipationSpy = jest.spyOn(service, 'getFeedbackDataForExerciseSubmission');
+        const studentParticipationSpy = vi.spyOn(service, 'getFeedbackDataForExerciseSubmission');
 
         const snapshot = {
             paramMap: convertToParamMap({ participationId: 1, submissionId: 2, resultId: 1 }),

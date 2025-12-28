@@ -1,3 +1,9 @@
+/**
+ * Test suite for TextEditorComponent.
+ * Tests text submission, participation management, and editor functionality.
+ */
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -52,11 +58,12 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextEditorComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
-    let getTextForParticipationStub: jest.SpyInstance;
+    let getTextForParticipationStub: any;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
 
@@ -72,8 +79,8 @@ describe('TextEditorComponent', () => {
         result.id = 1;
     });
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([textEditorRoute[0]]),
                 FaIconComponent,
@@ -107,21 +114,18 @@ describe('TextEditorComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextEditorComponent);
-                comp = fixture.componentInstance;
-                textService = TestBed.inject(TextEditorService);
-                textSubmissionService = TestBed.inject(TextSubmissionService);
-                profileService = TestBed.inject(ProfileService);
-                irisSettingsService = TestBed.inject(IrisSettingsService);
-                getTextForParticipationStub = jest.spyOn(textService, 'get');
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TextEditorComponent);
+        comp = fixture.componentInstance;
+        textService = TestBed.inject(TextEditorService);
+        textSubmissionService = TestBed.inject(TextSubmissionService);
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        getTextForParticipationStub = vi.spyOn(textService, 'get');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
@@ -129,9 +133,9 @@ describe('TextEditorComponent', () => {
         fixture.componentRef.setInput('inputParticipation', participation);
         fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
         // @ts-ignore updateParticipation is private
-        const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
-        const setupComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
+        const setupComponentWithInputValuesSpy = vi.spyOn(comp, 'setupComponentWithInputValues');
 
         fixture.detectChanges();
 
@@ -249,7 +253,7 @@ describe('TextEditorComponent', () => {
 
     it('should not submit while saving', () => {
         comp.isSaving = true;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
@@ -257,7 +261,7 @@ describe('TextEditorComponent', () => {
     it('should not submit without submission', () => {
         // @ts-ignore
         delete comp.submission;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
@@ -267,7 +271,7 @@ describe('TextEditorComponent', () => {
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving).toBeFalsy();
@@ -275,13 +279,13 @@ describe('TextEditorComponent', () => {
 
     it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'success');
+        const alertServiceSpy = vi.spyOn(alertService, 'success');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
         comp.isAllowedToSubmitAfterDueDate = false;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -289,20 +293,20 @@ describe('TextEditorComponent', () => {
 
     it('should warn alert on submit if submitDueDateMissedAlert', () => {
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        const alertServiceSpy = vi.spyOn(alertService, 'warning');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
         comp.isAllowedToSubmitAfterDueDate = true;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should return submission for answer', () => {
-        jest.spyOn(textService, 'predictLanguage');
+        vi.spyOn(textService, 'predictLanguage');
         const submissionForAnswer = comp['submissionForAnswer']('abc');
         expect(submissionForAnswer.text).toBe('abc');
         expect(submissionForAnswer.language).toEqual(Language.ENGLISH);
@@ -339,7 +343,7 @@ describe('TextEditorComponent', () => {
             text: 'abc',
         } as TextSubmission;
         // @ts-ignore
-        jest.spyOn(comp, 'updateParticipation');
+        vi.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('abc');
@@ -360,7 +364,7 @@ describe('TextEditorComponent', () => {
             } as Participation,
         } as TextSubmission;
         // @ts-ignore
-        jest.spyOn(comp, 'updateParticipation');
+        vi.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('');
@@ -455,7 +459,7 @@ describe('TextEditorComponent', () => {
         comp.submission = { text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
@@ -464,13 +468,13 @@ describe('TextEditorComponent', () => {
         comp.submission = { id: 1, text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
     it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         // Set up course with ID
         comp.course = { id: 123 } as any;
@@ -486,7 +490,7 @@ describe('TextEditorComponent', () => {
             effectiveRateLimit: { requests: 100, timeframeHours: 24 },
             applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
         } as IrisCourseSettingsWithRateLimitDTO;
-        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockIrisSettings));
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockIrisSettings));
 
         route.params = of({ exerciseId: '456' });
 
@@ -504,9 +508,9 @@ describe('TextEditorComponent', () => {
 
     it('should not load Iris settings when in exam mode', fakeAsync(() => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
-        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         route.params = of({ exerciseId: '456' });
 
@@ -524,9 +528,9 @@ describe('TextEditorComponent', () => {
 
     it('should not load Iris settings when Iris profile is not active', fakeAsync(() => {
         const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
-        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         route.params = of({ exerciseId: '456' });
 

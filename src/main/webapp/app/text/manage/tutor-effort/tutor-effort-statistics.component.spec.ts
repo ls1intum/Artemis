@@ -1,3 +1,9 @@
+/**
+ * Test suite for the TutorEffortStatisticsComponent.
+ * Tests tutor effort loading, distribution calculations, and UI rendering for text exercise assessments.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorEffortStatisticsComponent } from 'app/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
@@ -15,6 +21,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('TutorEffortStatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
     let component: TutorEffortStatisticsComponent;
     let compiled: any;
@@ -44,8 +51,8 @@ describe('TutorEffortStatisticsComponent', () => {
         },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -57,19 +64,17 @@ describe('TutorEffortStatisticsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorEffortStatisticsComponent);
-                component = fixture.componentInstance;
-                compiled = fixture.debugElement.nativeElement;
-                fixture.detectChanges();
-                textExerciseService = TestBed.inject(TextExerciseService);
-                textAssessmentService = TestBed.inject(TextAssessmentService);
-                getNumberOfTutorsInvolvedInAssessmentStub = jest.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
-                calculateTutorEffortStub = jest.spyOn(textExerciseService, 'calculateTutorEffort');
-                router = TestBed.inject(Router);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TutorEffortStatisticsComponent);
+        component = fixture.componentInstance;
+        compiled = fixture.debugElement.nativeElement;
+        fixture.detectChanges();
+        textExerciseService = TestBed.inject(TextExerciseService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        getNumberOfTutorsInvolvedInAssessmentStub = vi.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
+        calculateTutorEffortStub = vi.spyOn(textExerciseService, 'calculateTutorEffort');
+        router = TestBed.inject(Router);
     });
 
     it('should call loadTutorEfforts and calculateTutorEffort on init', () => {
@@ -144,7 +149,7 @@ describe('TutorEffortStatisticsComponent', () => {
     it('should delegate the user correctly', () => {
         component.currentCourseId = 42;
         component.currentExerciseId = 33;
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const expectedArray = ['/course-management', 42, 'assessment-dashboard', 33];
 
         component.onSelect();
@@ -163,8 +168,8 @@ describe('TutorEffortStatisticsComponent', () => {
                 totalTimeSpentMinutes: 32,
             },
         ];
-        jest.spyOn(textExerciseService, 'calculateTutorEffort').mockReturnValue(of(tutorEfforts));
-        jest.spyOn(component, 'loadNumberOfTutorsInvolved').mockImplementation();
+        vi.spyOn(textExerciseService, 'calculateTutorEffort').mockReturnValue(of(tutorEfforts));
+        vi.spyOn(component, 'loadNumberOfTutorsInvolved').mockImplementation();
 
         component.ngOnInit();
 

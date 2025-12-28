@@ -1,3 +1,9 @@
+/**
+ * Tests for TextExerciseComponent.
+ * Verifies the component's behavior for managing text exercises in a course.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -21,6 +27,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('TextExercise Management Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: TextExerciseComponent;
     let fixture: ComponentFixture<TextExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
@@ -30,8 +37,8 @@ describe('TextExercise Management Component', () => {
     const textExercise: TextExercise = { id: 456, title: 'Text Exercise', type: 'text' } as TextExercise;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -53,13 +60,13 @@ describe('TextExercise Management Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(courseExerciseService, 'findAllTextExercisesForCourse').mockReturnValue(
+        vi.spyOn(courseExerciseService, 'findAllTextExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [textExercise],
@@ -81,7 +88,7 @@ describe('TextExercise Management Component', () => {
             result: Promise.resolve({ id: 456 } as TextExercise),
             componentInstance: {},
         } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
@@ -118,7 +125,7 @@ describe('TextExercise Management Component', () => {
         comp.toggleExercise(textExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toContainEntry(['id', textExercise.id]);
+        expect(comp.selectedExercises[0]).toMatchObject({ id: textExercise.id });
         expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.textExercises.length);
     });
 });

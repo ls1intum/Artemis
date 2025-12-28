@@ -1,3 +1,15 @@
+/**
+ * Tests for TextSubmissionAssessmentComponent.
+ * This test suite verifies the functionality of text submission assessment including:
+ * - Assessment initialization and navigation
+ * - Assessment save and submit operations
+ * - Feedback validation and management
+ * - Text block selection and overlapping handling
+ * - Complaint resolution and assessment after complaints
+ * - Integration with Athena for feedback suggestions
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -51,6 +63,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextSubmissionAssessmentComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
@@ -75,7 +88,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         return new TextBlockRef(textBlock, feedback);
     }
 
-    beforeEach(() => {
+    beforeEach(async () => {
         exercise = {
             id: 1,
             type: ExerciseType.TEXT,
@@ -147,7 +160,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             }),
         } as unknown as ActivatedRoute;
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [FaIconComponent],
             declarations: [
                 TextSubmissionAssessmentComponent,
@@ -180,7 +193,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         }).compileComponents();
     });
 
-    beforeEach(() => {
+    beforeEach(async () => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
@@ -193,13 +206,13 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
         await component.ngOnInit();
-        expect(component.isTestRun).toBeFalse();
+        expect(component.isTestRun).toBe(false);
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
     });
@@ -232,7 +245,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should save the assessment with correct parameters', () => {
         component['setPropertiesFromServerResponse'](participation);
-        const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackStub = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -243,7 +256,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        const saveStub = jest.spyOn(textAssessmentService, 'save');
+        const saveStub = vi.spyOn(textAssessmentService, 'save');
         saveStub.mockReturnValue(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
@@ -260,7 +273,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should display error when submitting but assessment invalid', async () => {
         const alertService = TestBed.inject(AlertService);
-        const errorStub = jest.spyOn(alertService, 'error');
+        const errorStub = vi.spyOn(alertService, 'error');
 
         component.assessmentsAreValid = false;
         component.submit();
@@ -280,7 +293,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         };
 
         const alertService = TestBed.inject(AlertService);
-        const errorStub = jest.spyOn(alertService, 'error');
+        const errorStub = vi.spyOn(alertService, 'error');
 
         // add an unreferenced feedback to make the assessment invalid
         component.unreferencedFeedback = [new Feedback()];
@@ -289,8 +302,8 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
-        expect(onSuccessCalled).toBeFalse();
-        expect(onErrorCalled).toBeTrue();
+        expect(onSuccessCalled).toBe(false);
+        expect(onErrorCalled).toBe(true);
     });
 
     it.each([true, false])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
@@ -301,7 +314,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.id = 1;
         component.unreferencedFeedback = [unreferencedFeedback];
 
-        const updateAssessmentAfterComplaintStub = jest.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
+        const updateAssessmentAfterComplaintStub = vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
         const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
         updateAssessmentAfterComplaintStub.mockReturnValue(serverResponse);
 
@@ -331,7 +344,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        const submitStub = jest.spyOn(textAssessmentService, 'submit');
+        const submitStub = vi.spyOn(textAssessmentService, 'submit');
         submitStub.mockReturnValue(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
@@ -346,7 +359,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should not submit if result was not saved', () => {
-        const submitSpy = jest.spyOn(textAssessmentService, 'submit');
+        const submitSpy = vi.spyOn(textAssessmentService, 'submit');
         component.result!.id = undefined;
         component.submit();
         expect(submitSpy).not.toHaveBeenCalled();
@@ -357,19 +370,19 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.assessmentsAreValid = true;
         fixture.changeDetectorRef.detectChanges();
         const error = new HttpErrorResponse({ status: 404 });
-        const errorStub = jest.spyOn(textAssessmentService, 'save').mockReturnValue(throwError(() => error));
+        const errorStub = vi.spyOn(textAssessmentService, 'save').mockReturnValue(throwError(() => error));
 
         component.save();
 
         expect(errorStub).toHaveBeenCalledOnce();
-        expect(component.saveBusy).toBeFalse();
+        expect(component.saveBusy).toBe(false);
     });
 
     it('should invoke import example submission', () => {
         component.submission = submission;
         component.exercise = exercise;
 
-        const importStub = jest.spyOn(exampleSubmissionService, 'import');
+        const importStub = vi.spyOn(exampleSubmissionService, 'import');
         importStub.mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
 
         component.useStudentSubmissionAsExampleSubmission();
@@ -382,9 +395,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.changeDetectorRef.detectChanges();
 
-        const navigateBackSpy = jest.spyOn(component, 'navigateBack');
-        const cancelAssessmentStub = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
-        const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        const navigateBackSpy = vi.spyOn(component, 'navigateBack');
+        const cancelAssessmentStub = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+        const windowConfirmStub = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
         component.cancel();
 
@@ -396,7 +409,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should go to next submission', fakeAsync(() => {
         component['setPropertiesFromServerResponse'](participation);
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routerSpy = vi.spyOn(router, 'navigate');
 
         component.ngOnInit();
         tick();
@@ -423,28 +436,28 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should always let instructors override', () => {
         component.exercise!.isAtLeastInstructor = true;
-        expect(component.canOverride).toBeTrue();
+        expect(component.canOverride).toBe(true);
     });
 
     it('should not allow tutors to override after the assessment due date', () => {
         component.exercise!.isAtLeastInstructor = false;
         component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
         component.complaint = undefined;
-        expect(component.canOverride).toBeFalse();
+        expect(component.canOverride).toBe(false);
     });
 
     it('should recalculate text block refs correctly', () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         component.recalculateTextBlockRefs();
         fixture.changeDetectorRef.detectChanges();
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
 
         expect(component.textBlockRefs).toHaveLength(2);
         expect(component.unusedTextBlockRefs).toHaveLength(0);
     });
 
     it('should handle overlapping manual text blocks correctly', () => {
-        const sortAndSetTextBlockRefsSpy = jest.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
+        const sortAndSetTextBlockRefsSpy = vi.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
 
         // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
         submission.blocks?.push({
@@ -491,7 +504,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [];
         const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
-        const athenaServiceFeedbackSuggestionsStub = jest.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
+        const athenaServiceFeedbackSuggestionsStub = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
         component.loadFeedbackSuggestions();
         tick();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
@@ -632,7 +645,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Set up initial state with an existing text block that doesn't overlap
         const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
 
-        jest.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of(feedbackSuggestions));
+        vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of(feedbackSuggestions));
 
         component.loadFeedbackSuggestions();
 
@@ -654,7 +667,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should not load feedback suggestions if there already are assessments', fakeAsync(() => {
         // preparation already added an assessment
-        const athenaServiceFeedbackSuggestionsSpy = jest.spyOn(athenaService, 'getTextFeedbackSuggestions');
+        const athenaServiceFeedbackSuggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
         component.loadFeedbackSuggestions();
         tick();
         expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
@@ -663,17 +676,17 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should validate assessments on component init', async () => {
         component.assessmentsAreValid = false;
         await component.ngOnInit();
-        expect(component.assessmentsAreValid).toBeTrue();
+        expect(component.assessmentsAreValid).toBe(true);
     });
 
     it('should allow overriding directly after submitting', async () => {
         component.isAssessor = true;
         component.submit();
-        expect(component.canOverride).toBeTrue();
+        expect(component.canOverride).toBe(true);
     });
 
     it('should not invalidate assessment after saving', async () => {
         component.save();
-        expect(component.assessmentsAreValid).toBeTrue();
+        expect(component.assessmentsAreValid).toBe(true);
     });
 });

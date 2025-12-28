@@ -1,3 +1,9 @@
+/**
+ * Test suite for the TextExerciseUpdateComponent.
+ * Tests creation, update, import operations and form validation for text exercises in both course and exam modes.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
@@ -34,6 +40,7 @@ import { ActivatedRouteSnapshot } from '@angular/router';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('TextExercise Management Update Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: TextExerciseUpdateComponent;
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let service: TextExerciseService;
@@ -43,8 +50,8 @@ describe('TextExercise Management Update Component', () => {
             dateInput: { valid: true },
         }) as unknown as FormDateTimePickerComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 LocalStorageService,
@@ -82,9 +89,9 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
-                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+                vi.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
                 const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+                const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -92,17 +99,17 @@ describe('TextExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
-                expect(comp.isSaving).toBeFalse();
+                expect(comp.isSaving).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             }));
 
             it('should error during save', fakeAsync(() => {
-                const onErrorSpy = jest.spyOn(comp as any, 'onSaveError');
+                const onErrorSpy = vi.spyOn(comp as any, 'onSaveError');
 
                 // GIVEN
                 comp.ngOnInit();
 
-                jest.spyOn(service, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { title: 'some-error' } })));
+                vi.spyOn(service, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { title: 'some-error' } })));
 
                 // WHEN
                 comp.save();
@@ -128,9 +135,9 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
-                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+                vi.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+                const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -138,7 +145,7 @@ describe('TextExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toBeFalse();
+                expect(comp.isSaving).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             }));
         });
@@ -159,7 +166,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.isImport = true;
 
                 const entity = { ...textExercise };
-                jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
+                vi.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -167,7 +174,7 @@ describe('TextExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.import).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toBeFalse();
+                expect(comp.isSaving).toBe(false);
             }));
         });
     });
@@ -186,12 +193,12 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isExamMode).toBeTrue();
+            expect(comp.isExamMode).toBe(true);
             expect(comp.textExercise).toEqual(textExercise);
         }));
 
         it('should not set dateErrors', fakeAsync(() => {
-            const calculatValidationSectionsSpy = jest.spyOn(comp, 'calculateFormSectionStatus').mockReturnValue();
+            const calculatValidationSectionsSpy = vi.spyOn(comp, 'calculateFormSectionStatus').mockReturnValue();
             const dateErrorNames = ['dueDateError', 'startDateError', 'assessmentDueDateError', 'exampleSolutionPublicationDateError'];
             comp.ngOnInit();
             tick();
@@ -216,7 +223,7 @@ describe('TextExercise Management Update Component', () => {
                 },
             } as ActivatedRouteSnapshot;
 
-            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
             });
         });
@@ -226,12 +233,12 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isExamMode).toBeFalse();
+            expect(comp.isExamMode).toBe(false);
             expect(comp.textExercise).toEqual(textExercise);
         }));
 
         it('should calculate valid sections', () => {
-            const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus').mockImplementation(() => {
+            const calculateValidSpy = vi.spyOn(comp, 'calculateFormSectionStatus').mockImplementation(() => {
                 comp.formSectionStatus = [
                     { valid: true, empty: false, title: 'dummy' },
                     { valid: true, empty: false, title: 'dummy2' },
@@ -263,7 +270,7 @@ describe('TextExercise Management Update Component', () => {
 
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formSectionStatus).toBeDefined();
-            expect(comp.formSectionStatus[0].valid).toBeTrue();
+            expect(comp.formSectionStatus[0].valid).toBe(true);
 
             comp.validateDate();
             expect(calculateValidSpy).toHaveBeenCalledTimes(3);
@@ -293,15 +300,15 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeFalse();
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(false);
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
         }));
 
         it('should load exercise categories', () => {
-            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+            const loadExerciseCategoriesSpy = vi.spyOn(Utils, 'loadCourseExerciseCategories');
 
             comp.ngOnInit();
 
@@ -334,8 +341,8 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeFalse();
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(false);
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
@@ -363,8 +370,8 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeTrue();
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(true);
             expect(comp.textExercise.course).toBeUndefined();
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
@@ -395,8 +402,8 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeTrue();
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(true);
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();

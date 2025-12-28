@@ -1,3 +1,12 @@
+/**
+ * Tests for ResizableInstructionsComponent.
+ * This test suite verifies the resizable instructions panel functionality including:
+ * - Rendering of instruction sections (problem statement, sample solution, grading instructions)
+ * - Toggle collapse functionality
+ * - Forwarding criteria and readonly flags to structured layout
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, Directive, Input, Pipe, PipeTransform } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -38,10 +47,11 @@ class StructuredLayoutStubComponent {
     standalone: true,
 })
 class HtmlForMarkdownPipeStub implements PipeTransform {
-    transform = jest.fn((value: string) => `converted:${value}`);
+    transform = vi.fn((value: string) => `converted:${value}`);
 }
 
 describe('ResizableInstructionsComponent', () => {
+    setupTestBed({ zoneless: true });
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, HtmlForMarkdownPipeStub],
@@ -76,7 +86,7 @@ describe('ResizableInstructionsComponent', () => {
 
     it('should toggle collapse with provided id', () => {
         const fixture = TestBed.createComponent(ResizableInstructionsComponent);
-        const toggleSpy = jest.fn();
+        const toggleSpy = vi.fn();
         // Use setInput for signal inputs
         fixture.componentRef.setInput('toggleCollapse', toggleSpy);
         fixture.componentRef.setInput('toggleCollapseId', 'instructions');
@@ -101,6 +111,6 @@ describe('ResizableInstructionsComponent', () => {
 
         const layout = fixture.debugElement.query(By.directive(StructuredLayoutStubComponent)).componentInstance as StructuredLayoutStubComponent;
         expect(layout.criteria).toEqual(criteria);
-        expect(layout.readonly).toBeTrue();
+        expect(layout.readonly).toBe(true);
     });
 });

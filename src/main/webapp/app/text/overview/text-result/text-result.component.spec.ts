@@ -1,3 +1,15 @@
+/**
+ * Tests for TextResultComponent.
+ * This test suite verifies the text result display functionality including:
+ * - Component initialization
+ * - Conversion of text blocks to result blocks
+ * - Credit display and translation
+ * - Feedback text building and display
+ * - Subsequent feedback marking
+ * - Result block styling and icons
+ */
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -16,6 +28,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TextResultComponent>;
     let component: TextResultComponent;
 
@@ -235,6 +248,6 @@ describe('TextResultComponent', () => {
         expect(component.textResults[0].feedback).toBeDefined();
         expect(component.textResults[0].feedback!.isSubsequent).toBeUndefined();
         expect(component.textResults[1].feedback).toBeDefined();
-        expect(component.textResults[1].feedback!.isSubsequent).toBeTrue();
+        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
     });
 });

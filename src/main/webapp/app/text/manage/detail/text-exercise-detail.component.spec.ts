@@ -1,3 +1,9 @@
+/**
+ * Tests for TextExerciseDetailComponent.
+ * Verifies the component's behavior when displaying text exercise details for both course and exam exercises.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -24,6 +30,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('TextExercise Management Detail Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: TextExerciseDetailComponent;
     let fixture: ComponentFixture<TextExerciseDetailComponent>;
     let exerciseService: TextExerciseService;
@@ -43,8 +50,8 @@ describe('TextExercise Management Detail Component', () => {
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 MockDirective(TranslateDirective),
                 TextExerciseDetailComponent,
@@ -82,7 +89,7 @@ describe('TextExercise Management Detail Component', () => {
         it('should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            const exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
+            const exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithCourse,
@@ -90,7 +97,7 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
-            const statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+            const statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
             // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
@@ -98,7 +105,7 @@ describe('TextExercise Management Detail Component', () => {
             // THEN
             expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
             expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
-            expect(comp.isExamExercise).toBeFalse();
+            expect(comp.isExamExercise).toBe(false);
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
@@ -119,7 +126,7 @@ describe('TextExercise Management Detail Component', () => {
         it('should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            const exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
+            const exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithExerciseGroup,
@@ -127,7 +134,7 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
-            const statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+            const statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
 
             // WHEN
             fixture.detectChanges();
@@ -136,7 +143,7 @@ describe('TextExercise Management Detail Component', () => {
             // THEN
             expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
             expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
-            expect(comp.isExamExercise).toBeTrue();
+            expect(comp.isExamExercise).toBe(true);
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });
     });

@@ -1,3 +1,9 @@
+/**
+ * Test suite for the TextExerciseService.
+ * Tests CRUD operations, plagiarism detection, and tutor effort calculations for text exercises.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -18,14 +24,15 @@ import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
+    setupTestBed({ zoneless: true });
     let service: TextExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: TextExercise;
     let requestResult: any;
     let plagiarismResults: any;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
@@ -27,25 +29,22 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/u
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
+/**
+ * Test suite for TextBlockFeedbackEditorComponent.
+ * Tests component creation, feedback editing, delete button behavior,
+ * keyboard events, grading instruction links, and assessment event tracking.
+ */
 describe('TextBlockFeedbackEditorComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: TextBlockFeedbackEditorComponent;
     let fixture: ComponentFixture<TextBlockFeedbackEditorComponent>;
     let compiled: any;
 
     const textBlock = { id: '1' } as TextBlock;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent],
-            declarations: [
-                TextBlockFeedbackEditorComponent,
-                AssessmentCorrectionRoundBadgeComponent,
-                MockComponent(TextblockFeedbackDropdownComponent),
-                MockComponent(ConfirmIconComponent),
-                MockComponent(FaLayersComponent),
-                MockComponent(GradingInstructionLinkIconComponent),
-                MockDirective(TranslateDirective),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -63,10 +62,11 @@ describe('TextBlockFeedbackEditorComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(TextBlockFeedbackEditorComponent);
         component = fixture.componentInstance;
-        component.textBlock = textBlock;
-        component.feedback = Feedback.forText(textBlock);
-        component.feedback.gradingInstruction = new GradingInstruction();
-        component.feedback.gradingInstruction.usageCount = 0;
+        const feedback = Feedback.forText(textBlock);
+        feedback.gradingInstruction = new GradingInstruction();
+        feedback.gradingInstruction.usageCount = 0;
+        fixture.componentRef.setInput('textBlock', textBlock);
+        fixture.componentRef.setInput('feedback', feedback);
         compiled = fixture.debugElement.nativeElement;
         fixture.detectChanges();
     });
@@ -120,7 +120,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should call escKeyup when keyEvent', () => {
         component.feedback.credits = 0;
         component.feedback.detailText = '';
-        jest.spyOn(component, 'escKeyup');
+        vi.spyOn(component, 'escKeyup');
         const event = new KeyboardEvent('keydown', {
             key: 'Esc',
         });
@@ -133,8 +133,8 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should show confirmIcon if feedback dismission needs to be confirmed', () => {
         component.confirmIconComponent = new ConfirmIconComponent();
         component.feedback.credits = 1;
-        jest.spyOn(component, 'escKeyup');
-        const confirmSpy = jest.spyOn(component.confirmIconComponent, 'toggle');
+        vi.spyOn(component, 'escKeyup');
+        const confirmSpy = vi.spyOn(component.confirmIconComponent, 'toggle');
 
         component.escKeyup();
         fixture.changeDetectorRef.detectChanges();
@@ -159,7 +159,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.MANUAL;
         //@ts-ignore
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = vi.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.dismiss();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
@@ -180,7 +180,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         // given
         component.feedback.correctionStatus = FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION;
         //@ts-ignore
-        jest.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
 
         // when
         component.connectFeedbackWithInstruction(new Event(''));
@@ -192,7 +192,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should send assessment event if feedback type changed', () => {
         component.feedback.text = 'FeedbackSuggestion:accepted:Test';
         //@ts-ignore
-        const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
         expect(typeSpy).toHaveBeenCalledOnce();
     });

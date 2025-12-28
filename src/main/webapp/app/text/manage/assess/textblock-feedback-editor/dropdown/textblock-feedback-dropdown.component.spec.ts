@@ -1,3 +1,12 @@
+/**
+ * Tests for TextblockFeedbackDropdownComponent.
+ * This test suite verifies the feedback dropdown functionality including:
+ * - Component initialization
+ * - Assessment updates via dropdown menu
+ * - Background color display based on grading instruction credits
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextblockFeedbackDropdownComponent } from 'app/text/manage/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -6,6 +15,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 describe('TextblockFeedbackDropdownComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: TextblockFeedbackDropdownComponent;
     let fixture: ComponentFixture<TextblockFeedbackDropdownComponent>;
 
@@ -41,7 +51,7 @@ describe('TextblockFeedbackDropdownComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -49,7 +59,7 @@ describe('TextblockFeedbackDropdownComponent', () => {
     });
 
     it('should update assessment correctly when using dropdown-menu', () => {
-        const changeSpy = jest.spyOn(component.didChange, 'emit');
+        const changeSpy = vi.spyOn(component.didChange, 'emit');
         component.updateAssessmentWithDropdown(gradingInstruction);
 
         expect(changeSpy).toHaveBeenCalledOnce();

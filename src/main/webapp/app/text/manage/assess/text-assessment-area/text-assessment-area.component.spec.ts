@@ -1,4 +1,10 @@
+/**
+ * Vitest tests for TextAssessmentAreaComponent.
+ * Tests the text assessment area functionality with signal-based inputs.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
@@ -10,13 +16,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('TextAssessmentAreaComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TextAssessmentAreaComponent;
     let fixture: ComponentFixture<TextAssessmentAreaComponent>;
 
     const submission = { id: 1, text: 'Test submission text' } as TextSubmission;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 TextAssessmentAreaComponent,
                 MockComponent(TextBlockAssessmentCardComponent),
@@ -24,16 +32,18 @@ describe('TextAssessmentAreaComponent', () => {
                 TranslatePipeMock,
                 MockDirective(TranslateDirective),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextAssessmentAreaComponent);
-                component = fixture.componentInstance;
-                // Set required inputs
-                fixture.componentRef.setInput('submission', submission);
-                fixture.componentRef.setInput('textBlockRefs', []);
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TextAssessmentAreaComponent);
+        component = fixture.componentInstance;
+        // Set required inputs
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('textBlockRefs', []);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -65,23 +75,23 @@ describe('TextAssessmentAreaComponent', () => {
     });
 
     it('should toggle on alt', () => {
-        const spyOnAlt = jest.spyOn(component, 'onAltToggle');
+        const spyOnAlt = vi.spyOn(component, 'onAltToggle');
         const eventMock = new KeyboardEvent('keydown', { key: 'Alt' });
 
         component.onAltToggle(eventMock, false);
         expect(spyOnAlt).toHaveBeenCalledOnce();
-        expect(component.autoTextBlockAssessment).toBeFalse();
+        expect(component.autoTextBlockAssessment).toBe(false);
     });
 
     it('should not toggle on alt when manual selection forbidden', () => {
-        const spyOnAlt = jest.spyOn(component, 'onAltToggle');
+        const spyOnAlt = vi.spyOn(component, 'onAltToggle');
         const eventMock = new KeyboardEvent('keydown', { key: 'Alt' });
         // Use setInput for input signals
         fixture.componentRef.setInput('allowManualBlockSelection', false);
         fixture.detectChanges();
         component.onAltToggle(eventMock, false);
         expect(spyOnAlt).toHaveBeenCalledOnce();
-        expect(component.autoTextBlockAssessment).toBeTrue();
+        expect(component.autoTextBlockAssessment).toBe(true);
     });
 
     it('should add TextBlockRef if text block is added manually', () => {
@@ -89,7 +99,7 @@ describe('TextAssessmentAreaComponent', () => {
         fixture.componentRef.setInput('textBlockRefs', initialRefs);
         fixture.detectChanges();
 
-        jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
+        vi.spyOn(component.textBlockRefsAddedRemoved, 'emit');
 
         component.addTextBlockRef(TextBlockRef.new());
         fixture.changeDetectorRef.detectChanges();
@@ -103,7 +113,7 @@ describe('TextAssessmentAreaComponent', () => {
         fixture.componentRef.setInput('textBlockRefs', initialRefs);
         fixture.detectChanges();
 
-        jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
+        vi.spyOn(component.textBlockRefsAddedRemoved, 'emit');
 
         component.removeTextBlockRef(component.textBlockRefs()[0]);
         fixture.changeDetectorRef.detectChanges();
