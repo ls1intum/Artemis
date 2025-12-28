@@ -14,7 +14,6 @@ import {
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
@@ -34,17 +33,11 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         id: 1,
         timeZone: 'Europe/Berlin',
     } as Course;
-    let activeModal: NgbActiveModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
-            providers: [
-                MockProvider(TutorialGroupFreePeriodService),
-                MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         setUpTestComponent(generateExampleTutorialGroupFreePeriod({}));
     });
@@ -90,7 +83,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(formStub.formData()).toEqual(component.formData);
     });
 
-    it('should send PUT request upon form submission and navigate', () => {
+    it('should send PUT request upon form submission and close dialog', () => {
         const changedPeriod: TutorialGroupFreePeriod = {
             ...examplePeriod,
             reason: 'Changed',
@@ -101,7 +94,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
             status: 200,
         });
 
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const freePeriodUpdatedSpy = jest.spyOn(component.freePeriodUpdated, 'emit');
         const updatedStub = jest.spyOn(periodService, 'update').mockReturnValue(of(updateResponse));
 
         const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
@@ -115,7 +108,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleConfiguration.id!, examplePeriod.id!, formDataToTutorialGroupFreePeriodDTO(formData));
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(freePeriodUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should throw error if required inputs are missing when accessing them', () => {
@@ -123,7 +117,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
         // Required inputs throw when accessed without a value
-        expect(() => component.initialize()).toThrow();
+        expect(() => component.open()).toThrow();
     });
 
     it('should set startTime and endTime correctly when freePeriodWithinDay', () => {
@@ -136,34 +130,33 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         jest.spyOn(TutorialGroupFreePeriodsManagementComponent, 'isFreePeriod').mockReturnValue(false);
         jest.spyOn(TutorialGroupFreePeriodsManagementComponent, 'isFreePeriodWithinDay').mockReturnValue(true);
 
-        // Set inputs and initialize
+        // Set inputs and open dialog
         fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('course', course);
         fixture.componentRef.setInput('tutorialGroupFreePeriod', periodWithinDay);
         fixture.componentRef.setInput('tutorialGroupsConfiguration', { id: 1 } as TutorialGroupsConfiguration);
-        component.initialize();
+        component.open();
 
         // Expect formData startTime and endTime hours match the UTC→Berlin hour
         const berlinStartHour = start.tz('Europe/Berlin').hour();
         const berlinEndHour = end.tz('Europe/Berlin').hour();
         expect(component.formData.startTime!.getHours()).toBe(berlinStartHour);
         expect(component.formData.endTime!.getHours()).toBe(berlinEndHour);
-        expect(component.isInitialized).toBeTrue();
+        expect(component.dialogVisible()).toBeTrue();
     });
 
     // Helper functions
     function setUpTestComponent(freePeriod: TutorialGroupFreePeriod) {
         fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
         periodService = TestBed.inject(TutorialGroupFreePeriodService);
         examplePeriod = freePeriod;
         exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
         fixture.componentRef.setInput('course', course);
         fixture.componentRef.setInput('tutorialGroupFreePeriod', examplePeriod);
         fixture.componentRef.setInput('tutorialGroupsConfiguration', exampleConfiguration);
-        component.initialize();
+        component.open();
         fixture.detectChanges();
     }
 });

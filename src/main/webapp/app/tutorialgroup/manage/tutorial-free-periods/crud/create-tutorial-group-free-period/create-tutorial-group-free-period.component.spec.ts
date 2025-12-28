@@ -14,7 +14,6 @@ import {
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,7 +25,6 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
     const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const configurationId = 1;
-    let activeModal: NgbActiveModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,18 +32,16 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
             providers: [
                 MockProvider(TutorialGroupFreePeriodService),
                 MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
-        activeModal = TestBed.inject(NgbActiveModal);
         fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('tutorialGroupConfigurationId', configurationId);
         fixture.componentRef.setInput('course', course);
-        component.initialize();
+        component.open();
         tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
         fixture.detectChanges();
     });
@@ -58,7 +54,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should send POST request upon form submission and close modal', () => {
+    it('should send POST request upon form submission and close dialog', () => {
         const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
 
@@ -68,7 +64,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         });
 
         const createStub = jest.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const freePeriodCreatedSpy = jest.spyOn(component.freePeriodCreated, 'emit');
 
         const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
@@ -78,7 +74,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(freePeriodCreatedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should throw an error when date and alternativeDate are undefined', () => {

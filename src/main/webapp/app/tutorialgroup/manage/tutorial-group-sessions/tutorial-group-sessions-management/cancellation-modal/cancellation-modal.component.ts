@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,20 +10,24 @@ import { takeUntil } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe, DialogModule, ButtonDirective],
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
-    activeModal = inject(NgbActiveModal);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
     private fb = inject(FormBuilder);
 
     ngUnsubscribe = new Subject<void>();
+
+    readonly dialogVisible = signal<boolean>(false);
+    readonly confirmed = output<void>();
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
     form: FormGroup;
@@ -35,6 +38,15 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.initializeForm();
+    }
+
+    open(): void {
+        this.initializeForm();
+        this.dialogVisible.set(true);
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
     }
 
     get reasonControl() {
@@ -72,11 +84,12 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
-                    this.activeModal.close('confirmed');
+                    this.close();
+                    this.confirmed.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.activeModal.close('error');
+                    this.close();
                 },
             });
     }
@@ -87,11 +100,12 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
-                    this.activeModal.close('confirmed');
+                    this.close();
+                    this.confirmed.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.activeModal.close('error');
+                    this.close();
                 },
             });
     }

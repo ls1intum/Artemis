@@ -5,8 +5,6 @@ import { TutorialGroupSessionRowButtonsComponent } from 'app/tutorialgroup/manag
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -17,7 +15,6 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { signal } from '@angular/core';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;
@@ -29,7 +26,6 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
                 MockProvider(TutorialGroupSessionService),
@@ -62,21 +58,8 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     });
 
     it('should open the edit dialog when the respective button is clicked', fakeAsync(() => {
-        const modalService = TestBed.inject(NgbModal);
-        const mockCourse = { id: 1, title: 'Advanced Testing' };
-        const mockTutorialGroup = { id: 1, name: 'Group A' };
-        const mockSession = { id: 5, date: '2025-06-30', timeSlot: '10:00-11:00' };
-
-        const mockModalRef = {
-            componentInstance: {
-                course: signal(mockCourse),
-                tutorialGroup: signal(mockTutorialGroup),
-                tutorialGroupSession: signal(mockSession),
-                initialize: () => {},
-            },
-            result: of(),
-        };
-        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+        const mockEditDialog = { open: jest.fn() } as unknown as EditTutorialGroupSessionComponent;
+        jest.spyOn(component, 'editSessionDialog').mockReturnValue(mockEditDialog);
         const openDialogSpy = jest.spyOn(component, 'openEditSessionDialog');
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#edit-' + tutorialGroupSession.id);
@@ -84,38 +67,20 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupSessionComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
-            expect(mockModalRef.componentInstance.tutorialGroupSession()).toEqual(tutorialGroupSession);
-            expect(mockModalRef.componentInstance.course()).toEqual(course);
-            expect(mockModalRef.componentInstance.tutorialGroup()).toEqual(tutorialGroup);
+            expect(mockEditDialog.open).toHaveBeenCalledOnce();
         });
     }));
 
     it('should open the cancellation / activation dialog when the respective button is clicked', fakeAsync(() => {
-        const modalService = TestBed.inject(NgbModal);
-
-        const mockModalRef = {
-            componentInstance: {
-                course: undefined as any,
-                tutorialGroupId: undefined as number | undefined,
-                tutorialGroupSession: undefined as TutorialGroupSession | undefined,
-            },
-            result: { then: () => Promise.resolve() },
-        };
-        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+        const mockCancellationDialog = { open: jest.fn() } as unknown as CancellationModalComponent;
+        jest.spyOn(component, 'cancellationDialog').mockReturnValue(mockCancellationDialog);
         const openDialogSpy = jest.spyOn(component, 'openCancellationDialog');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancel-activate-' + tutorialGroupSession.id);
         cancelButton.click();
 
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(tutorialGroupSession);
-            expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(CancellationModalComponent, { animation: false, backdrop: 'static', scrollable: false, size: 'lg' });
-            expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
-            expect(mockModalRef.componentInstance.course()).toEqual(course);
-            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
+            expect(mockCancellationDialog.open).toHaveBeenCalledOnce();
         });
     }));
 

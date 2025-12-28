@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { TutorialGroupsImportButtonComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -17,10 +15,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [TutorialGroupsImportButtonComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsImportButtonComponent);
@@ -38,28 +33,36 @@ describe('TutorialGroupsImportButtonComponent', () => {
     });
 
     it('should open the import dialog when the button is clicked', fakeAsync(() => {
-        // given
-        const modalService = TestBed.inject(NgbModal);
-        const mockModalRef = {
-            componentInstance: { courseId: undefined as any },
-            result: Promise.resolve(),
-        };
-        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+        const mockImportDialog = { open: jest.fn() } as unknown as TutorialGroupsRegistrationImportDialogComponent;
+        jest.spyOn(component, 'importDialog').mockReturnValue(mockImportDialog);
         const openDialogSpy = jest.spyOn(component, 'openTutorialGroupImportDialog');
 
-        const importFinishSpy = jest.spyOn(component.importFinished, 'emit');
+        const importButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
+        importButton.click();
 
-        const cancelButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
-        // when
-        cancelButton.click();
-
-        // then
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledTimes(2);
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
-            expect(mockModalRef.componentInstance.courseId()).toEqual(exampleCourseId);
-            expect(importFinishSpy).toHaveBeenCalledOnce();
+            expect(mockImportDialog.open).toHaveBeenCalledOnce();
+        });
+    }));
+
+    it('should show warning dialog when import is completed', fakeAsync(() => {
+        component.onImportCompleted();
+
+        fixture.whenStable().then(() => {
+            expect(component.warningDialogVisible()).toBeTrue();
+        });
+    }));
+
+    it('should close warning dialog and emit importFinished when closeWarningDialog is called', fakeAsync(() => {
+        const importFinishedSpy = jest.spyOn(component.importFinished, 'emit');
+        component.warningDialogVisible.set(true);
+
+        component.closeWarningDialog();
+
+        fixture.whenStable().then(() => {
+            expect(component.warningDialogVisible()).toBeFalse();
+            expect(importFinishedSpy).toHaveBeenCalledOnce();
         });
     }));
 });

@@ -1,23 +1,24 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { Signal } from '@angular/core';
-import { MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -29,17 +30,18 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
     let router: MockRouter;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         router = new MockRouter();
-        TestBed.configureTestingModule({
-            imports: [MockModule(RouterModule)],
+        await TestBed.configureTestingModule({
+            imports: [TutorialGroupRowButtonsComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TutorialGroupsService),
-                MockProvider(NgbModal),
                 { provide: Router, useValue: router },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
@@ -56,16 +58,8 @@ describe('TutorialGroupRowButtonsComponent', () => {
     };
 
     it('should open the session management dialog when the respective button is clicked', fakeAsync(() => {
-        const modalService = TestBed.inject(NgbModal);
-        const mockModalRef = {
-            componentInstance: {
-                course: undefined as Signal<Course> | undefined,
-                tutorialGroupId: undefined as number | undefined,
-                initialize: () => {},
-            },
-            result: of(),
-        };
-        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+        const mockSessionDialog = { open: jest.fn(), initialize: jest.fn() } as unknown as TutorialGroupSessionsManagementComponent;
+        jest.spyOn(component, 'sessionManagementDialog').mockReturnValue(mockSessionDialog);
         const openDialogSpy = jest.spyOn(component, 'openSessionDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#sessions-' + tutorialGroup.id);
@@ -73,29 +67,13 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupSessionsManagementComponent, {
-                backdrop: 'static',
-                scrollable: false,
-                animation: false,
-                windowClass: 'session-management-dialog',
-            });
-            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
-            expect(mockModalRef.componentInstance.course!()).toEqual(course);
+            expect(mockSessionDialog.open).toHaveBeenCalledOnce();
         });
     }));
 
     it('should open the registrations dialog when the respective button is clicked', fakeAsync(() => {
-        const modalService = TestBed.inject(NgbModal);
-        const mockModalRef = {
-            componentInstance: {
-                course: undefined as Signal<Course> | undefined,
-                tutorialGroupId: undefined as number | undefined,
-                initialize: () => {},
-            },
-            result: of(),
-        };
-        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+        const mockRegistrationDialog = { open: jest.fn(), initialize: jest.fn() } as unknown as RegisteredStudentsComponent;
+        jest.spyOn(component, 'registeredStudentsDialog').mockReturnValue(mockRegistrationDialog);
         const openDialogSpy = jest.spyOn(component, 'openRegistrationDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#registrations-' + tutorialGroup.id);
@@ -103,10 +81,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(RegisteredStudentsComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
-            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
-            expect(mockModalRef.componentInstance.course!()).toEqual(course);
+            expect(mockRegistrationDialog.open).toHaveBeenCalledOnce();
         });
     }));
 

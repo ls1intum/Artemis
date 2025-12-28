@@ -6,7 +6,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
@@ -32,12 +31,13 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
             declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(TutorialGroupsService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(TutorialGroupsService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsRegistrationImportDialogComponent);
         component = fixture.componentInstance;
         component.selectedFile = generateDummyFile();
+        component.open();
         fixture.detectChanges();
     });
 
@@ -71,30 +71,24 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(resetSpy).toHaveBeenCalled();
     });
 
-    it('clear should close the modal with cancel reason', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        // given
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
-
+    it('clear should close the dialog', () => {
         // when
         component.clear();
 
         // then
-        expect(dismissSpy).toHaveBeenCalledOnce();
-        expect(dismissSpy).toHaveBeenCalledWith('cancel');
+        expect(component.dialogVisible()).toBeFalse();
     });
 
-    it('onFinish should close the modal', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
+    it('onFinish should close the dialog and emit importCompleted', () => {
         // given
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const importCompletedSpy = jest.spyOn(component.importCompleted, 'emit');
 
         // when
         component.onFinish();
 
         // then
-        expect(closeSpy).toHaveBeenCalledOnce();
-        expect(closeSpy).toHaveBeenCalledWith();
+        expect(importCompletedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should read registrations from csv string', async () => {

@@ -1,25 +1,26 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, TemplateRef, inject, input, output, viewChild } from '@angular/core';
-import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Subject, from } from 'rxjs';
-import { catchError, takeUntil } from 'rxjs/operators';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
+import { NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule],
+    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule, DialogModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
-    private modalService = inject(NgbModal);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();
-    readonly exportDialogRef = viewChild<TemplateRef<any>>('exportDialog');
+
+    readonly dialogVisible = signal<boolean>(false);
 
     courseId = input.required<number>();
 
@@ -45,21 +46,12 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     openExportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(this.exportDialogRef(), {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            animation: false,
-        });
+        this.resetSelections();
+        this.dialogVisible.set(true);
+    }
 
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.exportFinished.emit();
-            });
+    closeDialog() {
+        this.dialogVisible.set(false);
     }
 
     toggleSelectAll() {
@@ -82,7 +74,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
         return this.availableFields.every((field) => field.selected);
     }
 
-    exportCSV(modal: NgbModalRef) {
+    exportCSV() {
         this.tutorialGroupsService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields).subscribe({
             next: (blob: Blob) => {
                 const a = document.createElement('a');
@@ -92,17 +84,18 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 a.click();
                 URL.revokeObjectURL(objectUrl);
                 this.resetSelections();
-                modal.close();
+                this.closeDialog();
+                this.exportFinished.emit();
             },
             error: () => {
                 this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
                 this.resetSelections();
-                modal.dismiss('error');
+                this.closeDialog();
             },
         });
     }
 
-    exportJSON(modal: NgbModalRef) {
+    exportJSON() {
         this.tutorialGroupsService.exportToJson(this.courseId(), this.selectedFields).subscribe({
             next: (response) => {
                 const blob = new Blob([response], { type: 'application/json' });
@@ -113,12 +106,13 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 a.click();
                 window.URL.revokeObjectURL(url);
                 this.resetSelections();
-                modal.close();
+                this.closeDialog();
+                this.exportFinished.emit();
             },
             error: () => {
                 this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
                 this.resetSelections();
-                modal.dismiss('error');
+                this.closeDialog();
             },
         });
     }

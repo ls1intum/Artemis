@@ -1,12 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, viewChild } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { EMPTY, Subject, from } from 'rxjs';
+import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
-import { catchError, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
@@ -18,11 +17,10 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective, TutorialGroupSessionsManagementComponent, RegisteredStudentsComponent],
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
     private tutorialGroupsService = inject(TutorialGroupsService);
-    private modalService = inject(NgbModal);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -33,6 +31,9 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     readonly tutorialGroupDeleted = output<void>();
     readonly registrationsChanged = output<void>();
     readonly attendanceUpdated = output<void>();
+
+    readonly sessionManagementDialog = viewChild<TutorialGroupSessionsManagementComponent>('sessionManagementDialog');
+    readonly registeredStudentsDialog = viewChild<RegisteredStudentsComponent>('registeredStudentsDialog');
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -46,39 +47,20 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     openSessionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupSessionsManagementComponent, {
-            scrollable: false,
-            backdrop: 'static',
-            animation: false,
-            windowClass: 'session-management-dialog',
-        });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.attendanceUpdated.emit();
-            });
+        this.sessionManagementDialog()?.open();
+    }
+
+    onSessionDialogClosed(): void {
+        this.attendanceUpdated.emit();
     }
 
     openRegistrationDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(RegisteredStudentsComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.registrationsChanged.emit();
-            });
+        this.registeredStudentsDialog()?.open();
+    }
+
+    onRegistrationDialogClosed(): void {
+        this.registrationsChanged.emit();
     }
 
     deleteTutorialGroup = () => {

@@ -14,7 +14,6 @@ import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -60,11 +59,9 @@ describe('Registered Students Component', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),
-                MockProvider(NgbActiveModal),
                 MockProvider(LocalStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -96,7 +93,7 @@ describe('Registered Students Component', () => {
 
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 
-                comp.initialize();
+                comp.open();
 
                 fixture.detectChanges();
             });

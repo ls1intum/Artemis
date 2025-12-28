@@ -17,7 +17,6 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,7 +29,6 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
     let component: TutorialGroupSessionsManagementComponent;
-    let modalService: NgbModal;
 
     const tutorialGroupId = 2;
 
@@ -61,8 +59,6 @@ describe('TutorialGroupSessionsManagement', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
-                MockProvider(NgbModal),
                 SortService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
@@ -75,7 +71,6 @@ describe('TutorialGroupSessionsManagement', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupSessionsManagementComponent);
                 component = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
 
                 pastSession = generateExampleTutorialGroupSession({
                     id: 1,
@@ -97,7 +92,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
                 fixture.componentRef.setInput('course', course);
                 fixture.componentRef.setInput('tutorialGroupId', tutorialGroupId);
-                component.initialize();
+                component.open();
                 fixture.detectChanges();
             });
     });
@@ -116,16 +111,16 @@ describe('TutorialGroupSessionsManagement', () => {
     });
 
     it('should open create session dialog', fakeAsync(() => {
-        const openSpy = jest
-            .spyOn(modalService, 'open')
-            .mockReturnValue({ componentInstance: { tutorialGroup: undefined, course: undefined, initialize: () => {} }, result: of() } as any);
+        const mockCreateDialog = { open: jest.fn() } as unknown as CreateTutorialGroupSessionComponent;
+        jest.spyOn(component, 'createSessionDialog').mockReturnValue(mockCreateDialog);
+        const openDialogSpy = jest.spyOn(component, 'openCreateSessionDialog');
 
-        const editButton = fixture.debugElement.nativeElement.querySelector('#create-session-button');
-        editButton.click();
+        const createButton = fixture.debugElement.nativeElement.querySelector('#create-session-button');
+        createButton.click();
 
         fixture.whenStable().then(() => {
-            expect(openSpy).toHaveBeenCalledOnce();
-            expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(mockCreateDialog.open).toHaveBeenCalledOnce();
         });
     }));
 

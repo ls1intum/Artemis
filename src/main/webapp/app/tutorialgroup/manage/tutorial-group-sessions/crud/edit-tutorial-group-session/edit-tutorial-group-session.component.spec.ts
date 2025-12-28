@@ -13,7 +13,6 @@ import {
     tutorialGroupSessionToTutorialGroupSessionFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSessionFormComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
@@ -29,7 +28,6 @@ describe('EditTutorialGroupSessionComponent', () => {
     let sessionService: TutorialGroupSessionService;
     let exampleSession: TutorialGroupSession;
     let exampleTutorialGroup: TutorialGroup;
-    let activeModal: NgbActiveModal;
 
     const timeZone = 'Europe/Berlin';
     const course = {
@@ -40,23 +38,17 @@ describe('EditTutorialGroupSessionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
-            providers: [
-                MockProvider(TutorialGroupSessionService),
-                MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
         sessionService = TestBed.inject(TutorialGroupSessionService);
         exampleSession = generateExampleTutorialGroupSession({});
         exampleTutorialGroup = generateExampleTutorialGroup({});
         fixture.componentRef.setInput('course', course);
         fixture.componentRef.setInput('tutorialGroupSession', exampleSession);
         fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
-        component.initialize();
+        component.open();
         fixture.detectChanges();
     });
 
@@ -75,7 +67,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         expect(formStub.formData()).toEqual(component.formData);
     });
 
-    it('should send PUT request upon form submission and navigate', () => {
+    it('should send PUT request upon form submission and close dialog', () => {
         const changedSession: TutorialGroupSession = {
             ...exampleSession,
             location: 'Changed',
@@ -87,7 +79,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         });
 
         const updatedStub = jest.spyOn(sessionService, 'update').mockReturnValue(of(updateResponse));
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const sessionUpdatedSpy = jest.spyOn(component.sessionUpdated, 'emit');
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
 
@@ -97,6 +89,7 @@ describe('EditTutorialGroupSessionComponent', () => {
 
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleTutorialGroup.id!, exampleSession.id!, formDataToTutorialGroupSessionDTO(formData));
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(sessionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBeFalse();
     });
 });

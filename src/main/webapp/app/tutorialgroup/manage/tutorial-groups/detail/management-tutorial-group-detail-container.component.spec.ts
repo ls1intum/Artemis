@@ -7,20 +7,24 @@ import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
 
 describe('TutorialGroupManagementDetailComponent', () => {
     let fixture: ComponentFixture<ManagementTutorialGroupDetailContainerComponent>;
     let component: ManagementTutorialGroupDetailContainerComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ManagementTutorialGroupDetailContainerComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
@@ -40,13 +44,13 @@ describe('TutorialGroupManagementDetailComponent', () => {
                     },
                     {},
                 ),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ManagementTutorialGroupDetailContainerComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ManagementTutorialGroupDetailContainerComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {

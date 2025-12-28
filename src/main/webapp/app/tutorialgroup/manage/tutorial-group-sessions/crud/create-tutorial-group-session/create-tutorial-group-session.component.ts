@@ -1,45 +1,45 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
-import { captureException } from '@sentry/angular';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupSessionFormComponent],
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupSessionFormComponent, DialogModule, ArtemisTranslatePipe],
 })
 export class CreateTutorialGroupSessionComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();
 
+    readonly dialogVisible = signal<boolean>(false);
+    readonly sessionCreated = output<void>();
+
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
-    isLoading: boolean;
+    isLoading = false;
 
     readonly tutorialGroup = input.required<TutorialGroup>();
     readonly course = input.required<Course>();
 
-    isInitialized = false;
+    open(): void {
+        this.tutorialGroupSessionToCreate = new TutorialGroupSessionDTO();
+        this.dialogVisible.set(true);
+    }
 
-    initialize() {
-        if (!this.course() || !this.tutorialGroup()) {
-            captureException('Error: Component not fully configured');
-        } else {
-            this.isInitialized = true;
-        }
+    close(): void {
+        this.dialogVisible.set(false);
     }
 
     createTutorialGroupSession(formData: TutorialGroupSessionFormData) {
@@ -62,11 +62,12 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
             )
             .subscribe({
                 next: () => {
-                    this.activeModal.close();
+                    this.close();
+                    this.sessionCreated.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     this.onError(res);
-                    this.clear();
+                    this.close();
                 },
             });
     }
@@ -80,10 +81,6 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
                 error: httpErrorResponse.message,
             });
         }
-    }
-
-    clear() {
-        this.activeModal.dismiss();
     }
 
     ngOnDestroy(): void {
