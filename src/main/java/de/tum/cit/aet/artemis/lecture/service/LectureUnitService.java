@@ -25,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -39,7 +37,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -65,8 +63,6 @@ public class LectureUnitService {
 
     private final FileService fileService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
@@ -75,18 +71,20 @@ public class LectureUnitService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
+            Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi, LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
-        this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -163,7 +161,11 @@ public class LectureUnitService {
     }
 
     /**
-     * Deletes a lecture unit correctly in the database
+     * Deletes a lecture unit correctly in the database.
+     * Also cancels any ongoing content processing jobs (Nebula transcription, Pyris ingestion).
+     * <p>
+     * Note: The processing state is automatically deleted by database CASCADE DELETE
+     * when the lecture unit is deleted.
      *
      * @param lectureUnit lecture unit to delete
      */
@@ -171,6 +173,10 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            // Cancel ongoing processing and delete from Pyris vector database
+            // Processing state deletion is handled by DB cascade when lecture unit is deleted
+            contentProcessingApi.handleUnitDeletion(attachmentVideoUnit);
+
             if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
                 fileService.schedulePathForDeletion(
                         FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT), 5);
@@ -217,27 +223,6 @@ public class LectureUnitService {
         catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new BadRequestException();
         }
-    }
-
-    /**
-     * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
-     * `AttachmentVideoUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
-     * database.
-     * The method responds with different HTTP status codes based on the result:
-     * Returns {OK} if the ingestion is successful.
-     * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
-     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentVideoUnit}.
-     *
-     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentVideoUnit.
-     * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
-     */
-    public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (irisLectureApi.isEmpty()) {
-            log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-        }
-        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
-        return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 
     /**
@@ -341,4 +326,5 @@ public class LectureUnitService {
             managedSet.addAll(updatedLinks);
         }
     }
+
 }

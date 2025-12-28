@@ -1,11 +1,11 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
+        @if (user.id === undefined) {
+            <h5 *adminTitleBarTitle id="createUser" class="mb-0" jhiTranslate="artemisApp.userManagement.home.createLabel"></h5>
+        } @else {
+            <h5 *adminTitleBarTitle id="editUser" class="mb-0" jhiTranslate="artemisApp.userManagement.home.editLabel"></h5>
+        }
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
-            @if (user.id === undefined) {
-                <h2 id="createUser" jhiTranslate="artemisApp.userManagement.home.createLabel"></h2>
-            } @else {
-                <h2 id="editUser" jhiTranslate="artemisApp.userManagement.home.editLabel"></h2>
-            }
             <div>
                 <div class="form-group">
                     <label for="login" class="form-control-label" jhiTranslate="artemisApp.userManagement.login"></label>
@@ -204,7 +204,6 @@
                             @if (editForm.get('email')!.errors?.minlength) {
                                 <small
                                     class="form-text text-danger"
-                                    jhiTranslate="entity.validation.minlength"
                                     jhiTranslate="artemisApp.userManagement.inputConstraints"
                                     [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
                                 ></small>
@@ -250,17 +249,24 @@
                     </div>
                 }
                 <div class="form-group">
-                    <label for="authority" jhiTranslate="artemisApp.userManagement.profiles"></label>
-                    <select id="authority" class="form-select" multiple name="authority" formControlName="authorities">
-                        @for (authority of authorities; track authority) {
-                            <option [value]="authority">{{ authority }}</option>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.globalRoles"></label>
+                    <div class="global-roles-container">
+                        @for (authority of authorities(); track authority) {
+                            <div class="global-role-item" (click)="toggleAuthority(authority)">
+                                <div class="role-checkbox" [class.checked]="hasAuthority(authority)">
+                                    @if (hasAuthority(authority)) {
+                                        <fa-icon [icon]="faCheck" />
+                                    }
+                                </div>
+                                <span class="role-label">{{ getAuthorityTranslationKey(authority) | artemisTranslate }}</span>
+                            </div>
                         }
-                    </select>
+                    </div>
                 </div>
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
-                <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+                <button type="submit" [disabled]="editForm.invalid || isSaving()" class="btn btn-primary">
                     <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>

@@ -22,6 +22,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
@@ -38,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -87,9 +90,21 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
+
     @BeforeEach
     void initTestCase() {
+        irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        irisRequestMockProvider.reset();
     }
 
     @Test

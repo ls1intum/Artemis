@@ -1,19 +1,15 @@
 package de.tum.cit.aet.artemis.core.service.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MAIN_EMAIL;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 
 import javax.naming.Name;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.ldap.odm.annotations.Attribute;
 import org.springframework.ldap.odm.annotations.Entry;
 import org.springframework.ldap.odm.annotations.Id;
 
 @Entry(base = "ou=users", objectClasses = { "imdPerson" })
-@Profile(PROFILE_LDAP)
-// TODO: double check if we can use a Record here
 public final class LdapUserDto {
 
     @Id
