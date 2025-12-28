@@ -176,10 +176,7 @@ public class BuildJobExecutionService {
         String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
-                var commitObjectId = buildJobGitService.getLastCommitHash(assignmentRepoUri);
-                if (commitObjectId != null) {
-                    assignmentCommitHash = commitObjectId.getName();
-                }
+                assignmentCommitHash = buildJobGitService.getLastCommitHash(assignmentRepoUri);
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
@@ -190,10 +187,7 @@ public class BuildJobExecutionService {
         String testCommitHash = buildJob.buildConfig().testCommitHash();
         if (testCommitHash == null) {
             try {
-                var commitObjectId = buildJobGitService.getLastCommitHash(testsRepoUri);
-                if (commitObjectId != null) {
-                    testCommitHash = commitObjectId.getName();
-                }
+                testCommitHash = buildJobGitService.getLastCommitHash(testsRepoUri);
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
