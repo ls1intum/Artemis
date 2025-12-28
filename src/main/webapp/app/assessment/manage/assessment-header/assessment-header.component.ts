@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, inject, input, model, output } from '@angular/core';
+import { Component, HostListener, effect, inject, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -54,6 +54,7 @@ export class AssessmentHeaderComponent {
     readonly assessmentsAreValid = input.required<boolean>();
     readonly hasAssessmentDueDatePassed = model.required<boolean>();
     readonly isProgrammingExercise = input(false); // remove once diff view activated for programming exercises
+    readonly highlightDifferences = model(false);
 
     readonly save = output();
     readonly onSubmit = output();
@@ -62,7 +63,6 @@ export class AssessmentHeaderComponent {
     readonly highlightDifferencesChange = output<boolean>();
     readonly useAsExampleSubmission = output();
 
-    private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;
     readonly ComplaintType = ComplaintType;
     readonly AssessmentType = AssessmentType;
@@ -72,17 +72,13 @@ export class AssessmentHeaderComponent {
     faSave = faSave;
     faSquareCaretRight = faSquareCaretRight;
 
-    @Input() set highlightDifferences(highlightDifferences: boolean) {
-        this._highlightDifferences = highlightDifferences;
-        this.highlightDifferencesChange.emit(this.highlightDifferences);
-    }
-
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
-    }
 
-    get highlightDifferences() {
-        return this._highlightDifferences;
+        // Emit highlightDifferencesChange when the model changes
+        effect(() => {
+            this.highlightDifferencesChange.emit(this.highlightDifferences());
+        });
     }
 
     get overrideVisible() {
@@ -168,8 +164,7 @@ export class AssessmentHeaderComponent {
      * Highlight the difference between the first and second correction round
      */
     public toggleHighlightDifferences() {
-        this.highlightDifferences = !this.highlightDifferences;
-        this.highlightDifferencesChange.emit(this.highlightDifferences);
+        this.highlightDifferences.update((value) => !value);
     }
 
     /**

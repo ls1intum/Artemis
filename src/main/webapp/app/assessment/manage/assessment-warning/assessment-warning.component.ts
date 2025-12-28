@@ -13,21 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
  */
 @Component({
     selector: 'jhi-assessment-warning',
-    template: `
-        <h6>
-            @if (showWarning) {
-                <div class="card-header">
-                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" />
-                    @if (isBeforeExerciseDueDate) {
-                        <span jhiTranslate="artemisApp.assessment.dashboard.warning"></span>
-                    }
-                    @if (!isBeforeExerciseDueDate) {
-                        <span jhiTranslate="artemisApp.assessment.dashboard.warningIndividual"></span>
-                    }
-                </div>
-            }
-        </h6>
-    `,
+    templateUrl: './assessment-warning.component.html',
     imports: [FaIconComponent, TranslateDirective],
 })
 export class AssessmentWarningComponent implements OnChanges {

@@ -274,23 +274,23 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should set highlightDifferences to true', () => {
-        component.highlightDifferences = false;
-        jest.spyOn(component.highlightDifferencesChange, 'emit');
+        fixture.componentRef.setInput('highlightDifferences', false);
+        fixture.detectChanges();
 
         component.toggleHighlightDifferences();
+        fixture.detectChanges();
 
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
-        expect(component.highlightDifferences).toBeTrue();
+        expect(component.highlightDifferences()).toBeTrue();
     });
 
     it('should set highlightDifferences to false', () => {
-        component.highlightDifferences = true;
-        jest.spyOn(component.highlightDifferencesChange, 'emit');
+        fixture.componentRef.setInput('highlightDifferences', true);
+        fixture.detectChanges();
 
         component.toggleHighlightDifferences();
+        fixture.detectChanges();
 
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
-        expect(component.highlightDifferences).toBeFalse();
+        expect(component.highlightDifferences()).toBeFalse();
     });
 
     it('should send assessment event on assess next button click when exercise set to Text', () => {

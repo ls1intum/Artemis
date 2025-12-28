@@ -1,25 +1,33 @@
-import { Component, inject } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-system-info-modal',
     templateUrl: './grading-system-info-modal.component.html',
-    imports: [TranslateDirective, FaIconComponent],
+    imports: [TranslateDirective, FaIconComponent, DialogModule, ButtonModule, ArtemisTranslatePipe],
 })
 export class GradingSystemInfoModalComponent {
-    private modalService = inject(NgbModal);
-
     // Icons
     farQuestionCircle = faQuestionCircle;
 
+    visible = signal(false);
+
     /**
-     * Open a large modal with the given content.
-     * @param content the content to display
+     * Open the info dialog.
      */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+    open() {
+        this.visible.set(true);
+    }
+
+    /**
+     * Close the info dialog.
+     */
+    close() {
+        this.visible.set(false);
     }
 }
