@@ -14,14 +14,21 @@
         <div>
             <div class="form-check mb-3">
                 <input id="selectAllId" class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
-                <label class="form-check-label" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
+                <label class="form-check-label" for="selectAllId" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
             </div>
         </div>
-        @for (field of availableFields; track field) {
+        @for (field of availableFields; track field; let i = $index) {
             <div>
                 <div class="form-check mb-2">
-                    <input id="fieldId" class="form-check-input" type="checkbox" [value]="field.value" [checked]="field.selected" (change)="onFieldSelectionChange(field)" />
-                    <label class="form-check-label">{{ field.value }}</label>
+                    <input
+                        id="fieldId-{{ i }}"
+                        class="form-check-input"
+                        type="checkbox"
+                        [value]="field.value"
+                        [checked]="field.selected"
+                        (change)="onFieldSelectionChange(field)"
+                    />
+                    <label class="form-check-label" for="fieldId-{{ i }}">{{ field.value }}</label>
                 </div>
             </div>
         }
