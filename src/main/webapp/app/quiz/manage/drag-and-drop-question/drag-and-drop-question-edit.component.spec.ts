@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -103,10 +103,10 @@ describe('DragAndDropQuestionEditComponent', () => {
         });
     });
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await fixture.whenStable();
+    });
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -674,7 +674,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question().text).toBe(text);
     });
 
-    it('should get images from drop locations', fakeAsync(() => {
+    it('should get images from drop locations', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
         component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
@@ -728,7 +728,9 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.getImagesFromDropLocations();
 
-        tick();
+        await vi.waitFor(() => {
+            expect(dragAndDropQuestion.dragItems).toHaveLength(2);
+        });
 
         expect(imageSpy).toHaveBeenCalledTimes(2);
         expect(canvasSpy).toHaveBeenCalledTimes(2);
@@ -737,9 +739,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(dragAndDropQuestion.dragItems).toHaveLength(2);
         expect(dragAndDropQuestion.correctMappings).toHaveLength(2);
         expect(blankOutSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should blank out background image', fakeAsync(() => {
+    it('should blank out background image', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
         component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
@@ -784,7 +786,9 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.blankOutBackgroundImage();
 
-        tick();
+        await vi.waitFor(() => {
+            expect(setBackgroundSpy).toHaveBeenCalledOnce();
+        });
 
         expect(imageSpy).toHaveBeenCalledOnce();
         expect(canvasSpy).toHaveBeenCalledOnce();
@@ -794,7 +798,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(mockCanvas.toDataURL).toHaveBeenCalledOnce();
         expect(setBackgroundSpy).toHaveBeenCalledOnce();
         expect(setBackgroundSpy).toHaveBeenCalledWith(expect.any(File));
-    }));
+    });
 
     it('should convert data url to blob', () => {
         const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';

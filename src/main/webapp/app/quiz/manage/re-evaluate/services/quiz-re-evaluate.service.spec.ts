@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import * as blobUtil from 'app/shared/util/blob-util';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizReEvaluateService', () => {
     setupTestBed({ zoneless: true });
@@ -16,7 +18,7 @@ describe('QuizReEvaluateService', () => {
     let httpMock: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), QuizReEvaluateService],
+            providers: [provideHttpClient(), provideHttpClientTesting(), QuizReEvaluateService, { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(QuizReEvaluateService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -26,7 +28,7 @@ describe('QuizReEvaluateService', () => {
         httpMock.verify();
     });
 
-    it('should send reevaluate request correctly', fakeAsync(() => {
+    it('should send reevaluate request correctly', async () => {
         const quizExercise = { id: 1 } as QuizExercise;
         const files = new Map<string, Blob>();
         files.set('test1', new Blob());
@@ -45,8 +47,7 @@ describe('QuizReEvaluateService', () => {
         expect(formDataFiles[0]).toBeInstanceOf(Blob);
         expect(formDataFiles[1]).toBeInstanceOf(Blob);
         req.flush(null, { status: 200, statusText: 'OK' });
-        tick();
-    }));
+    });
 
     it('should convert QuizExercise with all question types into correct DTO and send it as FormData', () => {
         // Spy on objectToJsonBlob to capture the DTO passed to it

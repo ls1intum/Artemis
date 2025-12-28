@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -51,7 +51,7 @@ describe('QuizVisualEditorComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('parse the given question properly to markdown', fakeAsync(() => {
+    it('parse the given question properly to markdown', () => {
         fixture.detectChanges();
 
         comp.question().text = 'Hallo';
@@ -69,9 +69,9 @@ describe('QuizVisualEditorComponent', () => {
         const expected = 'Hallo\n\t[hint] Hint\n\t[exp] Exp\n\n[correct] Answer\n\t[hint] H2\n\t[exp] Exp2';
 
         expect(markdown).toBe(expected);
-    }));
+    });
 
-    it('delete an answer option', fakeAsync(() => {
+    it('delete an answer option', () => {
         fixture.detectChanges();
 
         const answerOption = new AnswerOption();
@@ -82,9 +82,9 @@ describe('QuizVisualEditorComponent', () => {
         comp.deleteAnswer(0);
 
         expect(comp.question().answerOptions).toHaveLength(1);
-    }));
+    });
 
-    it('toggle the isCorrect state', fakeAsync(() => {
+    it('toggle the isCorrect state', () => {
         fixture.detectChanges();
 
         const answerOption = new AnswerOption();
@@ -97,9 +97,9 @@ describe('QuizVisualEditorComponent', () => {
         comp.toggleIsCorrect(answerOption);
 
         expect(answerOption.isCorrect).toBeFalse();
-    }));
+    });
 
-    it('does not toggle the if single mode and already has correct answer', fakeAsync(() => {
+    it('does not toggle the if single mode and already has correct answer', () => {
         fixture.detectChanges();
 
         comp.question().singleChoice = true;
@@ -116,9 +116,9 @@ describe('QuizVisualEditorComponent', () => {
         comp.toggleIsCorrect(answerOption2);
 
         expect(answerOption2.isCorrect).toBeFalse();
-    }));
+    });
 
-    it('add a new answer option', fakeAsync(() => {
+    it('add a new answer option', () => {
         fixture.detectChanges();
 
         expect(comp.question().answerOptions).toBeUndefined();
@@ -126,5 +126,5 @@ describe('QuizVisualEditorComponent', () => {
         comp.addNewAnswer();
 
         expect(comp.question().answerOptions).toHaveLength(1);
-    }));
+    });
 });

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -18,6 +19,7 @@ import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ImageComponent } from '../../../../shared/image/image.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('DragAndDropQuestionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -45,7 +47,11 @@ describe('DragAndDropQuestionComponent', () => {
                 MockComponent(QuizScoringInfoStudentModalComponent),
                 DragItemComponent,
             ],
-            providers: [MockProvider(DragAndDropQuestionUtil), { provide: ProfileService, useClass: MockProfileService }],
+            providers: [
+                MockProvider(DragAndDropQuestionUtil),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {

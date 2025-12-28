@@ -4,7 +4,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -85,7 +85,7 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('onInit', () => {
-        it('should call functions on Init', fakeAsync(() => {
+        it('should call functions on Init', async () => {
             // setup
             vi.useFakeTimers();
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -99,7 +99,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // call
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
@@ -108,21 +108,20 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
             expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
-            discardPeriodicTasks();
-        }));
+            vi.clearAllTimers();
+        });
 
-        it('should not load QuizSuccess if not authorised', fakeAsync(() => {
+        it('should not load QuizSuccess if not authorised', async () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
-            tick();
+            await fixture.whenStable();
 
             expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
-            discardPeriodicTasks();
-        }));
+        });
     });
 
     describe('updateDisplayedTimes', () => {
@@ -257,18 +256,18 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('recalculate', () => {
-        it('should recalculate', fakeAsync(() => {
+        it('should recalculate', async () => {
             const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
             comp.quizExercise = quizExercise;
 
             comp.recalculate();
-            tick();
+            await fixture.whenStable();
 
             expect(recalculateMock).toHaveBeenCalledOnce();
             expect(recalculateMock).toHaveBeenCalledWith(42);
             expect(loadQuizSucessMock).toHaveBeenCalledOnce();
             expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
-        }));
+        });
     });
 });

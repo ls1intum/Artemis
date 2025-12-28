@@ -4,7 +4,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -82,7 +82,7 @@ describe('QuizStatisticsFooterComponent', () => {
         examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
     });
 
-    it('should load Quiz on Init', fakeAsync(() => {
+    it('should load Quiz on Init', async () => {
         // setup
         vi.useFakeTimers();
         const loadSpy = vi.spyOn(comp, 'loadQuiz');
@@ -90,7 +90,7 @@ describe('QuizStatisticsFooterComponent', () => {
 
         // call
         comp.ngOnInit();
-        tick(); // simulate async
+        await fixture.whenStable();
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
@@ -99,7 +99,8 @@ describe('QuizStatisticsFooterComponent', () => {
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);
         expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
-    }));
+        vi.clearAllTimers();
+    });
 
     it('should set quiz and update properties', () => {
         // setup

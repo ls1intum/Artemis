@@ -5,6 +5,8 @@ import { QuizTrainingDialogComponent } from './quiz-training-dialog.component';
 import { MockBuilder } from 'ng-mocks';
 import { DialogModule } from 'primeng/dialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizTrainingDialogComponent', () => {
     setupTestBed({ zoneless: true });
@@ -12,7 +14,7 @@ describe('QuizTrainingDialogComponent', () => {
     let fixture: ComponentFixture<QuizTrainingDialogComponent>;
 
     beforeEach(async () => {
-        await MockBuilder(QuizTrainingDialogComponent).keep(DialogModule).keep(FontAwesomeModule);
+        await MockBuilder(QuizTrainingDialogComponent).keep(DialogModule).keep(FontAwesomeModule).provide({ provide: TranslateService, useClass: MockTranslateService });
 
         fixture = TestBed.createComponent(QuizTrainingDialogComponent);
         component = fixture.componentInstance;

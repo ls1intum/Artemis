@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const resourceUrl = 'api/modeling';
 
@@ -18,7 +20,7 @@ describe('ApollonDiagramService', () => {
     let httpTestingController: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
+            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -29,7 +31,7 @@ describe('ApollonDiagramService', () => {
         apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     });
 
-    it('should create a diagram', fakeAsync(() => {
+    it('should create a diagram', async () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
@@ -43,14 +45,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('POST');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should update a diagram', fakeAsync(() => {
+    it('should update a diagram', async () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
@@ -64,14 +64,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('PUT');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should find a diagram', fakeAsync(() => {
+    it('should find a diagram', async () => {
         // Set up
         const diagramId = 1;
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -86,14 +84,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('GET');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should delete a diagram', fakeAsync(() => {
+    it('should delete a diagram', async () => {
         // Set up
         const diagramId = 1;
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -108,14 +104,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('DELETE');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should get diagrams by course', fakeAsync(() => {
+    it('should get diagrams by course', async () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = [apollonDiagram];
@@ -129,10 +123,8 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('GET');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 });

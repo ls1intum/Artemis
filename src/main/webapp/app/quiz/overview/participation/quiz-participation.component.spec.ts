@@ -2,7 +2,7 @@ import { type MockInstance, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -197,10 +197,6 @@ describe('QuizParticipationComponent', () => {
             vi.restoreAllMocks();
         });
 
-        afterEach(fakeAsync(() => {
-            discardPeriodicTasks();
-        }));
-
         it('should initialize', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -263,7 +259,8 @@ describe('QuizParticipationComponent', () => {
             expect(component.submission).not.toBeNull();
         });
 
-        it('should update in intervals of individual quiz', fakeAsync(() => {
+        it('should update in intervals of individual quiz', () => {
+            vi.useFakeTimers();
             const individualQuizExercise = { ...quizExercise };
             individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
             individualQuizExercise.quizStarted = false;
@@ -280,15 +277,16 @@ describe('QuizParticipationComponent', () => {
 
             const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
             const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
-            tick(5000);
+            vi.advanceTimersByTime(5000);
             fixture.changeDetectorRef.detectChanges();
-            discardPeriodicTasks();
 
             expect(updateSpy).toHaveBeenCalledTimes(50);
             expect(refreshSpy).toHaveBeenCalledOnce();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should update in intervals of not individual quiz', fakeAsync(() => {
+        it('should update in intervals of not individual quiz', () => {
+            vi.useFakeTimers();
             const notIndividualQuizExercise = { ...quizExercise };
             notIndividualQuizExercise.quizMode = QuizMode.SYNCHRONIZED;
             notIndividualQuizExercise.quizStarted = false;
@@ -305,28 +303,29 @@ describe('QuizParticipationComponent', () => {
 
             const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
             const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
-            tick(5000);
+            vi.advanceTimersByTime(5000);
             fixture.changeDetectorRef.detectChanges();
-            discardPeriodicTasks();
 
             expect(updateSpy).toHaveBeenCalledTimes(50);
             expect(refreshSpy).toHaveBeenCalledTimes(0);
 
-            tick(5000);
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should check quiz end in intervals', fakeAsync(() => {
+        it('should check quiz end in intervals', () => {
+            vi.useFakeTimers();
             fixture.detectChanges();
 
             const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
-            tick(5000);
+            vi.advanceTimersByTime(5000);
             fixture.changeDetectorRef.detectChanges();
-            discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should trigger a save on quiz end if the answers were not submitted', fakeAsync(() => {
+        it('should trigger a save on quiz end if the answers were not submitted', () => {
+            vi.useFakeTimers();
             fixture.detectChanges();
 
             component.endDate = dayjs().add(1, 'seconds');
@@ -337,13 +336,13 @@ describe('QuizParticipationComponent', () => {
             const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation(() => {});
             const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
 
-            tick(2000);
+            vi.advanceTimersByTime(2000);
             fixture.changeDetectorRef.detectChanges();
-            discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
             expect(triggerSaveStub).toHaveBeenCalledOnce();
-        }));
+            vi.useRealTimers();
+        });
 
         it('should refresh quiz', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
@@ -607,10 +606,6 @@ describe('QuizParticipationComponent', () => {
             vi.restoreAllMocks();
         });
 
-        afterEach(fakeAsync(() => {
-            discardPeriodicTasks();
-        }));
-
         it('should initialize', () => {
             const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
@@ -689,10 +684,6 @@ describe('QuizParticipationComponent', () => {
             httpMock.verify();
             vi.restoreAllMocks();
         });
-
-        afterEach(fakeAsync(() => {
-            discardPeriodicTasks();
-        }));
 
         it('should initialize', () => {
             const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));

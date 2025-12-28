@@ -1,13 +1,14 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ShortAnswerQuestionUtil', () => {
     setupTestBed({ zoneless: true });
@@ -48,7 +49,7 @@ describe('ShortAnswerQuestionUtil', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
 
         service = TestBed.inject(ShortAnswerQuestionUtil);
@@ -212,7 +213,7 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(textPartsInHTML[3][1]).toContain(`<p>test3</p>`);
     });
 
-    it('should transform text parts to html correctly', fakeAsync(() => {
+    it('should transform text parts to html correctly', () => {
         const originalTextParts1 = [['random text'], ['    some more text', '[-spot 1]'], ['last paragraph']];
         const formattedTextParts1 = [['<p>random text</p>'], ['<p>&nbsp;&nbsp;&nbsp;&nbsp;some more text</p>', '<p>[-spot 1]</p>'], ['<p>last paragraph</p>']];
         expect(service.transformTextPartsIntoHTML(originalTextParts1)).toEqual(formattedTextParts1);
@@ -230,23 +231,23 @@ describe('ShortAnswerQuestionUtil', () => {
             ['<p><code>last code paragraph</code></p>'],
         ];
         expect(service.transformTextPartsIntoHTML(originalTextParts3)).toEqual(formattedTextParts3);
-    }));
+    });
 
-    it('should return the correct indentation', fakeAsync(() => {
+    it('should return the correct indentation', () => {
         const sentence1 = '    this is a test';
         const sentence2 = '  `another test`';
         const sentence3 = '`last test`';
         expect(service.getIndentation(sentence1)).toBe('    ');
         expect(service.getIndentation(sentence2)).toBe('  ');
         expect(service.getIndentation(sentence3)).toBe('');
-    }));
+    });
 
-    it('should return first word of a sentence', fakeAsync(() => {
+    it('should return first word of a sentence', () => {
         const sentence1 = '         this is a test';
         const sentence2 = '    `another test`';
         const sentence3 = '';
         expect(service.getFirstWord(sentence1)).toBe('this');
         expect(service.getFirstWord(sentence2)).toBe('another');
         expect(service.getFirstWord(sentence3)).toBe('');
-    }));
+    });
 });

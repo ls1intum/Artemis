@@ -12,6 +12,8 @@ import { QuizQuestionListEditExistingComponent } from 'app/quiz/manage/list-edit
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizQuestionListEditComponent', () => {
     setupTestBed({ zoneless: true });
@@ -36,7 +38,7 @@ describe('QuizQuestionListEditComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {

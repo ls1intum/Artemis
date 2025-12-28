@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -12,6 +13,7 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SafeHtml } from '@angular/platform-browser';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -25,7 +27,7 @@ describe('ShortAnswerQuestionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FontAwesomeModule, ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionComponent);
         component = fixture.componentInstance;

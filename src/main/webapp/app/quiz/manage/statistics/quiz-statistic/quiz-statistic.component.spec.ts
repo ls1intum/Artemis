@@ -5,7 +5,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -93,33 +93,33 @@ describe('QuizStatisticComponent', () => {
             loadDataSpy.mockClear();
         });
 
-        it('should call functions on Init', fakeAsync(() => {
+        it('should call functions on Init', async () => {
             // setup
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
 
             // check
             expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
-        }));
+        });
 
-        it('should not load QuizSuccess if not authorised', fakeAsync(() => {
+        it('should not load QuizSuccess if not authorised', async () => {
             // setup
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
 
             // call
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
 
             // check
             expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
-        }));
+        });
     });
 
     describe('loadQuizSuccess', () => {

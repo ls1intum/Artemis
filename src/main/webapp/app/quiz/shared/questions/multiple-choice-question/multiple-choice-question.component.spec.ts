@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -11,6 +12,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MultipleChoiceQuestionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -22,7 +24,7 @@ describe('MultipleChoiceQuestionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FontAwesomeModule, MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
-            providers: [ArtemisMarkdownService],
+            providers: [ArtemisMarkdownService, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionComponent);
         component = fixture.componentInstance;

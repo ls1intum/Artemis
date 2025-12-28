@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -10,7 +10,7 @@ import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagr
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -54,7 +54,7 @@ describe('ApollonDiagramCreateForm Component', () => {
         vi.restoreAllMocks();
     });
 
-    it('save', fakeAsync(() => {
+    it('save', async () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         vi.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
         const ngbModalSpy = vi.spyOn(ngbModal, 'close');
@@ -62,7 +62,7 @@ describe('ApollonDiagramCreateForm Component', () => {
 
         // test
         fixture.componentInstance.save();
-        tick();
+        await fixture.whenStable();
         expect(ngbModalSpy).toHaveBeenCalledOnce();
-    }));
+    });
 });
