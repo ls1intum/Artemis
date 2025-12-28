@@ -181,18 +181,29 @@ public class ExerciseDeletionService {
     }
 
     /**
-     * Resets an Exercise by deleting all its participations and plagiarism results
+     * Resets an Exercise by deleting all its participations and plagiarism results.
+     * This overload fetches the exercise by ID, avoiding the need to load the full entity beforehand.
+     * Prefer this method when only the exercise ID is available to avoid unnecessary database queries.
      *
-     * @param exercise which should be reset
+     * @param exerciseId the ID of the exercise to reset
      */
-    public void reset(Exercise exercise) {
-        log.debug("Request reset Exercise : {}", exercise.getId());
+    public void reset(long exerciseId) {
+        log.debug("Request reset Exercise : {}", exerciseId);
 
-        deletePlagiarismResultsAndParticipations(exercise);
+        // Delete plagiarism results by ID (no need to fetch exercise)
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 
-        // and additional call to the quizExerciseService is only needed for course exercises, not for exam exercises
+        // Fetch minimal exercise data needed for participation deletion
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        // Delete all participations - this handles submissions, results, feedback, complaints, etc.
+        // For exam exercises, we don't need to recalculate competency progress since exam reset handles cleanup
+        boolean isExamExercise = exercise.isExamExercise();
+        participationDeletionService.deleteAllByExercise(exercise, !isExamExercise);
+
+        // Quiz-specific reset is only needed for course exercises
         if (exercise instanceof QuizExercise && exercise.isCourseExercise()) {
-            quizExerciseService.resetExercise(exercise.getId());
+            quizExerciseService.resetExercise(exerciseId);
         }
     }
 

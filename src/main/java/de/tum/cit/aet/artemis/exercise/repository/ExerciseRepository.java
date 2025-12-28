@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 
@@ -186,9 +187,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * Return the number of active students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
      * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
      *
-     * @param minDate          the minimum due date
-     * @param maxDate          the maximum due date
-     * @param activeUserLogins a list of users that should be treated as active
+     * @param minDate     the minimum due date
+     * @param maxDate     the maximum due date
+     * @param activeSince timestamp defining when a user is considered active
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
@@ -200,12 +201,19 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
-            	AND e.dueDate <= :maxDate
-                AND user.login IN :activeUserLogins
+                AND e.dueDate <= :maxDate
+                AND LOWER(user.login) NOT LIKE '%test%'
+                AND EXISTS (
+                    SELECT 1
+                    FROM Submission submission
+                        JOIN submission.participation participation
+                    WHERE submission.submissionDate >= :activeSince
+                        AND participation.student.id = user.id
+                )
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
-            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeSince") ZonedDateTime activeSince);
 
     /**
      * Return the number of exercises that will be released between minDate and maxDate, grouped by exercise type
@@ -255,9 +263,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * Return the number of active students that are part of an exercise that will be release between minDate and maxDate, grouped by exercise type
      * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
      *
-     * @param minDate          the minimum release date
-     * @param maxDate          the maximum release date
-     * @param activeUserLogins a list of users that should be treated as active
+     * @param minDate     the minimum release date
+     * @param maxDate     the maximum release date
+     * @param activeSince timestamp defining when a user is considered active
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
@@ -269,12 +277,19 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
-            	AND e.releaseDate <= :maxDate
-                AND user.login IN :activeUserLogins
+                AND e.releaseDate <= :maxDate
+                AND LOWER(user.login) NOT LIKE '%test%'
+                AND EXISTS (
+                    SELECT 1
+                    FROM Submission submission
+                        JOIN submission.participation participation
+                    WHERE submission.submissionDate >= :activeSince
+                        AND participation.student.id = user.id
+                )
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
-            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeSince") ZonedDateTime activeSince);
 
     @Query("""
             SELECT e
@@ -705,4 +720,28 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Fetches minimal exercise information needed for deletion/reset progress tracking.
+     * This avoids loading full Exercise entities with all their associations.
+     *
+     * @param courseId the id of the course
+     * @return a set of ExerciseDeletionInfoDTOs containing only id, title, and type
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO(
+                e.id,
+                e.title,
+                CASE TYPE(e)
+                    WHEN de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN de.tum.cit.aet.artemis.text.domain.TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN de.tum.cit.aet.artemis.modeling.domain.ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    WHEN de.tum.cit.aet.artemis.quiz.domain.QuizExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END
+            )
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+            """)
+    Set<ExerciseDeletionInfoDTO> findDeletionInfoByCourseId(@Param("courseId") long courseId);
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -67,5 +68,59 @@ public class ExamRepositoryApi extends AbstractExamApi {
 
     public Set<Exam> findAllVisibleByCourseId(long courseId, ZonedDateTime now) {
         return examRepository.findAllVisibleByCourseId(courseId, now);
+    }
+
+    /**
+     * Finds all exam IDs for a given course.
+     *
+     * @param courseId the ID of the course
+     * @return set of exam IDs
+     */
+    public Set<Long> findExamIdsByCourseId(long courseId) {
+        return examRepository.findExamIdsByCourseId(courseId);
+    }
+
+    /**
+     * Counts the number of student exams for a given exam.
+     * This is used for calculating weighted progress during course deletion/reset.
+     *
+     * @param examId the ID of the exam
+     * @return the number of student exams
+     */
+    public long countStudentExamsByExamId(long examId) {
+        return examRepository.countStudentExamsByExamId(examId);
+    }
+
+    /**
+     * Counts the number of programming exercises in an exam.
+     * This is used for calculating weighted progress during course deletion/reset,
+     * as programming exercises require repository deletion per student.
+     *
+     * @param examId the ID of the exam
+     * @return the number of programming exercises in the exam
+     */
+    public long countProgrammingExercisesByExamId(long examId) {
+        return examRepository.countProgrammingExercisesByExamId(examId);
+    }
+
+    /**
+     * Gets deletion info (student exam count, programming exercise count) for all exams in a course.
+     * This is used to calculate accurate total weight for course deletion/reset progress tracking.
+     *
+     * @param courseId the ID of the course
+     * @return list of ExamDeletionInfoDTO with counts for each exam
+     */
+    public List<ExamDeletionInfoDTO> findDeletionInfoByCourseId(long courseId) {
+        return examRepository.findDeletionInfoByCourseId(courseId);
+    }
+
+    /**
+     * Finds all exams for a course with their exercise groups and exercises.
+     *
+     * @param courseId the ID of the course
+     * @return list of exams with exercise groups and exercises
+     */
+    public List<Exam> findByCourseIdWithExerciseGroupsAndExercises(long courseId) {
+        return examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId);
     }
 }

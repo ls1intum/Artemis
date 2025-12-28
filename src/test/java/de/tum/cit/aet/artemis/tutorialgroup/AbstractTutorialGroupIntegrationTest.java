@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistr
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 
 public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -267,6 +269,35 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return tutorialGroup;
     }
 
+    /**
+     * Builds a TutorialGroupDTO for API requests (without schedule).
+     * Uses the same structure as the entity but only includes required fields.
+     */
+    TutorialGroupDTO buildTutorialGroupDTOWithoutSchedule(String tutorLogin) {
+        return new TutorialGroupDTO(null, // id
+                generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, // additionalInformation
+                15, // capacity
+                false, // isOnline
+                Language.ENGLISH.name(), // language
+                "Garching" // campus
+        );
+    }
+
+    /**
+     * Builds a TutorialGroupDTO with an ID set (for testing creation with ID should fail).
+     */
+    TutorialGroupDTO buildTutorialGroupDTOWithId(Long id, String tutorLogin) {
+        return new TutorialGroupDTO(id, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(),
+                "Garching");
+    }
+
+    /**
+     * Builds a TutorialGroupDTO with a specific title.
+     */
+    TutorialGroupDTO buildTutorialGroupDTOWithTitle(String title, String tutorLogin) {
+        return new TutorialGroupDTO(null, title, new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(), "Garching");
+    }
+
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var newTutorialGroup = new TutorialGroup();
@@ -280,11 +311,18 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate(), tutorLogin);
-        var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
-        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
+        // First create the tutorial group using DTO (create endpoint doesn't support schedules)
+        var tutorialGroupDTO = buildTutorialGroupDTOWithoutSchedule(tutorLogin);
+        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(courseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.CREATED);
+        var persistedTutorialGroupId = persistedTutorialGroup.getId();
 
-        newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
+        // Then update the tutorial group to add the schedule
+        var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
+        persistedTutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
+        var updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
+        request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroup.class, HttpStatus.OK);
+
+        var newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroup, scheduleToCreate);
         return newTutorialGroup;
     }

@@ -279,6 +279,20 @@ export async function makeExamSubmission(
     await examStartEnd.finishExam();
 }
 
+/**
+ * Waits for the exam to end if it hasn't already.
+ * This is necessary because the assessment dashboard button only appears after the exam ends.
+ * @param examEnd - The exam end date
+ * @param page - The Playwright page object (used for waitForTimeout)
+ */
+export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
+    if (examEnd.isAfter(dayjs())) {
+        const timeToWait = examEnd.diff(dayjs()) + 1000; // Add 1 second buffer
+        console.log(`Waiting ${timeToWait}ms for exam to end...`);
+        await page.waitForTimeout(timeToWait);
+    }
+}
+
 export async function startAssessing(
     courseID: number,
     examID: number,
