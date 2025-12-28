@@ -783,15 +783,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromSharing) {
-            this.courseService.find(this.courseId).subscribe({
-                next: (res) => {
-                    this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
-                        next: (response: HttpResponse<ProgrammingExercise>) => {
-                            this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                            this.onSaveSuccess(response.body!);
-                        },
-                        error: (err) => this.onSaveError(err),
-                    });
+            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId, this.sharingInfo).subscribe({
+                next: (response: HttpResponse<ProgrammingExercise>) => {
+                    this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
+                    this.onSaveSuccess(response.body!);
                 },
                 error: (err) => this.onSaveError(err),
             });

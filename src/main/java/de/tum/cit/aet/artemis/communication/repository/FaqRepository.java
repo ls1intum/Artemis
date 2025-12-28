@@ -30,6 +30,8 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     @EntityGraph(type = LOAD, attributePaths = "categories")
     List<Faq> findAllByCourseIdOrderByCreatedDateDesc(Long courseId);
 
+    List<Faq> findAllByCourseId(Long courseId);
+
     @Query("""
             SELECT DISTINCT faq.categories
             FROM Faq faq
@@ -50,4 +52,6 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCourseId(Long courseId);
+
+    long countByCourseId(Long courseId);
 }

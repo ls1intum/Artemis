@@ -16,6 +16,8 @@ import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dia
 import { AlertService } from 'app/shared/service/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('DeleteUsersButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -34,7 +36,12 @@ describe('DeleteUsersButtonComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [DeleteUsersButtonComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .overrideTemplate(DeleteUsersButtonComponent, '')
             .compileComponents();

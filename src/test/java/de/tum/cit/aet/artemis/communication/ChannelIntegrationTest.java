@@ -292,7 +292,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyNoParticipantTopicWebsocketSent();
 
         // cleanup
-        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup);
+        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup.getId());
         tutorialGroupRepository.deleteById(tutorialGroup.getId());
     }
 

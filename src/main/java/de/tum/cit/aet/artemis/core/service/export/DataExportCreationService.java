@@ -67,12 +67,22 @@ public class DataExportCreationService {
 
     private final DataExportScienceEventService dataExportScienceEventService;
 
+    private final DataExportIrisService dataExportIrisService;
+
+    private final DataExportLearnerProfileService dataExportLearnerProfileService;
+
+    private final DataExportCompetencyProgressService dataExportCompetencyProgressService;
+
+    private final DataExportTutorialGroupService dataExportTutorialGroupService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
             SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
             DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
             DataExportCommunicationDataService dataExportCommunicationDataService, DataExportScienceEventService dataExportScienceEventService,
+            DataExportIrisService dataExportIrisService, DataExportLearnerProfileService dataExportLearnerProfileService,
+            DataExportCompetencyProgressService dataExportCompetencyProgressService, DataExportTutorialGroupService dataExportTutorialGroupService,
             ResourceLoaderService resourceLoaderService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
@@ -84,6 +94,10 @@ public class DataExportCreationService {
         this.dataExportExamCreationService = dataExportExamCreationService;
         this.dataExportCommunicationDataService = dataExportCommunicationDataService;
         this.dataExportScienceEventService = dataExportScienceEventService;
+        this.dataExportIrisService = dataExportIrisService;
+        this.dataExportLearnerProfileService = dataExportLearnerProfileService;
+        this.dataExportCompetencyProgressService = dataExportCompetencyProgressService;
+        this.dataExportTutorialGroupService = dataExportTutorialGroupService;
         this.dataExportsPath = dataExportsPath;
         this.resourceLoaderService = resourceLoaderService;
     }
@@ -103,6 +117,10 @@ public class DataExportCreationService {
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         dataExportScienceEventService.createScienceEventExport(user.getLogin(), workingDirectory);
+        dataExportIrisService.createIrisExport(userId, workingDirectory);
+        dataExportLearnerProfileService.createLearnerProfileExport(userId, workingDirectory);
+        dataExportCompetencyProgressService.createCompetencyProgressExport(userId, workingDirectory);
+        dataExportTutorialGroupService.createTutorialGroupExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
         addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
