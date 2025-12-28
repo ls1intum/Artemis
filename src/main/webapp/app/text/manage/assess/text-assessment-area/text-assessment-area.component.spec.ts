@@ -9,11 +9,14 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 
 describe('TextAssessmentAreaComponent', () => {
     setupTestBed({ zoneless: true });
@@ -25,12 +28,12 @@ describe('TextAssessmentAreaComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-                TextAssessmentAreaComponent,
-                MockComponent(TextBlockAssessmentCardComponent),
-                MockComponent(ManualTextblockSelectionComponent),
-                TranslatePipeMock,
-                MockDirective(TranslateDirective),
+            imports: [TextAssessmentAreaComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(TextAssessmentAnalytics),
             ],
         }).compileComponents();
 

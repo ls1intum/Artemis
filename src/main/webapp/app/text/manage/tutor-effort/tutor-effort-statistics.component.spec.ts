@@ -2,7 +2,7 @@
  * Test suite for the TutorEffortStatisticsComponent.
  * Tests tutor effort loading, distribution calculations, and UI rendering for text exercise assessments.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorEffortStatisticsComponent } from 'app/text/manage/tutor-effort/tutor-effort-statistics.component';
@@ -169,7 +169,7 @@ describe('TutorEffortStatisticsComponent', () => {
             },
         ];
         vi.spyOn(textExerciseService, 'calculateTutorEffort').mockReturnValue(of(tutorEfforts));
-        vi.spyOn(component, 'loadNumberOfTutorsInvolved').mockImplementation();
+        vi.spyOn(component, 'loadNumberOfTutorsInvolved').mockImplementation(() => {});
 
         component.ngOnInit();
 

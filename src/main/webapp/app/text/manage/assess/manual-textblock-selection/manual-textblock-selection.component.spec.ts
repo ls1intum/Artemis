@@ -10,14 +10,19 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
 import { SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { TextSelectDirective } from 'app/text/manage/assess/directive/text-select.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 
 describe('ManualTextblockSelectionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -68,13 +73,13 @@ describe('ManualTextblockSelectionComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ManualTextblockSelectionComponent],
-            providers: [MockProvider(TextSelectDirective)], // Not mocking this will cause a leak through the mocked ManualTextSelectionComponent
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(TextAssessmentAnalytics),
+            ],
         })
-            .overrideComponent(ManualTextblockSelectionComponent, {
-                set: {
-                    imports: [MockComponent(TextBlockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
-                },
-            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ManualTextblockSelectionComponent);

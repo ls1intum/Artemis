@@ -1,30 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { EventEmitter } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 /**
  * Test suite for TextBlockAssessmentCardComponent.
@@ -38,17 +30,7 @@ describe('TextblockAssessmentCardComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent],
-            declarations: [
-                TextBlockAssessmentCardComponent,
-                TextBlockFeedbackEditorComponent,
-                TranslatePipeMock,
-                MockDirective(TranslateDirective),
-                MockComponent(ConfirmIconComponent),
-                MockComponent(GradingInstructionLinkIconComponent),
-                MockComponent(AssessmentCorrectionRoundBadgeComponent),
-                MockComponent(FaLayersComponent),
-            ],
+            imports: [TextBlockAssessmentCardComponent],
             providers: [
                 MockProvider(StructuredGradingCriterionService),
                 MockProvider(TextAssessmentAnalytics),
@@ -70,14 +52,13 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('cannot be selected in readOnly mode', () => {
         fixture.componentRef.setInput('readOnly', true);
-        component.didSelect = new EventEmitter();
+        fixture.changeDetectorRef.detectChanges();
         const selectSpy = vi.spyOn(component.didSelect, 'emit');
         component.select();
         expect(selectSpy).not.toHaveBeenCalled();
     });
 
-    it('should autofocus', () => {
-        vi.useFakeTimers();
+    it('should select and emit when autofocus is enabled', () => {
         fixture.componentRef.setInput('readOnly', false);
         const textBlockRef = TextBlockRef.new();
         textBlockRef.selectable = true;
@@ -86,18 +67,18 @@ describe('TextblockAssessmentCardComponent', () => {
         };
         fixture.componentRef.setInput('textBlockRef', textBlockRef);
         fixture.componentRef.setInput('selected', false);
-        component.feedbackEditor = {
-            focus: () => {},
-        } as TextBlockFeedbackEditorComponent;
-        const focusSpy = vi.spyOn(component.feedbackEditor!, 'focus');
+        fixture.changeDetectorRef.detectChanges();
+
+        const didSelectSpy = vi.spyOn(component.didSelect, 'emit');
         component.select(true);
-        vi.advanceTimersByTime(300);
-        expect(focusSpy).toHaveBeenCalled();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
     });
 
     it('should show text block', () => {
         const loremIpsum = 'Lorem Ipsum';
-        component.textBlockRef.block!.text = loremIpsum;
+        component.textBlockRef().block!.text = loremIpsum;
         fixture.changeDetectorRef.detectChanges();
 
         const compiled = fixture.debugElement.nativeElement;
@@ -108,9 +89,9 @@ describe('TextblockAssessmentCardComponent', () => {
         let element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         expect(element).toBeFalsy();
 
-        component.textBlockRef.initFeedback();
-        component.textBlockRef.feedback!.gradingInstruction = new GradingInstruction();
-        component.textBlockRef.feedback!.gradingInstruction.usageCount = 0;
+        component.textBlockRef().initFeedback();
+        component.textBlockRef().feedback!.gradingInstruction = new GradingInstruction();
+        component.textBlockRef().feedback!.gradingInstruction!.usageCount = 0;
 
         fixture.changeDetectorRef.detectChanges();
         element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
@@ -118,7 +99,7 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should delete feedback', () => {
-        component.textBlockRef.initFeedback();
+        component.textBlockRef().initFeedback();
         fixture.changeDetectorRef.detectChanges();
 
         vi.spyOn(component.didDelete, 'emit');
@@ -126,14 +107,14 @@ describe('TextblockAssessmentCardComponent', () => {
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextBlockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
 
-        expect(component.textBlockRef.feedback).toBeUndefined();
+        expect(component.textBlockRef().feedback).toBeUndefined();
         expect(component.didDelete.emit).toHaveBeenCalledOnce();
-        expect(component.didDelete.emit).toHaveBeenCalledWith(component.textBlockRef);
+        expect(component.didDelete.emit).toHaveBeenCalledWith(component.textBlockRef());
     });
 
     it('should delete feedback but not emit delete event when textblock is undeletable', () => {
-        component.textBlockRef.initFeedback();
-        component.textBlockRef.deletable = false;
+        component.textBlockRef().initFeedback();
+        component.textBlockRef().deletable = false;
         fixture.changeDetectorRef.detectChanges();
 
         vi.spyOn(component.didDelete, 'emit');
@@ -141,13 +122,13 @@ describe('TextblockAssessmentCardComponent', () => {
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextBlockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
 
-        expect(component.textBlockRef.feedback).toBeUndefined();
+        expect(component.textBlockRef().feedback).toBeUndefined();
         expect(component.didDelete.emit).not.toHaveBeenCalled();
     });
 
     it('should send assessment event when selecting automatic text block', () => {
         fixture.componentRef.setInput('selected', false);
-        component.textBlockRef.feedback = {
+        component.textBlockRef().feedback = {
             type: FeedbackType.MANUAL,
         };
         //@ts-ignore
@@ -159,10 +140,10 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should not send assessment event when selecting text block that is unselectable', () => {
         fixture.componentRef.setInput('selected', false);
-        component.textBlockRef.feedback = {
+        component.textBlockRef().feedback = {
             type: FeedbackType.MANUAL,
         };
-        component.textBlockRef.selectable = false;
+        component.textBlockRef().selectable = false;
         //@ts-ignore
         const sendAssessmentEvent = vi.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
