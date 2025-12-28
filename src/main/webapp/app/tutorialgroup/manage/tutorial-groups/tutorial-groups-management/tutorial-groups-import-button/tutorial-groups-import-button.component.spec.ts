@@ -34,6 +34,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
 
     it('should open the import dialog when the button is clicked', () => {
         const importDialog = component.importDialog();
+        expect(importDialog).toBeDefined();
         const openSpy = vi.spyOn(importDialog!, 'open');
         const openDialogSpy = vi.spyOn(component, 'openTutorialGroupImportDialog');
 
