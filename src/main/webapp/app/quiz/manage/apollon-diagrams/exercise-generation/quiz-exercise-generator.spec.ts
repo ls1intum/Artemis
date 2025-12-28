@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -24,6 +25,8 @@ import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/clas
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
 describe('QuizExercise Generator', () => {
+    setupTestBed({ zoneless: true });
+
     let quizExerciseService: QuizExerciseService;
 
     const course: Course = { id: 123 } as Course;

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -92,6 +93,8 @@ const makeExamQuiz = () => {
 };
 
 describe('QuizExercise Service', () => {
+    setupTestBed({ zoneless: true });
+
     const fileMap = new Map<string, Blob>();
     fileMap.set('file.jpg', new Blob());
 

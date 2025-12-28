@@ -1,8 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { addTemporaryHighlightToQuestion } from './quiz-stepwizard.util';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 
 describe('QuizStepwizardUtil', () => {
+    setupTestBed({ zoneless: true });
+
     let mockQuestion: QuizQuestion;
 
     beforeEach(() => {

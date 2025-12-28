@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -19,6 +20,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ImageComponent } from '../../../../shared/image/image.component';
 
 describe('DragAndDropQuestionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;
     let comp: DragAndDropQuestionComponent;
     let markdownService: ArtemisMarkdownService;
@@ -32,8 +35,10 @@ describe('DragAndDropQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [DragDropModule, FitTextDirective, FontAwesomeModule],
-            declarations: [
+            imports: [
+                DragDropModule,
+                FitTextDirective,
+                FontAwesomeModule,
                 DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ImageComponent),

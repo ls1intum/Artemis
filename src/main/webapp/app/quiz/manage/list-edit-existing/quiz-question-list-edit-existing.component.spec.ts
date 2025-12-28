@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
@@ -102,6 +103,8 @@ const createValidSAQuestion = () => {
 };
 
 describe('QuizQuestionListEditExistingComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<QuizQuestionListEditExistingComponent>;
     let component: QuizQuestionListEditExistingComponent;
     let courseService: CourseManagementService;

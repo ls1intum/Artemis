@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockBuilder, MockInstance, MockProvider } from 'ng-mocks';
@@ -10,6 +11,8 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 
 describe('ReEvaluateShortAnswerQuestionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ReEvaluateShortAnswerQuestionComponent>;
     let component: ReEvaluateShortAnswerQuestionComponent;
 

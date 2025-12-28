@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
@@ -6,6 +7,8 @@ import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-a
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 
 describe('ApollonDiagramImportDialog Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ApollonDiagramImportDialogComponent>;
     let activeModal: NgbActiveModal;
     const apollonDiagramId = 5;

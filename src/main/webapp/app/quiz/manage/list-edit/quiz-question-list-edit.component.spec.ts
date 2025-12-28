@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -13,6 +14,8 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizQuestionListEditComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<QuizQuestionListEditComponent>;
     let component: QuizQuestionListEditComponent;
 
@@ -25,8 +28,8 @@ describe('QuizQuestionListEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule],
-            declarations: [
+            imports: [
+                CommonModule,
                 QuizQuestionListEditComponent,
                 MockComponent(QuizQuestionListEditExistingComponent),
                 MockPipe(ArtemisTranslatePipe),

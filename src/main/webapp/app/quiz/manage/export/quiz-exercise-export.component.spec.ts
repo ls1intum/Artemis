@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -24,6 +25,8 @@ class CourseManagementServiceStub {
 }
 
 describe('QuizExerciseExportComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let quizService: QuizExerciseServiceStub;
     let courseService: CourseManagementServiceStub;
     let alertService: AlertService;

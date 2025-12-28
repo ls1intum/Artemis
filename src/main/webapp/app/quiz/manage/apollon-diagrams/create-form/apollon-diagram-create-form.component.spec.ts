@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -16,6 +17,8 @@ import { of } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
+    setupTestBed({ zoneless: true });
+
     let apollonDiagramService: ApollonDiagramService;
     let ngbModal: NgbActiveModal;
     let fixture: ComponentFixture<ApollonDiagramCreateFormComponent>;

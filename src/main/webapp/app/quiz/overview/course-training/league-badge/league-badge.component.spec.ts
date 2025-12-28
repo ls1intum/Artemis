@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LeagueBadgeComponent } from './league-badge.component';
 import { MockBuilder } from 'ng-mocks';
@@ -7,6 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LeagueIconComponent } from '../course-training-quiz/leaderboard/league/league-icon.component';
 
 describe('LeagueBadgeComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<LeagueBadgeComponent>;
     let component: LeagueBadgeComponent;
 

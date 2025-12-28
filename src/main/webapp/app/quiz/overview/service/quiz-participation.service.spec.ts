@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
@@ -9,6 +10,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Quiz Participation Service', () => {
+    setupTestBed({ zoneless: true });
     let service: QuizParticipationService;
     let httpMock: HttpTestingController;
     let exerciseId: number;

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -12,14 +13,15 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('MultipleChoiceQuestionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;
     let component: MultipleChoiceQuestionComponent;
     let artemisMarkdownService: ArtemisMarkdownService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FontAwesomeModule],
-            declarations: [MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
+            imports: [FontAwesomeModule, MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
             providers: [ArtemisMarkdownService],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionComponent);

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
@@ -44,6 +45,8 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('QuizExerciseUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: QuizExerciseUpdateComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;

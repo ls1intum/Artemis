@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     template: ` <div style="align-content: center;">
@@ -12,6 +13,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 class TestFitTextComponent {}
 
 describe('FitTextDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TestFitTextComponent>;
 
     beforeEach(() => {

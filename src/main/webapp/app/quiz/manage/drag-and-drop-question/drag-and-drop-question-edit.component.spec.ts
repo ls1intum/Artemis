@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -29,6 +30,8 @@ import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service
 import type { Mock } from 'vitest';
 
 describe('DragAndDropQuestionEditComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
     let modalService: NgbModal;

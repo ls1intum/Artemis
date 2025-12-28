@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -50,6 +51,8 @@ const spot2 = new ShortAnswerSpot();
 spot2.spotNr = 1;
 
 describe('ShortAnswerQuestionEditComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
     let component: ShortAnswerQuestionEditComponent;
 

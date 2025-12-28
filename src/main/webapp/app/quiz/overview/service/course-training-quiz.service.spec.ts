@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseTrainingQuizService } from './course-training-quiz.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
@@ -10,6 +11,7 @@ import { SubmittedAnswerAfterEvaluation } from '../course-training/course-traini
 import { SubmittedAnswer } from '../../shared/entities/submitted-answer.model';
 
 describe('CourseTrainingQuizService', () => {
+    setupTestBed({ zoneless: true });
     let service: CourseTrainingQuizService;
     let httpMock: HttpTestingController;
     let questionId: number;

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -16,13 +17,14 @@ const question = new ShortAnswerQuestion();
 question.id = 1;
 
 describe('ShortAnswerQuestionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ShortAnswerQuestionComponent>;
     let component: ShortAnswerQuestionComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FontAwesomeModule],
-            declarations: [ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
+            imports: [FontAwesomeModule, ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionComponent);

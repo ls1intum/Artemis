@@ -1,5 +1,6 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateModule } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -9,6 +10,8 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { cloneDeep } from 'lodash-es';
 
 describe('ShortAnswerQuestionUtil', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ShortAnswerQuestionUtil;
 
     const spot = new ShortAnswerSpot();

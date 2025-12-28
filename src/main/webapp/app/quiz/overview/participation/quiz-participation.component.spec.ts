@@ -1,4 +1,5 @@
 import { type MockInstance, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
@@ -118,6 +119,7 @@ const quizExerciseUnreleased: QuizExercise = {
 };
 
 describe('QuizParticipationComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
     let participationSpy: MockInstance;

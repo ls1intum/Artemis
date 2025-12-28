@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -7,6 +8,8 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 
 describe('Quiz Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ArtemisQuizService;
     const quiz = {
         mode: ExerciseMode.INDIVIDUAL,

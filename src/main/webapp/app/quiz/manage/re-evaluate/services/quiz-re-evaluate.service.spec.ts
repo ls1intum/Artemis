@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
@@ -9,6 +10,8 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 import * as blobUtil from 'app/shared/util/blob-util';
 
 describe('QuizReEvaluateService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: QuizReEvaluateService;
     let httpMock: HttpTestingController;
     beforeEach(() => {
