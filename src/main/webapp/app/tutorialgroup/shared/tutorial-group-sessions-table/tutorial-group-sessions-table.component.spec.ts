@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -44,6 +46,8 @@ class MockWrapperComponent {
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
     let tableInstance: TutorialGroupSessionsTableComponent;
@@ -82,7 +86,7 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should pass the session to the headers', () => {
@@ -101,6 +105,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
 });
 
 describe('TutorialGroupSessionTableComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupSessionsTableComponent>;
     let component: TutorialGroupSessionsTableComponent;
     let pastSession: TutorialGroupSession;
@@ -111,7 +117,7 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -143,13 +149,13 @@ describe('TutorialGroupSessionTableComponent', () => {
                 fixture.componentRef.setInput('sessions', [upcomingSession, pastSession]);
                 fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
                 fixture.componentRef.setInput('timeZone', timeZone);
-                jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
+                vi.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
                 fixture.detectChanges();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

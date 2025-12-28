@@ -93,6 +93,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/core/admin/**', // core admin module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/account/**', // account module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/buildagent/**', // buildagent module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/tutorialgroup/**', // tutorialgroup module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
@@ -101,14 +102,15 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/account/', // core account module uses Vitest
         '<rootDir>/src/main/webapp/app/core/admin/',   // core admin module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/',   // buildagent module uses Vitest
+        '<rootDir>/src/main/webapp/app/tutorialgroup/',   // tutorialgroup module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 90.1,
-            branches: 74.0,
-            functions: 84.1,
+            statements: 90.0,
+            branches: 74.1,
+            functions: 84.2,
             lines: 90.1,
         },
     },
@@ -136,6 +138,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/account/',  // core account module
         '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
+        '<rootDir>/src/main/webapp/app/tutorialgroup/',    // tutorialgroup module
     ],
     testTimeout: 3000,
     testMatch: [

@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
@@ -25,6 +27,8 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import '@angular/localize/init';
 
 describe('TutorialGroupsManagementComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
     const configuration = generateExampleTutorialGroupsConfiguration({});
@@ -35,8 +39,8 @@ describe('TutorialGroupsManagementComponent', () => {
 
     let tutorialGroupsService: TutorialGroupsService;
     let configurationService: TutorialGroupsConfigurationService;
-    let getAllOfCourseSpy: jest.SpyInstance;
-    let getOneOfCourseSpy: jest.SpyInstance;
+    let getAllOfCourseSpy: ReturnType<typeof vi.spyOn>;
+    let getOneOfCourseSpy: ReturnType<typeof vi.spyOn>;
 
     const router = new MockRouter();
 
@@ -69,7 +73,7 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 
         tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
+        getAllOfCourseSpy = vi.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [tutorialGroupOne, tutorialGroupTwo],
@@ -78,13 +82,13 @@ describe('TutorialGroupsManagementComponent', () => {
             ),
         );
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        getOneOfCourseSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
         fixture.detectChanges();
     });
 
     afterEach(() => {
         fixture.destroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

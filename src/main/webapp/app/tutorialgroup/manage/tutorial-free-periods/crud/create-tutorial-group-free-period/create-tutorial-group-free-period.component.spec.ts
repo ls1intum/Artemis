@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -20,6 +22,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
     let component: CreateTutorialGroupFreePeriodComponent;
     let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
@@ -28,7 +32,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [CreateTutorialGroupFreePeriodComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TutorialGroupFreePeriodService),
                 MockProvider(AlertService),
@@ -47,7 +51,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -63,8 +67,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
             status: 201,
         });
 
-        const createStub = jest.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
-        const freePeriodCreatedSpy = jest.spyOn(component.freePeriodCreated, 'emit');
+        const createStub = vi.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
+        const freePeriodCreatedSpy = vi.spyOn(component.freePeriodCreated, 'emit');
 
         const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
@@ -75,7 +79,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(freePeriodCreatedSpy).toHaveBeenCalledOnce();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('should throw an error when date and alternativeDate are undefined', () => {

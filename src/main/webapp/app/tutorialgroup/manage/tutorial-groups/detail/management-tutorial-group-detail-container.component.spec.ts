@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ManagementTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/manage/tutorial-groups/detail/management-tutorial-group-detail-container.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
@@ -19,6 +21,8 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import '@angular/localize/init';
 
 describe('TutorialGroupManagementDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ManagementTutorialGroupDetailContainerComponent>;
     let component: ManagementTutorialGroupDetailContainerComponent;
 
@@ -54,7 +58,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -72,7 +76,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+        const findByIdStub = vi.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
         fixture.detectChanges();
         expect(component.tutorialGroup).toEqual(tutorialGroupOfResponse);
         expect(component.tutorialGroupId).toBe(1);

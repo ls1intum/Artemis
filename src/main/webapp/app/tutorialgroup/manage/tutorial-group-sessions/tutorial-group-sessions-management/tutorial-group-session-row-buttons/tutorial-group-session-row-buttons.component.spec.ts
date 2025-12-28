@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { TutorialGroupSessionRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
@@ -17,6 +19,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;
     let component: TutorialGroupSessionRowButtonsComponent;
     let sessionService: TutorialGroupSessionService;
@@ -50,43 +54,41 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     };
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should open the edit dialog when the respective button is clicked', fakeAsync(() => {
-        const mockEditDialog = { open: jest.fn() } as unknown as EditTutorialGroupSessionComponent;
-        jest.spyOn(component, 'editSessionDialog').mockReturnValue(mockEditDialog);
-        const openDialogSpy = jest.spyOn(component, 'openEditSessionDialog');
+    it('should open the edit dialog when the respective button is clicked', async () => {
+        const mockEditDialog = { open: vi.fn() } as unknown as EditTutorialGroupSessionComponent;
+        vi.spyOn(component, 'editSessionDialog').mockReturnValue(mockEditDialog);
+        const openDialogSpy = vi.spyOn(component, 'openEditSessionDialog');
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#edit-' + tutorialGroupSession.id);
         editButton.click();
 
-        fixture.whenStable().then(() => {
-            expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(mockEditDialog.open).toHaveBeenCalledOnce();
-        });
-    }));
+        await fixture.whenStable();
+        expect(openDialogSpy).toHaveBeenCalledOnce();
+        expect(mockEditDialog.open).toHaveBeenCalledOnce();
+    });
 
-    it('should open the cancellation / activation dialog when the respective button is clicked', fakeAsync(() => {
-        const mockCancellationDialog = { open: jest.fn() } as unknown as CancellationModalComponent;
-        jest.spyOn(component, 'cancellationDialog').mockReturnValue(mockCancellationDialog);
-        const openDialogSpy = jest.spyOn(component, 'openCancellationDialog');
+    it('should open the cancellation / activation dialog when the respective button is clicked', async () => {
+        const mockCancellationDialog = { open: vi.fn() } as unknown as CancellationModalComponent;
+        vi.spyOn(component, 'cancellationDialog').mockReturnValue(mockCancellationDialog);
+        const openDialogSpy = vi.spyOn(component, 'openCancellationDialog');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancel-activate-' + tutorialGroupSession.id);
         cancelButton.click();
 
-        fixture.whenStable().then(() => {
-            expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(mockCancellationDialog.open).toHaveBeenCalledOnce();
-        });
-    }));
+        await fixture.whenStable();
+        expect(openDialogSpy).toHaveBeenCalledOnce();
+        expect(mockCancellationDialog.open).toHaveBeenCalledOnce();
+    });
 
     it('should call delete and emit deleted event', () => {
-        const deleteSpy = jest.spyOn(sessionService, 'delete').mockReturnValue(of(new HttpResponse<void>({})));
-        const deleteEventSpy = jest.spyOn(component.tutorialGroupSessionDeleted, 'emit');
+        const deleteSpy = vi.spyOn(sessionService, 'delete').mockReturnValue(of(new HttpResponse<void>({})));
+        const deleteEventSpy = vi.spyOn(component.tutorialGroupSessionDeleted, 'emit');
         component.deleteTutorialGroupSession();
         expect(deleteSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id!, tutorialGroupSession.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();

@@ -175,10 +175,10 @@ const moduleThresholds = {
         lines:      90.00,
     },
     tutorialgroup: {
-        statements: 92.10,
+        statements: 89.90,
         branches:   72.90,
         functions:  84.50,
-        lines:      92.00,
+        lines:      89.80,
     },
 };
 

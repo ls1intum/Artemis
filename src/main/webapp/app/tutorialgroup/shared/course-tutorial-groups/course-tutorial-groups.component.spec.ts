@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component';
@@ -19,8 +21,12 @@ import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseTutorialGroupsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
     let component: CourseTutorialGroupsComponent;
 
@@ -42,11 +48,11 @@ describe('CourseTutorialGroupsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [MockDirective(TranslateDirective)],
-            imports: [CourseTutorialGroupsComponent, MockSidebarComponent],
+            imports: [CourseTutorialGroupsComponent, MockSidebarComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: Router, useValue: mockRouter },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 MockProvider(CourseStorageService),
                 MockProvider(TutorialGroupsService),
@@ -73,7 +79,7 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -81,21 +87,21 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should use cached groups and lectures if available to compute correct sidebar data', async () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1, tutorialGroup2], lectures: [tutorialLecture1, tutorialLecture2] });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1, tutorialGroup2], lectures: [tutorialLecture1, tutorialLecture2] });
 
-        jest.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialGroup(tutorialGroup1),
             getSidebarCardElementForTutorialGroup(tutorialGroup2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialLecture(tutorialLecture1),
             getSidebarCardElementForTutorialLecture(tutorialLecture2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
-        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourse');
-        const tutorialLectureFetchSpy = jest.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupService, 'getAllForCourse');
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -123,22 +129,22 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should load groups and lectures if available to compute correct sidebar data', async () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ lectures: undefined, tutorialGroups: undefined });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ lectures: undefined, tutorialGroups: undefined });
 
-        jest.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialGroup(tutorialGroup1),
             getSidebarCardElementForTutorialGroup(tutorialGroup2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialLecture(tutorialLecture1),
             getSidebarCardElementForTutorialLecture(tutorialLecture2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
-        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1, tutorialGroup2] })));
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1, tutorialGroup2] })));
 
-        const tutorialLectureFetchSpy = jest
+        const tutorialLectureFetchSpy = vi
             .spyOn(lectureService, 'findAllTutorialLecturesByCourseId')
             .mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1, tutorialLecture2] })));
 
@@ -169,17 +175,17 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should navigate to previously selected route', () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1, tutorialLecture2] });
-        jest.spyOn(sessionStorageService, 'retrieve').mockReturnValue('tutorial-lectures/7');
-        const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1, tutorialLecture2] });
+        vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue('tutorial-lectures/7');
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        jest.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialGroup(tutorialGroup1),
             getSidebarCardElementForTutorialGroup(tutorialGroup2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
-        jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
-        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
         fixture.detectChanges();
 
@@ -191,7 +197,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should toggle isCollapsed', () => {
         const initialCollapseState = component.isCollapsed;
-        jest.spyOn(courseOverviewService, 'setSidebarCollapseState');
+        vi.spyOn(courseOverviewService, 'setSidebarCollapseState');
         component.toggleSidebar();
         expect(component.isCollapsed).toBe(!initialCollapseState);
         expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed);

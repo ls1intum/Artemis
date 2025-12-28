@@ -1,7 +1,11 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VerticalProgressBarComponent } from 'app/tutorialgroup/shared/vertical-progress-bar/vertical-progress-bar.component';
 
 describe('VerticalProgressBarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: VerticalProgressBarComponent;
     let fixture: ComponentFixture<VerticalProgressBarComponent>;
 
@@ -11,6 +15,10 @@ describe('VerticalProgressBarComponent', () => {
         fixture = TestBed.createComponent(VerticalProgressBarComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should keep borders in range [0,100]', () => {

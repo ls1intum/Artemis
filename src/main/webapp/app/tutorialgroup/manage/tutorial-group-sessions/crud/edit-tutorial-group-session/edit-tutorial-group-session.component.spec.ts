@@ -1,8 +1,10 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
@@ -20,9 +22,10 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import '@angular/localize/init';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
-
+import * as Sentry from '@sentry/angular';
 describe('EditTutorialGroupSessionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
     let component: EditTutorialGroupSessionComponent;
     let sessionService: TutorialGroupSessionService;
@@ -37,7 +40,7 @@ describe('EditTutorialGroupSessionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [EditTutorialGroupSessionComponent, OwlNativeDateTimeModule],
             providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
@@ -53,7 +56,7 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -61,7 +64,7 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const formStub = expectComponentRendered<TutorialGroupSessionFormComponent>(fixture, 'jhi-tutorial-group-session-form');
+        const formStub: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
         fixture.detectChanges();
         expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
         expect(formStub.formData()).toEqual(component.formData);
@@ -78,8 +81,8 @@ describe('EditTutorialGroupSessionComponent', () => {
             status: 200,
         });
 
-        const updatedStub = jest.spyOn(sessionService, 'update').mockReturnValue(of(updateResponse));
-        const sessionUpdatedSpy = jest.spyOn(component.sessionUpdated, 'emit');
+        const updatedStub = vi.spyOn(sessionService, 'update').mockReturnValue(of(updateResponse));
+        const sessionUpdatedSpy = vi.spyOn(component.sessionUpdated, 'emit');
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
 
@@ -90,6 +93,61 @@ describe('EditTutorialGroupSessionComponent', () => {
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleTutorialGroup.id!, exampleSession.id!, formDataToTutorialGroupSessionDTO(formData));
         expect(sessionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('should call onError and close dialog when update fails', () => {
+        const errorResponse = new HttpErrorResponse({
+            error: { errorKey: 'sessionOverlapsWithSession', message: 'Session overlaps', params: {} },
+            status: 400,
+        });
+
+        vi.spyOn(sessionService, 'update').mockReturnValue(throwError(() => errorResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+        const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
+        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone);
+
+        sessionForm.formSubmitted.emit(formData);
+
+        expect(alertErrorSpy).toHaveBeenCalledWith('Session overlaps', {});
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('should call onError with unexpected error when error key is not sessionOverlapsWithSession', () => {
+        const errorResponse = new HttpErrorResponse({
+            error: { errorKey: 'otherError' },
+            status: 500,
+            statusText: 'Internal Server Error',
+        });
+
+        vi.spyOn(sessionService, 'update').mockReturnValue(throwError(() => errorResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+        const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
+        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone);
+
+        sessionForm.formSubmitted.emit(formData);
+
+        expect(alertErrorSpy).toHaveBeenCalledWith('error.unexpectedError', expect.objectContaining({ error: expect.any(String) }));
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('should return early from updateSession when IDs are missing', () => {
+        const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+        const sessionWithoutId = generateExampleTutorialGroupSession({});
+        sessionWithoutId.id = undefined;
+
+        fixture.componentRef.setInput('tutorialGroupSession', sessionWithoutId);
+        fixture.detectChanges();
+
+        const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
+        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone);
+
+        sessionForm.formSubmitted.emit(formData);
+
+        expect(captureExceptionSpy).toHaveBeenCalledWith('Error: Course, TutorialGroup, or TutorialGroupSession ID is missing');
     });
 });

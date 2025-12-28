@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -47,6 +49,8 @@ class MockWrapperComponent {
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
     let tableInstance: TutorialGroupsTableComponent;
@@ -60,8 +64,8 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
                 MockWrapperComponent,
@@ -96,7 +100,7 @@ describe('TutorialGroupTableWrapperTest', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should pass the tutorialGroup to the headers', () => {
@@ -111,6 +115,8 @@ describe('TutorialGroupTableWrapperTest', () => {
 });
 
 describe('TutorialGroupsTableComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupsTableComponent>;
     let component: TutorialGroupsTableComponent;
 
@@ -139,7 +145,7 @@ describe('TutorialGroupsTableComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -210,7 +216,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.ascending = false;
 
         const sortService = fixture.debugElement.injector.get(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], 'id', false);
@@ -222,7 +228,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.ascending = false;
 
         const sortService = fixture.debugElement.injector.get(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], false);
@@ -234,7 +240,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.ascending = false;
 
         const sortService = fixture.debugElement.injector.get(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['capacity', 'numberOfRegisteredUsers'], false);
