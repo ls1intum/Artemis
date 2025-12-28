@@ -25,6 +25,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -47,6 +49,7 @@ examples.forEach((activeConversation) => {
                     SessionStorageService,
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                    { provide: DialogService, useClass: MockDialogService },
                 ],
             })
                 .compileComponents()
