@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -78,7 +79,7 @@ describe('CourseTrainingQuizComponent', () => {
                 },
             ]);
         quizService = TestBed.inject(CourseTrainingQuizService);
-        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(
+        vi.spyOn(quizService, 'getQuizQuestions').mockReturnValue(
             of(
                 new HttpResponse<QuizQuestionTraining[]>({
                     body: mockQuestions,
@@ -86,7 +87,7 @@ describe('CourseTrainingQuizComponent', () => {
                 }),
             ),
         );
-        jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture = TestBed.createComponent(CourseTrainingQuizComponent);
         component = fixture.componentInstance;
@@ -94,7 +95,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should extract courseId from route params', () => {
@@ -110,7 +111,7 @@ describe('CourseTrainingQuizComponent', () => {
             body: mockQuestions,
             headers: { get: () => '3' } as any,
         });
-        jest.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
+        vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
         component.page.set(0);
         component.loadQuestions();
         expect(component.allLoadedQuestions()).toHaveLength(3);
@@ -142,7 +143,7 @@ describe('CourseTrainingQuizComponent', () => {
     it('should go to the next question and call initQuestion', () => {
         component.allLoadedQuestions.set(mockQuestions);
         component.currentIndex.set(0);
-        const initQuestionSpy = jest.spyOn(component, 'initQuestion');
+        const initQuestionSpy = vi.spyOn(component, 'initQuestion');
         component.nextQuestion();
         expect(component.currentIndex()).toBe(1);
         expect(initQuestionSpy).toHaveBeenCalledOnce();
@@ -152,7 +153,7 @@ describe('CourseTrainingQuizComponent', () => {
     it('should increment page and call loadQuestions when hasNext is true', () => {
         component.page.set(0);
         component.hasNext.set(true);
-        const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
+        const loadQuestionsSpy = vi.spyOn(component, 'loadQuestions');
 
         component.loadNextPage();
 
@@ -163,7 +164,7 @@ describe('CourseTrainingQuizComponent', () => {
     it('should not increment page or call loadQuestions when hasNext is false', () => {
         component.page.set(0);
         component.hasNext.set(false);
-        const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
+        const loadQuestionsSpy = vi.spyOn(component, 'loadQuestions');
 
         component.loadNextPage();
 
@@ -176,7 +177,7 @@ describe('CourseTrainingQuizComponent', () => {
             body: [],
             headers: { get: () => '0' } as any,
         });
-        jest.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
+        vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
 
         component.loadQuestions();
         expect(component.hasNext()).toBeFalsy();
@@ -195,26 +196,26 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: answer })));
-        const showResultSpy = jest.spyOn(component, 'applyEvaluatedAnswer');
+        const submitSpy = vi.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: answer })));
+        const showResultSpy = vi.spyOn(component, 'applyEvaluatedAnswer');
         // Drag and Drop
-        jest.spyOn(component, 'currentQuestion').mockReturnValue(question1);
+        vi.spyOn(component, 'currentQuestion').mockReturnValue(question1);
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(component.submitted).toBeTrue();
         expect(showResultSpy).toHaveBeenCalledWith(answer);
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         // Multiple Choice
-        jest.spyOn(component, 'currentQuestion').mockReturnValue(question2);
+        vi.spyOn(component, 'currentQuestion').mockReturnValue(question2);
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(component.submitted).toBeTrue();
         expect(showResultSpy).toHaveBeenCalledWith(answer);
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         // Short Answer
-        jest.spyOn(component, 'currentQuestion').mockReturnValue(question3);
+        vi.spyOn(component, 'currentQuestion').mockReturnValue(question3);
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -223,8 +224,8 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should show a warning if no questionId is present', () => {
-        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ id: null } as any);
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        vi.spyOn(component, 'currentQuestion').mockReturnValue({ id: null } as any);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -234,14 +235,14 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should handle submit error', () => {
-        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1 } as any);
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        vi.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1 } as any);
         const error = new HttpErrorResponse({
             error: 'error',
             status: 400,
             statusText: 'Bad Request',
         });
-        jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
+        vi.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
         component.currentIndex.set(2);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalled();
@@ -249,7 +250,7 @@ describe('CourseTrainingQuizComponent', () => {
 
     it('should navigate to practice', () => {
         const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         component.navigateToTraining();
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training']);
@@ -262,7 +263,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should set showUnratedConfirmation to false and navigate to training when cancelUnratedPractice is called', () => {
-        const navigateSpy = jest.spyOn(component, 'navigateToTraining');
+        const navigateSpy = vi.spyOn(component, 'navigateToTraining');
         component.showUnratedConfirmation = true;
         component.cancelUnratedPractice();
         expect(component.showUnratedConfirmation).toBeFalse();

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -56,20 +57,20 @@ describe('QuizExercise Details Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should be in exam mode', () => {
-        jest.spyOn(comp, 'load').mockReturnValue();
+        vi.spyOn(comp, 'load').mockReturnValue();
         comp.ngOnInit();
 
         expect(comp.isExamMode).toBeTrue();
     });
 
     it('should initialize detail component', async () => {
-        jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-        jest.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
-        jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of({} as unknown as ExerciseManagementStatisticsDto));
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
+        vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of({} as unknown as ExerciseManagementStatisticsDto));
 
         comp.ngOnInit();
 

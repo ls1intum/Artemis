@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { QuizTrainingDialogComponent } from './quiz-training-dialog.component';
 import { MockBuilder } from 'ng-mocks';
@@ -17,7 +18,7 @@ describe('QuizTrainingDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should disable save when showInLeaderboard equals initialShowInLeaderboard', () => {

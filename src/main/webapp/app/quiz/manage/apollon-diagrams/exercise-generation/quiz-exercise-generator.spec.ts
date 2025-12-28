@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -46,7 +47,7 @@ describe('QuizExercise Generator', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
@@ -54,8 +55,8 @@ describe('QuizExercise Generator', () => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
-        jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
-        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
+        vi.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
@@ -115,7 +116,7 @@ describe('QuizExercise Generator', () => {
     });
 
     it('generateDragAndDropItemForElement', async () => {
-        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
 
         const umlModel: UMLModel = testClassDiagram as unknown as UMLModel;
 
@@ -142,6 +143,6 @@ describe('QuizExercise Generator', () => {
         expect(dragAndDropMapping.dropLocation?.width).toBe(114.5);
         expect(dragAndDropMapping.dropLocation?.height).toBe(30);
 
-        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
     });
 });

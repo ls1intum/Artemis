@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -47,13 +48,13 @@ describe('ApollonDiagramCreateForm Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('save', fakeAsync(() => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        jest.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
-        const ngbModalSpy = jest.spyOn(ngbModal, 'close');
+        vi.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
+        const ngbModalSpy = vi.spyOn(ngbModal, 'close');
         fixture.componentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 999);
 
         // test

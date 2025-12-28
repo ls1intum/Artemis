@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -53,7 +54,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
         fixture.componentRef.setInput('question', question);
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        globalThis.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
         fixture.componentRef.setInput('question', question);
@@ -62,7 +63,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize with question markdown text', () => {
@@ -203,7 +204,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should detect changes in markdown', () => {
-        const spy = jest.spyOn(component.questionUpdated, 'emit');
+        const spy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.changesInMarkdown();
 
@@ -220,7 +221,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     }
 
     it('should trigger delete button', () => {
-        const spy = jest.spyOn(component, 'deleteQuestion');
+        const spy = vi.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
         deleteButton.nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
@@ -228,7 +229,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse markdown when preparing for save in edit mode', () => {
         component.markdownEditor()!.inVisualMode = false;
-        const parseMarkdownSpy = jest.spyOn(component.markdownEditor()!, 'parseMarkdown');
+        const parseMarkdownSpy = vi.spyOn(component.markdownEditor()!, 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
@@ -237,10 +238,10 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.markdownEditor()!.inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
         component.markdownEditor()!['monacoEditor'] = {
-            setText: jest.fn(),
+            setText: vi.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
 
-        const parseQuestionStub = jest.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
+        const parseQuestionStub = vi.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
         expect(component.markdownEditor()!['_markdown']).toBe('parsed-question');
@@ -248,7 +249,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should open modal', () => {
         const content = {};
-        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+        const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
 
         component.open(content);
 
@@ -256,8 +257,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should detect changes in visual mode', () => {
-        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
-        const detectChangesSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
+        const detectChangesSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
 
         component.changesInVisualMode();
 
@@ -266,7 +267,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should move up', () => {
-        const emitSpy = jest.spyOn(component.questionMoveUp, 'emit');
+        const emitSpy = vi.spyOn(component.questionMoveUp, 'emit');
 
         component.moveUp();
 
@@ -274,7 +275,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should move down', () => {
-        const emitSpy = jest.spyOn(component.questionMoveDown, 'emit');
+        const emitSpy = vi.spyOn(component.questionMoveDown, 'emit');
 
         component.moveDown();
 
@@ -295,7 +296,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.backupQuestion = backup;
         component.question().title = 'current-title';
         component.question().text = 'current-text';
-        const detectChangesSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+        const detectChangesSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
 
         component.resetQuestion();
 

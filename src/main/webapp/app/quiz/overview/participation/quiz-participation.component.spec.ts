@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
@@ -39,8 +40,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { captureException } from '@sentry/angular';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
-jest.mock('@sentry/angular', () => ({
-    captureException: jest.fn(),
+vi.mock('@sentry/angular', () => ({
+    captureException: vi.fn(),
 }));
 
 const now = dayjs();
@@ -119,8 +120,8 @@ const quizExerciseUnreleased: QuizExercise = {
 describe('QuizParticipationComponent', () => {
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
-    let participationSpy: jest.SpyInstance;
-    let resultForSolutionServiceSpy: jest.SpyInstance;
+    let participationSpy: vi.SpyInstance;
+    let resultForSolutionServiceSpy: vi.SpyInstance;
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
     let participationService: ParticipationService;
@@ -182,18 +183,18 @@ describe('QuizParticipationComponent', () => {
 
                     participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
-                    participationSpy = jest
+                    participationSpy = vi
                         .spyOn(participationService, 'startQuizParticipation')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
                     quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                    jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
+                    vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
         });
 
         afterEach(() => {
             httpMock.verify();
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         afterEach(fakeAsync(() => {
@@ -207,7 +208,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should capture exception when element is not found', () => {
             const questionIndex = 1;
-            jest.spyOn(document, 'getElementById').mockReturnValue(null);
+            vi.spyOn(document, 'getElementById').mockReturnValue(null);
 
             component.navigateToQuestion(questionIndex);
 
@@ -215,7 +216,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should highlight the correct quiz question', () => {
-            const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+            const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
             const mockQuestion: QuizQuestion = {
                 id: 1,
                 type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -232,7 +233,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should not highlight if question is not found', () => {
-            const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+            const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
             component.quizExercise = { ...quizExercise, quizQuestions: [] };
 
             component['highlightQuestion'](1);
@@ -241,7 +242,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should not highlight if quizQuestions is undefined', () => {
-            const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+            const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
 
             component['highlightQuestion'](1);
@@ -272,13 +273,13 @@ describe('QuizParticipationComponent', () => {
                     started: false,
                 },
             ];
-            participationSpy = jest
+            participationSpy = vi
                 .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
-            const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
+            const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
+            const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation();
             tick(5000);
             fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
@@ -297,13 +298,13 @@ describe('QuizParticipationComponent', () => {
                     started: false,
                 },
             ];
-            participationSpy = jest
+            participationSpy = vi
                 .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: notIndividualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
-            const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
+            const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
+            const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation();
             tick(5000);
             fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
@@ -317,7 +318,7 @@ describe('QuizParticipationComponent', () => {
         it('should check quiz end in intervals', fakeAsync(() => {
             fixture.detectChanges();
 
-            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+            const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
             tick(5000);
             fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
@@ -333,8 +334,8 @@ describe('QuizParticipationComponent', () => {
             component.submission.submissionDate = dayjs();
             component.submission.submitted = false;
 
-            const triggerSaveStub = jest.spyOn(component, 'triggerSave').mockImplementation();
-            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+            const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation();
+            const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
 
             tick(2000);
             fixture.changeDetectorRef.detectChanges();
@@ -353,7 +354,7 @@ describe('QuizParticipationComponent', () => {
             component.quizBatch!.startTime = undefined;
 
             // Returns the started exercise
-            const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(
+            const findStudentSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(
                 of({
                     body: {
                         ...quizExercise,
@@ -363,7 +364,7 @@ describe('QuizParticipationComponent', () => {
             );
             fixture.changeDetectorRef.detectChanges();
 
-            const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
+            const initLiveModeSpy = vi.spyOn(component, 'initLiveMode');
 
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
             expect(refreshButton).not.toBeNull();
@@ -392,15 +393,15 @@ describe('QuizParticipationComponent', () => {
                     quizStarted: false,
                 } as QuizExercise,
             };
-            participationSpy = jest.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+            participationSpy = vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
 
             fixture.detectChanges();
 
             // Returns the started exercise
-            const joinBatchSpy = jest.spyOn(exerciseService, 'join').mockReturnValue(of({ body: { started } } as HttpResponse<QuizBatch>));
+            const joinBatchSpy = vi.spyOn(exerciseService, 'join').mockReturnValue(of({ body: { started } } as HttpResponse<QuizBatch>));
             fixture.detectChanges();
 
-            const refreshQuizSpy = jest.spyOn(component, 'refreshQuiz').mockReturnValue();
+            const refreshQuizSpy = vi.spyOn(component, 'refreshQuiz').mockReturnValue();
 
             const joinButton = fixture.debugElement.nativeElement.querySelector(quizMode === QuizMode.BATCHED ? '#join-batch button' : '#start-batch button');
             expect(joinButton).not.toBeNull();
@@ -416,7 +417,7 @@ describe('QuizParticipationComponent', () => {
         it('should submit quiz', () => {
             const individualQuizExercise = { ...quizExercise };
             individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
-            participationSpy = jest
+            participationSpy = vi
                 .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
@@ -461,7 +462,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should show warning on submit', () => {
-            const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
             fixture.detectChanges();
 
             // Set a value > 15 to simulate an early hand in without answered questions
@@ -511,7 +512,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should react to errors', () => {
             const alertService = fixture.debugElement.injector.get(AlertService);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
             fixture.detectChanges();
 
             component.onSubmitError({ message: 'error' } as any);
@@ -603,7 +604,7 @@ describe('QuizParticipationComponent', () => {
 
         afterEach(() => {
             httpMock.verify();
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         afterEach(fakeAsync(() => {
@@ -611,16 +612,16 @@ describe('QuizParticipationComponent', () => {
         }));
 
         it('should initialize', () => {
-            const serviceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
             expect(serviceStub).toHaveBeenCalledWith(quizExercise.id);
         });
 
         it('should initialize and start', () => {
             const quizService = fixture.debugElement.injector.get(ArtemisQuizService);
-            const serviceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
-            const startSpy = jest.spyOn(component, 'startQuizPreviewOrPractice');
-            const randomizeSpy = jest.spyOn(quizService, 'randomizeOrder');
+            const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
+            const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -629,7 +630,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should submit quiz', () => {
-            const serviceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
@@ -686,7 +687,7 @@ describe('QuizParticipationComponent', () => {
 
         afterEach(() => {
             httpMock.verify();
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         afterEach(fakeAsync(() => {
@@ -694,7 +695,7 @@ describe('QuizParticipationComponent', () => {
         }));
 
         it('should initialize', () => {
-            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+            const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -702,9 +703,9 @@ describe('QuizParticipationComponent', () => {
 
         it('should initialize and start', () => {
             const quizService = fixture.debugElement.injector.get(ArtemisQuizService);
-            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
-            const startSpy = jest.spyOn(component, 'startQuizPreviewOrPractice');
-            const randomizeSpy = jest.spyOn(quizService, 'randomizeOrder');
+            const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+            const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
+            const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -713,7 +714,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should submit quiz', () => {
-            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+            const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
@@ -767,12 +768,12 @@ describe('QuizParticipationComponent', () => {
                     component = fixture.componentInstance;
 
                     exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                    resultForSolutionServiceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+                    resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
                 });
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should initialize', () => {

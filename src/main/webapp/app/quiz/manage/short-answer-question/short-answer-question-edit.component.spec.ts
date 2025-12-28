@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -75,7 +76,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 },
             })
             .compileComponents();
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        globalThis.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
@@ -90,7 +91,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize with different question texts', () => {
@@ -267,7 +268,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
-        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
         expect(component.shortAnswerQuestion).toEqual(question);
 
@@ -289,7 +290,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should react to a solution being dropped on a spot', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         const solution = new ShortAnswerSolution();
         solution.id = 2;
         solution.text = 'solution text';
@@ -332,16 +333,16 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should open', () => {
         const content = {};
         const modalService = fixture.debugElement.injector.get(NgbModal);
-        const modalSpy = jest.spyOn(modalService, 'open');
+        const modalSpy = vi.spyOn(modalService, 'open');
         component.open(content);
         expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should add spot to cursor and increase the spot number', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Mock console methods to prevent test failures
-        jest.spyOn(console, 'error').mockImplementation();
-        jest.spyOn(console, 'warn').mockImplementation();
+        vi.spyOn(console, 'error').mockImplementation();
+        vi.spyOn(console, 'warn').mockImplementation();
 
         component.addSpotAtCursor();
 
@@ -353,10 +354,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should add option', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Mock console methods to prevent test failures
-        jest.spyOn(console, 'error').mockImplementation();
-        jest.spyOn(console, 'warn').mockImplementation();
+        vi.spyOn(console, 'error').mockImplementation();
+        vi.spyOn(console, 'warn').mockImplementation();
 
         component.addOption();
 
@@ -391,7 +392,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add spot at cursor visual mode', () => {
         const textParts = [['0'], ['0']];
         const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
-        jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
+        vi.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
 
         const node = {} as Node;
 
@@ -401,7 +402,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             },
         } as unknown as HTMLElement;
         const questionElementMock = { nativeElement: questionElement };
-        jest.spyOn(component, 'questionElement').mockReturnValue(questionElementMock);
+        vi.spyOn(component, 'questionElement').mockReturnValue(questionElementMock);
 
         const range = {
             cloneRange(): Range {
@@ -434,7 +435,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return [];
             },
         } as unknown as Selection;
-        jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
+        vi.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
 
         const returnHTMLDivElement = {
             appendChild(param: DocumentFragment) {
@@ -442,7 +443,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             },
             innerHTML: 'innerHTML',
         } as unknown as HTMLDivElement;
-        jest.spyOn(document, 'createElement').mockReturnValue(returnHTMLDivElement);
+        vi.spyOn(document, 'createElement').mockReturnValue(returnHTMLDivElement);
 
         const markdownHelper = {
             length: 1,
@@ -451,8 +452,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return '';
             },
         } as string;
-        jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
-        const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
+        vi.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
+        const questionUpdated = vi.spyOn(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
@@ -466,7 +467,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should delete question', () => {
-        const questionDeleted = jest.spyOn(component.questionDeleted, 'emit');
+        const questionDeleted = vi.spyOn(component.questionDeleted, 'emit');
         component.deleteQuestion();
         expect(questionDeleted).toHaveBeenCalledOnce();
     });
@@ -489,8 +490,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should move the question in different ways', () => {
-        const eventUpSpy = jest.spyOn(component.questionMoveUp, 'emit');
-        const eventDownSpy = jest.spyOn(component.questionMoveDown, 'emit');
+        const eventUpSpy = vi.spyOn(component.questionMoveUp, 'emit');
+        const eventDownSpy = vi.spyOn(component.questionMoveDown, 'emit');
 
         component.moveUp();
         component.moveDown();
@@ -544,7 +545,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should set question text', () => {
         const text = 'This is a text for a test';
         const returnValue = { value: text } as unknown as HTMLElement;
-        const getNavigationSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
+        const getNavigationSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnValue);
         const array = ['0'];
         component.textParts = [array, array];
         fixture.changeDetectorRef.detectChanges();
@@ -557,7 +558,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should toggle exact match', () => {
-        const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
+        const questionUpdated = vi.spyOn(component.questionUpdated, 'emit');
 
         component.toggleExactMatchCheckbox(true);
 

@@ -1,4 +1,5 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateModule } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';

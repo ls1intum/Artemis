@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
@@ -23,7 +24,7 @@ describe('ApollonDiagramImportDialog Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('handleDetailOpen', () => {
@@ -33,7 +34,7 @@ describe('ApollonDiagramImportDialog Component', () => {
     });
 
     it('handleDetailClose', () => {
-        const modalCloseSpy = jest.spyOn(activeModal, 'close');
+        const modalCloseSpy = vi.spyOn(activeModal, 'close');
         const newDnDQuestion = new DragAndDropQuestion();
         fixture.componentInstance.handleDetailClose(newDnDQuestion);
         expect(modalCloseSpy).toHaveBeenCalledWith(newDnDQuestion);
@@ -43,7 +44,7 @@ describe('ApollonDiagramImportDialog Component', () => {
     });
 
     it('closeModal', () => {
-        const modalDismissSpy = jest.spyOn(activeModal, 'dismiss');
+        const modalDismissSpy = vi.spyOn(activeModal, 'dismiss');
         fixture.componentInstance.closeModal();
         expect(modalDismissSpy).toHaveBeenCalledOnce();
     });

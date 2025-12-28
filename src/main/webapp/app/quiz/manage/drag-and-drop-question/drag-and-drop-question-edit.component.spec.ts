@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -25,15 +26,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import type { Mock } from 'vitest';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
     let modalService: NgbModal;
-    let createObjectURLStub: jest.SpyInstance;
-    let questionUpdatedSpy: jest.SpyInstance;
-    let addFileSpy: jest.SpyInstance;
-    let removeFileSpy: jest.SpyInstance;
+    let createObjectURLStub: Mock;
+    let questionUpdatedSpy: Mock;
+    let addFileSpy: Mock;
+    let removeFileSpy: Mock;
 
     const question1 = new DragAndDropQuestion();
     question1.id = 1;
@@ -61,7 +63,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     const createObjectURLBackup = window.URL.createObjectURL;
 
     beforeAll(() => {
-        window.URL.createObjectURL = jest.fn();
+        window.URL.createObjectURL = vi.fn();
     });
 
     beforeEach(async () => {
@@ -86,14 +88,14 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', clone(question1));
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
-        questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-        jest.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
-        createObjectURLStub = jest.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
+        questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+        vi.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
+        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
             return 'some/client/dependent/path/' + file.name;
         });
-        addFileSpy = jest.spyOn(component.addNewFile, 'emit');
-        removeFileSpy = jest.spyOn(component.removeFile, 'emit');
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        addFileSpy = vi.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        globalThis.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
     });
@@ -104,7 +106,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     }));
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     afterAll(() => {
@@ -126,9 +128,9 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should edit question in different ways', () => {
-        const eventUpSpy = jest.spyOn(component.questionMoveUp, 'emit');
-        const eventDownSpy = jest.spyOn(component.questionMoveDown, 'emit');
-        const eventDeleteSpy = jest.spyOn(component.questionDeleted, 'emit');
+        const eventUpSpy = vi.spyOn(component.questionMoveUp, 'emit');
+        const eventDownSpy = vi.spyOn(component.questionMoveDown, 'emit');
+        const eventDeleteSpy = vi.spyOn(component.questionDeleted, 'emit');
 
         component.moveUpQuestion();
         component.moveDownQuestion();
@@ -146,9 +148,10 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.setBackgroundFile(event);
 
-        expect(component.question().backgroundFilePath).toEndWith('.jpg');
+        expect(component.question().backgroundFilePath).toMatch(/\.jpg$/);
         expect(addFileSpy).toHaveBeenCalledOnce();
-        expect(createObjectURLStub).toHaveBeenCalledExactlyOnceWith(file1);
+        expect(createObjectURLStub).toHaveBeenCalledOnce();
+        expect(createObjectURLStub).toHaveBeenCalledWith(file1);
     });
 
     it('should move the mouse in different situations', () => {
@@ -232,7 +235,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(component.draggingState).toBe(DragState.NONE);
         expect(component.currentDropLocation).toBeUndefined();
-        expect(q.correctMappings).toBeArrayOfSize(0);
+        expect(q.correctMappings).toHaveLength(0);
         expect(q.dropLocations).toEqual([alternativeDropLocation]);
     });
 
@@ -266,7 +269,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should open, drag, drop', () => {
         const content = {};
-        const modalServiceSpy = jest.spyOn(modalService, 'open');
+        const modalServiceSpy = vi.spyOn(modalService, 'open');
 
         component.open(content);
         expect(modalServiceSpy).toHaveBeenCalledOnce();
@@ -326,7 +329,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.addTextDragItem();
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question().dragItems).toBeArrayOfSize(1);
+        expect(component.question().dragItems).toHaveLength(1);
         const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBe('Text');
         expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
@@ -343,15 +346,16 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.createImageDragItem({ target: { files: [file] } });
 
-        expect(component.question().dragItems).toBeArrayOfSize(1);
+        expect(component.question().dragItems).toHaveLength(1);
         const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBeUndefined();
         expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
-        expect(newDragItemOfQuestion.pictureFilePath).toEndWith('.' + extension);
+        expect(newDragItemOfQuestion.pictureFilePath).toMatch(/\.png$/);
         const filePath = newDragItemOfQuestion.pictureFilePath!;
         expect(component.filePreviewPaths.size).toBe(1);
         expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
-        expect(addFileSpy).toHaveBeenCalledExactlyOnceWith({ file, fileName: filePath });
+        expect(addFileSpy).toHaveBeenCalledOnce();
+        expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
@@ -365,7 +369,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.deleteDragItem(item);
 
-        expect(q.dragItems).toBeArrayOfSize(0);
+        expect(q.dragItems).toHaveLength(0);
         expect(q.correctMappings).toEqual([mapping]);
     });
 
@@ -378,7 +382,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.deleteMapping(mapping);
 
-        expect(q.correctMappings).toBeArrayOfSize(0);
+        expect(q.correctMappings).toHaveLength(0);
     });
 
     it('should drop a drag item on a drop location', () => {
@@ -452,9 +456,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', clone(question3));
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
-        questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-        addFileSpy = jest.spyOn(component.addNewFile, 'emit');
-        removeFileSpy = jest.spyOn(component.removeFile, 'emit');
+        questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+        addFileSpy = vi.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
         fixture.changeDetectorRef.detectChanges();
 
         component.changeToTextDragItem(component.question().dragItems![1]);
@@ -462,22 +466,23 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.filePreviewPaths.size).toBe(3);
         expect(addFileSpy).not.toHaveBeenCalled();
-        expect(removeFileSpy).toHaveBeenCalledExactlyOnceWith('this/is/a/fake/path/3/image.jpg');
-        expect(component.question().dragItems![0]).toContainAllEntries([
-            ['id', 1],
-            ['pictureFilePath', 'this/is/a/fake/path/2/image.jpg'],
-            ['text', undefined],
-        ]);
-        expect(component.question().dragItems![1]).toContainAllEntries([
-            ['id', 2],
-            ['pictureFilePath', undefined],
-            ['text', 'Text'],
-        ]);
-        expect(component.question().dragItems![2]).toContainAllEntries([
-            ['id', 3],
-            ['pictureFilePath', 'this/is/a/fake/path/4/image.jpg'],
-            ['text', undefined],
-        ]);
+        expect(removeFileSpy).toHaveBeenCalledOnce();
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(component.question().dragItems![0]).toMatchObject({
+            id: 1,
+            pictureFilePath: 'this/is/a/fake/path/2/image.jpg',
+            text: undefined,
+        });
+        expect(component.question().dragItems![1]).toMatchObject({
+            id: 2,
+            pictureFilePath: undefined,
+            text: 'Text',
+        });
+        expect(component.question().dragItems![2]).toMatchObject({
+            id: 3,
+            pictureFilePath: 'this/is/a/fake/path/4/image.jpg',
+            text: undefined,
+        });
     });
 
     it('should change text drag item to picture drag item', () => {
@@ -486,9 +491,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', clone(question4));
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
-        questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-        addFileSpy = jest.spyOn(component.addNewFile, 'emit');
-        removeFileSpy = jest.spyOn(component.removeFile, 'emit');
+        questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+        addFileSpy = vi.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
         fixture.changeDetectorRef.detectChanges();
 
         const extension = 'png';
@@ -499,22 +504,23 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } });
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question().dragItems![0]).toContainAllEntries([
-            ['id', 1],
-            ['pictureFilePath', undefined],
-            ['text', 'Text1'],
-        ]);
-        expect(component.question().dragItems![2]).toContainAllEntries([
-            ['id', 3],
-            ['pictureFilePath', undefined],
-            ['text', 'Text3'],
-        ]);
+        expect(component.question().dragItems![0]).toMatchObject({
+            id: 1,
+            pictureFilePath: undefined,
+            text: 'Text1',
+        });
+        expect(component.question().dragItems![2]).toMatchObject({
+            id: 3,
+            pictureFilePath: undefined,
+            text: 'Text3',
+        });
         expect(component.question().dragItems![1].text).toBeUndefined();
         expect(component.question().dragItems![1].pictureFilePath).toBeDefined();
-        expect(component.question().dragItems![1].pictureFilePath).toEndWith('.' + extension);
+        expect(component.question().dragItems![1].pictureFilePath).toMatch(/\.png$/);
         const filePath = component.question().dragItems![1].pictureFilePath!;
         expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
-        expect(addFileSpy).toHaveBeenCalledExactlyOnceWith({ file, fileName: filePath });
+        expect(addFileSpy).toHaveBeenCalledOnce();
+        expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
@@ -674,19 +680,19 @@ describe('DragAndDropQuestionEditComponent', () => {
         dragAndDropQuestion.dragItems = [];
 
         const mockContext = {
-            drawImage: jest.fn(),
+            drawImage: vi.fn(),
             fillStyle: '',
-            fillRect: jest.fn(),
+            fillRect: vi.fn(),
         };
 
         const mockCanvas = {
-            getContext: jest.fn().mockReturnValue(mockContext),
-            toDataURL: jest.fn().mockReturnValue('data:image/png;base64,cropped'),
+            getContext: vi.fn().mockReturnValue(mockContext),
+            toDataURL: vi.fn().mockReturnValue('data:image/png;base64,cropped'),
             width: 0,
             height: 0,
         } as any;
 
-        const canvasSpy = jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
             if (tag === 'canvas') return mockCanvas;
             return null as any;
         });
@@ -698,7 +704,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             width: 200,
         };
 
-        const imageSpy = jest.spyOn(global, 'Image' as any).mockImplementation(() => {
+        const imageSpy = vi.spyOn(globalThis, 'Image' as any).mockImplementation(() => {
             const img = mockImage;
             Object.defineProperty(img, 'src', {
                 set(value: string) {
@@ -708,14 +714,14 @@ describe('DragAndDropQuestionEditComponent', () => {
             return img;
         });
 
-        const createImageDragItemSpy = jest.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
+        const createImageDragItemSpy = vi.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
             const dragItem = new DragItem();
             dragItem.pictureFilePath = file.name;
             dragAndDropQuestion.dragItems!.push(dragItem);
             return dragItem;
         });
 
-        const blankOutSpy = jest.spyOn(component, 'blankOutBackgroundImage').mockImplementation(() => {});
+        const blankOutSpy = vi.spyOn(component, 'blankOutBackgroundImage').mockImplementation(() => {});
 
         component.getImagesFromDropLocations();
 
@@ -725,8 +731,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(canvasSpy).toHaveBeenCalledTimes(2);
         expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
         expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
-        expect(dragAndDropQuestion.dragItems).toBeArrayOfSize(2);
-        expect(dragAndDropQuestion.correctMappings).toBeArrayOfSize(2);
+        expect(dragAndDropQuestion.dragItems).toHaveLength(2);
+        expect(dragAndDropQuestion.correctMappings).toHaveLength(2);
         expect(blankOutSpy).toHaveBeenCalledOnce();
     }));
 
@@ -737,19 +743,19 @@ describe('DragAndDropQuestionEditComponent', () => {
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
 
         const mockContext = {
-            drawImage: jest.fn(),
+            drawImage: vi.fn(),
             fillStyle: '',
-            fillRect: jest.fn(),
+            fillRect: vi.fn(),
         };
 
         const mockCanvas = {
-            getContext: jest.fn().mockReturnValue(mockContext),
-            toDataURL: jest.fn().mockReturnValue('data:image/png;base64,blanked'),
+            getContext: vi.fn().mockReturnValue(mockContext),
+            toDataURL: vi.fn().mockReturnValue('data:image/png;base64,blanked'),
             width: 0,
             height: 0,
         } as any;
 
-        const canvasSpy = jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
             if (tag === 'canvas') return mockCanvas;
             return null as any;
         });
@@ -761,7 +767,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             width: 200,
         };
 
-        const imageSpy = jest.spyOn(global, 'Image' as any).mockImplementation(() => {
+        const imageSpy = vi.spyOn(globalThis, 'Image' as any).mockImplementation(() => {
             const img = mockImage;
             Object.defineProperty(img, 'src', {
                 set(value: string) {
@@ -771,7 +777,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             return img;
         });
 
-        const setBackgroundSpy = jest.spyOn(component, 'setBackgroundFileFromFile').mockImplementation(() => {});
+        const setBackgroundSpy = vi.spyOn(component, 'setBackgroundFileFromFile').mockImplementation(() => {});
 
         component.blankOutBackgroundImage();
 
@@ -783,7 +789,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(mockContext.fillStyle).toBe('white');
         expect(mockContext.fillRect).toHaveBeenCalledTimes(2);
         expect(mockCanvas.toDataURL).toHaveBeenCalledOnce();
-        expect(setBackgroundSpy).toHaveBeenCalledExactlyOnceWith(expect.any(File));
+        expect(setBackgroundSpy).toHaveBeenCalledOnce();
+        expect(setBackgroundSpy).toHaveBeenCalledWith(expect.any(File));
     }));
 
     it('should convert data url to blob', () => {

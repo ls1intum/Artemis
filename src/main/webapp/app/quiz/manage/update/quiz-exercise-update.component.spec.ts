@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
@@ -180,15 +181,15 @@ describe('QuizExerciseUpdateComponent', () => {
     };
 
     describe('onInit', () => {
-        let quizExerciseServiceStub: jest.SpyInstance;
-        let courseManagementServiceStub: jest.SpyInstance;
-        let exerciseGroupServiceStub: jest.SpyInstance;
-        let initStub: jest.SpyInstance;
+        let quizExerciseServiceStub: any;
+        let courseManagementServiceStub: any;
+        let exerciseGroupServiceStub: any;
+        let initStub: any;
         const configureStubs = () => {
-            quizExerciseServiceStub = jest.spyOn(quizExerciseService, 'find');
-            courseManagementServiceStub = jest.spyOn(courseManagementService, 'find');
-            exerciseGroupServiceStub = jest.spyOn(exerciseGroupService, 'find');
-            initStub = jest.spyOn(comp, 'init');
+            quizExerciseServiceStub = vi.spyOn(quizExerciseService, 'find');
+            courseManagementServiceStub = vi.spyOn(courseManagementService, 'find');
+            exerciseGroupServiceStub = vi.spyOn(exerciseGroupService, 'find');
+            initStub = vi.spyOn(comp, 'init');
             quizExerciseServiceStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
             courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
             exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
@@ -212,7 +213,7 @@ describe('QuizExerciseUpdateComponent', () => {
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
         });
 
@@ -235,7 +236,7 @@ describe('QuizExerciseUpdateComponent', () => {
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
         });
 
@@ -254,7 +255,7 @@ describe('QuizExerciseUpdateComponent', () => {
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
         });
 
@@ -273,7 +274,7 @@ describe('QuizExerciseUpdateComponent', () => {
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
         });
 
@@ -291,7 +292,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.isImport = true;
                 quizExercise.testRunParticipationsExist = true;
 
-                const alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = vi.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).not.toHaveBeenCalled();
@@ -303,14 +304,14 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.isImport = false;
                 quizExercise.testRunParticipationsExist = true;
 
-                const alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = vi.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).toHaveBeenCalledOnce();
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
         });
 
@@ -465,23 +466,23 @@ describe('QuizExerciseUpdateComponent', () => {
         beforeEach(configureFixtureAndServices);
 
         describe('init', () => {
-            let exerciseServiceCategoriesAsStringStub: jest.SpyInstance;
-            let courseServiceStub: jest.SpyInstance;
+            let exerciseServiceCategoriesAsStringStub: any;
+            let courseServiceStub: any;
             const testExistingCategories = [
                 { exerciseId: 1, category: 'eCategory1', color: 'eColor1' },
                 { exerciseId: 2, category: 'eCategory2', color: 'eColor2' },
             ];
-            let prepareEntitySpy: jest.SpyInstance;
-            let alertServiceStub: jest.SpyInstance;
+            let prepareEntitySpy: any;
+            let alertServiceStub: any;
             beforeEach(() => {
                 comp.course = course;
                 comp.courseId = course.id;
-                courseServiceStub = jest.spyOn(courseManagementService, 'findAllCategoriesOfCourse');
+                courseServiceStub = vi.spyOn(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.mockReturnValue(of(new HttpResponse<string[]>({ body: ['category1', 'category2'] })));
-                exerciseServiceCategoriesAsStringStub = jest.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
+                exerciseServiceCategoriesAsStringStub = vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
                 exerciseServiceCategoriesAsStringStub.mockReturnValue(testExistingCategories);
-                prepareEntitySpy = jest.spyOn(comp, 'prepareEntity');
-                alertServiceStub = jest.spyOn(alertService, 'error');
+                prepareEntitySpy = vi.spyOn(comp, 'prepareEntity');
+                alertServiceStub = vi.spyOn(alertService, 'error');
             });
 
             it('should set quizExercise to entity if quiz exercise not defined', () => {
@@ -564,7 +565,7 @@ describe('QuizExerciseUpdateComponent', () => {
         describe('ngOnChanges', () => {
             it('should call init if there are changes on course or quiz exercise', () => {
                 const change = new SimpleChange(0, 1, false);
-                const initStub = jest.spyOn(comp, 'init').mockImplementation();
+                const initStub = vi.spyOn(comp, 'init').mockImplementation();
 
                 comp.ngOnChanges({ course: change });
                 expect(initStub).toHaveBeenCalledOnce();
@@ -1008,11 +1009,11 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('saving', () => {
-            let quizExerciseServiceCreateStub: jest.SpyInstance;
-            let quizExerciseServiceUpdateStub: jest.SpyInstance;
-            let quizExerciseServiceImportStub: jest.SpyInstance;
-            let exerciseSanitizeSpy: jest.SpyInstance;
-            let refreshSpy: jest.SpyInstance;
+            let quizExerciseServiceCreateStub: any;
+            let quizExerciseServiceUpdateStub: any;
+            let quizExerciseServiceImportStub: any;
+            let exerciseSanitizeSpy: any;
+            let refreshSpy: any;
 
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
@@ -1020,15 +1021,15 @@ describe('QuizExerciseUpdateComponent', () => {
                 if (comp.courseId) {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
                     (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
-                    jest.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
-                    jest.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
+                    vi.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
+                    vi.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
             };
 
             const saveAndExpectAlertService = () => {
-                console.error = jest.fn();
-                const alertServiceStub = jest.spyOn(alertService, 'error');
+                console.error = vi.fn();
+                const alertServiceStub = vi.spyOn(alertService, 'error');
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
@@ -1039,19 +1040,19 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.courseId = course.id!;
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                quizExerciseServiceCreateStub = jest.spyOn(quizExerciseService, 'create');
+                quizExerciseServiceCreateStub = vi.spyOn(quizExerciseService, 'create');
                 quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                quizExerciseServiceUpdateStub = jest.spyOn(quizExerciseService, 'update');
+                quizExerciseServiceUpdateStub = vi.spyOn(quizExerciseService, 'update');
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
+                quizExerciseServiceImportStub = vi.spyOn(quizExerciseService, 'import');
                 quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 const calendarService = TestBed.inject(CalendarService);
-                refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
-                exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
+                refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
+                exerciseSanitizeSpy = vi.spyOn(Exercise, 'sanitize');
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             it('should call create if valid and quiz exercise no id', () => {
@@ -1151,16 +1152,16 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('routing', () => {
-            let routerSpy: jest.SpyInstance;
+            let routerSpy: any;
 
             beforeEach(() => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                routerSpy = jest.spyOn(router, 'navigate');
+                routerSpy = vi.spyOn(router, 'navigate');
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             it('should go back to quiz exercise page on cancel', () => {
@@ -1423,7 +1424,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 afterEach(() => {
-                    jest.restoreAllMocks();
+                    vi.restoreAllMocks();
                 });
 
                 it('should put reason for no correct mappings', () => {
@@ -1432,12 +1433,12 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason for unsolvable', () => {
-                    jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue([]);
+                    vi.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue([]);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionUnsolvable');
                 });
 
                 it('should put reason for misleading correct mappings', () => {
-                    jest.spyOn(dragAndDropQuestionUtil, 'validateNoMisleadingCorrectMapping').mockReturnValue(false);
+                    vi.spyOn(dragAndDropQuestionUtil, 'validateNoMisleadingCorrectMapping').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping');
                 });
 
@@ -1485,7 +1486,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 afterEach(() => {
-                    jest.restoreAllMocks();
+                    vi.restoreAllMocks();
                 });
 
                 it('should put reason for no correct mappings', () => {
@@ -1494,17 +1495,17 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason for misleading correct mappings', () => {
-                    jest.spyOn(shortAnswerQuestionUtil, 'validateNoMisleadingShortAnswerMapping').mockReturnValue(false);
+                    vi.spyOn(shortAnswerQuestionUtil, 'validateNoMisleadingShortAnswerMapping').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping');
                 });
 
                 it('should put reason when every spot has a solution', () => {
-                    jest.spyOn(shortAnswerQuestionUtil, 'everySpotHasASolution').mockReturnValue(false);
+                    vi.spyOn(shortAnswerQuestionUtil, 'everySpotHasASolution').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution');
                 });
 
                 it('should put reason when every mapped solution has a spot', () => {
-                    jest.spyOn(shortAnswerQuestionUtil, 'everyMappedSolutionHasASpot').mockReturnValue(false);
+                    vi.spyOn(shortAnswerQuestionUtil, 'everyMappedSolutionHasASpot').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot');
                 });
 
@@ -1519,12 +1520,12 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason when duplicate mappings', () => {
-                    jest.spyOn(shortAnswerQuestionUtil, 'hasMappingDuplicateValues').mockReturnValue(true);
+                    vi.spyOn(shortAnswerQuestionUtil, 'hasMappingDuplicateValues').mockReturnValue(true);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping');
                 });
 
                 it('should put reason for not many solutions as spots', () => {
-                    jest.spyOn(shortAnswerQuestionUtil, 'atLeastAsManySolutionsAsSpots').mockReturnValue(false);
+                    vi.spyOn(shortAnswerQuestionUtil, 'atLeastAsManySolutionsAsSpots').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable');
                 });
 

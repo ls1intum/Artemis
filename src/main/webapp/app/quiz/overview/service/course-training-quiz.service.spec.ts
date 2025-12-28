@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseTrainingQuizService } from './course-training-quiz.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';

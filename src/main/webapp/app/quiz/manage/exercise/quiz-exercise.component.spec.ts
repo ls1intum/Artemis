@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -58,13 +59,13 @@ describe('QuizExercise Management Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [quizExercise],
@@ -83,7 +84,7 @@ describe('QuizExercise Management Component', () => {
 
     it('should delete multiple quizzes', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(quizExerciseService, 'delete').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {},
@@ -126,16 +127,16 @@ describe('QuizExercise Management Component', () => {
         comp.toggleExercise(quizExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toContainEntry(['id', quizExercise.id]);
+        expect(comp.selectedExercises[0]).toMatchObject({ id: quizExercise.id });
         expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.quizExercises().length);
     });
 
     it('should load one', () => {
-        const findExerciseSpy = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-        jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
-        jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
-        jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-        jest.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
+        const findExerciseSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
+        vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
+        vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+        vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
         comp.loadOne(quizExercise.id!);
         expect(findExerciseSpy).toHaveBeenCalledOnce();
         expect(comp.quizExercises()).toHaveLength(1);
@@ -144,7 +145,7 @@ describe('QuizExercise Management Component', () => {
 
     it('should correctly calculate isEditable when loadExercises is called and isQuizEditable returns false', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [quizExercise],
@@ -153,7 +154,7 @@ describe('QuizExercise Management Component', () => {
             ),
         );
 
-        jest.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
+        vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
 
         // WHEN
         comp.ngOnInit();

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -36,7 +37,7 @@ describe('ShortAnswerQuestionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -51,7 +52,7 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.hint = hint;
         const explanation = 'This is a very good explanation!';
         alternativeQuestion.explanation = explanation;
-        jest.spyOn(component, 'hideSampleSolution');
+        vi.spyOn(component, 'hideSampleSolution');
 
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
@@ -79,7 +80,7 @@ describe('ShortAnswerQuestionComponent', () => {
             return true;
         });
         const returnValue = { value: text } as unknown as HTMLElement;
-        const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
+        const getNavigationStub = vi.spyOn(document, 'getElementById').mockReturnValue(returnValue);
 
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.componentRef.setInput('submittedTexts', []);

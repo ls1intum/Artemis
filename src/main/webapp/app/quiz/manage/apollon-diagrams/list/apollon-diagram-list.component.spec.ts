@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -60,7 +61,7 @@ describe('ApollonDiagramList Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load diagrams and course', () => {
@@ -68,8 +69,8 @@ describe('ApollonDiagramList Component', () => {
         const diagramResponse: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
         const courseResponse: HttpResponse<Course> = new HttpResponse({ body: course });
 
-        jest.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(diagramResponse));
-        jest.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
+        vi.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(diagramResponse));
+        vi.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
 
         fixture.detectChanges();
         expect(isEqual(fixture.componentInstance.apollonDiagrams(), apollonDiagrams)).toBeTruthy();
@@ -78,7 +79,7 @@ describe('ApollonDiagramList Component', () => {
     it('delete', () => {
         // setup
         const response: HttpResponse<void> = new HttpResponse();
-        jest.spyOn(apollonDiagramService, 'delete').mockReturnValue(of(response));
+        vi.spyOn(apollonDiagramService, 'delete').mockReturnValue(of(response));
 
         const apollonDiagrams = [];
         for (let i = 0; i < 3; i++) {
@@ -94,7 +95,7 @@ describe('ApollonDiagramList Component', () => {
     });
 
     it('openCreateDiagramDialog', () => {
-        const openModalSpy = jest.spyOn(modalService, 'open');
+        const openModalSpy = vi.spyOn(modalService, 'open');
         fixture.componentInstance.openCreateDiagramDialog(course.id!);
         expect(openModalSpy).toHaveBeenCalledOnce();
     });
@@ -106,13 +107,13 @@ describe('ApollonDiagramList Component', () => {
     });
 
     it('handleOpenDialogClick', () => {
-        const emitOpenDiagramSpy = jest.spyOn(fixture.componentInstance.openDiagram, 'emit');
+        const emitOpenDiagramSpy = vi.spyOn(fixture.componentInstance.openDiagram, 'emit');
         fixture.componentInstance.handleOpenDialogClick(1);
         expect(emitOpenDiagramSpy).toHaveBeenCalledWith(1);
     });
 
     it('handleCloseDiagramClick', () => {
-        const emitCloseDialog = jest.spyOn(fixture.componentInstance.closeDialog, 'emit');
+        const emitCloseDialog = vi.spyOn(fixture.componentInstance.closeDialog, 'emit');
         fixture.componentInstance.handleCloseDiagramClick();
         expect(emitCloseDialog).toHaveBeenCalledOnce();
     });

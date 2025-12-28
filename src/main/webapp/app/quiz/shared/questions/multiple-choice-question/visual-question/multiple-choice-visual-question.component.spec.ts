@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -44,7 +45,7 @@ describe('QuizVisualEditorComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('parse the given question properly to markdown', fakeAsync(() => {

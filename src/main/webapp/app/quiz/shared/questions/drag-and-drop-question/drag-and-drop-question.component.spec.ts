@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -52,16 +53,16 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should update html when question changes', () => {
-        jest.spyOn(comp, 'hideSampleSolution');
+        vi.spyOn(comp, 'hideSampleSolution');
         const question = new DragAndDropQuestion();
         question.text = 'Test text';
         question.hint = 'Test hint';
         question.explanation = 'Test explanation';
-        const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockImplementation((arg) => `${arg}markdown`);
+        const markdownSpy = vi.spyOn(markdownService, 'safeHtmlForMarkdown').mockImplementation((arg) => `${arg}markdown`);
         fixture.componentRef.setInput('question', question);
         fixture.changeDetectorRef.detectChanges();
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
@@ -126,7 +127,7 @@ describe('DragAndDropQuestionComponent', () => {
     it('should show sample solution if force sample solution is set to true', () => {
         const { mapping } = getDropLocationMappingAndItem();
         const mappings = [mapping];
-        const solveSpy = jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue(mappings);
+        const solveSpy = vi.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue(mappings);
         fixture.componentRef.setInput('mappings', mappings);
         fixture.componentRef.setInput('forceSampleSolution', false);
         fixture.changeDetectorRef.detectChanges();
@@ -201,7 +202,7 @@ describe('DragAndDropQuestionComponent', () => {
         fixture.componentRef.setInput('mappings', mappings);
         fixture.changeDetectorRef.detectChanges();
         const event = { item: { data: dragItem } } as CdkDragDrop<DragItem, DragItem>;
-        const onMappingUpdate = jest.fn();
+        const onMappingUpdate = vi.fn();
         fixture.componentRef.setInput('onMappingUpdate', onMappingUpdate);
         comp.onDragDrop(dropLocation, event);
         expect(comp._mappings).toEqual(expectedMappings);

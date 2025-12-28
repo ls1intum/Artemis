@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute } from '@angular/router';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -13,13 +14,13 @@ import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 class QuizExerciseServiceStub {
-    findForCourse = jest.fn();
-    find = jest.fn();
-    exportQuiz = jest.fn();
+    findForCourse = vi.fn();
+    find = vi.fn();
+    exportQuiz = vi.fn();
 }
 
 class CourseManagementServiceStub {
-    find = jest.fn();
+    find = vi.fn();
 }
 
 describe('QuizExerciseExportComponent', () => {
@@ -36,7 +37,7 @@ describe('QuizExerciseExportComponent', () => {
             providers: [
                 { provide: QuizExerciseService, useValue: quizService },
                 { provide: CourseManagementService, useValue: courseService },
-                { provide: AlertService, useValue: { error: jest.fn(), success: jest.fn(), addAlert: jest.fn() } as any },
+                { provide: AlertService, useValue: { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() } as any },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: TranslateStore, useValue: {} },
                 {

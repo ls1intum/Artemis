@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -30,10 +31,10 @@ describe('QuizStatisticsFooterComponent', () => {
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jest.SpyInstance;
-    let routerSpy: jest.SpyInstance;
+    let accountSpy: any;
+    let routerSpy: any;
     let router: Router;
-    let quizServiceFindSpy: jest.SpyInstance;
+    let quizServiceFindSpy: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -66,9 +67,9 @@ describe('QuizStatisticsFooterComponent', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                routerSpy = jest.spyOn(router, 'navigateByUrl');
-                accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                routerSpy = vi.spyOn(router, 'navigateByUrl');
+                accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -80,14 +81,14 @@ describe('QuizStatisticsFooterComponent', () => {
 
     it('should load Quiz on Init', fakeAsync(() => {
         // setup
-        jest.useFakeTimers();
-        const loadSpy = jest.spyOn(comp, 'loadQuiz');
-        const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
+        vi.useFakeTimers();
+        const loadSpy = vi.spyOn(comp, 'loadQuiz');
+        const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
 
         // call
         comp.ngOnInit();
         tick(); // simulate async
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
+        vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
         expect(accountSpy).toHaveBeenCalledTimes(2);

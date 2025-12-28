@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -43,21 +44,21 @@ describe('QuizQuestionListEditComponent', () => {
     });
 
     it('should add multiple choice question to quizQuestions and emit onQuestionAdded Output', () => {
-        const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
+        const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addMultipleChoiceQuestion();
         expect(component.quizQuestions()).toBeArrayOfSize(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {
-        const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
+        const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addDragAndDropQuestion();
         expect(component.quizQuestions()).toBeArrayOfSize(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add short answer question to quizQuestions and emit onQuestionAdded Output', () => {
-        const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
+        const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addShortAnswerQuestion();
         expect(component.quizQuestions()).toBeArrayOfSize(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
@@ -82,7 +83,7 @@ describe('QuizQuestionListEditComponent', () => {
     });
 
     it('should emit onQuestionUpdated Output', () => {
-        const onQuestionUpdatedEmit = jest.spyOn(component.onQuestionUpdated, 'emit');
+        const onQuestionUpdatedEmit = vi.spyOn(component.onQuestionUpdated, 'emit');
         component.handleQuestionUpdated();
         expect(onQuestionUpdatedEmit).toHaveBeenCalledOnce();
     });
@@ -91,7 +92,7 @@ describe('QuizQuestionListEditComponent', () => {
         const question0 = new MultipleChoiceQuestion();
         const question1 = new ShortAnswerQuestion();
         fixture.componentRef.setInput('quizQuestions', [question0, question1]);
-        const onQuestionDeletedEmit = jest.spyOn(component.onQuestionDeleted, 'emit');
+        const onQuestionDeletedEmit = vi.spyOn(component.onQuestionDeleted, 'emit');
         component.handleQuestionDeleted(0);
         expect(onQuestionDeletedEmit).toHaveBeenCalledOnce();
         expect(component.quizQuestions()).toBeArrayOfSize(1);

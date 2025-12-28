@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
@@ -46,7 +47,7 @@ describe('QuizReEvaluateService', () => {
 
     it('should convert QuizExercise with all question types into correct DTO and send it as FormData', () => {
         // Spy on objectToJsonBlob to capture the DTO passed to it
-        const blobSpy = jest.spyOn(blobUtil, 'objectToJsonBlob');
+        const blobSpy = vi.spyOn(blobUtil, 'objectToJsonBlob');
 
         // Build a QuizExercise with MC, DnD, and SA questions to cover all conversions
         const mcQuestion = {

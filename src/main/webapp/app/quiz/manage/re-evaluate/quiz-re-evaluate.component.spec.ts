@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -28,7 +29,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     let comp: QuizReEvaluateComponent;
     let fixture: ComponentFixture<QuizReEvaluateComponent>;
     let quizService: QuizExerciseService;
-    let quizServiceFindStub: jest.SpyInstance;
+    let quizServiceFindStub: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -97,11 +98,11 @@ describe('QuizExercise Re-evaluate Component', () => {
         const { question: quizQuestion1 } = createValidMCQuestion();
         const { question: quizQuestion2 } = createValidDnDQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
-        quizServiceFindStub = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        quizServiceFindStub = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize quiz exercise', () => {
@@ -154,7 +155,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     });
 
     it('Updates quiz on changes', () => {
-        const prepareEntitySpy = jest.spyOn(comp, 'prepareEntity');
+        const prepareEntitySpy = vi.spyOn(comp, 'prepareEntity');
         comp.ngOnInit();
         comp.ngOnChanges({
             quizExercise: { currentValue: quizExercise } as SimpleChange,

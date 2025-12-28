@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -50,11 +51,11 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should reset quiz', () => {
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(
+        vi.spyOn(exerciseService, 'reset').mockReturnValue(
             of(
                 new HttpResponse({
                     body: undefined,
@@ -69,7 +70,7 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should delete quiz', () => {
-        jest.spyOn(quizExerciseService, 'delete').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {},
@@ -85,14 +86,14 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should export quiz', () => {
-        jest.spyOn(quizExerciseService, 'find').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizExercise,
                 }),
             ),
         );
-        jest.spyOn(quizExerciseService, 'exportQuiz');
+        vi.spyOn(quizExerciseService, 'exportQuiz');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();

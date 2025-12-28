@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addTemporaryHighlightToQuestion } from './quiz-stepwizard.util';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 
@@ -9,11 +10,11 @@ describe('QuizStepwizardUtil', () => {
             isHighlighted: false,
         } as QuizQuestion;
 
-        jest.useFakeTimers(); // Mock timers
+        vi.useFakeTimers(); // Mock timers
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     describe('addTemporaryHighlightToQuestion', () => {
@@ -28,7 +29,7 @@ describe('QuizStepwizardUtil', () => {
 
             expect(mockQuestion.isHighlighted).toBeTrue();
 
-            jest.advanceTimersByTime(1500);
+            vi.advanceTimersByTime(1500);
 
             expect(mockQuestion.isHighlighted).toBeFalse();
         });
@@ -39,7 +40,7 @@ describe('QuizStepwizardUtil', () => {
             expect(mockQuestion.isHighlighted).toBeTrue();
 
             // Fast-forward time by 1499ms (just before the timeout)
-            jest.advanceTimersByTime(1499);
+            vi.advanceTimersByTime(1499);
 
             expect(mockQuestion.isHighlighted).toBeTrue();
         });
@@ -49,16 +50,16 @@ describe('QuizStepwizardUtil', () => {
             expect(mockQuestion.isHighlighted).toBeTrue();
 
             // Call again before first timeout completes
-            jest.advanceTimersByTime(500);
+            vi.advanceTimersByTime(500);
             addTemporaryHighlightToQuestion(mockQuestion);
             expect(mockQuestion.isHighlighted).toBeTrue();
 
             // First timeout should still trigger
-            jest.advanceTimersByTime(1000);
+            vi.advanceTimersByTime(1000);
             expect(mockQuestion.isHighlighted).toBeFalse();
 
             // But second timeout should set it back to false again
-            jest.advanceTimersByTime(500);
+            vi.advanceTimersByTime(500);
             expect(mockQuestion.isHighlighted).toBeFalse();
         });
     });

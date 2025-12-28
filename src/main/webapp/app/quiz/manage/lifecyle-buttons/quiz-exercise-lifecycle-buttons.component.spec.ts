@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -52,11 +53,11 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open quiz for practice', () => {
-        jest.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizExercise,
@@ -71,8 +72,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should not open quiz for practice on error', () => {
-        jest.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
-        jest.spyOn(alertService, 'error');
+        vi.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        vi.spyOn(alertService, 'error');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.openForPractice();
@@ -82,7 +83,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should start quiz', () => {
-        jest.spyOn(quizExerciseService, 'start').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'start').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizExercise,
@@ -97,8 +98,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should not start quiz on error', () => {
-        jest.spyOn(quizExerciseService, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
-        jest.spyOn(alertService, 'error');
+        vi.spyOn(quizExerciseService, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        vi.spyOn(alertService, 'error');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startQuiz();
@@ -108,7 +109,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should end quiz', () => {
-        jest.spyOn(quizExerciseService, 'end').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'end').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizExercise,
@@ -123,7 +124,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should add quiz batch', () => {
-        jest.spyOn(quizExerciseService, 'addBatch').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'addBatch').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizBatch,
@@ -138,7 +139,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should start quiz batch', () => {
-        jest.spyOn(quizExerciseService, 'startBatch').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'startBatch').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizBatch,
@@ -153,7 +154,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should make quiz visible', () => {
-        jest.spyOn(quizExerciseService, 'setVisible').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'setVisible').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizExercise,
@@ -168,15 +169,15 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should not make quiz visible on error', () => {
-        jest.spyOn(quizExerciseService, 'find').mockReturnValue(
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: quizExercise,
                 }),
             ),
         );
-        jest.spyOn(quizExerciseService, 'setVisible').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
-        jest.spyOn(alertService, 'error');
+        vi.spyOn(quizExerciseService, 'setVisible').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        vi.spyOn(alertService, 'error');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.showQuiz();

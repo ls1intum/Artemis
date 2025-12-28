@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -174,11 +175,11 @@ describe('Quiz Service', () => {
     ];
     beforeEach(() => {
         service = TestBed.inject(ArtemisQuizService);
-        jest.spyOn(global.Math, 'random').mockReturnValue(0.2);
+        vi.spyOn(globalThis.Math, 'random').mockReturnValue(0.2);
     });
 
     afterEach(() => {
-        jest.spyOn(global.Math, 'random').mockRestore();
+        vi.spyOn(globalThis.Math, 'random').mockRestore();
     });
 
     it('shuffles order of Answer options', () => {

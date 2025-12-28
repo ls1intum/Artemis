@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
@@ -145,10 +146,10 @@ describe('QuizQuestionListEditExistingComponent', () => {
         it('should load courses and exams when show signal is true', () => {
             const exam = new Exam();
             const course = new Course();
-            const getAllCoursesWithQuizExercisesSpy = jest
+            const getAllCoursesWithQuizExercisesSpy = vi
                 .spyOn(courseService, 'getAllCoursesWithQuizExercises')
                 .mockReturnValue(of(new HttpResponse<Course[]>({ body: [course] })));
-            const findAllExamsAccessibleToUserSpy = jest.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [exam] })));
+            const findAllExamsAccessibleToUserSpy = vi.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [exam] })));
 
             // Set the input signals
             fixture.componentRef.setInput('show', true);
@@ -164,8 +165,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
         });
 
         it('should not load courses and exams when show signal is false', () => {
-            const getAllCoursesWithQuizExercisesSpy = jest.spyOn(courseService, 'getAllCoursesWithQuizExercises');
-            const findAllExamsAccessibleToUserSpy = jest.spyOn(examService, 'findAllExamsAccessibleToUser');
+            const getAllCoursesWithQuizExercisesSpy = vi.spyOn(courseService, 'getAllCoursesWithQuizExercises');
+            const findAllExamsAccessibleToUserSpy = vi.spyOn(examService, 'findAllExamsAccessibleToUser');
 
             // Set the input signals
             fixture.componentRef.setInput('show', false);
@@ -208,9 +209,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
             quizExercise.id = 1;
             const quizQuestion = new MultipleChoiceQuestion();
             quizExercise.quizQuestions = [quizQuestion];
-            const findForCourseSpy = jest.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-            const findSpy = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-            const applyFilterSpy = jest.spyOn(component, 'applyFilter').mockImplementation();
+            const findForCourseSpy = vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
+            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation();
             component.onCourseSelect();
             expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
@@ -243,9 +244,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
             quizExercise.id = 1;
             const quizQuestion = new MultipleChoiceQuestion();
             quizExercise.quizQuestions = [quizQuestion];
-            const findForExamSpy = jest.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-            const findSpy = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-            const applyFilterSpy = jest.spyOn(component, 'applyFilter').mockImplementation();
+            const findForExamSpy = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
+            const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation();
             component.onExamSelect();
             expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
@@ -300,7 +301,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
-            const changeDetectorDetectChangesStub = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
+            const changeDetectorDetectChangesStub = vi.spyOn(changeDetector.constructor.prototype, 'detectChanges');
             component.setImportFile(ev);
             expect(component.importFile).toEqual(file);
             expect(component.importFileName).toBe('testFileName');
@@ -309,9 +310,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
     });
 
     describe('importing quiz', () => {
-        let generateFileReaderStub: jest.SpyInstance;
-        let getElementStub: jest.SpyInstance;
-        let readAsText: jest.Mock;
+        let generateFileReaderStub: ReturnType<typeof vi.spyOn>;
+        let getElementStub: ReturnType<typeof vi.spyOn>;
+        let readAsText: ReturnType<typeof vi.fn>;
         let reader: FileReader;
         const jsonContent = `[{
                 "type": "multiple-choice",
@@ -346,18 +347,18 @@ describe('QuizQuestionListEditExistingComponent', () => {
         const control = { ...element, value: 'test' };
         beforeEach(() => {
             component.importFile = fakeFile;
-            readAsText = jest.fn();
+            readAsText = vi.fn();
             reader = new FileReader();
             // @ts-ignore
             reader = { ...reader, result: jsonContent };
             // @ts-ignore
-            generateFileReaderStub = jest.spyOn(component, 'generateFileReader').mockReturnValue({ ...reader, onload: null, readAsText });
+            generateFileReaderStub = vi.spyOn(component, 'generateFileReader').mockReturnValue({ ...reader, onload: null, readAsText });
             // @ts-ignore
-            getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
+            getElementStub = vi.spyOn(document, 'getElementById').mockReturnValue(control);
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should call verify and import questions with right json', async () => {
@@ -365,7 +366,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             await component.importQuiz();
             expect(readAsText).toHaveBeenCalledWith(fakeFile);
             expect(generateFileReaderStub).toHaveBeenCalledOnce();
-            const addQuestionSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
+            const addQuestionSpy = vi.spyOn(component, 'addQuestions').mockImplementation();
             await component.onFileLoadImport(reader);
             expect(addQuestionSpy).toHaveBeenCalledWith(questions, new Map());
             expect(component.importFile).toBeUndefined();
@@ -384,9 +385,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
         it('should alert user when onload throws error', async () => {
             const alert = window.alert;
-            const alertFunction = jest.fn();
+            const alertFunction = vi.fn();
             window.alert = alertFunction;
-            const addQuestionSpy = jest.spyOn(component, 'addQuestions');
+            const addQuestionSpy = vi.spyOn(component, 'addQuestions');
             addQuestionSpy.mockImplementation(() => {
                 throw '';
             });
@@ -414,7 +415,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const question1 = new MultipleChoiceQuestion();
             question1.exportQuiz = false;
             component.existingQuestions = [question0, question1];
-            const addQuestionsSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
+            const addQuestionsSpy = vi.spyOn(component, 'addQuestions').mockImplementation();
             component.addExistingQuestions();
             expect(addQuestionsSpy).toHaveBeenCalledExactlyOnceWith([question0]);
         });
@@ -439,7 +440,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
             const shouldImportEmitter = new EventEmitter<void>();
             const componentInstance = { invalidFlaggedQuestions: [], shouldImport: shouldImportEmitter };
-            const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance });
+            const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance });
 
             await component.addQuestions(questions);
 
@@ -483,9 +484,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
             ];
             // question2.invalid is false by default
 
-            const onQuestionsAddedSpy = jest.spyOn(component.onQuestionsAdded, 'emit').mockImplementation();
-            const onFilesAddedSpy = jest.spyOn(component.onFilesAdded, 'emit').mockImplementation();
-            const getFileMock = jest.spyOn(fileService, 'getFile').mockResolvedValueOnce(backgroundFile).mockResolvedValueOnce(dragItemFile1).mockResolvedValueOnce(dragItemFile2);
+            const onQuestionsAddedSpy = vi.spyOn(component.onQuestionsAdded, 'emit').mockImplementation();
+            const onFilesAddedSpy = vi.spyOn(component.onFilesAdded, 'emit').mockImplementation();
+            const getFileMock = vi.spyOn(fileService, 'getFile').mockResolvedValueOnce(backgroundFile).mockResolvedValueOnce(dragItemFile1).mockResolvedValueOnce(dragItemFile2);
 
             const questions = [question0, question1, question2];
             await component.addQuestions(questions);
@@ -496,8 +497,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
         });
 
         it('should correctly differentiate between JSON and ZIP files', async () => {
-            const handleJsonFileSpy = jest.spyOn(component, 'handleJsonFile');
-            const handleZipFileSpy = jest.spyOn(component, 'handleZipFile');
+            const handleJsonFileSpy = vi.spyOn(component, 'handleJsonFile');
+            const handleZipFileSpy = vi.spyOn(component, 'handleZipFile');
             const jsonFile = new File(['{}'], 'quiz.json', { type: 'application/json' });
             component.importFile = jsonFile;
             await component.importQuiz();
@@ -509,7 +510,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         });
 
         it('should correctly extract images from a ZIP file', async () => {
-            const extractImagesFromZipSpy = jest.spyOn(component, 'extractImagesFromZip');
+            const extractImagesFromZipSpy = vi.spyOn(component, 'extractImagesFromZip');
             const zip = new JSZip();
             zip.file('image1.png', 'fakeImageData1');
             zip.file('image2.jpg', 'fakeImageData2');
@@ -520,9 +521,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const extractedImages = new Map();
             extractedImages.set('image1', new File(['fakeImageData1'], 'image1.png'));
             extractedImages.set('image2', new File(['fakeImageData2'], 'image2.jpg'));
-            jest.spyOn(JSZip.prototype, 'loadAsync').mockResolvedValue(zip);
-            jest.spyOn(zip.files['image1.png'], 'async').mockResolvedValue(new Blob(['fakeImageData1']));
-            jest.spyOn(zip.files['image2.jpg'], 'async').mockResolvedValue(new Blob(['fakeImageData2']));
+            vi.spyOn(JSZip.prototype, 'loadAsync').mockResolvedValue(zip);
+            vi.spyOn(zip.files['image1.png'], 'async').mockResolvedValue(new Blob(['fakeImageData1']));
+            vi.spyOn(zip.files['image2.jpg'], 'async').mockResolvedValue(new Blob(['fakeImageData2']));
             const result = await component.extractImagesFromZip(zip);
             expect(extractImagesFromZipSpy).toHaveBeenCalledWith(zip);
             expect(result.size).toBe(2);

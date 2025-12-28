@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -97,7 +98,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
-    const mockJSZip: jest.Mocked<JSZip> = {} as jest.Mocked<JSZip>;
+    const mockJSZip = {} as JSZip;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -118,7 +119,7 @@ describe('QuizExercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should find an element', async () => {
@@ -322,7 +323,7 @@ describe('QuizExercise Service', () => {
             2,
         ],
     ])('should export a quiz with no assets as json (%#)', async (questions, exportAll, filename, count) => {
-        const spy = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+        const spy = vi.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
         service.exportQuiz(questions, exportAll, filename);
 
         if (count === 0) {
@@ -344,7 +345,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should fetch correct image names and paths from drag and drop questions', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.DRAG_AND_DROP,
@@ -368,7 +369,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should export images from multiple choice options', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -388,7 +389,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should export images from short answer questions', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.SHORT_ANSWER,
@@ -404,8 +405,8 @@ describe('QuizExercise Service', () => {
     });
 
     it('should not try to fetch files if there are no images to export', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
-        const spyDownload = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spyDownload = vi.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
 
         const questions: QuizQuestion[] = [
             {
@@ -434,7 +435,7 @@ describe('QuizExercise Service', () => {
         const fileName = 'mockFile.png';
         const filePath = 'path/to/mockFile.png';
         const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
-        jest.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
+        vi.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
 
         await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
     });

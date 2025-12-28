@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockBuilder } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +22,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     let comp: QuizScoringInfoStudentModalComponent;
     let modalService: NgbModal;
     let translateService: TranslateService;
-    let translateSpy: jest.SpyInstance;
+    let translateSpy: any;
     const translationBasePath = 'artemisApp.quizExercise.explanationText.';
 
     beforeEach(async () => {
@@ -34,12 +35,12 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         modalService = TestBed.inject(NgbModal);
         translateService = TestBed.inject(TranslateService);
 
-        translateSpy = jest.spyOn(translateService, 'instant');
+        translateSpy = vi.spyOn(translateService, 'instant');
         fixture.componentRef.setInput('question', {} as ShortAnswerQuestion);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should check for singular point singular score', () => {
@@ -62,7 +63,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
 
     it('should open modal', () => {
         const content: any = {} as HTMLElement;
-        const openModalSpy = jest.spyOn(modalService, 'open');
+        const openModalSpy = vi.spyOn(modalService, 'open');
 
         comp.open(content);
 
