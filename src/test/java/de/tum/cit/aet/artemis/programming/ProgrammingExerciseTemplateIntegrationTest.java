@@ -19,6 +19,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -205,26 +209,25 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             for (RepositoryType type : repositoryTypes) {
                 try {
                     LocalVCRepositoryUri uri = exercise.getRepositoryURI(type);
+
+                    // Get the local repository path before deletion to verify cleanup
+                    Path repoPath = uri.getLocalRepositoryPath(localVCBasePath);
+
                     gitServiceSpy.deleteLocalRepository(uri);
 
                     // Verify cleanup completed with retries
-                    // Get the local repository path to verify deletion
-                    Repository repo = gitServiceSpy.getOrCheckoutRepository(uri, false, false);
-                    if (repo != null) {
-                        Path repoPath = repo.getLocalPath();
-                        int retries = 5;
-                        while (Files.exists(repoPath) && retries > 0) {
-                            log.debug("Repository {} still exists after cleanup, waiting... (retries left: {})", type, retries);
-                            Thread.sleep(200);
-                            retries--;
-                        }
+                    int retries = 5;
+                    while (Files.exists(repoPath) && retries > 0) {
+                        log.debug("Repository {} still exists after cleanup, waiting... (retries left: {})", type, retries);
+                        Thread.sleep(200);
+                        retries--;
+                    }
 
-                        if (Files.exists(repoPath)) {
-                            log.warn("Repository {} still exists after cleanup: {}", type, repoPath);
-                        }
-                        else {
-                            log.debug("Successfully cleaned up {} repository", type);
-                        }
+                    if (Files.exists(repoPath)) {
+                        log.warn("Repository {} still exists after cleanup: {}", type, repoPath);
+                    }
+                    else {
+                        log.debug("Successfully cleaned up {} repository", type);
                     }
                 }
                 catch (Exception e) {
@@ -410,19 +413,45 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     private int invokeGradle(Path testRepositoryPath) {
-        try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
-            BuildLauncher launcher = connector.newBuild();
-            launcher.setJavaHome(java17Home);
-            String[] tasks = new String[] { "clean", "test" };
-            launcher.forTasks(tasks);
-            launcher.run();
+        log.info("Invoking Gradle in directory: {}", testRepositoryPath);
+
+        // Use ExecutorService to enforce a timeout on Gradle builds
+        // This prevents indefinite hangs in slow CI environments
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Integer> future = executor.submit(() -> {
+                try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
+                    BuildLauncher launcher = connector.newBuild();
+                    launcher.setJavaHome(java17Home);
+                    String[] tasks = new String[] { "clean", "test" };
+                    launcher.forTasks(tasks);
+                    launcher.run();
+                    log.info("Gradle build completed successfully");
+                    return 0;
+                }
+                catch (Exception e) {
+                    // printing the cause because this contains the relevant error message (and not a generic one from the connector)
+                    log.error("Error occurred while executing Gradle build.", e.getCause());
+                    return -1;
+                }
+            });
+
+            // Wait up to 5 minutes for Gradle build to complete
+            // This is generous but necessary for slow CI environments with dependency downloads
+            return future.get(5, TimeUnit.MINUTES);
         }
-        catch (Exception e) {
-            // printing the cause because this contains the relevant error message (and not a generic one from the connector)
-            log.error("Error occurred while executing Gradle build.", e.getCause());
+        catch (TimeoutException e) {
+            log.error("Gradle build timed out after 5 minutes in directory: {}", testRepositoryPath);
             return -1;
         }
-        return 0;
+        catch (InterruptedException | ExecutionException e) {
+            log.error("Gradle build was interrupted or failed with exception", e);
+            Thread.currentThread().interrupt();
+            return -1;
+        }
+        finally {
+            executor.shutdownNow();
+        }
     }
 
     private void moveAssignmentSourcesOf(Path assignmentRepositoryPath, Path testRepositoryPath) throws IOException {
@@ -449,15 +478,26 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             }
         });
         log.debug("File system synchronization completed for assignment sources");
+
+        // Add additional wait time for slow CI environments to ensure file system has fully committed changes
+        // This is especially important for network-mounted file systems or systems under heavy I/O load
+        try {
+            Thread.sleep(1000);
+            log.debug("Completed additional wait period after file synchronization");
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while waiting after file synchronization", e);
+        }
     }
 
     private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) throws InterruptedException {
         File reportFolder = testRepositoryPath.resolve(testResultPath).toFile();
 
         // Retry logic to handle timing issues where test reports might not be immediately available
-        // Increased retries and delay to handle systems under load
-        int maxRetries = 10; // Increased from 5
-        int retryDelayMs = 1000; // Increased from 500ms
+        // Increased retries and delay to handle systems under load, especially in CI environments
+        int maxRetries = 30; // Increased from 10 for slow CI environments
+        int retryDelayMs = 2000; // Increased from 1000ms for slow CI environments (60s total)
         boolean hasReports = false;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
