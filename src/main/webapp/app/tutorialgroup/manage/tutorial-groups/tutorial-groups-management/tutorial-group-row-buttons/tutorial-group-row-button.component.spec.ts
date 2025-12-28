@@ -16,6 +16,8 @@ import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -37,6 +39,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 

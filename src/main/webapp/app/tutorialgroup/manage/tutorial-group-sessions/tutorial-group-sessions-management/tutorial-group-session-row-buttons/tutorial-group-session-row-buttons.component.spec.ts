@@ -13,6 +13,8 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { signal } from '@angular/core';
@@ -29,6 +31,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 MockProvider(TutorialGroupSessionService),
             ],
         })
