@@ -341,8 +341,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add spot to cursor and increase the spot number', () => {
         const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Mock console methods to prevent test failures
-        vi.spyOn(console, 'error').mockImplementation();
-        vi.spyOn(console, 'warn').mockImplementation();
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         component.addSpotAtCursor();
 
@@ -356,8 +356,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add option', () => {
         const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Mock console methods to prevent test failures
-        vi.spyOn(console, 'error').mockImplementation();
-        vi.spyOn(console, 'warn').mockImplementation();
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         component.addOption();
 

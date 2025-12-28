@@ -565,7 +565,7 @@ describe('QuizExerciseUpdateComponent', () => {
         describe('ngOnChanges', () => {
             it('should call init if there are changes on course or quiz exercise', () => {
                 const change = new SimpleChange(0, 1, false);
-                const initStub = vi.spyOn(comp, 'init').mockImplementation();
+                const initStub = vi.spyOn(comp, 'init').mockImplementation(() => {});
 
                 comp.ngOnChanges({ course: change });
                 expect(initStub).toHaveBeenCalledOnce();
@@ -1022,7 +1022,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
                     (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
                     vi.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
-                    vi.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
+                    vi.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation(() => {});
                 }
                 comp.save();
             };

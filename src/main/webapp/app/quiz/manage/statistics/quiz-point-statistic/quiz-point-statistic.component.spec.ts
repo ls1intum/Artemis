@@ -211,7 +211,7 @@ describe('QuizExercise Point Statistic Component', () => {
         comp.quizExercise = quizExercise;
         accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
-        vi.spyOn(comp, 'loadData').mockImplementation();
+        vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
         // call
         comp.loadQuizSuccess(quizExercise);
@@ -242,8 +242,8 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('loadNewData', () => {
         it('should route students back to courses', () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const routerMock = vi.spyOn(router, 'navigate').mockImplementation();
-            vi.spyOn(comp, 'loadData').mockImplementation();
+            const routerMock = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
             const testData = new QuizPointStatistic();
 
             comp.loadNewData(testData);
@@ -256,7 +256,7 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('recalculate', () => {
         it('should recalculate', fakeAsync(() => {
             const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation();
+            const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
             comp.quizExercise = quizExercise;
 
             comp.recalculate();

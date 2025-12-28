@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
@@ -120,8 +120,8 @@ const quizExerciseUnreleased: QuizExercise = {
 describe('QuizParticipationComponent', () => {
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
-    let participationSpy: vi.SpyInstance;
-    let resultForSolutionServiceSpy: vi.SpyInstance;
+    let participationSpy: MockInstance;
+    let resultForSolutionServiceSpy: MockInstance;
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
     let participationService: ParticipationService;
@@ -183,9 +183,7 @@ describe('QuizParticipationComponent', () => {
 
                     participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
-                    participationSpy = vi
-                        .spyOn(participationService, 'startQuizParticipation')
-                        .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+                    participationSpy = vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
                     quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
                     vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
@@ -279,7 +277,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
-            const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation();
+            const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
             tick(5000);
             fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
@@ -304,7 +302,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
-            const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation();
+            const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
             tick(5000);
             fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
@@ -334,7 +332,7 @@ describe('QuizParticipationComponent', () => {
             component.submission.submissionDate = dayjs();
             component.submission.submitted = false;
 
-            const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation();
+            const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation(() => {});
             const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
 
             tick(2000);

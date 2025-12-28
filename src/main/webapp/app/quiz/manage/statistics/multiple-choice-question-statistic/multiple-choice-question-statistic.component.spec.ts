@@ -168,7 +168,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
         it('should navigate back if the quiz does not contain any questions', () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const navigateByUrlMock = vi.spyOn(router, 'navigateByUrl').mockImplementation();
+            const navigateByUrlMock = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
             const emptyQuizExercise = new QuizExercise(undefined, undefined);
 
             const result = comp.loadQuizCommon(emptyQuizExercise);

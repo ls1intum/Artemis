@@ -146,9 +146,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         it('should load courses and exams when show signal is true', () => {
             const exam = new Exam();
             const course = new Course();
-            const getAllCoursesWithQuizExercisesSpy = vi
-                .spyOn(courseService, 'getAllCoursesWithQuizExercises')
-                .mockReturnValue(of(new HttpResponse<Course[]>({ body: [course] })));
+            const getAllCoursesWithQuizExercisesSpy = vi.spyOn(courseService, 'getAllCoursesWithQuizExercises').mockReturnValue(of(new HttpResponse<Course[]>({ body: [course] })));
             const findAllExamsAccessibleToUserSpy = vi.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [exam] })));
 
             // Set the input signals
@@ -211,7 +209,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             quizExercise.quizQuestions = [quizQuestion];
             const findForCourseSpy = vi.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
             const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-            const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation();
+            const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
             component.onCourseSelect();
             expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
@@ -246,7 +244,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             quizExercise.quizQuestions = [quizQuestion];
             const findForExamSpy = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
             const findSpy = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-            const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation();
+            const applyFilterSpy = vi.spyOn(component, 'applyFilter').mockImplementation(() => {});
             component.onExamSelect();
             expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
@@ -366,7 +364,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             await component.importQuiz();
             expect(readAsText).toHaveBeenCalledWith(fakeFile);
             expect(generateFileReaderStub).toHaveBeenCalledOnce();
-            const addQuestionSpy = vi.spyOn(component, 'addQuestions').mockImplementation();
+            const addQuestionSpy = vi.spyOn(component, 'addQuestions').mockResolvedValue(undefined);
             await component.onFileLoadImport(reader);
             expect(addQuestionSpy).toHaveBeenCalledWith(questions, new Map());
             expect(component.importFile).toBeUndefined();
@@ -388,9 +386,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const alertFunction = vi.fn();
             window.alert = alertFunction;
             const addQuestionSpy = vi.spyOn(component, 'addQuestions');
-            addQuestionSpy.mockImplementation(() => {
-                throw '';
-            });
+            addQuestionSpy.mockRejectedValue('');
             await component.importQuiz();
             await component.onFileLoadImport(reader);
             expect(alertFunction).toHaveBeenCalledOnce();
@@ -415,7 +411,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const question1 = new MultipleChoiceQuestion();
             question1.exportQuiz = false;
             component.existingQuestions = [question0, question1];
-            const addQuestionsSpy = vi.spyOn(component, 'addQuestions').mockImplementation();
+            const addQuestionsSpy = vi.spyOn(component, 'addQuestions').mockResolvedValue(undefined);
             component.addExistingQuestions();
             expect(addQuestionsSpy).toHaveBeenCalledExactlyOnceWith([question0]);
         });
@@ -484,8 +480,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             ];
             // question2.invalid is false by default
 
-            const onQuestionsAddedSpy = vi.spyOn(component.onQuestionsAdded, 'emit').mockImplementation();
-            const onFilesAddedSpy = vi.spyOn(component.onFilesAdded, 'emit').mockImplementation();
+            const onQuestionsAddedSpy = vi.spyOn(component.onQuestionsAdded, 'emit').mockImplementation(() => {});
+            const onFilesAddedSpy = vi.spyOn(component.onFilesAdded, 'emit').mockImplementation(() => {});
             const getFileMock = vi.spyOn(fileService, 'getFile').mockResolvedValueOnce(backgroundFile).mockResolvedValueOnce(dragItemFile1).mockResolvedValueOnce(dragItemFile2);
 
             const questions = [question0, question1, question2];

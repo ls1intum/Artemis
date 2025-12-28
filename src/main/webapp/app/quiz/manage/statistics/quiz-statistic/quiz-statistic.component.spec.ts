@@ -171,7 +171,7 @@ describe('QuizStatisticComponent', () => {
             ];
             comp.quizExercise = quizExercise;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            vi.spyOn(comp, 'loadData').mockImplementation();
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -186,7 +186,7 @@ describe('QuizStatisticComponent', () => {
             quizExercise.maxPoints = 42;
             comp.quizExercise = quizExercise;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            vi.spyOn(comp, 'loadData').mockImplementation();
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -257,7 +257,7 @@ describe('QuizStatisticComponent', () => {
     });
 
     it('should switch rated', () => {
-        const loadDataMock = vi.spyOn(comp, 'loadDataInDiagram').mockImplementation();
+        const loadDataMock = vi.spyOn(comp, 'loadDataInDiagram').mockImplementation(() => {});
         comp.rated = true;
 
         comp.switchRated();
