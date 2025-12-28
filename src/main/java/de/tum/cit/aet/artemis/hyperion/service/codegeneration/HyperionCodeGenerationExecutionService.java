@@ -159,12 +159,7 @@ public class HyperionCodeGenerationExecutionService {
                 return new RepositorySetupResult(null, null, false);
             }
 
-            var latestHash = gitService.getLastCommitHash(repositoryUri);
-            if (latestHash == null) {
-                log.error("Could not get last commit hash for {} repository in exercise {} - repository may have no commits", repositoryType, exercise.getId());
-                return new RepositorySetupResult(null, null, false);
-            }
-            String originalCommitHash = latestHash.getName();
+            String originalCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
             return new RepositorySetupResult(repository, originalCommitHash, true);
 
         }
@@ -221,12 +216,7 @@ public class HyperionCodeGenerationExecutionService {
     private String commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise, RepositoryType repositoryType)
             throws GitAPIException {
         repositoryService.commitChanges(repository, user);
-        var latestHash = gitService.getLastCommitHash(repositoryUri);
-        if (latestHash == null) {
-            throw new GitAPIException("Could not get commit hash after committing changes - repository may be in an inconsistent state") {
-            };
-        }
-        String newCommitHash = latestHash.getName();
+        String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
         ProgrammingExerciseParticipation exerciseParticipation = switch (repositoryType) {
             case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
             case SOLUTION -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
@@ -378,12 +368,9 @@ public class HyperionCodeGenerationExecutionService {
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
-                var latestHash = gitService.getLastCommitHash(repositoryUri);
-                if (latestHash != null) {
-                    String head = latestHash.getName();
-                    if (expectedHash != null && expectedHash.equals(head)) {
-                        return;
-                    }
+                String head = gitService.getLastCommitHash(repositoryUri).getName();
+                if (expectedHash != null && expectedHash.equals(head)) {
+                    return;
                 }
             }
             catch (Exception ignored) {
