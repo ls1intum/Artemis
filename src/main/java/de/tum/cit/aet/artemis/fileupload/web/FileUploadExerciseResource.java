@@ -464,7 +464,7 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         // TAs are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants()) {
+        if (submissionExportOptions.exportAllParticipants()) {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 

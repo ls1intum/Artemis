@@ -446,7 +446,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
 
         // TAs are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants()) {
+        if (submissionExportOptions.exportAllParticipants()) {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 

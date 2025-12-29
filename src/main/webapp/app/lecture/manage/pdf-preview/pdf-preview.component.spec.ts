@@ -1,4 +1,6 @@
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -93,6 +95,7 @@ describe('PdfPreviewComponent', () => {
                 { provide: LectureUnitService, useValue: lectureUnitServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
