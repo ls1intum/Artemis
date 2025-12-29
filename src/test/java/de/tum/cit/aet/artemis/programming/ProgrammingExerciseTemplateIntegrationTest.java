@@ -235,6 +235,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
+        // Wait before cleanup to ensure all operations are complete
+        // This is especially important to allow git processes to fully terminate
+        Thread.sleep(1000);
+
         this.cleanUpRepositories();
     }
 
@@ -475,42 +479,57 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise = createExerciseWithRetry();
 
         // Wait after exercise setup to ensure all async operations complete
-        // This is especially important for slow CI environments
-        Thread.sleep(2000);
+        // Increased wait time for slow CI environments to ensure git operations fully complete
+        Thread.sleep(5000);
 
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
-        Repository assignmentRepository = gitServiceSpy.getOrCheckoutRepository(assignmentUri, true, true);
-        Repository testRepository = gitServiceSpy.getOrCheckoutRepository(testUri, true, true);
+        Repository assignmentRepository = null;
+        Repository testRepository = null;
 
-        // Verify repositories are fully initialized before proceeding
-        verifyRepositorySetup(assignmentRepository, "assignment repository (" + repositoryType + ")");
-        verifyRepositorySetup(testRepository, "test repository");
+        try {
+            assignmentRepository = gitServiceSpy.getOrCheckoutRepository(assignmentUri, true, true);
+            testRepository = gitServiceSpy.getOrCheckoutRepository(testUri, true, true);
 
-        // Wait for specific build files to exist in test repository with retry logic
-        // This addresses the "pom.xml not found" errors in slow CI environments
-        String buildFileName = (projectType != null && projectType.isGradle()) ? "build.gradle" : "pom.xml";
-        waitForFileToExist(testRepository.getLocalPath(), buildFileName, "test repository build file");
+            // Verify repositories are fully initialized before proceeding
+            verifyRepositorySetup(assignmentRepository, "assignment repository (" + repositoryType + ")");
+            verifyRepositorySetup(testRepository, "test repository");
 
-        moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
-        int exitCode;
-        if (projectType != null && projectType.isGradle()) {
-            exitCode = invokeGradle(testRepository.getLocalPath());
+            // Wait for specific build files to exist in test repository with retry logic
+            // This addresses the "pom.xml not found" errors in slow CI environments
+            String buildFileName = (projectType != null && projectType.isGradle()) ? "build.gradle" : "pom.xml";
+            waitForFileToExist(testRepository.getLocalPath(), buildFileName, "test repository build file");
+
+            moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
+            int exitCode;
+            if (projectType != null && projectType.isGradle()) {
+                exitCode = invokeGradle(testRepository.getLocalPath());
+            }
+            else {
+                exitCode = invokeMaven(testRepository.getLocalPath());
+            }
+
+            if (TestResult.SUCCESSFUL.equals(testResult)) {
+                assertThat(exitCode).isZero();
+            }
+            else {
+                assertThat(exitCode).isNotZero();
+            }
+
+            var testReportPath = projectType != null && projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
+            var testResults = readTestReports(testRepository.getLocalPath(), testReportPath);
+            assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
         }
-        else {
-            exitCode = invokeMaven(testRepository.getLocalPath());
+        finally {
+            // Ensure repositories are properly closed before cleanup to release file locks
+            // This is critical for preventing "No such file or directory" errors in cleanup
+            if (assignmentRepository != null) {
+                assignmentRepository.close();
+            }
+            if (testRepository != null) {
+                testRepository.close();
+            }
         }
-
-        if (TestResult.SUCCESSFUL.equals(testResult)) {
-            assertThat(exitCode).isZero();
-        }
-        else {
-            assertThat(exitCode).isNotZero();
-        }
-
-        var testReportPath = projectType != null && projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
-        var testResults = readTestReports(testRepository.getLocalPath(), testReportPath);
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
     private int invokeMaven(Path testRepositoryPath) throws MavenInvocationException, IOException {
