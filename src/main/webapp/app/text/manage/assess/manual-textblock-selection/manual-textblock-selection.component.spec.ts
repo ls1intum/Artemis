@@ -98,7 +98,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should add TextBlockRefGroup correctly', () => {
-        expect(component.textBlockRefGroups).toHaveLength(3);
+        expect(component.textBlockRefGroups()).toHaveLength(3);
     });
 
     it('should add a TextblockAssessmentCardComponent for each TextBlockRefGroup with a feedback', () => {

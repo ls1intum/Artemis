@@ -1,4 +1,4 @@
-@for (group of textBlockRefGroups; track group) {
+@for (group of textBlockRefGroups(); track group) {
     @if (group.singleRef) {
         <jhi-text-block-assessment-card
             [textBlockRef]="group.singleRef"

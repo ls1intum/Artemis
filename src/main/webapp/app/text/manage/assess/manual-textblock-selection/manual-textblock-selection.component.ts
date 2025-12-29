@@ -1,4 +1,4 @@
-import { Component, effect, input, model, output } from '@angular/core';
+import { Component, effect, input, model, output, signal } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
@@ -20,20 +20,20 @@ export class ManualTextblockSelectionComponent {
 
     textBlockRefAdded = output<TextBlockRef>();
 
-    textBlockRefGroups: TextBlockRefGroup[] = [];
+    textBlockRefGroups = signal<TextBlockRefGroup[]>([]);
 
     constructor() {
         // Effect to compute textBlockRefGroups when textBlockRefs changes
         effect(() => {
             const refs = this.textBlockRefs();
             if (refs) {
-                this.textBlockRefGroups = TextBlockRefGroup.fromTextBlockRefs(refs);
+                this.textBlockRefGroups.set(TextBlockRefGroup.fromTextBlockRefs(refs));
             }
         });
     }
 
     private getTextBlockRefsFromGroups(): TextBlockRef[] {
-        return this.textBlockRefGroups.reduce((previous: TextBlockRef[], group: TextBlockRefGroup) => [...previous, ...group.refs], []);
+        return this.textBlockRefGroups().reduce((previous: TextBlockRef[], group: TextBlockRefGroup) => [...previous, ...group.refs], []);
     }
 
     textBlockRefsChangeEmit(): void {
