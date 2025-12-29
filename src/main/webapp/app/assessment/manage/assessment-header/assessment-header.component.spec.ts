@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
@@ -65,7 +66,7 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should have correct overrideVisible when result has completionDate and canOverride is true', () => {
         const mockResult = new Result();
-        mockResult.completionDate = new Date().toISOString() as any;
+        mockResult.completionDate = dayjs();
         fixture.componentRef.setInput('result', mockResult);
         fixture.componentRef.setInput('canOverride', true);
         fixture.detectChanges();
@@ -84,7 +85,7 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should have assessNextVisible true under correct conditions', () => {
         const mockResult = new Result();
-        mockResult.completionDate = new Date().toISOString() as any;
+        mockResult.completionDate = dayjs();
         fixture.componentRef.setInput('result', mockResult);
         fixture.componentRef.setInput('isAssessor', true);
         fixture.componentRef.setInput('hasComplaint', false);
@@ -119,7 +120,7 @@ describe('AssessmentHeaderComponent', () => {
     describe('saveDisabled', () => {
         it('should return true when result has completionDate', () => {
             const mockResult = new Result();
-            mockResult.completionDate = new Date().toISOString() as any;
+            mockResult.completionDate = dayjs();
             fixture.componentRef.setInput('result', mockResult);
             fixture.detectChanges();
 
@@ -181,7 +182,7 @@ describe('AssessmentHeaderComponent', () => {
 
         it('should return false when overrideVisible and assessments are valid', () => {
             const mockResult = new Result();
-            mockResult.completionDate = new Date().toISOString() as any;
+            mockResult.completionDate = dayjs();
             fixture.componentRef.setInput('result', mockResult);
             fixture.componentRef.setInput('canOverride', true);
             fixture.componentRef.setInput('assessmentsAreValid', true);
@@ -202,7 +203,7 @@ describe('AssessmentHeaderComponent', () => {
 
         it('should return false when assessNextVisible and not busy', () => {
             const mockResult = new Result();
-            mockResult.completionDate = new Date().toISOString() as any;
+            mockResult.completionDate = dayjs();
             fixture.componentRef.setInput('result', mockResult);
             fixture.componentRef.setInput('isAssessor', true);
             fixture.componentRef.setInput('hasComplaint', false);
@@ -220,7 +221,7 @@ describe('AssessmentHeaderComponent', () => {
         it('should emit onSubmit when override is not disabled', () => {
             const submitSpy = vi.spyOn(component.onSubmit, 'emit');
             const mockResult = new Result();
-            mockResult.completionDate = new Date().toISOString() as any;
+            mockResult.completionDate = dayjs();
             fixture.componentRef.setInput('result', mockResult);
             fixture.componentRef.setInput('canOverride', true);
             fixture.componentRef.setInput('assessmentsAreValid', true);
@@ -255,7 +256,7 @@ describe('AssessmentHeaderComponent', () => {
             const nextSpy = vi.spyOn(component.nextSubmission, 'emit');
             const analyticsSpy = vi.spyOn(component, 'sendAssessNextEventToAnalytics');
             const mockResult = new Result();
-            mockResult.completionDate = new Date().toISOString() as any;
+            mockResult.completionDate = dayjs();
             fixture.componentRef.setInput('result', mockResult);
             fixture.componentRef.setInput('isAssessor', true);
             fixture.componentRef.setInput('hasComplaint', false);

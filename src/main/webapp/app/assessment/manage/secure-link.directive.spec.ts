@@ -51,13 +51,8 @@ describe('SecureLinkDirective', () => {
             expect(linkElement.nativeElement.rel).toBe('noopener noreferrer');
         });
 
-        it('should prevent reverse tabnabbing vulnerability', () => {
-            const target = linkElement.nativeElement.target;
-            const rel = linkElement.nativeElement.rel;
-
-            expect(target).toBe('_blank');
-            expect(rel).toContain('noopener');
-            expect(rel).toContain('noreferrer');
+        it('should preserve the original href attribute', () => {
+            expect(linkElement.nativeElement.href).toBe('https://example.com/');
         });
     });
 
