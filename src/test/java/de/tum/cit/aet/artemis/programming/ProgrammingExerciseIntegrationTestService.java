@@ -420,6 +420,9 @@ public class ProgrammingExerciseIntegrationTestService {
         GitService.commit(repo1.workingCopyGitRepo).setMessage("seed project and pom").call();
         repo1.workingCopyGitRepo.push().setRemote("origin").call();
 
+        // Give LocalVC time to sync after push
+        Thread.sleep(100);
+
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
         assertThat(participation).isPresent();
 
@@ -595,6 +598,10 @@ public class ProgrammingExerciseIntegrationTestService {
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
         programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
+
+        // Give LocalVC time to sync after repository creation
+        Thread.sleep(100);
+
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + userPrefix + "student1,"
                 + userPrefix + "student2";
         return request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
