@@ -44,6 +44,7 @@
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1'">
                     The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
                 </p>
+                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1b'">Additionally, the archive will include comprehensive student data.</p>
             }
             @if (archiveMode === 'Exam') {
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.question'" [translateValues]="{ title: exam?.title || '' }">Are you sure you want to archive??</p>

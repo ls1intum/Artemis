@@ -8,11 +8,9 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -76,19 +74,6 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") ProcessingPhase phase, @Param("now") ZonedDateTime now);
 
     /**
-     * Find all processing states for a lecture.
-     *
-     * @param lectureId the ID of the lecture
-     * @return list of processing states for all units in the lecture
-     */
-    @Query("""
-            SELECT ps FROM LectureUnitProcessingState ps
-            JOIN ps.lectureUnit lu
-            WHERE lu.lecture.id = :lectureId
-            """)
-    List<LectureUnitProcessingState> findByLectureId(@Param("lectureId") Long lectureId);
-
-    /**
      * Find all processing states for a course.
      *
      * @param courseId the ID of the course
@@ -101,31 +86,6 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE l.course.id = :courseId
             """)
     List<LectureUnitProcessingState> findByCourseId(@Param("courseId") Long courseId);
-
-    /**
-     * Delete the processing state for a lecture unit.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     */
-    @Modifying
-    @Transactional
-    void deleteByLectureUnit_Id(Long lectureUnitId);
-
-    /**
-     * Count processing states in a specific phase for a course.
-     *
-     * @param courseId the ID of the course
-     * @param phase    the processing phase
-     * @return count of states in the given phase
-     */
-    @Query("""
-            SELECT COUNT(ps) FROM LectureUnitProcessingState ps
-            JOIN ps.lectureUnit lu
-            JOIN lu.lecture l
-            WHERE l.course.id = :courseId
-            AND ps.phase = :phase
-            """)
-    long countByCourseIdAndPhase(@Param("courseId") Long courseId, @Param("phase") ProcessingPhase phase);
 
     /**
      * Count processing states currently in active processing phases (TRANSCRIBING or INGESTING).

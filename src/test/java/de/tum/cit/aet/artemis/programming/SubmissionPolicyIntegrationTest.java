@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -29,14 +28,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
-
-    @Autowired
-    private ProgrammingExerciseGradingService gradingService;
 
     private static final String TEST_PREFIX = "submissionpolicyintegration";
 
@@ -388,11 +383,11 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
 
-        var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        var result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
 
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
-        result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.isRated()).isFalse();
@@ -419,7 +414,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
                 List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
         participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
         var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
-        var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        var result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
         assertThat(result.getScore()).isEqualTo(25);
 
@@ -428,7 +423,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         var updatedResultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
         resultRequestBody = convertBuildResultToJsonObject(updatedResultNotification);
-        result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.getScore()).isEqualTo(15);
@@ -453,9 +448,9 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
                 List.of("test1"), List.of("test2", "test3"), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
         var resultRequestBody = convertBuildResultToJsonObject(resultNotification1);
         participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
-        var result1 = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        var result1 = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         resultRequestBody = convertBuildResultToJsonObject(resultNotification2);
-        var result2 = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        var result2 = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result1).isNotNull();
         assertThat(result2).isNotNull();
         assertThat(result1.getScore()).isEqualTo(result2.getScore());
