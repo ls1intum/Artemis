@@ -220,10 +220,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.examId).toBe(2);
     });
 
-    // TODO: This test requires investigation for zoneless testing - template rendering issues
-    it.skip('should show jhi-text-assessment-area', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should show jhi-text-assessment-area', async () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         expect(textAssessmentArea).not.toBeNull();
@@ -234,10 +236,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(sharedLayout).not.toBeNull();
     });
 
-    // TODO: This test requires investigation for zoneless testing - template rendering issues
-    it.skip('should update score', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should update score', async () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         // Modify the text block ref directly on the component under test
         const textBlockRef = component.textBlockRefs[0];
@@ -248,12 +252,14 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.totalScore).toBe(42);
     });
 
-    // TODO: This test requires investigation for zoneless testing - timing issues
-    it.skip('should save the assessment with correct parameters', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should save the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const handleFeedbackStub = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         const result = getLatestSubmissionResult(submission);
         result!.assessmentNote = { id: 1, note: 'Note Text' };
@@ -339,10 +345,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBe(serverReturnsError);
     });
 
-    // TODO: This test requires investigation for zoneless testing - timing issues
-    it.skip('should submit the assessment with correct parameters', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should submit the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         const result = getLatestSubmissionResult(submission);
         result!.assessmentNote = { id: 1, note: 'Note Text' };
@@ -372,11 +380,14 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(submitSpy).not.toHaveBeenCalled();
     });
 
-    // TODO: This test requires investigation for zoneless testing - timing issues
-    it.skip('should handle error if saving fails', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should handle error if saving fails', async () => {
         component['setPropertiesFromServerResponse'](participation);
         component.assessmentsAreValid = true;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         const error = new HttpErrorResponse({ status: 404 });
         const errorStub = vi.spyOn(textAssessmentService, 'save').mockReturnValue(throwError(() => error));
 
@@ -399,10 +410,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
     });
 
-    // TODO: This test requires investigation for zoneless testing - timing issues
-    it.skip('should cancel assessment', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should cancel assessment', async () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         const navigateBackSpy = vi.spyOn(component, 'navigateBack');
         const cancelAssessmentStub = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
@@ -416,12 +429,14 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
     it.skip('should go to next submission', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = vi.spyOn(router, 'navigate');
 
         await component.ngOnInit();
+        fixture.detectChanges();
         await fixture.whenStable();
 
         const url = [
@@ -456,19 +471,22 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.canOverride).toBe(false);
     });
 
-    // TODO: This test requires investigation for zoneless testing - timing issues
-    it.skip('should recalculate text block refs correctly', () => {
+    // This test requires component restructuring for zoneless testing
+    // recalculateTextBlockRefs uses timers that conflict with zoneless change detection
+    it.skip('should recalculate text block refs correctly', async () => {
         vi.useFakeTimers();
         component.recalculateTextBlockRefs();
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         vi.advanceTimersByTime(300);
+        vi.useRealTimers();
 
         expect(component.textBlockRefs).toHaveLength(2);
         expect(component.unusedTextBlockRefs).toHaveLength(0);
     });
 
-    // TODO: This test requires investigation for zoneless testing - timing issues
-    it.skip('should handle overlapping manual text blocks correctly', () => {
+    // This test requires component restructuring for zoneless testing
+    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    it.skip('should handle overlapping manual text blocks correctly', async () => {
         const sortAndSetTextBlockRefsSpy = vi.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
 
         // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
@@ -490,7 +508,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         // END: Adding a new block (with feedback) that overlaps with an existing block
 
         component['setPropertiesFromServerResponse'](participation);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(sortAndSetTextBlockRefsSpy).toHaveBeenCalled();
 
@@ -510,7 +529,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
+    // This test requires component restructuring for zoneless testing
+    // loadFeedbackSuggestions triggers async operations that conflict with zoneless change detection
     it.skip('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
@@ -519,6 +539,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
         const athenaServiceFeedbackSuggestionsStub = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
         component.loadFeedbackSuggestions();
+        fixture.detectChanges();
         await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
         expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
@@ -678,11 +699,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         }
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
+    // This test requires component restructuring for zoneless testing
+    // loadFeedbackSuggestions triggers async operations that conflict with zoneless change detection
     it.skip('should not load feedback suggestions if there already are assessments', async () => {
         // preparation already added an assessment
         const athenaServiceFeedbackSuggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
         component.loadFeedbackSuggestions();
+        fixture.detectChanges();
         await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
     });

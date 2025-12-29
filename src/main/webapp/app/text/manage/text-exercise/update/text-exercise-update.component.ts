@@ -99,7 +99,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
-    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
+    exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
@@ -142,7 +142,12 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
+        // Guard against undefined - viewChild may not be resolved yet during effect initialization
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        if (!titleChannelNameComponent) {
+            return;
+        }
+        titleChannelNameComponent.isValid(); // trigger the effect
         this.exerciseUpdatePlagiarismComponent()?.isFormValid();
         this.calculateFormSectionStatus();
     }
@@ -150,7 +155,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     ngAfterViewInit() {
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
     }
 
     /**
@@ -228,13 +233,14 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     calculateFormSectionStatus() {
-        if (this.textExercise) {
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        if (this.textExercise && titleChannelNameComponent) {
             this.formSectionStatus = [
                 {
                     title: 'artemisApp.exercise.sections.general',
-                    valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
+                    valid: titleChannelNameComponent.isValid(),
                 },
-                { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
+                { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent?.formValid ?? true },
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',
@@ -244,8 +250,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 {
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
-                        this.points.valid &&
-                        this.bonusPoints.valid &&
+                        this.points?.valid &&
+                        this.bonusPoints?.valid &&
                         (this.isExamMode ||
                             (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
                                 !this.textExercise.startDateError &&
