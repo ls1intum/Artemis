@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -49,7 +49,6 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
