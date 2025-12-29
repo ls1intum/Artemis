@@ -225,8 +225,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
-    protected static final String DUMMY_COMMIT_HASH_VALID = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-
     private static final Path TEST_RESULTS_PATH = Path.of("src", "test", "resources", "test-data", "test-results");
 
     private static final Path GRADLE_TEST_RESULTS_PATH = TEST_RESULTS_PATH.resolve("java-gradle");
