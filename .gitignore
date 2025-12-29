@@ -235,3 +235,4 @@ deferredEagerBeanInstantiationViolations.dot
 CLAUDE.md
 .claude
 /src/test/playwright/monocart-report
+/venv/
