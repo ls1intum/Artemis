@@ -756,3 +756,371 @@ describe('QuizParticipationComponent - solution mode', () => {
         expect(component.showingResult).toBeTrue();
     });
 });
+
+describe('QuizParticipationComponent - relativeTimeText', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                ParticipationService,
+                QuizExerciseService,
+                QuizParticipationService,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        })
+            .overrideComponent(QuizParticipationComponent, {
+                set: { providers: [] },
+            })
+            .compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should return minutes for more than 210 seconds', () => {
+        const result = component.relativeTimeText(250);
+        expect(result).toBe('5 min');
+    });
+
+    it('should return minutes and seconds for 60-210 seconds', () => {
+        const result = component.relativeTimeText(125);
+        expect(result).toBe('2 min 5 s');
+    });
+
+    it('should return only seconds for less than 60 seconds', () => {
+        const result = component.relativeTimeText(45);
+        expect(result).toBe('45 s');
+    });
+
+    it('should return exactly 60 seconds in minutes format', () => {
+        const result = component.relativeTimeText(60);
+        expect(result).toBe('1 min 0 s');
+    });
+
+    it('should return 0 seconds', () => {
+        const result = component.relativeTimeText(0);
+        expect(result).toBe('0 s');
+    });
+});
+
+describe('QuizParticipationComponent - applySelection', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                ParticipationService,
+                QuizExerciseService,
+                QuizParticipationService,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        })
+            .overrideComponent(QuizParticipationComponent, {
+                set: { providers: [] },
+            })
+            .compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should convert selections to submitted answers', () => {
+        fixture.detectChanges();
+
+        // Set up selections
+        const answerOption = { id: 1 } as AnswerOption;
+        component.selectedAnswerOptions.set(question2.id!, [answerOption]);
+
+        const mapping = { dragItem: { id: 1, invalid: false }, dropLocation: { id: 1, invalid: false }, invalid: false } as DragAndDropMapping;
+        component.dragAndDropMappings.set(question1.id!, [mapping]);
+
+        const submittedText = { text: 'answer' } as ShortAnswerSubmittedText;
+        component.shortAnswerSubmittedTexts.set(question3.id!, [submittedText]);
+
+        component.applySelection();
+
+        expect(component.submission.submittedAnswers).toHaveLength(3);
+    });
+
+    it('should log error when question not found for multiple choice', () => {
+        fixture.detectChanges();
+
+        // Set up selection for non-existent question
+        const answerOption = { id: 1 } as AnswerOption;
+        component.selectedAnswerOptions.set(999, [answerOption]);
+
+        component.applySelection();
+
+        expect(captureException).toHaveBeenCalled();
+    });
+});
+
+describe('QuizParticipationComponent - showResult', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                ParticipationService,
+                QuizExerciseService,
+                QuizParticipationService,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        })
+            .overrideComponent(QuizParticipationComponent, {
+                set: { providers: [] },
+            })
+            .compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should calculate user score and question scores', () => {
+        fixture.detectChanges();
+
+        component.submission = {
+            scoreInPoints: 5,
+            submittedAnswers: [
+                { quizQuestion: question1, scoreInPoints: 1 },
+                { quizQuestion: question2, scoreInPoints: 2 },
+            ],
+        } as QuizSubmission;
+
+        const result = { submission: component.submission } as Result;
+
+        component.showResult(result);
+
+        expect(component.showingResult).toBeTrue();
+        expect(component.userScore).toBe(5);
+        expect(component.questionScores[question1.id!]).toBe(1);
+        expect(component.questionScores[question2.id!]).toBe(2);
+    });
+
+    it('should handle undefined result', () => {
+        fixture.detectChanges();
+
+        component.showResult(undefined as unknown as Result);
+
+        expect(component.showingResult).toBeFalsy();
+    });
+
+    it('should use 0 when scoreInPoints is undefined', () => {
+        fixture.detectChanges();
+
+        component.submission = {
+            scoreInPoints: undefined,
+            submittedAnswers: [],
+        } as QuizSubmission;
+
+        const result = { submission: component.submission } as Result;
+
+        component.showResult(result);
+
+        expect(component.userScore).toBe(0);
+    });
+});
+
+describe('QuizParticipationComponent - onSaveError', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let alertService: AlertService;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                ParticipationService,
+                QuizExerciseService,
+                QuizParticipationService,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        })
+            .overrideComponent(QuizParticipationComponent, {
+                set: { providers: [] },
+            })
+            .compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+
+        alertService = TestBed.inject(AlertService);
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should show alert and reset flags on save error', () => {
+        fixture.detectChanges();
+
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+        component.onSaveError('Test error message');
+
+        expect(alertSpy).toHaveBeenCalled();
+        expect(component.unsavedChanges).toBeTrue();
+        expect(component.isSubmitting).toBeFalse();
+    });
+
+    it('should not show alert for empty error', () => {
+        fixture.detectChanges();
+
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+        component.onSaveError('');
+
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
+});

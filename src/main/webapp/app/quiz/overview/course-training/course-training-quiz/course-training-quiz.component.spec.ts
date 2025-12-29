@@ -17,7 +17,7 @@ import { CourseManagementService } from '../../../../core/course/manage/services
 import { DragAndDropQuestionComponent } from '../../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ImageComponent } from '../../../../shared/image/image.component';
 import { signal } from '@angular/core';
-import { SubmittedAnswerAfterEvaluation } from './SubmittedAnswerAfterEvaluation';
+import { SubmittedAnswerAfterEvaluation } from './submitted-answer-after-evaluation';
 import { QuizQuestionTraining } from './quiz-question-training.model';
 
 const question1: QuizQuestion = {
