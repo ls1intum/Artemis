@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
-import java.net.URI;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,31 +19,19 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
-import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
-
-    // Config
-    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    protected String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
-
-    @Value("${artemis.continuous-integration.url}")
-    protected URI jenkinsServerUri;
+public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTemplateTest extends AbstractSpringIntegrationJenkinsLocalVCTemplateTest {
 
     @Autowired
     protected RestTemplate restTemplate;
@@ -55,9 +40,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
     protected ObjectMapper objectMapper;
 
     // Repositories
-    @Autowired
-    protected BuildPlanRepository buildPlanRepository;
-
     @Autowired
     protected ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
@@ -96,22 +78,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
     protected UserTestRepository userRepository;
 
     @Autowired
-    protected JenkinsAuthorizationInterceptor jenkinsAuthorizationInterceptor;
-
-    @Autowired
-    protected JenkinsInternalUrlService jenkinsInternalUrlService;
-
-    @Autowired
-    protected JenkinsJobService jenkinsJobService;
-
-    @Autowired
-    protected JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
-
-    @Autowired
-    protected ContinuousIntegrationTestService continuousIntegrationTestService;
-
-    @Autowired
-    protected ProgrammingExerciseResultTestService programmingExerciseResultTestService;
+    protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @Autowired
     protected ProgrammingExerciseTestService programmingExerciseTestService;

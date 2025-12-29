@@ -21,17 +21,23 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
-// TODO: rewrite this test to use LocalVC
-@Tag("BucketJenkinsLocalVC")
-@ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTest")
+/**
+ * Batch test class for JenkinsLocalVC tests - runs in parallel with AbstractSpringIntegrationJenkinsLocalVCTest.
+ * This class contains the larger/slower test classes to improve parallel test execution time.
+ */
+@Tag("BucketJenkinsLocalVCBatch")
+@ResourceLock("AbstractSpringIntegrationJenkinsLocalVCBatchTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "info.contact=test@localhost",
-        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken" })
-public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_batch", "info.contact=test@localhost",
+        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
+        // Use separate paths for parallel bucket execution
+        "artemis.repo-clone-path=./local/server-integration-test-batch/repos",
+        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-batch/local-vcs-repos" })
+public abstract class AbstractSpringIntegrationJenkinsLocalVCBatchTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
 
     private static final int serverPort;
 
