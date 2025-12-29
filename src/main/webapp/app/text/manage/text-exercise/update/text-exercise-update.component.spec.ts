@@ -4,6 +4,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
@@ -37,6 +38,15 @@ import { MockProvider } from 'ng-mocks';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+
+// Mock components to prevent deep rendering issues
+@Component({ selector: 'jhi-monaco-editor', template: '', standalone: true })
+class MockMonacoEditorComponent {}
+
+@Component({ selector: 'jhi-exercise-feedback-suggestion-options', template: '', standalone: true })
+class MockExerciseFeedbackSuggestionOptionsComponent {}
 
 describe('TextExercise Management Update Component', () => {
     setupTestBed({ zoneless: true });
@@ -64,7 +74,12 @@ describe('TextExercise Management Update Component', () => {
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TextExerciseUpdateComponent, {
+                remove: { imports: [MonacoEditorComponent, ExerciseFeedbackSuggestionOptionsComponent] },
+                add: { imports: [MockMonacoEditorComponent, MockExerciseFeedbackSuggestionOptionsComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(TextExerciseUpdateComponent);
         comp = fixture.componentInstance;
