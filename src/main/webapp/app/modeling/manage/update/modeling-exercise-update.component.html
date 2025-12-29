@@ -85,7 +85,11 @@
                     [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
                     [error]="modelingExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
+                    [disabled]="isImport"
                 />
+                @if (isImport) {
+                    <span class="text-info" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
+                }
                 @if (modelingExercise.exampleSolutionPublicationDateError) {
                     <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
                 }
