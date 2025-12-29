@@ -3,7 +3,7 @@
     @if (block.feedback) {
         @if (block.icon) {
             <span [ngClass]="block.iconCssClass" [title]="creditsTranslationForTextResultBlock(block)">
-                @for (i of repeatForEachCredit(block); track i) {
+                @for (i of repeatForEachCredit(block); track $index) {
                     <fa-icon [icon]="block.icon" />
                 }
             </span>

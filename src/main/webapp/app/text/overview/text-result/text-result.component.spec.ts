@@ -13,7 +13,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
@@ -26,6 +26,9 @@ import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextResultBlock } from 'app/text/overview/text-result/text-result-block';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TextResultComponent', () => {
     setupTestBed({ zoneless: true });
@@ -60,7 +63,7 @@ describe('TextResultComponent', () => {
         })
             .overrideComponent(TextResultComponent, {
                 set: {
-                    imports: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe)],
+                    imports: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), NgClass, MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
                 },
             })
             .compileComponents()

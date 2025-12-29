@@ -129,6 +129,7 @@ class StubExerciseUpdatePlagiarismComponent {
 @Component({ selector: 'jhi-team-config-form-group', template: '', standalone: true })
 class StubTeamConfigFormGroupComponent {
     exercise = input<TextExercise | undefined>();
+    isImport = input<boolean>(false);
     formValid = true;
     formValidChanges = new Subject<boolean>();
 }
