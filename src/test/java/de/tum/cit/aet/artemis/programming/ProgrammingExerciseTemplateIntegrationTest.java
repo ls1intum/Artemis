@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -215,20 +216,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
                     gitServiceSpy.deleteLocalRepository(uri);
 
-                    // Verify cleanup completed with retries
-                    int retries = 5;
-                    while (Files.exists(repoPath) && retries > 0) {
-                        log.debug("Repository {} still exists after cleanup, waiting... (retries left: {})", type, retries);
-                        Thread.sleep(200);
-                        retries--;
-                    }
-
-                    if (Files.exists(repoPath)) {
-                        log.warn("Repository {} still exists after cleanup: {}", type, repoPath);
-                    }
-                    else {
-                        log.debug("Successfully cleaned up {} repository", type);
-                    }
+                    // This handles OS file locks that prevent complete deletion
+                    deleteDirectoryWithRetries(repoPath, type.toString());
                 }
                 catch (Exception e) {
                     log.error("Failed to clean up {} repository", type, e);
@@ -239,6 +228,97 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             // If cleanup failed, it might cause subsequent tests to fail
             if (!cleanupFailures.isEmpty()) {
                 log.warn("Cleanup incomplete. {} repositories failed to clean up. This may cause subsequent test failures.", cleanupFailures.size());
+            }
+        }
+    }
+
+    /**
+     * Verifies that a repository has been properly checked out and initialized.
+     * Checks that the repository path exists and contains expected files.
+     *
+     * @param repository  the repository to verify
+     * @param description description for logging
+     * @throws IllegalStateException if repository is not properly set up
+     */
+    private void verifyRepositorySetup(Repository repository, String description) {
+        Path repoPath = repository.getLocalPath();
+
+        if (!Files.exists(repoPath)) {
+            throw new IllegalStateException(String.format("%s path does not exist: %s", description, repoPath));
+        }
+
+        if (!Files.isDirectory(repoPath)) {
+            throw new IllegalStateException(String.format("%s path is not a directory: %s", description, repoPath));
+        }
+
+        // Check that the repository contains some files (not empty)
+        try (Stream<Path> files = Files.list(repoPath)) {
+            long fileCount = files.count();
+            if (fileCount == 0) {
+                throw new IllegalStateException(String.format("%s directory is empty: %s", description, repoPath));
+            }
+            log.debug("Verified {} has {} items at: {}", description, fileCount, repoPath);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException(String.format("Failed to verify %s at: %s", description, repoPath), e);
+        }
+    }
+
+    /**
+     * Robust directory deletion with retries to handle OS file locks.
+     * Similar to the pattern described in flaky test fix tip #4.
+     * Repeatedly attempts to delete the directory until successful or max retries reached.
+     *
+     * @param directory   the directory to delete
+     * @param description description for logging (e.g., repository type)
+     * @throws IOException if deletion fails after all retries
+     */
+    private void deleteDirectoryWithRetries(Path directory, String description) throws IOException {
+        if (!Files.exists(directory)) {
+            log.debug("{} directory does not exist, no cleanup needed: {}", description, directory);
+            return;
+        }
+
+        int maxAttempts = 10;
+        int attemptDelayMs = 100;
+        IOException lastException = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                FileUtils.deleteDirectory(directory.toFile());
+
+                // Verify deletion completed
+                if (!Files.exists(directory)) {
+                    log.debug("Successfully deleted {} directory after {} attempt(s): {}", description, attempt, directory);
+                    return;
+                }
+            }
+            catch (IOException e) {
+                lastException = e;
+                log.debug("{} directory deletion attempt {}/{} failed: {}", description, attempt, maxAttempts, e.getMessage());
+            }
+
+            // Wait before retry to allow OS to release file locks
+            if (attempt < maxAttempts) {
+                try {
+                    Thread.sleep(attemptDelayMs);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Interrupted while retrying directory deletion", e);
+                }
+            }
+        }
+
+        // If we got here, all attempts failed
+        if (Files.exists(directory)) {
+            String message = String.format("Failed to delete %s directory after %d attempts: %s", description, maxAttempts, directory);
+            log.error(message);
+            if (lastException != null) {
+                throw new IOException(message, lastException);
+            }
+            else {
+                throw new IOException(message);
             }
         }
     }
@@ -297,8 +377,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private void runTests(ProgrammingLanguage language, ProjectType projectType, RepositoryType repositoryType, TestResult testResult) throws Exception {
         // Add unique identifier to prevent repository path collisions between parameterized test iterations
         // This is critical because multiple tests may run in sequence and need isolated file system state
-        // Use a short hash-based suffix to stay within shortname length limits
-        String uniqueId = String.valueOf(System.currentTimeMillis() % 100000); // Last 5 digits of timestamp
+        // Use UUID to ensure absolute uniqueness (take first 8 chars to stay within shortname length limits)
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8).replace("-", "");
         String originalShortName = exercise.getShortName();
         exercise.setShortName(originalShortName + uniqueId);
         log.debug("Running test with unique exercise short name: {}", exercise.getShortName());
@@ -308,10 +388,20 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        // Wait briefly after exercise setup to ensure all async operations complete
+        // This is especially important for slow CI environments
+        Thread.sleep(500);
+
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
         Repository assignmentRepository = gitServiceSpy.getOrCheckoutRepository(assignmentUri, true, true);
         Repository testRepository = gitServiceSpy.getOrCheckoutRepository(testUri, true, true);
+
+        // Verify repositories are fully initialized before proceeding
+        verifyRepositorySetup(assignmentRepository, "assignment repository (" + repositoryType + ")");
+        verifyRepositorySetup(testRepository, "test repository");
+
         moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
         int exitCode;
         if (projectType != null && projectType.isGradle()) {
