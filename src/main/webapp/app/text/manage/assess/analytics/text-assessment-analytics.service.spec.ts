@@ -68,6 +68,7 @@ describe('TextAssessmentAnalytics Service', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        httpMock.verify();
     });
 
     it('should send assessment event if artemis analytics is enabled', () => {
@@ -116,9 +117,5 @@ describe('TextAssessmentAnalytics Service', () => {
         service.analyticsEnabled = false;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).not.toHaveBeenCalled();
-    });
-
-    afterEach(() => {
-        httpMock.verify();
     });
 });

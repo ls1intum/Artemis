@@ -66,15 +66,17 @@ describe('TutorEffortStatisticsComponent', () => {
             ],
         }).compileComponents();
 
+        textExerciseService = TestBed.inject(TextExerciseService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        router = TestBed.inject(Router);
+        // Create spies before detectChanges to capture calls made during ngOnInit
+        getNumberOfTutorsInvolvedInAssessmentStub = vi.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
+        calculateTutorEffortStub = vi.spyOn(textExerciseService, 'calculateTutorEffort');
+
         fixture = TestBed.createComponent(TutorEffortStatisticsComponent);
         component = fixture.componentInstance;
         compiled = fixture.debugElement.nativeElement;
         fixture.detectChanges();
-        textExerciseService = TestBed.inject(TextExerciseService);
-        textAssessmentService = TestBed.inject(TextAssessmentService);
-        getNumberOfTutorsInvolvedInAssessmentStub = vi.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
-        calculateTutorEffortStub = vi.spyOn(textExerciseService, 'calculateTutorEffort');
-        router = TestBed.inject(Router);
     });
 
     it('should call loadTutorEfforts and calculateTutorEffort on init', () => {

@@ -41,7 +41,7 @@ export class TextResultComponent {
         // Effect to process result when it changes
         effect(() => {
             const resultValue = this.result();
-            if (!resultValue || !resultValue.submission || !(resultValue.submission as TextSubmission)) {
+            if (!resultValue || !resultValue.submission) {
                 return;
             }
 

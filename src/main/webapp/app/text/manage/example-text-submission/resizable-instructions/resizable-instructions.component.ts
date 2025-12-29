@@ -18,7 +18,7 @@ export class ResizableInstructionsComponent {
     problemStatement = input<string>();
     sampleSolution = input<string>();
     gradingInstructions = input<string>();
-    toggleCollapse = input.required<(event: any, type?: string) => void>();
+    toggleCollapse = input.required<(event: MouseEvent, type?: string) => void>();
     toggleCollapseId = input<string>();
     readOnly = input.required<boolean>();
 
