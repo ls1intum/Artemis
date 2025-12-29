@@ -234,11 +234,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-
-        // Wait before cleanup to ensure all operations are complete
-        // This is especially important to allow git processes to fully terminate
-        Thread.sleep(1000);
-
         this.cleanUpRepositories();
     }
 
@@ -461,6 +456,42 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         throw new IllegalStateException("Exercise creation failed after " + maxAttempts + " attempts", lastException);
     }
 
+    /**
+     * Checks out a repository with retry logic to handle timing issues in slow CI environments.
+     * Repository checkout may fail if the repository is not fully initialized on disk yet.
+     *
+     * @param repositoryUri the URI of the repository to checkout
+     * @param description   description for logging
+     * @return the checked out repository
+     * @throws Exception if checkout fails after all retries
+     */
+    private Repository checkoutRepositoryWithRetry(LocalVCRepositoryUri repositoryUri, String description) throws Exception {
+        int maxAttempts = 10;
+        int retryDelayMs = 500;
+        Exception lastException = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                Repository repository = gitServiceSpy.getOrCheckoutRepository(repositoryUri, true, true);
+                verifyRepositorySetup(repository, description);
+                log.info("Successfully checked out {} on attempt {}/{}", description, attempt, maxAttempts);
+                return repository;
+            }
+            catch (Exception e) {
+                lastException = e;
+                log.debug("{} checkout attempt {}/{} failed: {}", description, attempt, maxAttempts, e.getMessage());
+
+                if (attempt < maxAttempts) {
+                    log.debug("Waiting {} ms before retry...", retryDelayMs);
+                    Thread.sleep(retryDelayMs);
+                }
+            }
+        }
+
+        log.error("Failed to checkout {} after {} attempts", description, maxAttempts);
+        throw new IllegalStateException(description + " checkout failed after " + maxAttempts + " attempts", lastException);
+    }
+
     private void runTests(ProgrammingLanguage language, ProjectType projectType, RepositoryType repositoryType, TestResult testResult) throws Exception {
         // Add unique identifier to prevent repository path collisions between parameterized test iterations
         // This is critical because multiple tests may run in sequence and need isolated file system state
@@ -478,22 +509,15 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Retry exercise creation to handle transient 500 errors in slow CI environments
         exercise = createExerciseWithRetry();
 
-        // Wait after exercise setup to ensure all async operations complete
-        // Increased wait time for slow CI environments to ensure git operations fully complete
-        Thread.sleep(5000);
-
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
         Repository assignmentRepository = null;
         Repository testRepository = null;
 
         try {
-            assignmentRepository = gitServiceSpy.getOrCheckoutRepository(assignmentUri, true, true);
-            testRepository = gitServiceSpy.getOrCheckoutRepository(testUri, true, true);
-
-            // Verify repositories are fully initialized before proceeding
-            verifyRepositorySetup(assignmentRepository, "assignment repository (" + repositoryType + ")");
-            verifyRepositorySetup(testRepository, "test repository");
+            // Use retry logic for repository checkout to handle timing issues in slow CI environments
+            assignmentRepository = checkoutRepositoryWithRetry(assignmentUri, "assignment repository (" + repositoryType + ")");
+            testRepository = checkoutRepositoryWithRetry(testUri, "test repository");
 
             // Wait for specific build files to exist in test repository with retry logic
             // This addresses the "pom.xml not found" errors in slow CI environments
@@ -667,6 +691,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 // Force synchronization to disk for each file
+                // This ensures file system has fully committed changes, even on network-mounted file systems
                 try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
                     channel.force(true);
                 }
@@ -677,17 +702,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             }
         });
         log.debug("File system synchronization completed for assignment sources");
-
-        // Add additional wait time for slow CI environments to ensure file system has fully committed changes
-        // This is especially important for network-mounted file systems or systems under heavy I/O load
-        try {
-            Thread.sleep(1000);
-            log.debug("Completed additional wait period after file synchronization");
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("Interrupted while waiting after file synchronization", e);
-        }
     }
 
     private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) throws InterruptedException {
