@@ -113,7 +113,7 @@ describe('TextResultComponent', () => {
         fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
 
-        expect(component.textResults).toHaveLength(4);
+        expect(component.textResults()).toHaveLength(4);
     });
 
     it('should repeat steps for each credit', () => {
@@ -244,10 +244,10 @@ describe('TextResultComponent', () => {
         fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
 
-        expect(component.textResults).toHaveLength(2);
-        expect(component.textResults[0].feedback).toBeDefined();
-        expect(component.textResults[0].feedback!.isSubsequent).toBeUndefined();
-        expect(component.textResults[1].feedback).toBeDefined();
-        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
+        expect(component.textResults()).toHaveLength(2);
+        expect(component.textResults()[0].feedback).toBeDefined();
+        expect(component.textResults()[0].feedback!.isSubsequent).toBeUndefined();
+        expect(component.textResults()[1].feedback).toBeDefined();
+        expect(component.textResults()[1].feedback!.isSubsequent).toBe(true);
     });
 });

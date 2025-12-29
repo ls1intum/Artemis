@@ -1,4 +1,4 @@
-@for (block of textResults; track block; let i = $index) {
+@for (block of textResults(); track block; let i = $index) {
     <span class="white-space" [ngClass]="block.cssClass" [innerHTML]="block.text"></span>
     @if (block.feedback) {
         @if (block.icon) {

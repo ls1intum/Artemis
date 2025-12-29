@@ -1,4 +1,4 @@
-import { Component, HostListener, effect, inject, input, model, output } from '@angular/core';
+import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
@@ -33,10 +33,11 @@ export class TextAssessmentAreaComponent {
     // outputs
     textBlockRefsAddedRemoved = output<void>();
 
-    autoTextBlockAssessment = true;
-    selectedRef?: TextBlockRef;
-    wordCount = 0;
-    characterCount = 0;
+    // state signals
+    autoTextBlockAssessment = signal(true);
+    selectedRef = model<TextBlockRef | undefined>(undefined);
+    wordCount = signal(0);
+    characterCount = signal(0);
 
     constructor() {
         // Effect to handle submission changes and sort textBlockRefs
@@ -44,8 +45,8 @@ export class TextAssessmentAreaComponent {
             const submissionValue = this.submission();
             if (submissionValue) {
                 const { text } = submissionValue;
-                this.wordCount = this.stringCountService.countWords(text);
-                this.characterCount = this.stringCountService.countCharacters(text);
+                this.wordCount.set(this.stringCountService.countWords(text));
+                this.characterCount.set(this.stringCountService.countCharacters(text));
             }
 
             const refs = this.textBlockRefs();
@@ -61,7 +62,7 @@ export class TextAssessmentAreaComponent {
         if (!this.allowManualBlockSelection()) {
             return;
         }
-        this.autoTextBlockAssessment = toggleValue;
+        this.autoTextBlockAssessment.set(toggleValue);
     }
 
     /**
@@ -100,6 +101,6 @@ export class TextAssessmentAreaComponent {
      * @param ref - selected TextBlockRef
      */
     didSelectRef(ref?: TextBlockRef): void {
-        this.selectedRef = ref;
+        this.selectedRef.set(ref);
     }
 }

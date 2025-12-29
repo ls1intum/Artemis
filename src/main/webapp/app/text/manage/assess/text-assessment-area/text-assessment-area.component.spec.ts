@@ -83,7 +83,7 @@ describe('TextAssessmentAreaComponent', () => {
 
         component.onAltToggle(eventMock, false);
         expect(spyOnAlt).toHaveBeenCalledOnce();
-        expect(component.autoTextBlockAssessment).toBe(false);
+        expect(component.autoTextBlockAssessment()).toBe(false);
     });
 
     it('should not toggle on alt when manual selection forbidden', () => {
@@ -94,7 +94,7 @@ describe('TextAssessmentAreaComponent', () => {
         fixture.detectChanges();
         component.onAltToggle(eventMock, false);
         expect(spyOnAlt).toHaveBeenCalledOnce();
-        expect(component.autoTextBlockAssessment).toBe(true);
+        expect(component.autoTextBlockAssessment()).toBe(true);
     });
 
     it('should add TextBlockRef if text block is added manually', () => {
