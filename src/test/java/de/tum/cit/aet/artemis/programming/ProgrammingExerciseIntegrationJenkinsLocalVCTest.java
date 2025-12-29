@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
 // Run tests sequentially to avoid interference with shared LocalVC repositories and temp directories
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "progexjenklocalvc";
 

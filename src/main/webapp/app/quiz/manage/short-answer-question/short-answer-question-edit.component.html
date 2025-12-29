@@ -416,7 +416,7 @@
                 }
                 @if (shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length) {
                     <div class="drag-items" cdkDropList cdkDropListOrientation="horizontal">
-                        @for (solution of shortAnswerQuestion.solutions; track solution) {
+                        @for (solution of shortAnswerQuestion.solutions; track solution.id ?? solution.tempID) {
                             <div class="drag-item" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
                                 <div>
                                     <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
@@ -428,7 +428,7 @@
                                     <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
                                 </div>
                                 <div class="mapping-numbers-wrapper">
-                                    @for (mapping of getMappingsForSolution(solution); track mapping) {
+                                    @for (mapping of getMappingsForSolution(solution); track mapping.id ?? mapping.spot?.id ?? mapping.spot?.tempID) {
                                         <div>
                                             @if (mapping.spot !== undefined) {
                                                 <div [ngClass]="'mapping-number mapping-color-' + ((mapping.spot!.spotNr || 0) % 8)">

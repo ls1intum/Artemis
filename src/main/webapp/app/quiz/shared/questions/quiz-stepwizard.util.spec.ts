@@ -1,7 +1,11 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { addTemporaryHighlightToQuestion } from './quiz-stepwizard.util';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 
 describe('QuizStepwizardUtil', () => {
+    setupTestBed({ zoneless: true });
+
     let mockQuestion: QuizQuestion;
 
     beforeEach(() => {
@@ -9,57 +13,57 @@ describe('QuizStepwizardUtil', () => {
             isHighlighted: false,
         } as QuizQuestion;
 
-        jest.useFakeTimers(); // Mock timers
+        vi.useFakeTimers(); // Mock timers
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     describe('addTemporaryHighlightToQuestion', () => {
         it('should immediately set isHighlighted to true', () => {
             addTemporaryHighlightToQuestion(mockQuestion);
 
-            expect(mockQuestion.isHighlighted).toBeTrue();
+            expect(mockQuestion.isHighlighted).toBe(true);
         });
 
         it('should set isHighlighted to false after 1500ms', () => {
             addTemporaryHighlightToQuestion(mockQuestion);
 
-            expect(mockQuestion.isHighlighted).toBeTrue();
+            expect(mockQuestion.isHighlighted).toBe(true);
 
-            jest.advanceTimersByTime(1500);
+            vi.advanceTimersByTime(1500);
 
-            expect(mockQuestion.isHighlighted).toBeFalse();
+            expect(mockQuestion.isHighlighted).toBe(false);
         });
 
         it('should not set isHighlighted to false before 1500ms', () => {
             addTemporaryHighlightToQuestion(mockQuestion);
 
-            expect(mockQuestion.isHighlighted).toBeTrue();
+            expect(mockQuestion.isHighlighted).toBe(true);
 
             // Fast-forward time by 1499ms (just before the timeout)
-            jest.advanceTimersByTime(1499);
+            vi.advanceTimersByTime(1499);
 
-            expect(mockQuestion.isHighlighted).toBeTrue();
+            expect(mockQuestion.isHighlighted).toBe(true);
         });
 
         it('should handle multiple calls correctly', () => {
             addTemporaryHighlightToQuestion(mockQuestion);
-            expect(mockQuestion.isHighlighted).toBeTrue();
+            expect(mockQuestion.isHighlighted).toBe(true);
 
             // Call again before first timeout completes
-            jest.advanceTimersByTime(500);
+            vi.advanceTimersByTime(500);
             addTemporaryHighlightToQuestion(mockQuestion);
-            expect(mockQuestion.isHighlighted).toBeTrue();
+            expect(mockQuestion.isHighlighted).toBe(true);
 
             // First timeout should still trigger
-            jest.advanceTimersByTime(1000);
-            expect(mockQuestion.isHighlighted).toBeFalse();
+            vi.advanceTimersByTime(1000);
+            expect(mockQuestion.isHighlighted).toBe(false);
 
             // But second timeout should set it back to false again
-            jest.advanceTimersByTime(500);
-            expect(mockQuestion.isHighlighted).toBeFalse();
+            vi.advanceTimersByTime(500);
+            expect(mockQuestion.isHighlighted).toBe(false);
         });
     });
 });
