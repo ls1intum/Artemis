@@ -224,18 +224,30 @@ public class SharedQueueProcessingService {
         });
     }
 
+    /**
+     * Cleanup method called when the service is being destroyed.
+     * Removes the queue listener and cancels the scheduled availability check.
+     */
     @PreDestroy
     public void removeListenerAndCancelScheduledFuture() {
         removeListener();
         cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
 
+    /**
+     * Removes the item listener from the distributed build job queue.
+     * Only removes if the Hazelcast instance is still running and a listener was registered.
+     */
     private void removeListener() {
         if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
             distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
         }
     }
 
+    /**
+     * Cancels the scheduled future that periodically checks availability and processes builds.
+     * Uses non-interrupting cancel to allow current execution to complete gracefully.
+     */
     private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
         if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
             scheduledFuture.cancel(false);
@@ -328,6 +340,23 @@ public class SharedQueueProcessingService {
         }
     }
 
+    /**
+     * Atomically dequeues a build job and registers it as a processing job on this node.
+     * <p>
+     * This method:
+     * <ol>
+     * <li>Polls the next job from the distributed queue</li>
+     * <li>Assigns this build agent as the job's executor</li>
+     * <li>Calculates the estimated completion time</li>
+     * <li>Registers the job in the distributed processing jobs map</li>
+     * <li>Increments the local processing counter</li>
+     * </ol>
+     * <p>
+     * <b>Must be called while holding {@link #availabilityAndDequeueLock}</b> to prevent
+     * race conditions with concurrent dequeue operations.
+     *
+     * @return the processing job item, or null if the queue was empty
+     */
     private BuildJobQueueItem addToProcessingJobs() {
         BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedBuildJobQueue().poll();
         if (buildJob != null) {
@@ -348,7 +377,11 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Removes build agent information for offline nodes and processing jobs that are assigned to these nodes.
+     * Removes build agent information and processing jobs for nodes that are no longer in the cluster.
+     * <p>
+     * This cleanup is necessary because when a node goes offline unexpectedly (e.g., crash),
+     * its build agent information and any jobs it was processing remain in the distributed maps.
+     * This method detects such stale entries by comparing registered agents with current cluster members.
      */
     private void removeOfflineNodes() {
         Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
@@ -360,11 +393,24 @@ public class SharedQueueProcessingService {
         }
     }
 
+    /**
+     * Removes the build agent information entry for a specific node from the distributed map.
+     *
+     * @param memberAddress the Hazelcast member address of the offline node
+     */
     private void removeBuildAgentInformationForNode(String memberAddress) {
         log.debug("Cleaning up build agent information for offline node: {}", memberAddress);
         distributedDataAccessService.getDistributedBuildAgentInformation().remove(memberAddress);
     }
 
+    /**
+     * Removes all processing jobs that were assigned to an offline node.
+     * <p>
+     * These jobs were being processed when the node went offline and need to be cleaned up.
+     * Note: The jobs are not re-queued here as they may have been partially processed.
+     *
+     * @param memberAddress the Hazelcast member address of the offline node
+     */
     private void removeProcessingJobsForNode(String memberAddress) {
         List<String> jobsToRemove = distributedDataAccessService.getProcessingJobIdsForAgent(memberAddress);
         log.debug("Removing {} processing jobs for offline node: {}", jobsToRemove.size(), memberAddress);
