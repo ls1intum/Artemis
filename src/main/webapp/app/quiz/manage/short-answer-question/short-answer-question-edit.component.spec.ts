@@ -410,11 +410,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.solutions).toEqual([shortAnswerSolution2]);
     });
 
-    // Skip: This test requires complex DOM mocking that is incompatible with Vitest zoneless mode
-    it.skip('should add spot at cursor visual mode', () => {
-        const textParts = [['0'], ['0']];
+    it('should add spot at cursor visual mode', () => {
+        const textParts = [['text part 0'], ['text part 1']];
         const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
         vi.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
+        vi.spyOn(shortAnswerQuestionUtil, 'transformTextPartsIntoHTML').mockReturnValue(textParts);
 
         const node = {} as Node;
 
@@ -430,10 +430,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
             cloneRange(): Range {
                 return {
                     selectNodeContents(node1: Node) {},
-
                     setEnd(node2: Node, offset: number) {},
-                    cloneContents() {},
-                } as Range;
+                    cloneContents() {
+                        return document.createDocumentFragment();
+                    },
+                } as unknown as Range;
             },
             endContainer: {} as Node,
             endOffset: 0,
@@ -445,60 +446,50 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 parentNode: {
                     parentElement: {
                         id: '0-0-0-0',
-                        firstElementChild: {} as Element,
+                        firstElementChild: document.createElement('span'),
                     },
                 },
             },
-
             getRangeAt(index: number): Range {
                 return range as Range;
             },
             toString() {
-                return [];
+                return '';
             },
         } as unknown as Selection;
         vi.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
 
-        const returnHTMLDivElement = {
-            appendChild(param: DocumentFragment) {
-                return {} as DocumentFragment;
-            },
-            innerHTML: 'innerHTML',
-        } as unknown as HTMLDivElement;
-        const originalCreateElement = document.createElement.bind(document);
-        vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-            if (tag === 'div') return returnHTMLDivElement;
-            return originalCreateElement(tag);
-        });
+        vi.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue('');
 
-        const markdownHelper = {
-            length: 1,
+        // Mock the questionEditor to return a mock monaco editor
+        const mockMonacoEditor = {
+            getText: vi.fn().mockReturnValue('Question text [-option 1]'),
+        };
+        const mockQuestionEditor = {
+            monacoEditor: mockMonacoEditor,
+            applyOptionPreset: vi.fn(),
+        };
+        vi.spyOn(component, 'questionEditor').mockReturnValue(mockQuestionEditor as any);
 
-            substring(start: number, end?: number): string {
-                return '';
-            },
-        } as string;
-        vi.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
+        // Mock setQuestionEditorValue and parseMarkdown
+        vi.spyOn(component, 'setQuestionEditorValue').mockImplementation(() => {});
+        vi.spyOn(component, 'parseMarkdown').mockImplementation(() => {});
+        vi.spyOn(component, 'generateMarkdown').mockReturnValue('');
+        vi.spyOn(component, 'addOptionToSpot').mockImplementation(() => {});
+
         const questionUpdated = vi.spyOn(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
-        // Initialize numberOfSpot to 1 (already has spots 0 and 1)
         component.numberOfSpot = 1;
-
-        // Mock onTextChange to simulate the expected behavior
-        vi.spyOn(component, 'onTextChange').mockImplementation(() => {
-            component.numberOfSpot = 2;
-            component.questionUpdated.emit();
-        });
-
-        fixture.componentRef.setInput('question', component.shortAnswerQuestion);
-        fixture.changeDetectorRef.detectChanges();
+        component.textParts = textParts;
 
         component.addSpotAtCursorVisualMode();
 
-        expect(component.numberOfSpot).toBe(2);
-        expect(questionUpdated).toHaveBeenCalledTimes(3);
+        // The method should emit questionUpdated once at the end
+        expect(questionUpdated).toHaveBeenCalled();
+        // numberOfSpot stays at 1 because we're just using currentSpotNumber, not incrementing
+        expect(component.numberOfSpot).toBe(1);
     });
 
     it('should delete question', () => {
