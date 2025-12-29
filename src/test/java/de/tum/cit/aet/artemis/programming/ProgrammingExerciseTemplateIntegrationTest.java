@@ -313,6 +313,89 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     /**
+     * Waits for a specific directory to exist with retry logic.
+     * This is crucial for slow CI environments where repository operations may not complete immediately.
+     *
+     * @param directoryPath the path of the directory to wait for
+     * @param description   description for logging
+     * @throws InterruptedException  if interrupted while waiting
+     * @throws IllegalStateException if directory does not exist after all retries
+     */
+    private void waitForDirectoryToExist(Path directoryPath, String description) throws InterruptedException {
+        int maxRetries = 30; // Increased retries for slow CI
+        int retryDelayMs = 1000; // 1 second delay (30 seconds total)
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            if (Files.exists(directoryPath) && Files.isDirectory(directoryPath)) {
+                log.info("{} found after {} attempt(s) at: {}", description, attempt, directoryPath);
+                return;
+            }
+
+            if (attempt < maxRetries) {
+                log.debug("{} not found yet (attempt {}/{}), waiting {} ms...", description, attempt, maxRetries, retryDelayMs);
+                Thread.sleep(retryDelayMs);
+            }
+        }
+
+        // Log diagnostic information for debugging
+        Path parentDir = directoryPath.getParent();
+        String diagnosticInfo = String.format("Parent directory %s exists: %s", parentDir, Files.exists(parentDir));
+        if (Files.exists(parentDir)) {
+            try (Stream<Path> files = Files.list(parentDir)) {
+                List<String> dirNames = files.filter(Files::isDirectory).map(Path::getFileName).map(Path::toString).toList();
+                diagnosticInfo += String.format(", contains %d subdirectories: %s", dirNames.size(), dirNames);
+            }
+            catch (IOException e) {
+                diagnosticInfo += ", unable to list parent directory: " + e.getMessage();
+            }
+        }
+
+        log.error("{} not found after {} retries. {}", description, maxRetries, diagnosticInfo);
+        throw new IllegalStateException(String.format("%s not found at %s after %d attempts. %s", description, directoryPath, maxRetries, diagnosticInfo));
+    }
+
+    /**
+     * Waits for repositories to be initialized on disk after exercise creation.
+     * Actively checks that repository paths exist rather than using a fixed delay.
+     * This is critical in slow CI environments where background repository initialization may still be running.
+     *
+     * @param assignmentUri the assignment repository URI
+     * @param testUri       the test repository URI
+     * @throws InterruptedException  if interrupted while waiting
+     * @throws IllegalStateException if repositories are not initialized after all retries
+     */
+    private void waitForRepositoriesToBeInitialized(LocalVCRepositoryUri assignmentUri, LocalVCRepositoryUri testUri) throws InterruptedException {
+        int maxRetries = 15;
+        int retryDelayMs = 500; // 500ms delay (7.5 seconds total)
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            Path assignmentPath = assignmentUri.getLocalRepositoryPath(localVCBasePath);
+            Path testPath = testUri.getLocalRepositoryPath(localVCBasePath);
+
+            boolean assignmentExists = Files.exists(assignmentPath) && Files.isDirectory(assignmentPath);
+            boolean testExists = Files.exists(testPath) && Files.isDirectory(testPath);
+
+            if (assignmentExists && testExists) {
+                log.info("Repositories initialized after {} attempt(s)", attempt);
+                return;
+            }
+
+            if (attempt < maxRetries) {
+                log.debug("Repositories not yet initialized (attempt {}/{}): assignment={}, test={}", attempt, maxRetries, assignmentExists, testExists);
+                Thread.sleep(retryDelayMs);
+            }
+        }
+
+        // Provide diagnostic information if initialization fails
+        Path assignmentPath = assignmentUri.getLocalRepositoryPath(localVCBasePath);
+        Path testPath = testUri.getLocalRepositoryPath(localVCBasePath);
+        String diagnosticInfo = String.format("Assignment repository exists: %s, Test repository exists: %s", Files.exists(assignmentPath), Files.exists(testPath));
+
+        log.error("Repositories not initialized after {} retries. {}", maxRetries, diagnosticInfo);
+        throw new IllegalStateException(String.format("Repositories not initialized after %d attempts. %s", maxRetries, diagnosticInfo));
+    }
+
+    /**
      * Robust directory deletion with retries to handle OS file locks.
      * Similar to the pattern described in flaky test fix tip #4.
      * Repeatedly attempts to delete the directory until successful or max retries reached.
@@ -511,6 +594,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
+
+        // Wait for repositories to be initialized on disk after exercise creation
+        // This actively checks repository existence instead of using a fixed delay
+        // Critical for slow CI environments where background repository initialization may still be running
+        waitForRepositoriesToBeInitialized(assignmentUri, testUri);
         Repository assignmentRepository = null;
         Repository testRepository = null;
 
@@ -523,6 +611,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             // This addresses the "pom.xml not found" errors in slow CI environments
             String buildFileName = (projectType != null && projectType.isGradle()) ? "build.gradle" : "pom.xml";
             waitForFileToExist(testRepository.getLocalPath(), buildFileName, "test repository build file");
+
+            // Wait for src directory to exist in assignment repository
+            // This is critical because the repository might be checked out but not yet populated
+            waitForDirectoryToExist(assignmentRepository.getLocalPath().resolve("src"), "assignment repository src directory");
 
             moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
             int exitCode;
