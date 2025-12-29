@@ -271,6 +271,49 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     /**
+     * Waits for a specific file to exist in a directory with retry logic.
+     * This is crucial for slow CI environments where git operations may not complete immediately.
+     *
+     * @param directory   the directory containing the file
+     * @param fileName    the name of the file to wait for
+     * @param description description for logging
+     * @throws InterruptedException  if interrupted while waiting
+     * @throws IllegalStateException if file does not exist after all retries
+     */
+    private void waitForFileToExist(Path directory, String fileName, String description) throws InterruptedException {
+        Path filePath = directory.resolve(fileName);
+        int maxRetries = 20;
+        int retryDelayMs = 500;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            if (Files.exists(filePath)) {
+                log.info("{} ({}) found after {} attempt(s) at: {}", description, fileName, attempt, filePath);
+                return;
+            }
+
+            if (attempt < maxRetries) {
+                log.debug("{} ({}) not found yet (attempt {}/{}), waiting {} ms...", description, fileName, attempt, maxRetries, retryDelayMs);
+                Thread.sleep(retryDelayMs);
+            }
+        }
+
+        // Log diagnostic information for debugging
+        String diagnosticInfo = String.format("Directory %s exists: %s", directory, Files.exists(directory));
+        if (Files.exists(directory)) {
+            try (Stream<Path> files = Files.list(directory)) {
+                List<String> fileNames = files.map(Path::getFileName).map(Path::toString).toList();
+                diagnosticInfo += String.format(", contains %d files: %s", fileNames.size(), fileNames);
+            }
+            catch (IOException e) {
+                diagnosticInfo += ", unable to list files: " + e.getMessage();
+            }
+        }
+
+        log.error("{} ({}) not found after {} retries. {}", description, fileName, maxRetries, diagnosticInfo);
+        throw new IllegalStateException(String.format("%s (%s) not found in directory %s after %d attempts. %s", description, fileName, directory, maxRetries, diagnosticInfo));
+    }
+
+    /**
      * Robust directory deletion with retries to handle OS file locks.
      * Similar to the pattern described in flaky test fix tip #4.
      * Repeatedly attempts to delete the directory until successful or max retries reached.
@@ -380,6 +423,40 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         assumeTrue(java17Home != null, "Could not find Java 17. Skipping execution of template tests.");
     }
 
+    /**
+     * Creates a programming exercise with retry logic to handle transient 500 errors.
+     * In slow CI environments, exercise setup may fail transiently due to timing issues with LocalVC or Jenkins setup.
+     *
+     * @return the created programming exercise
+     * @throws Exception if exercise creation fails after all retries
+     */
+    private ProgrammingExercise createExerciseWithRetry() throws Exception {
+        int maxAttempts = 3;
+        int retryDelayMs = 1000;
+        Exception lastException = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class,
+                        HttpStatus.CREATED);
+                log.info("Successfully created exercise on attempt {}/{}", attempt, maxAttempts);
+                return createdExercise;
+            }
+            catch (Exception e) {
+                lastException = e;
+                log.warn("Exercise creation attempt {}/{} failed: {}", attempt, maxAttempts, e.getMessage());
+
+                if (attempt < maxAttempts) {
+                    log.debug("Waiting {} ms before retry...", retryDelayMs);
+                    Thread.sleep(retryDelayMs);
+                }
+            }
+        }
+
+        log.error("Failed to create exercise after {} attempts", maxAttempts);
+        throw new IllegalStateException("Exercise creation failed after " + maxAttempts + " attempts", lastException);
+    }
+
     private void runTests(ProgrammingLanguage language, ProjectType projectType, RepositoryType repositoryType, TestResult testResult) throws Exception {
         // Add unique identifier to prevent repository path collisions between parameterized test iterations
         // This is critical because multiple tests may run in sequence and need isolated file system state
@@ -393,11 +470,13 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
-        exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
-        // Wait briefly after exercise setup to ensure all async operations complete
+        // Retry exercise creation to handle transient 500 errors in slow CI environments
+        exercise = createExerciseWithRetry();
+
+        // Wait after exercise setup to ensure all async operations complete
         // This is especially important for slow CI environments
-        Thread.sleep(500);
+        Thread.sleep(2000);
 
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
@@ -407,6 +486,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Verify repositories are fully initialized before proceeding
         verifyRepositorySetup(assignmentRepository, "assignment repository (" + repositoryType + ")");
         verifyRepositorySetup(testRepository, "test repository");
+
+        // Wait for specific build files to exist in test repository with retry logic
+        // This addresses the "pom.xml not found" errors in slow CI environments
+        String buildFileName = (projectType != null && projectType.isGradle()) ? "build.gradle" : "pom.xml";
+        waitForFileToExist(testRepository.getLocalPath(), buildFileName, "test repository build file");
 
         moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
         int exitCode;
