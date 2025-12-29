@@ -64,9 +64,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         // Sync input to internal state
         effect(() => {
             const inputValue = this.textExercises();
-            if (inputValue && inputValue.length > 0) {
-                this.internalTextExercises = inputValue;
-            }
+            this.internalTextExercises = inputValue ?? [];
         });
     }
 

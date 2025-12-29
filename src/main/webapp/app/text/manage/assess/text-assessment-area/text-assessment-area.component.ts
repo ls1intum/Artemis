@@ -40,7 +40,7 @@ export class TextAssessmentAreaComponent {
     characterCount = signal(0);
 
     constructor() {
-        // Effect to handle submission changes and sort textBlockRefs
+        // Effect to handle submission changes - updates word/character counts
         effect(() => {
             const submissionValue = this.submission();
             if (submissionValue) {
@@ -48,10 +48,23 @@ export class TextAssessmentAreaComponent {
                 this.wordCount.set(this.stringCountService.countWords(text));
                 this.characterCount.set(this.stringCountService.countCharacters(text));
             }
+        });
 
+        // Effect to ensure textBlockRefs are sorted by startIndex
+        effect(() => {
             const refs = this.textBlockRefs();
-            if (refs) {
-                refs.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
+            if (!refs || refs.length <= 1) {
+                return;
+            }
+
+            // Create a sorted copy without mutating the original
+            const sortedRefs = [...refs].sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
+
+            // Check if order actually changed by comparing startIndices
+            const orderChanged = refs.some((ref, index) => ref.block!.startIndex !== sortedRefs[index].block!.startIndex);
+
+            if (orderChanged) {
+                this.textBlockRefs.set(sortedRefs);
             }
         });
     }

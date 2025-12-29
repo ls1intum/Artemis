@@ -15,10 +15,10 @@ export class MockActivatedRoute extends ActivatedRoute {
         this.url = this.urlSubject.asObservable();
         this.setParameters(parameters);
         this.urlSubject.next([]);
-        // Provide a default snapshot with paramMap
+        // Provide a default snapshot with paramMap and queryParamMap
         this.snapshot = {
             paramMap: convertToParamMap(parameters || {}),
-            queryParamMap: convertToParamMap({}),
+            queryParamMap: convertToParamMap(parameters || {}),
         } as ActivatedRouteSnapshot;
     }
 
