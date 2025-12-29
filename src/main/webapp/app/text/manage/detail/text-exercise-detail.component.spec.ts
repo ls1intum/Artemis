@@ -2,6 +2,7 @@
  * Tests for TextExerciseDetailComponent.
  * Verifies the component's behavior when displaying text exercise details for both course and exam exercises.
  */
+import { Component, Input } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -23,6 +24,53 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { MockDirective } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
+// Mock child components to avoid their complex dependencies
+@Component({
+    selector: 'jhi-non-programming-exercise-detail-common-actions',
+    template: '',
+    standalone: true,
+})
+class MockNonProgrammingExerciseDetailCommonActionsComponent {
+    @Input() isExamExercise: boolean;
+    @Input() course: any;
+    @Input() exercise: any;
+}
+
+@Component({
+    selector: 'jhi-exercise-detail-statistics',
+    template: '',
+    standalone: true,
+})
+class MockExerciseDetailStatisticsComponent {
+    @Input() exercise: any;
+    @Input() doughnutStats: any;
+    @Input() exerciseType: any;
+}
+
+@Component({
+    selector: 'jhi-detail-overview-list',
+    template: '',
+    standalone: true,
+})
+class MockDetailOverviewListComponent {
+    @Input() sections: any;
+}
+
+@Component({
+    selector: 'jhi-documentation-button',
+    template: '',
+    standalone: true,
+})
+class MockDocumentationButtonComponent {
+    @Input() type: any;
+}
 
 describe('TextExercise Management Detail Component', () => {
     setupTestBed({ zoneless: true });
@@ -56,7 +104,28 @@ describe('TextExercise Management Detail Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TextExerciseDetailComponent, {
+                remove: {
+                    imports: [
+                        NonProgrammingExerciseDetailCommonActionsComponent,
+                        ExerciseDetailStatisticsComponent,
+                        DetailOverviewListComponent,
+                        DocumentationButtonComponent,
+                        TranslateDirective,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockNonProgrammingExerciseDetailCommonActionsComponent,
+                        MockExerciseDetailStatisticsComponent,
+                        MockDetailOverviewListComponent,
+                        MockDocumentationButtonComponent,
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(TextExerciseDetailComponent);
         comp = fixture.componentInstance;
         exerciseService = TestBed.inject(TextExerciseService);
@@ -73,8 +142,7 @@ describe('TextExercise Management Detail Component', () => {
             route.params = of({ exerciseId: textExerciseWithCourse.id });
         });
 
-        // TODO: This test requires investigation for zoneless testing - child component (DoughnutChartComponent) requires course.id
-        it.skip('should call load on init and be not in exam mode', () => {
+        it('should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             const exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
@@ -86,13 +154,13 @@ describe('TextExercise Management Detail Component', () => {
                 ),
             );
             const statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+
             // WHEN
             fixture.detectChanges();
-            comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
+            expect(exerciseServiceStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBe(false);
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
@@ -111,8 +179,7 @@ describe('TextExercise Management Detail Component', () => {
             route.params = of({ exerciseId: textExerciseWithExerciseGroup.id });
         });
 
-        // TODO: This test requires investigation for zoneless testing - child component (DoughnutChartComponent) requires course.id
-        it.skip('should call load on init and be in exam mode', () => {
+        it('should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             const exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
@@ -127,11 +194,10 @@ describe('TextExercise Management Detail Component', () => {
 
             // WHEN
             fixture.detectChanges();
-            comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
+            expect(exerciseServiceStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBe(true);
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });

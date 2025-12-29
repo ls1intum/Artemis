@@ -45,6 +45,7 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -95,14 +96,43 @@ describe('ExampleTextSubmissionComponent', () => {
                 },
                 LocalStorageService,
                 SessionStorageService,
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ExampleTextSubmissionComponent, {
+                remove: {
+                    imports: [
+                        TranslateDirective,
+                        HelpIconComponent,
+                        ConfirmAutofocusButtonComponent,
+                        ResizeableContainerComponent,
+                        ScoreDisplayComponent,
+                        TextAssessmentAreaComponent,
+                        AssessmentInstructionsComponent,
+                        UnreferencedFeedbackComponent,
+                        ArtemisTranslatePipe,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(ConfirmAutofocusButtonComponent),
+                        MockComponent(ResizeableContainerComponent),
+                        MockComponent(ScoreDisplayComponent),
+                        MockComponent(TextAssessmentAreaComponent),
+                        MockComponent(AssessmentInstructionsComponent),
+                        MockComponent(UnreferencedFeedbackComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
         comp = fixture.componentInstance;
@@ -147,8 +177,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.state.constructor.name).toBe('EditState');
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('should mark text blocks not included in the example submission correctly', async () => {
+    it('should mark text blocks not included in the example submission correctly', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
@@ -254,8 +283,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.state.constructor.name).toBe('NewAssessmentState');
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('should save assessment', async () => {
+    it('should save assessment', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
@@ -302,8 +330,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('editing submission from assessment state switches state', async () => {
+    it('editing submission from assessment state switches state', async () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
@@ -344,8 +371,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('should verify correct tutorial submission', async () => {
+    it('should verify correct tutorial submission', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
@@ -394,8 +420,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('when wrong tutor assessment, upon server response should mark feedback as incorrect', async () => {
+    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', async () => {
         // GIVEN
         const textBlockRefA = TextBlockRef.new();
         textBlockRefA.block!.id = 'ID';
@@ -439,12 +464,13 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(feedbackB.correctionStatus).toBe('CORRECT');
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('should create new example submission', async () => {
+    it('should create new example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
         const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(httpResponse(exampleSubmission));
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
+        // Mock the navigation util to avoid window.location.href regex matching issues
+        vi.spyOn(comp['navigationUtilService'], 'replaceNewWithIdInUrl').mockImplementation(() => {});
 
         comp.createNewExampleTextSubmission();
         await fixture.whenStable();
@@ -453,8 +479,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('should not create example submission', async () => {
+    it('should not create example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
         const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -467,8 +492,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    // TODO: This test requires investigation for zoneless testing - TranslateDirective pipe issue
-    it.skip('should read and understood', () => {
+    it('should read and understood', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const dto: TutorParticipationDTO = {

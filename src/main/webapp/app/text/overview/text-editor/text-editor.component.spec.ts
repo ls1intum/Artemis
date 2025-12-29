@@ -54,8 +54,41 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { FormsModule } from '@angular/forms';
+import { Component, Input } from '@angular/core';
+
+// Mock components to avoid complex dependencies
+@Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
+class MockHeaderParticipationPageComponent {
+    @Input() exercise: any;
+    @Input() participation: any;
+}
+
+@Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
+class MockRequestFeedbackButtonComponent {
+    @Input() exercise: any;
+    @Input() pendingChanges: any;
+    @Input() hasAthenaResultForLatestSubmission: any;
+    @Input() isGeneratingFeedback: any;
+    @Input() isSubmitted: any;
+}
+
+@Component({ selector: 'jhi-result-history', template: '', standalone: true })
+class MockResultHistoryComponent {
+    @Input() results: any;
+    @Input() exercise: any;
+    @Input() participationInput: any;
+    @Input() selectedResultId: any;
+}
+
+@Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
+class MockIrisExerciseChatbotButtonComponent {
+    @Input() mode: any;
+}
 
 describe('TextEditorComponent', () => {
     setupTestBed({ zoneless: true });
@@ -92,7 +125,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(HeaderParticipationPageComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
@@ -114,7 +146,22 @@ describe('TextEditorComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TextEditorComponent, {
+                remove: {
+                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, ResultHistoryComponent, IrisExerciseChatbotButtonComponent],
+                },
+                add: {
+                    imports: [
+                        MockHeaderParticipationPageComponent,
+                        MockRequestFeedbackButtonComponent,
+                        MockResultHistoryComponent,
+                        MockIrisExerciseChatbotButtonComponent,
+                        FormsModule,
+                    ],
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(TextEditorComponent);
         comp = fixture.componentInstance;
         textService = TestBed.inject(TextEditorService);
@@ -159,8 +206,7 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
-    it.skip('should not allow to submit after the due date if the initialization date is before the due date', async () => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', async () => {
         participation.initializationDate = dayjs();
         textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
@@ -175,8 +221,7 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
-    it.skip('should allow to submit after the due date if the initialization date is after the due date', async () => {
+    it('should allow to submit after the due date if the initialization date is after the due date', async () => {
         participation.initializationDate = dayjs().add(1, 'days');
         textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
@@ -191,8 +236,7 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
-    it.skip('should not be always active if there is a result and no due date', async () => {
+    it('should not be always active if there is a result and no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.result = result;
@@ -206,8 +250,7 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
     });
 
-    // TODO: This test requires investigation for zoneless testing - ArtemisTimeAgoPipe.format() issue
-    it.skip('should be always active if there is no result and the initialization date is after the due date', async () => {
+    it('should be always active if there is no result and the initialization date is after the due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
@@ -222,8 +265,7 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
     });
 
-    // TODO: This test requires investigation for zoneless testing - ArtemisTimeAgoPipe.format() issue
-    it.skip('should get inactive as soon as the due date passes the current date', async () => {
+    it('should get inactive as soon as the due date passes the current date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         textExercise.dueDate = dayjs().add(1, 'days');
@@ -426,8 +468,7 @@ describe('TextEditorComponent', () => {
         expect(comp.submission.id).toBe(4);
     });
 
-    // TODO: This test requires investigation for zoneless testing - ArtemisTimeAgoPipe.format() issue
-    it.skip('should not render the submit button when isReadOnlyWithShowResult is true', () => {
+    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
         comp.isReadOnlyWithShowResult = true;
         comp.textExercise = textExercise;
         fixture.changeDetectorRef.detectChanges();
@@ -436,8 +477,7 @@ describe('TextEditorComponent', () => {
         expect(submitButton).toBeFalsy();
     });
 
-    // TODO: This test requires investigation for zoneless testing - template rendering issues
-    it.skip('should render the submit button when isReadOnlyWithShowResult is false', () => {
+    it('should render the submit button when isReadOnlyWithShowResult is false', () => {
         comp.isOwnerOfParticipation = true;
         comp.isReadOnlyWithShowResult = false;
         comp.isAlwaysActive = true;
@@ -499,39 +539,31 @@ describe('TextEditorComponent', () => {
         expect(comp.irisSettings).toEqual(mockIrisSettings);
     });
 
-    // TODO: This test requires investigation for zoneless testing - async timing issues
-    it.skip('should not load Iris settings when in exam mode', async () => {
-        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-
+    it('should not load Iris settings when in exam mode', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
-        route.params = of({ exerciseId: '456' });
-
+        // Set up exercise and exam mode
+        comp.textExercise = textExercise;
         comp.examMode = true;
 
         comp['loadIrisSettings']();
-        await fixture.whenStable();
 
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
+        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
         expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
     });
 
-    it('should not load Iris settings when Iris profile is not active', async () => {
-        const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-
+    it('should not load Iris settings when Iris profile is not active', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
-        route.params = of({ exerciseId: '456' });
-
+        comp.textExercise = textExercise;
         comp.examMode = false;
 
         comp['loadIrisSettings']();
-        await fixture.whenStable();
 
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
+        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
         expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
     });
