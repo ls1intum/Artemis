@@ -99,7 +99,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
-    teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
+    teamConfigFormGroupComponent = viewChild.required<TeamConfigFormGroupComponent>('teamConfigFormGroup');
 
     examCourseId?: number;
     isExamMode: boolean;
@@ -154,7 +154,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     ngAfterViewInit() {
         this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.teamSubscription = this.teamConfigFormGroupComponent()?.formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent().formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
     }
 
     /**
@@ -239,7 +239,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     title: 'artemisApp.exercise.sections.general',
                     valid: titleChannelNameComponent.isValid(),
                 },
-                { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent()?.formValid ?? true },
+                { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent().formValid },
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',

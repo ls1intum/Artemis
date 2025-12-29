@@ -64,7 +64,6 @@ describe('ManualTextSelectionComponent', () => {
                 // Use setInput for signal inputs
                 fixture.componentRef.setInput('textBlockRefGroup', new TextBlockRefGroup(textBlockRefs));
                 fixture.componentRef.setInput('submission', submission);
-                fixture.componentRef.setInput('words', new TextBlockRefGroup(textBlockRefs));
                 fixture.detectChanges();
             });
     });

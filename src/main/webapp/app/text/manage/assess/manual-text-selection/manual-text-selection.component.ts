@@ -27,7 +27,6 @@ export class ManualTextSelectionComponent {
     textBlockRefGroup = input.required<TextBlockRefGroup>();
     submission = input.required<TextSubmission>();
     didSelectWord = output<wordSelection[]>();
-    words = input.required<TextBlockRefGroup>();
 
     public submissionWords = signal<string[] | undefined>(undefined);
     public currentWordIndex: number;
@@ -37,13 +36,13 @@ export class ManualTextSelectionComponent {
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
 
-        // Effect to compute submissionWords when words or submission changes
+        // Effect to compute submissionWords when textBlockRefGroup or submission changes
         effect(() => {
-            const wordsValue = this.words();
+            const textBlockRefGroupValue = this.textBlockRefGroup();
             const submissionValue = this.submission();
-            if (wordsValue && submissionValue) {
+            if (textBlockRefGroupValue && submissionValue) {
                 // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
-                this.submissionWords.set(wordsValue.getText(submissionValue).replace(LINEBREAK, '\n ').split(SPACE));
+                this.submissionWords.set(textBlockRefGroupValue.getText(submissionValue).replace(LINEBREAK, '\n ').split(SPACE));
             }
         });
     }
