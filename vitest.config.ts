@@ -29,8 +29,8 @@ export default defineConfig({
             'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
             'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
             'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
-            'src/main/webapp/app/assessment/**/*.spec.ts'       // include assessment tests
-            'src/main/webapp/app/quiz/**/*.spec.ts'             // include quiz tests
+            'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
+            'src/main/webapp/app/quiz/**/*.spec.ts',            // include quiz tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -50,8 +50,8 @@ export default defineConfig({
                 'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
                 'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts',       // include buildagent for code coverage
-                'src/main/webapp/app/assessment/**/*.ts'        // include assessment for code coverage
-                'src/main/webapp/app/quiz/**/*.ts'              // include quiz for code coverage
+                'src/main/webapp/app/assessment/**/*.ts',       // include assessment for code coverage
+                'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
