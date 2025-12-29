@@ -49,6 +49,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     @Query("""
+            SELECT COUNT(r)
+            FROM Result r
+            WHERE r.submission.participation.exercise.course.id = :courseId
+            """)
+    long countByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
             SELECT r
             FROM Result r
                 LEFT JOIN FETCH r.assessor

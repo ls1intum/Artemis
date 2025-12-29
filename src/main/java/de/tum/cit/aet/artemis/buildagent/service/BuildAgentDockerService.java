@@ -46,13 +46,42 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
- * Service for Docker related operations in local CI
+ * Service for Docker-related operations in the local CI build agent.
+ * <p>
+ * This service manages Docker image lifecycle and container cleanup for the build agent, including:
+ * <ul>
+ * <li><b>Image Management:</b> Pulling Docker images for build jobs with proper architecture handling</li>
+ * <li><b>Container Cleanup:</b> Removing dangling or stuck build containers</li>
+ * <li><b>Disk Space Management:</b> Automatic cleanup of old images when disk space is low</li>
+ * </ul>
+ * <p>
+ * <b>Architecture Support:</b>
+ * The service supports both AMD64 and ARM64 architectures. On macOS ARM systems, it can
+ * automatically fall back to AMD64 images via Rosetta 2 emulation when ARM images are unavailable.
+ * <p>
+ * <b>Scheduled Tasks:</b>
+ * <ul>
+ * <li>Container cleanup runs periodically (default: every 60 minutes) to remove stuck containers</li>
+ * <li>Image cleanup runs daily (default: 3:00 AM) to remove unused images older than the expiry threshold</li>
+ * <li>Disk space check runs periodically to trigger cleanup when space falls below threshold</li>
+ * </ul>
+ * <p>
+ * <b>Concurrency:</b>
+ * Docker image pulls are protected by a {@link ReentrantLock} to prevent multiple concurrent pulls
+ * of the same image, which could waste bandwidth and disk space.
+ *
+ * @see BuildAgentConfiguration
+ * @see BuildJobContainerService
  */
 @Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentDockerService {
 
+    /**
+     * Lock to serialize Docker image pull operations.
+     * Prevents multiple concurrent pulls of the same image.
+     */
     private final ReentrantLock lock = new ReentrantLock();
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
@@ -91,6 +120,10 @@ public class BuildAgentDockerService {
     // amd64 is the default value, as this is the architecture of Intel and AMD CPUs, which most systems still use
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
+
+    private static final String AMD64_ARCHITECTURE = "amd64";
+
+    private static final String ARM64_ARCHITECTURE = "arm64";
 
     public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, DistributedDataAccessService distributedDataAccessService,
             BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
@@ -265,7 +298,31 @@ public class BuildAgentDockerService {
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
                 catch (Exception ex) {
-                    throw new LocalCIException("Error while pulling docker image " + imageName, ex);
+                    // On macOS ARM, if the ARM image is not available, fall back to amd64 (Rosetta emulation)
+                    if (isMacOS() && ARM64_ARCHITECTURE.equals(imageArchitecture) && isNoMatchingManifestError(ex)) {
+                        String fallbackMsg = "~~~~~~~~~~~~~~~~~~~~ No ARM image available for " + imageName + ", falling back to amd64 (Rosetta emulation) ~~~~~~~~~~~~~~~~~~~~";
+                        log.warn(fallbackMsg);
+                        buildLogsMap.appendBuildLogEntry(buildJob.id(), fallbackMsg);
+
+                        try {
+                            var fallbackCommand = dockerClient.pullImageCmd(imageName).withPlatform(AMD64_ARCHITECTURE);
+                            var fallbackExec = fallbackCommand.exec(new MyPullImageResultCallback());
+                            fallbackExec.awaitCompletion();
+
+                            // Verify the fallback image was pulled successfully
+                            var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
+                            checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
+                        }
+                        catch (InterruptedException ie) {
+                            throw new LocalCIException("Interrupted while pulling docker image " + imageName + " with amd64 fallback", ie);
+                        }
+                        catch (Exception fallbackEx) {
+                            throw new LocalCIException("Error while pulling docker image " + imageName + " with amd64 fallback", fallbackEx);
+                        }
+                    }
+                    else {
+                        throw new LocalCIException("Error while pulling docker image " + imageName, ex);
+                    }
                 }
                 String msg2 = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " done after " + TimeLogUtil.formatDurationFrom(start) + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg2);
@@ -286,6 +343,7 @@ public class BuildAgentDockerService {
 
     /**
      * Checks if the architecture of the Docker image is compatible with the current system.
+     * On macOS ARM, amd64 images are allowed as they can run via Rosetta 2 emulation.
      *
      * @param imageName            the name of the Docker image
      * @param inspectImageResponse the response from the inspect image command
@@ -300,6 +358,13 @@ public class BuildAgentDockerService {
             log.warn("Docker image {} does not report its architecture, skipping architecture check", imageName);
             return;
         }
+
+        // Allow amd64 images on macOS ARM via Rosetta 2 emulation
+        if (isMacOS() && ARM64_ARCHITECTURE.equals(imageArchitecture) && AMD64_ARCHITECTURE.equals(actualArch)) {
+            log.info("Docker image {} is amd64, running on macOS ARM via Rosetta 2 emulation", imageName);
+            return;
+        }
+
         if (!imageArchitecture.equals(actualArch)) {
             var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '" + actualArch + "'";
             log.error(msg);
@@ -466,6 +531,36 @@ public class BuildAgentDockerService {
             }
             log.error("Docker client is not available. {}", additionalLogInfo);
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the current operating system is macOS.
+     * macOS can run amd64 Docker images on ARM hardware via Rosetta 2 emulation.
+     *
+     * @return true if running on macOS, false otherwise
+     */
+    private boolean isMacOS() {
+        String osName = System.getProperty("os.name");
+        return osName != null && osName.toLowerCase().contains("mac");
+    }
+
+    /**
+     * Checks if the exception indicates that no matching manifest was found for the requested platform.
+     * This typically occurs when trying to pull an ARM image that only has an AMD64 variant available.
+     *
+     * @param ex the exception to check
+     * @return true if the exception indicates a missing platform manifest, false otherwise
+     */
+    private boolean isNoMatchingManifestError(Exception ex) {
+        Throwable cause = ex;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null && message.contains("no matching manifest")) {
+                return true;
+            }
+            cause = cause.getCause();
         }
         return false;
     }

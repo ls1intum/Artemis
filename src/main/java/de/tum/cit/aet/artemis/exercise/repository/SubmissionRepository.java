@@ -46,6 +46,32 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
 
     /**
+     * Count the number of submissions for a given course.
+     *
+     * @param courseId the id of the course
+     * @return the number of submissions in the course
+     */
+    @Query("""
+            SELECT COUNT(s)
+            FROM Submission s
+            WHERE s.participation.exercise.course.id = :courseId
+            """)
+    long countByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Count the number of submissions for a given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of submissions in the exercise
+     */
+    @Query("""
+            SELECT COUNT(s)
+            FROM Submission s
+            WHERE s.participation.exercise.id = :exerciseId
+            """)
+    long countByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Load submission with eager Results
      *
      * @param submissionId the submissionId
