@@ -1651,6 +1651,10 @@ public class ProgrammingExerciseTestService {
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
+
+        // Wait for the file to be fully written to disk before attempting to extract it
+        // This is crucial for slow CI environments where file I/O may be delayed
+        waitForZipFileToBeComplete(zipFile);
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded

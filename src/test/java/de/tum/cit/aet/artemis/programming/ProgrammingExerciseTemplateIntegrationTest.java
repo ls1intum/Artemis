@@ -430,8 +430,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      * @throws Exception if exercise creation fails after all retries
      */
     private ProgrammingExercise createExerciseWithRetry() throws Exception {
-        int maxAttempts = 3;
-        int retryDelayMs = 1000;
+        int maxAttempts = 5;
+        int retryDelayMs = 2000;
         Exception lastException = null;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
