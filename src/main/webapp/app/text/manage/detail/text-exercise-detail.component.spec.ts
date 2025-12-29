@@ -2,7 +2,7 @@
  * Tests for TextExerciseDetailComponent.
  * Verifies the component's behavior when displaying text exercise details for both course and exam exercises.
  */
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -38,9 +38,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     standalone: true,
 })
 class MockNonProgrammingExerciseDetailCommonActionsComponent {
-    @Input() isExamExercise: boolean;
-    @Input() course: any;
-    @Input() exercise: any;
+    isExamExercise = input<boolean>();
+    course = input<any>();
+    exercise = input<any>();
 }
 
 @Component({
@@ -49,9 +49,9 @@ class MockNonProgrammingExerciseDetailCommonActionsComponent {
     standalone: true,
 })
 class MockExerciseDetailStatisticsComponent {
-    @Input() exercise: any;
-    @Input() doughnutStats: any;
-    @Input() exerciseType: any;
+    exercise = input<any>();
+    doughnutStats = input<any>();
+    exerciseType = input<any>();
 }
 
 @Component({
@@ -60,7 +60,7 @@ class MockExerciseDetailStatisticsComponent {
     standalone: true,
 })
 class MockDetailOverviewListComponent {
-    @Input() sections: any;
+    sections = input<any>();
 }
 
 @Component({
@@ -69,7 +69,7 @@ class MockDetailOverviewListComponent {
     standalone: true,
 })
 class MockDocumentationButtonComponent {
-    @Input() type: any;
+    type = input<any>();
 }
 
 describe('TextExercise Management Detail Component', () => {

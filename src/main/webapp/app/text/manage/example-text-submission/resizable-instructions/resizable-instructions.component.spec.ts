@@ -7,7 +7,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Component, Directive, Input, Pipe, PipeTransform } from '@angular/core';
+import { Component, Directive, Pipe, PipeTransform, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
     standalone: true,
 })
 class FaIconStubComponent {
-    @Input() icon: any;
+    icon = input<any>();
 }
 
 @Directive({
@@ -29,7 +29,7 @@ class FaIconStubComponent {
     standalone: true,
 })
 class TranslateDirectiveStub {
-    @Input('jhiTranslate') key: string;
+    key = input<string>(undefined, { alias: 'jhiTranslate' });
 }
 
 @Component({
@@ -38,8 +38,8 @@ class TranslateDirectiveStub {
     standalone: true,
 })
 class StructuredLayoutStubComponent {
-    @Input() readonly: boolean;
-    @Input() criteria: GradingCriterion[];
+    readonly = input<boolean>();
+    criteria = input<GradingCriterion[]>();
 }
 
 @Pipe({
@@ -110,7 +110,7 @@ describe('ResizableInstructionsComponent', () => {
         fixture.detectChanges();
 
         const layout = fixture.debugElement.query(By.directive(StructuredLayoutStubComponent)).componentInstance as StructuredLayoutStubComponent;
-        expect(layout.criteria).toEqual(criteria);
-        expect(layout.readonly).toBe(true);
+        expect(layout.criteria()).toEqual(criteria);
+        expect(layout.readonly()).toBe(true);
     });
 });

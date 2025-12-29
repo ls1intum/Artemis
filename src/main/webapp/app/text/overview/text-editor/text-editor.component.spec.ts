@@ -59,35 +59,35 @@ import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercis
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 // Mock components to avoid complex dependencies
 @Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
 class MockHeaderParticipationPageComponent {
-    @Input() exercise: any;
-    @Input() participation: any;
+    exercise = input<any>();
+    participation = input<any>();
 }
 
 @Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
 class MockRequestFeedbackButtonComponent {
-    @Input() exercise: any;
-    @Input() pendingChanges: any;
-    @Input() hasAthenaResultForLatestSubmission: any;
-    @Input() isGeneratingFeedback: any;
-    @Input() isSubmitted: any;
+    exercise = input<any>();
+    pendingChanges = input<any>();
+    hasAthenaResultForLatestSubmission = input<any>();
+    isGeneratingFeedback = input<any>();
+    isSubmitted = input<any>();
 }
 
 @Component({ selector: 'jhi-result-history', template: '', standalone: true })
 class MockResultHistoryComponent {
-    @Input() results: any;
-    @Input() exercise: any;
-    @Input() participationInput: any;
-    @Input() selectedResultId: any;
+    results = input<any>();
+    exercise = input<any>();
+    participationInput = input<any>();
+    selectedResultId = input<any>();
 }
 
 @Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
 class MockIrisExerciseChatbotButtonComponent {
-    @Input() mode: any;
+    mode = input<any>();
 }
 
 describe('TextEditorComponent', () => {
