@@ -1,56 +1,27 @@
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
-import { of } from 'rxjs';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
-import { Bonus } from 'app/assessment/shared/entities/bonus.model';
-import { HttpResponse } from '@angular/common/http';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
-import { CourseScores, StudentScores } from 'app/core/course/manage/course-scores/course-scores';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
-
-describe('GradingKeyTableComponent', () => {
-    let fixture: ComponentFixture<GradingKeyTableComponent>;
-    let comp: GradingKeyTableComponent;
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+describe('GradingKeyOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+    let fixture: ComponentFixture<GradingKeyOverviewComponent>;
+    let component: GradingKeyOverviewComponent;
     let route: ActivatedRoute;
-
-    let gradingSystemService: GradingSystemService;
-    let bonusService: BonusService;
-
-    const gradeStep1: GradeStep = {
-        gradeName: 'Fail',
-        lowerBoundPercentage: 0,
-        upperBoundPercentage: 50,
-        lowerBoundInclusive: true,
-        upperBoundInclusive: false,
-        isPassingGrade: false,
-    };
-    const gradeStep2: GradeStep = {
-        gradeName: 'Pass',
-        lowerBoundPercentage: 50,
-        upperBoundPercentage: 100,
-        lowerBoundInclusive: true,
-        upperBoundInclusive: true,
-        isPassingGrade: true,
-    };
-    const gradeStepsDto: GradeStepsDTO = {
-        title: 'Title',
-        gradeType: GradeType.BONUS,
-        gradeSteps: [gradeStep1, gradeStep2],
-        maxPoints: 100,
-        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
-        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
-    };
 
     const studentGrade = '2.0';
 
@@ -67,135 +38,66 @@ describe('GradingKeyTableComponent', () => {
             },
         } as ActivatedRoute;
 
-        return TestBed.configureTestingModule({
-            imports: [
-                GradingKeyTableComponent,
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-                MockPipe(SafeHtmlPipe),
-                MockPipe(GradeStepBoundsPipe),
-            ],
+        TestBed.configureTestingModule({
+            imports: [GradingKeyOverviewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(GradingSystemService),
                 MockProvider(BonusService),
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),
+                MockProvider(ArtemisNavigationUtilService),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(GradingKeyTableComponent);
-                comp = fixture.componentInstance;
-                gradingSystemService = TestBed.inject(GradingSystemService);
-                bonusService = TestBed.inject(BonusService);
-            });
+            .overrideComponent(GradingKeyOverviewComponent, {
+                remove: { imports: [GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective] },
+                add: {
+                    imports: [MockComponent(GradingKeyTableComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(GradingKeyOverviewComponent);
+        component = fixture.componentInstance;
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    function expectInitialState(grade?: string) {
-        jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
-        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
-        const gradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints').mockImplementation();
-
+    it('should initialize component', () => {
         fixture.detectChanges();
 
         expect(fixture).toBeTruthy();
-        expect(comp).toBeTruthy();
-        expect(comp.examId).toBe(123);
-        expect(comp.courseId).toBe(345);
-        expect(comp.studentGradeOrBonusPointsOrGradeBonus()).toBe(grade);
-        expect(comp.title).toBe('Title');
-        expect(comp.isBonus).toBeTrue();
-        expect(comp.isExam).toBeTrue();
-        expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
-        expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
-    }
-
-    it('should initialize when grade queryParam is not given', () => {
-        route.snapshot.queryParams = {};
-
-        expectInitialState(undefined);
+        expect(component).toBeTruthy();
+        expect(component.examId).toBe(123);
+        expect(component.courseId).toBe(345);
+        expect(component.studentGradeOrBonusPointsOrGradeBonus).toBe(studentGrade);
     });
 
-    it('should initialize when params are in grandparent route', () => {
-        expectInitialState(studentGrade);
+    it('should print PDF', () => {
+        const printSpy = vi.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation(async () => {});
+
+        component.printPDF();
+
+        expect(printSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should initialize when params are in parent route', () => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        route.parent!.snapshot.params = route.parent?.parent?.snapshot.params!;
-        route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
+    it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {
+        const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
+        const navUtilServiceSpy = vi.spyOn(navUtilService, 'navigateBack');
+        const courseId = 213;
 
-        expectInitialState(studentGrade);
-    });
+        component.courseId = courseId;
+        component.examId = examId;
+        component.isExam = examId !== undefined;
 
-    it('should initialize when params are in current route', () => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        route.snapshot.params = route.parent?.parent?.snapshot.params!;
-        route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
+        component.previousState();
 
-        expectInitialState(studentGrade);
-    });
+        expect(navUtilServiceSpy).toHaveBeenCalledTimes(1);
 
-    it('should initialize for bonus grading scale', () => {
-        jest.spyOn(gradingSystemService, 'getGradingScaleTitle').mockImplementation((gradingScale) => gradingScale?.course?.title);
-        jest.spyOn(gradingSystemService, 'getGradingScaleMaxPoints').mockImplementation((gradingScale) => gradingScale?.course?.maxPoints ?? 0);
-        const bonusServiceSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(
-            of({
-                body: {
-                    sourceGradingScale: {
-                        gradeSteps: gradeStepsDto.gradeSteps,
-                        gradeType: gradeStepsDto.gradeType,
-                        course: { title: gradeStepsDto.title, maxPoints: gradeStepsDto.maxPoints },
-                    },
-                } as Bonus,
-            } as HttpResponse<Bonus>),
-        );
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        route.snapshot.params = route.parent?.parent?.snapshot.params!;
-        route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
-        route.snapshot.data.forBonus = true;
-
-        expectInitialState(studentGrade);
-
-        expect(bonusServiceSpy).toHaveBeenCalledOnce();
-        expect(bonusServiceSpy).toHaveBeenCalledWith(345, 123, true);
-    });
-
-    it('should initialize for courses', () => {
-        route.parent!.parent!.snapshot!.params.examId = undefined;
-        const courseId = route.parent!.parent!.snapshot!.params.courseId;
-        const reachablePoints = 200;
-
-        const scoresStorageService = TestBed.inject(ScoresStorageService);
-        const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, 0, new StudentScores()));
-        const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
-
-        jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
-        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
-
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(fixture).toBeTruthy();
-        expect(comp).toBeTruthy();
-        expect(comp.examId).toBeUndefined();
-        expect(comp.courseId).toBe(courseId);
-        expect(comp.studentGradeOrBonusPointsOrGradeBonus()).toBe(studentGrade);
-        expect(comp.title).toBe('Title');
-        expect(comp.isBonus).toBeTrue();
-        expect(comp.isExam).toBeFalse();
-
-        expect(getStoredScoresStub).toHaveBeenCalledOnce();
-        expect(getStoredScoresStub).toHaveBeenCalledWith(courseId);
-
-        expect(gradingSystemServiceSpy).toHaveBeenCalledOnce();
-        expect(gradingSystemServiceSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], reachablePoints);
+        if (examId == undefined) {
+            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'statistics']);
+        } else {
+            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'exams', examId.toString()]);
+        }
     });
 });

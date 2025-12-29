@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IntervalGradingSystemComponent } from 'app/assessment/manage/grading-system/interval-grading-system/interval-grading-system.component';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { MockProvider } from 'ng-mocks';
@@ -13,11 +15,13 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('Interval Grading System Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: IntervalGradingSystemComponent;
     let fixture: ComponentFixture<IntervalGradingSystemComponent>;
+    let examService: ExamManagementService;
 
     const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
 
@@ -82,6 +86,10 @@ describe('Interval Grading System Component', () => {
         })
             .compileComponents()
             .then(() => {
+                examService = TestBed.inject(ExamManagementService);
+                // Mock examService.find by default BEFORE creating component to prevent undefined subscribe errors
+                vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
+
                 fixture = TestBed.createComponent(IntervalGradingSystemComponent);
                 comp = fixture.componentInstance;
 
@@ -94,7 +102,7 @@ describe('Interval Grading System Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should generate default grading scale', () => {
@@ -102,7 +110,7 @@ describe('Interval Grading System Component', () => {
 
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
         expect(comp.firstPassingGrade).toBe('4.0');
-        expect(comp.lowerBoundInclusivity).toBeTrue();
+        expect(comp.lowerBoundInclusivity).toBe(true);
         expect(comp.gradingScale.gradeSteps).toHaveLength(13);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.id).toBeUndefined();
@@ -153,9 +161,9 @@ describe('Interval Grading System Component', () => {
         expect(newGradeStep.gradeName).toBe('');
         expect(newGradeStep.lowerBoundPercentage).toBe(100);
         expect(newGradeStep.upperBoundPercentage).toBe(100);
-        expect(newGradeStep.isPassingGrade).toBeTrue();
-        expect(newGradeStep.lowerBoundInclusive).toBeTrue();
-        expect(newGradeStep.upperBoundInclusive).toBeFalse();
+        expect(newGradeStep.isPassingGrade).toBe(true);
+        expect(newGradeStep.lowerBoundInclusive).toBe(true);
+        expect(newGradeStep.upperBoundInclusive).toBe(false);
 
         // Previous gradeStep.upperBoundPercentage is already 100.
         expect(comp.getPercentageInterval(newGradeStep)).toBe(0);
@@ -319,14 +327,14 @@ describe('Interval Grading System Component', () => {
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(false);
 
         expect(comp.gradingScale.gradeSteps[0].lowerBoundPercentage).toBe(0);
         expect(comp.gradingScale.gradeSteps[0].upperBoundPercentage).toBe(100);
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(false);
 
         expect(comp.gradingScale.gradeSteps[1].lowerBoundPercentage).toBe(100);
 
@@ -345,39 +353,39 @@ describe('Interval Grading System Component', () => {
         comp.lowerBoundInclusivity = true;
         comp.setInclusivity();
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(false);
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(false);
 
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBe(false);
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(true);
     });
 
     it('should set inclusivity to upper bound inclusive', () => {
         comp.lowerBoundInclusivity = false;
         comp.setInclusivity();
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(true);
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeFalse();
-        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(true);
 
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeFalse();
-        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBe(true);
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(true);
     });
 
     it('should not show grading steps above max points warning', () => {
         const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
-        expect(result).toBeFalse();
+        expect(result).toBe(false);
     });
 
     it('should show grading steps above max points warning for inclusive bound', () => {
@@ -392,7 +400,7 @@ describe('Interval Grading System Component', () => {
         comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4];
 
         const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
     });
 
     it('should show grading steps above max points warning for exclusive bound', () => {
@@ -407,6 +415,6 @@ describe('Interval Grading System Component', () => {
         comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4];
 
         const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
     });
 });

@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
@@ -7,6 +9,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Rating Service', () => {
+    setupTestBed({ zoneless: true });
     let service: RatingService;
     let httpMock: HttpTestingController;
     let elemDefault: Rating;
@@ -20,7 +23,7 @@ describe('Rating Service', () => {
         elemDefault = new Rating(new Result(), 3);
     });
 
-    it('should create a Rating', fakeAsync(() => {
+    it('should create a Rating', () => {
         const returnedFromService = {
             id: 0,
             ...elemDefault,
@@ -29,19 +32,17 @@ describe('Rating Service', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get a Rating', fakeAsync(() => {
+    it('should get a Rating', () => {
         const returnedFromService = Object.assign({}, elemDefault);
         service.getRating(0).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should update a Rating', fakeAsync(() => {
+    it('should update a Rating', () => {
         const returnedFromService = {
             id: 0,
             ...elemDefault,
@@ -50,10 +51,9 @@ describe('Rating Service', () => {
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get Ratings for Dashboard', fakeAsync(() => {
+    it('should get Ratings for Dashboard', () => {
         const returnedFromService = Object.assign({}, [elemDefault]);
         const expected = { ...returnedFromService };
         service
@@ -65,8 +65,7 @@ describe('Rating Service', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
     afterEach(() => {
         httpMock.verify();

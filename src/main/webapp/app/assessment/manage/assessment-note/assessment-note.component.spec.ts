@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -6,6 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentNoteComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: AssessmentNoteComponent;
     let fixture: ComponentFixture<AssessmentNoteComponent>;
 
@@ -25,7 +28,7 @@ describe('AssessmentNoteComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('component creation', () => {
@@ -82,7 +85,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.componentRef.setInput('assessmentNote', existingNote);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.onAssessmentNoteChange, 'emit');
+            const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
             const mockEvent = {
                 target: { value: 'New note text' } as HTMLTextAreaElement,
             } as unknown as Event;
@@ -90,7 +93,7 @@ describe('AssessmentNoteComponent', () => {
             component.onAssessmentNoteInput(mockEvent);
 
             expect(existingNote.note).toBe('New note text');
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
             expect(emitSpy).toHaveBeenCalledWith(existingNote);
         });
 
@@ -99,7 +102,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.componentRef.setInput('assessmentNote', existingNote);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.onAssessmentNoteChange, 'emit');
+            const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
             const mockEvent = {
                 target: { value: 'Updated text' } as HTMLTextAreaElement,
             } as unknown as Event;
@@ -117,7 +120,7 @@ describe('AssessmentNoteComponent', () => {
             fixture.componentRef.setInput('assessmentNote', existingNote);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.onAssessmentNoteChange, 'emit');
+            const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
             const mockEvent = {
                 target: { value: '' } as HTMLTextAreaElement,
             } as unknown as Event;
@@ -125,21 +128,21 @@ describe('AssessmentNoteComponent', () => {
             component.onAssessmentNoteInput(mockEvent);
 
             expect(existingNote.note).toBe('');
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should work with a newly created AssessmentNote when input was undefined', () => {
             fixture.componentRef.setInput('assessmentNote', undefined);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.onAssessmentNoteChange, 'emit');
+            const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
             const mockEvent = {
                 target: { value: 'Note for new assessment' } as HTMLTextAreaElement,
             } as unknown as Event;
 
             component.onAssessmentNoteInput(mockEvent);
 
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
             const emittedNote = emitSpy.mock.calls[0][0];
             expect(emittedNote.note).toBe('Note for new assessment');
         });

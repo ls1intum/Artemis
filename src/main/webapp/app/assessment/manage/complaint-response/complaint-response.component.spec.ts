@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -11,6 +13,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 
 describe('ComplaintResponseComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ComplaintResponseComponent;
     let fixture: ComponentFixture<ComplaintResponseComponent>;
 
@@ -48,7 +51,7 @@ describe('ComplaintResponseComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('component creation', () => {
@@ -114,7 +117,7 @@ describe('ComplaintResponseComponent', () => {
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');
-            expect(textarea.readOnly).toBeTrue();
+            expect(textarea.readOnly).toBe(true);
         });
 
         it('should set maxLength on textarea', () => {

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading-system/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -23,15 +25,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('BonusComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: BonusComponent;
     let fixture: ComponentFixture<BonusComponent>;
 
     let bonusService: BonusService;
     let gradingSystemService: GradingSystemService;
 
-    let findGradeStepsSpy: jest.SpyInstance;
-    let findWithBonusSpy: jest.SpyInstance;
-    let findBonusForExamSpy: jest.SpyInstance;
+    let findGradeStepsSpy: MockInstance;
+    let findWithBonusSpy: MockInstance;
+    let findBonusForExamSpy: MockInstance;
 
     const courseId = 1;
     const examId = 2;
@@ -252,8 +255,11 @@ describe('BonusComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
-            declarations: [
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                MockModule(NgbTooltipModule),
+                BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),
                 MockComponent(ModePickerComponent),
@@ -280,30 +286,30 @@ describe('BonusComponent', () => {
         bonusService = TestBed.inject(BonusService);
         gradingSystemService = TestBed.inject(GradingSystemService);
 
-        findBonusForExamSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
-        findWithBonusSpy = jest
+        findBonusForExamSpy = vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        findWithBonusSpy = vi
             .spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor')
             .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
-        findGradeStepsSpy = jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
-        jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
+        findGradeStepsSpy = vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
+        vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         // Note: without this line the test does not work for some reason due to a weird error. We let the test still run by setting the bonus object with its grading scale
         // below (i.e. we inject it directly into the component)
         findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const sortGradeStepsSpy = jest.spyOn(gradingSystemService, 'sortGradeSteps');
-        const setGradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
+        const sortGradeStepsSpy = vi.spyOn(gradingSystemService, 'sortGradeSteps');
+        const setGradePointsSpy = vi.spyOn(gradingSystemService, 'setGradePoints');
 
         fixture.changeDetectorRef.detectChanges();
         component.setBonus(bonus);
 
-        expect(findBonusForExamSpy).toHaveBeenCalledOnce();
+        expect(findBonusForExamSpy).toHaveBeenCalledTimes(1);
         expect(findBonusForExamSpy).toHaveBeenCalledWith(courseId, examId);
 
         const state: SearchTermPageableSearch = {
@@ -314,24 +320,22 @@ describe('BonusComponent', () => {
             sortedColumn: 'ID',
         };
 
-        expect(findWithBonusSpy).toHaveBeenCalledOnce();
+        expect(findWithBonusSpy).toHaveBeenCalledTimes(1);
         expect(findWithBonusSpy).toHaveBeenCalledWith(state);
 
-        expect(findGradeStepsSpy).toHaveBeenCalledOnce();
+        expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
 
-        tick();
-
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
         expect(component.sourceGradingScales).toEqual(searchResult.resultsOnPage);
 
-        expect(sortGradeStepsSpy).toHaveBeenCalledOnce();
+        expect(sortGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(sortGradeStepsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps);
 
-        expect(setGradePointsSpy).toHaveBeenCalledOnce();
+        expect(setGradePointsSpy).toHaveBeenCalledTimes(1);
         expect(setGradePointsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps, examGradeSteps.maxPoints);
-    }));
+    });
 
     it('should get calculation sign', () => {
         expect(component.getCalculationSign(1)).toBe('+');
@@ -340,13 +344,13 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
         'should set bonus strategy and discreteness for [%p, %p, %p]',
-        fakeAsync((bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
             const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
             component.ngOnInit();
-            expect(bonusSpy).toHaveBeenCalledOnce();
+            expect(bonusSpy).toHaveBeenCalledTimes(1);
             expect(component.currentBonusStrategyOption).toBe(bonusStrategyOption);
             expect(component.currentBonusStrategyDiscreteness).toBe(bonusStrategyDiscreteness);
-        }),
+        },
     );
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings)(
@@ -364,29 +368,29 @@ describe('BonusComponent', () => {
         component.bonus = { ...bonus };
         component.bonusToGradeStepsDTO = examGradeSteps;
 
-        const bonusSpy = jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
+        const bonusSpy = vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
 
-        expect(component.examples).toBeEmpty();
+        expect(component.examples).toHaveLength(0);
 
         component.onBonusStrategyInputChange();
 
         expect(component.bonus.bonusStrategy).toBe(bonusStrategy);
-        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith({ ...bonus, bonusStrategy }, examGradeSteps);
         expect(component.examples).toHaveLength(bonusExamples.length);
     });
 
     it('should check bonus strategy and weight mismatch', () => {
-        jest.spyOn(gradingSystemService, 'getNumericValueForGradeName').mockImplementation((gradeName) => parseFloat(gradeName!));
-        jest.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
+        vi.spyOn(gradingSystemService, 'getNumericValueForGradeName').mockImplementation((gradeName) => parseFloat(gradeName!));
+        vi.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
 
         component.bonus = { ...bonus, bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 };
         component.bonusToGradeStepsDTO = { gradeSteps: [] as GradeStep[] } as GradeStepsDTO;
 
         component.generateExamples();
 
-        expect(component.examples).toBeEmpty();
-        expect(component.hasBonusStrategyWeightMismatch).toBeTrue();
+        expect(component.examples).toHaveLength(0);
+        expect(component.hasBonusStrategyWeightMismatch).toBe(true);
     });
 
     it('should remove examples when all required fields are not set', () => {
@@ -395,11 +399,11 @@ describe('BonusComponent', () => {
 
         component.onBonusStrategyInputChange();
 
-        expect(component.examples).toBeEmpty();
+        expect(component.examples).toHaveLength(0);
     });
 
-    it('should create bonus', fakeAsync(() => {
-        const createBonusSpy = jest.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+    it('should create bonus', () => {
+        const createBonusSpy = vi.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
         const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.changeDetectorRef.detectChanges();
@@ -408,37 +412,33 @@ describe('BonusComponent', () => {
         component.bonus = newBonus;
         component.save();
 
-        expect(createBonusSpy).toHaveBeenCalledOnce();
+        expect(createBonusSpy).toHaveBeenCalledTimes(1);
         expect(createBonusSpy).toHaveBeenCalledWith(courseId, examId, newBonus);
 
-        expect(findBonusSpy).toHaveBeenCalledOnce();
+        expect(findBonusSpy).toHaveBeenCalledTimes(1);
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
-        tick();
-
         expect(component.bonus.id).toBe(bonus.id);
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
-    it('should update bonus', fakeAsync(() => {
-        const bonusSpy = jest.spyOn(bonusService, 'updateBonus').mockReturnValue(of({ body: bonus } as EntityResponseType));
+    it('should update bonus', () => {
+        const bonusSpy = vi.spyOn(bonusService, 'updateBonus').mockReturnValue(of({ body: bonus } as EntityResponseType));
 
         component.bonus = bonus;
         component.ngOnInit();
 
         component.save();
 
-        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus);
 
-        tick();
-
         expect(component.bonus.id).toBe(bonus.id);
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
-    it('should delete bonus', fakeAsync(() => {
-        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus').mockReturnValue(of({} as HttpResponse<void>));
+    it('should delete bonus', () => {
+        const bonusSpy = vi.spyOn(bonusService, 'deleteBonus').mockReturnValue(of({} as HttpResponse<void>));
 
         let dialogError: string | undefined = undefined;
         component.dialogError$.subscribe((err) => (dialogError = err));
@@ -448,10 +448,8 @@ describe('BonusComponent', () => {
 
         component.delete();
 
-        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus.id);
-
-        tick();
 
         expect(component.bonus.id).toBeUndefined();
         expect(component.bonus.bonusStrategy).toBeUndefined();
@@ -460,12 +458,12 @@ describe('BonusComponent', () => {
         expect(component.bonus.sourceGradingScale).toBeUndefined();
         expect(dialogError).toBe('');
 
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
-    it('should show error on delete', fakeAsync(() => {
+    it('should show error on delete', () => {
         const errorMessage = 'Error message';
-        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus').mockReturnValue(throwError(() => new Error(errorMessage)));
+        const bonusSpy = vi.spyOn(bonusService, 'deleteBonus').mockReturnValue(throwError(() => new Error(errorMessage)));
 
         let dialogError: string | undefined = undefined;
         component.dialogError$.subscribe((err) => (dialogError = err));
@@ -475,19 +473,17 @@ describe('BonusComponent', () => {
 
         component.delete();
 
-        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus.id);
-
-        tick();
 
         expect(component.bonus).toEqual(bonus);
         expect(dialogError).toBe(errorMessage);
 
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
     it('should not delete if id is empty', () => {
-        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus');
+        const bonusSpy = vi.spyOn(bonusService, 'deleteBonus');
 
         const unsavedBonus = { ...bonus, id: undefined };
         component.bonus = unsavedBonus;
@@ -496,57 +492,53 @@ describe('BonusComponent', () => {
         expect(bonusSpy).not.toHaveBeenCalled();
 
         expect(component.bonus).toEqual(unsavedBonus);
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
     });
 
-    it('should handle find bonus response with error', fakeAsync(() => {
+    it('should handle find bonus response with error', () => {
         const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.ngOnInit();
 
-        expect(findBonusSpy).toHaveBeenCalledOnce();
+        expect(findBonusSpy).toHaveBeenCalledTimes(1);
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
-        expect(() => tick()).toThrow();
-
         expect(component.bonus).toStrictEqual(new Bonus());
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
-    it('should handle empty find bonus response', fakeAsync(() => {
+    it('should handle empty find bonus response', () => {
         const findBonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: undefined } as any as EntityResponseType));
 
         component.ngOnInit();
 
-        expect(findBonusSpy).toHaveBeenCalledOnce();
+        expect(findBonusSpy).toHaveBeenCalledTimes(1);
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
-        tick();
-
         expect(component.bonus).toStrictEqual(new Bonus());
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
     it('should forward grading scale title call to service', () => {
-        const gradingSystemSpy = jest.spyOn(gradingSystemService, 'getGradingScaleTitle');
+        const gradingSystemSpy = vi.spyOn(gradingSystemService, 'getGradingScaleTitle');
 
         component.getGradingScaleTitle(bonus.sourceGradingScale!);
 
-        expect(gradingSystemSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemSpy).toHaveBeenCalledTimes(1);
         expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale);
     });
 
     it('should forward grading scale max points call to service', () => {
-        const gradingSystemSpy = jest.spyOn(gradingSystemService, 'getGradingScaleMaxPoints');
+        const gradingSystemSpy = vi.spyOn(gradingSystemService, 'getGradingScaleMaxPoints');
 
         component.getGradingScaleMaxPoints(bonus.sourceGradingScale!);
 
-        expect(gradingSystemSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemSpy).toHaveBeenCalledTimes(1);
         expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale);
     });
 
     it('should forward has points set call to service', () => {
-        const gradingSystemSpy = jest.spyOn(gradingSystemService, 'hasPointsSet');
+        const gradingSystemSpy = vi.spyOn(gradingSystemService, 'hasPointsSet');
 
         component.bonus = { ...bonus, sourceGradingScale: {} as GradingScale };
         component.hasPointsSet();
@@ -557,12 +549,12 @@ describe('BonusComponent', () => {
         component.bonus = bonus;
         component.hasPointsSet();
 
-        expect(gradingSystemSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemSpy).toHaveBeenCalledTimes(1);
         expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale!.gradeSteps!);
     });
 
     it('should forward calculate dynamic example call to service', () => {
-        const bonusFinalGradeSpy = jest.spyOn(bonusService, 'calculateFinalGrade');
+        const bonusFinalGradeSpy = vi.spyOn(bonusService, 'calculateFinalGrade');
 
         const dynamicExample = new BonusExample(10, 50);
 
@@ -572,12 +564,12 @@ describe('BonusComponent', () => {
 
         component.calculateDynamicExample();
 
-        expect(bonusFinalGradeSpy).toHaveBeenCalledOnce();
+        expect(bonusFinalGradeSpy).toHaveBeenCalledTimes(1);
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
     });
 
     it('should refresh dynamic example on weight change only if previously calculated', () => {
-        const bonusFinalGradeSpy = jest.spyOn(bonusService, 'calculateFinalGrade');
+        const bonusFinalGradeSpy = vi.spyOn(bonusService, 'calculateFinalGrade');
 
         const dynamicExample = new BonusExample(10, 50);
 
@@ -593,7 +585,7 @@ describe('BonusComponent', () => {
 
         component.onWeightChange();
 
-        expect(bonusFinalGradeSpy).toHaveBeenCalledOnce();
+        expect(bonusFinalGradeSpy).toHaveBeenCalledTimes(1);
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
     });
 });

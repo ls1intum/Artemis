@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
@@ -11,6 +13,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
 describe('Bonus Service', () => {
+    setupTestBed({ zoneless: true });
     type GradeStepBuilder = {
         interval: number;
         gradeName: string;
@@ -101,7 +104,7 @@ describe('Bonus Service', () => {
         httpMock.verify();
     });
 
-    it('should filter bonus before serializing into request', fakeAsync(() => {
+    it('should filter bonus before serializing into request', () => {
         const filteredBonus: Bonus = {
             id: 3,
             weight: 1,
@@ -121,24 +124,19 @@ describe('Bonus Service', () => {
 
         const httpRequest = httpMock.expectOne({ method: 'PUT' });
         expect(httpRequest.request.body).toEqual(filteredBonus);
-        tick();
-    }));
+    });
 
     it.each([
         [undefined, null],
         [false, 'false'],
         [true, 'true'],
-    ])(
-        'should set includeSourceGradeSteps when calling findBonusForExam',
-        fakeAsync((inputIncludeSourceGradeSteps: boolean, expectedIncludeSourceGradeSteps: boolean) => {
-            service.findBonusForExam(1, 6, inputIncludeSourceGradeSteps).pipe(take(1)).subscribe();
+    ])('should set includeSourceGradeSteps when calling findBonusForExam', (inputIncludeSourceGradeSteps: boolean | undefined, expectedIncludeSourceGradeSteps: string | null) => {
+        service.findBonusForExam(1, 6, inputIncludeSourceGradeSteps).pipe(take(1)).subscribe();
 
-            const httpRequest = httpMock.expectOne({ method: 'GET' });
+        const httpRequest = httpMock.expectOne({ method: 'GET' });
 
-            expect(httpRequest.request.params.get('includeSourceGradeSteps')).toBe(expectedIncludeSourceGradeSteps);
-            tick();
-        }),
-    );
+        expect(httpRequest.request.params.get('includeSourceGradeSteps')).toBe(expectedIncludeSourceGradeSteps);
+    });
 
     it.each([
         [5, 10, 1, false],

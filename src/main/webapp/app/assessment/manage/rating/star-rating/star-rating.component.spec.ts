@@ -1,7 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 
 describe('StarRatingComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: StarRatingComponent;
     let fixture: ComponentFixture<StarRatingComponent>;
 
@@ -44,7 +47,7 @@ describe('StarRatingComponent', () => {
         });
 
         it('should not be read-only by default', () => {
-            expect(component.isReadOnly).toBeFalse();
+            expect(component.isReadOnly).toBe(false);
         });
 
         it('should have undefined checkedColor by default', () => {
@@ -157,14 +160,14 @@ describe('StarRatingComponent', () => {
             fixture.componentRef.setInput('readOnly', true);
             fixture.detectChanges();
 
-            expect(component.isReadOnly).toBeTrue();
+            expect(component.isReadOnly).toBe(true);
         });
 
         it('should be editable when readOnly is false', () => {
             fixture.componentRef.setInput('readOnly', false);
             fixture.detectChanges();
 
-            expect(component.isReadOnly).toBeFalse();
+            expect(component.isReadOnly).toBe(false);
         });
     });
 
@@ -210,20 +213,18 @@ describe('StarRatingComponent', () => {
     // =========================================================================
 
     describe('input changes', () => {
-        it('should update currentRating when value input changes', fakeAsync(() => {
+        it('should update currentRating when value input changes', () => {
             fixture.componentRef.setInput('value', 4);
             fixture.detectChanges();
-            tick();
 
             expect(component.currentRating).toBe(4);
-        }));
+        });
 
-        it('should update starCount when totalStars input changes', fakeAsync(() => {
+        it('should update starCount when totalStars input changes', () => {
             fixture.componentRef.setInput('totalStars', 7);
             fixture.detectChanges();
-            tick();
 
             expect(component.starCount).toBe(7);
-        }));
+        });
     });
 });

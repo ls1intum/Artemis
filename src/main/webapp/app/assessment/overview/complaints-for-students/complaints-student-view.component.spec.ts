@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -27,8 +29,12 @@ import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-cou
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ComplaintsStudentViewComponent', () => {
+    setupTestBed({ zoneless: true });
     const complaintTimeLimitDays = 7;
     const course: Course = {
         id: 1,
@@ -67,14 +73,15 @@ describe('ComplaintsStudentViewComponent', () => {
     let courseService: CourseManagementService;
     let accountService: AccountService;
     let serverDateService: ArtemisServerDateService;
-    let numberOfAllowedComplaintsStub: jest.SpyInstance<Observable<number>, [courseId: number, teamMode?: boolean | undefined]>;
+    let numberOfAllowedComplaintsStub: MockInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 ComplaintsStudentViewComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
+                MockComponent(FaIconComponent),
                 MockComponent(ComplaintsFormComponent),
                 MockComponent(ComplaintRequestComponent),
                 MockComponent(ComplaintResponseComponent),
@@ -92,83 +99,99 @@ describe('ComplaintsStudentViewComponent', () => {
                     provide: CourseManagementService,
                     useClass: MockCourseManagementService,
                 },
+                {
+                    provide: ArtemisServerDateService,
+                    useValue: { now: () => dayjs() },
+                },
+                MockProvider(TranslateService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ComplaintsStudentViewComponent);
-                component = fixture.componentInstance;
-                complaintService = TestBed.inject(ComplaintService);
-                courseService = TestBed.inject(CourseManagementService);
-                accountService = TestBed.inject(AccountService);
-                serverDateService = TestBed.inject(ArtemisServerDateService);
-                fixture.componentRef.setInput('participation', participation);
-                fixture.componentRef.setInput('result', result);
-                fixture.componentRef.setInput('exam', undefined);
-                numberOfAllowedComplaintsStub = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
-            });
+            .overrideComponent(ComplaintsStudentViewComponent, {
+                remove: { imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent] },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(FaIconComponent),
+                        MockComponent(ComplaintsFormComponent),
+                        MockComponent(ComplaintRequestComponent),
+                        MockComponent(ComplaintResponseComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ComplaintsStudentViewComponent);
+        component = fixture.componentInstance;
+        complaintService = TestBed.inject(ComplaintService);
+        courseService = TestBed.inject(CourseManagementService);
+        accountService = TestBed.inject(AccountService);
+        serverDateService = TestBed.inject(ArtemisServerDateService);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', result);
+        fixture.componentRef.setInput('exam', undefined);
+        numberOfAllowedComplaintsStub = vi.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Exam mode', () => {
-        it('should initialize', fakeAsync(() => {
+        it('should initialize', async () => {
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
-            const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
-            const numberOfAllowedComplaintsMock = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
-            const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+            const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            const numberOfAllowedComplaintsMock = vi.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
+            const userMock = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
             fixture.detectChanges();
-            tick(100);
+            await fixture.whenStable();
 
             expectExamDefault();
             expect(component.complaint).toBeUndefined();
-            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
-            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledOnce();
-            expect(userMock).toHaveBeenCalledOnce();
-        }));
+            expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
+            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
+            expect(userMock).toHaveBeenCalledTimes(1);
+        });
 
-        it('should initialize with complaint', fakeAsync(() => {
+        it('should initialize with complaint', async () => {
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
 
-            const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
-            const numberOfAllowedComplaintsMock = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
-            const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+            const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
+            const numberOfAllowedComplaintsMock = vi.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
+            const userMock = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
             fixture.detectChanges();
-            tick(100);
+            await fixture.whenStable();
 
             expectExamDefault();
             expect(component.complaint).toStrictEqual(complaint);
-            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
-            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledOnce();
-            expect(userMock).toHaveBeenCalledOnce();
-        }));
+            expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
+            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
+            expect(userMock).toHaveBeenCalledTimes(1);
+        });
 
-        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', () => {
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
             component.showSection = true;
             component.isCorrectUserToFileAction = true;
-            const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
 
             fixture.changeDetectorRef.detectChanges();
 
             //Check if button is available
             expect(component.complaint).toBeUndefined();
-            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
+            expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
 
             // Mock complaint scrollpoint
-            const scrollIntoViewMock = jest.fn();
+            const scrollIntoViewMock = vi.fn();
             fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
@@ -178,70 +201,68 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
-            tick();
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
-        }));
 
-        it('should be visible on test run', fakeAsync(() => {
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+        });
+
+        it('should be visible on test run', () => {
             const now = dayjs();
             const examWithFutureReview: Exam = { examStudentReviewStart: dayjs(now).add(1, 'day'), examStudentReviewEnd: dayjs(now).add(2, 'day') } as Exam;
-            const serverDateStub = jest.spyOn(serverDateService, 'now').mockReturnValue(dayjs());
+            const serverDateStub = vi.spyOn(serverDateService, 'now').mockReturnValue(dayjs());
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', examWithFutureReview);
             fixture.componentRef.setInput('testRun', true);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.showSection).toBeTrue();
+            expect(component.showSection).toBe(true);
             expect(serverDateStub).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should be hidden if review start not set', fakeAsync(() => {
+        it('should be hidden if review start not set', () => {
             const examWithoutReviewStart: Exam = { examStudentReviewEnd: dayjs() } as Exam;
             testVisibilityToBeHiddenWithExam(examWithoutReviewStart);
-        }));
+        });
 
-        it('should be hidden if review end not set', fakeAsync(() => {
+        it('should be hidden if review end not set', () => {
             const examWithoutReviewEnd: Exam = { examStudentReviewStart: dayjs() } as Exam;
             testVisibilityToBeHiddenWithExam(examWithoutReviewEnd);
-        }));
+        });
 
         function expectExamDefault() {
             expectDefault();
-            expect(component.isExamMode).toBeTrue();
-            expect(component.timeOfFeedbackRequestValid).toBeFalse();
-            expect(component.timeOfComplaintValid).toBeTrue();
+            expect(component.isExamMode).toBe(true);
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfComplaintValid).toBe(true);
         }
 
         function testVisibilityToBeHiddenWithExam(exam: Exam) {
-            jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
 
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', exam);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.showSection).toBeFalse();
+            expect(component.showSection).toBe(false);
         }
     });
 
     describe('Course mode', () => {
-        it('should initialize', fakeAsync(() => {
-            testInitWithResultStub(of());
+        it('should initialize', async () => {
+            await testInitWithResultStub(of());
             expect(component.complaint).toBeUndefined();
-        }));
+        });
 
-        it('should initialize with complaint', fakeAsync(() => {
-            testInitWithResultStub(of({ body: complaint } as EntityResponseType));
+        it('should initialize with complaint', async () => {
+            await testInitWithResultStub(of({ body: complaint } as EntityResponseType));
             expect(component.complaint).toStrictEqual(complaint);
-        }));
+        });
 
-        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
-            testInitWithResultStub(of());
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {
+            await testInitWithResultStub(of());
             const courseWithMaxComplaints: Course = {
                 ...course,
                 maxComplaints: 3,
@@ -260,7 +281,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             // Mock complaint scrollpoint
-            const scrollIntoViewMock = jest.fn();
+            const scrollIntoViewMock = vi.fn();
             fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
@@ -269,12 +290,12 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
-            tick(); // Wait for update to happen
+            // setTimeout executes synchronously with mocked timers removed
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
-        }));
+        });
 
-        it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', fakeAsync(() => {
-            testInitWithResultStub(of());
+        it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', async () => {
+            await testInitWithResultStub(of());
             component.showSection = true;
             component.isCorrectUserToFileAction = true;
 
@@ -284,7 +305,7 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.complaint).toBeUndefined();
 
             // Mock complaint scrollpoint
-            const scrollIntoViewMock = jest.fn();
+            const scrollIntoViewMock = vi.fn();
             fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
@@ -293,37 +314,35 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
-            tick(); // Wait for update to happen
+            // setTimeout executes synchronously with mocked timers removed
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
-        }));
+        });
 
-        it('should not be available if before or at assessment due date', fakeAsync(() => {
+        it('should not be available if before or at assessment due date', () => {
             const exercise: Exercise = { id: 1, teamMode: false, course, assessmentDueDate: dayjs() } as Exercise;
             const resultMatchingDate: Result = { id: 1, completionDate: dayjs(exercise.assessmentDueDate) } as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultMatchingDate);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBeFalse();
-            expect(component.timeOfComplaintValid).toBeFalse();
-        }));
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfComplaintValid).toBe(false);
+        });
 
-        it('should not be available if assessment due date not set and completion date is out of period', fakeAsync(() => {
+        it('should not be available if assessment due date not set and completion date is out of period', () => {
             const exercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') } as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBeFalse();
-            expect(component.timeOfComplaintValid).toBeFalse();
-        }));
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfComplaintValid).toBe(false);
+        });
 
-        it('should not be available if completionDate after assessment due date and date is out of period', fakeAsync(() => {
+        it('should not be available if completionDate after assessment due date and date is out of period', () => {
             const exercise: Exercise = {
                 id: 1,
                 teamMode: false,
@@ -335,26 +354,24 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('result', resultMatchingDate);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBeFalse();
-            expect(component.timeOfComplaintValid).toBeFalse();
-        }));
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfComplaintValid).toBe(false);
+        });
 
-        it('should be available if result was before due date', fakeAsync(() => {
+        it('should be available if result was before due date', () => {
             const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(1, 'minute'), assessmentType: AssessmentType.MANUAL } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBeTrue();
-            expect(component.timeOfComplaintValid).toBeTrue();
-        }));
+            expect(component.timeOfFeedbackRequestValid).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(true);
+        });
 
-        it('should be available if result was before assessment due date', fakeAsync(() => {
+        it('should be available if result was before assessment due date', () => {
             const exercise: Exercise = {
                 id: 1,
                 teamMode: false,
@@ -368,13 +385,12 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBeTrue();
-            expect(component.timeOfComplaintValid).toBeTrue();
-        }));
+            expect(component.timeOfFeedbackRequestValid).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(true);
+        });
 
-        it('complaints should be available if feedback requests disabled', fakeAsync(() => {
+        it('complaints should be available if feedback requests disabled', () => {
             fixture.componentRef.setInput('exercise', {
                 ...courseExercise,
                 course: courseWithoutFeedback,
@@ -383,14 +399,13 @@ describe('ComplaintsStudentViewComponent', () => {
             component.course = courseWithoutFeedback;
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.showSection).toBeTrue();
-            expect(component.timeOfComplaintValid).toBeTrue();
-            expect(component.timeOfFeedbackRequestValid).toBeFalse();
-        }));
+            expect(component.showSection).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+        });
 
-        it('feedback requests should be available if complaints are disabled', fakeAsync(() => {
+        it('feedback requests should be available if complaints are disabled', () => {
             const courseWithoutComplaints = {
                 ...course,
                 complaintsEnabled: false,
@@ -406,79 +421,75 @@ describe('ComplaintsStudentViewComponent', () => {
             component.course = courseWithoutComplaints;
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.showSection).toBeTrue();
-            expect(component.timeOfComplaintValid).toBeFalse();
-            expect(component.timeOfFeedbackRequestValid).toBeTrue();
-        }));
+            expect(component.showSection).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBe(true);
+        });
 
-        it('no action should be allowed if the result is automatic for a non automatic exercise', fakeAsync(() => {
+        it('no action should be allowed if the result is automatic for a non automatic exercise', () => {
             fixture.componentRef.setInput('exercise', courseExercise);
             fixture.componentRef.setInput('result', { ...result, assessmentType: AssessmentType.AUTOMATIC, rated: false });
 
             fixture.detectChanges();
-            tick(100);
 
-            expect(component.showSection).toBeTrue();
-            expect(component.timeOfComplaintValid).toBeFalse();
-            expect(component.timeOfFeedbackRequestValid).toBeFalse();
-        }));
+            expect(component.showSection).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBe(false);
+        });
 
         function expectCourseDefault() {
             expectDefault();
-            expect(component.isExamMode).toBeFalse();
-            expect(component.timeOfFeedbackRequestValid).toBeTrue();
-            expect(component.timeOfComplaintValid).toBeTrue();
+            expect(component.isExamMode).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBe(true);
+            expect(component.timeOfComplaintValid).toBe(true);
         }
 
-        function testInitWithResultStub(content: Observable<EntityResponseType>) {
+        async function testInitWithResultStub(content: Observable<EntityResponseType>) {
             fixture.componentRef.setInput('exercise', courseExercise);
             fixture.componentRef.setInput('result', result);
-            const complaintBySubmissionStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(content);
-            const userStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+            const complaintBySubmissionStub = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(content);
+            const userStub = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
             fixture.detectChanges();
-            tick(100);
+            await fixture.whenStable();
 
             expectCourseDefault();
-            expect(complaintBySubmissionStub).toHaveBeenCalledOnce();
-            expect(numberOfAllowedComplaintsStub).toHaveBeenCalledOnce();
-            expect(userStub).toHaveBeenCalledOnce();
+            expect(complaintBySubmissionStub).toHaveBeenCalledTimes(1);
+            expect(numberOfAllowedComplaintsStub).toHaveBeenCalledTimes(1);
+            expect(userStub).toHaveBeenCalledTimes(1);
         }
     });
 
     function expectDefault() {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course).toStrictEqual(course);
-        expect(component.showSection).toBeTrue();
+        expect(component.showSection).toBe(true);
         expect(component.formComplaintType).toBeUndefined();
         expect(component.remainingNumberOfComplaints).toStrictEqual(numberOfComplaints);
-        expect(component.isCorrectUserToFileAction).toBeTrue();
+        expect(component.isCorrectUserToFileAction).toBe(true);
         expect(result.submission?.participation).toStrictEqual(participation);
     }
 
-    it('should set time of complaint invalid without completion date', fakeAsync(() => {
+    it('should set time of complaint invalid without completion date', () => {
         const participationWithoutCompletionDate: Participation = { id: 2, results: [resultWithoutCompletionDate], submissions: [submission], student: user } as Participation;
         fixture.componentRef.setInput('exercise', courseExercise);
         fixture.componentRef.setInput('participation', participationWithoutCompletionDate);
         fixture.componentRef.setInput('result', resultWithoutCompletionDate);
 
         fixture.detectChanges();
-        tick(100);
 
-        expect(component.timeOfComplaintValid).toBeFalse();
-    }));
+        expect(component.timeOfComplaintValid).toBe(false);
+    });
 
-    it('complaint should be possible with long assessment periods', fakeAsync(() => {
+    it('complaint should be possible with long assessment periods', () => {
         fixture.componentRef.setInput('exercise', { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') });
         fixture.componentRef.setInput('result', { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') });
 
         fixture.detectChanges();
-        tick(100);
 
-        expect(component.showSection).toBeTrue();
-        expect(component.timeOfComplaintValid).toBeTrue();
-        expect(component.timeOfFeedbackRequestValid).toBeTrue();
-    }));
+        expect(component.showSection).toBe(true);
+        expect(component.timeOfComplaintValid).toBe(true);
+        expect(component.timeOfFeedbackRequestValid).toBe(true);
+    });
 });

@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import {
     GradingSystemPresentationsComponent,
@@ -11,6 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('GradingSystemPresentationsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: GradingSystemPresentationsComponent;
     let fixture: ComponentFixture<GradingSystemPresentationsComponent>;
 
@@ -207,8 +210,8 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            expect(component.isBasicPresentation()).toBeTrue();
-            expect(component.isGradedPresentation()).toBeFalse();
+            expect(component.isBasicPresentation()).toBe(true);
+            expect(component.isGradedPresentation()).toBe(false);
         });
     });
 
@@ -258,7 +261,7 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            expect(component.isGradedPresentation()).toBeTrue();
+            expect(component.isGradedPresentation()).toBe(true);
         });
     });
 
@@ -391,7 +394,7 @@ describe('GradingSystemPresentationsComponent', () => {
         it('should emit config change on initialization', () => {
             const gradingScale = createGradingScaleWithGradedPresentations();
             const config = createDefaultPresentationsConfig();
-            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
 
             fixture.componentRef.setInput('gradingScale', gradingScale);
             fixture.componentRef.setInput('presentationsConfig', config);
@@ -410,10 +413,10 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
             component.onPresentationTypeChange(PresentationType.GRADED);
 
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
             const emittedConfig = emitSpy.mock.calls[0][0];
             expect(emittedConfig.presentationType).toBe(PresentationType.GRADED);
             expect(emittedConfig.presentationsNumber).toBe(2);
@@ -428,10 +431,10 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
             component.updatePresentationsNumber(5);
 
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
             const emittedConfig = emitSpy.mock.calls[0][0];
             expect(emittedConfig.presentationsNumber).toBe(5);
         });
@@ -444,10 +447,10 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
             component.updatePresentationsWeight(50);
 
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
             const emittedConfig = emitSpy.mock.calls[0][0];
             expect(emittedConfig.presentationsWeight).toBe(50);
         });
@@ -460,10 +463,10 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
             component.updatePresentationScore(7);
 
-            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledTimes(1);
             const emittedConfig = emitSpy.mock.calls[0][0];
             expect(emittedConfig.presentationScore).toBe(7);
         });
@@ -476,7 +479,7 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
             component.updatePresentationsNumber(10);
 
             const emittedConfig = emitSpy.mock.calls[0][0];
@@ -487,6 +490,7 @@ describe('GradingSystemPresentationsComponent', () => {
 
     describe('onPresentationTypeChange', () => {
         describe('changing to GRADED', () => {
+            setupTestBed({ zoneless: true });
             it('should set default graded presentation values', () => {
                 const gradingScale = createGradingScaleWithoutPresentations();
                 const config = createDefaultPresentationsConfig();
@@ -497,7 +501,7 @@ describe('GradingSystemPresentationsComponent', () => {
 
                 component.onPresentationTypeChange(PresentationType.GRADED);
 
-                expect(component.isGradedPresentation()).toBeTrue();
+                expect(component.isGradedPresentation()).toBe(true);
                 expect(component.presentationsConfig().presentationsNumber).toBe(2);
                 expect(component.presentationsConfig().presentationsWeight).toBe(20);
             });
@@ -518,6 +522,7 @@ describe('GradingSystemPresentationsComponent', () => {
         });
 
         describe('changing to BASIC', () => {
+            setupTestBed({ zoneless: true });
             it('should set default basic presentation score', () => {
                 const gradingScale = createGradingScaleWithoutPresentations();
                 const config = createDefaultPresentationsConfig();
@@ -547,6 +552,7 @@ describe('GradingSystemPresentationsComponent', () => {
         });
 
         describe('changing to NONE', () => {
+            setupTestBed({ zoneless: true });
             it('should clear all presentation settings from graded', () => {
                 const gradingScale = createGradingScaleWithGradedPresentations();
                 const config = createDefaultPresentationsConfig();
@@ -557,7 +563,7 @@ describe('GradingSystemPresentationsComponent', () => {
 
                 component.onPresentationTypeChange(PresentationType.NONE);
 
-                expect(component.isGradedPresentation()).toBeFalse();
+                expect(component.isGradedPresentation()).toBe(false);
                 expect(component.presentationsConfig().presentationsNumber).toBeUndefined();
                 expect(component.presentationsConfig().presentationsWeight).toBeUndefined();
             });

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -11,11 +13,12 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('GradingKeyOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
     let component: GradingKeyOverviewComponent;
     let route: ActivatedRoute;
@@ -36,18 +39,11 @@ describe('GradingKeyOverviewComponent', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [
-                GradingKeyOverviewComponent,
-                MockComponent(GradingKeyTableComponent),
-                FaIconComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-                MockPipe(SafeHtmlPipe),
-                MockPipe(GradeStepBoundsPipe),
-            ],
+            imports: [GradingKeyOverviewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(GradingSystemService),
                 MockProvider(BonusService),
                 MockProvider(CourseStorageService),
@@ -55,13 +51,16 @@ describe('GradingKeyOverviewComponent', () => {
                 MockProvider(ArtemisNavigationUtilService),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(GradingKeyOverviewComponent);
-                component = fixture.componentInstance;
-            });
+            .overrideComponent(GradingKeyOverviewComponent, {
+                remove: { imports: [GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective] },
+                add: {
+                    imports: [MockComponent(GradingKeyTableComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(GradingKeyOverviewComponent);
+        component = fixture.componentInstance;
     });
 
     it('should initialize component', () => {
@@ -74,18 +73,17 @@ describe('GradingKeyOverviewComponent', () => {
         expect(component.studentGradeOrBonusPointsOrGradeBonus).toBe(studentGrade);
     });
 
-    it('should print PDF', fakeAsync(() => {
-        const printSpy = jest.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation();
+    it('should print PDF', () => {
+        const printSpy = vi.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation(async () => {});
 
         component.printPDF();
 
-        tick();
-        expect(printSpy).toHaveBeenCalledOnce();
-    }));
+        expect(printSpy).toHaveBeenCalledTimes(1);
+    });
 
     it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {
         const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navUtilServiceSpy = jest.spyOn(navUtilService, 'navigateBack');
+        const navUtilServiceSpy = vi.spyOn(navUtilService, 'navigateBack');
         const courseId = 213;
 
         component.courseId = courseId;
@@ -94,7 +92,7 @@ describe('GradingKeyOverviewComponent', () => {
 
         component.previousState();
 
-        expect(navUtilServiceSpy).toHaveBeenCalledOnce();
+        expect(navUtilServiceSpy).toHaveBeenCalledTimes(1);
 
         if (examId == undefined) {
             expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'statistics']);

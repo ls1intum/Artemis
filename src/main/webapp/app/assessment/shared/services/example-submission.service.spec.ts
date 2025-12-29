@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
@@ -15,6 +17,7 @@ import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.se
 import { MockProvider } from 'ng-mocks';
 
 describe('Example Submission Service', () => {
+    setupTestBed({ zoneless: true });
     let httpMock: HttpTestingController;
     let service: ExampleSubmissionService;
     let expectedResult: any;
@@ -65,11 +68,11 @@ describe('Example Submission Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Service methods', () => {
-        it('should create an example submission', fakeAsync(() => {
+        it('should create an example submission', () => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
@@ -79,11 +82,11 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-            expect(expectedResult.body).toEqual(expected);
-        }));
 
-        it('should update an example submission', fakeAsync(() => {
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should update an example submission', () => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -93,21 +96,21 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-            expect(expectedResult.body).toEqual(expected);
-        }));
 
-        it('should delete an example submission', fakeAsync(() => {
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should delete an example submission', () => {
             const exampleSubmissionId = 1;
             service.delete(exampleSubmissionId).subscribe((resp) => (expectedResult = resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-            expect(expectedResult).toBeTrue();
-        }));
 
-        it('should return an example submission', fakeAsync(() => {
+            expect(expectedResult).toBe(true);
+        });
+
+        it('should return an example submission', () => {
             const exampleSubmissionId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -117,11 +120,11 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-            expect(expectedResult.body).toEqual(expected);
-        }));
 
-        it('should import an example submission', fakeAsync(() => {
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should import an example submission', () => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -131,13 +134,14 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
+
             expect(expectedResult.body).toEqual(expected);
-        }));
+        });
     });
 
     describe('ExampleSubmission model & DTO', () => {
         describe('ExampleSubmission', () => {
+            setupTestBed({ zoneless: true });
             it('allows creating an empty object with all optionals undefined', () => {
                 const ex: ExampleSubmission = {};
 
@@ -161,7 +165,7 @@ describe('Example Submission Service', () => {
                 };
 
                 expect(ex.id).toBe(42);
-                expect(ex.usedForTutorial).toBeFalse();
+                expect(ex.usedForTutorial).toBe(false);
                 expect(ex.assessmentExplanation).toBe('why');
                 expect((ex.exercise as any).id).toBe(99);
                 expect((ex.submission as any).id).toBe(7);
@@ -170,11 +174,12 @@ describe('Example Submission Service', () => {
         });
 
         describe('ExampleSubmissionDTO', () => {
+            setupTestBed({ zoneless: true });
             it('constructor assigns all fields', () => {
                 const dto = new ExampleSubmissionDTO(1, true, 777, 'note');
 
                 expect(dto.id).toBe(1);
-                expect(dto.usedForTutorial).toBeTrue();
+                expect(dto.usedForTutorial).toBe(true);
                 expect(dto.submissionId).toBe(777);
                 expect(dto.assessmentExplanation).toBe('note');
             });
@@ -183,7 +188,7 @@ describe('Example Submission Service', () => {
                 const dto = new ExampleSubmissionDTO(2, false, 888);
 
                 expect(dto.id).toBe(2);
-                expect(dto.usedForTutorial).toBeFalse();
+                expect(dto.usedForTutorial).toBe(false);
                 expect(dto.submissionId).toBe(888);
                 expect(dto.assessmentExplanation).toBeUndefined();
             });
@@ -202,6 +207,7 @@ describe('Example Submission Service', () => {
         });
 
         describe('ExampleSubmissionMode enum', () => {
+            setupTestBed({ zoneless: true });
             it('has the expected string values', () => {
                 expect(ExampleSubmissionMode.READ_AND_CONFIRM).toBe('readConfirm');
                 expect(ExampleSubmissionMode.ASSESS_CORRECTLY).toBe('assessCorrectly');

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +30,7 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
     let comp: ListOfComplaintsComponent;
 
@@ -37,11 +40,11 @@ describe('ListOfComplaintsComponent', () => {
     let router: Router;
     let datePipe: ArtemisDatePipe;
 
-    let findAllByTutorIdForExerciseIdStub: jest.SpyInstance;
-    let findAllByTutorIdForCourseIdStub: jest.SpyInstance;
-    let findAllByExerciseIdStub: jest.SpyInstance;
-    let findAllByCourseIdAndExamIdStub: jest.SpyInstance;
-    let findAllByCourseIdStub: jest.SpyInstance;
+    let findAllByTutorIdForExerciseIdStub: MockInstance;
+    let findAllByTutorIdForCourseIdStub: MockInstance;
+    let findAllByExerciseIdStub: MockInstance;
+    let findAllByCourseIdAndExamIdStub: MockInstance;
+    let findAllByCourseIdStub: MockInstance;
 
     const complaint1 = {
         id: 1,
@@ -66,7 +69,7 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TranslatePipeMock, MockComponent(FaIconComponent)],
+            imports: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SortService),
@@ -89,16 +92,16 @@ describe('ListOfComplaintsComponent', () => {
                 router = fixture.debugElement.injector.get(Router);
                 datePipe = fixture.debugElement.injector.get(ArtemisDatePipe);
 
-                findAllByTutorIdForExerciseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
-                findAllByTutorIdForCourseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForCourseId');
-                findAllByExerciseIdStub = jest.spyOn(complaintService, 'findAllByExerciseId');
-                findAllByCourseIdAndExamIdStub = jest.spyOn(complaintService, 'findAllByCourseIdAndExamId');
-                findAllByCourseIdStub = jest.spyOn(complaintService, 'findAllByCourseId');
+                findAllByTutorIdForExerciseIdStub = vi.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
+                findAllByTutorIdForCourseIdStub = vi.spyOn(complaintService, 'findAllByTutorIdForCourseId');
+                findAllByExerciseIdStub = vi.spyOn(complaintService, 'findAllByExerciseId');
+                findAllByCourseIdAndExamIdStub = vi.spyOn(complaintService, 'findAllByCourseIdAndExamId');
+                findAllByCourseIdStub = vi.spyOn(complaintService, 'findAllByCourseId');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('loadComplaints', () => {
@@ -106,7 +109,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledOnce();
+            expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledWith(12, 56, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -115,7 +118,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, examId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledOnce();
+            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -124,7 +127,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledOnce();
+            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -133,7 +136,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByExerciseIdStub).toHaveBeenCalledOnce();
+            expect(findAllByExerciseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByExerciseIdStub).toHaveBeenCalledWith(34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByTutorIdForCourseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -142,7 +145,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ courseId: 12, examId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledOnce();
+            expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledWith(12, 34);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdStub);
         });
@@ -151,7 +154,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByCourseIdStub).toHaveBeenCalledOnce();
+            expect(findAllByCourseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByCourseIdStub).toHaveBeenCalledWith(12, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub);
         });
@@ -160,19 +163,19 @@ describe('ListOfComplaintsComponent', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
+            expect(comp.complaintsToShow).toEqual(expect.arrayContaining([complaint3]));
         });
 
         it('process complaints with student information', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint4] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toIncludeSameMembers([complaint3, complaint4]);
+            expect(comp.complaintsToShow).toEqual(expect.arrayContaining([complaint3, complaint4]));
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
+            expect(comp.complaintsToShow).toEqual(expect.arrayContaining([complaint3]));
         });
     });
 
@@ -181,18 +184,18 @@ describe('ListOfComplaintsComponent', () => {
         const freeComplaints = [complaint3, complaint4];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
         comp.loadComplaints();
-        expect(comp.showAddressedComplaints).toBeFalse();
-        expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
+        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.complaintsToShow).toEqual(expect.arrayContaining(freeComplaints));
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBeTrue();
-        expect(comp.complaintsToShow).toIncludeSameMembers(complaints);
+        expect(comp.showAddressedComplaints).toBe(true);
+        expect(comp.complaintsToShow).toEqual(expect.arrayContaining(complaints));
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBeFalse();
-        expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
+        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.complaintsToShow).toEqual(expect.arrayContaining(freeComplaints));
     });
 
     describe('calculateComplaintLockStatus', () => {
@@ -202,11 +205,11 @@ describe('ListOfComplaintsComponent', () => {
             complaint.result = new Result();
             complaint.complaintText = 'Test text';
             complaint.complaintType = ComplaintType.MORE_FEEDBACK;
-            jest.spyOn(translateService, 'instant');
+            vi.spyOn(translateService, 'instant');
 
             comp.calculateComplaintLockStatus(complaint);
 
-            expect(translateService.instant).toHaveBeenCalledOnce();
+            expect(translateService.instant).toHaveBeenCalledTimes(1);
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.notUnlocked');
         });
 
@@ -216,13 +219,13 @@ describe('ListOfComplaintsComponent', () => {
             const complaint = createComplaint(ComplaintType.MORE_FEEDBACK, endDate);
             complaint.id = 42;
             complaint.result = new Result();
-            jest.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(true);
-            jest.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
-            jest.spyOn(translateService, 'instant');
+            vi.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(true);
+            vi.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
+            vi.spyOn(translateService, 'instant');
 
             comp.calculateComplaintLockStatus(complaint);
 
-            expect(translateService.instant).toHaveBeenCalledOnce();
+            expect(translateService.instant).toHaveBeenCalledTimes(1);
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformationYou', { endDate: `${expectedDate}` });
         });
 
@@ -239,13 +242,13 @@ describe('ListOfComplaintsComponent', () => {
             complaint.complaintResponse.isCurrentlyLocked = true;
             complaint.complaintResponse.reviewer = { login: reviewLogin } as User;
             complaint.complaintResponse.lockEndDate = endDate;
-            jest.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(false);
-            jest.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
-            jest.spyOn(translateService, 'instant');
+            vi.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(false);
+            vi.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
+            vi.spyOn(translateService, 'instant');
 
             comp.calculateComplaintLockStatus(complaint);
 
-            expect(translateService.instant).toHaveBeenCalledOnce();
+            expect(translateService.instant).toHaveBeenCalledTimes(1);
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformation', { endDate: `${expectedDate}`, user: reviewLogin });
         });
     });
@@ -274,14 +277,14 @@ describe('ListOfComplaintsComponent', () => {
         const complaint = createComplaintWithSubmissionAndResult(submissionId, participationId, exerciseId, courseId, type);
         activatedRoute.data = of({ complaintType: type });
         complaint.accepted = accepted;
-        jest.spyOn(router, 'navigate');
+        vi.spyOn(router, 'navigate');
         activatedRoute.setParameters({ courseId });
 
         comp.ngOnInit();
         comp.openAssessmentEditor(complaint);
 
         expect(comp.correctionRound).toBe(expectedCorrectionRound);
-        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledTimes(1);
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'submissions', `${submissionId}`, 'assessment'], {
             queryParams: { 'correction-round': expectedCorrectionRound },
         });
@@ -314,41 +317,37 @@ describe('ListOfComplaintsComponent', () => {
         return complaint;
     }
 
-    it.each(['4', '5'])(
-        'should filter complaints accordingly',
-        fakeAsync((filterOption: string) => {
-            const addressedComplaints = [complaint1, complaint2, complaint5];
-            const openComplaints = [complaint3, complaint4];
+    it.each(['4', '5'])('should filter complaints accordingly', (filterOption: string) => {
+        const addressedComplaints = [complaint1, complaint2, complaint5];
+        const openComplaints = [complaint3, complaint4];
 
-            const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
-            findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
-            comp.filterOption = Number(filterOption);
-            comp.loadComplaints();
-            tick(100);
+        const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
+        findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
+        comp.filterOption = Number(filterOption);
+        comp.loadComplaints();
 
-            switch (Number(filterOption)) {
-                case 4:
-                    // This filter option indicates that the user selected the part of the pie representing the number of addressed complaints
-                    // -> Only addressed complaints should be shown
-                    expect(comp.complaintsToShow).toEqual(addressedComplaints);
-                    expect(comp.showAddressedComplaints).toBeTrue();
-                    break;
-                case 5:
-                    // This filter option indicates that the user selected the part of the pie representing the number of open complaints
-                    // -> Only open complaints should be shown
-                    expect(comp.complaintsToShow).toEqual(openComplaints);
-                    expect(comp.showAddressedComplaints).toBeFalse();
-                    break;
-            }
+        switch (Number(filterOption)) {
+            case 4:
+                // This filter option indicates that the user selected the part of the pie representing the number of addressed complaints
+                // -> Only addressed complaints should be shown
+                expect(comp.complaintsToShow).toEqual(addressedComplaints);
+                expect(comp.showAddressedComplaints).toBe(true);
+                break;
+            case 5:
+                // This filter option indicates that the user selected the part of the pie representing the number of open complaints
+                // -> Only open complaints should be shown
+                expect(comp.complaintsToShow).toEqual(openComplaints);
+                expect(comp.showAddressedComplaints).toBe(false);
+                break;
+        }
 
-            comp.resetFilterOptions();
+        comp.resetFilterOptions();
 
-            expect(comp.complaintsToShow).toEqual(openComplaints);
-            expect(comp.filterOption).toBeUndefined();
-        }),
-    );
+        expect(comp.complaintsToShow).toEqual(openComplaints);
+        expect(comp.filterOption).toBeUndefined();
+    });
 
-    function verifyNotCalled(...instances: jest.SpyInstance[]) {
+    function verifyNotCalled(...instances: MockInstance[]) {
         for (const spyInstance of instances) {
             expect(spyInstance).not.toHaveBeenCalled();
         }

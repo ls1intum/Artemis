@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -7,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { mockExercise } from 'test/helpers/mocks/service/mock-team.service';
 
 describe('CollapsableAssessmentInstructionsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CollapsableAssessmentInstructionsComponent;
     let fixture: ComponentFixture<CollapsableAssessmentInstructionsComponent>;
 
@@ -27,9 +30,9 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
         fixture.componentRef.setInput('collapsed', true);
         fixture.componentRef.setInput('readOnly', true);
 
-        expect(component.isAssessmentTraining()).toBeTrue();
-        expect(component.showAssessmentInstructions()).toBeFalse();
-        expect(component.collapsed()).toBeTrue();
-        expect(component.readOnly()).toBeTrue();
+        expect(component.isAssessmentTraining()).toBe(true);
+        expect(component.showAssessmentInstructions()).toBe(false);
+        expect(component.collapsed()).toBe(true);
+        expect(component.readOnly()).toBe(true);
     });
 });

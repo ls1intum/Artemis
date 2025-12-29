@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { RatingListComponent } from 'app/assessment/manage/rating/rating-list/rating-list.component';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,6 +18,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('RatingListComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: RatingListComponent;
     let fixture: ComponentFixture<RatingListComponent>;
     let router: Router;
@@ -26,7 +29,7 @@ describe('RatingListComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
+            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -41,7 +44,7 @@ describe('RatingListComponent', () => {
                 component = fixture.componentInstance;
                 router = TestBed.inject(Router);
 
-                jest.spyOn(TestBed.inject(RatingService), 'getRatingsForDashboard').mockReturnValue(of(ratings));
+                vi.spyOn(TestBed.inject(RatingService), 'getRatingsForDashboard').mockReturnValue(of(ratings));
 
                 component.ngOnInit();
             });
@@ -53,14 +56,14 @@ describe('RatingListComponent', () => {
 
     it('should not open exercise du to missing participation', () => {
         const rating = { id: 1, result: { id: 1 } as Result } as Rating;
-        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
+        const routerNavigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
         expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
 
     it('should not open exercise du to missing exercise', () => {
         const rating = { id: 1, result: { id: 1, participation: { id: 1 } as Participation } as Result } as Rating;
-        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
+        const routerNavigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
         expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
@@ -70,8 +73,8 @@ describe('RatingListComponent', () => {
             id: 1,
             result: { id: 1, submission: { participation: { id: 1, exercise: { id: 1, type: ExerciseType.TEXT } as Exercise } as Participation } } as Result,
         } as Rating;
-        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
+        const routerNavigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
-        expect(routerNavigateSpy).toHaveBeenCalledOnce();
+        expect(routerNavigateSpy).toHaveBeenCalledTimes(1);
     });
 });

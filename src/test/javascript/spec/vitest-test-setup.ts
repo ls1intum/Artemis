@@ -5,6 +5,7 @@
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
  */
 import '@angular/compiler';
+import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
 import { vi } from 'vitest';
 
@@ -15,11 +16,23 @@ import relativeTime from 'dayjs/esm/plugin/relativeTime';
 import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
 import utc from 'dayjs/esm/plugin/utc';
 import timezone from 'dayjs/esm/plugin/timezone';
+import isBetween from 'dayjs/esm/plugin/isBetween';
+import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/esm/plugin/isSameOrAfter';
+import minMax from 'dayjs/esm/plugin/minMax';
+import customParseFormat from 'dayjs/esm/plugin/customParseFormat';
+import duration from 'dayjs/esm/plugin/duration';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(isBetween);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(minMax);
+dayjs.extend(customParseFormat);
+dayjs.extend(duration);
 
 // Browser API mocks (not available in jsdom)
 globalThis.ResizeObserver = class ResizeObserver {

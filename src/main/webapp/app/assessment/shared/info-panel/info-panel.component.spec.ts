@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { Component } from '@angular/core';
 
@@ -17,6 +19,7 @@ class TestHostComponent {
 }
 
 describe('InfoPanelComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: InfoPanelComponent;
     let fixture: ComponentFixture<InfoPanelComponent>;
 
@@ -30,7 +33,7 @@ describe('InfoPanelComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('component creation', () => {
