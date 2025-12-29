@@ -7,6 +7,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('FeedbackTextComponent', () => {
     let fixture: ComponentFixture<FeedbackTextComponent>;
@@ -16,6 +17,7 @@ describe('FeedbackTextComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [TranslateModule.forRoot()],
             providers: [MockProvider(LongFeedbackTextService)],
         })
             .compileComponents()
@@ -37,8 +39,6 @@ describe('FeedbackTextComponent', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
 
-        comp.ngOnInit();
-
         expect(comp.text).toBe('');
     });
 
@@ -47,16 +47,12 @@ describe('FeedbackTextComponent', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
 
-        comp.ngOnInit();
-
         expect(comp.text).toBe(text);
     });
 
     it('should not fetch long feedback if it does not exist', fakeAsync(() => {
         fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
-
-        comp.ngOnInit();
         tick();
 
         expect(getLongFeedbackStub).not.toHaveBeenCalled();
@@ -68,8 +64,6 @@ describe('FeedbackTextComponent', () => {
 
         fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, true)));
         fixture.detectChanges();
-
-        comp.ngOnInit();
         tick();
 
         expect(getLongFeedbackStub).toHaveBeenCalledOnce();
@@ -85,8 +79,6 @@ describe('FeedbackTextComponent', () => {
 
         fixture.componentRef.setInput('feedback', getFeedbackItem('short version', getFeedbackReference(1, 2, true)));
         fixture.detectChanges();
-
-        comp.ngOnInit();
         tick();
 
         expect(comp.text).toBe('short version');
