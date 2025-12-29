@@ -89,11 +89,11 @@ describe('QuizVisualEditorComponent', () => {
         answerOption.isCorrect = true;
         comp.question().answerOptions = [answerOption];
 
-        expect(answerOption.isCorrect).toBeTrue();
+        expect(answerOption.isCorrect).toBe(true);
 
         comp.toggleIsCorrect(answerOption);
 
-        expect(answerOption.isCorrect).toBeFalse();
+        expect(answerOption.isCorrect).toBe(false);
     });
 
     it('does not toggle the if single mode and already has correct answer', () => {
@@ -108,11 +108,11 @@ describe('QuizVisualEditorComponent', () => {
         const answerOption2 = new AnswerOption();
         comp.question().answerOptions = [answerOption, answerOption2];
 
-        expect(answerOption2.isCorrect).toBeFalse();
+        expect(answerOption2.isCorrect).toBe(false);
 
         comp.toggleIsCorrect(answerOption2);
 
-        expect(answerOption2.isCorrect).toBeFalse();
+        expect(answerOption2.isCorrect).toBe(false);
     });
 
     it('add a new answer option', () => {

@@ -83,6 +83,6 @@ describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
 
         component.importQuestions();
 
-        expect(eventEmitted).toBeTrue();
+        expect(eventEmitted).toBe(true);
     });
 });

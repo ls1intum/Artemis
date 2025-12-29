@@ -229,6 +229,6 @@ describe('QuizExercise Generator', () => {
         expect(generatedQuestion.points).toBe(1);
         expect(generatedQuestion.backgroundFilePath).toBe('diagram-background.png');
         expect(generatedQuestion.importedFiles).toBeDefined();
-        expect(generatedQuestion.importedFiles!.has('diagram-background.png')).toBeTrue();
+        expect(generatedQuestion.importedFiles!.has('diagram-background.png')).toBe(true);
     });
 });

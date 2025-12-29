@@ -63,19 +63,19 @@ describe('Leaderboard', () => {
 
     describe('isUserInLeaderboard', () => {
         it('should return true when current user is in leaderboard', () => {
-            expect(component.isUserInLeaderboard()).toBeTrue();
+            expect(component.isUserInLeaderboard()).toBe(true);
         });
 
         it('should return false when current user is not in leaderboard', () => {
             fixture.componentRef.setInput('currentUserId', 999);
             fixture.detectChanges();
-            expect(component.isUserInLeaderboard()).toBeFalse();
+            expect(component.isUserInLeaderboard()).toBe(false);
         });
 
         it('should return false when leaderboard is empty', () => {
             fixture.componentRef.setInput('leaderboard', []);
             fixture.detectChanges();
-            expect(component.isUserInLeaderboard()).toBeFalse();
+            expect(component.isUserInLeaderboard()).toBe(false);
         });
     });
 

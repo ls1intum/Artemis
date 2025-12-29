@@ -50,9 +50,9 @@ describe('QuizExercise Point Statistic Component', () => {
     let router: Router;
     let translateService: TranslateService;
     let quizServiceFindSpy: any;
-    Date.now = vi.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
     beforeEach(async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(new Date(Date.UTC(2017, 0, 1)).valueOf());
         await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -80,6 +80,7 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
@@ -188,7 +189,7 @@ describe('QuizExercise Point Statistic Component', () => {
             // check
             expect(routerSpy).not.toHaveBeenCalled();
             expect(comp.quizExercise).toEqual(quizExercise);
-            expect(comp.waitingForQuizStart).toBeFalse();
+            expect(comp.waitingForQuizStart).toBe(false);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });

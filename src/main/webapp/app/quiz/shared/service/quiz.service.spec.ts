@@ -204,7 +204,7 @@ describe('Quiz Service', () => {
     });
 
     afterEach(() => {
-        vi.spyOn(globalThis.Math, 'random').mockRestore();
+        vi.restoreAllMocks();
     });
 
     it('shuffles order of Answer options', () => {
@@ -275,7 +275,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [{ initializationState: undefined }],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBeTrue();
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(true);
         });
 
         it('should return false when quiz has ended', () => {
@@ -285,7 +285,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [{ initializationState: undefined }],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
         });
 
         it('should return false when participation is initialized', () => {
@@ -298,7 +298,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [participation],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
         });
 
         it('should return false when participation is finished', () => {
@@ -311,7 +311,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [participation],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
         });
 
         it('should return false when no quiz batch has started', () => {
@@ -321,7 +321,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [{ initializationState: undefined }],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
         });
     });
 
@@ -333,7 +333,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [{ initializationState: undefined }],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.notStarted(quizExercise)).toBeTrue();
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(true);
         });
 
         it('should return true when no quiz batches exist', () => {
@@ -343,7 +343,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: undefined,
             } as QuizExercise;
 
-            expect(ArtemisQuizService.notStarted(quizExercise)).toBeTrue();
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(true);
         });
 
         it('should return false when quiz batch has started', () => {
@@ -353,7 +353,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [{ initializationState: undefined }],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.notStarted(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(false);
         });
 
         it('should return false when quiz has ended', () => {
@@ -363,7 +363,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [{ initializationState: undefined }],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.notStarted(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(false);
         });
 
         it('should return false when participation is initialized', () => {
@@ -376,7 +376,7 @@ describe('Quiz Service - Static Methods', () => {
                 studentParticipations: [participation],
             } as QuizExercise;
 
-            expect(ArtemisQuizService.notStarted(quizExercise)).toBeFalse();
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(false);
         });
     });
 });

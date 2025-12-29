@@ -95,10 +95,10 @@ describe('CourseTrainingComponent', () => {
         expect(leaderboardSpy).toHaveBeenCalledWith(1);
         expect(component.leaderboardEntries()).toEqual([mockLeaderboardEntry]);
         expect(component.currentUserEntry()).toEqual(mockLeaderboardEntry);
-        expect(component.isLoading()).toBeFalse();
-        expect(component.isDataLoaded()).toBeTrue();
-        expect(component.showDialog).toBeFalse();
-        expect(component.isFirstVisit()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
+        expect(component.isDataLoaded()).toBe(true);
+        expect(component.showDialog).toBe(false);
+        expect(component.isFirstVisit()).toBe(false);
     });
 
     it('should calculate league based on user entry', () => {
@@ -131,8 +131,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeTrue();
-        expect(dueIn.isPast).toBeFalse();
+        expect(dueIn.isValid).toBe(true);
+        expect(dueIn.isPast).toBe(false);
         expect(dueIn.days).toBe(2);
         expect(dueIn.hours).toBe(3);
     });
@@ -147,8 +147,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeTrue();
-        expect(dueIn.isPast).toBeTrue();
+        expect(dueIn.isValid).toBe(true);
+        expect(dueIn.isPast).toBe(true);
     });
 
     it('should handle undefined due date', () => {
@@ -159,8 +159,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeFalse();
-        expect(dueIn.isPast).toBeFalse();
+        expect(dueIn.isValid).toBe(false);
+        expect(dueIn.isPast).toBe(false);
         expect(dueIn.days).toBe(0);
         expect(dueIn.hours).toBe(0);
         expect(dueIn.minutes).toBe(0);
@@ -176,8 +176,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeTrue();
-        expect(dueIn.isPast).toBeTrue();
+        expect(dueIn.isValid).toBe(true);
+        expect(dueIn.isPast).toBe(true);
         expect(dueIn.days).toBe(0);
         expect(dueIn.hours).toBe(0);
         expect(dueIn.minutes).toBe(0);
@@ -211,7 +211,7 @@ describe('CourseTrainingComponent', () => {
         component.isFirstVisit.set(true);
         await component.onSaveDialog();
 
-        expect(component.isFirstVisit()).toBeFalse();
+        expect(component.isFirstVisit()).toBe(false);
         expect(saveSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 showInLeaderboard: true,
@@ -226,7 +226,7 @@ describe('CourseTrainingComponent', () => {
         component.isLoading.set(true);
         await component.onSaveDialog();
 
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should load settings and open info dialog', async () => {
@@ -234,11 +234,11 @@ describe('CourseTrainingComponent', () => {
 
         await component.showInfoDialog();
 
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
         expect(getSettingsSpy).toHaveBeenCalled();
-        expect(component.showInLeaderboard).toBeTrue();
-        expect(component.initialShowInLeaderboard()).toBeTrue();
-        expect(component.displayInfoDialog).toBeTrue();
+        expect(component.showInLeaderboard).toBe(true);
+        expect(component.initialShowInLeaderboard()).toBe(true);
+        expect(component.displayInfoDialog).toBe(true);
     });
 
     it('should handle error when loading settings for info dialog', async () => {
@@ -248,8 +248,8 @@ describe('CourseTrainingComponent', () => {
         component.isLoading.set(true);
         await component.showInfoDialog();
 
-        expect(component.isLoading()).toBeFalse();
-        expect(component.displayInfoDialog).toBeFalse();
+        expect(component.isLoading()).toBe(false);
+        expect(component.displayInfoDialog).toBe(false);
     });
 
     it('should save info dialog settings and reload leaderboard', async () => {
@@ -265,8 +265,8 @@ describe('CourseTrainingComponent', () => {
                 showInLeaderboard: false,
             }),
         );
-        expect(component.initialShowInLeaderboard()).toBeFalse();
-        expect(component.displayInfoDialog).toBeFalse();
+        expect(component.initialShowInLeaderboard()).toBe(false);
+        expect(component.displayInfoDialog).toBe(false);
         expect(loadLeaderboardSpy).toHaveBeenCalledWith(1);
     });
 
@@ -277,7 +277,7 @@ describe('CourseTrainingComponent', () => {
         component.isLoading.set(true);
         await component.onSaveInfoDialog();
 
-        expect(component.isLoading()).toBeFalse();
-        expect(component.displayInfoDialog).toBeTrue();
+        expect(component.isLoading()).toBe(false);
+        expect(component.displayInfoDialog).toBe(true);
     });
 });

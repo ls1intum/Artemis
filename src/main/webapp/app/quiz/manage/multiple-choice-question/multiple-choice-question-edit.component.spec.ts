@@ -225,7 +225,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should parse answer options with question titles', () => {
@@ -266,7 +266,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should parse question titles', () => {
@@ -285,14 +285,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should find no domain actions', () => {
         component.domainActionsFound([]);
 
         expectCleanupQuestion();
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should detect changes in markdown', () => {

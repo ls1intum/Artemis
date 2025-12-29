@@ -53,29 +53,29 @@ describe('QuizQuestionListEditComponent', () => {
     it('should add multiple choice question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addMultipleChoiceQuestion();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addDragAndDropQuestion();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add short answer question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addShortAnswerQuestion();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should toggle show hide existing questions flag', () => {
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBeTrue();
+        expect(component.showExistingQuestions).toBe(true);
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBeFalse();
+        expect(component.showExistingQuestions).toBe(false);
     });
 
     it('should add existing quiz questions to quizQuestions and toggle show hide existing questions flag', () => {
@@ -83,8 +83,8 @@ describe('QuizQuestionListEditComponent', () => {
         const question1 = new ShortAnswerQuestion();
         component.showExistingQuestions = true;
         component.handleExistingQuestionsAdded([question0, question1]);
-        expect(component.showExistingQuestions).toBeFalse();
-        expect(component.quizQuestions()).toBeArrayOfSize(2);
+        expect(component.showExistingQuestions).toBe(false);
+        expect(component.quizQuestions()).toHaveLength(2);
         expect(component.quizQuestions()[0]).toEqual(question0);
         expect(component.quizQuestions()[1]).toEqual(question1);
     });
@@ -102,7 +102,7 @@ describe('QuizQuestionListEditComponent', () => {
         const onQuestionDeletedEmit = vi.spyOn(component.onQuestionDeleted, 'emit');
         component.handleQuestionDeleted(0);
         expect(onQuestionDeletedEmit).toHaveBeenCalledOnce();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(component.quizQuestions()[0]).toEqual(question1);
     });
 

@@ -67,7 +67,7 @@ describe('QuizExercise Details Component', () => {
         vi.spyOn(comp, 'load').mockReturnValue();
         comp.ngOnInit();
 
-        expect(comp.isExamMode).toBeTrue();
+        expect(comp.isExamMode).toBe(true);
     });
 
     it('should initialize detail component', async () => {

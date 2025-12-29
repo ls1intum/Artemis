@@ -213,7 +213,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.submitted).toBeTrue();
+        expect(component.submitted).toBe(true);
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         vi.clearAllMocks();
         // Multiple Choice
@@ -221,7 +221,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.submitted).toBeTrue();
+        expect(component.submitted).toBe(true);
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         vi.clearAllMocks();
         // Short Answer
@@ -229,7 +229,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.submitted).toBeTrue();
+        expect(component.submitted).toBe(true);
         expect(showResultSpy).toHaveBeenCalledWith(answer);
     });
 
@@ -269,14 +269,14 @@ describe('CourseTrainingQuizComponent', () => {
     it('should set showUnratedConfirmation to false when confirmUnratedPractice is called', () => {
         component.showUnratedConfirmation = true;
         component.confirmUnratedPractice();
-        expect(component.showUnratedConfirmation).toBeFalse();
+        expect(component.showUnratedConfirmation).toBe(false);
     });
 
     it('should set showUnratedConfirmation to false and navigate to training when cancelUnratedPractice is called', () => {
         const navigateSpy = vi.spyOn(component, 'navigateToTraining');
         component.showUnratedConfirmation = true;
         component.cancelUnratedPractice();
-        expect(component.showUnratedConfirmation).toBeFalse();
+        expect(component.showUnratedConfirmation).toBe(false);
         expect(navigateSpy).toHaveBeenCalled();
     });
 });

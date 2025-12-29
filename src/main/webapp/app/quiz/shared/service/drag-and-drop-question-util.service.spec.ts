@@ -143,7 +143,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.validateNoMisleadingCorrectMapping(question);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true when no drag items', () => {
@@ -157,7 +157,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.validateNoMisleadingCorrectMapping(question);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true for valid non-misleading mappings', () => {
@@ -177,7 +177,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.validateNoMisleadingCorrectMapping(question);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return false for misleading mappings', () => {
@@ -200,7 +200,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.validateNoMisleadingCorrectMapping(question);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true when drag items share all drop locations', () => {
@@ -223,7 +223,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.validateNoMisleadingCorrectMapping(question);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -235,7 +235,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.isMappedTogether(mappings, dragItem, dropLocation);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return false when mapping does not exist', () => {
@@ -246,7 +246,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.isMappedTogether(mappings, dragItem, otherDropLocation);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 
@@ -309,7 +309,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.isSameSetOfDropLocations(set1, set2);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true for same elements in different order', () => {
@@ -320,7 +320,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.isSameSetOfDropLocations(set1, set2);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return false for different lengths', () => {
@@ -331,7 +331,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.isSameSetOfDropLocations(set1, set2);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return false for different elements', () => {
@@ -343,7 +343,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             const result = service.isSameSetOfDropLocations(set1, set2);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 
@@ -351,40 +351,40 @@ describe('DragAndDropQuestionUtil', () => {
         it('should return true for same object reference', () => {
             const entity = { id: 1 };
             const result = service.isSameEntityWithTempId(entity, entity);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true for same id', () => {
             const entity1 = { id: 1 };
             const entity2 = { id: 1 };
             const result = service.isSameEntityWithTempId(entity1, entity2);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true for same tempID', () => {
             const entity1 = { tempID: 123 };
             const entity2 = { tempID: 123 };
             const result = service.isSameEntityWithTempId(entity1, entity2);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return false for different ids', () => {
             const entity1 = { id: 1 };
             const entity2 = { id: 2 };
             const result = service.isSameEntityWithTempId(entity1, entity2);
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return false when one is undefined', () => {
             const entity = { id: 1 };
             const result = service.isSameEntityWithTempId(entity, undefined);
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true when both are undefined', () => {
             // When both are undefined, they are considered the same (undefined === undefined)
             const result = service.isSameEntityWithTempId(undefined, undefined);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 });

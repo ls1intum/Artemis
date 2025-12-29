@@ -110,7 +110,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('should initialize quiz exercise', () => {
         comp.ngOnInit();
-        expect(comp.isValidQuiz()).toBeTrue();
+        expect(comp.isValidQuiz()).toBe(true);
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(quizServiceFindStub).toHaveBeenCalledOnce();
     });
@@ -140,7 +140,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     it('should have pending changes', () => {
         comp.ngOnInit();
         comp.quizExercise.quizQuestions![0].points = 5;
-        expect(comp.pendingChanges()).toBeTrue();
+        expect(comp.pendingChanges()).toBe(true);
     });
 
     it('should move down the quiz question', () => {
@@ -190,7 +190,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if quiz explanation is too long', () => {
@@ -199,7 +199,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if answer option hint is too long', () => {
@@ -207,7 +207,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if answer option explanation is too long', () => {
@@ -215,7 +215,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
         });
 
@@ -231,7 +231,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if question explanation is invalid', () => {
@@ -240,7 +240,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
         });
     });
@@ -270,6 +270,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         comp.quizExercise = quizExercise;
         // @ts-ignore
         comp.invalidFlaggedQuestions = [question];
-        expect(comp.isValidQuiz()).toBeTrue();
+        expect(comp.isValidQuiz()).toBe(true);
     });
 });

@@ -32,7 +32,7 @@ describe('QuizTrainingDialogComponent', () => {
         fixture.componentRef.setInput('initialShowInLeaderboard', true);
         fixture.detectChanges();
 
-        expect(component.saveDisabled()).toBeTrue();
+        expect(component.saveDisabled()).toBe(true);
     });
 
     it('should enable save when showInLeaderboard differs from initialShowInLeaderboard', () => {
@@ -40,7 +40,7 @@ describe('QuizTrainingDialogComponent', () => {
         fixture.componentRef.setInput('initialShowInLeaderboard', true);
         fixture.detectChanges();
 
-        expect(component.saveDisabled()).toBeFalse();
+        expect(component.saveDisabled()).toBe(false);
     });
 
     it('should always enable save when disableSaveValidation is true', () => {
@@ -49,6 +49,6 @@ describe('QuizTrainingDialogComponent', () => {
         fixture.componentRef.setInput('disableSaveValidation', true);
         fixture.detectChanges();
 
-        expect(component.saveDisabled()).toBeFalse();
+        expect(component.saveDisabled()).toBe(false);
     });
 });

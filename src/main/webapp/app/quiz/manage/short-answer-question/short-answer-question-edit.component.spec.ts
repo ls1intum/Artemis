@@ -356,7 +356,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(questionUpdatedSpy).toHaveBeenCalled();
         const text: string = component.questionEditorText;
         const firstLine = text.split('\n')[0];
-        expect(firstLine).toInclude('[-spot 1]');
+        expect(firstLine).toContain('[-spot 1]');
         expect(component.numberOfSpot).toBe(2);
     });
 
@@ -377,7 +377,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(questionUpdatedSpy).toHaveBeenCalled();
         const text: string = component.questionEditorText;
         const lastLine = text.split('\n').last();
-        expect(lastLine).toInclude('[-option');
+        expect(lastLine).toContain('[-option');
     });
 
     it('should add text solution', () => {
@@ -460,7 +460,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         vi.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue('');
 
-        // Mock the questionEditor to return a mock monaco editor
+        // Mock the questionEditor signal to return a mock monaco editor
         const mockMonacoEditor = {
             getText: vi.fn().mockReturnValue('Question text [-option 1]'),
         };
@@ -468,7 +468,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
             monacoEditor: mockMonacoEditor,
             applyOptionPreset: vi.fn(),
         };
-        vi.spyOn(component as any, 'questionEditor').mockReturnValue(mockQuestionEditor as any);
+        // Use Object.defineProperty to mock the signal getter since vi.spyOn doesn't work with Angular signals
+        Object.defineProperty(component, 'questionEditor', {
+            value: () => mockQuestionEditor,
+            configurable: true,
+        });
 
         // Mock setQuestionEditorValue and parseMarkdown
         vi.spyOn(component, 'setQuestionEditorValue').mockImplementation(() => {});

@@ -130,7 +130,7 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.sampleSolutions).toHaveLength(1);
         expect(component.sampleSolutions[0]).toStrictEqual(solution);
-        expect(component.showingSampleSolution()).toBeTrue();
+        expect(component.showingSampleSolution()).toBe(true);
     });
 
     it('should toggle show sample solution', () => {
@@ -152,7 +152,7 @@ describe('ShortAnswerQuestionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         component.hideSampleSolution();
 
-        expect(component.showingSampleSolution()).toBeFalse();
+        expect(component.showingSampleSolution()).toBe(false);
     });
 
     it('should get submitted text size for spot', () => {

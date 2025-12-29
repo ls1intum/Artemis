@@ -144,16 +144,16 @@ describe('DragAndDropQuestionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         fixture.componentRef.setInput('forceSampleSolution', true);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.forceSampleSolution()).toBeTrue();
+        expect(comp.forceSampleSolution()).toBe(true);
         expect(solveSpy).toHaveBeenCalledWith(comp.question(), mappings);
         expect(comp.sampleSolutionMappings).toEqual(mappings);
-        expect(comp.showingSampleSolution()).toBeTrue();
+        expect(comp.showingSampleSolution()).toBe(true);
     });
 
     it('should hide sample solutions', () => {
         comp.showingSampleSolution.set(true);
         comp.hideSampleSolution();
-        expect(comp.showingSampleSolution()).toBeFalse();
+        expect(comp.showingSampleSolution()).toBe(false);
     });
 
     it('should return unassigned drag items', () => {
@@ -170,9 +170,9 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation: dropLocation2, mapping: mapping2, dragItem: dragItem2 } = getDropLocationMappingAndItem();
         fixture.componentRef.setInput('mappings', [mapping1, mapping2]);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBeFalse();
+        expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBe(false);
         dragItem2.invalid = true;
-        expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBeTrue();
+        expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBe(true);
     });
 
     it('should return no drag item if there is no mapping', () => {
@@ -228,7 +228,7 @@ describe('DragAndDropQuestionComponent', () => {
     it('should set drop allowed to true when dragged', () => {
         comp.dropAllowed = false;
         comp.drag();
-        expect(comp.dropAllowed).toBeTrue();
+        expect(comp.dropAllowed).toBe(true);
     });
 
     const getDropLocationMappingAndItem = () => {

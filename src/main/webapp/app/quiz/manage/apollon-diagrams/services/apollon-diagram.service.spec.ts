@@ -1,13 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const resourceUrl = 'api/modeling';
 
@@ -18,20 +16,22 @@ describe('ApollonDiagramService', () => {
     let apollonDiagram: ApollonDiagram;
     let apollonDiagramService: ApollonDiagramService;
     let httpTestingController: HttpTestingController;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService, { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                apollonDiagramService = TestBed.inject(ApollonDiagramService);
-                httpTestingController = TestBed.inject(HttpTestingController);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
+        }).compileComponents();
+
+        apollonDiagramService = TestBed.inject(ApollonDiagramService);
+        httpTestingController = TestBed.inject(HttpTestingController);
         courseId = 1;
         apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     });
 
-    it('should create a diagram', async () => {
+    afterEach(() => {
+        httpTestingController.verify();
+    });
+
+    it('should create a diagram', () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
@@ -50,7 +50,7 @@ describe('ApollonDiagramService', () => {
         expect(response!.status).toBe(200);
     });
 
-    it('should update a diagram', async () => {
+    it('should update a diagram', () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
@@ -69,7 +69,7 @@ describe('ApollonDiagramService', () => {
         expect(response!.status).toBe(200);
     });
 
-    it('should find a diagram', async () => {
+    it('should find a diagram', () => {
         // Set up
         const diagramId = 1;
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -89,7 +89,7 @@ describe('ApollonDiagramService', () => {
         expect(response!.status).toBe(200);
     });
 
-    it('should delete a diagram', async () => {
+    it('should delete a diagram', () => {
         // Set up
         const diagramId = 1;
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -109,7 +109,7 @@ describe('ApollonDiagramService', () => {
         expect(response!.status).toBe(200);
     });
 
-    it('should get diagrams by course', async () => {
+    it('should get diagrams by course', () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = [apollonDiagram];

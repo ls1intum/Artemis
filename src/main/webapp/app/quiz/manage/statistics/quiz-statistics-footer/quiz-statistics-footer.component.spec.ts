@@ -112,7 +112,7 @@ describe('QuizStatisticsFooterComponent', () => {
         expect(accountSpy).toHaveBeenCalledOnce();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(comp.waitingForQuizStart).toBeFalse();
+        expect(comp.waitingForQuizStart).toBe(false);
     });
 
     it('should return remaining Time', () => {

@@ -186,7 +186,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.switchSolution();
 
             expect(loadDataInDiagramSpy).toHaveBeenCalledTimes(2);
-            expect(comp.showSolution).toBeFalse();
+            expect(comp.showSolution).toBe(false);
         });
     });
 
@@ -198,7 +198,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.switchRated();
 
             expect(loadDataInDiagramSpy).toHaveBeenCalledTimes(2);
-            expect(comp.rated).toBeFalse();
+            expect(comp.rated).toBe(false);
         });
     });
 });

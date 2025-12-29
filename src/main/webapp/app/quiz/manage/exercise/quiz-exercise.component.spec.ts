@@ -165,6 +165,6 @@ describe('QuizExercise Management Component', () => {
         // THEN
         expect(quizExerciseService.findForCourse).toHaveBeenCalledOnce();
         expect(comp.quizExercises()[0]).toEqual(quizExercise);
-        expect(comp.quizExercises()[0].isEditable).toBeFalse();
+        expect(comp.quizExercises()[0].isEditable).toBe(false);
     });
 });

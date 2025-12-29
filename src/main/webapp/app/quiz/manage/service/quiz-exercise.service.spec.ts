@@ -260,10 +260,10 @@ describe('QuizExercise Service', () => {
         }
         const result = firstValueFrom(functionToCall.apply(service, args)) as Promise<HttpResponse<unknown>>;
         const req = httpMock.expectOne({ method: httpMethod });
-        expect(req.request.url).toEndWith(urlSuffix);
+        expect(req.request.url.endsWith(urlSuffix)).toBe(true);
         req.flush(response);
         const resp = await result;
-        expect(resp.ok).toBeTrue();
+        expect(resp.ok).toBe(true);
         expect(resp.body).toEqual(response);
     });
 
@@ -342,8 +342,8 @@ describe('QuizExercise Service', () => {
                 };
             });
             expect(blob.type).toBe('application/json');
-            expect(data).toBeArrayOfSize(count);
-            expect(file).toEndWith('.json');
+            expect(data).toHaveLength(count);
+            expect(file.endsWith('.json')).toBe(true);
         }
     });
 
@@ -447,7 +447,7 @@ describe('QuizExercise Service', () => {
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
         const fileArray = req.request.body.getAll('files');
-        expect(fileArray).toBeArrayOfSize(1);
+        expect(fileArray).toHaveLength(1);
         expect(fileArray[0]).toBeInstanceOf(Blob);
     }
 });

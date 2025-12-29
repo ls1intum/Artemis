@@ -159,9 +159,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
             expect(getAllCoursesWithQuizExercisesSpy).toHaveBeenCalledOnce();
             expect(findAllExamsAccessibleToUserSpy).toHaveBeenCalledWith(123);
-            expect(component.courses).toBeArrayOfSize(1);
+            expect(component.courses).toHaveLength(1);
             expect(component.courses[0]).toEqual(course);
-            expect(component.exams).toBeArrayOfSize(1);
+            expect(component.exams).toHaveLength(1);
             expect(component.exams[0]).toEqual(exam);
         });
 
@@ -178,8 +178,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
             expect(getAllCoursesWithQuizExercisesSpy).not.toHaveBeenCalled();
             expect(findAllExamsAccessibleToUserSpy).not.toHaveBeenCalled();
-            expect(component.courses).toBeArrayOfSize(0);
-            expect(component.exams).toBeArrayOfSize(0);
+            expect(component.courses).toHaveLength(0);
+            expect(component.exams).toHaveLength(0);
         });
     });
 
@@ -194,8 +194,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             component.existingQuestions = component.allExistingQuestions = [];
             component.selectedCourseId = undefined;
             component.onCourseSelect();
-            expect(component.existingQuestions).toBeArrayOfSize(0);
-            expect(component.allExistingQuestions).toBeArrayOfSize(0);
+            expect(component.existingQuestions).toHaveLength(0);
+            expect(component.allExistingQuestions).toHaveLength(0);
         });
 
         it('should set all existing questions when course is selected', () => {
@@ -217,7 +217,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
             expect(quizQuestion.exercise).toEqual(quizExercise);
-            expect(component.allExistingQuestions).toBeArrayOfSize(1);
+            expect(component.allExistingQuestions).toHaveLength(1);
             expect(component.allExistingQuestions[0]).toEqual(quizQuestion);
             expect(applyFilterSpy).toHaveBeenCalledOnce();
         });
@@ -228,8 +228,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             component.existingQuestions = component.allExistingQuestions = [];
             component.selectedExamId = undefined;
             component.onExamSelect();
-            expect(component.existingQuestions).toBeArrayOfSize(0);
-            expect(component.allExistingQuestions).toBeArrayOfSize(0);
+            expect(component.existingQuestions).toHaveLength(0);
+            expect(component.allExistingQuestions).toHaveLength(0);
         });
 
         it('should set all existing questions when exam is selected', () => {
@@ -252,7 +252,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
             expect(quizQuestion.exercise).toEqual(quizExercise);
-            expect(component.allExistingQuestions).toBeArrayOfSize(1);
+            expect(component.allExistingQuestions).toHaveLength(1);
             expect(component.allExistingQuestions[0]).toEqual(quizQuestion);
             expect(applyFilterSpy).toHaveBeenCalledOnce();
         });
@@ -526,8 +526,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const result = await component.extractImagesFromZip(zip);
             expect(extractImagesFromZipSpy).toHaveBeenCalledWith(zip);
             expect(result.size).toBe(2);
-            expect(result.has('image1')).toBeTrue();
-            expect(result.has('image2')).toBeTrue();
+            expect(result.has('image1')).toBe(true);
+            expect(result.has('image2')).toBe(true);
         });
     });
 });

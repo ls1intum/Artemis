@@ -283,7 +283,7 @@ describe('QuizStatisticComponent', () => {
         comp.switchRated();
 
         expect(loadDataMock).toHaveBeenCalledOnce();
-        expect(comp.rated).toBeFalse();
+        expect(comp.rated).toBe(false);
     });
 
     it('should format correctly', () => {

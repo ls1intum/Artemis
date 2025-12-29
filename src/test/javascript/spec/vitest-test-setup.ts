@@ -6,11 +6,7 @@
  */
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
-import { expect, vi } from 'vitest';
-import * as matchers from 'jest-extended';
-
-// Extend Vitest's expect with jest-extended matchers
-expect.extend(matchers);
+import { vi } from 'vitest';
 
 import 'app/shared/util/array.extension';
 

@@ -269,9 +269,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.open(content);
         expect(modalServiceSpy).toHaveBeenCalledOnce();
         component.drag();
-        expect(component.dropAllowed).toBeTrue();
+        expect(component.dropAllowed).toBe(true);
         component.drop();
-        expect(component.dropAllowed).toBeFalse();
+        expect(component.dropAllowed).toBe(false);
     });
 
     it('should duplicate drop location', () => {
@@ -580,7 +580,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resetDragItem(firstItem);
 
-        expect(component.question().dragItems![2].invalid).toBeFalse();
+        expect(component.question().dragItems![2].invalid).toBe(false);
     });
 
     it('should reset drop location', () => {
@@ -599,7 +599,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resetDropLocation(firstItem);
 
-        expect(component.question().dropLocations![2].invalid).toBeFalse();
+        expect(component.question().dropLocations![2].invalid).toBe(false);
     });
 
     it('should toggle preview', () => {
@@ -611,7 +611,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.togglePreview();
 
-        expect(component.showPreview).toBeFalse();
+        expect(component.showPreview).toBe(false);
         expect(component.question().text).toBeUndefined();
     });
 
