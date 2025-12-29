@@ -190,19 +190,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
     }
 
-    @BeforeEach
-    void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = courseUtilService.addEmptyCourse();
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        jenkinsRequestMockProvider.enableMockingOfRequests();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests();
-
-        // Clean up repositories to prevent state leaking between tests
+    /**
+     * Cleans up local repositories associated with the current exercise to prevent state leaking between tests.
+     */
+    private void cleanUpRepositories() {
         if (exercise != null && exercise.getId() != null) {
             List<RepositoryType> repositoryTypes = List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
             List<Exception> cleanupFailures = new java.util.ArrayList<>();
@@ -230,6 +221,21 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 log.warn("Cleanup incomplete. {} repositories failed to clean up. This may cause subsequent test failures.", cleanupFailures.size());
             }
         }
+    }
+
+    @BeforeEach
+    void setup() throws Exception {
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
+        Course course = courseUtilService.addEmptyCourse();
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+
+        this.cleanUpRepositories();
     }
 
     /**
@@ -287,8 +293,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             try {
                 FileUtils.deleteDirectory(directory.toFile());
 
-                // Verify deletion completed
-                if (!Files.exists(directory)) {
+                boolean deletionWasSuccessful = !Files.exists(directory);
+                if (deletionWasSuccessful) {
                     log.debug("Successfully deleted {} directory after {} attempt(s): {}", description, attempt, directory);
                     return;
                 }
@@ -310,8 +316,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             }
         }
 
-        // If we got here, all attempts failed
-        if (Files.exists(directory)) {
+        boolean allDeletionAttemptsFailed = Files.exists(directory);
+        if (allDeletionAttemptsFailed) {
             String message = String.format("Failed to delete %s directory after %d attempts: %s", description, maxAttempts, directory);
             log.error(message);
             if (lastException != null) {
