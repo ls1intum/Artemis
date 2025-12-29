@@ -181,7 +181,7 @@ describe('ApollonDiagramDetail Component', () => {
         expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
-    it('detectChanges', async () => {
+    it('detectChanges', () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         vi.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
         vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
@@ -191,7 +191,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.ngOnDestroy();
     });
 
-    it('ngOnDestroy', async () => {
+    it('ngOnDestroy', () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         vi.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
         fixture.componentInstance.ngOnInit();

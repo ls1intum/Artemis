@@ -12,17 +12,15 @@ describe('QuizTrainingDialogComponent', () => {
     let component: QuizTrainingDialogComponent;
     let fixture: ComponentFixture<QuizTrainingDialogComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [QuizTrainingDialogComponent, DialogModule, FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizTrainingDialogComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(QuizTrainingDialogComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
     });
 
     afterEach(() => {

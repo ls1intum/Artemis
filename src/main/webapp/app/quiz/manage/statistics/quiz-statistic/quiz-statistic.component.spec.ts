@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -37,9 +37,9 @@ describe('QuizStatisticComponent', () => {
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: any;
+    let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
     let router: Router;
-    let quizServiceFindSpy: any;
+    let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

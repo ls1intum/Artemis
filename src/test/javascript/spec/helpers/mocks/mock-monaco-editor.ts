@@ -76,6 +76,14 @@ const createMockEditor = () => {
 // Model cache for getModel/createModel
 const modelCache = new Map<string, ReturnType<typeof createMockModel>>();
 
+/**
+ * Clears the model cache to prevent test pollution.
+ * Call this in beforeEach hooks to reset state between tests.
+ */
+export function clearModelCache(): void {
+    modelCache.clear();
+}
+
 export const editor = {
     create: createMockEditor,
     createModel: (content?: string, language?: string, uri?: { toString: () => string }) => {
@@ -92,19 +100,18 @@ export const editor = {
     EndOfLineSequence: { LF: 0, CRLF: 1 },
     EndOfLinePreference: { TextDefined: 0, LF: 1, CRLF: 2 },
     EditorOption: {
-        lineHeight: 66,
-        readOnly: 90,
-        fontSize: 52,
-        fontFamily: 47,
-        tabSize: 122,
-        wordWrap: 131,
-        minimap: 72,
-        scrollBeyondLastLine: 99,
-        lineNumbers: 67,
-        renderLineHighlight: 93,
-        cursorStyle: 27,
-        cursorBlinking: 25,
-        automaticLayout: 12,
+        lineHeight: 75,
+        readOnly: 104,
+        fontSize: 61,
+        fontFamily: 58,
+        wordWrap: 149,
+        minimap: 81,
+        scrollBeyondLastLine: 119,
+        lineNumbers: 76,
+        renderLineHighlight: 110,
+        cursorStyle: 34,
+        cursorBlinking: 32,
+        automaticLayout: 19,
     },
 };
 
