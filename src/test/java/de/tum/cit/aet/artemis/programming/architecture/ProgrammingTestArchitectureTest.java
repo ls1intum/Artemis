@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.architecture;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -23,6 +24,7 @@ class ProgrammingTestArchitectureTest extends AbstractModuleTestArchitectureTest
             AbstractProgrammingIntegrationLocalVCSamlTest.class,
             AbstractProgrammingIntegrationIndependentTest.class,
             AbstractProgrammingIntegrationJenkinsLocalVCTest.class,
+            AbstractProgrammingIntegrationJenkinsLocalVCBatchTest.class,
             AbstractProgrammingIntegrationLocalCILocalVCTest.class,
             AbstractProgrammingIntegrationLocalCILocalVCTestBase.class
         );
