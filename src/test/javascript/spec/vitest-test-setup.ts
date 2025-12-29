@@ -78,3 +78,38 @@ window.addEventListener('error', (event) => {
         event.stopPropagation();
     }
 });
+
+// Mock SVG methods not available in jsdom
+if (typeof SVGElement !== 'undefined') {
+    Object.defineProperty(SVGElement.prototype, 'getBBox', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+        }),
+    });
+
+    Object.defineProperty(SVGElement.prototype, 'getScreenCTM', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            a: 1,
+            b: 0,
+            c: 0,
+            d: 1,
+            e: 0,
+            f: 0,
+            inverse: vi.fn().mockReturnValue({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+        }),
+    });
+
+    Object.defineProperty(SVGElement.prototype, 'createSVGPoint', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+            matrixTransform: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        }),
+    });
+}

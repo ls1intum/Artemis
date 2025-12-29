@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 // TODO: rewrite this test to use LocalVC
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "progexlocalvcjenkins";
 
