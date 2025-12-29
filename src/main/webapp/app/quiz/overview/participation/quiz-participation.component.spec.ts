@@ -271,8 +271,9 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(component.submission).not.toBeNull();
     });
 
-    // Skip: These tests use vi.useFakeTimers() which causes ExpressionChangedAfterItHasBeenCheckedError in zoneless mode
-    it.skip('should update in intervals of individual quiz', () => {
+    // These tests verify interval-based behavior by removing the second detectChanges() call
+    // that caused ExpressionChangedAfterItHasBeenCheckedError in zoneless mode
+    it('should update in intervals of individual quiz', () => {
         vi.useFakeTimers();
         const individualQuizExercise = { ...quizExercise };
         individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
@@ -291,15 +292,14 @@ describe('QuizParticipationComponent - live mode', () => {
         const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
         const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
         vi.advanceTimersByTime(5000);
-        fixture.detectChanges();
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
 
         expect(updateSpy).toHaveBeenCalledTimes(50);
         expect(refreshSpy).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
 
-    // Skip: These tests use vi.useFakeTimers() which causes ExpressionChangedAfterItHasBeenCheckedError in zoneless mode
-    it.skip('should update in intervals of not individual quiz', () => {
+    it('should update in intervals of not individual quiz', () => {
         vi.useFakeTimers();
         const notIndividualQuizExercise = { ...quizExercise };
         notIndividualQuizExercise.quizMode = QuizMode.SYNCHRONIZED;
@@ -318,7 +318,7 @@ describe('QuizParticipationComponent - live mode', () => {
         const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
         const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
         vi.advanceTimersByTime(5000);
-        fixture.detectChanges();
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
 
         expect(updateSpy).toHaveBeenCalledTimes(50);
         expect(refreshSpy).toHaveBeenCalledTimes(0);
@@ -326,21 +326,19 @@ describe('QuizParticipationComponent - live mode', () => {
         vi.useRealTimers();
     });
 
-    // Skip: These tests use vi.useFakeTimers() which causes ExpressionChangedAfterItHasBeenCheckedError in zoneless mode
-    it.skip('should check quiz end in intervals', () => {
+    it('should check quiz end in intervals', () => {
         vi.useFakeTimers();
         fixture.detectChanges();
 
         const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
         vi.advanceTimersByTime(5000);
-        fixture.detectChanges();
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
 
         expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
         vi.useRealTimers();
     });
 
-    // Skip: These tests use vi.useFakeTimers() which causes ExpressionChangedAfterItHasBeenCheckedError in zoneless mode
-    it.skip('should trigger a save on quiz end if the answers were not submitted', () => {
+    it('should trigger a save on quiz end if the answers were not submitted', () => {
         vi.useFakeTimers();
         fixture.detectChanges();
 
@@ -353,37 +351,38 @@ describe('QuizParticipationComponent - live mode', () => {
         const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
 
         vi.advanceTimersByTime(2000);
-        fixture.detectChanges();
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
 
         expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
         expect(triggerSaveStub).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
 
-    // Skip: This test causes ExpressionChangedAfterItHasBeenCheckedError in zoneless mode due to async state changes
-    it.skip('should refresh quiz', () => {
-        const exerciseService = TestBed.inject(QuizExerciseService);
+    it('should refresh quiz when called directly', () => {
         fixture.detectChanges();
 
+        // Set up component state for refresh
         component.quizExercise.quizStarted = false;
-        component.quizBatch!.started = false;
-        component.quizBatch!.startTime = undefined;
+        component.quizBatch = { started: false };
 
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(
+        const quizExerciseService = TestBed.inject(QuizExerciseService);
+        const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(
             of({
                 body: {
                     ...quizExercise,
+                    quizStarted: true,
                     quizEnded: true,
                 },
             } as HttpResponse<QuizExercise>),
         );
-        fixture.detectChanges();
-
-        vi.spyOn(component, 'initLiveMode');
+        const initQuizSpy = vi.spyOn(component, 'initQuiz');
+        const initLiveModeSpy = vi.spyOn(component, 'initLiveMode').mockImplementation(() => {});
 
         component.refreshQuiz();
 
-        expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+        expect(findForStudentSpy).toHaveBeenCalledWith(quizExercise.id);
+        expect(initQuizSpy).toHaveBeenCalled();
+        expect(initLiveModeSpy).toHaveBeenCalled();
     });
 
     it('should return true if student didnt interact with any question', () => {
