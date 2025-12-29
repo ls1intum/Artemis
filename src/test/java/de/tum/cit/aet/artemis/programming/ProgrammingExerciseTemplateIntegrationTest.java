@@ -562,7 +562,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                     channel.force(true);
                 }
                 catch (IOException e) {
-                    log.debug("Could not force sync for file: {}", file, e);
+                    log.warn("Could not force sync for file: {}", file, e);
                 }
                 return FileVisitResult.CONTINUE;
             }
