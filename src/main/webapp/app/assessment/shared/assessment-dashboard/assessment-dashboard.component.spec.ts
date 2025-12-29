@@ -283,7 +283,6 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     describe('tutor issues', () => {
         describe('on ngOnInit', () => {
-            setupTestBed({ zoneless: true });
             it('compute issues if not in exam mode', () => {
                 // given
                 const newRoute = {
@@ -345,12 +344,10 @@ describe('AssessmentDashboardInformationComponent', () => {
         });
 
         describe('tutor issue checkers', () => {
-            setupTestBed({ zoneless: true });
             const tutorId = 1;
             const tutorName = 'TutorA';
 
             describe('rating checker', () => {
-                setupTestBed({ zoneless: true });
                 it('tutors value is significantly less than the course average value', () => {
                     const ratingsCount = 1;
                     const tutorAverageValue = 2.25;
@@ -370,7 +367,6 @@ describe('AssessmentDashboardInformationComponent', () => {
             });
 
             describe('score checker', () => {
-                setupTestBed({ zoneless: true });
                 it('tutors value is significantly less than the course average value', () => {
                     const submissionsCount = 5;
                     const tutorAverageValue = 40;
@@ -392,7 +388,6 @@ describe('AssessmentDashboardInformationComponent', () => {
             });
 
             describe('complaints checker', () => {
-                setupTestBed({ zoneless: true });
                 it('tutors value is significantly bigger than the course average value', () => {
                     const submissionsCount = 5;
                     const tutorAverageValue = 14;
