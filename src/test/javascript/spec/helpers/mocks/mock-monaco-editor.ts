@@ -69,7 +69,17 @@ const createMockEditor = () => {
         setScrollPosition: () => {},
         onDidScrollChange: () => ({ dispose: () => {} }),
         getId: () => editorId,
-        getOption: () => 19, // Default line height
+        getOption: (optionId: number) => {
+            // Return option-specific mock values based on EditorOption IDs
+            const optionValues: Record<number, unknown> = {
+                19: true, // automaticLayout
+                61: 14, // fontSize
+                75: 19, // lineHeight
+                104: false, // readOnly
+                149: 'off', // wordWrap
+            };
+            return optionValues[optionId] ?? 0;
+        },
     };
 };
 
