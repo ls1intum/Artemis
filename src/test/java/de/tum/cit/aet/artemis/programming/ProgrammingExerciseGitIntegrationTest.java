@@ -9,7 +9,6 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,7 +117,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
             // Verify we can fetch and read last commit hash from the remote
             gitService.fetchAll(checkedOut);
             var lastHash = gitService.getLastCommitHash(repoUri);
-            assertThat(lastHash).as("last commit hash should exist on remote").isNotNull().isInstanceOf(ObjectId.class);
+            assertThat(lastHash).as("last commit hash should exist on remote").isNotNull().isNotBlank();
 
             // Create a local change, commit and push via GitService
             var localFile = targetPath.resolve("hello.txt");
