@@ -28,6 +28,65 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
 
+/**
+ * Helper function to set up canvas and Image mocks for image processing tests.
+ * @param toDataURLValue - The value that mockCanvas.toDataURL should return
+ * @returns An object with mock objects and cleanup function
+ */
+function setupCanvasAndImageMocks(toDataURLValue: string) {
+    const mockContext = {
+        drawImage: vi.fn(),
+        fillStyle: '',
+        fillRect: vi.fn(),
+    };
+
+    const mockCanvas = {
+        getContext: vi.fn().mockReturnValue(mockContext),
+        toDataURL: vi.fn().mockReturnValue(toDataURLValue),
+        width: 0,
+        height: 0,
+    } as any;
+
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    const originalCreateElement = document.createElement.bind(document);
+    const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        if (tag === 'canvas') return mockCanvas;
+        return originalCreateElement(tag);
+    });
+
+    const originalImage = globalThis.Image;
+    let imageCallCount = 0;
+    class MockImage {
+        onload: () => void = () => {};
+        private _src: string = '';
+        height: number = 200;
+        width: number = 200;
+        constructor() {
+            imageCallCount++;
+        }
+        get src() {
+            return this._src;
+        }
+        set src(value: string) {
+            this._src = value;
+            setTimeout(() => this.onload(), 0);
+        }
+    }
+    globalThis.Image = MockImage as any;
+
+    return {
+        mockContext,
+        mockCanvas,
+        canvasSpy,
+        originalImage,
+        getImageCallCount: () => imageCallCount,
+        cleanup: () => {
+            canvasSpy.mockRestore();
+            globalThis.Image = originalImage;
+        },
+    };
+}
+
 describe('DragAndDropQuestionEditComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -674,44 +733,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         dragAndDropQuestion.correctMappings = [];
         dragAndDropQuestion.dragItems = [];
 
-        const mockContext = {
-            drawImage: vi.fn(),
-            fillStyle: '',
-            fillRect: vi.fn(),
-        };
-
-        const mockCanvas = {
-            getContext: vi.fn().mockReturnValue(mockContext),
-            toDataURL: vi.fn().mockReturnValue('data:image/png;base64,cropped'),
-            width: 0,
-            height: 0,
-        } as any;
-
-        const originalCreateElement = (tag: string) => document.createElement(tag);
-        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-            if (tag === 'canvas') return mockCanvas;
-            return originalCreateElement(tag);
-        });
-
-        const originalImage = globalThis.Image;
-        let imageCallCount = 0;
-        class MockImage {
-            onload: () => void = () => {};
-            private _src: string = '';
-            height: number = 200;
-            width: number = 200;
-            constructor() {
-                imageCallCount++;
-            }
-            get src() {
-                return this._src;
-            }
-            set src(value: string) {
-                this._src = value;
-                setTimeout(() => this.onload(), 0);
-            }
-        }
-        globalThis.Image = MockImage as any;
+        const { mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,cropped');
 
         const createImageDragItemSpy = vi.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
             const dragItem = new DragItem();
@@ -728,15 +750,14 @@ describe('DragAndDropQuestionEditComponent', () => {
             expect(dragAndDropQuestion.dragItems).toHaveLength(2);
         });
 
-        expect(imageCallCount).toBe(2);
+        expect(getImageCallCount()).toBe(2);
         expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
         expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
         expect(dragAndDropQuestion.dragItems).toHaveLength(2);
         expect(dragAndDropQuestion.correctMappings).toHaveLength(2);
         expect(blankOutSpy).toHaveBeenCalledOnce();
 
-        canvasSpy.mockRestore();
-        globalThis.Image = originalImage;
+        cleanup();
     });
 
     it('should blank out background image', async () => {
@@ -745,44 +766,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
 
-        const mockContext = {
-            drawImage: vi.fn(),
-            fillStyle: '',
-            fillRect: vi.fn(),
-        };
-
-        const mockCanvas = {
-            getContext: vi.fn().mockReturnValue(mockContext),
-            toDataURL: vi.fn().mockReturnValue('data:image/png;base64,blanked'),
-            width: 0,
-            height: 0,
-        } as any;
-
-        const originalCreateElement = (tag: string) => document.createElement(tag);
-        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-            if (tag === 'canvas') return mockCanvas;
-            return originalCreateElement(tag);
-        });
-
-        const originalImage = globalThis.Image;
-        let imageCallCount = 0;
-        class MockImage {
-            onload: () => void = () => {};
-            private _src: string = '';
-            height: number = 200;
-            width: number = 200;
-            constructor() {
-                imageCallCount++;
-            }
-            get src() {
-                return this._src;
-            }
-            set src(value: string) {
-                this._src = value;
-                setTimeout(() => this.onload(), 0);
-            }
-        }
-        globalThis.Image = MockImage as any;
+        const { mockContext, mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,blanked');
 
         const setBackgroundSpy = vi.spyOn(component, 'setBackgroundFileFromFile').mockImplementation(() => {});
 
@@ -792,7 +776,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             expect(setBackgroundSpy).toHaveBeenCalledOnce();
         });
 
-        expect(imageCallCount).toBe(1);
+        expect(getImageCallCount()).toBe(1);
         expect(mockContext.drawImage).toHaveBeenCalledOnce();
         expect(mockContext.fillStyle).toBe('white');
         expect(mockContext.fillRect).toHaveBeenCalledTimes(2);
@@ -800,8 +784,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(setBackgroundSpy).toHaveBeenCalledOnce();
         expect(setBackgroundSpy).toHaveBeenCalledWith(expect.any(File));
 
-        canvasSpy.mockRestore();
-        globalThis.Image = originalImage;
+        cleanup();
     });
 
     it('should convert data url to blob', () => {

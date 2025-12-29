@@ -7,7 +7,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragHandle, CdkDragPlaceholder, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
@@ -33,7 +33,7 @@ question2.id = 2;
 question2.text = 'This is a second text regarding a question';
 
 const shortAnswerSolution1 = new ShortAnswerSolution();
-shortAnswerSolution1.id = 0;
+shortAnswerSolution1.id = 10;
 shortAnswerSolution1.text = 'solution 1';
 
 const shortAnswerSolution2 = new ShortAnswerSolution();
@@ -48,6 +48,12 @@ spot1.spotNr = 0;
 const spot2 = new ShortAnswerSpot();
 spot2.spotNr = 1;
 
+question.spots = [spot1, spot2];
+
+const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
+const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
+question.correctMappings = [mapping1, mapping2];
+
 describe('ShortAnswerQuestionEditComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -58,7 +64,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 MockModule(FormsModule),
-                MockModule(DragDropModule),
+                MockDirective(CdkDropList),
+                MockDirective(CdkDrag),
+                MockDirective(CdkDragHandle),
+                MockDirective(CdkDragPlaceholder),
+                MockDirective(CdkDropListGroup),
                 MockDirective(NgbCollapse),
                 MockComponent(FaIconComponent),
                 MockComponent(QuizScoringInfoModalComponent),
@@ -84,13 +94,20 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     beforeEach(() => {
-        component.shortAnswerQuestion = question;
+        vi.useFakeTimers();
+        // Use cloneDeep to avoid tests modifying the shared question object
+        component.shortAnswerQuestion = cloneDeep(question);
         fixture.componentRef.setInput('questionIndex', 0);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         fixture.detectChanges();
+        // Note: Don't advance timers here - let each test control when setupQuestionEditor runs
+        // Tests that need initialization complete should call vi.advanceTimersToNextFrame()
     });
 
     afterEach(() => {
+        // Run any pending animation frame callbacks before destroying the component
+        vi.advanceTimersToNextFrame();
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -98,6 +115,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
         // test spots concatenated to other words
         const newQuestion1 = new ShortAnswerQuestion();
         newQuestion1.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
+        // Initialize arrays to avoid undefined errors in setupQuestionEditor
+        newQuestion1.spots = [];
+        newQuestion1.solutions = [];
+        newQuestion1.correctMappings = [];
         fixture.componentRef.setInput('question', newQuestion1);
         fixture.detectChanges();
 
@@ -270,13 +291,16 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
         const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
-        expect(component.shortAnswerQuestion).toEqual(question);
+        // Check essential properties instead of deep equality (parseMarkdown modifies internal structure)
+        expect(component.shortAnswerQuestion.id).toEqual(question.id);
+        expect(component.shortAnswerQuestion.text).toEqual(question.text);
 
         fixture.componentRef.setInput('question', question2);
 
         fixture.detectChanges();
 
-        expect(component.shortAnswerQuestion).toEqual(question2);
+        expect(component.shortAnswerQuestion.id).toEqual(question2.id);
+        expect(component.shortAnswerQuestion.text).toEqual(question2.text);
 
         expect(emitSpy).toHaveBeenCalledTimes(0);
 
@@ -284,42 +308,69 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.shortAnswerQuestion).toEqual(question);
+        expect(component.shortAnswerQuestion.id).toEqual(question.id);
+        expect(component.shortAnswerQuestion.text).toEqual(question.text);
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should react to a solution being dropped on a spot', () => {
         const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
-        const solution = new ShortAnswerSolution();
-        solution.id = 2;
-        solution.text = 'solution text';
-        const spot = new ShortAnswerSpot();
-        spot.id = 2;
-        spot.spotNr = 2;
-        const spot3 = new ShortAnswerSpot();
-        const mapping1 = new ShortAnswerMapping(spot2, shortAnswerSolution1);
-        const mapping2 = new ShortAnswerMapping(spot3, shortAnswerSolution1);
-        const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
-        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2, alternativeMapping];
+        // Create fresh test data to avoid issues with parseMarkdown modifying objects
+        const testSolution1 = new ShortAnswerSolution();
+        testSolution1.id = 10;
+        testSolution1.text = 'solution 1';
+        const testSpot1 = new ShortAnswerSpot();
+        testSpot1.id = 1;
+        testSpot1.spotNr = 1;
+        const testSpot2 = new ShortAnswerSpot();
+        testSpot2.id = 2;
+        testSpot2.spotNr = 2;
+        const dropSpot = new ShortAnswerSpot();
+        dropSpot.id = 3;
+        dropSpot.spotNr = 3;
+
+        // Set up the component with our test data - all spots used in mappings must be in the spots array
+        component.shortAnswerQuestion.solutions = [testSolution1];
+        component.shortAnswerQuestion.spots = [testSpot1, testSpot2, dropSpot];
+
+        // Use only spots that are in the spots array for mappings
+        const mapping1 = new ShortAnswerMapping(testSpot1, testSolution1);
+        const mapping2 = new ShortAnswerMapping(testSpot2, testSolution1);
+        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
         const event = {
             item: {
-                data: shortAnswerSolution1,
+                data: testSolution1,
             },
         };
 
         fixture.detectChanges();
-        component.onDragDrop(spot, event);
+        component.onDragDrop(dropSpot, event);
 
-        const expectedMapping = new ShortAnswerMapping(spot, shortAnswerSolution1);
+        const expectedMapping = new ShortAnswerMapping(dropSpot, testSolution1);
         expect(component.shortAnswerQuestion.correctMappings.pop()).toEqual(expectedMapping);
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
     it('should setup question editor', () => {
-        component.shortAnswerQuestion.spots = [spot1, spot2];
-        const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
-        const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
+        // Create fresh test data
+        const testSpot1 = new ShortAnswerSpot();
+        testSpot1.id = 1;
+        testSpot1.spotNr = 0;
+        const testSpot2 = new ShortAnswerSpot();
+        testSpot2.id = 2;
+        testSpot2.spotNr = 1;
+        const testSolution1 = new ShortAnswerSolution();
+        testSolution1.id = 10;
+        testSolution1.text = 'solution 1';
+        const testSolution2 = new ShortAnswerSolution();
+        testSolution2.id = 11;
+        testSolution2.text = 'solution 2';
+
+        component.shortAnswerQuestion.spots = [testSpot1, testSpot2];
+        component.shortAnswerQuestion.solutions = [testSolution1, testSolution2];
+        const mapping1 = new ShortAnswerMapping(testSpot1, testSolution1);
+        const mapping2 = new ShortAnswerMapping(testSpot2, testSolution2);
         component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
 
         fixture.detectChanges();

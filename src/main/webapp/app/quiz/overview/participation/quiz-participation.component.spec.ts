@@ -574,8 +574,7 @@ describe('QuizParticipationComponent - preview mode', () => {
         request.flush({
             submissionDate: now,
             submitted: true,
-            submission: { submittedAnswers: [] },
-            participation: { exercise: quizExercise },
+            submission: { submittedAnswers: [], participation: { exercise: quizExercise } },
         } as Result);
         expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/preview`);
     });
@@ -668,8 +667,7 @@ describe('QuizParticipationComponent - practice mode', () => {
         request.flush({
             submissionDate: now,
             submitted: true,
-            submission: { submittedAnswers: [] },
-            participation: { exercise: quizExerciseForPractice },
+            submission: { submittedAnswers: [], participation: { exercise: quizExerciseForPractice } },
         } as Result);
         expect(request.request.url).toBe(`api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice`);
 

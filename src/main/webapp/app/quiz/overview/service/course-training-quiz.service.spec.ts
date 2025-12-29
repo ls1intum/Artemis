@@ -43,8 +43,8 @@ describe('CourseTrainingQuizService', () => {
 
     it('should fetch an Array of quiz questions', () => {
         const mockQuestions: QuizQuestion[] = [{ id: 1 } as QuizQuestion];
-        service.getQuizQuestions(courseId).subscribe((questions) => {
-            expect(questions).toEqual(mockQuestions);
+        service.getQuizQuestions(courseId).subscribe((response) => {
+            expect(response.body).toEqual(mockQuestions);
         });
         const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions`);
         expect(req.request.method).toBe('POST');

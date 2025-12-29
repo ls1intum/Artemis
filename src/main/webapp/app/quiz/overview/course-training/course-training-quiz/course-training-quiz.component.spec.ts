@@ -4,19 +4,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from '../../../shared/entities/quiz-question.model';
-import { MockInstance } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../../service/course-training-quiz.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { SessionStorageService } from '../../../../shared/service/session-storage.service';
-import { AlertService } from '../../../../shared/service/alert.service';
-import { CourseManagementService } from '../../../../core/course/manage/services/course-management.service';
-import { DragAndDropQuestionComponent } from '../../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { ImageComponent } from '../../../../shared/image/image.component';
-import { signal } from '@angular/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { SubmittedAnswerAfterEvaluation } from './submitted-answer-after-evaluation';
 import { QuizQuestionTraining } from './quiz-question-training.model';
 
@@ -62,8 +58,6 @@ describe('CourseTrainingQuizComponent', () => {
     ];
 
     beforeEach(() => {
-        MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
-
         TestBed.configureTestingModule({
             imports: [CourseTrainingQuizComponent],
             providers: [
@@ -85,6 +79,7 @@ describe('CourseTrainingQuizComponent', () => {
                 },
             ],
         })
+            .overrideTemplate(CourseTrainingQuizComponent, '')
             .compileComponents()
             .then(() => {
                 quizService = TestBed.inject(CourseTrainingQuizService);
@@ -93,6 +88,14 @@ describe('CourseTrainingQuizComponent', () => {
                         new HttpResponse<QuizQuestionTraining[]>({
                             body: mockQuestions,
                             headers: { get: () => '3' } as any,
+                        }),
+                    ),
+                );
+                vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(
+                    of(
+                        new HttpResponse<QuizQuestionTraining[]>({
+                            body: mockQuestions,
+                            headers: { get: (key: string) => (key === 'X-Has-Next' ? 'false' : '3') } as any,
                         }),
                     ),
                 );
@@ -189,6 +192,8 @@ describe('CourseTrainingQuizComponent', () => {
         });
         vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
 
+        // Set page to 1 to avoid triggering the page 0 code path that accesses body[0]
+        component.page.set(1);
         component.loadQuestions();
         expect(component.hasNext()).toBeFalsy();
     });

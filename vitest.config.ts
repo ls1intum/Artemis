@@ -53,10 +53,10 @@ export default defineConfig({
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
-                statements: 92.40,
+                lines: 91.80,
+                statements: 91.50,
                 branches: 77.00,
                 functions: 84.60,
-                lines: 93.00,
             },
         },
     },

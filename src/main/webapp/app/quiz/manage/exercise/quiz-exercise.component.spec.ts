@@ -59,6 +59,7 @@ describe('QuizExercise Management Component', () => {
 
         comp.course = course;
         comp.quizExercises.set([quizExercise]);
+        comp.filter = new ExerciseFilter();
     });
 
     afterEach(() => {

@@ -18,6 +18,17 @@ import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+
+// Mock JSZip to prevent unhandled rejection errors during zip creation
+vi.mock('jszip', () => {
+    class MockJSZip {
+        file = vi.fn();
+        generateAsync = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
+    }
+    return {
+        default: MockJSZip,
+    };
+});
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
