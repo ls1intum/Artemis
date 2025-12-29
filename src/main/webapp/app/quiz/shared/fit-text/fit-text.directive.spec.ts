@@ -68,8 +68,6 @@ describe('FitTextDirective', () => {
 });
 
 describe('FitTextDirective - Input configurations', () => {
-    setupTestBed({ zoneless: true });
-
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -184,8 +182,6 @@ describe('FitTextDirective - Input configurations', () => {
 });
 
 describe('FitTextDirective - Resize Behavior', () => {
-    setupTestBed({ zoneless: true });
-
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -239,8 +235,6 @@ describe('FitTextDirective - Resize Behavior', () => {
 });
 
 describe('FitTextDirective - Font Size Calculation', () => {
-    setupTestBed({ zoneless: true });
-
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -340,8 +334,6 @@ describe('FitTextDirective - Font Size Calculation', () => {
 });
 
 describe('FitTextDirective - innerHTML Changes', () => {
-    setupTestBed({ zoneless: true });
-
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -392,8 +384,6 @@ describe('FitTextDirective - innerHTML Changes', () => {
 });
 
 describe('FitTextDirective - Lifecycle', () => {
-    setupTestBed({ zoneless: true });
-
     afterEach(() => {
         vi.restoreAllMocks();
     });

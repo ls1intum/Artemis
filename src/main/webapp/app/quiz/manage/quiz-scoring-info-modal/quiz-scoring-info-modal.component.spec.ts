@@ -48,16 +48,6 @@ describe('QuizScoringInfoModalComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(mockContent, { size: 'lg' });
     });
 
-    it('should pass content to modal service', () => {
-        const mockTemplateRef = document.createElement('ng-template');
-        const mockModalRef = { componentInstance: {} } as NgbModalRef;
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-
-        component.open(mockTemplateRef);
-
-        expect(openSpy).toHaveBeenCalledWith(mockTemplateRef, { size: 'lg' });
-    });
-
     it('should handle different content types', () => {
         const mockModalRef = { componentInstance: {} } as NgbModalRef;
         const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
