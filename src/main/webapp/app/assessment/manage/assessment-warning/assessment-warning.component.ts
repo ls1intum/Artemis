@@ -1,4 +1,4 @@
-import { Component, OnChanges, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -16,7 +16,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './assessment-warning.component.html',
     imports: [FaIconComponent, TranslateDirective],
 })
-export class AssessmentWarningComponent implements OnChanges {
+export class AssessmentWarningComponent {
     readonly exercise = input.required<Exercise>();
     readonly submissions = input<Submission[]>([]);
 
@@ -26,16 +26,17 @@ export class AssessmentWarningComponent implements OnChanges {
     // Icons
     faExclamationTriangle = faExclamationTriangle;
 
-    /**
-     * Checks if the due date of the exercise is over
-     */
-    ngOnChanges() {
-        const exercise = this.exercise();
-        if (exercise.dueDate) {
-            const now = dayjs();
-            this.isBeforeExerciseDueDate = now.isBefore(exercise.dueDate);
-            this.showWarning = now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests;
-        }
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            // Read submissions to register it as a dependency
+            this.submissions();
+            if (exercise.dueDate) {
+                const now = dayjs();
+                this.isBeforeExerciseDueDate = now.isBefore(exercise.dueDate);
+                this.showWarning = now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests;
+            }
+        });
     }
 
     private getLatestDueDate(): dayjs.Dayjs | undefined {

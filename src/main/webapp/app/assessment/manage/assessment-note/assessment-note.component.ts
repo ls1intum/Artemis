@@ -9,9 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective],
 })
 export class AssessmentNoteComponent {
-    readonly assessmentNote = input<AssessmentNote | undefined, AssessmentNote | undefined>(undefined, {
-        transform: (value: AssessmentNote | undefined) => value ?? new AssessmentNote(),
-    });
+    readonly assessmentNote = input<AssessmentNote | undefined>();
 
     readonly onAssessmentNoteChange = output<AssessmentNote>();
 
@@ -20,10 +18,13 @@ export class AssessmentNoteComponent {
      * @param event the input event containing the text of the note
      */
     onAssessmentNoteInput(event: Event) {
-        const note = this.assessmentNote();
-        if (note) {
-            note.note = (event.target as HTMLTextAreaElement).value;
-            this.onAssessmentNoteChange.emit(note);
+        const target = event.target;
+        if (!(target instanceof HTMLTextAreaElement)) {
+            return;
         }
+        const value = target.value;
+        const currentNote = this.assessmentNote();
+        const updatedNote: AssessmentNote = currentNote ? { ...currentNote, note: value } : { note: value };
+        this.onAssessmentNoteChange.emit(updatedNote);
     }
 }

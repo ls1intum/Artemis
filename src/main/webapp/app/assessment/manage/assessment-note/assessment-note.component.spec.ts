@@ -43,13 +43,12 @@ describe('AssessmentNoteComponent', () => {
     });
 
     describe('assessmentNote input', () => {
-        it('should create a new AssessmentNote when input is undefined', () => {
+        it('should preserve undefined when input is undefined', () => {
             fixture.componentRef.setInput('assessmentNote', undefined);
             fixture.detectChanges();
 
             const note = component.assessmentNote();
-            expect(note).toBeDefined();
-            expect(note).toBeInstanceOf(AssessmentNote);
+            expect(note).toBeUndefined();
         });
 
         it('should use the provided AssessmentNote when input is defined', () => {
@@ -78,39 +77,46 @@ describe('AssessmentNoteComponent', () => {
     });
 
     describe('onAssessmentNoteInput', () => {
-        it('should update the note and emit onAssessmentNoteChange', () => {
+        const createMockInputEvent = (value: string): Event => {
+            const textarea = document.createElement('textarea');
+            textarea.value = value;
+            return { target: textarea } as unknown as Event;
+        };
+
+        it('should emit a new note object with updated text without mutating the original', () => {
             const existingNote = new AssessmentNote();
             existingNote.id = 1;
+            existingNote.note = 'Original text';
 
             fixture.componentRef.setInput('assessmentNote', existingNote);
             fixture.detectChanges();
 
             const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
-            const mockEvent = {
-                target: { value: 'New note text' } as HTMLTextAreaElement,
-            } as unknown as Event;
+            const mockEvent = createMockInputEvent('New note text');
 
             component.onAssessmentNoteInput(mockEvent);
 
-            expect(existingNote.note).toBe('New note text');
+            expect(existingNote.note).toBe('Original text'); // Original not mutated
             expect(emitSpy).toHaveBeenCalledTimes(1);
-            expect(emitSpy).toHaveBeenCalledWith(existingNote);
+            const emittedNote = emitSpy.mock.calls[0][0];
+            expect(emittedNote.note).toBe('New note text');
+            expect(emittedNote.id).toBe(1); // Preserves other properties
+            expect(emittedNote).not.toBe(existingNote); // New object
         });
 
-        it('should emit the same AssessmentNote object reference', () => {
+        it('should emit a new AssessmentNote object, not the same reference', () => {
             const existingNote = new AssessmentNote();
             fixture.componentRef.setInput('assessmentNote', existingNote);
             fixture.detectChanges();
 
             const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
-            const mockEvent = {
-                target: { value: 'Updated text' } as HTMLTextAreaElement,
-            } as unknown as Event;
+            const mockEvent = createMockInputEvent('Updated text');
 
             component.onAssessmentNoteInput(mockEvent);
 
             const emittedNote = emitSpy.mock.calls[0][0];
-            expect(emittedNote).toBe(existingNote);
+            expect(emittedNote).not.toBe(existingNote);
+            expect(emittedNote.note).toBe('Updated text');
         });
 
         it('should handle empty input text', () => {
@@ -121,30 +127,40 @@ describe('AssessmentNoteComponent', () => {
             fixture.detectChanges();
 
             const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
-            const mockEvent = {
-                target: { value: '' } as HTMLTextAreaElement,
-            } as unknown as Event;
+            const mockEvent = createMockInputEvent('');
 
             component.onAssessmentNoteInput(mockEvent);
 
-            expect(existingNote.note).toBe('');
+            expect(existingNote.note).toBe('Original note'); // Original not mutated
             expect(emitSpy).toHaveBeenCalledTimes(1);
+            const emittedNote = emitSpy.mock.calls[0][0];
+            expect(emittedNote.note).toBe('');
         });
 
-        it('should work with a newly created AssessmentNote when input was undefined', () => {
+        it('should create a new AssessmentNote when input was undefined', () => {
             fixture.componentRef.setInput('assessmentNote', undefined);
             fixture.detectChanges();
 
             const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
-            const mockEvent = {
-                target: { value: 'Note for new assessment' } as HTMLTextAreaElement,
-            } as unknown as Event;
+            const mockEvent = createMockInputEvent('Note for new assessment');
 
             component.onAssessmentNoteInput(mockEvent);
 
             expect(emitSpy).toHaveBeenCalledTimes(1);
             const emittedNote = emitSpy.mock.calls[0][0];
             expect(emittedNote.note).toBe('Note for new assessment');
+        });
+
+        it('should not emit when target is not an HTMLTextAreaElement', () => {
+            fixture.componentRef.setInput('assessmentNote', new AssessmentNote());
+            fixture.detectChanges();
+
+            const emitSpy = vi.spyOn(component.onAssessmentNoteChange, 'emit');
+            const mockEvent = { target: document.createElement('input') } as unknown as Event;
+
+            component.onAssessmentNoteInput(mockEvent);
+
+            expect(emitSpy).not.toHaveBeenCalled();
         });
     });
 

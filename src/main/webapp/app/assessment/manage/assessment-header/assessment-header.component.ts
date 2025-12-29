@@ -72,12 +72,19 @@ export class AssessmentHeaderComponent {
     faSave = faSave;
     faSquareCaretRight = faSquareCaretRight;
 
+    private highlightDifferencesEffectInitialized = false;
+
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
 
-        // Emit highlightDifferencesChange when the model changes
+        // Emit highlightDifferencesChange when the model changes (skip initial emission)
         effect(() => {
-            this.highlightDifferencesChange.emit(this.highlightDifferences());
+            const value = this.highlightDifferences();
+            if (!this.highlightDifferencesEffectInitialized) {
+                this.highlightDifferencesEffectInitialized = true;
+                return;
+            }
+            this.highlightDifferencesChange.emit(value);
         });
     }
 

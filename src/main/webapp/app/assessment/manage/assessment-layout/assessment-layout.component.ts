@@ -57,10 +57,17 @@ export class AssessmentLayoutComponent {
     readonly highlightDifferencesChange = output<boolean>();
     readonly useAsExampleSubmission = output();
 
+    private highlightDifferencesEffectInitialized = false;
+
     constructor() {
-        // Emit highlightDifferencesChange when the model changes
+        // Emit highlightDifferencesChange when the model changes (skip initial emission)
         effect(() => {
-            this.highlightDifferencesChange.emit(this.highlightDifferences());
+            const value = this.highlightDifferences();
+            if (!this.highlightDifferencesEffectInitialized) {
+                this.highlightDifferencesEffectInitialized = true;
+                return;
+            }
+            this.highlightDifferencesChange.emit(value);
         });
     }
 
