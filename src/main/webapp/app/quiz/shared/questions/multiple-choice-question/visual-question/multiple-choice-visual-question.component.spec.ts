@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -15,13 +17,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('QuizVisualEditorComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MultipleChoiceVisualQuestionComponent>;
     let comp: MultipleChoiceVisualQuestionComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), FaIconComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
                 MockProvider(CourseManagementService),
@@ -32,22 +35,20 @@ describe('QuizVisualEditorComponent', () => {
                     useValue: { queryParams: of({}) },
                 },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MultipleChoiceVisualQuestionComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                fixture.componentRef.setInput('question', new MultipleChoiceQuestion());
-                fixture.detectChanges();
-            });
+        fixture = TestBed.createComponent(MultipleChoiceVisualQuestionComponent);
+        comp = fixture.componentInstance;
+
+        fixture.componentRef.setInput('question', new MultipleChoiceQuestion());
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('parse the given question properly to markdown', fakeAsync(() => {
+    it('parse the given question properly to markdown', () => {
         fixture.detectChanges();
 
         comp.question().text = 'Hallo';
@@ -65,9 +66,9 @@ describe('QuizVisualEditorComponent', () => {
         const expected = 'Hallo\n\t[hint] Hint\n\t[exp] Exp\n\n[correct] Answer\n\t[hint] H2\n\t[exp] Exp2';
 
         expect(markdown).toBe(expected);
-    }));
+    });
 
-    it('delete an answer option', fakeAsync(() => {
+    it('delete an answer option', () => {
         fixture.detectChanges();
 
         const answerOption = new AnswerOption();
@@ -78,9 +79,9 @@ describe('QuizVisualEditorComponent', () => {
         comp.deleteAnswer(0);
 
         expect(comp.question().answerOptions).toHaveLength(1);
-    }));
+    });
 
-    it('toggle the isCorrect state', fakeAsync(() => {
+    it('toggle the isCorrect state', () => {
         fixture.detectChanges();
 
         const answerOption = new AnswerOption();
@@ -88,14 +89,14 @@ describe('QuizVisualEditorComponent', () => {
         answerOption.isCorrect = true;
         comp.question().answerOptions = [answerOption];
 
-        expect(answerOption.isCorrect).toBeTrue();
+        expect(answerOption.isCorrect).toBe(true);
 
         comp.toggleIsCorrect(answerOption);
 
-        expect(answerOption.isCorrect).toBeFalse();
-    }));
+        expect(answerOption.isCorrect).toBe(false);
+    });
 
-    it('does not toggle the if single mode and already has correct answer', fakeAsync(() => {
+    it('does not toggle the if single mode and already has correct answer', () => {
         fixture.detectChanges();
 
         comp.question().singleChoice = true;
@@ -107,14 +108,14 @@ describe('QuizVisualEditorComponent', () => {
         const answerOption2 = new AnswerOption();
         comp.question().answerOptions = [answerOption, answerOption2];
 
-        expect(answerOption2.isCorrect).toBeFalse();
+        expect(answerOption2.isCorrect).toBe(false);
 
         comp.toggleIsCorrect(answerOption2);
 
-        expect(answerOption2.isCorrect).toBeFalse();
-    }));
+        expect(answerOption2.isCorrect).toBe(false);
+    });
 
-    it('add a new answer option', fakeAsync(() => {
+    it('add a new answer option', () => {
         fixture.detectChanges();
 
         expect(comp.question().answerOptions).toBeUndefined();
@@ -122,5 +123,5 @@ describe('QuizVisualEditorComponent', () => {
         comp.addNewAnswer();
 
         expect(comp.question().answerOptions).toHaveLength(1);
-    }));
+    });
 });

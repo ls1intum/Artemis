@@ -30,6 +30,7 @@ export default defineConfig({
             'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
             'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts'             // include text module tests
+            'src/main/webapp/app/quiz/**/*.spec.ts'             // include quiz tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -55,8 +56,14 @@ export default defineConfig({
             thresholds: {
                 statements: 92.40,
                 branches: 76.80,
+                'src/main/webapp/app/quiz/**/*.ts'              // include quiz for code coverage
+            ],
+            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
+            thresholds: {
+                lines: 91.80,
+                statements: 91.50,
+                branches: 77.00,
                 functions: 84.60,
-                lines: 93.00,
             },
         },
     },

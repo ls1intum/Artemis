@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
@@ -76,10 +75,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected SshServer sshServer;
-
-    // Repositories
-    @Autowired
-    protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -172,8 +167,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected String solutionRepositorySlug;
 
     protected String testsRepositorySlug;
-
-    protected String auxiliaryRepositorySlug;
 
     protected abstract String getTestPrefix();
 

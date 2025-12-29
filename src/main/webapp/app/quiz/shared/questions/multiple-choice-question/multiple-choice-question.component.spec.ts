@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -9,17 +12,19 @@ import { SafeHtml } from '@angular/platform-browser';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MultipleChoiceQuestionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;
     let component: MultipleChoiceQuestionComponent;
     let artemisMarkdownService: ArtemisMarkdownService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FontAwesomeModule],
-            declarations: [MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
-            providers: [ArtemisMarkdownService],
+            imports: [FontAwesomeModule, MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
+            providers: [ArtemisMarkdownService, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionComponent);
         component = fixture.componentInstance;
@@ -28,7 +33,7 @@ describe('MultipleChoiceQuestionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should update rendered question and answer with html when question is set', () => {
@@ -106,9 +111,9 @@ describe('MultipleChoiceQuestionComponent', () => {
         ];
 
         fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[2]]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeTrue();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[2])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(true);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[2])).toBe(true);
     });
 
     it('should not toggle anything on disabled click', () => {
@@ -133,9 +138,9 @@ describe('MultipleChoiceQuestionComponent', () => {
         fixture.componentRef.setInput('clickDisabled', true);
         fixture.changeDetectorRef.detectChanges();
         component.toggleSelection(answerOptions[1]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[2])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[2])).toBe(false);
     });
 
     it('should toggle answer options', () => {
@@ -164,26 +169,26 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         component.toggleSelection(answerOptions[1]);
 
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(true);
 
         // Re-toggle
         component.toggleSelection(answerOptions[1]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
 
         component.toggleSelection(answerOptions[1]);
         component.toggleSelection(answerOptions[0]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeTrue();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(true);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(true);
 
         component.toggleSelection(answerOptions[0]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(true);
 
         component.toggleSelection(answerOptions[1]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
     });
 
     it('should toggle answer options, but only allow one to be selected for single choice questions', () => {
@@ -212,25 +217,25 @@ describe('MultipleChoiceQuestionComponent', () => {
         });
 
         component.toggleSelection(answerOptions[1]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(true);
 
         // Re-toggle
         component.toggleSelection(answerOptions[1]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
 
         component.toggleSelection(answerOptions[1]);
         component.toggleSelection(answerOptions[0]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeTrue();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(true);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
 
         component.toggleSelection(answerOptions[0]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
 
         component.toggleSelection(answerOptions[1]);
-        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
-        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(true);
     });
 });

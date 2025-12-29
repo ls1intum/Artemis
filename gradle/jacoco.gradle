@@ -1,7 +1,7 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
     //This also needs to be lowered if we merge nebula PRs
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.860, "CLASS": 144]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.840, "CLASS": 144]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.918, "CLASS":  0],

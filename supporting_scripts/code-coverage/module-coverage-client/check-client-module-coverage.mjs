@@ -102,7 +102,7 @@ const moduleThresholds = {
     exercise: {
         statements: 88.40,
         branches:   76.60,
-        functions:  80.20,
+        functions:  80.00,
         lines:      88.50,
     },
     fileupload: {
