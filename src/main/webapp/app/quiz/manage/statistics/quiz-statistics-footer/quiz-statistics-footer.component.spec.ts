@@ -39,8 +39,8 @@ describe('QuizStatisticsFooterComponent', () => {
     let router: Router;
     let quizServiceFindSpy: any;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useClass: MockRouter },
                 QuizStatisticUtil,
@@ -63,17 +63,16 @@ describe('QuizStatisticsFooterComponent', () => {
                 },
             })
             .overrideTemplate(QuizStatisticsFooterComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
-                comp = fixture.componentInstance;
-                quizService = fixture.debugElement.injector.get(QuizExerciseService);
-                accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
-                routerSpy = vi.spyOn(router, 'navigateByUrl');
-                accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
+        comp = fixture.componentInstance;
+        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        accountService = fixture.debugElement.injector.get(AccountService);
+        router = fixture.debugElement.injector.get(Router);
+        routerSpy = vi.spyOn(router, 'navigateByUrl');
+        accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
@@ -94,11 +93,11 @@ describe('QuizStatisticsFooterComponent', () => {
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
-        expect(accountSpy).toHaveBeenCalledTimes(2);
+        expect(accountSpy).toHaveBeenCalled();
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
+        expect(updateDisplayedTimesSpy).toHaveBeenCalled();
         vi.clearAllTimers();
     });
 

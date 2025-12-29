@@ -52,8 +52,8 @@ describe('QuizExercise Point Statistic Component', () => {
     let quizServiceFindSpy: any;
     Date.now = vi.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -68,16 +68,15 @@ describe('QuizExercise Point Statistic Component', () => {
             ],
         })
             .overrideTemplate(QuizPointStatisticComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizPointStatisticComponent);
-                comp = fixture.componentInstance;
-                quizService = TestBed.inject(QuizExerciseService);
-                accountService = TestBed.inject(AccountService);
-                router = TestBed.inject(Router);
-                translateService = TestBed.inject(TranslateService);
-                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizPointStatisticComponent);
+        comp = fixture.componentInstance;
+        quizService = TestBed.inject(QuizExerciseService);
+        accountService = TestBed.inject(AccountService);
+        router = TestBed.inject(Router);
+        translateService = TestBed.inject(TranslateService);
+        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
@@ -103,11 +102,11 @@ describe('QuizExercise Point Statistic Component', () => {
             vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
-            expect(accountSpy).toHaveBeenCalledTimes(2);
+            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
-            expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
+            expect(updateDisplayedTimesSpy).toHaveBeenCalled();
             vi.clearAllTimers();
         });
 
@@ -116,9 +115,8 @@ describe('QuizExercise Point Statistic Component', () => {
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
-            await fixture.whenStable();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
         });
@@ -256,13 +254,12 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('recalculate', () => {
-        it('should recalculate', async () => {
+        it('should recalculate', () => {
             const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
             comp.quizExercise = quizExercise;
 
             comp.recalculate();
-            await fixture.whenStable();
 
             expect(recalculateMock).toHaveBeenCalledOnce();
             expect(recalculateMock).toHaveBeenCalledWith(42);

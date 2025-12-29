@@ -2,22 +2,29 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LeagueBadgeComponent } from './league-badge.component';
-import { MockBuilder } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LeagueIconComponent } from '../course-training-quiz/leaderboard/league/league-icon.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LeagueBadgeComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<LeagueBadgeComponent>;
     let component: LeagueBadgeComponent;
 
-    beforeEach(async () => {
-        await MockBuilder(LeagueBadgeComponent).keep(LeagueBadgeComponent).keep(FontAwesomeModule).mock(LeagueIconComponent).mock(TranslateDirective);
-
-        fixture = TestBed.createComponent(LeagueBadgeComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [LeagueBadgeComponent, FontAwesomeModule, LeagueIconComponent, MockDirective(TranslateDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(LeagueBadgeComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     describe('progressWidth calculation', () => {

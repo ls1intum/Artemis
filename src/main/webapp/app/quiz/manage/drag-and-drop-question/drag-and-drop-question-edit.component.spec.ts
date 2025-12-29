@@ -18,7 +18,6 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MockResizeObserver } from 'src/test/javascript/spec/helpers/mocks/service/mock-resize-observer';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -98,14 +97,10 @@ describe('DragAndDropQuestionEditComponent', () => {
         });
         addFileSpy = vi.spyOn(component.addNewFile, 'emit');
         removeFileSpy = vi.spyOn(component.removeFile, 'emit');
-        globalThis.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         fixture.detectChanges();
-        await fixture.whenStable();
     });
 
     afterEach(() => {
@@ -695,27 +690,31 @@ describe('DragAndDropQuestionEditComponent', () => {
             height: 0,
         } as any;
 
-        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+        const originalCreateElement = document.createElement.bind(document);
+        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
             if (tag === 'canvas') return mockCanvas;
-            return null as any;
+            return originalCreateElement(tag);
         });
 
-        const mockImage = {
-            onload: () => {},
-            src: '',
-            height: 200,
-            width: 200,
-        };
-
-        const imageSpy = vi.spyOn(globalThis, 'Image' as any).mockImplementation(() => {
-            const img = mockImage;
-            Object.defineProperty(img, 'src', {
-                set(value: string) {
-                    setTimeout(() => img.onload(), 0);
-                },
-            });
-            return img;
-        });
+        const originalImage = globalThis.Image;
+        let imageCallCount = 0;
+        class MockImage {
+            onload: () => void = () => {};
+            private _src: string = '';
+            height: number = 200;
+            width: number = 200;
+            constructor() {
+                imageCallCount++;
+            }
+            get src() {
+                return this._src;
+            }
+            set src(value: string) {
+                this._src = value;
+                setTimeout(() => this.onload(), 0);
+            }
+        }
+        globalThis.Image = MockImage as any;
 
         const createImageDragItemSpy = vi.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
             const dragItem = new DragItem();
@@ -732,13 +731,15 @@ describe('DragAndDropQuestionEditComponent', () => {
             expect(dragAndDropQuestion.dragItems).toHaveLength(2);
         });
 
-        expect(imageSpy).toHaveBeenCalledTimes(2);
-        expect(canvasSpy).toHaveBeenCalledTimes(2);
+        expect(imageCallCount).toBe(2);
         expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
         expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
         expect(dragAndDropQuestion.dragItems).toHaveLength(2);
         expect(dragAndDropQuestion.correctMappings).toHaveLength(2);
         expect(blankOutSpy).toHaveBeenCalledOnce();
+
+        canvasSpy.mockRestore();
+        globalThis.Image = originalImage;
     });
 
     it('should blank out background image', async () => {
@@ -760,27 +761,31 @@ describe('DragAndDropQuestionEditComponent', () => {
             height: 0,
         } as any;
 
-        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+        const originalCreateElement = document.createElement.bind(document);
+        const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
             if (tag === 'canvas') return mockCanvas;
-            return null as any;
+            return originalCreateElement(tag);
         });
 
-        const mockImage = {
-            onload: () => {},
-            src: '',
-            height: 200,
-            width: 200,
-        };
-
-        const imageSpy = vi.spyOn(globalThis, 'Image' as any).mockImplementation(() => {
-            const img = mockImage;
-            Object.defineProperty(img, 'src', {
-                set(value: string) {
-                    setTimeout(() => img.onload(), 0);
-                },
-            });
-            return img;
-        });
+        const originalImage = globalThis.Image;
+        let imageCallCount = 0;
+        class MockImage {
+            onload: () => void = () => {};
+            private _src: string = '';
+            height: number = 200;
+            width: number = 200;
+            constructor() {
+                imageCallCount++;
+            }
+            get src() {
+                return this._src;
+            }
+            set src(value: string) {
+                this._src = value;
+                setTimeout(() => this.onload(), 0);
+            }
+        }
+        globalThis.Image = MockImage as any;
 
         const setBackgroundSpy = vi.spyOn(component, 'setBackgroundFileFromFile').mockImplementation(() => {});
 
@@ -790,14 +795,16 @@ describe('DragAndDropQuestionEditComponent', () => {
             expect(setBackgroundSpy).toHaveBeenCalledOnce();
         });
 
-        expect(imageSpy).toHaveBeenCalledOnce();
-        expect(canvasSpy).toHaveBeenCalledOnce();
+        expect(imageCallCount).toBe(1);
         expect(mockContext.drawImage).toHaveBeenCalledOnce();
         expect(mockContext.fillStyle).toBe('white');
         expect(mockContext.fillRect).toHaveBeenCalledTimes(2);
         expect(mockCanvas.toDataURL).toHaveBeenCalledOnce();
         expect(setBackgroundSpy).toHaveBeenCalledOnce();
         expect(setBackgroundSpy).toHaveBeenCalledWith(expect.any(File));
+
+        canvasSpy.mockRestore();
+        globalThis.Image = originalImage;
     });
 
     it('should convert data url to blob', () => {

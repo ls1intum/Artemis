@@ -20,6 +20,37 @@ import { provideHttpClient } from '@angular/common/http';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
+
+// Mock monaco-editor module
+vi.mock('monaco-editor', () => ({
+    editor: {
+        EditorOption: {
+            lineHeight: 'lineHeight',
+        },
+        EndOfLineSequence: {
+            LF: 0,
+        },
+        createModel: vi.fn().mockReturnValue({
+            setValue: vi.fn(),
+            getValue: vi.fn().mockReturnValue(''),
+            dispose: vi.fn(),
+            setEOL: vi.fn(),
+        }),
+        getModel: vi.fn().mockReturnValue(null),
+        setModelLanguage: vi.fn(),
+        create: vi.fn(),
+        createDiffEditor: vi.fn(),
+    },
+    KeyCode: {},
+    KeyMod: {
+        CtrlCmd: 2048,
+    },
+    Uri: {
+        parse: vi.fn().mockReturnValue({ toString: () => 'mock://uri' }),
+        file: vi.fn().mockReturnValue({ toString: () => 'file://mock' }),
+    },
+}));
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     setupTestBed({ zoneless: true });
@@ -43,23 +74,81 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     };
 
     beforeEach(async () => {
+        const mockDisposable = { dispose: vi.fn() };
+        const mockModel = {
+            setEOL: vi.fn(),
+            getValue: vi.fn().mockReturnValue(''),
+            setValue: vi.fn(),
+            onDidChangeContent: vi.fn(),
+            getLineContent: vi.fn().mockReturnValue(''),
+        };
+        const mockEditor = {
+            getModel: vi.fn().mockReturnValue(mockModel),
+            setModel: vi.fn(),
+            updateOptions: vi.fn(),
+            layout: vi.fn(),
+            onDidChangeModelContent: vi.fn().mockReturnValue(mockDisposable),
+            onDidContentSizeChange: vi.fn().mockReturnValue(mockDisposable),
+            onDidBlurEditorWidget: vi.fn().mockReturnValue(mockDisposable),
+            onDidFocusEditorText: vi.fn().mockReturnValue(mockDisposable),
+            onDidBlurEditorText: vi.fn().mockReturnValue(mockDisposable),
+            onDidPaste: vi.fn().mockReturnValue(mockDisposable),
+            onDidChangeCursorPosition: vi.fn().mockReturnValue(mockDisposable),
+            onKeyDown: vi.fn().mockReturnValue(mockDisposable),
+            onKeyUp: vi.fn().mockReturnValue(mockDisposable),
+            getOption: vi.fn().mockReturnValue(16),
+            getContentHeight: vi.fn().mockReturnValue(100),
+            getContentWidth: vi.fn().mockReturnValue(500),
+            addCommand: vi.fn(),
+            addAction: vi.fn().mockReturnValue(mockDisposable),
+            dispose: vi.fn(),
+            getValue: vi.fn().mockReturnValue(''),
+            setValue: vi.fn(),
+            getId: vi.fn().mockReturnValue('mock-editor-id'),
+            getPosition: vi.fn().mockReturnValue({ lineNumber: 1, column: 1 }),
+            setPosition: vi.fn(),
+            getSelection: vi.fn().mockReturnValue({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }),
+            setSelection: vi.fn(),
+            executeEdits: vi.fn().mockReturnValue(true),
+            focus: vi.fn(),
+            trigger: vi.fn(),
+            deltaDecorations: vi.fn().mockReturnValue([]),
+            getContribution: vi.fn().mockReturnValue(null),
+            createDecorationsCollection: vi.fn().mockReturnValue({ clear: vi.fn(), set: vi.fn() }),
+            getContainerDomNode: vi.fn().mockReturnValue(document.createElement('div')),
+            getDomNode: vi.fn().mockReturnValue(document.createElement('div')),
+            revealLine: vi.fn(),
+            revealLineInCenter: vi.fn(),
+            revealRangeInCenter: vi.fn(),
+            getScrollHeight: vi.fn().mockReturnValue(100),
+            getScrollWidth: vi.fn().mockReturnValue(500),
+            getScrollTop: vi.fn().mockReturnValue(0),
+            getScrollLeft: vi.fn().mockReturnValue(0),
+            setScrollTop: vi.fn(),
+            setScrollPosition: vi.fn(),
+            onDidScrollChange: vi.fn().mockReturnValue(mockDisposable),
+        };
+
+        const mockMonacoEditorService = {
+            createStandaloneCodeEditor: vi.fn().mockReturnValue(mockEditor),
+        };
+
         await TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: MonacoEditorService, useValue: mockMonacoEditorService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
 
+        globalThis.ResizeObserver = MockResizeObserver as any;
+
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
-        fixture.componentRef.setInput('question', question);
-        globalThis.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.detectChanges();

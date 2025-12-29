@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { QuizTrainingDialogComponent } from './quiz-training-dialog.component';
-import { MockBuilder } from 'ng-mocks';
 import { DialogModule } from 'primeng/dialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,12 +12,17 @@ describe('QuizTrainingDialogComponent', () => {
     let component: QuizTrainingDialogComponent;
     let fixture: ComponentFixture<QuizTrainingDialogComponent>;
 
-    beforeEach(async () => {
-        await MockBuilder(QuizTrainingDialogComponent).keep(DialogModule).keep(FontAwesomeModule).provide({ provide: TranslateService, useClass: MockTranslateService });
-
-        fixture = TestBed.createComponent(QuizTrainingDialogComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [QuizTrainingDialogComponent, DialogModule, FontAwesomeModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(QuizTrainingDialogComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     afterEach(() => {

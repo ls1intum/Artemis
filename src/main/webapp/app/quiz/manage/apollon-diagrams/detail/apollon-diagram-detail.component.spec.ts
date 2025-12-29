@@ -22,6 +22,7 @@ import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'src/test/javascript/spec/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 
 describe('ApollonDiagramDetail Component', () => {
     setupTestBed({ zoneless: true });
@@ -40,11 +41,11 @@ describe('ApollonDiagramDetail Component', () => {
 
     globalThis.URL.createObjectURL = vi.fn(() => 'https://some.test.com');
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [ApollonDiagramDetailComponent],
             providers: [
                 provideHttpClient(),
@@ -62,15 +63,14 @@ describe('ApollonDiagramDetail Component', () => {
             ],
         })
             .overrideTemplate(ApollonDiagramDetailComponent, '<div #editorContainer></div>')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                courseService = fixture.debugElement.injector.get(CourseManagementService);
-                alertService = fixture.debugElement.injector.get(AlertService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
-                div = fixture.componentInstance.editorContainer().nativeElement;
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
+        apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        alertService = fixture.debugElement.injector.get(AlertService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
+        div = fixture.componentInstance.editorContainer().nativeElement;
     });
 
     afterEach(() => {
@@ -106,10 +106,7 @@ describe('ApollonDiagramDetail Component', () => {
         // setup
         fixture.componentInstance.apollonDiagram.set(diagram);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        // TODO: we should mock this differently without require
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        vi.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         vi.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         // Mock ApollonEditor.exportModelAsSvg to avoid DOM issues in jsdom
@@ -150,10 +147,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('downloadSelection', async () => {
-        // TODO: we should mock this differently without require
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        vi.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
         fixture.componentInstance.apollonDiagram.set(diagram);
         await fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child

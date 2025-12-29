@@ -25,10 +25,10 @@ describe('ApollonDiagramCreateForm Component', () => {
 
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 123);
 
-    beforeEach(() => {
+    beforeEach(async () => {
         diagram.id = 1;
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [ApollonDiagramCreateFormComponent],
             providers: [
                 provideHttpClient(),
@@ -41,13 +41,12 @@ describe('ApollonDiagramCreateForm Component', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         })
-            .overrideTemplate(ApollonDiagramCreateFormComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ApollonDiagramCreateFormComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                ngbModal = fixture.debugElement.injector.get(NgbActiveModal);
-            });
+            .overrideTemplate(ApollonDiagramCreateFormComponent, '<input #titleInput />')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ApollonDiagramCreateFormComponent);
+        apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+        ngbModal = fixture.debugElement.injector.get(NgbActiveModal);
     });
 
     afterEach(() => {

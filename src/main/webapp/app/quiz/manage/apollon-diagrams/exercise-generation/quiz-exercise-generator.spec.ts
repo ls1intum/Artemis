@@ -35,9 +35,8 @@ describe('QuizExercise Generator', () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -47,6 +46,8 @@ describe('QuizExercise Generator', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         }).compileComponents();
+
+        configureServices();
     });
 
     afterEach(() => {
@@ -54,12 +55,8 @@ describe('QuizExercise Generator', () => {
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
-        // TODO: we should mock this differently without require
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        configureServices();
         vi.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
-        vi.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;

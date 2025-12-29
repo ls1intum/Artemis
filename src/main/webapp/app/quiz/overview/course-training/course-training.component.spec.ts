@@ -3,7 +3,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingComponent } from './course-training.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideHttpClient } from '@angular/common/http';
@@ -41,12 +40,14 @@ describe('CourseTrainingComponent', () => {
         currentTime: new Date(Date.now()).toISOString(),
     };
 
-    beforeEach(async () => {
-        await MockBuilder(CourseTrainingComponent)
-            .keep(Router)
-            .provide([
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [CourseTrainingComponent],
+            providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                Router,
+                LeaderboardService,
                 { provide: LocationStrategy, useClass: PathLocationStrategy },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
@@ -57,16 +58,18 @@ describe('CourseTrainingComponent', () => {
                         },
                     },
                 },
-            ]);
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                leaderboardService = TestBed.inject(LeaderboardService);
+                vi.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
+                vi.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true } as LeaderboardSettingsDTO);
 
-        leaderboardService = TestBed.inject(LeaderboardService);
-        vi.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
-        vi.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true } as LeaderboardSettingsDTO);
-
-        fixture = TestBed.createComponent(CourseTrainingComponent);
-        component = fixture.componentInstance;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+                fixture = TestBed.createComponent(CourseTrainingComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     afterEach(() => {

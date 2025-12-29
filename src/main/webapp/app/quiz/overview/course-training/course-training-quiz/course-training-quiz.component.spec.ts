@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from '../../../shared/entities/quiz-question.model';
-import { MockBuilder } from 'ng-mocks';
+import { MockInstance } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -14,7 +14,6 @@ import { MockTranslateService } from '../../../../../../../test/javascript/spec/
 import { SessionStorageService } from '../../../../shared/service/session-storage.service';
 import { AlertService } from '../../../../shared/service/alert.service';
 import { CourseManagementService } from '../../../../core/course/manage/services/course-management.service';
-import { MockInstance } from 'ng-mocks';
 import { DragAndDropQuestionComponent } from '../../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ImageComponent } from '../../../../shared/image/image.component';
 import { signal } from '@angular/core';
@@ -52,7 +51,6 @@ const answer: SubmittedAnswerAfterEvaluation = { selectedOptions: [{ scoreInPoin
 
 describe('CourseTrainingQuizComponent', () => {
     setupTestBed({ zoneless: true });
-    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
     let component: CourseTrainingQuizComponent;
     let fixture: ComponentFixture<CourseTrainingQuizComponent>;
     let quizService: CourseTrainingQuizService;
@@ -63,14 +61,20 @@ describe('CourseTrainingQuizComponent', () => {
         { quizQuestionWithSolutionDTO: question3, isRated: false, questionIds: [1], isNewSession: true },
     ];
 
-    beforeEach(async () => {
-        await MockBuilder(CourseTrainingQuizComponent)
-            .keep(Router)
-            .provide([
+    beforeEach(() => {
+        MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
+
+        TestBed.configureTestingModule({
+            imports: [CourseTrainingQuizComponent],
+            providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
+                Router,
                 SessionStorageService,
+                CourseTrainingQuizService,
+                CourseManagementService,
+                AlertService,
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -79,21 +83,25 @@ describe('CourseTrainingQuizComponent', () => {
                         },
                     },
                 },
-            ]);
-        quizService = TestBed.inject(CourseTrainingQuizService);
-        vi.spyOn(quizService, 'getQuizQuestions').mockReturnValue(
-            of(
-                new HttpResponse<QuizQuestionTraining[]>({
-                    body: mockQuestions,
-                    headers: { get: () => '3' } as any,
-                }),
-            ),
-        );
-        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                quizService = TestBed.inject(CourseTrainingQuizService);
+                vi.spyOn(quizService, 'getQuizQuestions').mockReturnValue(
+                    of(
+                        new HttpResponse<QuizQuestionTraining[]>({
+                            body: mockQuestions,
+                            headers: { get: () => '3' } as any,
+                        }),
+                    ),
+                );
+                vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
-        fixture = TestBed.createComponent(CourseTrainingQuizComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+                fixture = TestBed.createComponent(CourseTrainingQuizComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     afterEach(() => {

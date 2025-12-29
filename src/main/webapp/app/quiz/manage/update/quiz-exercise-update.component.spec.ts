@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -148,8 +148,8 @@ describe('QuizExerciseUpdateComponent', () => {
         return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
     };
 
-    const configureTestBed = (testRoute?: ActivatedRoute) => {
-        TestBed.configureTestingModule({
+    const configureTestBed = async (testRoute?: ActivatedRoute) => {
+        await TestBed.configureTestingModule({
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
@@ -199,7 +199,9 @@ describe('QuizExerciseUpdateComponent', () => {
         };
 
         describe('without exam id', () => {
-            beforeEach(waitForAsync(configureTestBed));
+            beforeEach(async () => {
+                await configureTestBed();
+            });
             beforeEach(configureFixtureAndServices);
             it('should call courseExerciseService.find and quizExerciseService.find', () => {
                 // GIVEN
@@ -226,7 +228,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 queryParams: of({}),
             } as any as ActivatedRoute;
 
-            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(async () => {
+                await configureTestBed(testRoute);
+            });
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
                 configureStubs();
@@ -245,7 +249,9 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exam id but without exercise id', () => {
             const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) }, queryParams: of({}) } as any as ActivatedRoute;
-            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(async () => {
+                await configureTestBed(testRoute);
+            });
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
                 configureStubs();
@@ -264,7 +270,9 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('without exam id and exercise id', () => {
             const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
-            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(async () => {
+                await configureTestBed(testRoute);
+            });
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
                 configureStubs();
@@ -286,7 +294,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
                 queryParams: of({}),
             } as any as ActivatedRoute;
-            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(async () => {
+                await configureTestBed(testRoute);
+            });
             beforeEach(configureFixtureAndServices);
 
             it('should not call alert service', () => {
@@ -397,7 +407,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
                 queryParams: of({}),
             } as any as ActivatedRoute;
-            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(async () => {
+                await configureTestBed(testRoute);
+            });
             beforeEach(configureFixtureAndServices);
             beforeEach(() => {
                 comp.quizExercise = new QuizExercise(undefined, undefined);
@@ -465,7 +477,9 @@ describe('QuizExerciseUpdateComponent', () => {
     });
 
     describe('without routeChange', () => {
-        beforeEach(waitForAsync(configureTestBed));
+        beforeEach(async () => {
+            await configureTestBed();
+        });
         beforeEach(configureFixtureAndServices);
 
         describe('init', () => {

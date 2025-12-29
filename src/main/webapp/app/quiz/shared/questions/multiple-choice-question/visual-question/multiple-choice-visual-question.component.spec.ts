@@ -22,10 +22,9 @@ describe('QuizVisualEditorComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceVisualQuestionComponent>;
     let comp: MultipleChoiceVisualQuestionComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), FaIconComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
                 MockProvider(CourseManagementService),
@@ -36,15 +35,13 @@ describe('QuizVisualEditorComponent', () => {
                     useValue: { queryParams: of({}) },
                 },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MultipleChoiceVisualQuestionComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                fixture.componentRef.setInput('question', new MultipleChoiceQuestion());
-                fixture.detectChanges();
-            });
+        fixture = TestBed.createComponent(MultipleChoiceVisualQuestionComponent);
+        comp = fixture.componentInstance;
+
+        fixture.componentRef.setInput('question', new MultipleChoiceQuestion());
+        fixture.detectChanges();
     });
 
     afterEach(() => {
