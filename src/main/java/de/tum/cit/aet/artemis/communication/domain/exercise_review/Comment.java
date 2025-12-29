@@ -32,7 +32,7 @@ public class Comment extends DomainObject {
     private CommentThread thread;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id")
+    @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -44,7 +44,7 @@ public class Comment extends DomainObject {
     private CommentType type;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "content", columnDefinition = "json")
+    @Column(name = "content", columnDefinition = "json", nullable = false)
     private CommentContentDTO content;
 
     @CreatedDate

@@ -46,19 +46,19 @@ public class CommentThread extends DomainObject {
     @Column(name = "file_path")
     private String filePath;
 
-    @Column(name = "initial_file_path")
+    @Column(name = "initial_file_path", nullable = false)
     private String initialFilePath;
 
     @Column(name = "line_number")
     private Integer lineNumber;
 
-    @Column(name = "initial_line_number")
+    @Column(name = "initial_line_number", nullable = false)
     private Integer initialLineNumber;
 
-    @Column(name = "outdated")
+    @Column(name = "outdated", nullable = false)
     private boolean outdated;
 
-    @Column(name = "resolved")
+    @Column(name = "resolved", nullable = false)
     private boolean resolved;
 
     @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
