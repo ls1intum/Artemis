@@ -690,7 +690,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             height: 0,
         } as any;
 
-        const originalCreateElement = document.createElement.bind(document);
+        const originalCreateElement = (tag: string) => document.createElement(tag);
         const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
             if (tag === 'canvas') return mockCanvas;
             return originalCreateElement(tag);
@@ -761,7 +761,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             height: 0,
         } as any;
 
-        const originalCreateElement = document.createElement.bind(document);
+        const originalCreateElement = (tag: string) => document.createElement(tag);
         const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
             if (tag === 'canvas') return mockCanvas;
             return originalCreateElement(tag);
