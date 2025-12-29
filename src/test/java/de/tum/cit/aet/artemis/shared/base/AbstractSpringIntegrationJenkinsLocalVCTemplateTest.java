@@ -22,22 +22,22 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Batch test class for JenkinsLocalVC tests - runs in parallel with AbstractSpringIntegrationJenkinsLocalVCTest.
- * This class contains the larger/slower test classes to improve parallel test execution time.
+ * Template test class for JenkinsLocalVC tests - runs actual Maven/Gradle builds.
+ * This class is in a separate bucket because template tests are slow (they run real builds).
  */
-@Tag("BucketJenkinsLocalVCBatch")
-@ResourceLock("AbstractSpringIntegrationJenkinsLocalVCBatchTest")
+@Tag("BucketJenkinsLocalVCTemplate")
+@ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTemplateTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_batch", "info.contact=test@localhost",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_template", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
         // Use separate paths for parallel bucket execution
-        "artemis.repo-clone-path=./local/server-integration-test-batch/repos",
-        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-batch/local-vcs-repos" })
-public abstract class AbstractSpringIntegrationJenkinsLocalVCBatchTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
+        "artemis.repo-clone-path=./local/server-integration-test-template/repos",
+        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-template/local-vcs-repos" })
+public abstract class AbstractSpringIntegrationJenkinsLocalVCTemplateTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
 
     private static final int serverPort;
 

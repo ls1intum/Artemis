@@ -220,28 +220,36 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
-        // Get a proper temp path for slides
-        Path tempFilePath = FilePathConverter.getTempFilePath();
-        Files.createDirectories(tempFilePath);
+        // Get the proper attachment directory for slides
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Path slideImagesDir = attachmentDirectory.resolve("slide");
+        Files.createDirectories(slideImagesDir);
 
         // Create existing slides (all 3) and store their IDs
         List<Long> slideIds = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
-            // Create a real file in the temp directory
-            Path slidePath = tempFilePath.resolve("slide" + i + ".png");
+            Slide slide = new Slide();
+            slide.setSlideNumber(i);
+            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+            // Set a dummy path first as it cannot be null
+            slide.setSlideImagePath("dummy");
+
+            // Save the slide to get an ID
+            Slide savedSlide = slideRepository.save(slide);
+            slideIds.add(savedSlide.getId());
+
+            // Create the proper directory structure for the slide
+            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            Files.createDirectories(slideDir);
+            Path slidePath = slideDir.resolve("slide" + i + ".png");
 
             // Create a simple image file (1x1 pixel)
             BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            Slide slide = new Slide();
-            slide.setSlideNumber(i);
-            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
-
-            // The path is relative to the base path and should match what's expected
-            slide.setSlideImagePath("temp/slide" + i + ".png");
-            Slide savedSlide = slideRepository.save(slide);
-            slideIds.add(savedSlide.getId());
+            // Update the slide with the proper path format
+            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            slideRepository.save(savedSlide);
         }
 
         // Only include 2 of the 3 slides in page order - use actual IDs
