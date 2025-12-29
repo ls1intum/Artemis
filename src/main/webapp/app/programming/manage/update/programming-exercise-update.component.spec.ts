@@ -842,7 +842,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
         }));
 
         it('should call create service on save for new sharing entity, but save failed', fakeAsync(() => {
@@ -864,7 +864,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
         }));
 
         it('should import without buildConfig and reset dates, id, project key and store zipFile', fakeAsync(() => {

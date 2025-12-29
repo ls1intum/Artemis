@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
@@ -19,17 +20,36 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
- * A service to create the communication data export for users
- * This includes messages (posts), thread replies (answer posts) and reactions to posts and answer posts
- * All communication data is exported per course and stored in a CSV file.
+ * A service to create the communication data export for users.
+ * <p>
+ * This includes:
+ * <ul>
+ * <li>Messages (posts) and thread replies (answer posts)</li>
+ * <li>Reactions to posts and answer posts</li>
+ * <li>Saved/bookmarked posts</li>
+ * <li>Notification settings</li>
+ * <li>Conversation participations (channels, group chats, direct messages)</li>
+ * </ul>
+ * Communication data per course is stored in course-specific CSV files,
+ * while saved posts, notification settings, and conversation participations are stored in root-level files.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -42,14 +62,26 @@ public class DataExportCommunicationDataService {
 
     private final ReactionRepository reactionRepository;
 
-    public DataExportCommunicationDataService(PostRepository postRepository, AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository) {
+    private final SavedPostRepository savedPostRepository;
+
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
+    public DataExportCommunicationDataService(PostRepository postRepository, AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository,
+            SavedPostRepository savedPostRepository, GlobalNotificationSettingRepository globalNotificationSettingRepository,
+            ConversationParticipantRepository conversationParticipantRepository) {
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.reactionRepository = reactionRepository;
+        this.savedPostRepository = savedPostRepository;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
-     * Creates the communication data export for a user containing all posts, answer posts and reactions of the user
+     * Creates the communication data export for a user containing all posts, answer posts, reactions,
+     * saved posts, and notification settings.
      *
      * @param userId           the id of the user
      * @param workingDirectory the working directory
@@ -72,6 +104,13 @@ public class DataExportCommunicationDataService {
         createCommunicationDataExportIfAnswerPostsExist(workingDirectory, answerPostsPerCourse, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
         createCommunicationDataExportIfReactionsToPostsExist(workingDirectory, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
         createCommunicationDataExportIfReactionsToAnswerPostsExist(workingDirectory, reactionsToAnswerPostsPerCourse);
+
+        // Export saved posts and notification settings (user-wide, not course-specific)
+        createSavedPostsExport(userId, workingDirectory);
+        createNotificationSettingsExport(userId, workingDirectory);
+
+        // Export conversation participations (channels, group chats, direct messages)
+        createConversationParticipationsExport(userId, workingDirectory);
     }
 
     /**
@@ -209,5 +248,122 @@ public class DataExportCommunicationDataService {
             }
             printer.flush();
         }
+    }
+
+    /**
+     * Creates a CSV file containing the user's saved/bookmarked posts.
+     *
+     * @param userId           the id of the user
+     * @param workingDirectory the directory where the export is stored
+     * @throws IOException if an error occurs while writing the file
+     */
+    private void createSavedPostsExport(long userId, Path workingDirectory) throws IOException {
+        List<SavedPost> savedPosts = savedPostRepository.findSavedPostsByUserId(userId);
+        if (savedPosts == null || savedPosts.isEmpty()) {
+            return;
+        }
+
+        String[] headers = { "post_id", "post_type", "status", "completed_at" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).get();
+
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("saved_posts" + CSV_FILE_EXTENSION)), csvFormat)) {
+            for (var savedPost : savedPosts) {
+                printer.printRecord(savedPost.getPostId(), savedPost.getPostType(), savedPost.getStatus(), savedPost.getCompletedAt());
+            }
+            printer.flush();
+        }
+    }
+
+    /**
+     * Creates a CSV file containing the user's global notification settings.
+     *
+     * @param userId           the id of the user
+     * @param workingDirectory the directory where the export is stored
+     * @throws IOException if an error occurs while writing the file
+     */
+    private void createNotificationSettingsExport(long userId, Path workingDirectory) throws IOException {
+        Set<GlobalNotificationSetting> notificationSettings = globalNotificationSettingRepository.findByUserId(userId);
+        if (notificationSettings == null || notificationSettings.isEmpty()) {
+            return;
+        }
+
+        String[] headers = { "notification_type", "enabled" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).get();
+
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("notification_settings" + CSV_FILE_EXTENSION)), csvFormat)) {
+            for (var setting : notificationSettings) {
+                printer.printRecord(setting.getNotificationType(), setting.getEnabled());
+            }
+            printer.flush();
+        }
+    }
+
+    /**
+     * Creates a CSV file containing the user's conversation participations.
+     * This includes channels, group chats, and direct messages (one-to-one chats).
+     *
+     * @param userId           the id of the user
+     * @param workingDirectory the directory where the export is stored
+     * @throws IOException if an error occurs while writing the file
+     */
+    private void createConversationParticipationsExport(long userId, Path workingDirectory) throws IOException {
+        List<ConversationParticipant> participations = conversationParticipantRepository.findAllByUserIdWithConversationAndCourse(userId);
+        if (participations == null || participations.isEmpty()) {
+            return;
+        }
+
+        String[] headers = { "course_title", "conversation_type", "conversation_name", "is_moderator", "is_muted", "is_hidden", "is_favorite", "joined_at" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).get();
+
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("conversation_participations" + CSV_FILE_EXTENSION)), csvFormat)) {
+            for (var participation : participations) {
+                Conversation conversation = participation.getConversation();
+                String courseTitle = conversation.getCourse() != null ? conversation.getCourse().getTitle() : "";
+                String conversationType = getConversationType(conversation);
+                String conversationName = getConversationName(conversation);
+
+                printer.printRecord(courseTitle, conversationType, conversationName, participation.getIsModerator(), participation.getIsMuted(), participation.getIsHidden(),
+                        participation.getIsFavorite(), participation.getLastRead());
+            }
+            printer.flush();
+        }
+    }
+
+    /**
+     * Determines the type of conversation (Channel, Group Chat, or Direct Message).
+     *
+     * @param conversation the conversation to determine the type for
+     * @return a string describing the conversation type
+     */
+    private String getConversationType(Conversation conversation) {
+        if (conversation instanceof Channel) {
+            return "Channel";
+        }
+        else if (conversation instanceof GroupChat) {
+            return "Group Chat";
+        }
+        else if (conversation instanceof OneToOneChat) {
+            return "Direct Message";
+        }
+        return "Unknown";
+    }
+
+    /**
+     * Gets the name or identifier for a conversation.
+     *
+     * @param conversation the conversation to get the name for
+     * @return the conversation name or a descriptive identifier
+     */
+    private String getConversationName(Conversation conversation) {
+        if (conversation instanceof Channel channel) {
+            return channel.getName() != null ? channel.getName() : "";
+        }
+        else if (conversation instanceof GroupChat groupChat) {
+            return groupChat.getName() != null ? groupChat.getName() : "Group Chat #" + groupChat.getId();
+        }
+        else if (conversation instanceof OneToOneChat) {
+            return "Direct Message #" + conversation.getId();
+        }
+        return "";
     }
 }
