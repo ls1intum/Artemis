@@ -220,8 +220,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.examId).toBe(2);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should show jhi-text-assessment-area', async () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
@@ -236,8 +237,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(sharedLayout).not.toBeNull();
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should update score', async () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
@@ -252,8 +254,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.totalScore).toBe(42);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should save the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const handleFeedbackStub = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
@@ -345,8 +348,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBe(serverReturnsError);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should submit the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
@@ -380,8 +384,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(submitSpy).not.toHaveBeenCalled();
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should handle error if saving fails', async () => {
         component['setPropertiesFromServerResponse'](participation);
         component.assessmentsAreValid = true;
@@ -410,8 +415,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should cancel assessment', async () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
@@ -429,8 +435,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should go to next submission', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = vi.spyOn(router, 'navigate');
@@ -471,8 +478,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.canOverride).toBe(false);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // recalculateTextBlockRefs uses timers that conflict with zoneless change detection
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should recalculate text block refs correctly', async () => {
         vi.useFakeTimers();
         component.recalculateTextBlockRefs();
@@ -484,8 +492,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.unusedTextBlockRefs).toHaveLength(0);
     });
 
-    // This test requires component restructuring for zoneless testing
-    // setPropertiesFromServerResponse modifies state during change detection, causing NG0100
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should handle overlapping manual text blocks correctly', async () => {
         const sortAndSetTextBlockRefsSpy = vi.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
 
@@ -529,8 +538,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
 
-    // This test requires component restructuring for zoneless testing
-    // loadFeedbackSuggestions triggers async operations that conflict with zoneless change detection
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
@@ -699,8 +709,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         }
     });
 
-    // This test requires component restructuring for zoneless testing
-    // loadFeedbackSuggestions triggers async operations that conflict with zoneless change detection
+    // Skipped: Requires component modification for zoneless testing.
+    // The component's isLoading property changes during ngOnInit (true->false),
+    // which triggers NG0100 in zoneless mode. Fix requires converting isLoading to a signal.
     it.skip('should not load feedback suggestions if there already are assessments', async () => {
         // preparation already added an assessment
         const athenaServiceFeedbackSuggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
