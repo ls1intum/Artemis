@@ -1,103 +1,403 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, Params, Router } from '@angular/router';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { ActivatedRoute, Params } from '@angular/router';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-describe('GradingKeyOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-    let fixture: ComponentFixture<GradingKeyOverviewComponent>;
-    let component: GradingKeyOverviewComponent;
-    let route: ActivatedRoute;
+import { of } from 'rxjs';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { MockComponent } from 'ng-mocks';
+import { HttpResponse } from '@angular/common/http';
+import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 
+describe('GradingKeyTableComponent', () => {
+    setupTestBed({ zoneless: true });
+    let fixture: ComponentFixture<GradingKeyTableComponent>;
+    let component: GradingKeyTableComponent;
+    let gradingSystemService: GradingSystemService;
+    let bonusService: BonusService;
+    let scoresStorageService: ScoresStorageService;
+
+    const courseId = 123;
+    const examId = 456;
     const studentGrade = '2.0';
 
-    beforeEach(() => {
-        route = {
-            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params, data: {} },
+    const gradeStep1: GradeStep = {
+        gradeName: 'Fail',
+        lowerBoundPercentage: 0,
+        upperBoundPercentage: 50,
+        lowerBoundInclusive: true,
+        upperBoundInclusive: false,
+        isPassingGrade: false,
+    };
+    const gradeStep2: GradeStep = {
+        gradeName: 'Pass',
+        lowerBoundPercentage: 50,
+        upperBoundPercentage: 100,
+        lowerBoundInclusive: true,
+        upperBoundInclusive: true,
+        isPassingGrade: true,
+    };
+
+    const gradeStepsDTO: GradeStepsDTO = {
+        title: 'Test Exam',
+        gradeType: GradeType.GRADE,
+        gradeSteps: [gradeStep1, gradeStep2],
+        maxPoints: 100,
+        plagiarismGrade: '5.0',
+        noParticipationGrade: '5.0',
+    };
+
+    describe('with exam context', () => {
+        const route = {
+            snapshot: {
+                params: {} as Params,
+                queryParams: { grade: studentGrade } as Params,
+                data: {},
+            },
             parent: {
                 snapshot: { params: {} },
                 parent: {
                     snapshot: {
-                        params: { courseId: 345, examId: 123 } as Params,
+                        params: { courseId, examId } as Params,
                     },
                 },
             },
         } as ActivatedRoute;
 
-        TestBed.configureTestingModule({
-            imports: [GradingKeyOverviewComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useClass: MockRouter },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(GradingSystemService),
-                MockProvider(BonusService),
-                MockProvider(CourseStorageService),
-                MockProvider(ScoresStorageService),
-                MockProvider(ArtemisNavigationUtilService),
-            ],
-        })
-            .overrideComponent(GradingKeyOverviewComponent, {
-                remove: { imports: [GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective] },
-                add: {
-                    imports: [MockComponent(GradingKeyTableComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-                },
+        beforeEach(() => {
+            return TestBed.configureTestingModule({
+                imports: [GradingKeyTableComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: route },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    MockProvider(GradingSystemService),
+                    MockProvider(BonusService),
+                    MockProvider(ScoresStorageService),
+                ],
             })
-            .compileComponents();
+                .overrideComponent(GradingKeyTableComponent, {
+                    remove: {
+                        imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+                    },
+                    add: {
+                        imports: [
+                            MockDirective(TranslateDirective),
+                            MockPipe(ArtemisTranslatePipe),
+                            MockPipe(GradeStepBoundsPipe),
+                            MockPipe(SafeHtmlPipe),
+                            MockComponent(HelpIconComponent),
+                        ],
+                    },
+                })
+                .compileComponents()
+                .then(() => {
+                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    bonusService = TestBed.inject(BonusService);
+                    scoresStorageService = TestBed.inject(ScoresStorageService);
 
-        fixture = TestBed.createComponent(GradingKeyOverviewComponent);
-        component = fixture.componentInstance;
+                    vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
+                    vi.spyOn(gradingSystemService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
+                    vi.spyOn(gradingSystemService, 'setGradePoints').mockImplementation((steps, maxPoints) => {
+                        steps.forEach((step) => {
+                            step.lowerBoundPoints = (maxPoints * step.lowerBoundPercentage) / 100;
+                            step.upperBoundPoints = (maxPoints * step.upperBoundPercentage) / 100;
+                        });
+                    });
+                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+
+                    fixture = TestBed.createComponent(GradingKeyTableComponent);
+                    component = fixture.componentInstance;
+                });
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should initialize with exam context', () => {
+            fixture.detectChanges();
+
+            expect(component).toBeTruthy();
+            expect(component.courseId).toBe(courseId);
+            expect(component.examId).toBe(examId);
+            expect(component.isExam).toBe(true);
+        });
+
+        it('should load grade steps from service', () => {
+            fixture.detectChanges();
+
+            expect(gradingSystemService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
+            expect(component.title).toBe('Test Exam');
+            expect(component.gradeSteps).toHaveLength(2);
+            expect(component.isBonus).toBe(false);
+            expect(component.plagiarismGrade).toBe('5.0');
+            expect(component.noParticipationGrade).toBe('5.0');
+        });
+
+        it('should set grade points for exam', () => {
+            fixture.detectChanges();
+
+            expect(gradingSystemService.setGradePoints).toHaveBeenCalledWith(expect.any(Array), 100);
+        });
+
+        it('should set studentGradeOrBonusPointsOrGradeBonus from query params', () => {
+            fixture.detectChanges();
+
+            expect(component.studentGradeOrBonusPointsOrGradeBonus()).toBe(studentGrade);
+        });
+
+        it('should expose GradeEditMode enum', () => {
+            expect(component.GradeEditMode).toBeDefined();
+        });
+
+        it('should expose faChevronLeft icon', () => {
+            expect(component.faChevronLeft).toBeDefined();
+        });
     });
 
-    it('should initialize component', () => {
-        fixture.detectChanges();
+    describe('with course context', () => {
+        const route = {
+            snapshot: {
+                params: {} as Params,
+                queryParams: {} as Params,
+                data: {},
+            },
+            parent: {
+                snapshot: {
+                    params: { courseId } as Params,
+                },
+            },
+        } as ActivatedRoute;
 
-        expect(fixture).toBeTruthy();
-        expect(component).toBeTruthy();
-        expect(component.examId).toBe(123);
-        expect(component.courseId).toBe(345);
-        expect(component.studentGradeOrBonusPointsOrGradeBonus).toBe(studentGrade);
+        beforeEach(() => {
+            return TestBed.configureTestingModule({
+                imports: [GradingKeyTableComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: route },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    MockProvider(GradingSystemService),
+                    MockProvider(BonusService),
+                    MockProvider(ScoresStorageService),
+                ],
+            })
+                .overrideComponent(GradingKeyTableComponent, {
+                    remove: {
+                        imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+                    },
+                    add: {
+                        imports: [
+                            MockDirective(TranslateDirective),
+                            MockPipe(ArtemisTranslatePipe),
+                            MockPipe(GradeStepBoundsPipe),
+                            MockPipe(SafeHtmlPipe),
+                            MockComponent(HelpIconComponent),
+                        ],
+                    },
+                })
+                .compileComponents()
+                .then(() => {
+                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    scoresStorageService = TestBed.inject(ScoresStorageService);
+
+                    vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
+                    vi.spyOn(gradingSystemService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
+                    vi.spyOn(gradingSystemService, 'setGradePoints').mockImplementation(() => {});
+                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+                    vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+                        new CourseScores(200, 200, 0, { absoluteScore: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
+                    );
+
+                    fixture = TestBed.createComponent(GradingKeyTableComponent);
+                    component = fixture.componentInstance;
+                });
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should initialize with course context', () => {
+            fixture.detectChanges();
+
+            expect(component).toBeTruthy();
+            expect(component.courseId).toBe(courseId);
+            expect(component.examId).toBeUndefined();
+            expect(component.isExam).toBe(false);
+        });
+
+        it('should get max points from scores storage for course', () => {
+            fixture.detectChanges();
+
+            expect(scoresStorageService.getStoredTotalScores).toHaveBeenCalledWith(courseId);
+            expect(gradingSystemService.setGradePoints).toHaveBeenCalledWith(expect.any(Array), 200);
+        });
     });
 
-    it('should print PDF', () => {
-        const printSpy = vi.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation(async () => {});
+    describe('with forBonus context', () => {
+        const route = {
+            snapshot: {
+                params: {} as Params,
+                queryParams: {} as Params,
+                data: { forBonus: true },
+            },
+            parent: {
+                snapshot: { params: {} },
+                parent: {
+                    snapshot: {
+                        params: { courseId, examId } as Params,
+                    },
+                },
+            },
+        } as unknown as ActivatedRoute;
 
-        component.printPDF();
+        const sourceGradingScale: GradingScale = {
+            id: 1,
+            gradeType: GradeType.BONUS,
+            gradeSteps: [gradeStep1, gradeStep2],
+            plagiarismGrade: '0',
+            noParticipationGrade: '0',
+            exam: { title: 'Source Exam', examMaxPoints: 50 } as Exam,
+        };
 
-        expect(printSpy).toHaveBeenCalledTimes(1);
+        const bonus: Bonus = {
+            id: 1,
+            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
+            weight: 1,
+            sourceGradingScale,
+        };
+
+        beforeEach(() => {
+            return TestBed.configureTestingModule({
+                imports: [GradingKeyTableComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: route },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    MockProvider(GradingSystemService),
+                    MockProvider(BonusService),
+                    MockProvider(ScoresStorageService),
+                ],
+            })
+                .overrideComponent(GradingKeyTableComponent, {
+                    remove: {
+                        imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+                    },
+                    add: {
+                        imports: [
+                            MockDirective(TranslateDirective),
+                            MockPipe(ArtemisTranslatePipe),
+                            MockPipe(GradeStepBoundsPipe),
+                            MockPipe(SafeHtmlPipe),
+                            MockComponent(HelpIconComponent),
+                        ],
+                    },
+                })
+                .compileComponents()
+                .then(() => {
+                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    bonusService = TestBed.inject(BonusService);
+
+                    vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of(new HttpResponse({ body: bonus })));
+                    vi.spyOn(gradingSystemService, 'getGradingScaleTitle').mockReturnValue('Source Exam');
+                    vi.spyOn(gradingSystemService, 'getGradingScaleMaxPoints').mockReturnValue(50);
+                    vi.spyOn(gradingSystemService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
+                    vi.spyOn(gradingSystemService, 'setGradePoints').mockImplementation(() => {});
+                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+
+                    fixture = TestBed.createComponent(GradingKeyTableComponent);
+                    component = fixture.componentInstance;
+                });
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should load grade steps from bonus service when forBonus is true', () => {
+            fixture.detectChanges();
+
+            expect(bonusService.findBonusForExam).toHaveBeenCalledWith(courseId, examId, true);
+            expect(component.forBonus()).toBe(true);
+            expect(component.isBonus).toBe(true);
+        });
     });
 
-    it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {
-        const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navUtilServiceSpy = vi.spyOn(navUtilService, 'navigateBack');
-        const courseId = 213;
+    describe('with undefined gradeSteps', () => {
+        const route = {
+            snapshot: {
+                params: {} as Params,
+                queryParams: {} as Params,
+                data: {},
+            },
+            parent: {
+                snapshot: { params: {} },
+                parent: {
+                    snapshot: {
+                        params: { courseId, examId } as Params,
+                    },
+                },
+            },
+        } as ActivatedRoute;
 
-        component.courseId = courseId;
-        component.examId = examId;
-        component.isExam = examId !== undefined;
+        beforeEach(() => {
+            return TestBed.configureTestingModule({
+                imports: [GradingKeyTableComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: route },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    MockProvider(GradingSystemService),
+                    MockProvider(BonusService),
+                    MockProvider(ScoresStorageService),
+                ],
+            })
+                .overrideComponent(GradingKeyTableComponent, {
+                    remove: {
+                        imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+                    },
+                    add: {
+                        imports: [
+                            MockDirective(TranslateDirective),
+                            MockPipe(ArtemisTranslatePipe),
+                            MockPipe(GradeStepBoundsPipe),
+                            MockPipe(SafeHtmlPipe),
+                            MockComponent(HelpIconComponent),
+                        ],
+                    },
+                })
+                .compileComponents()
+                .then(() => {
+                    gradingSystemService = TestBed.inject(GradingSystemService);
 
-        component.previousState();
+                    vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(undefined));
+                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
 
-        expect(navUtilServiceSpy).toHaveBeenCalledTimes(1);
+                    fixture = TestBed.createComponent(GradingKeyTableComponent);
+                    component = fixture.componentInstance;
+                });
+        });
 
-        if (examId == undefined) {
-            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'statistics']);
-        } else {
-            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'exams', examId.toString()]);
-        }
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should handle undefined grade steps gracefully', () => {
+            fixture.detectChanges();
+
+            expect(component.gradeSteps).toHaveLength(0);
+            expect(component.title).toBeUndefined();
+        });
     });
 });

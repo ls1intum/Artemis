@@ -1,878 +1,462 @@
-import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { DetailedGradingSystemComponent } from 'app/assessment/manage/grading-system/detailed-grading-system/detailed-grading-system.component';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { cloneDeep } from 'lodash-es';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
-import { PresentationType } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { lastValueFrom } from 'rxjs';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
-vi.mock('export-to-csv', () => {
-    return {
-        mkConfig: vi.fn(),
-        download: vi.fn(() => vi.fn()),
-        generateCsv: vi.fn(() => vi.fn()),
-    };
-});
-
-describe('Detailed Grading System Component', () => {
+describe('GradingSystemService', () => {
     setupTestBed({ zoneless: true });
-    let comp: DetailedGradingSystemComponent;
-    let fixture: ComponentFixture<DetailedGradingSystemComponent>;
-    let gradingSystemService: GradingSystemService;
-    let translateService: TranslateService;
-    let translateStub: MockInstance;
-    let examService: ExamManagementService;
+    let service: GradingSystemService;
+    let httpMock: HttpTestingController;
 
-    const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
+    const courseId = 123;
+    const examId = 456;
 
     const gradeStep1: GradeStep = {
-        id: 1,
         gradeName: 'Fail',
         lowerBoundPercentage: 0,
-        upperBoundPercentage: 40,
+        upperBoundPercentage: 50,
         lowerBoundInclusive: true,
         upperBoundInclusive: false,
         isPassingGrade: false,
     };
+
     const gradeStep2: GradeStep = {
-        id: 2,
         gradeName: 'Pass',
-        lowerBoundPercentage: 40,
-        upperBoundPercentage: 80,
-        lowerBoundInclusive: true,
-        upperBoundInclusive: false,
-        isPassingGrade: true,
-    };
-    const gradeStep3: GradeStep = {
-        id: 3,
-        gradeName: 'Excellent',
-        lowerBoundPercentage: 80,
+        lowerBoundPercentage: 50,
         upperBoundPercentage: 100,
         lowerBoundInclusive: true,
         upperBoundInclusive: true,
         isPassingGrade: true,
     };
-    const gradeSteps = [gradeStep1, gradeStep2, gradeStep3];
 
-    const exam = new Exam();
-    exam.examMaxPoints = 100;
-    const course = new Course();
-    course.maxPoints = 100;
+    const gradingScale: GradingScale = {
+        id: 1,
+        gradeType: GradeType.GRADE,
+        gradeSteps: [gradeStep1, gradeStep2],
+        plagiarismGrade: '5.0',
+        noParticipationGrade: '5.0',
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                MockProvider(ExamManagementService),
-                { provide: CourseManagementService, useClass: MockCourseManagementService },
-                { provide: Router, useClass: MockRouter },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                gradingSystemService = TestBed.inject(GradingSystemService);
-                examService = TestBed.inject(ExamManagementService);
-                translateService = TestBed.inject(TranslateService);
+            providers: [GradingSystemService, provideHttpClient(), provideHttpClientTesting()],
+        });
 
-                // Mock examService.find by default BEFORE creating component to prevent undefined subscribe errors
-                vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
-
-                fixture = TestBed.createComponent(DetailedGradingSystemComponent);
-                comp = fixture.componentInstance;
-
-                comp.gradingScale = new GradingScale();
-                comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
-                comp.courseId = 123;
-                comp.examId = 456;
-                comp.firstPassingGrade = 'Pass';
-                translateStub = vi.spyOn(translateService, 'instant');
-            });
+        service = TestBed.inject(GradingSystemService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
+        httpMock.verify();
         vi.restoreAllMocks();
     });
 
-    it('should handle find response for exam', () => {
-        const findGradingScaleForExamStub = vi
-            .spyOn(gradingSystemService, 'findGradingScaleForExam')
-            .mockReturnValue(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
-        const findExamStub = vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
+    describe('HTTP operations for course', () => {
+        it('should create grading scale for course', async () => {
+            const responsePromise = lastValueFrom(service.createGradingScaleForCourse(courseId, gradingScale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
+            expect(req.request.method).toBe('POST');
+            req.flush(gradingScale);
 
-        fixture.changeDetectorRef.detectChanges();
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradingScale);
+        });
 
-        expect(comp.isExam).toBe(true);
-        expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
-        expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
-        expect(findExamStub).toHaveBeenCalledTimes(1);
-        expect(comp.exam).toStrictEqual(exam);
-        expect(comp.maxPoints).toBe(exam.examMaxPoints);
-    });
+        it('should update grading scale for course', async () => {
+            const responsePromise = lastValueFrom(service.updateGradingScaleForCourse(courseId, gradingScale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
+            expect(req.request.method).toBe('PUT');
+            req.flush(gradingScale);
 
-    it('should handle find response for exam and not find a grading scale', () => {
-        const findGradingScaleForExamAndReturnNotFoundStub = vi
-            .spyOn(gradingSystemService, 'findGradingScaleForExam')
-            .mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradingScale);
+        });
 
-        fixture.changeDetectorRef.detectChanges();
+        it('should find grading scale for course', async () => {
+            const responsePromise = lastValueFrom(service.findGradingScaleForCourse(courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
+            expect(req.request.method).toBe('GET');
+            req.flush(gradingScale);
 
-        expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenNthCalledWith(1, 1, 1);
-        expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenCalledTimes(1);
-    });
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradingScale);
+        });
 
-    it('should generate default grading scale', () => {
-        comp.generateDefaultGradingScale();
+        it('should delete grading scale for course', async () => {
+            const responsePromise = lastValueFrom(service.deleteGradingScaleForCourse(courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
+            expect(req.request.method).toBe('DELETE');
+            req.flush({});
 
-        expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
-        expect(comp.firstPassingGrade).toBe('4.0');
-        expect(comp.lowerBoundInclusivity).toBe(true);
-        expect(comp.gradingScale.gradeSteps).toHaveLength(13);
-        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.id).toBeUndefined();
-            expect(gradeStep.gradeName).toBeDefined();
-            expect(gradeStep.lowerBoundInclusive).toBe(true);
-            expect(gradeStep.lowerBoundPercentage).toBeGreaterThanOrEqual(0);
-            expect(gradeStep.lowerBoundPercentage).toBeLessThan(101);
-            expect(gradeStep.upperBoundPercentage).toBeGreaterThanOrEqual(0);
-            expect(gradeStep.upperBoundPercentage).toBeLessThan(101);
-            expect(gradeStep.lowerBoundPercentage).toBeLessThanOrEqual(gradeStep.upperBoundPercentage);
-            if (gradeStep.upperBoundPercentage === 100) {
-                expect(gradeStep.upperBoundInclusive).toBe(true);
-            } else {
-                expect(gradeStep.upperBoundInclusive).toBe(false);
-            }
-            if (gradeStep.lowerBoundPercentage >= 50) {
-                expect(gradeStep.isPassingGrade).toBe(true);
-            }
+            const response = await responsePromise;
+            expect(response.ok).toBe(true);
+        });
+
+        it('should find grade steps for course', async () => {
+            const gradeStepsDTO = { title: 'Course', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
+            const responsePromise = lastValueFrom(service.findGradeStepsForCourse(courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
+            expect(req.request.method).toBe('GET');
+            req.flush(gradeStepsDTO);
+
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradeStepsDTO);
+        });
+
+        it('should match percentage to grade step for course', async () => {
+            const gradeDTO = { gradeName: 'Pass', isPassingGrade: true };
+            const responsePromise = lastValueFrom(service.matchPercentageToGradeStepForCourse(courseId, 75));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/match-grade-step?gradePercentage=75`);
+            expect(req.request.method).toBe('GET');
+            req.flush(gradeDTO);
+
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradeDTO);
         });
     });
 
-    it('should delete grade step', () => {
-        comp.deleteGradeStep(1);
+    describe('HTTP operations for exam', () => {
+        it('should create grading scale for exam', async () => {
+            const responsePromise = lastValueFrom(service.createGradingScaleForExam(courseId, examId, gradingScale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
+            expect(req.request.method).toBe('POST');
+            req.flush(gradingScale);
 
-        expect(comp.gradingScale.gradeSteps).toHaveLength(2);
-        expect(comp.gradingScale.gradeSteps).not.toContain(gradeStep2);
-    });
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradingScale);
+        });
 
-    it('should create grade step', () => {
-        comp.lowerBoundInclusivity = true;
+        it('should update grading scale for exam', async () => {
+            const responsePromise = lastValueFrom(service.updateGradingScaleForExam(courseId, examId, gradingScale));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
+            expect(req.request.method).toBe('PUT');
+            req.flush(gradingScale);
 
-        comp.createGradeStep();
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradingScale);
+        });
 
-        expect(comp.gradingScale.gradeSteps).toHaveLength(4);
-        expect(comp.gradingScale.gradeSteps[3].id).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[3].gradeName).toBe('');
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundPercentage).toBe(100);
-        expect(comp.gradingScale.gradeSteps[3].upperBoundPercentage).toBe(100);
-        expect(comp.gradingScale.gradeSteps[3].isPassingGrade).toBe(true);
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(true);
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(false);
-    });
+        it('should find grading scale for exam', async () => {
+            const responsePromise = lastValueFrom(service.findGradingScaleForExam(courseId, examId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
+            expect(req.request.method).toBe('GET');
+            req.flush(gradingScale);
 
-    it('should delete grade names correctly', () => {
-        comp.deleteGradeNames();
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradingScale);
+        });
 
-        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.gradeName).toBe('');
+        it('should delete grading scale for exam', async () => {
+            const responsePromise = lastValueFrom(service.deleteGradingScaleForExam(courseId, examId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
+            expect(req.request.method).toBe('DELETE');
+            req.flush({});
+
+            const response = await responsePromise;
+            expect(response.ok).toBe(true);
+        });
+
+        it('should find grade steps for exam', async () => {
+            const gradeStepsDTO = { title: 'Exam', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
+            const responsePromise = lastValueFrom(service.findGradeStepsForExam(courseId, examId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps`);
+            expect(req.request.method).toBe('GET');
+            req.flush(gradeStepsDTO);
+
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradeStepsDTO);
+        });
+
+        it('should match percentage to grade step for exam', async () => {
+            const gradeDTO = { gradeName: 'Pass', isPassingGrade: true };
+            const responsePromise = lastValueFrom(service.matchPercentageToGradeStepForExam(courseId, examId, 75));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=75`);
+            expect(req.request.method).toBe('GET');
+            req.flush(gradeDTO);
+
+            const response = await responsePromise;
+            expect(response.body).toEqual(gradeDTO);
         });
     });
 
-    it('should filter grade steps with empty names correctly', () => {
-        comp.gradingScale.gradeSteps[0].gradeName = '';
-        comp.gradingScale.gradeSteps[2].gradeName = '';
+    describe('findGradeSteps', () => {
+        it('should find grade steps for course when no examId provided', async () => {
+            const gradeStepsDTO = { title: 'Course', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
+            const resultPromise = lastValueFrom(service.findGradeSteps(courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
+            req.flush(gradeStepsDTO);
 
-        const filteredGradeSteps = comp.gradeStepsWithNonemptyNames();
-
-        expect(filteredGradeSteps).toHaveLength(1);
-        expect(filteredGradeSteps[0]).toStrictEqual(gradeStep2);
-    });
-
-    it('should set passing Grades correctly', () => {
-        comp.firstPassingGrade = 'Fail';
-
-        comp.setPassingGrades(comp.gradingScale.gradeSteps);
-
-        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.isPassingGrade).toBe(true);
+            const result = await resultPromise;
+            expect(result).toEqual(gradeStepsDTO);
         });
 
-        comp.firstPassingGrade = '';
+        it('should find grade steps for exam when examId provided', async () => {
+            const gradeStepsDTO = { title: 'Exam', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
+            const resultPromise = lastValueFrom(service.findGradeSteps(courseId, examId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps`);
+            req.flush(gradeStepsDTO);
 
-        comp.setPassingGrades(comp.gradingScale.gradeSteps);
-
-        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.isPassingGrade).toBe(false);
+            const result = await resultPromise;
+            expect(result).toEqual(gradeStepsDTO);
         });
-    });
 
-    it('should determine first passing grade correctly', () => {
-        comp.determineFirstPassingGrade();
+        it('should return undefined when response body is null', async () => {
+            const resultPromise = lastValueFrom(service.findGradeSteps(courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
+            req.flush(null);
 
-        expect(comp.firstPassingGrade).toBe('Pass');
-    });
-
-    it('should set inclusivity correctly', () => {
-        comp.lowerBoundInclusivity = false;
-
-        comp.setInclusivity();
-
-        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.upperBoundInclusive).toBe(true);
-            if (gradeStep.lowerBoundPercentage === 0) {
-                expect(gradeStep.lowerBoundInclusive).toBe(true);
-            } else {
-                expect(gradeStep.lowerBoundInclusive).toBe(false);
-            }
+            const result = await resultPromise;
+            expect(result).toBeUndefined();
         });
     });
 
-    it('should set inclusivity correctly for grade step where lowerBound=upperBound', () => {
-        comp.lowerBoundInclusivity = false;
+    describe('matchPercentageToGradeStep', () => {
+        it('should match percentage for course when no examId provided', async () => {
+            const gradeDTO = { gradeName: 'Pass', isPassingGrade: true };
+            const resultPromise = lastValueFrom(service.matchPercentageToGradeStep(75, courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/match-grade-step?gradePercentage=75`);
+            req.flush(gradeDTO);
 
-        comp.gradingScale.gradeSteps.push({
-            gradeName: 'Super Excellent',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 100,
-            lowerBoundInclusive: true,
-            upperBoundInclusive: true,
-            isPassingGrade: true,
+            const result = await resultPromise;
+            expect(result).toEqual(gradeDTO);
         });
 
-        comp.setInclusivity();
+        it('should match percentage for exam when examId provided', async () => {
+            const gradeDTO = { gradeName: 'Pass', isPassingGrade: true };
+            const resultPromise = lastValueFrom(service.matchPercentageToGradeStep(75, courseId, examId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=75`);
+            req.flush(gradeDTO);
 
-        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.upperBoundInclusive).toBe(true);
-            if (gradeStep.lowerBoundPercentage === 0) {
-                expect(gradeStep.lowerBoundInclusive).toBe(true);
-            } else {
-                expect(gradeStep.lowerBoundInclusive).toBe(false);
-            }
+            const result = await resultPromise;
+            expect(result).toEqual(gradeDTO);
+        });
+
+        it('should return undefined when response body is null', async () => {
+            const resultPromise = lastValueFrom(service.matchPercentageToGradeStep(75, courseId));
+            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/match-grade-step?gradePercentage=75`);
+            req.flush(null);
+
+            const result = await resultPromise;
+            expect(result).toBeUndefined();
         });
     });
 
-    it('should determine lower bound inclusivity correctly', () => {
-        comp.setBoundInclusivity();
+    describe('findWithBonusGradeTypeForInstructor', () => {
+        it('should search for grading scales with bonus grade type', async () => {
+            const pageable = { pageSize: 10, page: 0, sortingOrder: SortingOrder.ASCENDING, searchTerm: 'test', sortedColumn: 'title' };
+            const searchResult = { resultsOnPage: [gradingScale], numberOfPages: 1 };
+            const responsePromise = lastValueFrom(service.findWithBonusGradeTypeForInstructor(pageable));
+            const req = httpMock.expectOne((r) => r.url === 'api/assessment/grading-scales');
+            expect(req.request.method).toBe('GET');
+            expect(req.request.params.get('pageSize')).toBe('10');
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('sortingOrder')).toBe('ASCENDING');
+            expect(req.request.params.get('searchTerm')).toBe('test');
+            expect(req.request.params.get('sortedColumn')).toBe('title');
+            req.flush(searchResult);
 
-        expect(comp.lowerBoundInclusivity).toBe(true);
+            const response = await responsePromise;
+            expect(response.body).toEqual(searchResult);
+        });
     });
 
-    it('should determine lower bound inclusivity correctly when using a step above 100%', () => {
-        comp.gradingScale.gradeSteps.push({
-            id: 4,
-            gradeName: 'Super Excellent',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 150,
-            lowerBoundInclusive: false,
-            upperBoundInclusive: true,
-            isPassingGrade: true,
+    describe('sortGradeSteps', () => {
+        it('should sort grade steps by lower bound percentage', () => {
+            const unsorted = [gradeStep2, gradeStep1];
+            const result = service.sortGradeSteps(unsorted);
+
+            expect(result[0]).toBe(gradeStep1);
+            expect(result[1]).toBe(gradeStep2);
+        });
+    });
+
+    describe('matchGradePercentage', () => {
+        it('should match when percentage equals lower bound with inclusive lower bound', () => {
+            expect(service.matchGradePercentage(gradeStep1, 0)).toBe(true);
         });
 
-        comp.setBoundInclusivity();
+        it('should not match when percentage equals lower bound with exclusive lower bound', () => {
+            const step: GradeStep = { ...gradeStep1, lowerBoundInclusive: false };
+            expect(service.matchGradePercentage(step, 0)).toBe(false);
+        });
 
-        expect(comp.lowerBoundInclusivity).toBe(true);
+        it('should match when percentage equals upper bound with inclusive upper bound', () => {
+            expect(service.matchGradePercentage(gradeStep2, 100)).toBe(true);
+        });
+
+        it('should not match when percentage equals upper bound with exclusive upper bound', () => {
+            expect(service.matchGradePercentage(gradeStep1, 50)).toBe(false);
+        });
+
+        it('should match when percentage is between bounds', () => {
+            expect(service.matchGradePercentage(gradeStep1, 25)).toBe(true);
+            expect(service.matchGradePercentage(gradeStep2, 75)).toBe(true);
+        });
+
+        it('should not match when percentage is outside bounds', () => {
+            expect(service.matchGradePercentage(gradeStep1, 60)).toBe(false);
+            expect(service.matchGradePercentage(gradeStep2, 40)).toBe(false);
+        });
     });
 
-    it('should not delete non-existing grading scale', () => {
-        comp.existingGradingScale = false;
-        const gradingSystemDeleteForCourseSpy = vi.spyOn(gradingSystemService, 'deleteGradingScaleForCourse');
-        const gradingSystemDeleteForExamSpy = vi.spyOn(gradingSystemService, 'deleteGradingScaleForExam');
+    describe('findMatchingGradeStep', () => {
+        it('should find matching grade step', () => {
+            const gradeSteps = [gradeStep1, gradeStep2];
+            expect(service.findMatchingGradeStep(gradeSteps, 25)).toBe(gradeStep1);
+            expect(service.findMatchingGradeStep(gradeSteps, 75)).toBe(gradeStep2);
+        });
 
-        comp.delete();
+        it('should return highest step when percentage exceeds all steps', () => {
+            const gradeSteps = [gradeStep1, gradeStep2];
+            const result = service.findMatchingGradeStep(gradeSteps, 150);
+            expect(result?.gradeName).toBe('Pass');
+        });
 
-        expect(gradingSystemDeleteForCourseSpy).not.toHaveBeenCalled();
-        expect(gradingSystemDeleteForExamSpy).not.toHaveBeenCalled();
+        it('should return undefined when percentage is below all steps', () => {
+            const step: GradeStep = { ...gradeStep1, lowerBoundPercentage: 10, lowerBoundInclusive: false };
+            const result = service.findMatchingGradeStep([step, gradeStep2], 5);
+            expect(result).toBeUndefined();
+        });
     });
 
-    it('should delete grading scale for course', () => {
-        comp.existingGradingScale = true;
-        comp.isExam = false;
-        comp.courseId = 123;
-        const gradingSystemDeleteForCourseStub = vi.spyOn(gradingSystemService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
-
-        comp.delete();
-
-        expect(gradingSystemDeleteForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId);
-        expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(false);
+    describe('findMatchingGradeStepByPoints', () => {
+        it('should find matching grade step by points', () => {
+            const gradeSteps = [gradeStep1, gradeStep2];
+            expect(service.findMatchingGradeStepByPoints(gradeSteps, 25, 100)).toBe(gradeStep1);
+            expect(service.findMatchingGradeStepByPoints(gradeSteps, 75, 100)).toBe(gradeStep2);
+        });
     });
 
-    it('should delete grading scale for exam', () => {
-        comp.existingGradingScale = true;
-        comp.isExam = true;
-        const gradingSystemDeleteForExamStub = vi.spyOn(gradingSystemService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
+    describe('maxGrade', () => {
+        it('should return max grade name', () => {
+            const gradeSteps = [gradeStep1, gradeStep2];
+            expect(service.maxGrade(gradeSteps)).toBe('Pass');
+        });
 
-        comp.delete();
-
-        expect(gradingSystemDeleteForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId);
-        expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(false);
+        it('should return empty string when no max grade found', () => {
+            const step: GradeStep = { ...gradeStep1, upperBoundInclusive: false };
+            expect(service.maxGrade([step])).toBe('');
+        });
     });
 
-    it('should not update grading scale', () => {
-        comp.existingGradingScale = false;
-        comp.isExam = false;
-        comp.course = course;
-        const gradingSystemServiceStub = vi.spyOn(gradingSystemService, 'createGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: undefined })));
+    describe('setGradePoints', () => {
+        it('should set grade points based on max points', () => {
+            const steps = [{ ...gradeStep1 }, { ...gradeStep2 }];
+            service.setGradePoints(steps, 200);
 
-        comp.save();
-
-        expect(gradingSystemServiceStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemServiceStub).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(false);
+            expect(steps[0].lowerBoundPoints).toBe(0);
+            expect(steps[0].upperBoundPoints).toBe(100);
+            expect(steps[1].lowerBoundPoints).toBe(100);
+            expect(steps[1].upperBoundPoints).toBe(200);
+        });
     });
 
-    it('should create grading scale correctly for course', () => {
-        comp.existingGradingScale = false;
-        comp.course = course;
-        const createdGradingScaleForCourse = comp.gradingScale;
-        createdGradingScaleForCourse.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForCourseMock = vi
-            .spyOn(gradingSystemService, 'createGradingScaleForCourse')
-            .mockReturnValue(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForCourse })));
+    describe('hasPointsSet', () => {
+        it('should return true when all grade steps have points set', () => {
+            const steps = [
+                { ...gradeStep1, lowerBoundPoints: 0, upperBoundPoints: 50 },
+                { ...gradeStep2, lowerBoundPoints: 50, upperBoundPoints: 100 },
+            ];
+            expect(service.hasPointsSet(steps)).toBe(true);
+        });
 
-        comp.save();
+        it('should return false when points are not set', () => {
+            expect(service.hasPointsSet([gradeStep1, gradeStep2])).toBe(false);
+        });
 
-        expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(true);
-        expect(comp.gradingScale).toStrictEqual(createdGradingScaleForCourse);
+        it('should return false when upper bound points is 0', () => {
+            const steps = [{ ...gradeStep1, lowerBoundPoints: 0, upperBoundPoints: 0 }];
+            expect(service.hasPointsSet(steps)).toBe(false);
+        });
+
+        it('should return false for empty array', () => {
+            expect(service.hasPointsSet([])).toBe(false);
+        });
     });
 
-    it('should create grading scale correctly for exam', () => {
-        comp.existingGradingScale = false;
-        comp.isExam = true;
-        comp.exam = exam;
-        const createdGradingScaleForExam = comp.gradingScale;
-        createdGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForExamMock = vi
-            .spyOn(gradingSystemService, 'createGradingScaleForExam')
-            .mockReturnValue(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForExam })));
+    describe('getGradingScaleCourse', () => {
+        it('should return course from exam', () => {
+            const course = new Course();
+            course.id = 1;
+            const exam = new Exam();
+            exam.course = course;
+            const scale: GradingScale = { ...gradingScale, exam };
 
-        comp.save();
+            expect(service.getGradingScaleCourse(scale)).toBe(course);
+        });
 
-        expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
-        expect(gradingSystemCreateForExamMock).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(true);
-        expect(comp.gradingScale).toStrictEqual(createdGradingScaleForExam);
+        it('should return course directly', () => {
+            const course = new Course();
+            course.id = 1;
+            const scale: GradingScale = { ...gradingScale, course };
+
+            expect(service.getGradingScaleCourse(scale)).toBe(course);
+        });
     });
 
-    it('should update grading scale correctly for course', () => {
-        comp.existingGradingScale = true;
-        comp.course = course;
-        const updateGradingScaleFoCourse = comp.gradingScale;
-        updateGradingScaleFoCourse.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForCourseMock = vi
-            .spyOn(gradingSystemService, 'updateGradingScaleForCourse')
-            .mockReturnValue(of(new HttpResponse<GradingScale>({ body: updateGradingScaleFoCourse })));
+    describe('getGradingScaleTitle', () => {
+        it('should return exam title', () => {
+            const exam = new Exam();
+            exam.title = 'Test Exam';
+            const scale: GradingScale = { ...gradingScale, exam };
 
-        comp.save();
+            expect(service.getGradingScaleTitle(scale)).toBe('Test Exam');
+        });
 
-        expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
-        expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(true);
-        expect(comp.gradingScale).toStrictEqual(updateGradingScaleFoCourse);
+        it('should return course title when no exam', () => {
+            const course = new Course();
+            course.title = 'Test Course';
+            const scale: GradingScale = { ...gradingScale, course };
+
+            expect(service.getGradingScaleTitle(scale)).toBe('Test Course');
+        });
     });
 
-    it('should update grading scale correctly for exam', () => {
-        comp.existingGradingScale = true;
-        comp.isExam = true;
-        comp.exam = exam;
-        const updatedGradingScaleForExam = comp.gradingScale;
-        updatedGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForExamMock = vi
-            .spyOn(gradingSystemService, 'updateGradingScaleForExam')
-            .mockReturnValue(of(new HttpResponse<GradingScale>({ body: updatedGradingScaleForExam })));
+    describe('getGradingScaleMaxPoints', () => {
+        it('should return exam max points', () => {
+            const exam = new Exam();
+            exam.examMaxPoints = 150;
+            const scale: GradingScale = { ...gradingScale, exam };
 
-        comp.save();
+            expect(service.getGradingScaleMaxPoints(scale)).toBe(150);
+        });
 
-        expect(gradingSystemUpdateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
-        expect(gradingSystemUpdateForExamMock).toHaveBeenCalledTimes(1);
-        expect(comp.existingGradingScale).toBe(true);
-        expect(comp.gradingScale).toStrictEqual(updatedGradingScaleForExam);
+        it('should return course max points when no exam', () => {
+            const course = new Course();
+            course.maxPoints = 200;
+            const scale: GradingScale = { ...gradingScale, course };
+
+            expect(service.getGradingScaleMaxPoints(scale)).toBe(200);
+        });
+
+        it('should return 0 when no max points set', () => {
+            expect(service.getGradingScaleMaxPoints(gradingScale)).toBe(0);
+        });
     });
 
-    it('should handle find response correctly', () => {
-        comp.handleFindResponse(comp.gradingScale);
+    describe('getNumericValueForGradeName', () => {
+        it('should parse grade name with period as decimal separator', () => {
+            expect(service.getNumericValueForGradeName('2.0')).toBe(2.0);
+        });
 
-        expect(comp.firstPassingGrade).toBe('Pass');
-        expect(comp.lowerBoundInclusivity).toBe(true);
-        expect(comp.existingGradingScale).toBe(true);
+        it('should parse grade name with comma as decimal separator', () => {
+            expect(service.getNumericValueForGradeName('2,5')).toBe(2.5);
+        });
+
+        it('should return undefined for undefined input', () => {
+            expect(service.getNumericValueForGradeName(undefined)).toBeUndefined();
+        });
+
+        it('should return undefined and capture exception for non-numeric grade name', () => {
+            expect(service.getNumericValueForGradeName('Pass')).toBeUndefined();
+        });
     });
-
-    it('should validate valid grading scale correctly', () => {
-        expect(comp.validGradeSteps()).toBe(true);
-        expect(comp.validPresentationsConfig()).toBe(true);
-        expect(comp.invalidGradeStepsMessage).toBeUndefined();
-    });
-
-    it('should validate invalid grading scale with empty grade steps correctly', () => {
-        comp.gradingScale.gradeSteps = [];
-        translateStub.mockReturnValue('empty set');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('empty set');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.empty');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with negative max points', () => {
-        comp.course = course;
-        comp.maxPoints = -10;
-        translateStub.mockReturnValue('negative max points');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('negative max points');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.negativeMaxPoints');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-        course.maxPoints = 100;
-    });
-
-    it('should validate invalid grading scale with empty grade step fields correctly', () => {
-        comp.gradingScale.gradeSteps[0].gradeName = '';
-        translateStub.mockReturnValue('empty field');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('empty field');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with empty grade step point fields correctly', () => {
-        comp.course = course;
-        comp.maxPoints = 100;
-        translateStub.mockReturnValue('empty field for points');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('empty field for points');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with invalid percentages', () => {
-        comp.gradingScale.gradeSteps[0].lowerBoundPercentage = -10;
-        translateStub.mockReturnValue('invalid percentage');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('invalid percentage');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPercentages');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with invalid points', () => {
-        comp.maxPoints = 100;
-        comp.gradingScale.gradeSteps[0].lowerBoundPoints = 0;
-        comp.gradingScale.gradeSteps[0].upperBoundPoints = -120;
-        comp.gradingScale.gradeSteps[1].lowerBoundPoints = 40;
-        comp.gradingScale.gradeSteps[1].upperBoundPoints = 80;
-        comp.gradingScale.gradeSteps[2].lowerBoundPoints = 80;
-        comp.gradingScale.gradeSteps[2].upperBoundPoints = 100;
-        translateStub.mockReturnValue('invalid points');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('invalid points');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPoints');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with set points when all should be undefined', () => {
-        comp.gradingScale.gradeSteps[0].upperBoundPoints = 70;
-
-        expect(comp.validGradeSteps()).toBe(false);
-    });
-
-    it('should validate invalid grading scale with non-unique grade names', () => {
-        comp.gradingScale.gradeType = GradeType.GRADE;
-        comp.gradingScale.gradeSteps[1].gradeName = 'Fail';
-        translateStub.mockReturnValue('non-unique grade names');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('non-unique grade names');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonUniqueGradeNames');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with unset first passing grade', () => {
-        comp.gradingScale.gradeType = GradeType.GRADE;
-        comp.firstPassingGrade = undefined;
-        translateStub.mockReturnValue('unset first passing grade');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('unset first passing grade');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.unsetFirstPassingGrade');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with invalid bonus points', () => {
-        comp.gradingScale.gradeSteps[0].gradeName = '-2';
-        comp.gradingScale.gradeType = GradeType.BONUS;
-        translateStub.mockReturnValue('invalid bonus points');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('invalid bonus points');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidBonusPoints');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale without strictly ascending bonus points', () => {
-        comp.gradingScale.gradeSteps[0].gradeName = '0';
-        comp.gradingScale.gradeSteps[1].gradeName = '2';
-        comp.gradingScale.gradeSteps[2].gradeName = '1';
-        comp.gradingScale.gradeType = GradeType.BONUS;
-        translateStub.mockReturnValue('descending bonus points');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('descending bonus points');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with invalid adjacency', () => {
-        const gradeStep: GradeStep = {
-            gradeName: 'Grade',
-            isPassingGrade: false,
-            lowerBoundInclusive: true,
-            lowerBoundPercentage: 0,
-            upperBoundInclusive: false,
-            upperBoundPercentage: 30,
-        };
-        translateStub.mockReturnValue('invalid adjacency');
-        vi.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep, gradeStep2, gradeStep3]);
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('invalid adjacency');
-        expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidAdjacency');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate invalid grading scale with invalid first grade step', () => {
-        const invalidFirstGradeStep: GradeStep = {
-            gradeName: 'Name',
-            isPassingGrade: false,
-            lowerBoundInclusive: true,
-            lowerBoundPercentage: 20,
-            upperBoundInclusive: false,
-            upperBoundPercentage: 40,
-        };
-        vi.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([invalidFirstGradeStep, gradeStep2, gradeStep3]);
-        comp.gradingScale.gradeSteps[0].lowerBoundPercentage = 10;
-        translateStub.mockReturnValue('invalid first grade step');
-
-        expect(comp.validGradeSteps()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('invalid first grade step');
-        expect(translateStub).toHaveBeenCalledWith('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should validate grading scale with basic presentations and invalid presentationScore', () => {
-        validateInvalidPresentationsConfig(PresentationType.BASIC, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0);
-    });
-
-    it('should validate grading scale with graded presentations and invalid presentationsWeight', () => {
-        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidPresentationsWeight', 0, 2, 128);
-    });
-
-    it('should validate grading scale with graded presentations and invalid presentationsNumber', () => {
-        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0, 0, 20);
-    });
-
-    it('should validate grading scale with graded presentations and invalid presentationScore', () => {
-        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled', 2, 2, 20);
-    });
-
-    it('should detect that max points are valid', () => {
-        comp.maxPoints = 100;
-
-        expect(comp.maxPointsValid()).toBe(true);
-    });
-
-    it('should set points correctly', () => {
-        gradeStep1.lowerBoundPoints = undefined;
-
-        comp.setPoints(gradeStep1, true);
-
-        expect(gradeStep1.lowerBoundPoints).toBeUndefined();
-
-        comp.maxPoints = 100;
-
-        comp.setPoints(gradeStep1, true);
-
-        expect(gradeStep1.lowerBoundPoints).toBe(0);
-
-        comp.setPoints(gradeStep1, false);
-
-        expect(gradeStep1.upperBoundPoints).toBe(40);
-
-        gradeStep1.lowerBoundPoints = undefined;
-        gradeStep1.upperBoundPoints = undefined;
-    });
-
-    it('should set percentages correctly', () => {
-        comp.maxPoints = 100;
-        gradeStep2.lowerBoundPoints = 40;
-        gradeStep2.upperBoundPoints = 80;
-
-        comp.setPercentage(gradeStep2, true);
-        comp.setPercentage(gradeStep2, false);
-
-        expect(gradeStep2.lowerBoundPercentage).toBe(40);
-        expect(gradeStep2.upperBoundPercentage).toBe(80);
-
-        gradeStep2.lowerBoundPoints = undefined;
-        gradeStep2.upperBoundPoints = undefined;
-    });
-
-    it('should set all grade step points correctly', () => {
-        comp.maxPoints = 100;
-
-        comp.onChangeMaxPoints(100);
-
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).toBe(0);
-        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).toBe(40);
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).toBe(40);
-        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).toBe(80);
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBe(80);
-        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBe(100);
-
-        comp.onChangeMaxPoints(-10);
-
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBeUndefined();
-        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBeUndefined();
-    });
-
-    const csvColumnsGrade = 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade';
-    const csvColumnsBonus = 'bonusPoints,lowerBoundPercentage,upperBoundPercentage';
-
-    it('should read no grade steps from csv file without data', async () => {
-        const event = { target: { files: [csvColumnsGrade] } };
-        await comp.onCSVFileSelect(event);
-
-        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
-    });
-
-    it('should have validation error for csv with duplicated header keys', async () => {
-        // Csv without header
-        const invalidCsv = `4.0,10,10,TRUE`;
-
-        const warnLogSpy = vi.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
-
-        const event = { target: { files: [invalidCsv] } };
-        await comp.onCSVFileSelect(event);
-
-        expect(warnLogSpy).toHaveBeenCalledTimes(1);
-        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
-    });
-
-    it('should import csv with "grade" as grade type correctly', async () => {
-        // csv representation of gradeSteps
-        const csvRows = [csvColumnsGrade, '1.0,0,40,TRUE', '2.0,40,80,TRUE', '3.0,80,100,FALSE'];
-        const event = { target: { files: [csvRows.join('\n')] } };
-
-        const gradeStepsGrade = [
-            {
-                gradeName: '1.0',
-                lowerBoundPercentage: 0,
-                lowerBoundPoints: 0,
-                upperBoundPercentage: 40,
-                upperBoundPoints: 40,
-                lowerBoundInclusive: true,
-                upperBoundInclusive: false,
-                isPassingGrade: true,
-            },
-            {
-                gradeName: '2.0',
-                lowerBoundPercentage: 40,
-                lowerBoundPoints: 40,
-                upperBoundPercentage: 80,
-                upperBoundPoints: 80,
-                lowerBoundInclusive: true,
-                upperBoundInclusive: false,
-                isPassingGrade: true,
-            },
-            {
-                gradeName: '3.0',
-                lowerBoundPercentage: 80,
-                lowerBoundPoints: 80,
-                upperBoundPercentage: 100,
-                upperBoundPoints: 100,
-                lowerBoundInclusive: true,
-                upperBoundInclusive: true,
-                isPassingGrade: false,
-            },
-        ];
-
-        await comp.onCSVFileSelect(event);
-
-        expect(comp.gradingScale.gradeSteps).toEqual(gradeStepsGrade);
-        expect(comp.gradingScale.gradeType).toBe(GradeType.GRADE);
-    });
-
-    it('should import csv with "bonus" as grade type correctly', async () => {
-        // csv representation of gradeSteps
-        const csvRows = [csvColumnsBonus, '1.0,0,40', '2.0,40,80', '3.0,80,100'];
-        const event = { target: { files: [csvRows.join('\n')] } };
-
-        const gradeStepsBonus = [
-            {
-                gradeName: '1.0',
-                lowerBoundPercentage: 0,
-                lowerBoundPoints: 0,
-                upperBoundPercentage: 40,
-                upperBoundPoints: 40,
-                lowerBoundInclusive: true,
-                upperBoundInclusive: false,
-            },
-            {
-                gradeName: '2.0',
-                lowerBoundPercentage: 40,
-                lowerBoundPoints: 40,
-                upperBoundPercentage: 80,
-                upperBoundPoints: 80,
-                lowerBoundInclusive: true,
-                upperBoundInclusive: false,
-            },
-            {
-                gradeName: '3.0',
-                lowerBoundPercentage: 80,
-                lowerBoundPoints: 80,
-                upperBoundPercentage: 100,
-                upperBoundPoints: 100,
-                lowerBoundInclusive: true,
-                upperBoundInclusive: true,
-            },
-        ];
-
-        await comp.onCSVFileSelect(event);
-
-        expect(comp.gradingScale.gradeSteps).toEqual(gradeStepsBonus);
-        expect(comp.gradingScale.gradeType).toBe(GradeType.BONUS);
-    });
-
-    it('should generate csv correctly', () => {
-        comp.gradingScale.gradeSteps = gradeSteps;
-        const numberOfGradeSteps = gradeSteps.length;
-        const exportAsCsvMock = vi.spyOn(comp, 'exportAsCSV');
-
-        comp.exportGradingStepsToCsv();
-
-        expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
-        const generatedRows = exportAsCsvMock.mock.calls[0][0];
-        expect(generatedRows).toHaveLength(numberOfGradeSteps);
-
-        for (let index = 0; index < numberOfGradeSteps; index++) {
-            const gradeStepRow = generatedRows[index];
-            validateGradeStepRow(gradeStepRow, gradeSteps[index]);
-        }
-    });
-
-    it('should apply maxPoints of 100 to all grade steps after csv importing', async () => {
-        // csv representation of gradeSteps
-        const csvRows = [csvColumnsBonus, '1.0,0,40', '2.0,40,80', '3.0,80,100'];
-        const event = { target: { files: [csvRows.join('\n')] } };
-
-        await comp.onCSVFileSelect(event);
-
-        // percentage equal to points due to max points of 100
-        for (const gradeStep of comp.gradingScale.gradeSteps) {
-            expect(gradeStep.lowerBoundPercentage).toBe(gradeStep.lowerBoundPoints);
-            expect(gradeStep.upperBoundPercentage).toBe(gradeStep.upperBoundPoints);
-        }
-    });
-
-    it('should export as csv', () => {
-        comp.exportGradingStepsToCsv();
-        expect(mkConfig).toHaveBeenCalled();
-        expect(generateCsv).toHaveBeenCalled();
-        expect(download).toHaveBeenCalled();
-    });
-
-    it('should not show grading steps above max points warning', () => {
-        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
-        expect(result).toBe(false);
-    });
-
-    it('should show grading steps above max points warning for inclusive bound', () => {
-        const gradeStep: GradeStep = {
-            gradeName: 'Step',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 101,
-            lowerBoundInclusive: true,
-            upperBoundInclusive: true,
-            isPassingGrade: true,
-        };
-        comp.gradingScale.gradeSteps.push(gradeStep);
-
-        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
-        expect(result).toBe(true);
-    });
-
-    it('should show grading steps above max points warning for exclusive bound', () => {
-        const gradeStep: GradeStep = {
-            gradeName: 'Step',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 100,
-            lowerBoundInclusive: true,
-            upperBoundInclusive: false,
-            isPassingGrade: true,
-        };
-        comp.gradingScale.gradeSteps.push(gradeStep);
-
-        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
-        expect(result).toBe(true);
-    });
-
-    // validating presentations config
-    function validateInvalidPresentationsConfig(
-        presentationType: PresentationType,
-        message: string,
-        presentationScore?: number,
-        presentationsNumber?: number,
-        presentationsWeight?: number,
-    ) {
-        comp.course = course;
-        comp.course.presentationScore = presentationScore;
-        comp.presentationsConfig = {
-            presentationType: presentationType,
-            presentationsNumber: presentationsNumber,
-            presentationsWeight: presentationsWeight,
-        };
-        translateStub.mockReturnValue('invalid presentations config');
-
-        expect(comp.validPresentationsConfig()).toBe(false);
-        expect(comp.invalidGradeStepsMessage).toBe('invalid presentations config');
-        expect(translateStub).toHaveBeenCalledWith(message);
-        expect(translateStub).toHaveBeenCalledTimes(1);
-    }
 });
-
-// validating grade step rows
-function validateGradeStepRow(actualGradeStepRow: any, expectedGradeStepRow: GradeStep) {
-    expect(actualGradeStepRow.gradeName).toBe(expectedGradeStepRow.gradeName);
-    expect(actualGradeStepRow.lowerBoundPercentage).toBe(expectedGradeStepRow.lowerBoundPercentage);
-    expect(actualGradeStepRow.upperBoundPercentage).toBe(expectedGradeStepRow.upperBoundPercentage);
-}

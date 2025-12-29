@@ -483,14 +483,13 @@ describe('GradingSystemPresentationsComponent', () => {
             component.updatePresentationsNumber(10);
 
             const emittedConfig = emitSpy.mock.calls[0][0];
-            // The emitted config is the same object reference (child mutates parent's object)
-            expect(emittedConfig).toBe(config);
+            // The emitted config is a shallow copy with the same values
+            expect(emittedConfig).toStrictEqual(config);
         });
     });
 
     describe('onPresentationTypeChange', () => {
         describe('changing to GRADED', () => {
-            setupTestBed({ zoneless: true });
             it('should set default graded presentation values', () => {
                 const gradingScale = createGradingScaleWithoutPresentations();
                 const config = createDefaultPresentationsConfig();
@@ -522,7 +521,6 @@ describe('GradingSystemPresentationsComponent', () => {
         });
 
         describe('changing to BASIC', () => {
-            setupTestBed({ zoneless: true });
             it('should set default basic presentation score', () => {
                 const gradingScale = createGradingScaleWithoutPresentations();
                 const config = createDefaultPresentationsConfig();
@@ -552,7 +550,6 @@ describe('GradingSystemPresentationsComponent', () => {
         });
 
         describe('changing to NONE', () => {
-            setupTestBed({ zoneless: true });
             it('should clear all presentation settings from graded', () => {
                 const gradingScale = createGradingScaleWithGradedPresentations();
                 const config = createDefaultPresentationsConfig();

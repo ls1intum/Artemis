@@ -68,7 +68,7 @@ describe('ListOfComplaintsComponent', () => {
     } as Complaint;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
@@ -163,19 +163,19 @@ describe('ListOfComplaintsComponent', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual(expect.arrayContaining([complaint3]));
+            expect(comp.complaintsToShow).toEqual([complaint3]);
         });
 
         it('process complaints with student information', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint4] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual(expect.arrayContaining([complaint3, complaint4]));
+            expect(comp.complaintsToShow).toEqual([complaint3, complaint4]);
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual(expect.arrayContaining([complaint3]));
+            expect(comp.complaintsToShow).toEqual([complaint3]);
         });
     });
 
@@ -185,17 +185,17 @@ describe('ListOfComplaintsComponent', () => {
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
         comp.loadComplaints();
         expect(comp.showAddressedComplaints).toBe(false);
-        expect(comp.complaintsToShow).toEqual(expect.arrayContaining(freeComplaints));
+        expect(comp.complaintsToShow).toEqual(freeComplaints);
 
         comp.triggerAddressedComplaints();
 
         expect(comp.showAddressedComplaints).toBe(true);
-        expect(comp.complaintsToShow).toEqual(expect.arrayContaining(complaints));
+        expect(comp.complaintsToShow).toEqual(complaints);
 
         comp.triggerAddressedComplaints();
 
         expect(comp.showAddressedComplaints).toBe(false);
-        expect(comp.complaintsToShow).toEqual(expect.arrayContaining(freeComplaints));
+        expect(comp.complaintsToShow).toEqual(freeComplaints);
     });
 
     describe('calculateComplaintLockStatus', () => {

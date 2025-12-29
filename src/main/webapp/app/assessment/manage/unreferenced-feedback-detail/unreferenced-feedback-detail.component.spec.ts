@@ -18,7 +18,7 @@ describe('Unreferenced Feedback Detail Component', () => {
     let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -26,7 +26,7 @@ describe('Unreferenced Feedback Detail Component', () => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
                 feedbackService = TestBed.inject(FeedbackService);
-                sgiService = TestBed.inject(StructuredGradingCriterionService); // Add this line to inject sgiService
+                sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
     });
 
@@ -52,15 +52,22 @@ describe('Unreferenced Feedback Detail Component', () => {
         } as Feedback;
         fixture.componentRef.setInput('feedback', feedback);
 
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
+        // Mock the service to update the feedback with the instruction
+        const serviceSpy = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((currentFeedback) => {
+            currentFeedback.gradingInstruction = instruction;
+            currentFeedback.credits = instruction.credits;
         });
+
+        // Spy on the component's output to verify it emits the change
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
 
         comp.updateFeedbackOnDrop(new Event(''));
 
-        expect(feedback.gradingInstruction).toBe(instruction);
-        expect(feedback.credits).toBe(instruction.credits);
+        // Verify the service was called
+        expect(serviceSpy).toHaveBeenCalledOnce();
+
+        // Verify the component emitted the feedback change
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should emit the assessment change after deletion', () => {

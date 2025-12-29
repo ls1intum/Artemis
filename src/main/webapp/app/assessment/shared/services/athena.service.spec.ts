@@ -13,7 +13,7 @@ import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedback
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
-describe('AthenaService file map behaviour', () => {
+describe('AthenaService', () => {
     setupTestBed({ zoneless: true });
     let service: AthenaService;
     let httpMock: HttpTestingController;

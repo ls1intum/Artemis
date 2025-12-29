@@ -6,8 +6,9 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmission, ExampleSubmissionDTO, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -137,11 +138,76 @@ describe('Example Submission Service', () => {
 
             expect(expectedResult.body).toEqual(expected);
         });
+
+        it('should prepare for assessment', () => {
+            const exerciseId = 1;
+            const exampleSubmissionId = 2;
+            service
+                .prepareForAssessment(exerciseId, exampleSubmissionId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp.ok));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush({});
+
+            expect(expectedResult).toBe(true);
+        });
+    });
+
+    describe('getSubmissionSize', () => {
+        it('should return word count for text submission', () => {
+            const textExercise = { type: ExerciseType.TEXT } as Exercise;
+            const textSubmission = { text: 'hello world test' } as TextSubmission;
+            const stringCountService = TestBed.inject(StringCountService);
+            vi.spyOn(stringCountService, 'countWords').mockReturnValue(3);
+
+            const result = service.getSubmissionSize(textSubmission, textExercise);
+
+            expect(stringCountService.countWords).toHaveBeenCalledWith('hello world test');
+            expect(result).toBe(3);
+        });
+
+        it('should return element count for modeling submission', () => {
+            const modelingExercise = { type: ExerciseType.MODELING } as Exercise;
+            const modelingSubmission = {
+                model: JSON.stringify({
+                    elements: [{ id: 1 }, { id: 2 }],
+                    relationships: [{ id: 3 }],
+                }),
+            } as ModelingSubmission;
+
+            const result = service.getSubmissionSize(modelingSubmission, modelingExercise);
+
+            expect(result).toBe(3);
+        });
+
+        it('should return 0 when submission is undefined', () => {
+            const exercise = { type: ExerciseType.TEXT } as Exercise;
+
+            const result = service.getSubmissionSize(undefined, exercise);
+
+            expect(result).toBe(0);
+        });
+
+        it('should return 0 when exercise is undefined', () => {
+            const submission = { text: 'test' } as TextSubmission;
+
+            const result = service.getSubmissionSize(submission, undefined);
+
+            expect(result).toBe(0);
+        });
+
+        it('should return 0 for unsupported exercise types', () => {
+            const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+            const submission = {} as Submission;
+
+            const result = service.getSubmissionSize(submission, exercise);
+
+            expect(result).toBe(0);
+        });
     });
 
     describe('ExampleSubmission model & DTO', () => {
         describe('ExampleSubmission', () => {
-            setupTestBed({ zoneless: true });
             it('allows creating an empty object with all optionals undefined', () => {
                 const ex: ExampleSubmission = {};
 
@@ -174,7 +240,6 @@ describe('Example Submission Service', () => {
         });
 
         describe('ExampleSubmissionDTO', () => {
-            setupTestBed({ zoneless: true });
             it('constructor assigns all fields', () => {
                 const dto = new ExampleSubmissionDTO(1, true, 777, 'note');
 
@@ -207,7 +272,6 @@ describe('Example Submission Service', () => {
         });
 
         describe('ExampleSubmissionMode enum', () => {
-            setupTestBed({ zoneless: true });
             it('has the expected string values', () => {
                 expect(ExampleSubmissionMode.READ_AND_CONFIRM).toBe('readConfirm');
                 expect(ExampleSubmissionMode.ASSESS_CORRECTLY).toBe('assessCorrectly');

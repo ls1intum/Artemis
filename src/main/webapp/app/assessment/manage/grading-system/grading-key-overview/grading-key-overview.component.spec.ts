@@ -17,6 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
 describe('GradingKeyOverviewComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -38,7 +39,7 @@ describe('GradingKeyOverviewComponent', () => {
             },
         } as ActivatedRoute;
 
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [GradingKeyOverviewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -49,6 +50,7 @@ describe('GradingKeyOverviewComponent', () => {
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),
                 MockProvider(ArtemisNavigationUtilService),
+                MockProvider(ThemeService),
             ],
         })
             .overrideComponent(GradingKeyOverviewComponent, {
@@ -57,10 +59,11 @@ describe('GradingKeyOverviewComponent', () => {
                     imports: [MockComponent(GradingKeyTableComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 },
             })
-            .compileComponents();
-
-        fixture = TestBed.createComponent(GradingKeyOverviewComponent);
-        component = fixture.componentInstance;
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(GradingKeyOverviewComponent);
+                component = fixture.componentInstance;
+            });
     });
 
     it('should initialize component', () => {

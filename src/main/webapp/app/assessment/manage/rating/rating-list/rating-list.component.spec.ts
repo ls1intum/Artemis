@@ -54,14 +54,14 @@ describe('RatingListComponent', () => {
         expect(component.ratings).toHaveLength(3);
     });
 
-    it('should not open exercise du to missing participation', () => {
+    it('should not open exercise due to missing participation', () => {
         const rating = { id: 1, result: { id: 1 } as Result } as Rating;
         const routerNavigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
         expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
 
-    it('should not open exercise du to missing exercise', () => {
+    it('should not open exercise due to missing exercise', () => {
         const rating = { id: 1, result: { id: 1, participation: { id: 1 } as Participation } as Result } as Rating;
         const routerNavigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);

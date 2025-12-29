@@ -21,7 +21,6 @@ describe('Interval Grading System Component', () => {
     setupTestBed({ zoneless: true });
     let comp: IntervalGradingSystemComponent;
     let fixture: ComponentFixture<IntervalGradingSystemComponent>;
-    let examService: ExamManagementService;
 
     const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
 
@@ -74,8 +73,10 @@ describe('Interval Grading System Component', () => {
         expect(actualGradeStepRow.upperBoundPoints).toBe(percentageUpperBound * multiplier);
     }
 
+    let examService: ExamManagementService;
+
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),

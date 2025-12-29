@@ -35,11 +35,19 @@ describe('Rating Service', () => {
     });
 
     it('should get a Rating', () => {
-        const returnedFromService = Object.assign({}, elemDefault);
-        service.getRating(0).pipe(take(1)).subscribe();
+        const ratingValue = 3;
+        let expectedResult: number | null | undefined;
+        service
+            .getRating(0)
+            .pipe(take(1))
+            .subscribe((rating) => {
+                expectedResult = rating;
+            });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+        req.flush(ratingValue);
+
+        expect(expectedResult).toBe(ratingValue);
     });
 
     it('should update a Rating', () => {
