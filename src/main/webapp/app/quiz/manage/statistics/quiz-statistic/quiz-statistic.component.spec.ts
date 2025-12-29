@@ -85,7 +85,7 @@ describe('QuizStatisticComponent', () => {
         it('should call functions on Init', async () => {
             // setup
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
-            const loadDataSpy = vi.spyOn(comp, 'loadData');
+            vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },

@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
@@ -451,7 +451,7 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         component.remainingTimeSeconds = 90;
-        const result = component.relativeTimeText();
+        const result = component.relativeTimeText(component.remainingTimeSeconds);
         expect(result).toBeDefined();
     });
 
@@ -476,7 +476,7 @@ describe('QuizParticipationComponent - live mode', () => {
 
         const participation: StudentParticipation = {
             exercise: quizExercise,
-            results: [{ submission: { submittedAnswers: [] } as QuizSubmission }],
+            submissions: [{ submittedAnswers: [] } as QuizSubmission],
         };
 
         component.updateParticipationFromServer(participation);

@@ -56,7 +56,7 @@ describe('QuizExercise Generator', () => {
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
         vi.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
-        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;

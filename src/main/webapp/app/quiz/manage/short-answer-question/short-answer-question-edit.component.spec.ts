@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -469,7 +468,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             monacoEditor: mockMonacoEditor,
             applyOptionPreset: vi.fn(),
         };
-        vi.spyOn(component, 'questionEditor').mockReturnValue(mockQuestionEditor as any);
+        vi.spyOn(component as any, 'questionEditor').mockReturnValue(mockQuestionEditor as any);
 
         // Mock setQuestionEditorValue and parseMarkdown
         vi.spyOn(component, 'setQuestionEditorValue').mockImplementation(() => {});

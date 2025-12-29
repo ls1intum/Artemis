@@ -106,7 +106,7 @@ describe('ApollonDiagramDetail Component', () => {
         // setup
         fixture.componentInstance.apollonDiagram.set(diagram);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
         vi.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         // Mock ApollonEditor.exportModelAsSvg to avoid DOM issues in jsdom
@@ -147,7 +147,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('downloadSelection', async () => {
-        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
         fixture.componentInstance.apollonDiagram.set(diagram);
         await fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
