@@ -8,7 +8,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
@@ -128,7 +128,7 @@ describe('TextEditorComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should use inputValues if present instead of loading new details', fakeAsync(() => {
+    it('should use inputValues if present instead of loading new details', async () => {
         fixture.componentRef.setInput('inputExercise', textExercise);
         fixture.componentRef.setInput('inputParticipation', participation);
         fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
@@ -143,25 +143,23 @@ describe('TextEditorComponent', () => {
         expect(updateParticipationSpy).not.toHaveBeenCalled();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
         expect(comp.answer).toBeDefined();
-    }));
+    });
 
-    it('should not allow to submit after the due date if there is no due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if there is no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
         expect(comp.isAlwaysActive).toBeTruthy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should not allow to submit after the due date if the initialization date is before the due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', async () => {
         participation.initializationDate = dayjs();
         textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
@@ -169,16 +167,14 @@ describe('TextEditorComponent', () => {
         comp.textExercise = textExercise;
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should allow to submit after the due date if the initialization date is after the due date', fakeAsync(() => {
+    it('should allow to submit after the due date if the initialization date is after the due date', async () => {
         participation.initializationDate = dayjs().add(1, 'days');
         textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
@@ -186,32 +182,28 @@ describe('TextEditorComponent', () => {
         comp.textExercise = textExercise;
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeTruthy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should not be always active if there is a result and no due date', fakeAsync(() => {
+    it('should not be always active if there is a result and no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.result = result;
         comp.textExercise = textExercise;
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isAlwaysActive).toBeFalsy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {
+    it('should be always active if there is no result and the initialization date is after the due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
@@ -219,37 +211,33 @@ describe('TextEditorComponent', () => {
         participation.initializationDate = dayjs().add(1, 'days');
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isAlwaysActive).toBeTruthy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
+    it('should get inactive as soon as the due date passes the current date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         textExercise.dueDate = dayjs().add(1, 'days');
         participation.initializationDate = dayjs();
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isActive).toBeTruthy();
 
         comp.textExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp.isActive).toBeFalsy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
     it('should not submit while saving', () => {
         comp.isSaving = true;
@@ -473,7 +461,7 @@ describe('TextEditorComponent', () => {
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
-    it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
+    it('should load Iris settings when Iris profile is active and not in exam mode', async () => {
         vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         // Set up course with ID
@@ -497,16 +485,14 @@ describe('TextEditorComponent', () => {
         comp.examMode = false;
 
         comp['loadIrisSettings']();
-        tick();
+        await fixture.whenStable();
 
         expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
         expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(123);
         expect(comp.irisSettings).toEqual(mockIrisSettings);
+    });
 
-        flush();
-    }));
-
-    it('should not load Iris settings when in exam mode', fakeAsync(() => {
+    it('should not load Iris settings when in exam mode', async () => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
@@ -517,16 +503,14 @@ describe('TextEditorComponent', () => {
         comp.examMode = true;
 
         comp['loadIrisSettings']();
-        tick();
+        await fixture.whenStable();
 
         expect(profileService.getProfileInfo).toHaveBeenCalled();
         expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
+    });
 
-        flush();
-    }));
-
-    it('should not load Iris settings when Iris profile is not active', fakeAsync(() => {
+    it('should not load Iris settings when Iris profile is not active', async () => {
         const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
@@ -537,12 +521,10 @@ describe('TextEditorComponent', () => {
         comp.examMode = false;
 
         comp['loadIrisSettings']();
-        tick();
+        await fixture.whenStable();
 
         expect(profileService.getProfileInfo).toHaveBeenCalled();
         expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
-
-        flush();
-    }));
+    });
 });

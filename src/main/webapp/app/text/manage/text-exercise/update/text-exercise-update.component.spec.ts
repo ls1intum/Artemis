@@ -4,7 +4,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -35,7 +35,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockProvider } from 'ng-mocks';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
@@ -70,6 +69,11 @@ describe('TextExercise Management Update Component', () => {
         fixture = TestBed.createComponent(TextExerciseUpdateComponent);
         comp = fixture.componentInstance;
         service = TestBed.inject(TextExerciseService);
+
+        // Mock calculateFormSectionStatus to avoid accessing undefined view children
+        vi.spyOn(comp, 'calculateFormSectionStatus').mockImplementation(() => {
+            comp.formSectionStatus = [];
+        });
     });
 
     describe('save', () => {
@@ -84,7 +88,7 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call update service and refresh calendar events on save for existing entity', fakeAsync(() => {
+            it('should call update service and refresh calendar events on save for existing entity', async () => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -95,15 +99,15 @@ describe('TextExercise Management Update Component', () => {
 
                 // WHEN
                 comp.save();
-                tick(); // simulate async
+                await fixture.whenStable();
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
                 expect(comp.isSaving).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
-            }));
+            });
 
-            it('should error during save', fakeAsync(() => {
+            it('should error during save', async () => {
                 const onErrorSpy = vi.spyOn(comp as any, 'onSaveError');
 
                 // GIVEN
@@ -113,11 +117,11 @@ describe('TextExercise Management Update Component', () => {
 
                 // WHEN
                 comp.save();
-                tick(); // simulate async
+                await fixture.whenStable();
 
                 // THEN
                 expect(onErrorSpy).toHaveBeenCalledOnce();
-            }));
+            });
         });
 
         describe('new exercise', () => {
@@ -130,7 +134,7 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call create service and refresh calendar events on save for new entity', fakeAsync(() => {
+            it('should call create service and refresh calendar events on save for new entity', async () => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -141,13 +145,13 @@ describe('TextExercise Management Update Component', () => {
 
                 // WHEN
                 comp.save();
-                tick(1000); // simulate async
+                await fixture.whenStable();
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
                 expect(comp.isSaving).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
-            }));
+            });
         });
 
         describe('imported exercise', () => {
@@ -160,7 +164,7 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call import service on save for new entity', fakeAsync(() => {
+            it('should call import service on save for new entity', async () => {
                 // GIVEN
                 comp.ngOnInit();
                 comp.isImport = true;
@@ -170,12 +174,12 @@ describe('TextExercise Management Update Component', () => {
 
                 // WHEN
                 comp.save();
-                tick(1000); // simulate async
+                await fixture.whenStable();
 
                 // THEN
                 expect(service.import).toHaveBeenCalledWith(entity);
                 expect(comp.isSaving).toBe(false);
-            }));
+            });
         });
     });
 
@@ -188,26 +192,26 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('should be in exam mode', fakeAsync(() => {
+        it('should be in exam mode', async () => {
             // WHEN
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             // THEN
             expect(comp.isExamMode).toBe(true);
             expect(comp.textExercise).toEqual(textExercise);
-        }));
+        });
 
-        it('should not set dateErrors', fakeAsync(() => {
+        it('should not set dateErrors', async () => {
             const calculatValidationSectionsSpy = vi.spyOn(comp, 'calculateFormSectionStatus').mockReturnValue();
             const dateErrorNames = ['dueDateError', 'startDateError', 'assessmentDueDateError', 'exampleSolutionPublicationDateError'];
             comp.ngOnInit();
-            tick();
+            await fixture.whenStable();
             comp.validateDate();
             expect(calculatValidationSectionsSpy).toHaveBeenCalledOnce();
             for (const errorName of dateErrorNames) {
                 expect(comp.textExercise[errorName as keyof TextExercise]).toBeFalsy();
             }
-        }));
+        });
     });
 
     describe('ngOnInit for course exercise', () => {
@@ -222,22 +226,20 @@ describe('TextExercise Management Update Component', () => {
                     get: (key: string) => 'mockValue',
                 },
             } as ActivatedRouteSnapshot;
-
-            global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                return new MockResizeObserver(callback);
-            });
         });
 
-        it('should not be in exam mode', fakeAsync(() => {
+        it('should not be in exam mode', async () => {
             // WHEN
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             // THEN
             expect(comp.isExamMode).toBe(false);
             expect(comp.textExercise).toEqual(textExercise);
-        }));
+        });
 
         it('should calculate valid sections', () => {
+            // Restore mock and re-mock with the test implementation
+            vi.mocked(comp.calculateFormSectionStatus).mockRestore();
             const calculateValidSpy = vi.spyOn(comp, 'calculateFormSectionStatus').mockImplementation(() => {
                 comp.formSectionStatus = [
                     { valid: true, empty: false, title: 'dummy' },
@@ -246,7 +248,7 @@ describe('TextExercise Management Update Component', () => {
             });
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
             comp.exerciseUpdatePlagiarismComponent()?.isFormValid.set(true);
-            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
+            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as unknown as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.solutionPublicationDateField = createDateFieldStub();
@@ -295,17 +297,17 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', async () => {
             // WHEN
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             // THEN
             expect(comp.isImport).toBe(true);
             expect(comp.isExamMode).toBe(false);
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
-        }));
+        });
 
         it('should load exercise categories', () => {
             const loadExerciseCategoriesSpy = vi.spyOn(Utils, 'loadCourseExerciseCategories');
@@ -336,17 +338,17 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', async () => {
             // WHEN
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             // THEN
             expect(comp.isImport).toBe(true);
             expect(comp.isExamMode).toBe(false);
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
-        }));
+        });
     });
 
     describe('ngOnInit in import mode: Course to Exam', () => {
@@ -365,10 +367,10 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', async () => {
             // WHEN
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             // THEN
             expect(comp.isImport).toBe(true);
             expect(comp.isExamMode).toBe(true);
@@ -376,7 +378,7 @@ describe('TextExercise Management Update Component', () => {
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
-        }));
+        });
     });
 
     describe('ngOnInit in import mode: Exam to Exam', () => {
@@ -397,17 +399,17 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', async () => {
             // WHEN
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
             // THEN
             expect(comp.isImport).toBe(true);
             expect(comp.isExamMode).toBe(true);
             expect(comp.textExercise.assessmentDueDate).toBeUndefined();
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
-        }));
+        });
     });
 
     it('should updateCategories properly by making category available for selection again when removing it', () => {

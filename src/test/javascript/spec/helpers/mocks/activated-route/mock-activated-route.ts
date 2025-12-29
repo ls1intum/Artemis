@@ -1,4 +1,4 @@
-import { ActivatedRoute, Data, Params, UrlSegment } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Data, Params, UrlSegment, convertToParamMap } from '@angular/router';
 import { ReplaySubject } from 'rxjs';
 
 export class MockActivatedRoute extends ActivatedRoute {
@@ -15,6 +15,11 @@ export class MockActivatedRoute extends ActivatedRoute {
         this.url = this.urlSubject.asObservable();
         this.setParameters(parameters);
         this.urlSubject.next([]);
+        // Provide a default snapshot with paramMap
+        this.snapshot = {
+            paramMap: convertToParamMap(parameters || {}),
+            queryParamMap: convertToParamMap({}),
+        } as ActivatedRouteSnapshot;
     }
 
     setParameters(parameters: Params): void {

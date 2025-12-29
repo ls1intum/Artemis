@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
@@ -73,10 +73,11 @@ describe('ExampleTextSubmissionComponent', () => {
             },
         } as any;
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent],
-            declarations: [
-                MockDirective(TranslateDirective),
+            imports: [
+                FormsModule,
+                FaIconComponent,
                 ExampleTextSubmissionComponent,
+                MockDirective(TranslateDirective),
                 MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(ScoreDisplayComponent),
@@ -299,7 +300,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('editing submission from assessment state switches state', fakeAsync(() => {
+    it('editing submission from assessment state switches state', async () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
@@ -325,9 +326,9 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // WHEN
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         comp.editSubmission();
-        tick();
+        await fixture.whenStable();
 
         // THEN
         expect(comp.state.constructor.name).toBe('EditState');
@@ -338,7 +339,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.result).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
-    }));
+    });
 
     it('should verify correct tutorial submission', async () => {
         // GIVEN
@@ -389,7 +390,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
+    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', async () => {
         // GIVEN
         const textBlockRefA = TextBlockRef.new();
         textBlockRefA.block!.id = 'ID';
@@ -422,42 +423,42 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
-        comp.ngOnInit();
-        tick();
+        await comp.ngOnInit();
+        await fixture.whenStable();
 
         comp.checkAssessment();
-        tick();
+        await fixture.whenStable();
 
         // THEN
         expect(feedbackA.correctionStatus).toBe(FeedbackCorrectionErrorType.INCORRECT_SCORE);
         expect(feedbackB.correctionStatus).toBe('CORRECT');
-    }));
+    });
 
-    it('should create new example submission', fakeAsync(() => {
+    it('should create new example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
         const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(httpResponse(exampleSubmission));
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
 
         comp.createNewExampleTextSubmission();
-        tick();
+        await fixture.whenStable();
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should not create example submission', fakeAsync(() => {
+    it('should not create example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
         const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         comp.createNewExampleTextSubmission();
-        tick();
+        await fixture.whenStable();
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should read and understood', () => {
         // GIVEN

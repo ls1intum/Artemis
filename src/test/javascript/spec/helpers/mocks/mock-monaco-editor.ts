@@ -3,10 +3,24 @@
  * Used via path alias in vitest.config.ts to prevent ESM resolution errors.
  */
 export const editor = {
-    create: () => ({}),
-    createModel: () => ({}),
+    create: () => ({
+        getModel: () => ({
+            setEOL: () => {},
+        }),
+        dispose: () => {},
+        onDidChangeModelContent: () => ({ dispose: () => {} }),
+        onDidFocusEditorWidget: () => ({ dispose: () => {} }),
+        onDidBlurEditorWidget: () => ({ dispose: () => {} }),
+        layout: () => {},
+        getValue: () => '',
+        setValue: () => {},
+    }),
+    createModel: () => ({
+        setEOL: () => {},
+    }),
     defineTheme: () => {},
     setTheme: () => {},
+    EndOfLineSequence: { LF: 0, CRLF: 1 },
 };
 
 export const languages = {

@@ -10,7 +10,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -25,6 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('TextExercise Management Component', () => {
     setupTestBed({ zoneless: true });
@@ -41,6 +42,7 @@ describe('TextExercise Management Component', () => {
         await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -92,6 +94,9 @@ describe('TextExercise Management Component', () => {
             componentInstance: {},
         } as NgbModalRef;
         vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        // Set the course before opening the modal to ensure courseId is defined
+        comp.course = course;
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });

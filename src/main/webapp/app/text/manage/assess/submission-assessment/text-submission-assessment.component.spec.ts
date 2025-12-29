@@ -10,7 +10,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
@@ -61,6 +61,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     setupTestBed({ zoneless: true });
@@ -161,8 +163,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 TextSubmissionAssessmentComponent,
                 MockComponent(TextAssessmentAreaComponent),
                 MockComponent(TextBlockAssessmentCardComponent),
@@ -185,6 +187,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AthenaService, useClass: MockAthenaService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(Router),
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -407,12 +410,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     });
 
-    it('should go to next submission', fakeAsync(() => {
+    it('should go to next submission', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = vi.spyOn(router, 'navigate');
 
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
+        await fixture.whenStable();
 
         const url = [
             '/course-management',
@@ -432,7 +435,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
-    }));
+    });
 
     it('should always let instructors override', () => {
         component.exercise!.isAtLeastInstructor = true;
@@ -498,7 +501,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
 
-    it('should load feedback suggestions', fakeAsync(() => {
+    it('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
         component.unreferencedFeedback = [];
@@ -506,10 +509,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
         const athenaServiceFeedbackSuggestionsStub = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
         component.loadFeedbackSuggestions();
-        tick();
+        await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
         expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
-    }));
+    });
 
     it.each([
         // No existing blocks
@@ -665,13 +668,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         }
     });
 
-    it('should not load feedback suggestions if there already are assessments', fakeAsync(() => {
+    it('should not load feedback suggestions if there already are assessments', async () => {
         // preparation already added an assessment
         const athenaServiceFeedbackSuggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
         component.loadFeedbackSuggestions();
-        tick();
+        await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
-    }));
+    });
 
     it('should validate assessments on component init', async () => {
         component.assessmentsAreValid = false;
