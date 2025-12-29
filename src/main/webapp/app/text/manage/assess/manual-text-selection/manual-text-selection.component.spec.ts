@@ -74,7 +74,7 @@ describe('ManualTextSelectionComponent', () => {
     });
 
     it('should set words correctly', () => {
-        expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
+        expect(component.submissionWords()).toEqual(['First', 'last', 'text.']);
     });
 
     it('should calculate word indices correctly', () => {

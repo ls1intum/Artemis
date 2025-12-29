@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
@@ -29,7 +29,7 @@ export class ManualTextSelectionComponent {
     didSelectWord = output<wordSelection[]>();
     words = input.required<TextBlockRefGroup>();
 
-    public submissionWords: string[] | undefined;
+    public submissionWords = signal<string[] | undefined>(undefined);
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
     public ready = false;
@@ -43,18 +43,19 @@ export class ManualTextSelectionComponent {
             const submissionValue = this.submission();
             if (wordsValue && submissionValue) {
                 // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
-                this.submissionWords = wordsValue.getText(submissionValue).replace(LINEBREAK, '\n ').split(SPACE);
+                this.submissionWords.set(wordsValue.getText(submissionValue).replace(LINEBREAK, '\n ').split(SPACE));
             }
         });
     }
 
     calculateIndex(index: number): void {
         let result = this.textBlockRefGroup().startIndex!;
+        const words = this.submissionWords();
         for (let i = 0; i < index; i++) {
             const space = 1;
-            result += this.submissionWords![i].length + space;
+            result += words![i].length + space;
 
-            const wordContainsLinebreak = this.submissionWords![i].search(/\n+/g) !== -1;
+            const wordContainsLinebreak = words![i].search(/\n+/g) !== -1;
             if (wordContainsLinebreak) {
                 result--;
             }
