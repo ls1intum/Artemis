@@ -44,6 +44,8 @@ describe('QuizQuestionListEditComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizQuestionListEditComponent);
                 component = fixture.componentInstance;
+                // Set required input before detectChanges
+                fixture.componentRef.setInput('courseId', 1);
                 fixture.detectChanges();
             });
     });
