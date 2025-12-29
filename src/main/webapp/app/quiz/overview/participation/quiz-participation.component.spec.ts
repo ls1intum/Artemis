@@ -756,8 +756,6 @@ describe('QuizParticipationComponent - solution mode', () => {
 });
 
 describe('QuizParticipationComponent - relativeTimeText', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
     let quizExercise: QuizExercise;
@@ -842,8 +840,6 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
 });
 
 describe('QuizParticipationComponent - applySelection', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
     let quizExercise: QuizExercise;
@@ -933,8 +929,6 @@ describe('QuizParticipationComponent - applySelection', () => {
 });
 
 describe('QuizParticipationComponent - showResult', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
     let quizExercise: QuizExercise;
@@ -1038,8 +1032,6 @@ describe('QuizParticipationComponent - showResult', () => {
 });
 
 describe('QuizParticipationComponent - onSaveError', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
     let alertService: AlertService;

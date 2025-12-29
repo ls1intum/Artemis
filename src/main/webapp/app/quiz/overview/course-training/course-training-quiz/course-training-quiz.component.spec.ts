@@ -83,14 +83,6 @@ describe('CourseTrainingQuizComponent', () => {
             .compileComponents()
             .then(() => {
                 quizService = TestBed.inject(CourseTrainingQuizService);
-                vi.spyOn(quizService, 'getQuizQuestions').mockReturnValue(
-                    of(
-                        new HttpResponse<QuizQuestionTraining[]>({
-                            body: mockQuestions,
-                            headers: { get: () => '3' } as any,
-                        }),
-                    ),
-                );
                 vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(
                     of(
                         new HttpResponse<QuizQuestionTraining[]>({

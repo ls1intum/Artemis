@@ -474,7 +474,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
             },
         } as unknown as HTMLElement;
         const questionElementMock = { nativeElement: questionElement };
-        vi.spyOn(component, 'questionElement').mockReturnValue(questionElementMock);
+        // Use Object.defineProperty to mock the signal getter since vi.spyOn doesn't work with Angular signals
+        Object.defineProperty(component, 'questionElement', {
+            value: () => questionElementMock,
+            configurable: true,
+        });
 
         const range = {
             cloneRange(): Range {
