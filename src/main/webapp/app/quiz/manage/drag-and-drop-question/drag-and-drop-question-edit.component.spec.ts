@@ -97,9 +97,6 @@ describe('DragAndDropQuestionEditComponent', () => {
         });
         addFileSpy = vi.spyOn(component.addNewFile, 'emit');
         removeFileSpy = vi.spyOn(component.removeFile, 'emit');
-    });
-
-    beforeEach(() => {
         fixture.detectChanges();
     });
 
