@@ -5,18 +5,25 @@ import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutori
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { provideHttpClient } from '@angular/common/http';
+import { TutorialGroupSessionApi } from 'app/openapi/api/tutorial-group-session-api';
+import { of } from 'rxjs';
 
 describe('TutorialGroupSessionService', () => {
     let service: TutorialGroupSessionService;
     let httpMock: HttpTestingController;
+    let tutorialGroupSessionApi: jest.Mocked<TutorialGroupSessionApi>;
     let elemDefault: TutorialGroupSession;
 
     beforeEach(() => {
+        const spySessionApi = {
+            deleteSession: jest.fn(),
+        };
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TutorialGroupSessionApi, useValue: spySessionApi }],
         });
         service = TestBed.inject(TutorialGroupSessionService);
         httpMock = TestBed.inject(HttpTestingController);
+        tutorialGroupSessionApi = TestBed.inject(TutorialGroupSessionApi) as jest.Mocked<TutorialGroupSessionApi>;
 
         elemDefault = generateExampleTutorialGroupSession({});
     });
@@ -105,13 +112,12 @@ describe('TutorialGroupSessionService', () => {
     }));
 
     it('delete', fakeAsync(() => {
+        tutorialGroupSessionApi.deleteSession.mockReturnValue(of(undefined));
         service
             .delete(1, 1, 1)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-
-        const req = httpMock.expectOne({ method: 'DELETE' });
-        req.flush({});
+            .subscribe((res) => expect(res.body).toBeUndefined());
+        expect(tutorialGroupSessionApi.deleteSession).toHaveBeenCalledWith(1, 1, 1);
         tick();
     }));
 });

@@ -30,7 +30,7 @@ export class TutorialGroupApi {
      * @param tutorialGroupId 
      */
     delete(courseId: number, tutorialGroupId: number): Observable<void> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups/$${tutorialGroupId}`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}`;
         return this.http.delete<void>(url);
     }
 
@@ -43,7 +43,7 @@ export class TutorialGroupApi {
      */
     deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string): Observable<void> {
         const studentLoginPath = encodeURIComponent(String(studentLogin));
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups/$${tutorialGroupId}/deregister/${studentLoginPath}`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/deregister/${studentLoginPath}`;
         return this.http.delete<void>(url);
     }
 
@@ -54,7 +54,7 @@ export class TutorialGroupApi {
      * @param tutorialGroupRegistrationImport 
      */
     importRegistrations(courseId: number, tutorialGroupRegistrationImport: Array<TutorialGroupRegistrationImport>): Observable<Array<TutorialGroupRegistrationImport>> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups/import`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/import`;
         return this.http.post<Array<TutorialGroupRegistrationImport>>(url, tutorialGroupRegistrationImport);
     }
 
@@ -66,7 +66,7 @@ export class TutorialGroupApi {
      * @param student 
      */
     registerMultipleStudentsToTutorialGroup(courseId: number, tutorialGroupId: number, student: Array<Student>): Observable<Array<Student>> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups/$${tutorialGroupId}/register-multiple`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`;
         return this.http.post<Array<Student>>(url, student);
     }
 
@@ -79,7 +79,7 @@ export class TutorialGroupApi {
      */
     registerStudent(courseId: number, tutorialGroupId: number, studentLogin: string): Observable<void> {
         const studentLoginPath = encodeURIComponent(String(studentLogin));
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups/$${tutorialGroupId}/register/${studentLoginPath}`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register/${studentLoginPath}`;
         return this.http.post<void>(url, null);
     }
 

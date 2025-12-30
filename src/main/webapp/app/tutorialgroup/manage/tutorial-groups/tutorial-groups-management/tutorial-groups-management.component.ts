@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EnvironmentInjector,
+    OnDestroy,
+    OnInit,
+    effect,
+    inject,
+    runInInjectionContext,
+    signal,
+} from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject, combineLatest, finalize } from 'rxjs';
+import { Subject, finalize } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
@@ -23,6 +34,7 @@ import { TutorialGroupsTableComponent } from 'app/tutorialgroup/shared/tutorial-
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { HttpResourceRef } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -53,6 +65,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private cdr = inject(ChangeDetectorRef);
+    private environmentInjector = inject(EnvironmentInjector);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -61,6 +74,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     isAtLeastInstructor = false;
 
     configuration: TutorialGroupsConfiguration;
+    private configurationLoading = signal(false);
 
     isLoading = false;
     tutorialGroups: TutorialGroup[] = [];
@@ -70,6 +84,9 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    private tutorialGroupsResource?: HttpResourceRef<Array<TutorialGroup> | undefined>;
+    private lastTutorialGroups?: TutorialGroup[];
+    private resourceEffects: EffectRef[] = [];
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {
@@ -85,39 +102,71 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.resourceEffects.forEach((resourceEffect) => resourceEffect.destroy());
     }
 
     loadTutorialGroups() {
-        this.isLoading = true;
+        this.tutorialGroupsResource = this.tutorialGroupService.getAllForCourseResource(this.courseId);
+        runInInjectionContext(this.environmentInjector, () => {
+            this.resourceEffects.forEach((resourceEffect) => resourceEffect.destroy());
+            this.resourceEffects = [];
+            this.resourceEffects.push(
+                effect(() => {
+                    const tutorialGroups = this.tutorialGroupsResource?.value();
+                    if (!tutorialGroups || tutorialGroups === this.lastTutorialGroups) {
+                        return;
+                    }
+                this.lastTutorialGroups = tutorialGroups;
+                this.tutorialGroupService.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+                tutorialGroups.sort((a, b) => {
+                    if (a.isUserTutor && !b.isUserTutor) {
+                        return -1;
+                    } else if (!a.isUserTutor && b.isUserTutor) {
+                        return 1;
+                    } else {
+                        return a.title!.localeCompare(b.title!);
+                    }
+                });
+                    this.tutorialGroups = tutorialGroups;
+                    this.cdr.detectChanges();
+                }),
+            );
 
-        combineLatest([this.tutorialGroupService.getAllForCourse(this.courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!)])
+            this.resourceEffects.push(
+                effect(() => {
+                    const error = this.tutorialGroupsResource?.error();
+                    if (error) {
+                        onError(this.alertService, error as HttpErrorResponse);
+                    }
+                }),
+            );
+
+            this.resourceEffects.push(
+                effect(() => {
+                    this.isLoading = (this.tutorialGroupsResource?.isLoading() ?? false) || this.configurationLoading();
+                    this.cdr.detectChanges();
+                }),
+            );
+        });
+
+        this.configurationLoading.set(true);
+        this.tutorialGroupsConfigurationService
+            .getOneOfCourse(this.course.id!)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.configurationLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: ([tutorialGroupsRes, configurationRes]) => {
-                    const tutorialGroups = tutorialGroupsRes.body!;
-                    tutorialGroups.sort((a, b) => {
-                        if (a.isUserTutor && !b.isUserTutor) {
-                            return -1;
-                        } else if (!a.isUserTutor && b.isUserTutor) {
-                            return 1;
-                        } else {
-                            return a.title!.localeCompare(b.title!);
-                        }
-                    });
-                    this.tutorialGroups = tutorialGroups;
-
+                next: (configurationRes) => {
                     this.configuration = configurationRes.body!;
                     if (this.configuration.tutorialGroupFreePeriods) {
                         this.tutorialGroupFreeDays = this.configuration.tutorialGroupFreePeriods;
                     }
+                    this.cdr.detectChanges();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 }

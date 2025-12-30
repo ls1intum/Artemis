@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResourceRef, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupComponent } from 'app/tutorialgroup/manage/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
@@ -25,6 +25,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { signal } from '@angular/core';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -67,16 +68,17 @@ describe('EditTutorialGroupComponent', () => {
 
         tutorialGroupService = TestBed.inject(TutorialGroupsService);
 
-        const response: HttpResponse<TutorialGroup> = new HttpResponse({
-            body: exampleTutorialGroup,
-            status: 200,
-        });
+        const tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([exampleTutorialGroup]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
 
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
 
-        findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+        findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
         fixture.detectChanges();
     });
 
@@ -87,14 +89,14 @@ describe('EditTutorialGroupComponent', () => {
     it('should initialize', () => {
         expect(component).not.toBeNull();
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
-        expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);
+        expect(findTutorialGroupSpy).toHaveBeenCalledWith(2);
     });
 
     it('should set form data correctly', () => {
         const tutorialGroupFormComponent = expectComponentRendered<TutorialGroupFormComponent>(fixture, 'jhi-tutorial-group-form');
 
         expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
-        expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);
+        expect(findTutorialGroupSpy).toHaveBeenCalledWith(2);
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
 
         expect(component.formData).toEqual(tutorialGroupToTutorialGroupFormData(exampleTutorialGroup));

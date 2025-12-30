@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EffectRef,
+    EnvironmentInjector,
+    Input,
+    OnDestroy,
+    effect,
+    inject,
+    runInInjectionContext,
+} from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { finalize, takeUntil, tap } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
+import { tap } from 'rxjs/operators';
+import { HttpErrorResponse, HttpResourceRef } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -27,6 +38,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
+    private environmentInjector = inject(EnvironmentInjector);
 
     // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
     @Input() course: Course;
@@ -44,6 +56,9 @@ export class RegisteredStudentsComponent implements OnDestroy {
 
     isInitialized = false;
     ngUnsubscribe = new Subject<void>();
+    private tutorialGroupsResource?: HttpResourceRef<Array<TutorialGroup> | undefined>;
+    private loadEffect?: EffectRef;
+    private lastTutorialGroups?: TutorialGroup[];
 
     get capacityReached(): boolean {
         if (!this.tutorialGroup) {
@@ -59,6 +74,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.loadEffect?.destroy();
     }
 
     initialize() {
@@ -103,27 +119,39 @@ export class RegisteredStudentsComponent implements OnDestroy {
     }
 
     loadAll = () => {
-        this.tutorialGroupService
-            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
-            .pipe(
-                finalize(() => (this.isLoading = false)),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (tutorialGroupResult) => {
-                    if (tutorialGroupResult.body) {
-                        this.tutorialGroup = tutorialGroupResult.body;
-                        // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.tutorialGroup.registrations) {
-                            this.tutorialGroup.registrations = [];
-                        }
-                        this.registeredStudents = this.tutorialGroup.registrations.map((registration) => registration.student!);
-                        this.numberOfRegistrations = this.registeredStudents.length;
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+        this.isLoading = true;
+        this.tutorialGroupsResource = this.tutorialGroupService.getAllForCourseResource(this.course.id!);
+        this.loadEffect?.destroy();
+        runInInjectionContext(this.environmentInjector, () => {
+            this.loadEffect = effect(() => {
+                const resource = this.tutorialGroupsResource;
+                if (!resource) {
+                    return;
+                }
+                this.isLoading = resource.isLoading();
+                const error = resource.error();
+                if (error) {
+                    onError(this.alertService, error as HttpErrorResponse);
+                }
+                const tutorialGroups = resource.value();
+                if (!tutorialGroups || tutorialGroups === this.lastTutorialGroups) {
+                    return;
+                }
+                this.lastTutorialGroups = tutorialGroups;
+                this.tutorialGroupService.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+                const tutorialGroup = tutorialGroups.find((group) => group.id === this.tutorialGroupId);
+                if (!tutorialGroup) {
+                    return;
+                }
+                this.tutorialGroup = tutorialGroup;
+                if (!this.tutorialGroup.registrations) {
+                    this.tutorialGroup.registrations = [];
+                }
+                this.registeredStudents = this.tutorialGroup.registrations.map((registration) => registration.student!);
+                this.numberOfRegistrations = this.registeredStudents.length;
+                this.cdr.detectChanges();
+            });
+        });
     };
 
     clear() {

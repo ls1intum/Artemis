@@ -29,7 +29,7 @@ export class TutorialGroupSessionApi {
      * @param sessionId 
      */
     deleteSession(courseId: number, tutorialGroupId: number, sessionId: number): Observable<void> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups/$${tutorialGroupId}/sessions/$${sessionId}`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`;
         return this.http.delete<void>(url);
     }
 

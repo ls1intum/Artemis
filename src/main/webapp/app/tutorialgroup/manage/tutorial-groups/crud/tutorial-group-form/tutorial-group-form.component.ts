@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, OnChanges, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    EnvironmentInjector,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    runInInjectionContext,
+    viewChild,
+} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -49,6 +63,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private courseManagementService = inject(CourseManagementService);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
+    private environmentInjector = inject(EnvironmentInjector);
 
     readonly formData = input<TutorialGroupFormData>({
         title: undefined,
@@ -73,14 +88,23 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     taFocus$ = new Subject<string>();
     taClick$ = new Subject<string>();
 
-    campusAreLoading = false;
-    campus: string[];
+    campusAreLoading = computed(() => this.campusResource.isLoading());
+    campus = computed(() => this.campusResource.value() ?? []);
     readonly campusTypeAhead = viewChild.required<NgbTypeahead>('campusInput');
     campusFocus$ = new Subject<string>();
     campusClick$ = new Subject<string>();
 
-    languagesAreLoading = false;
-    languages: string[];
+    languagesAreLoading = computed(() => this.languagesResource.isLoading());
+    languages = computed(() => {
+        const values = [...(this.languagesResource.value() ?? [])];
+        if (!values.includes('English')) {
+            values.push('English');
+        }
+        if (!values.includes('German')) {
+            values.push('German');
+        }
+        return values;
+    });
     readonly languageTypeAhead = viewChild.required<NgbTypeahead>('languageInput');
     languageFocus$ = new Subject<string>();
     languageClick$ = new Subject<string>();
@@ -95,6 +119,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     faSave = faSave;
 
     ngUnsubscribe = new Subject<void>();
+    private courseId = computed(() => this.course().id!);
+    private campusResource = this.tutorialGroupService.getUniqueCampusValuesResource(this.courseId);
+    private languagesResource = this.tutorialGroupService.getUniqueLanguageValuesResource(this.courseId);
 
     get titleControl() {
         return this.form.get('title');
@@ -186,9 +213,22 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     ngOnInit(): void {
         this.getTeachingAssistantsInCourse();
-        this.getUniqueCampusValuesOfCourse();
-        this.getUniqueLanguageValuesOfCourse();
         this.initializeForm();
+        runInInjectionContext(this.environmentInjector, () => {
+            effect(() => {
+                const error = this.campusResource.error();
+                if (error) {
+                    onError(this.alertService, error as HttpErrorResponse);
+                }
+            });
+
+            effect(() => {
+                const error = this.languagesResource.error();
+                if (error) {
+                    onError(this.alertService, error as HttpErrorResponse);
+                }
+            });
+        });
     }
 
     ngOnDestroy(): void {
@@ -228,7 +268,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     campusSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         return this.mergeSearch$(text$, this.campusFocus$, this.campusClick$, this.campusTypeAhead()).pipe(
-            map((term) => (term === '' ? this.campus : this.campus.filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+            map((term) => (term === '' ? this.campus() : this.campus().filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
 
@@ -236,7 +276,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     languageSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         return this.mergeSearch$(text$, this.languageFocus$, this.languageClick$, this.languageTypeAhead()).pipe(
-            map((term) => (term === '' ? this.languages : this.languages.filter((language) => language.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+            map((term) => (term === '' ? this.languages() : this.languages().filter((language) => language.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
 
@@ -330,51 +370,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             ),
         ).subscribe((users: User[]) => {
             this.teachingAssistants = users.map((user) => this.createUserWithLabel(user));
-        });
-    }
-
-    private getUniqueCampusValuesOfCourse() {
-        return concat(
-            of([]), // default items
-            this.tutorialGroupService.getUniqueCampusValues(this.course().id!).pipe(
-                catchError((res: HttpErrorResponse) => {
-                    onError(this.alertService, res);
-                    return of([]);
-                }),
-                map((res: HttpResponse<string[]>) => res.body!),
-                finalize(() => {
-                    this.campusAreLoading = false;
-                }),
-                takeUntil(this.ngUnsubscribe),
-            ),
-        ).subscribe((campus: string[]) => {
-            this.campus = campus;
-        });
-    }
-
-    private getUniqueLanguageValuesOfCourse() {
-        return concat(
-            of([]), // default items
-            this.tutorialGroupService.getUniqueLanguageValues(this.course().id!).pipe(
-                catchError((res: HttpErrorResponse) => {
-                    onError(this.alertService, res);
-                    return of([]);
-                }),
-                map((res: HttpResponse<string[]>) => res.body!),
-                finalize(() => {
-                    this.languagesAreLoading = false;
-                }),
-                takeUntil(this.ngUnsubscribe),
-            ),
-        ).subscribe((languages: string[]) => {
-            this.languages = languages;
-            // default values for English & German
-            if (!languages.includes('English')) {
-                this.languages.push('English');
-            }
-            if (!languages.includes('German')) {
-                this.languages.push('German');
-            }
         });
     }
 }

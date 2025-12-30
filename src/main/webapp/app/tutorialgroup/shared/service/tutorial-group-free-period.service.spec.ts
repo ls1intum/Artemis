@@ -5,18 +5,25 @@ import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/
 import { generateExampleTutorialGroupFreePeriod } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { provideHttpClient } from '@angular/common/http';
+import { TutorialGroupFreePeriodApi } from 'app/openapi/api/tutorial-group-free-period-api';
+import { of } from 'rxjs';
 
 describe('TutorialGroupFreePeriodService', () => {
     let service: TutorialGroupFreePeriodService;
     let httpMock: HttpTestingController;
+    let tutorialGroupFreePeriodApi: jest.Mocked<TutorialGroupFreePeriodApi>;
     let elemDefault: TutorialGroupFreePeriod;
 
     beforeEach(() => {
+        const spyFreePeriodApi = {
+            delete: jest.fn(),
+        };
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TutorialGroupFreePeriodApi, useValue: spyFreePeriodApi }],
         });
         service = TestBed.inject(TutorialGroupFreePeriodService);
         httpMock = TestBed.inject(HttpTestingController);
+        tutorialGroupFreePeriodApi = TestBed.inject(TutorialGroupFreePeriodApi) as jest.Mocked<TutorialGroupFreePeriodApi>;
 
         elemDefault = generateExampleTutorialGroupFreePeriod({});
     });
@@ -65,13 +72,12 @@ describe('TutorialGroupFreePeriodService', () => {
     }));
 
     it('delete', fakeAsync(() => {
+        tutorialGroupFreePeriodApi.delete.mockReturnValue(of(undefined));
         service
             .delete(1, 1, 1)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-
-        const req = httpMock.expectOne({ method: 'DELETE' });
-        req.flush({});
+            .subscribe((res) => expect(res.body).toBeUndefined());
+        expect(tutorialGroupFreePeriodApi.delete).toHaveBeenCalledWith(1, 1, 1);
         tick();
     }));
 });

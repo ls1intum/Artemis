@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { HttpClient, HttpResponse, HttpResourceRef } from '@angular/common/http';
+import { EnvironmentInjector, Injectable, Signal, inject, runInInjectionContext } from '@angular/core';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
@@ -8,44 +8,61 @@ import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/models/student';
-import { TutorialGroupExport } from 'app/openapi/models/tutorial-group-export';
 import { TutorialGroupRegistrationImport } from 'app/openapi/models/tutorial-group-registration-import';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import {
+    exportTutorialGroupsToCSVResource,
+    exportTutorialGroupsToJSONResource,
+    getAllForCourseResource,
+    getTutorialGroupDetailGroupDTOResource,
+    getUniqueCampusValuesResource,
+    getUniqueLanguageValuesResource,
+} from 'app/openapi/api/tutorial-group-resources';
+import { ExportTutorialGroupsToCSVParams, ExportTutorialGroupsToJSONParams } from 'app/openapi/api/tutorial-group-resources';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
-type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsService {
     private httpClient = inject(HttpClient);
+    private environmentInjector = inject(EnvironmentInjector);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private tutorialGroupApi = inject(TutorialGroupApi);
 
     private resourceURL = 'api/tutorialgroup';
 
-    getUniqueCampusValues(courseId: number): Observable<HttpResponse<Array<string>>> {
-        return this.httpClient.get<Array<string>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
+    getUniqueCampusValuesResource(courseId: Signal<number> | number): HttpResourceRef<Array<string> | undefined> {
+        return this.createResource(() => getUniqueCampusValuesResource(courseId));
     }
 
-    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Array<string>>> {
-        return this.httpClient.get<Array<string>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/language-values`, { observe: 'response' });
+    getUniqueLanguageValuesResource(courseId: Signal<number> | number): HttpResourceRef<Array<string> | undefined> {
+        return this.createResource(() => getUniqueLanguageValuesResource(courseId));
     }
 
-    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupResponseArrayDatesFromServer(res)));
+    getAllForCourseResource(courseId: Signal<number> | number): HttpResourceRef<Array<TutorialGroup> | undefined> {
+        return this.createResource(() => getAllForCourseResource(courseId)) as HttpResourceRef<Array<TutorialGroup> | undefined>;
     }
 
-    getOneOfCourse(courseId: number, tutorialGroupId: number) {
-        return this.httpClient
-            .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
+    getTutorialGroupDetailGroupDTOResource(
+        courseId: Signal<number> | number,
+        tutorialGroupId: Signal<number> | number,
+    ): HttpResourceRef<RawTutorialGroupDetailGroupDTO | undefined> {
+        return this.createResource(() => getTutorialGroupDetailGroupDTOResource(courseId, tutorialGroupId)) as HttpResourceRef<RawTutorialGroupDetailGroupDTO | undefined>;
     }
 
-    getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number) {
-        return this.httpClient
-            .get<RawTutorialGroupDetailGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/${tutorialGroupId}`)
-            .pipe(map((rawDto) => new TutorialGroupDetailGroupDTO(rawDto)));
+    exportTutorialGroupsToCSVResource(
+        courseId: Signal<number> | number,
+        params?: Signal<ExportTutorialGroupsToCSVParams>,
+    ): HttpResourceRef<Blob | undefined> {
+        return this.createResource(() => exportTutorialGroupsToCSVResource(courseId, params));
+    }
+
+    exportTutorialGroupsToJSONResource(
+        courseId: Signal<number> | number,
+        params?: Signal<ExportTutorialGroupsToJSONParams>,
+    ): HttpResourceRef<Array<any> | undefined> {
+        return this.createResource(() => exportTutorialGroupsToJSONResource(courseId, params));
     }
 
     create(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {
@@ -77,27 +94,25 @@ export class TutorialGroupsService {
     }
 
     deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
+        return this.tutorialGroupApi.deregisterStudent(courseId, tutorialGroupId, login).pipe(map(() => new HttpResponse<void>({ status: 200 })));
     }
 
     registerStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register/${login}`, null, { observe: 'response' });
+        return this.tutorialGroupApi.registerStudent(courseId, tutorialGroupId, login).pipe(map(() => new HttpResponse<void>({ status: 200 })));
     }
 
     registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
-        return this.httpClient.post<Array<Student>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
-            observe: 'response',
-        });
+        return this.tutorialGroupApi
+            .registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos)
+            .pipe(map((body) => new HttpResponse<Array<Student>>({ body })));
     }
 
     import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
-        return this.httpClient.post<Array<TutorialGroupRegistrationImport>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/import`, tutorialGroups, {
-            observe: 'response',
-        });
+        return this.tutorialGroupApi.importRegistrations(courseId, tutorialGroups).pipe(map((body) => new HttpResponse<Array<TutorialGroupRegistrationImport>>({ body })));
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
+        return this.tutorialGroupApi.delete(courseId, tutorialGroupId).pipe(map(() => new HttpResponse<void>({ status: 200 })));
     }
 
     convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
@@ -176,31 +191,7 @@ export class TutorialGroupsService {
         }
     }
 
-    /**
-     * Export tutorial groups for a specific course to a CSV file.
-     *
-     * @param courseId the id of the course for which the tutorial groups should be exported
-     * @param fields   the list of fields to include in the CSV export
-     * @return an Observable containing the CSV file as a Blob
-     */
-    exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
-        const params = new HttpParams({ fromObject: { fields } });
-        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/csv`, {
-            params,
-            responseType: 'blob',
-        });
-    }
-
-    exportToJson(courseId: number, fields: string[]): Observable<string> {
-        const params = new HttpParams({ fromObject: { fields } });
-        return this.httpClient
-            .get<Array<TutorialGroupExport>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/json`, {
-                params,
-            })
-            .pipe(
-                map((data: Array<TutorialGroupExport>) => {
-                    return JSON.stringify(data);
-                }),
-            );
+    private createResource<T>(factory: () => HttpResourceRef<T>) {
+        return runInInjectionContext(this.environmentInjector, factory);
     }
 }

@@ -227,7 +227,8 @@ const main = async () => {
         const path = sourceFile.getFilePath();
         const content = sourceFile.getFullText();
         const normalizedModelImports = content.replace(/from \"(\.\.\/models\/[^\"]+)\"/g, "from '$1'");
-        const fixedContent = isWindows ? normalizeLineEndings(normalizedModelImports, "CRLF") : normalizedModelImports;
+        const normalizedTemplateStrings = normalizedModelImports.replace(/\$\$\{/g, '${');
+        const fixedContent = isWindows ? normalizeLineEndings(normalizedTemplateStrings, "CRLF") : normalizedTemplateStrings;
 
         writeFileSync(path, fixedContent, "utf8");
         if (removedImportsInFile + renamedMethodsInFile > 0) {

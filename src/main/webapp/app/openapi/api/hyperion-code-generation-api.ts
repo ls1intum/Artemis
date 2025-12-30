@@ -30,7 +30,7 @@ export class HyperionCodeGenerationApi {
      * @param codeGenerationRequestDTO 
      */
     generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO): Observable<CodeGenerationJobStartDTO> {
-        const url = `${this.basePath}/api/hyperion/programming-exercises/$${exerciseId}/generate-code`;
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-code`;
         return this.http.post<CodeGenerationJobStartDTO>(url, codeGenerationRequestDTO);
     }
 

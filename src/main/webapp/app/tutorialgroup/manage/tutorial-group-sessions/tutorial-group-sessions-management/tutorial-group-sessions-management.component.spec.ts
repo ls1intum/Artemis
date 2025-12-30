@@ -3,7 +3,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResourceRef, provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { SortService } from 'app/shared/service/sort.service';
@@ -26,6 +26,7 @@ import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { signal } from '@angular/core';
 
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
@@ -93,7 +94,12 @@ describe('TutorialGroupSessionsManagement', () => {
                 tutorialGroup.tutorialGroupSessions = [pastSession, upcomingSession];
 
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+                const tutorialGroupsResource = {
+                    value: signal<Array<TutorialGroup> | undefined>([tutorialGroup]),
+                    error: signal<unknown | undefined>(undefined),
+                    isLoading: signal(false),
+                } as HttpResourceRef<Array<TutorialGroup> | undefined>;
+                getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
 
                 component.course = course;
                 component.tutorialGroupId = tutorialGroupId;
@@ -109,7 +115,7 @@ describe('TutorialGroupSessionsManagement', () => {
     it('should initialize', () => {
         expect(component).toBeTruthy();
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
-        expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!);
         expect(component.tutorialGroup).toEqual(tutorialGroup);
         expect(component.tutorialGroupSchedule).toEqual(tutorialGroup.tutorialGroupSchedule);
         expect(component.course).toEqual(course);
@@ -136,13 +142,18 @@ describe('TutorialGroupSessionsManagement', () => {
         component.course = course;
         component.tutorialGroupId = tutorialGroupId;
 
-        const getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+        const tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([tutorialGroup]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
+        const getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
 
         component.loadAll();
         tick();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!);
         expect(refreshSpy).toHaveBeenCalledOnce();
     }));
 });

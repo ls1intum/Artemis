@@ -18,6 +18,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { HttpResourceRef } from '@angular/common/http';
+import { signal } from '@angular/core';
 
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
 
@@ -82,7 +84,12 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
         courseOfResponse = { id: 2 } as Course;
 
         findStub = jest.spyOn(courseManagementService, 'find').mockReturnValue(of({ body: courseOfResponse } as any));
-        findByIdStub = jest.spyOn(tutorialGroupService, 'getTutorialGroupDetailGroupDTO').mockReturnValue(of(tutorialGroupOfResponse));
+        const tutorialGroupResource = {
+            value: signal<RawTutorialGroupDetailGroupDTO | undefined>(raw),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<RawTutorialGroupDetailGroupDTO | undefined>;
+        findByIdStub = jest.spyOn(tutorialGroupService, 'getTutorialGroupDetailGroupDTOResource').mockReturnValue(tutorialGroupResource);
     });
 
     afterEach(() => {
@@ -96,8 +103,8 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
 
     it('should load tutorial group', () => {
         fixture.detectChanges();
-        expect(component.tutorialGroup).toEqual(tutorialGroupOfResponse);
-        expect(component.course).toEqual(courseOfResponse);
+        expect(component.tutorialGroup()).toEqual(tutorialGroupOfResponse);
+        expect(component.course()).toEqual(courseOfResponse);
         expect(findByIdStub).toHaveBeenCalledWith(2, 1);
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(findStub).toHaveBeenCalledWith(2);

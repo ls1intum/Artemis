@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpResourceRef } from '@angular/common/http';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
@@ -21,6 +21,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { signal } from '@angular/core';
 
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
@@ -35,6 +36,7 @@ describe('TutorialGroupsManagementComponent', () => {
     let configurationService: TutorialGroupsConfigurationService;
     let getAllOfCourseSpy: jest.SpyInstance;
     let getOneOfCourseSpy: jest.SpyInstance;
+    let tutorialGroupsResource: HttpResourceRef<Array<TutorialGroup> | undefined>;
 
     const router = new MockRouter();
 
@@ -65,14 +67,12 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 
         tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [tutorialGroupOne, tutorialGroupTwo],
-                    status: 200,
-                }),
-            ),
-        );
+        tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([tutorialGroupOne, tutorialGroupTwo]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
+        getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
         fixture.detectChanges();

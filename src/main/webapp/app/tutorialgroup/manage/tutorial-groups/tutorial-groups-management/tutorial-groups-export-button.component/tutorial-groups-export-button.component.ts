@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, TemplateRef, inject, input, output, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    EffectRef,
+    EnvironmentInjector,
+    OnDestroy,
+    TemplateRef,
+    effect,
+    inject,
+    input,
+    output,
+    runInInjectionContext,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
@@ -6,6 +20,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { TutorialGroupExport } from 'app/openapi/models/tutorial-group-export';
 
 @Component({
     selector: 'jhi-tutorial-groups-export-button',
@@ -17,6 +32,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     private modalService = inject(NgbModal);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
+    private environmentInjector = inject(EnvironmentInjector);
 
     ngUnsubscribe = new Subject<void>();
     readonly exportDialogRef = viewChild<TemplateRef<any>>('exportDialog');
@@ -83,8 +99,24 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV(modal: NgbModalRef) {
-        this.tutorialGroupsService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields).subscribe({
-            next: (blob: Blob) => {
+        const params = signal({ fields: [...this.selectedFields] });
+        const resource = this.tutorialGroupsService.exportTutorialGroupsToCSVResource(this.courseId(), params);
+        let exportEffect: EffectRef;
+        runInInjectionContext(this.environmentInjector, () => {
+            exportEffect = effect(() => {
+                const error = resource.error();
+                if (error) {
+                    this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
+                    this.resetSelections();
+                    modal.dismiss('error');
+                    exportEffect.destroy();
+                    return;
+                }
+
+                const blob = resource.value();
+                if (!blob) {
+                    return;
+                }
                 const a = document.createElement('a');
                 const objectUrl = URL.createObjectURL(blob);
                 a.href = objectUrl;
@@ -93,19 +125,31 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 URL.revokeObjectURL(objectUrl);
                 this.resetSelections();
                 modal.close();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
-                this.resetSelections();
-                modal.dismiss('error');
-            },
+                exportEffect.destroy();
+            });
         });
     }
 
     exportJSON(modal: NgbModalRef) {
-        this.tutorialGroupsService.exportToJson(this.courseId(), this.selectedFields).subscribe({
-            next: (response) => {
-                const blob = new Blob([response], { type: 'application/json' });
+        const params = signal({ fields: [...this.selectedFields] });
+        const resource = this.tutorialGroupsService.exportTutorialGroupsToJSONResource(this.courseId(), params);
+        let exportEffect: EffectRef;
+        runInInjectionContext(this.environmentInjector, () => {
+            exportEffect = effect(() => {
+                const error = resource.error();
+                if (error) {
+                    this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
+                    this.resetSelections();
+                    modal.dismiss('error');
+                    exportEffect.destroy();
+                    return;
+                }
+
+                const data = resource.value();
+                if (!data) {
+                    return;
+                }
+                const blob = new Blob([JSON.stringify(data as Array<TutorialGroupExport>)], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -114,12 +158,8 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 window.URL.revokeObjectURL(url);
                 this.resetSelections();
                 modal.close();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
-                this.resetSelections();
-                modal.dismiss('error');
-            },
+                exportEffect.destroy();
+            });
         });
     }
 

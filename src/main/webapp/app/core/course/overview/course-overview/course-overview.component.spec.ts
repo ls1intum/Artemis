@@ -1,7 +1,7 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpHeaders, HttpResourceRef, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -565,16 +565,17 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
-            body: [new TutorialGroup()],
-            status: 200,
-        });
+        const tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([new TutorialGroup()]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
         const configurationResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({
             body: generateExampleTutorialGroupsConfiguration({}),
             status: 200,
         });
 
-        jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        jest.spyOn(tutorialGroupsService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
         jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);

@@ -7,8 +7,8 @@ import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpResourceRef } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -63,17 +63,18 @@ describe('TutorialGroupManagementDetailComponent', () => {
 
         const tutorialGroupOfResponse = generateExampleTutorialGroup({ id: 1 });
 
-        const response: HttpResponse<TutorialGroup> = new HttpResponse({
-            body: tutorialGroupOfResponse,
-            status: 200,
-        });
+        const tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([tutorialGroupOfResponse]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
 
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+        const findByIdStub = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
         fixture.detectChanges();
         expect(component.tutorialGroup).toEqual(tutorialGroupOfResponse);
         expect(component.tutorialGroupId).toBe(1);
         expect(component.course.id).toBe(2);
-        expect(findByIdStub).toHaveBeenCalledWith(2, 1);
+        expect(findByIdStub).toHaveBeenCalledWith(2);
         expect(findByIdStub).toHaveBeenCalledOnce();
     });
 });

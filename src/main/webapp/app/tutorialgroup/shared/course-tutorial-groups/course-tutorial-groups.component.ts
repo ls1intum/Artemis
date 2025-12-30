@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { filter, map } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResourceRef } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -55,9 +55,11 @@ export class CourseTutorialGroupsComponent {
     tutorialGroups = signal<TutorialGroup[]>([]);
     tutorialLectures = signal<Lecture[]>([]);
     sidebarData = signal<SidebarData | undefined>(undefined);
+    tutorialGroupsResource = signal<HttpResourceRef<Array<TutorialGroup> | undefined> | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     isCollapsed = false;
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
+    private lastTutorialGroups?: TutorialGroup[];
 
     constructor() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
@@ -81,6 +83,25 @@ export class CourseTutorialGroupsComponent {
         effect(() => {
             this.lectureService.currentTutorialLectureId = this.currentTutorialLectureId();
         });
+
+        effect(() => {
+            const resource = this.tutorialGroupsResource();
+            if (!resource) {
+                return;
+            }
+            const error = resource.error();
+            if (error) {
+                onError(this.alertService, error as HttpErrorResponse);
+            }
+            const tutorialGroups = resource.value();
+            if (!tutorialGroups || tutorialGroups === this.lastTutorialGroups) {
+                return;
+            }
+            this.lastTutorialGroups = tutorialGroups;
+            this.tutorialGroupService.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+            this.tutorialGroups.set(tutorialGroups);
+            this.updateCachedTutorialGroups(tutorialGroups, this.courseId()!);
+        });
     }
 
     toggleSidebar() {
@@ -94,9 +115,8 @@ export class CourseTutorialGroupsComponent {
         const cachedLectures = course?.lectures;
         if (cachedTutorialGroups) {
             this.tutorialGroups.set(cachedTutorialGroups);
-        } else {
-            this.loadAndSetTutorialGroups(courseId);
         }
+        this.loadAndSetTutorialGroups(courseId);
         if (cachedLectures) {
             this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.isTutorialLecture));
         } else {
@@ -105,14 +125,7 @@ export class CourseTutorialGroupsComponent {
     }
 
     private loadAndSetTutorialGroups(courseId: number) {
-        this.tutorialGroupService.getAllForCourse(courseId).subscribe({
-            next: ({ body }) => {
-                const tutorialGroups = body ?? [];
-                this.tutorialGroups.set(tutorialGroups);
-                this.updateCachedTutorialGroups(tutorialGroups, courseId);
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        this.tutorialGroupsResource.set(this.tutorialGroupService.getAllForCourseResource(courseId));
     }
 
     private updateCachedTutorialGroups(tutorialGroups: TutorialGroup[], courseId: number) {

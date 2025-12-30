@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -18,7 +18,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResourceRef, HttpResponse } from '@angular/common/http';
 
 describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
@@ -94,13 +94,18 @@ describe('CourseTutorialGroupsComponent', () => {
         jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
         jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourse');
+        const tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([tutorialGroup1, tutorialGroup2]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
+        const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
         const tutorialLectureFetchSpy = jest.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupFetchSpy).not.toHaveBeenCalled();
+        expect(tutorialGroupFetchSpy).toHaveBeenCalled();
         expect(tutorialLectureFetchSpy).not.toHaveBeenCalled();
         const expectedSidebarCardElement1: SidebarCardElement = getSidebarCardElementForTutorialGroup(tutorialGroup1);
         const expectedSidebarCardElement2: SidebarCardElement = getSidebarCardElementForTutorialGroup(tutorialGroup2);
@@ -136,7 +141,12 @@ describe('CourseTutorialGroupsComponent', () => {
         jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
         jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1, tutorialGroup2] })));
+        const tutorialGroupsResource = {
+            value: signal<Array<TutorialGroup> | undefined>([tutorialGroup1, tutorialGroup2]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<TutorialGroup> | undefined>;
+        const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
 
         const tutorialLectureFetchSpy = jest
             .spyOn(lectureService, 'findAllTutorialLecturesByCourseId')

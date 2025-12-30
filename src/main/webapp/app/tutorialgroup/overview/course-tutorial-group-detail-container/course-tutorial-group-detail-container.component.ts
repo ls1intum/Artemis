@@ -1,69 +1,111 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { Component, HttpResourceRef, Signal, computed, effect, inject, signal } from '@angular/core';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { BehaviorSubject, Subscription, catchError, combineLatest, forkJoin, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, map, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { AsyncPipe } from '@angular/common';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',
     templateUrl: './course-tutorial-group-detail-container.component.html',
-    imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent, AsyncPipe],
+    imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent],
 })
-export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
+export class CourseTutorialGroupDetailContainerComponent {
     private route = inject(ActivatedRoute);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
     private courseManagementService = inject(CourseManagementService);
 
-    isLoading = new BehaviorSubject<boolean>(false);
-    tutorialGroup?: TutorialGroupDetailGroupDTO;
-    course?: Course;
-    private paramsSubscription: Subscription;
+    private courseId = this.getCourseIdSignal();
+    private tutorialGroupId = this.getTutorialGroupIdSignal();
+    private tutorialGroupResource = signal<HttpResourceRef<RawTutorialGroupDetailGroupDTO | undefined> | undefined>(undefined);
+    private courseResponse = this.getCourseResponseSignal();
+    private courseLoadFailed = signal(false);
 
-    ngOnInit(): void {
-        const courseIdParams$ = this.route.parent?.parent?.params;
-        const tutorialGroupIdParams$ = this.route.params;
-        if (courseIdParams$) {
-            this.paramsSubscription = combineLatest([courseIdParams$, tutorialGroupIdParams$])
-                .pipe(
-                    switchMap(([courseIdParams, tutorialGroupIdParams]) => {
-                        this.isLoading.next(true);
-                        const tutorialGroupId = parseInt(tutorialGroupIdParams.tutorialGroupId, 10);
-                        const courseId = parseInt(courseIdParams.courseId, 10);
-                        return forkJoin({
-                            courseResult: this.courseManagementService.find(courseId),
-                            tutorialGroupResult: this.tutorialGroupService.getTutorialGroupDetailGroupDTO(courseId, tutorialGroupId),
-                        });
-                    }),
-                    tap({
-                        next: () => {
-                            this.isLoading.next(false);
-                        },
-                    }),
-                    catchError((error: HttpErrorResponse) => {
-                        this.isLoading.next(false);
-                        onError(this.alertService, error);
-                        throw error;
-                    }),
-                )
-                .subscribe({
-                    next: ({ courseResult, tutorialGroupResult }) => {
-                        this.tutorialGroup = tutorialGroupResult;
-                        this.course = courseResult.body ?? undefined;
-                    },
-                });
+    isLoading = computed(() => (this.tutorialGroupResource()?.isLoading() ?? false) || (!this.courseLoadFailed() && this.courseResponse() === undefined));
+    tutorialGroup = computed(() => {
+        const raw = this.tutorialGroupResource()?.value();
+        if (!raw) {
+            return undefined;
         }
+        return new TutorialGroupDetailGroupDTO(raw);
+    });
+    course = computed(() => this.courseResponse()?.body ?? undefined);
+
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            const tutorialGroupId = this.tutorialGroupId();
+            if (!courseId || !tutorialGroupId) {
+                return;
+            }
+            this.courseLoadFailed.set(false);
+            this.tutorialGroupResource.set(this.tutorialGroupService.getTutorialGroupDetailGroupDTOResource(courseId, tutorialGroupId));
+        });
+
+        effect(() => {
+            const resource = this.tutorialGroupResource();
+            if (!resource) {
+                return;
+            }
+            const error = resource.error();
+            if (error) {
+                onError(this.alertService, error as HttpErrorResponse);
+            }
+        });
     }
 
-    ngOnDestroy(): void {
-        this.paramsSubscription?.unsubscribe();
+    private getCourseIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.route.parent?.parent?.params.pipe(
+                map((params) => {
+                    const courseId = params.courseId ? parseInt(params.courseId, 10) : undefined;
+                    return Number.isNaN(courseId) ? undefined : courseId;
+                }),
+                filter((courseId): courseId is number => courseId !== undefined),
+            ) ?? EMPTY,
+            { initialValue: undefined },
+        );
+    }
+
+    private getTutorialGroupIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.route.params.pipe(
+                map((params) => {
+                    const tutorialGroupId = params.tutorialGroupId ? parseInt(params.tutorialGroupId, 10) : undefined;
+                    return Number.isNaN(tutorialGroupId) ? undefined : tutorialGroupId;
+                }),
+            ),
+            { initialValue: undefined },
+        );
+    }
+
+    private getCourseResponseSignal() {
+        return toSignal(
+            this.route.parent?.parent?.params.pipe(
+                map((params) => {
+                    const courseId = params.courseId ? parseInt(params.courseId, 10) : undefined;
+                    return Number.isNaN(courseId) ? undefined : courseId;
+                }),
+                filter((courseId): courseId is number => courseId !== undefined),
+                switchMap((courseId) =>
+                    this.courseManagementService.find(courseId).pipe(
+                        catchError((error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                            this.courseLoadFailed.set(true);
+                            return EMPTY;
+                        }),
+                    ),
+                ),
+            ) ?? EMPTY,
+            { initialValue: undefined },
+        );
     }
 }

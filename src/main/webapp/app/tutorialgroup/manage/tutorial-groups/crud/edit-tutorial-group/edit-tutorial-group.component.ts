@@ -1,11 +1,22 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EffectRef,
+    EnvironmentInjector,
+    OnDestroy,
+    OnInit,
+    effect,
+    inject,
+    runInInjectionContext,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupFormComponent, TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest } from 'rxjs';
-import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
+import { finalize, take, takeUntil } from 'rxjs/operators';
+import { HttpErrorResponse, HttpResourceRef } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
@@ -28,6 +39,7 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private calendarService = inject(CalendarService);
     private cdr = inject(ChangeDetectorRef);
+    private environmentInjector = inject(EnvironmentInjector);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -37,45 +49,23 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     formData: TutorialGroupFormData;
     tutorialGroupId: number;
     course: Course;
+    private tutorialGroupsResource?: HttpResourceRef<Array<TutorialGroup> | undefined>;
+    private loadEffect?: EffectRef;
+    private lastTutorialGroups?: TutorialGroup[];
 
     ngOnInit(): void {
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, { course }]) => {
-                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.course = course;
-                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
-                }),
-                finalize(() => (this.isLoading = false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (tutorialGroupResult) => {
-                    if (tutorialGroupResult.body) {
-                        this.tutorialGroup = tutorialGroupResult.body;
-                        this.formData = {
-                            title: this.tutorialGroup.title,
-                            teachingAssistant: this.tutorialGroup.teachingAssistant,
-                            additionalInformation: this.tutorialGroup.additionalInformation,
-                            capacity: this.tutorialGroup.capacity,
-                            isOnline: this.tutorialGroup.isOnline,
-                            language: this.tutorialGroup.language,
-                            campus: this.tutorialGroup.campus,
-                        };
-                        if (this.tutorialGroup.tutorialGroupSchedule) {
-                            this.tutorialGroupSchedule = this.tutorialGroup.tutorialGroupSchedule;
-                            this.formData.schedule = {
-                                period: [this.tutorialGroupSchedule.validFromInclusive!.toDate(), this.tutorialGroupSchedule.validToInclusive!.toDate()],
-                                repetitionFrequency: this.tutorialGroupSchedule.repetitionFrequency,
-                                startTime: this.tutorialGroupSchedule.startTime,
-                                endTime: this.tutorialGroupSchedule.endTime,
-                                dayOfWeek: this.tutorialGroupSchedule.dayOfWeek,
-                                location: this.tutorialGroupSchedule.location,
-                            };
-                        }
-                    }
+                next: ([params, { course }]) => {
+                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
+                    this.course = course;
+                    this.tutorialGroupsResource = this.tutorialGroupService.getAllForCourseResource(this.course.id!);
+                    this.setupTutorialGroupEffect();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })
@@ -142,5 +132,58 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.loadEffect?.destroy();
+    }
+
+    private setupTutorialGroupEffect() {
+        if (!this.tutorialGroupsResource) {
+            return;
+        }
+        this.loadEffect?.destroy();
+        runInInjectionContext(this.environmentInjector, () => {
+            this.loadEffect = effect(() => {
+                const resource = this.tutorialGroupsResource;
+                if (!resource) {
+                    return;
+                }
+                this.isLoading = resource.isLoading();
+                const error = resource.error();
+                if (error) {
+                    onError(this.alertService, error as HttpErrorResponse);
+                }
+                const tutorialGroups = resource.value();
+                if (!tutorialGroups || tutorialGroups === this.lastTutorialGroups) {
+                    return;
+                }
+                this.lastTutorialGroups = tutorialGroups;
+                this.tutorialGroupService.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+                const tutorialGroup = tutorialGroups.find((group) => group.id === this.tutorialGroupId);
+                if (!tutorialGroup) {
+                    return;
+                }
+                this.tutorialGroup = tutorialGroup;
+                this.formData = {
+                    title: this.tutorialGroup.title,
+                    teachingAssistant: this.tutorialGroup.teachingAssistant,
+                    additionalInformation: this.tutorialGroup.additionalInformation,
+                    capacity: this.tutorialGroup.capacity,
+                    isOnline: this.tutorialGroup.isOnline,
+                    language: this.tutorialGroup.language,
+                    campus: this.tutorialGroup.campus,
+                };
+                if (this.tutorialGroup.tutorialGroupSchedule) {
+                    this.tutorialGroupSchedule = this.tutorialGroup.tutorialGroupSchedule;
+                    this.formData.schedule = {
+                        period: [this.tutorialGroupSchedule.validFromInclusive!.toDate(), this.tutorialGroupSchedule.validToInclusive!.toDate()],
+                        repetitionFrequency: this.tutorialGroupSchedule.repetitionFrequency,
+                        startTime: this.tutorialGroupSchedule.startTime,
+                        endTime: this.tutorialGroupSchedule.endTime,
+                        dayOfWeek: this.tutorialGroupSchedule.dayOfWeek,
+                        location: this.tutorialGroupSchedule.location,
+                    };
+                }
+                this.cdr.detectChanges();
+            });
+        });
     }
 }

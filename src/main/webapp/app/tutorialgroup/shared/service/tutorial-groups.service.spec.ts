@@ -6,6 +6,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { provideHttpClient } from '@angular/common/http';
+import { RawTutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
@@ -26,27 +27,25 @@ describe('TutorialGroupService', () => {
         httpMock.verify();
     });
 
-    it('getUniqueCampusValues', fakeAsync(() => {
+    it('getUniqueCampusValuesResource', fakeAsync(() => {
         const returnedFromService = ['Test', 'Test2'];
-        service
-            .getUniqueCampusValues(1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+        const resource = service.getUniqueCampusValuesResource(1);
+        resource.value();
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         tick();
+        expect(resource.value()).toEqual(returnedFromService);
     }));
 
-    it('getOneOfCourse', fakeAsync(() => {
+    it('getTutorialGroupDetailGroupDTOResource', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
-        service
-            .getOneOfCourse(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
+        const resource = service.getTutorialGroupDetailGroupDTOResource(1, 1);
+        resource.value();
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+        req.flush(returnedFromService as RawTutorialGroupDetailGroupDTO);
         tick();
+        expect(resource.value()).toEqual(returnedFromService as RawTutorialGroupDetailGroupDTO);
     }));
 
     it('create', fakeAsync(() => {
@@ -76,21 +75,17 @@ describe('TutorialGroupService', () => {
         tick();
     }));
 
-    it('getAllOfCourse', fakeAsync(() => {
+    it('getAllForCourseResource', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, title: 'Test' };
         const expected = { ...returnedFromService };
 
-        service
-            .getAllForCourse(1)
-            .pipe(
-                take(1),
-                map((resp) => resp.body),
-            )
-            .subscribe((body) => expect(body).toContainEqual(expected));
+        const resource = service.getAllForCourseResource(1);
+        resource.value();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([returnedFromService]);
         tick();
+        expect(resource.value()).toContainEqual(expected);
     }));
 
     it('deregisterStudent', fakeAsync(() => {

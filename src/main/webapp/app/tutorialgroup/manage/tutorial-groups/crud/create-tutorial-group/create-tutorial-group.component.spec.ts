@@ -69,8 +69,6 @@ describe('CreateTutorialGroupComponent', () => {
                 fixture = TestBed.createComponent(CreateTutorialGroupComponent);
                 component = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                jest.spyOn(tutorialGroupService, 'getUniqueCampusValues').mockReturnValue(of(new HttpResponse<string[]>({ body: [] })));
-                jest.spyOn(tutorialGroupService, 'getUniqueLanguageValues').mockReturnValue(of(new HttpResponse<string[]>({ body: [] })));
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });

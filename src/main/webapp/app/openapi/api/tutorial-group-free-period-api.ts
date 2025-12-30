@@ -29,7 +29,7 @@ export class TutorialGroupFreePeriodApi {
      * @param tutorialGroupFreePeriodId 
      */
     delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<void> {
-        const url = `${this.basePath}/api/tutorialgroup/courses/$${courseId}/tutorial-groups-configuration/$${tutorialGroupsConfigurationId}/tutorial-free-periods/$${tutorialGroupFreePeriodId}`;
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`;
         return this.http.delete<void>(url);
     }
 

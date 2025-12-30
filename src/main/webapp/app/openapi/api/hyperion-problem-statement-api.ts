@@ -32,7 +32,7 @@ export class HyperionProblemStatementApi {
      * @param programmingExerciseId 
      */
     checkExerciseConsistency(programmingExerciseId: number): Observable<ConsistencyCheckResponse> {
-        const url = `${this.basePath}/api/hyperion/programming-exercises/$${programmingExerciseId}/consistency-check`;
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${programmingExerciseId}/consistency-check`;
         return this.http.post<ConsistencyCheckResponse>(url, null);
     }
 
@@ -43,7 +43,7 @@ export class HyperionProblemStatementApi {
      * @param problemStatementGenerationRequest 
      */
     generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest): Observable<ProblemStatementGenerationResponse> {
-        const url = `${this.basePath}/api/hyperion/courses/$${courseId}/problem-statements/generate`;
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/problem-statements/generate`;
         return this.http.post<ProblemStatementGenerationResponse>(url, problemStatementGenerationRequest);
     }
 
@@ -54,7 +54,7 @@ export class HyperionProblemStatementApi {
      * @param problemStatementRewriteRequest 
      */
     rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest): Observable<ProblemStatementRewriteResponse> {
-        const url = `${this.basePath}/api/hyperion/courses/$${courseId}/problem-statements/rewrite`;
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/problem-statements/rewrite`;
         return this.http.post<ProblemStatementRewriteResponse>(url, problemStatementRewriteRequest);
     }
 

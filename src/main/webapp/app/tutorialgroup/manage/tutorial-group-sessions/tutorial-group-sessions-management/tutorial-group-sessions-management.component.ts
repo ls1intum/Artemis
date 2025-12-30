@@ -1,8 +1,20 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EffectRef,
+    EnvironmentInjector,
+    Input,
+    OnDestroy,
+    ViewEncapsulation,
+    effect,
+    inject,
+    runInInjectionContext,
+} from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EMPTY, Subject, from } from 'rxjs';
-import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { catchError, takeUntil } from 'rxjs/operators';
+import { HttpErrorResponse, HttpResourceRef } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
@@ -46,6 +58,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     private modalService = inject(NgbModal);
     private activeModal = inject(NgbActiveModal);
     private cdr = inject(ChangeDetectorRef);
+    private environmentInjector = inject(EnvironmentInjector);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -61,6 +74,9 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     attendanceUpdated = false;
 
     isInitialized = false;
+    private tutorialGroupsResource?: HttpResourceRef<Array<TutorialGroup> | undefined>;
+    private loadEffect?: EffectRef;
+    private lastTutorialGroups?: TutorialGroup[];
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
@@ -74,29 +90,37 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     getDayTranslationKey = getDayTranslationKey;
     loadAll() {
         this.isLoading = true;
-        return this.tutorialGroupService
-            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
-            .pipe(
-                finalize(() => (this.isLoading = false)),
-                map((res: HttpResponse<TutorialGroup>) => {
-                    return res.body;
-                }),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (tutorialGroup) => {
-                    if (tutorialGroup) {
-                        this.tutorialGroup = tutorialGroup;
-                        this.sessions = tutorialGroup.tutorialGroupSessions ?? [];
-                        if (tutorialGroup.tutorialGroupSchedule) {
-                            this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
-                        }
+        this.tutorialGroupsResource = this.tutorialGroupService.getAllForCourseResource(this.course.id!);
+        this.loadEffect?.destroy();
+        return runInInjectionContext(this.environmentInjector, () => {
+            this.loadEffect = effect(() => {
+                const resource = this.tutorialGroupsResource;
+                if (!resource) {
+                    return;
+                }
+                this.isLoading = resource.isLoading();
+                const error = resource.error();
+                if (error) {
+                    onError(this.alertService, error as HttpErrorResponse);
+                }
+                const tutorialGroups = resource.value();
+                if (!tutorialGroups || tutorialGroups === this.lastTutorialGroups) {
+                    return;
+                }
+                this.lastTutorialGroups = tutorialGroups;
+                this.tutorialGroupService.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+                const tutorialGroup = tutorialGroups.find((group) => group.id === this.tutorialGroupId);
+                if (tutorialGroup) {
+                    this.tutorialGroup = tutorialGroup;
+                    this.sessions = tutorialGroup.tutorialGroupSessions ?? [];
+                    if (tutorialGroup.tutorialGroupSchedule) {
+                        this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                     }
-                    this.calendarService.reloadEvents();
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+                }
+                this.calendarService.reloadEvents();
+                this.cdr.detectChanges();
+            });
+        });
     }
 
     openCreateSessionDialog(event: MouseEvent) {
@@ -126,5 +150,6 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.loadEffect?.destroy();
     }
 }

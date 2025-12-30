@@ -6,11 +6,11 @@ import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/tutorialg
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResourceRef, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -59,6 +59,11 @@ describe('TutorialGroupFormComponent', () => {
     let testFormIsInvalidOnMissingRequiredProperty: (controlName: string, subFormName?: string) => void;
 
     beforeEach(() => {
+        const emptyStringArrayResource = {
+            value: signal<Array<string> | undefined>([]),
+            error: signal<unknown | undefined>(undefined),
+            isLoading: signal(false),
+        } as HttpResourceRef<Array<string> | undefined>;
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
             declarations: [
@@ -76,12 +81,8 @@ describe('TutorialGroupFormComponent', () => {
                     },
                 }),
                 MockProvider(TutorialGroupsService, {
-                    getUniqueCampusValues: () => {
-                        return of(new HttpResponse({ body: [] }));
-                    },
-                    getUniqueLanguageValues: () => {
-                        return of(new HttpResponse({ body: [] }));
-                    },
+                    getUniqueCampusValuesResource: () => emptyStringArrayResource,
+                    getUniqueLanguageValuesResource: () => emptyStringArrayResource,
                 }),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },

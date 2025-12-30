@@ -1,4 +1,4 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResourceRef, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -6,7 +6,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
@@ -106,7 +106,12 @@ describe('Registered Students Component', () => {
                 comp.course = course;
                 comp.tutorialGroupId = tutorialGroup.id!;
 
-                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+                const tutorialGroupsResource = {
+                    value: signal<Array<TutorialGroup> | undefined>([tutorialGroup]),
+                    error: signal<unknown | undefined>(undefined),
+                    isLoading: signal(false),
+                } as HttpResourceRef<Array<TutorialGroup> | undefined>;
+                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getAllForCourseResource').mockReturnValue(tutorialGroupsResource);
 
                 comp.initialize();
 
@@ -128,7 +133,7 @@ describe('Registered Students Component', () => {
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();
-            expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id);
+            expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id);
             expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));
         });
     });

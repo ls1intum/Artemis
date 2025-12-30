@@ -1,10 +1,21 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EffectRef,
+    EnvironmentInjector,
+    OnDestroy,
+    OnInit,
+    effect,
+    inject,
+    runInInjectionContext,
+} from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
+import { Subject, combineLatest, take } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResourceRef } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
@@ -24,6 +35,7 @@ export class ManagementTutorialGroupDetailContainerComponent implements OnInit, 
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
     private cdr = inject(ChangeDetectorRef);
+    private environmentInjector = inject(EnvironmentInjector);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -32,26 +44,26 @@ export class ManagementTutorialGroupDetailContainerComponent implements OnInit, 
     course: Course;
     tutorialGroupId: number;
     isAtLeastInstructor = false;
+    private tutorialGroupsResource?: HttpResourceRef<Array<TutorialGroup> | undefined>;
+    private loadEffect?: EffectRef;
+    private lastTutorialGroups?: TutorialGroup[];
 
     ngOnInit(): void {
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, { course }]) => {
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: ([params, { course }]) => {
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
                     if (course) {
                         this.course = course;
                         this.isAtLeastInstructor = course.isAtLeastInstructor;
                     }
-                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
-                }),
-                finalize(() => (this.isLoading = false)),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (tutorialGroupResult) => {
-                    this.tutorialGroup = tutorialGroupResult.body!;
+                    this.tutorialGroupsResource = this.tutorialGroupService.getAllForCourseResource(this.course.id!);
+                    this.setupTutorialGroupEffect();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })
@@ -65,5 +77,37 @@ export class ManagementTutorialGroupDetailContainerComponent implements OnInit, 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.loadEffect?.destroy();
+    }
+
+    private setupTutorialGroupEffect() {
+        if (!this.tutorialGroupsResource) {
+            return;
+        }
+        this.loadEffect?.destroy();
+        runInInjectionContext(this.environmentInjector, () => {
+            this.loadEffect = effect(() => {
+                const resource = this.tutorialGroupsResource;
+                if (!resource) {
+                    return;
+                }
+                this.isLoading = resource.isLoading();
+                const error = resource.error();
+                if (error) {
+                    onError(this.alertService, error as HttpErrorResponse);
+                }
+                const tutorialGroups = resource.value();
+                if (!tutorialGroups || tutorialGroups === this.lastTutorialGroups) {
+                    return;
+                }
+                this.lastTutorialGroups = tutorialGroups;
+                this.tutorialGroupService.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
+                const tutorialGroup = tutorialGroups.find((group) => group.id === this.tutorialGroupId);
+                if (tutorialGroup) {
+                    this.tutorialGroup = tutorialGroup;
+                }
+                this.cdr.detectChanges();
+            });
+        });
     }
 }
