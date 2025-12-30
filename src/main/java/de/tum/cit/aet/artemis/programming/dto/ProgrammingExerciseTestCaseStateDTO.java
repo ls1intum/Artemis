@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * This DTO contains information that is valuable to determine the test case state of the programming exercise:
- * - isReleased: has the programming exercise's release date passed?
- * - hasStudentResult: is there at least one student submission with a result?
- * - testCasesChanged: have the test cases been changed after the exercise was released and a student result existed?
+ * - released: has the programming exercise's release date passed?
+ * - hasStudentResult: is there at least one result for this exercise (from any participation type)?
+ * - testCasesChanged: have the test cases been changed after the exercise was released and a result existed?
  * - buildAndTestStudentSubmissionsAfterDueDate: Should the student submissions be triggered on this date after the due date to create rated results?
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

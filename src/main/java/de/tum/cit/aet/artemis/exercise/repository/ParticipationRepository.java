@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,17 +28,17 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
 
     /**
-     * Count the number of participations for a given course.
+     * Count the number of participations for a given set of exercises.
      *
-     * @param courseId the id of the course
-     * @return the number of participations in the course
+     * @param exerciseIds the id of the exercises (e.g. all in a course)
+     * @return the number of participations in these exercises
      */
     @Query("""
             SELECT COUNT(p)
             FROM Participation p
-            WHERE p.exercise.course.id = :courseId
+            WHERE p.exercise.id IN :exerciseIds
             """)
-    long countByCourseId(@Param("courseId") long courseId);
+    long countByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Count the number of participations for a given exercise.
