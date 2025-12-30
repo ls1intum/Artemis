@@ -7,6 +7,8 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from 'test/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -18,7 +20,7 @@ describe('UnreferencedFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [UnreferencedFeedbackComponent, UnreferencedFeedbackDetailStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

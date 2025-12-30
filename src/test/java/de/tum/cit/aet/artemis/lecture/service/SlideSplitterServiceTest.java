@@ -216,35 +216,45 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
 
-        // Only include 2 of the 3 slides in page order
-        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1), new SlideOrderDTO("2", 2));
-
         // Clear any existing slides first
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
-        // Get a proper temp path for slides
-        Path tempFilePath = FilePathConverter.getTempFilePath();
-        Files.createDirectories(tempFilePath);
+        // Get the proper attachment directory for slides
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Path slideImagesDir = attachmentDirectory.resolve("slide");
+        Files.createDirectories(slideImagesDir);
 
-        // Create existing slides (all 3) with known IDs and valid paths
+        // Create existing slides (all 3) and store their IDs
+        List<Long> slideIds = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
-            // Create a real file in the temp directory
-            Path slidePath = tempFilePath.resolve("slide" + i + ".png");
+            Slide slide = new Slide();
+            slide.setSlideNumber(i);
+            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+            // Set a dummy path first as it cannot be null
+            slide.setSlideImagePath("dummy");
+
+            // Save the slide to get an ID
+            Slide savedSlide = slideRepository.save(slide);
+            slideIds.add(savedSlide.getId());
+
+            // Create the proper directory structure for the slide
+            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            Files.createDirectories(slideDir);
+            Path slidePath = slideDir.resolve("slide" + i + ".png");
 
             // Create a simple image file (1x1 pixel)
             BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            Slide slide = new Slide();
-            slide.setSlideNumber(i);
-            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
-
-            // The path is relative to the base path and should match what's expected
-            slide.setSlideImagePath("temp/slide" + i + ".png");
-            slideRepository.save(slide);
-
+            // Update the slide with the proper path format
+            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            slideRepository.save(savedSlide);
         }
+
+        // Only include 2 of the 3 slides in page order - use actual IDs
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO(slideIds.get(0).toString(), 1), new SlideOrderDTO(slideIds.get(1).toString(), 2));
+
         // Act
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
 
@@ -253,13 +263,14 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
-        // Check if slide 3 exists but is detached
-        Slide slide3 = slideRepository.findById(3L).orElse(null);
+        // Check if slide 3 exists but is detached - use actual ID
+        Long thirdSlideId = slideIds.get(2);
+        Slide slide3 = slideRepository.findById(thirdSlideId).orElse(null);
 
         // If slide3 is null, the service is completely removing it rather than detaching
         if (slide3 == null) {
             // Test that it was removed instead
-            assertThat(slideRepository.existsById(3L)).isFalse();
+            assertThat(slideRepository.existsById(thirdSlideId)).isFalse();
         }
         else {
             // Test that it was detached
