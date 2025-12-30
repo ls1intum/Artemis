@@ -6,6 +6,8 @@ import { IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { provideHttpClient } from '@angular/common/http';
+import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
+import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 
 describe('IrisChatHttpService', () => {
     let service: IrisChatHttpService;
@@ -23,8 +25,9 @@ describe('IrisChatHttpService', () => {
         it('should create a message', fakeAsync(() => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
+            const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text('test message')], 123, {});
             service
-                .createMessage(2, new IrisUserMessage())
+                .createMessage(2, requestDTO)
                 .pipe(take(1))
                 .subscribe((resp) => {
                     expect(resp.body).toEqual(expected);
