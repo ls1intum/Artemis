@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
@@ -62,14 +63,17 @@ public class ComplaintService {
 
     private final TeamRepository teamRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, TeamRepository teamRepository) {
+            Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, TeamRepository teamRepository, ExerciseRepository exerciseRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.examRepositoryApi = examRepositoryApi;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -277,20 +281,62 @@ public class ComplaintService {
         });
     }
 
+    /**
+     * Get all complaints for a course.
+     * Uses optimized query that leverages the denormalized result.exerciseId instead of joining through submission -> participation -> exercise.
+     *
+     * @param courseId the id of the course
+     * @return list of complaints for the course
+     */
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
-        return complaintRepository.getAllByResult_Submission_Participation_Exercise_Course_Id(courseId);
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        if (exerciseIds.isEmpty()) {
+            return List.of();
+        }
+        return complaintRepository.findAllByResult_ExerciseIdIn(exerciseIds);
     }
 
+    /**
+     * Get all complaints for an exam.
+     * Uses optimized query that leverages the denormalized result.exerciseId instead of joining through submission -> participation -> exercise -> exerciseGroup -> exam.
+     *
+     * @param examId the id of the exam
+     * @return list of complaints for the exam
+     */
     public List<Complaint> getAllComplaintsByExamId(Long examId) {
-        return complaintRepository.getAllByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_Id(examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        Set<Long> exerciseIds = api.findExerciseIdsByExamId(examId);
+        if (exerciseIds.isEmpty()) {
+            return List.of();
+        }
+        return complaintRepository.findAllByResult_ExerciseIdIn(exerciseIds);
     }
 
+    /**
+     * Get all complaints for a course made by a specific tutor (assessor).
+     * Uses optimized query that leverages the denormalized result.exerciseId.
+     *
+     * @param courseId the id of the course
+     * @param tutorId  the id of the tutor
+     * @return list of complaints for the course and tutor
+     */
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Course_Id(tutorId, courseId);
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        if (exerciseIds.isEmpty()) {
+            return List.of();
+        }
+        return complaintRepository.findAllByResult_Assessor_IdAndResult_ExerciseIdIn(tutorId, exerciseIds);
     }
 
+    /**
+     * Get all complaints for an exercise.
+     * Uses optimized query that leverages the denormalized result.exerciseId.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of complaints for the exercise
+     */
     public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
-        return complaintRepository.getAllByResult_Submission_Participation_Exercise_Id(exerciseId);
+        return complaintRepository.findAllByResult_ExerciseIdIn(Set.of(exerciseId));
     }
 
     /**
@@ -304,8 +350,16 @@ public class ComplaintService {
         return participant instanceof Team ? course.getMaxTeamComplaints() : course.getMaxComplaints();
     }
 
+    /**
+     * Get all complaints for an exercise made by a specific tutor (assessor).
+     * Uses optimized query that leverages the denormalized result.exerciseId.
+     *
+     * @param exerciseId the id of the exercise
+     * @param tutorId    the id of the tutor
+     * @return list of complaints for the exercise and tutor
+     */
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Id(tutorId, exerciseId);
+        return complaintRepository.findAllByResult_Assessor_IdAndResult_ExerciseId(tutorId, exerciseId);
     }
 
     /**

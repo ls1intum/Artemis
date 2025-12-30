@@ -162,7 +162,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     List<ExerciseTypeMetricsEntry> countExercisesWithEndDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
+     * Return the number of students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type.
+     * Optimized: fetches exercise type and student group pairs first, then counts students per group efficiently.
      * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
      *
      * @param minDate the minimum due date
@@ -184,8 +185,29 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of active students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
+     * Return the distinct exercise types and their course's student group names for exercises with due dates in the given range.
+     * This is used as the first step in an optimized two-query approach to count active students.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return a list of Object arrays containing [exercise type class, student group name]
+     */
+    @Query("""
+            SELECT DISTINCT TYPE(e), e.course.studentGroupName
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+                AND e.dueDate >= :minDate
+                AND e.dueDate <= :maxDate
+            """)
+    List<Object[]> findExerciseTypesAndStudentGroupsWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the number of active students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type.
      * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
+     * NOTE: This query can be slow for large datasets. Consider using the optimized two-query approach:
+     * 1. Call findExerciseTypesAndStudentGroupsWithDueDateBetween to get exercise types and groups
+     * 2. Call countActiveStudentsByGroupNames to count active students per group
+     * 3. Aggregate results in Java
      *
      * @param minDate     the minimum due date
      * @param maxDate     the maximum due date
@@ -237,8 +259,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     List<ExerciseTypeMetricsEntry> countExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of students that are part of an exercise that will be released between minDate and maxDate, grouped by exercise type
+     * Return the number of students that are part of an exercise that will be released between minDate and maxDate, grouped by exercise type.
      * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
+     * NOTE: This query uses MEMBER OF which can be slow on large datasets. Consider caching results for metrics use cases.
      *
      * @param minDate the minimum release date
      * @param maxDate the maximum release date
@@ -260,8 +283,30 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of active students that are part of an exercise that will be release between minDate and maxDate, grouped by exercise type
+     * Return the distinct exercise types and their course's student group names for exercises with release dates in the given range.
+     * This is used as the first step in an optimized two-query approach to count active students.
+     *
+     * @param minDate the minimum release date
+     * @param maxDate the maximum release date
+     * @return a list of Object arrays containing [exercise type class, student group name]
+     */
+    @Query("""
+            SELECT DISTINCT TYPE(e), e.course.studentGroupName
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+                AND e.releaseDate >= :minDate
+                AND e.releaseDate <= :maxDate
+            """)
+    List<Object[]> findExerciseTypesAndStudentGroupsWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the number of active students that are part of an exercise that will be released between minDate and maxDate, grouped by exercise type.
      * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
+     * NOTE: This query uses MEMBER OF and EXISTS which can be slow on large datasets (7+ seconds observed).
+     * For better performance, consider using the optimized two-query approach:
+     * 1. Call findExerciseTypesAndStudentGroupsWithReleaseDateBetween to get exercise types and groups
+     * 2. Count active students per group using a separate query
+     * 3. Aggregate results in Java
      *
      * @param minDate     the minimum release date
      * @param maxDate     the maximum release date
