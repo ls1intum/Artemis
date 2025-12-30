@@ -28,8 +28,8 @@ public class CompetencyApi extends AbstractAtlasApi {
         competencyService.addCompetencyLinksToExerciseUnits(lecture);
     }
 
-    public Competency getReference(Long competencyId) {
-        return competencyService.getReference(competencyId);
+    public Competency loadCompetency(Long competencyId) {
+        return competencyService.loadCompetency(competencyId);
     }
 
     public long countByCourseId(long courseId) {
