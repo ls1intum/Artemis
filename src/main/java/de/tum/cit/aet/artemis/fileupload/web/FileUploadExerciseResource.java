@@ -354,45 +354,49 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * Core update logic extracted for reuse by both update and re-evaluate endpoints.
+     * Core update logic matching the pattern used in ModelingExerciseResource.
+     * Captures old values before mutation and handles save/notification.
      *
-     * @param updateFileUploadExerciseDTO    the DTO with updated values
-     * @param fileUploadExerciseBeforeUpdate the existing exercise entity (already loaded with associations)
-     * @param notificationText               optional notification text for students
-     * @param user                           the user performing the update (if null, will be loaded)
+     * @param updateFileUploadExerciseDTO the DTO with updated values
+     * @param originalExercise            the existing exercise entity (will be mutated)
+     * @param notificationText            optional notification text for students
+     * @param user                        the user performing the update (if null, will be loaded)
      * @return ResponseEntity with the updated exercise
      */
-    private ResponseEntity<FileUploadExercise> doUpdateFileUploadExercise(UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO,
-            FileUploadExercise fileUploadExerciseBeforeUpdate, String notificationText, User user) {
+    private ResponseEntity<FileUploadExercise> doUpdateFileUploadExercise(UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO, FileUploadExercise originalExercise,
+            String notificationText, User user) {
 
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
 
-        ZonedDateTime oldDueDate = fileUploadExerciseBeforeUpdate.getDueDate();
-        ZonedDateTime oldAssessmentDueDate = fileUploadExerciseBeforeUpdate.getAssessmentDueDate();
-        ZonedDateTime oldReleaseDate = fileUploadExerciseBeforeUpdate.getReleaseDate();
-        Double oldMaxPoints = fileUploadExerciseBeforeUpdate.getMaxPoints();
-        Double oldBonusPoints = fileUploadExerciseBeforeUpdate.getBonusPoints();
-        String oldProblemStatement = fileUploadExerciseBeforeUpdate.getProblemStatement();
+        // Capture old values BEFORE mutation (same pattern as ModelingExerciseResource)
+        ZonedDateTime oldDueDate = originalExercise.getDueDate();
+        ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
+        ZonedDateTime oldReleaseDate = originalExercise.getReleaseDate();
+        Double oldMaxPoints = originalExercise.getMaxPoints();
+        Double oldBonusPoints = originalExercise.getBonusPoints();
+        String oldProblemStatement = originalExercise.getProblemStatement();
 
-        FileUploadExercise updatedFileUploadExercise = update(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate);
+        FileUploadExercise updatedExercise = update(updateFileUploadExerciseDTO, originalExercise);
         // Validate the updated file upload exercise
-        validateNewOrUpdatedFileUploadExercise(updatedFileUploadExercise);
+        validateNewOrUpdatedFileUploadExercise(updatedExercise);
 
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedFileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedExercise, originalExercise, ENTITY_NAME);
 
-        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, updatedFileUploadExercise);
+        channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
-        var persistedExercise = exerciseService.saveWithCompetencyLinks(updatedFileUploadExercise, fileUploadExerciseRepository::save);
+        var persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, fileUploadExerciseRepository::save);
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
-        slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
+
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
 
         exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(persistedExercise)));
+        slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
+
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
 
         // Notify AtlasML about the exercise update
         atlasMLApi.ifPresent(api -> {
@@ -588,20 +592,16 @@ public class FileUploadExerciseResource {
         final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
-        // Validate courseId and exerciseGroupId exclusivity
-        validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, existingExercise);
-
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
-
-        // Check that the user is authorized to update the exercise
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Apply updates for re-evaluation
+        FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
+        var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
-        // Use the extracted core update logic to avoid loading the entity again
-        return doUpdateFileUploadExercise(updateFileUploadExerciseDTO, existingExercise, null, user);
+        // Delegate to the main update method (same pattern as ModelingExerciseResource)
+        return updateFileUploadExercise(updateFileUploadExerciseDTO, null, exerciseId);
     }
 
     /**
@@ -659,11 +659,11 @@ public class FileUploadExerciseResource {
      * Replaces the competency links of the given exercise according to PUT semantics.
      * <p>
      * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
-     * Otherwise, weights are updated for existing links and missing links are created using managed competency references.
+     * Otherwise, weights are updated for existing links and missing links are created using loaded competency entities.
      *
      * <p>
-     * <b>Hibernate note:</b> Uses {@code competencyRepository.getReferenceById(...)} to avoid creating detached entities
-     * and to keep associations consistent with the persistence context.
+     * <b>Hibernate note:</b> Uses {@code competencyApi.loadCompetency(...)} to load competency entities fully,
+     * ensuring they can be safely accessed and validated outside the original persistence context.
      *
      * @param dto      the update DTO containing competency link updates
      * @param exercise the exercise to mutate
