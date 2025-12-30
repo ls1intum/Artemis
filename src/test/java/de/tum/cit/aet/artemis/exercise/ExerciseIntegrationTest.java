@@ -181,6 +181,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentParticipationCountByIdFiltersParticipantsNotInCourseGroupForExamExercise() throws Exception {
+        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+
+        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "instructor1");
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("exerciseId", textExercise.getId().toString());
+        ExerciseManagementStatisticsDTO statistics = request.get("/api/core/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class,
+                parameters);
+
+        assertThat(statistics.numberOfParticipations()).isEqualTo(1L);
+        assertThat(statistics.numberOfStudentsOrTeamsInCourse()).isEqualTo(3L);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class)
