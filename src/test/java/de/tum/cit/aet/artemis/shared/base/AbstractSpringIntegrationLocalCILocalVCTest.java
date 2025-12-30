@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.ai.chat.model.ChatModel;
@@ -76,6 +77,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
 // Note: Cannot use WebEnvironment.RANDOM_PORT here because artemis.version-control.url must be set to the correct port in the @TestPropertySource annotation.
+@Tag("BucketLocalCILocalVC")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
@@ -222,8 +224,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected Path localVCBasePath;
 
     protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
-
-    protected static final String DUMMY_COMMIT_HASH_VALID = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
 
     private static final Path TEST_RESULTS_PATH = Path.of("src", "test", "resources", "test-data", "test-results");
 

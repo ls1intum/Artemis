@@ -72,7 +72,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // This is important in the context of Maven because it avoids potential race conditions or inconsistencies that could arise if multiple test methods are executed simultaneously.
 @Execution(ExecutionMode.SAME_THREAD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTemplateTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 

@@ -21,6 +21,7 @@ import java.util.UUID;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -49,10 +50,11 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
+@Tag("BucketSmall")
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
-@ResourceLock("AbstractArtemisBuildAgentTest")
+@ResourceLock("BucketSmall")
 // NOTE: Do not use SPRING_PROFILE_TEST as it will cause the test to fail due to missing beans. This is because SPRING_PROFILE_TEST will cause some
 // test services, which dependencies are not provided since we are not running the full application context, to be created.
 @ActiveProfiles({ PROFILE_BUILDAGENT, PROFILE_TEST_BUILDAGENT })
