@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 
@@ -101,7 +103,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             SecurityUtils.setAuthorizationObject();
 
-            List<ProgrammingExercise> exercisesToBeScheduled = programmingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
+            // Use optimized queries to find exercises to be scheduled without eagerly loading all participations
+            ZonedDateTime now = ZonedDateTime.now();
+            Set<Long> exerciseIdsByDates = programmingExerciseRepository.findAllExerciseIdsToBeScheduledByExerciseDates(now);
+            Set<Long> exerciseIdsWithIndividualDueDates = programmingExerciseRepository.findAllExerciseIdsWithIndividualDueDatesAfter(now);
+
+            // Combine all exercise IDs
+            Set<Long> allExerciseIds = new HashSet<>(exerciseIdsByDates);
+            allExerciseIds.addAll(exerciseIdsWithIndividualDueDates);
+
+            // Load exercises without participations (participations will be loaded on-demand during scheduling)
+            List<ProgrammingExercise> exercisesToBeScheduled = allExerciseIds.isEmpty() ? List.of() : programmingExerciseRepository.findAllByIdIn(allExerciseIds);
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
             List<ProgrammingExercise> programmingExercisesWithTestsAfterDueDateButNoRebuild = programmingExerciseRepository

@@ -187,11 +187,20 @@
             "competencyMissing": "Der Kompetenzlink muss eine Kompetenz referenzieren.",
             "courseMissing": "Die referenzierte Kompetenz ist keinem Kurs zugeordnet."
         },
+        "Exercise": {
+            "titleLengthInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
+            "titlePatternInvalid": "Der Titel ist ungültig."
+        },
+        "FileUploadExercise": {
+            "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
+            "courseIdMissing": "Die courseId ist erforderlich.",
+            "courseIdInvalid": "Der Kurs darf nicht geändert werden.",
+            "courseOrExerciseGroupRequired": "Es muss entweder courseId oder exerciseGroupId gesetzt sein, aber nicht beides.",
+            "exerciseGroupIdMissing": "Die exerciseGroupId ist für Klausuraufgaben erforderlich."
+        },
         "ModelingExercise": {
             "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
             "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
-            "titleLengthInvalid": "Der Titel ist nicht festgelegt oder zu kurz.",
-            "titlePatternInvalid": "Der Titel ist ungültig.",
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
