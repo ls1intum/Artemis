@@ -354,14 +354,26 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * Core update logic matching the pattern used in ModelingExerciseResource.
-     * Captures old values before mutation and handles save/notification.
+     * Core update logic for file upload exercises, following the same pattern as {@code ModelingExerciseResource}.
+     * <p>
+     * <b>Why capture old values before mutation?</b>
+     * The {@link #update} method mutates the entity in place. To detect what changed (for notifications,
+     * score recalculations, etc.), we must capture the original values before applying the DTO updates.
+     * <p>
+     * <b>Processing steps:</b>
+     * <ol>
+     * <li>Capture old values (dates, points, problem statement) for change detection</li>
+     * <li>Apply DTO values to entity via {@link #update}</li>
+     * <li>Validate the updated exercise</li>
+     * <li>Save with competency links</li>
+     * <li>Trigger side effects: score updates, notifications, competency progress, versioning</li>
+     * </ol>
      *
-     * @param updateFileUploadExerciseDTO the DTO with updated values
-     * @param originalExercise            the existing exercise entity (will be mutated)
-     * @param notificationText            optional notification text for students
-     * @param user                        the user performing the update (if null, will be loaded)
-     * @return ResponseEntity with the updated exercise
+     * @param updateFileUploadExerciseDTO the DTO containing the new values
+     * @param originalExercise            the existing exercise entity (will be mutated in place)
+     * @param notificationText            optional text to include in student notifications
+     * @param user                        the user performing the update (loaded if null)
+     * @return ResponseEntity containing the persisted exercise
      */
     private ResponseEntity<FileUploadExercise> doUpdateFileUploadExercise(UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO, FileUploadExercise originalExercise,
             String notificationText, User user) {
@@ -370,7 +382,9 @@ public class FileUploadExerciseResource {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
 
-        // Capture old values BEFORE mutation (same pattern as ModelingExerciseResource)
+        // ========== 1. Capture old values BEFORE mutation ==========
+        // These are needed to detect changes for notifications and score recalculations.
+        // After update() is called, originalExercise will contain the NEW values.
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
         ZonedDateTime oldReleaseDate = originalExercise.getReleaseDate();
@@ -378,27 +392,37 @@ public class FileUploadExerciseResource {
         Double oldBonusPoints = originalExercise.getBonusPoints();
         String oldProblemStatement = originalExercise.getProblemStatement();
 
+        // ========== 2. Apply DTO values to entity ==========
         FileUploadExercise updatedExercise = update(updateFileUploadExerciseDTO, originalExercise);
-        // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(updatedExercise);
 
-        // Forbid conversion between normal course exercise and exam exercise
+        // Prevent changing between course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedExercise, originalExercise, ENTITY_NAME);
 
+        // Update the communication channel if the channel name changed
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
+        // ========== 3. Persist changes ==========
         var persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, fileUploadExerciseRepository::save);
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+
+        // ========== 4. Handle side effects based on what changed ==========
+        // Recalculate participant scores if max points or bonus points changed
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
 
+        // Remove individual due dates that are now before the exercise due date
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
 
+        // Send notifications if release date, assessment date, or problem statement changed
         exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
+
+        // Handle slide unlocking if due date changed
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
+        // Update competency progress for affected students
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
 
-        // Notify AtlasML about the exercise update
+        // Sync with AtlasML for AI-based features
         atlasMLApi.ifPresent(api -> {
             try {
                 api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
@@ -407,6 +431,8 @@ public class FileUploadExerciseResource {
                 log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
             }
         });
+
+        // Create a version snapshot for history tracking
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
         return ResponseEntity.ok(persistedExercise);
@@ -562,22 +588,26 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and
-     * updates an existing fileUploadExercise.
+     * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     * <p>
+     * <b>What is re-evaluation?</b>
+     * When grading criteria or grading instructions change, existing submissions may need to be re-scored.
+     * This endpoint applies the updated exercise settings and triggers re-evaluation of all existing results.
+     * <p>
+     * <b>Processing flow:</b>
+     * <ol>
+     * <li>Apply DTO updates to the exercise (same as regular update)</li>
+     * <li>Re-evaluate all existing results based on the new grading criteria</li>
+     * <li>Optionally delete feedback associated with removed grading instructions</li>
+     * <li>Delegate to the regular update endpoint for persistence and notifications</li>
+     * </ol>
+     * <p>
+     * This follows the same pattern as {@code ModelingExerciseResource.reEvaluateAndUpdateModelingExercise()}.
      *
-     * @param exerciseId                                  of the exercise
-     * @param updateFileUploadExerciseDTO                 the fileUploadExerciseDTO to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that
-     *                                                        indicates whether the
-     *                                                        associated feedback should
-     *                                                        be deleted or not
-     * @return the ResponseEntity with status 200 (OK) and with body the updated
-     *         fileUploadExercise, or
-     *         with status 400 (Bad Request) if the fileUploadExercise is not valid,
-     *         or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body,
-     *         or with status 500 (Internal
-     *         Server Error) if the fileUploadExercise couldn't be updated
+     * @param exerciseId                                  the ID of the exercise to re-evaluate
+     * @param updateFileUploadExerciseDTO                 the DTO containing updated exercise settings
+     * @param deleteFeedbackAfterGradingInstructionUpdate if true, feedback linked to removed grading instructions is deleted
+     * @return the updated exercise, or 400/409/500 on error
      */
     @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
@@ -586,7 +616,6 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", updateFileUploadExerciseDTO);
 
-        // Validate that path exerciseId matches DTO id
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateFileUploadExerciseDTO.id());
 
         final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
@@ -629,6 +658,7 @@ public class FileUploadExerciseResource {
      * @param exercise the exercise to mutate
      */
     private void updateGradingCriteria(UpdateFileUploadExerciseDTO dto, FileUploadExercise exercise) {
+        // Empty or null means "remove all criteria"
         if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
             clearInitializedCollection(exercise.getGradingCriteria());
             return;
@@ -636,21 +666,27 @@ public class FileUploadExerciseResource {
 
         Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
 
+        // Build lookup map for existing criteria by ID
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
+        // Process each DTO: update existing criteria or create new ones
         Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+            // DTO with id=null means "create new criterion"
             GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
             if (criterion == null) {
+                // Create new criterion from DTO
                 criterion = gcDto.toEntity();
                 criterion.setExercise(exercise);
             }
             else {
+                // Update existing criterion in place (preserves Hibernate managed state)
                 gcDto.applyTo(criterion);
             }
             return criterion;
         }).collect(Collectors.toSet());
 
+        // Replace collection contents (criteria not in DTO are removed via orphanRemoval)
         managedCriteria.clear();
         managedCriteria.addAll(updated);
     }
@@ -752,13 +788,24 @@ public class FileUploadExerciseResource {
         exercise.setAssessmentDueDate(updateFileUploadExerciseDTO.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(updateFileUploadExerciseDTO.exampleSolutionPublicationDate());
 
-        // validates general settings: points, dates
+        // Validates general settings: points, dates
         exercise.validateGeneralSettings();
 
-        exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments());
-        exercise.setAllowFeedbackRequests(updateFileUploadExerciseDTO.allowFeedbackRequests());
-        exercise.setPresentationScoreEnabled(updateFileUploadExerciseDTO.presentationScoreEnabled());
-        exercise.setSecondCorrectionEnabled(updateFileUploadExerciseDTO.secondCorrectionEnabled());
+        // Boolean fields use null-check to support partial updates:
+        // If the client omits a field (null), the existing value is preserved.
+        // This matches the pattern in ModelingExerciseResource.
+        if (updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments());
+        }
+        if (updateFileUploadExerciseDTO.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(updateFileUploadExerciseDTO.allowFeedbackRequests());
+        }
+        if (updateFileUploadExerciseDTO.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(updateFileUploadExerciseDTO.presentationScoreEnabled());
+        }
+        if (updateFileUploadExerciseDTO.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(updateFileUploadExerciseDTO.secondCorrectionEnabled());
+        }
         exercise.setFeedbackSuggestionModule(updateFileUploadExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateFileUploadExerciseDTO.gradingInstructions());
 
