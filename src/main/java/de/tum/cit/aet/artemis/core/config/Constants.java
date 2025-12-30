@@ -443,6 +443,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_FILEUPLOAD = "fileupload";
 
     /**
+     * The name of the module feature used for Lecture functionality.
+     */
+    public static final String MODULE_FEATURE_LECTURE = "lecture";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
@@ -491,6 +496,11 @@ public final class Constants {
      * The name of the property used to enable or disable file upload exercise functionality.
      */
     public static final String FILEUPLOAD_ENABLED_PROPERTY_NAME = "artemis.fileupload.enabled";
+
+    /**
+     * The name of the property used to enable or disable lecture functionality.
+     */
+    public static final String LECTURE_ENABLED_PROPERTY_NAME = "artemis.lecture.enabled";
 
     /**
      * The name of the property used to enable or disable tutorial group functionality.

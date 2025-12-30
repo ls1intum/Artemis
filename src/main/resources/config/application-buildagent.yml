@@ -22,6 +22,8 @@ artemis:
         enabled: false
     fileupload:
         enabled: false
+    lecture:
+        enabled: false
     tutorialgroup:
         enabled: false
     user-management:

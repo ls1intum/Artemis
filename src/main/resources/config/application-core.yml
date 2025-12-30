@@ -13,6 +13,8 @@ artemis:
         enabled: true
     fileupload:
         enabled: true
+    lecture:
+        enabled: true
     sharing:
         enabled: false
         # the shared common secret

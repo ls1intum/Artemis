@@ -121,6 +121,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the lecture module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the lecture module is enabled, false otherwise
+     */
+    public boolean isLectureEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.LECTURE_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the tutorial group feature is enabled.
      *
      * @param environment the Spring environment
@@ -169,6 +179,9 @@ public class ArtemisConfigHelper {
         }
         if (isFileUploadEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_FILEUPLOAD);
+        }
+        if (isLectureEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LECTURE);
         }
         if (isTutorialGroupEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
