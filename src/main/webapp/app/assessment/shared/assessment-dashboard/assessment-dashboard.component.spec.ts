@@ -36,7 +36,7 @@ import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-d
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
-describe('AssessmentDashboardInformationComponent', () => {
+describe('AssessmentDashboardComponent', () => {
     setupTestBed({ zoneless: true });
     let comp: AssessmentDashboardComponent;
     let fixture: ComponentFixture<AssessmentDashboardComponent>;
