@@ -35,6 +35,9 @@ export class AssessmentWarningComponent {
                 const now = dayjs();
                 this.isBeforeExerciseDueDate = now.isBefore(exercise.dueDate);
                 this.showWarning = now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests;
+            } else {
+                this.isBeforeExerciseDueDate = false;
+                this.showWarning = false;
             }
         });
     }

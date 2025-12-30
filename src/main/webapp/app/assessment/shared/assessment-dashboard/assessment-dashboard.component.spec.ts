@@ -51,7 +51,6 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     let exerciseService: ExerciseService;
 
-    let accountService: AccountService;
     let sortService: SortService;
 
     const programmingExercise = {
@@ -167,9 +166,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 getStatsForTutorsStub = vi
                     .spyOn(courseManagementService, 'getStatsForTutors')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
-
-                accountService = TestBed.inject(AccountService);
-                vi.spyOn(accountService, 'isAtLeastInstructorInCourse');
             });
     });
 

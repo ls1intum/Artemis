@@ -24,7 +24,16 @@ export class AssessmentNoteComponent {
         }
         const value = target.value;
         const currentNote = this.assessmentNote();
-        const updatedNote: AssessmentNote = currentNote ? { ...currentNote, note: value } : { note: value };
+
+        const updatedNote = new AssessmentNote();
+        if (currentNote) {
+            updatedNote.id = currentNote.id;
+            updatedNote.creator = currentNote.creator;
+            updatedNote.createdDate = currentNote.createdDate;
+            updatedNote.lastUpdatedDate = currentNote.lastUpdatedDate;
+        }
+        updatedNote.note = value;
+
         this.onAssessmentNoteChange.emit(updatedNote);
     }
 }
