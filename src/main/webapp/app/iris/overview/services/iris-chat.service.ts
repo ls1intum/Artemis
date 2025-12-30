@@ -195,10 +195,10 @@ export class IrisChatService implements OnDestroy {
 
         const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], this.randomInt(), uncommittedFiles);
 
-        return this.http.createMessage(this.sessionId, requestDTO).pipe(
-            tap((m) => {
+        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
+            tap((response: HttpResponse<IrisUserMessage>) => {
                 this.suggestions.next([]);
-                this.replaceOrAddMessage(m.body!);
+                this.replaceOrAddMessage(response.body!);
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
