@@ -330,22 +330,17 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", updateFileUploadExerciseDTO);
-        // TODO: The route has an exerciseId but we don't do anything useful with it.
-        // Change route and client requests?
+
+        // Validate that path exerciseId matches DTO id
+        authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateFileUploadExerciseDTO.id());
+
         final FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
-        ZonedDateTime oldDueDate = fileUploadExerciseBeforeUpdate.getDueDate();
-        ZonedDateTime oldAssessmentDueDate = fileUploadExerciseBeforeUpdate.getAssessmentDueDate();
-        ZonedDateTime oldReleaseDate = fileUploadExerciseBeforeUpdate.getReleaseDate();
-        Double oldMaxPoints = fileUploadExerciseBeforeUpdate.getMaxPoints();
-        Double oldBonusPoints = fileUploadExerciseBeforeUpdate.getBonusPoints();
-        String oldProblemStatement = fileUploadExerciseBeforeUpdate.getProblemStatement();
+        // Validate courseId and exerciseGroupId exclusivity
+        validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate);
 
         // Retrieve the course over the exerciseGroup or the given courseId
-        if (updateFileUploadExerciseDTO.courseId() == null) {
-            throw new BadRequestAlertException("The courseId is required.", ENTITY_NAME, "courseIdMissing");
-        }
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
         if (!Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
             throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
@@ -354,6 +349,32 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        return doUpdateFileUploadExercise(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, notificationText, user);
+    }
+
+    /**
+     * Core update logic extracted for reuse by both update and re-evaluate endpoints.
+     *
+     * @param updateFileUploadExerciseDTO    the DTO with updated values
+     * @param fileUploadExerciseBeforeUpdate the existing exercise entity (already loaded with associations)
+     * @param notificationText               optional notification text for students
+     * @param user                           the user performing the update (if null, will be loaded)
+     * @return ResponseEntity with the updated exercise
+     */
+    private ResponseEntity<FileUploadExercise> doUpdateFileUploadExercise(UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO,
+            FileUploadExercise fileUploadExerciseBeforeUpdate, String notificationText, User user) {
+
+        if (user == null) {
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+
+        ZonedDateTime oldDueDate = fileUploadExerciseBeforeUpdate.getDueDate();
+        ZonedDateTime oldAssessmentDueDate = fileUploadExerciseBeforeUpdate.getAssessmentDueDate();
+        ZonedDateTime oldReleaseDate = fileUploadExerciseBeforeUpdate.getReleaseDate();
+        Double oldMaxPoints = fileUploadExerciseBeforeUpdate.getMaxPoints();
+        Double oldBonusPoints = fileUploadExerciseBeforeUpdate.getBonusPoints();
+        String oldProblemStatement = fileUploadExerciseBeforeUpdate.getProblemStatement();
 
         FileUploadExercise updatedFileUploadExercise = update(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate);
         // Validate the updated file upload exercise
@@ -385,6 +406,32 @@ public class FileUploadExerciseResource {
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
         return ResponseEntity.ok(persistedExercise);
+    }
+
+    /**
+     * Validates that the DTO has valid courseId/exerciseGroupId combination.
+     * Exactly one of courseId or exerciseGroupId must be set, matching the stored exercise.
+     *
+     * @param dto              the update DTO
+     * @param existingExercise the existing exercise entity
+     * @throws BadRequestAlertException if both or neither are set, or if they don't match the stored exercise
+     */
+    private void validateCourseAndExerciseGroupExclusivity(UpdateFileUploadExerciseDTO dto, FileUploadExercise existingExercise) {
+        boolean hasCourseId = dto.courseId() != null;
+        boolean hasExerciseGroupId = dto.exerciseGroupId() != null;
+
+        // Both set or neither set is invalid
+        if (hasCourseId == hasExerciseGroupId) {
+            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set, but not both.", ENTITY_NAME, "courseOrExerciseGroupRequired");
+        }
+
+        // Validate consistency with stored exercise
+        if (existingExercise.isCourseExercise() && !hasCourseId) {
+            throw new BadRequestAlertException("Course exercise requires courseId.", ENTITY_NAME, "courseIdMissing");
+        }
+        if (existingExercise.isExamExercise() && !hasExerciseGroupId) {
+            throw new BadRequestAlertException("Exam exercise requires exerciseGroupId.", ENTITY_NAME, "exerciseGroupIdMissing");
+        }
     }
 
     /**
@@ -525,20 +572,26 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", updateFileUploadExerciseDTO);
 
+        // Validate that path exerciseId matches DTO id
+        authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateFileUploadExerciseDTO.id());
+
         final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
-        // check that the exercise exists for given id
-        authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateFileUploadExerciseDTO.id());
+        // Validate courseId and exerciseGroupId exclusivity
+        validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, existingExercise);
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
 
         // Check that the user is authorized to update the exercise
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
+        FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateFileUploadExercise(updateFileUploadExerciseDTO, null, updateFileUploadExerciseDTO.id());
+
+        // Use the extracted core update logic to avoid loading the entity again
+        return doUpdateFileUploadExercise(updateFileUploadExerciseDTO, existingExercise, null, user);
     }
 
     /**

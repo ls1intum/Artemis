@@ -425,6 +425,56 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
+        // Test case 1: Exam exercise - send DTO with both courseId and exerciseGroupId set
+        FileUploadExercise examExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
+        UpdateFileUploadExerciseDTO dtoWithBothSet = createDtoWithBothCourseAndExerciseGroup(examExercise);
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithBothSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test case 2: Exam exercise - send DTO with neither courseId nor exerciseGroupId set
+        UpdateFileUploadExerciseDTO dtoWithNeitherSet = createDtoWithNeitherCourseNorExerciseGroup(examExercise);
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test case 3: Course exercise - send DTO with both courseId and exerciseGroupId set
+        Course testCourse = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise courseExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(testCourse.getExercises(), "released");
+        UpdateFileUploadExerciseDTO courseDtoWithBothSet = createDtoWithBothCourseAndExerciseGroup(courseExercise);
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithBothSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test case 4: Course exercise - send DTO with neither courseId nor exerciseGroupId set
+        UpdateFileUploadExerciseDTO courseDtoWithNeitherSet = createDtoWithNeitherCourseNorExerciseGroup(courseExercise);
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Creates a DTO from the exercise but with both courseId and exerciseGroupId set (invalid).
+     */
+    private UpdateFileUploadExerciseDTO createDtoWithBothCourseAndExerciseGroup(FileUploadExercise exercise) {
+        UpdateFileUploadExerciseDTO original = UpdateFileUploadExerciseDTO.of(exercise);
+        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : 1L;
+        Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : 1L;
+        return new UpdateFileUploadExerciseDTO(original.id(), original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
+                original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
+                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
+                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
+                original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), courseId, exerciseGroupId, original.gradingCriteria(),
+                original.competencyLinks());
+    }
+
+    /**
+     * Creates a DTO from the exercise but with neither courseId nor exerciseGroupId set (invalid).
+     */
+    private UpdateFileUploadExerciseDTO createDtoWithNeitherCourseNorExerciseGroup(FileUploadExercise exercise) {
+        UpdateFileUploadExerciseDTO original = UpdateFileUploadExerciseDTO.of(exercise);
+        return new UpdateFileUploadExerciseDTO(original.id(), original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
+                original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
+                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
+                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
+                original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), null, null, original.gradingCriteria(), original.competencyLinks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_conversionBetweenCourseAndExamExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExerciseWithExerciseGroup = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
 

@@ -193,7 +193,9 @@
         "FileUploadExercise": {
             "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
             "courseIdMissing": "Die courseId ist erforderlich.",
-            "courseIdInvalid": "Der Kurs darf nicht geändert werden."
+            "courseIdInvalid": "Der Kurs darf nicht geändert werden.",
+            "courseOrExerciseGroupRequired": "Es muss entweder courseId oder exerciseGroupId gesetzt sein, aber nicht beides.",
+            "exerciseGroupIdMissing": "Die exerciseGroupId ist für Klausuraufgaben erforderlich."
         },
         "ModelingExercise": {
             "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",

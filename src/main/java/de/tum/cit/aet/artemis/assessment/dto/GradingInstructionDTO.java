@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingInstructionDTO(@NotNull(message = "The ID does not exist") Long id, double credits, String gradingScale, String instructionDescription, String feedback,
+public record GradingInstructionDTO(@NotNull(message = "The ID is required") Long id, double credits, String gradingScale, String instructionDescription, String feedback,
         int usageCount) {
 
     /**

@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingCriterionDTO(@NotNull(message = "The ID does not exist") Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
+public record GradingCriterionDTO(@NotNull(message = "The ID is required") Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
 
     /**
      * Convert GradingCriterion to GradingCriterionDTO. Used in the exercise DTOs for Athena.
