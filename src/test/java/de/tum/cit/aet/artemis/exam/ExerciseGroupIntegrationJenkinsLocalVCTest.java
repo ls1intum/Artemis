@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -100,7 +101,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     private void testAllPreAuthorize() throws Exception {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup1), HttpStatus.FORBIDDEN);
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
         request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.FORBIDDEN, ExerciseGroup.class);
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
@@ -129,10 +130,13 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateExerciseGroup_asEditor() throws Exception {
+        // Exercise group with non-existent ID -> not found
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
-        exerciseGroup.setExam(null);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CONFLICT);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup1, HttpStatus.OK);
+        exerciseGroup.setId(999999L);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup), HttpStatus.NOT_FOUND);
+
+        // Valid update
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup1), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
     }
 
