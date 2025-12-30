@@ -266,7 +266,8 @@ Artemis provides various options to customize programming exercises:
 - **Auxiliary Repositories**: Additional repositories with a name, checkout directory, and description. Created and added to the build plan when the exercise is created. **Cannot be changed after exercise creation**
 
 <Callout variant={CalloutVariant.info}>
-  <p>Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set. This can be used for providing additional resources or overwriting template source code in testing exercises.</p>
+  <p>Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set.
+    This can be used for providing additional resources or overwriting template source code in testing exercises.</p>
 </Callout>
 
 </details>
@@ -321,7 +322,8 @@ Artemis provides various options to customize programming exercises:
 - **Allow Custom Branches**: Allow students to push to branches other than the default one
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions. Students are fully responsible for managing their branches. Only activate if absolutely necessary!</p>
+  <p>Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions.
+    Students are fully responsible for managing their branches. Only activate if absolutely necessary!</p>
 </Callout>
 
 - **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression. Pushing is only allowed if it matches
@@ -391,7 +393,8 @@ Artemis provides various options to customize programming exercises:
 
 <Image src={programmingOptionsSca} alt="Programming Options SCA" size={ImageSize.large} caption="Static Code Analysis Configuration" />
 
-- **Max Static Code Analysis Penalty**: Available if static code analysis is active. Maximum points that can be deducted for code quality issues as a percentage (0-100%) of **Points**. Defaults to 100% if empty
+- **Max Static Code Analysis Penalty**: Available if static code analysis is active.
+  Maximum points that can be deducted for code quality issues as a percentage (0-100%) of **Points**. Defaults to 100% if empty
 
 <Callout variant={CalloutVariant.info}>
   <p><strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.</p>
@@ -539,28 +542,28 @@ You can switch between different repositories and <img src={submitButton} alt="S
 
 Write test cases in the Test repository using language-specific frameworks:
 
-| No. | Language | Package Manager | Build System | Testing Framework |
-|-----|----------|----------------|--------------|-------------------|
-| 1 | Java | Maven / Gradle | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares) |
-| 2 | Python | pip | pip | [pytest](https://docs.pytest.org/) |
-| 3 | C | - | Makefile | Python scripts / [FACT](https://fact.readthedocs.io/) |
-| 4 | Haskell | Stack | Stack | [Tasty](https://hackage.haskell.org/package/tasty) |
-| 5 | Kotlin | Maven | Maven | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares) |
-| 6 | VHDL | - | Makefile | Python scripts |
-| 7 | Assembler | - | Makefile | Python scripts |
-| 8 | Swift | SwiftPM | SwiftPM | [XCTest](https://developer.apple.com/documentation/xctest) |
-| 9 | OCaml | opam | Dune | [OUnit2](https://gildor478.github.io/ounit/ounit2/) |
-| 10 | Rust | cargo | cargo | [cargo test](https://doc.rust-lang.org/book/ch11-00-testing.html) |
-| 11 | JavaScript | npm | npm | [Jest](https://jestjs.io/) |
-| 12 | R | built-in | - | [testthat](https://testthat.r-lib.org/) |
-| 13 | C++ | - | CMake | [Catch2](https://github.com/catchorg/Catch2) |
-| 14 | TypeScript | npm | npm | [Jest](https://jestjs.io/) |
-| 15 | C# | NuGet | dotnet | [NUnit](https://nunit.org/) |
-| 16 | Go | built-in | built-in | [go testing](https://pkg.go.dev/testing) |
-| 17 | Bash | - | - | [Bats](https://bats-core.readthedocs.io/) |
-| 18 | MATLAB | mpminstall | - | [matlab.unittest](https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html) |
-| 19 | Ruby | Gem | Rake | [minitest](https://docs.seattlerb.org/minitest/) |
-| 20 | Dart | pub | built-in | [package.test](https://dart.dev/tools/testing) |
+| No. | Language   | Package Manager | Build System   | Testing Framework                                                                        |
+|-----|------------|-----------------|----------------|------------------------------------------------------------------------------------------|
+| 1   | Java       | Maven / Gradle  | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
+| 2   | Python     | pip             | pip            | [pytest](https://docs.pytest.org/)                                                       |
+| 3   | C          | -               | Makefile       | Python scripts / [FACT](https://fact.readthedocs.io/)                                    |
+| 4   | Haskell    | Stack           | Stack          | [Tasty](https://hackage.haskell.org/package/tasty)                                       |
+| 5   | Kotlin     | Maven           | Maven          | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
+| 6   | VHDL       | -               | Makefile       | Python scripts                                                                           |
+| 7   | Assembler  | -               | Makefile       | Python scripts                                                                           |
+| 8   | Swift      | SwiftPM         | SwiftPM        | [XCTest](https://developer.apple.com/documentation/xctest)                               |
+| 9   | OCaml      | opam            | Dune           | [OUnit2](https://gildor478.github.io/ounit/ounit2/)                                      |
+| 10  | Rust       | cargo           | cargo          | [cargo test](https://doc.rust-lang.org/book/ch11-00-testing.html)                        |
+| 11  | JavaScript | npm             | npm            | [Jest](https://jestjs.io/)                                                               |
+| 12  | R          | built-in        | -              | [testthat](https://testthat.r-lib.org/)                                                  |
+| 13  | C++        | -               | CMake          | [Catch2](https://github.com/catchorg/Catch2)                                             |
+| 14  | TypeScript | npm             | npm            | [Jest](https://jestjs.io/)                                                               |
+| 15  | C#         | NuGet           | dotnet         | [NUnit](https://nunit.org/)                                                              |
+| 16  | Go         | built-in        | built-in       | [go testing](https://pkg.go.dev/testing)                                                 |
+| 17  | Bash       | -               | -              | [Bats](https://bats-core.readthedocs.io/)                                                |
+| 18  | MATLAB     | mpminstall      | -              | [matlab.unittest](https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html) |
+| 19  | Ruby       | Gem             | Rake           | [minitest](https://docs.seattlerb.org/minitest/)                                         |
+| 20  | Dart       | pub             | built-in       | [package.test](https://dart.dev/tools/testing)                                           |
 
 Check the build plan results:
 
