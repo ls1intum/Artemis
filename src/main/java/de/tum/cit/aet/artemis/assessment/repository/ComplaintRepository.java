@@ -80,6 +80,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param complaintType the type of complaint
      * @return list of complaints with eagerly loaded result, assessor, submission, participation and exercise
      */
+    // TODO: reduce the fetched associations if not all are needed
     @Query("""
             SELECT c
             FROM Complaint c

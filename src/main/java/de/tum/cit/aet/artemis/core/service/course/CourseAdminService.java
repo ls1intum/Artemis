@@ -127,10 +127,11 @@ public class CourseAdminService {
         long numberOfEditors = userRepository.countUserInGroup(course.getEditorGroupName());
         long numberOfInstructors = userRepository.countUserInGroup(course.getInstructorGroupName());
 
-        // Student Work
-        long numberOfParticipations = participationRepository.countByCourseId(courseId);
-        long numberOfSubmissions = submissionRepository.countByCourseId(courseId);
         Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+
+        // Student Work
+        long numberOfParticipations = exerciseIds.isEmpty() ? 0L : participationRepository.countByExerciseIds(exerciseIds);
+        long numberOfSubmissions = exerciseIds.isEmpty() ? 0L : submissionRepository.countByExerciseIds(exerciseIds);
         long numberOfResults = exerciseIds.isEmpty() ? 0L : resultRepository.countByExerciseIds(exerciseIds);
 
         // Communication
