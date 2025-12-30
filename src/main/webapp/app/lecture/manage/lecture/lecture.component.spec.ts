@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -14,8 +14,8 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
@@ -23,11 +23,14 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { PdfUploadTarget, PdfUploadTargetDialogComponent } from 'app/lecture/manage/pdf-upload-target-dialog/pdf-upload-target-dialog.component';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -153,6 +156,8 @@ describe('Lecture', () => {
                     },
                 }),
                 MockProvider(IrisSettingsService),
+                MockProvider(AttachmentVideoUnitService),
+                MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -264,106 +269,306 @@ describe('Lecture', () => {
         expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
     });
 
-    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
-        lectureComponent.lectures = [lectureToIngest];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        lectureComponent.ingestLecturesInPyris();
-        expect(ingestSpy).toHaveBeenCalledWith(lectureToIngest.course?.id);
-        expect(ingestSpy).toHaveBeenCalledOnce();
+    it('should return lecture id from trackId', () => {
+        const lecture = new Lecture();
+        lecture.id = 42;
+
+        const result = lectureComponent.trackId(0, lecture);
+
+        expect(result).toBe(42);
     });
 
-    it('should update ingestion states correctly when getIngestionState returns data', () => {
-        lectureComponent.courseId = 99;
-        lectureComponent.lectures = [lectureToIngest, pastLecture];
-        const mockIngestionStates = {
-            1: IngestionState.DONE,
-            6: IngestionState.PARTIALLY_INGESTED,
-        };
+    it('should navigate to lecture creation page with existing lectures state', () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        lectureComponentFixture.detectChanges();
 
-        jest.spyOn(lectureService, 'getIngestionState').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: mockIngestionStates,
-                    status: 200,
-                }),
-            ),
-        );
+        lectureComponent.navigateToLectureCreationPage();
 
-        lectureComponent.updateIngestionStates();
-
-        expect(lectureService.getIngestionState).toHaveBeenCalledWith(lectureToIngest.course!.id!);
-        expect(lectureToIngest.ingested).toBe(IngestionState.DONE);
-        expect(pastLecture.ingested).toBe(IngestionState.PARTIALLY_INGESTED);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 'new'], {
+            state: { existingLectures: lectureComponent.lectures },
+        });
     });
 
-    it('should not call the service if the first lecture does not exist', () => {
-        lectureComponent.lectures = [];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        lectureComponent.ingestLecturesInPyris();
-        expect(ingestSpy).not.toHaveBeenCalled();
+    it('should handle error when deleting lecture fails', () => {
+        const errorMessage = 'Delete failed';
+        jest.spyOn(lectureService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 400 })));
+
+        lectureComponentFixture.detectChanges();
+        const initialLectureCount = lectureComponent.lectures.length;
+
+        // Subscribe to dialogError$ to capture the error
+        let capturedError = '';
+        lectureComponent.dialogError$.subscribe((error) => (capturedError = error));
+
+        lectureComponent.deleteLecture(pastLecture.id!);
+
+        expect(lectureComponent.lectures).toHaveLength(initialLectureCount);
+        expect(capturedError).toBeTruthy();
     });
 
-    it('should do nothing when error occurs', () => {
-        lectureComponent.lectures = [lectureToIngest];
-        jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
-        lectureComponent.ingestLecturesInPyris();
+    it('should handle import modal dismissal gracefully', async () => {
+        const dismissPromise = Promise.reject('dismissed');
+        jest.spyOn(modalService, 'open').mockReturnValue({ result: dismissPromise } as unknown as NgbModalRef);
+        const importSpy = jest.spyOn(lectureService, 'import');
+
+        lectureComponentFixture.detectChanges();
+        lectureComponent.openImportModal();
+
+        await expect(dismissPromise).toReject();
+        expect(importSpy).not.toHaveBeenCalled();
     });
 
-    function setupInitializationTests() {
-        const updateIngestionStatesSpy = jest.spyOn(lectureComponent, 'updateIngestionStates');
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+    it('should handle import error', fakeAsync(() => {
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = jest.spyOn(alertService, 'error');
+        jest.spyOn(modalService, 'open').mockReturnValue({ result: Promise.resolve({ id: 123 } as Lecture) } as unknown as NgbModalRef);
+        // Use status 400 because onError explicitly skips 500 errors
+        jest.spyOn(lectureService, 'import').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
-        // Mock the services with Subjects to control when they emit
-        const lectureSubject = new Subject<HttpResponse<Lecture[]>>();
-        const settingsSubject = new Subject<any>();
+        lectureComponentFixture.detectChanges();
+        lectureComponent.openImportModal();
+        tick();
 
-        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(lectureSubject.asObservable());
-        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCombinedCourseSettings').mockReturnValue(settingsSubject.asObservable());
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+    }));
 
-        // Set up test data
-        const lectures = [lectureToIngest];
-        const enabledSettings = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        };
+    it('should handle error when loading lectures fails', fakeAsync(() => {
+        // Set up error mock before triggering ngOnInit
+        // Use status 400 because onError explicitly skips 500 errors
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = jest.spyOn(alertService, 'error');
 
-        return {
-            updateIngestionStatesSpy,
-            lectureSubject,
-            settingsSubject,
-            lectures,
-            enabledSettings,
-        };
-    }
-
-    it('should properly load ingestion state when lectures load first, then settings', () => {
-        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
-
-        // Initialize component
+        // Manually trigger ngOnInit to use the error mock
         lectureComponent.ngOnInit();
+        tick();
 
-        // Emit lectures first
-        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
-        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+    }));
 
-        // Then emit settings
-        settingsSubject.next(enabledSettings);
-        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
-    });
+    describe('PDF drop zone functionality', () => {
+        let attachmentVideoUnitService: AttachmentVideoUnitService;
+        let alertService: AlertService;
+        let router: Router;
 
-    it('should properly load ingestion state when settings load first, then lectures', () => {
-        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
+        beforeEach(() => {
+            attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            alertService = TestBed.inject(AlertService);
+            router = TestBed.inject(Router);
+        });
 
-        // Initialize component
-        lectureComponent.ngOnInit();
+        it('should open dialog when PDF files are dropped', () => {
+            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.reject('dismissed'),
+            } as unknown as NgbModalRef);
 
-        // Emit settings first
-        settingsSubject.next(enabledSettings);
-        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })];
 
-        // Then emit lectures
-        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
-        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
+            lectureComponent.onPdfFilesDropped(files);
+
+            expect(openSpy).toHaveBeenCalledWith(PdfUploadTargetDialogComponent, { size: 'lg', backdrop: 'static' });
+        });
+
+        it('should pass lectures and files to dialog', () => {
+            const initializeWithFilesSpy = jest.fn();
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: initializeWithFilesSpy },
+                result: Promise.reject('dismissed'),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })];
+
+            lectureComponent.onPdfFilesDropped(files);
+
+            expect(initializeWithFilesSpy).toHaveBeenCalledWith(files);
+        });
+
+        it('should create new lecture with units when dialog returns new target', fakeAsync(() => {
+            const createdLecture = new Lecture();
+            createdLecture.id = 999;
+            createdLecture.title = 'New Lecture';
+            createdLecture.course = { id: 1 } as Course;
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            jest.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: createdLecture, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            const successSpy = jest.spyOn(alertService, 'success');
+
+            const dialogResult: PdfUploadTarget = {
+                targetType: 'new',
+                newLectureTitle: 'New Lecture',
+            };
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.resolve(dialogResult),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'Chapter_01.pdf', { type: 'application/pdf' })];
+
+            lectureComponent.onPdfFilesDropped(files);
+            tick();
+
+            expect(lectureService.create).toHaveBeenCalled();
+            expect(attachmentVideoUnitService.createAttachmentVideoUnitFromFile).toHaveBeenCalled();
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 999, 'edit']);
+            expect(lectureComponent.isUploadingPdfs()).toBeFalse();
+        }));
+
+        it('should create units for existing lecture when dialog returns existing target', fakeAsync(() => {
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            const successSpy = jest.spyOn(alertService, 'success');
+
+            const dialogResult: PdfUploadTarget = {
+                targetType: 'existing',
+                lectureId: 42,
+            };
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.resolve(dialogResult),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'Chapter_01.pdf', { type: 'application/pdf' })];
+
+            lectureComponent.onPdfFilesDropped(files);
+            tick();
+
+            expect(attachmentVideoUnitService.createAttachmentVideoUnitFromFile).toHaveBeenCalled();
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 42, 'edit']);
+            expect(lectureComponent.isUploadingPdfs()).toBeFalse();
+        }));
+
+        it('should handle multiple PDF files', fakeAsync(() => {
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            const dialogResult: PdfUploadTarget = {
+                targetType: 'existing',
+                lectureId: 42,
+            };
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.resolve(dialogResult),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [
+                new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
+                new File(['content2'], 'file2.pdf', { type: 'application/pdf' }),
+                new File(['content3'], 'file3.pdf', { type: 'application/pdf' }),
+            ];
+
+            lectureComponent.onPdfFilesDropped(files);
+            tick();
+
+            expect(createSpy).toHaveBeenCalledTimes(3);
+        }));
+
+        it('should handle error when creating lecture fails', fakeAsync(() => {
+            jest.spyOn(lectureService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            const dialogResult: PdfUploadTarget = {
+                targetType: 'new',
+                newLectureTitle: 'New Lecture',
+            };
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.resolve(dialogResult),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })];
+
+            lectureComponent.onPdfFilesDropped(files);
+            tick();
+
+            // Error handling sets isUploadingPdfs to false
+            expect(lectureComponent.isUploadingPdfs()).toBeFalse();
+        }));
+
+        it('should handle error when creating attachment unit fails', fakeAsync(() => {
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            const dialogResult: PdfUploadTarget = {
+                targetType: 'existing',
+                lectureId: 42,
+            };
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.resolve(dialogResult),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })];
+
+            lectureComponent.onPdfFilesDropped(files);
+            tick();
+
+            // Error handling sets isUploadingPdfs to false
+            expect(lectureComponent.isUploadingPdfs()).toBeFalse();
+        }));
+
+        it('should do nothing when dialog is dismissed', fakeAsync(() => {
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.reject('dismissed'),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })];
+
+            lectureComponent.onPdfFilesDropped(files);
+            tick();
+
+            expect(createSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should call service with correct lecture id and file', fakeAsync(() => {
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            const dialogResult: PdfUploadTarget = {
+                targetType: 'existing',
+                lectureId: 42,
+            };
+
+            jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
+                result: Promise.resolve(dialogResult),
+            } as unknown as NgbModalRef);
+
+            lectureComponentFixture.detectChanges();
+            const pdfFile = new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' });
+
+            lectureComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+
+            expect(createSpy).toHaveBeenCalledWith(42, pdfFile);
+        }));
     });
 });

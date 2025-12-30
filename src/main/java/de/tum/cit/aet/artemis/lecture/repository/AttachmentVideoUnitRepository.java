@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.lecture.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -68,4 +70,31 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
     default AttachmentVideoUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentVideoUnitId) {
         return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentVideoUnitId), attachmentVideoUnitId);
     }
+
+    /**
+     * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.
+     * Used by the backfill scheduler to process legacy units that existed before the processing pipeline was deployed.
+     *
+     * @param now      the current time for determining active courses
+     * @param pageable pagination to limit results
+     * @return list of unprocessed AttachmentVideoUnits
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = avu.id
+            WHERE ps.id IS NULL
+                AND (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                )
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
 }

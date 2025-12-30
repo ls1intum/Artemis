@@ -158,4 +158,17 @@ public class CompetencyService extends CourseCompetencyService {
             exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
         });
     }
+
+    /**
+     * Returns a managed reference to the competency with the given id.
+     * <p>
+     * Uses {@code getReferenceById} to avoid creating detached entities when
+     * creating or updating competency links.
+     *
+     * @param competencyId the id of the competency
+     * @return a managed competency reference
+     */
+    public Competency getReference(Long competencyId) {
+        return competencyRepository.getReferenceById(competencyId);
+    }
 }

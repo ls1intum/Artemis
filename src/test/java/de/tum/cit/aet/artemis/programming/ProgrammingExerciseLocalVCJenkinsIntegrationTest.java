@@ -9,9 +9,12 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTH
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.STUDENT_LOGIN;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -34,7 +37,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -273,7 +275,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_exception_directoryDeleted() throws Exception {
         doThrow(new RuntimeException("Error")).when(zipFileService).extractZipFileRecursively(any(Path.class));
-        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted_WithCleanup();
         verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
@@ -457,12 +459,22 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testNotCreatedError() throws Exception {
-        programmingExerciseTestService.copyRepository_testNotCreatedError();
+        var teamLocalPath = Files.createTempDirectory("teamLocalRepo");
+        try {
+            doReturn(teamLocalPath).when(gitServiceSpy).getDefaultLocalCheckOutPathOfRepo(any());
+            doThrow(new IOException("Checkout got interrupted!")).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+
+            programmingExerciseTestService.copyRepository_testNotCreatedError();
+        }
+        finally {
+            Files.deleteIfExists(teamLocalPath);
+        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_testBadRequestError() throws Exception {
+        doThrow(new IOException()).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
@@ -502,10 +514,8 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateTempDir() throws Exception {
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            mockedFiles.when(() -> Files.createTempDirectory(any(Path.class), any(String.class))).thenThrow(IOException.class);
-            programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, false, false, false);
-        }
+        doThrow(new IOException("Failed to zip")).when(zipFileService).createTemporaryZipFile(any(Path.class), anyList(), anyLong());
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, false, false);
     }
 
     @Test

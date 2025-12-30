@@ -1,18 +1,20 @@
 <div>
     <h3><span jhiTranslate="artemisApp.lecture.sections.units"></span></h3>
     <p><span jhiTranslate="artemisApp.lecture.sections.unitsDescription"></span></p>
+
     <jhi-lecture-unit-management
         [lectureId]="this.lecture.id"
         [emitEditEvents]="true"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
         [showCreationCard]="false"
-        [showCompetencies]="false"
+        [showCompetencies]="true"
+        [showDropZone]="false"
     />
     <div class="form-group w-100 d-flex justify-content-start">
         <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
     </div>
-    <div class="form-group">
-        @if (isEditingLectureUnit) {
+    <div class="form-group" #editFormContainer>
+        @if (isEditingLectureUnit && isAnyUnitFormOpen()) {
             <h4><span jhiTranslate="artemisApp.lecture.editLectureUnit"></span></h4>
         } @else if (isAnyUnitFormOpen()) {
             <h4><span jhiTranslate="artemisApp.lecture.newLectureUnit"></span></h4>
@@ -54,5 +56,9 @@
                 (onCancel)="onCloseLectureUnitForms()"
             />
         }
+    </div>
+
+    <div class="mt-4">
+        <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
     </div>
 </div>

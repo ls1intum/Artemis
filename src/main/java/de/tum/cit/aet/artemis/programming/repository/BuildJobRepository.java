@@ -147,7 +147,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     BuildJobStatisticsDTO findBuildJobStatisticsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE BuildJob b
@@ -165,7 +165,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @param newStatus      the new build status
      * @param buildStartDate the build start date
      */
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE BuildJob b
@@ -214,7 +214,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @param buildJobId the ID of the build job
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of modifying query
     @Query("""
             UPDATE BuildJob b
             SET b.retryCount = b.retryCount + 1

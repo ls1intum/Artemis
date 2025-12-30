@@ -11,13 +11,13 @@ describe(`BrowserFingerprintInterceptor`, () => {
     const instanceIdentifier = 'abcdefgh';
 
     const browserFingerPrintServiceMock = {
-        fingerprint: of(fingerprint),
-        instanceIdentifier: of(instanceIdentifier),
+        browserFingerprint: of(fingerprint),
+        browserInstanceId: of(instanceIdentifier),
     } as any as BrowserFingerprintService;
 
     const falsyBrowserFingerPrintServiceMock = {
-        fingerprint: of(null),
-        instanceIdentifier: of(null),
+        browserFingerprint: of(null),
+        browserInstanceId: of(null),
     } as any as BrowserFingerprintService;
 
     beforeEach(() => {

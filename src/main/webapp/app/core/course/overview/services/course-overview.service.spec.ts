@@ -17,6 +17,7 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 describe('CourseOverviewService', () => {
     let courseOverviewService: CourseOverviewService;
@@ -690,6 +691,74 @@ describe('CourseOverviewService', () => {
 
             expect(result.attendanceChipColor).toBe(expectedColor);
             expect(result.attendanceText).toBe(`Ø ${(ratio * 100).toFixed(0)}%`);
+        });
+    });
+
+    describe('getCorrespondingExerciseGroupByDate with QuizExercise', () => {
+        let quizExercise: QuizExercise;
+
+        beforeEach(() => {
+            quizExercise = new QuizExercise(course, undefined);
+            quizExercise.title = 'Test Quiz';
+        });
+
+        it('should return "current" if the Release Date is today', () => {
+            quizExercise.releaseDate = dayjs();
+            quizExercise.dueDate = dayjs().add(5, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if the Start Date is today', () => {
+            quizExercise.startDate = dayjs();
+            quizExercise.dueDate = dayjs().add(5, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if the Due Date is today', () => {
+            quizExercise.releaseDate = dayjs().subtract(5, 'days');
+            quizExercise.dueDate = dayjs();
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if now is strictly between Release Date and Due Date', () => {
+            quizExercise.releaseDate = dayjs().subtract(1, 'day');
+            quizExercise.dueDate = dayjs().add(1, 'day');
+
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if now is strictly between Start Date and Due Date', () => {
+            quizExercise.startDate = dayjs().subtract(1, 'day');
+            quizExercise.dueDate = dayjs().add(1, 'day');
+
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should fall back to "past" if the quiz is completely over (dates in past)', () => {
+            quizExercise.releaseDate = dayjs().subtract(5, 'days');
+            quizExercise.dueDate = dayjs().subtract(2, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('past');
+        });
+
+        it('should fall back to "future" if the quiz has not started (dates in future)', () => {
+            quizExercise.releaseDate = dayjs().add(5, 'days');
+            quizExercise.dueDate = dayjs().add(7, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('future');
+        });
+
+        it('should handle undefined dates gracefully', () => {
+            quizExercise.releaseDate = undefined;
+            quizExercise.startDate = undefined;
+            quizExercise.dueDate = undefined;
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('noDate');
         });
     });
 });

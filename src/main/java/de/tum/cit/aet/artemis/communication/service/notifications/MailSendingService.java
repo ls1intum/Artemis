@@ -4,12 +4,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +29,6 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -40,11 +41,18 @@ public class MailSendingService {
 
     private static final Logger log = LoggerFactory.getLogger(MailSendingService.class);
 
+    /**
+     * The default mail sender address used by JHipster when no custom configuration is provided.
+     * When this default is detected, email sending is skipped to avoid connection errors in
+     * development and E2E test environments where no mail server is configured.
+     */
+    private static final String DEFAULT_MAIL_FROM = "artemis@localhost";
+
     private final JHipsterProperties jHipsterProperties;
 
     private final JavaMailSender javaMailSender;
 
-    private final ProfileService profileService;
+    private final boolean mailConfigured;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -53,13 +61,19 @@ public class MailSendingService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, ProfileService profileService, MessageSource messageSource,
-            SpringTemplateEngine templateEngine) {
+    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
-        this.profileService = profileService;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
+
+        // Check if mail is properly configured (not using the default placeholder)
+        String mailFrom = jHipsterProperties.getMail().getFrom();
+        this.mailConfigured = mailFrom != null && !mailFrom.isBlank() && !mailFrom.equals(DEFAULT_MAIL_FROM);
+
+        if (!this.mailConfigured) {
+            log.warn("Email sending is disabled. To enable, configure 'jhipster.mail.from' in application.yml");
+        }
     }
 
     /**
@@ -97,12 +111,12 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    public void buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
-        buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
+    public void buildAndSendSync(@NonNull User recipient, @NonNull String subjectKey, @NonNull String contentTemplate, @NonNull Map<String, Object> additionalContextVariables) {
+        buildAndSend(recipient, subjectKey, List.of(), contentTemplate, additionalContextVariables);
     }
 
     /**
-     * Builds and sends an e-mail to the specified sender synchronously
+     * Builds and sends an e-mail to the specified sender asynchronously
      *
      * @param recipient                  who should be contacted.
      * @param subjectKey                 The locale key of the subject
@@ -110,8 +124,23 @@ public class MailSendingService {
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
     @Async
-    public void buildAndSendAsync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
-        buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
+    public void buildAndSendAsync(@NonNull User recipient, @NonNull String subjectKey, @NonNull String contentTemplate, @NonNull Map<String, Object> additionalContextVariables) {
+        buildAndSend(recipient, subjectKey, List.of(), contentTemplate, additionalContextVariables);
+    }
+
+    /**
+     * Builds and sends an e-mail to the specified sender asynchronously with subject arguments
+     *
+     * @param recipient                  who should be contacted.
+     * @param subjectKey                 The locale key of the subject
+     * @param subjectArgs                The arguments to be substituted in the subject message (e.g., for {0}, {1} placeholders)
+     * @param contentTemplate            The thymeleaf .html file path to render
+     * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     */
+    @Async
+    public void buildAndSendAsync(@NonNull User recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
+            @NonNull Map<String, Object> additionalContextVariables) {
+        buildAndSend(recipient, subjectKey, subjectArgs, contentTemplate, additionalContextVariables);
     }
 
     /**
@@ -119,10 +148,12 @@ public class MailSendingService {
      *
      * @param recipient                  who should be contacted.
      * @param subjectKey                 The locale key of the subject
+     * @param subjectArgs                The arguments to be substituted in the subject message
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    private void buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+    private void buildAndSend(@NonNull User recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
+            @NonNull Map<String, Object> additionalContextVariables) {
         String localeKey = recipient.getLangKey();
         if (localeKey == null) {
             localeKey = "en";
@@ -137,7 +168,8 @@ public class MailSendingService {
         String subject;
         String content;
         try {
-            subject = messageSource.getMessage(subjectKey, null, context.getLocale());
+            Object[] argsArray = subjectArgs.isEmpty() ? null : subjectArgs.toArray();
+            subject = messageSource.getMessage(subjectKey, argsArray, context.getLocale());
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
@@ -158,9 +190,8 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        // NOTE: comment this out if you want to send / test emails in development mode
-        if (profileService.isDevActive()) {
-            log.debug("Skipping sending email in development mode");
+        if (!mailConfigured) {
+            log.debug("Skipping email to '{}' - mail not configured", recipient.getEmail());
             return;
         }
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
