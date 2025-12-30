@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -92,7 +93,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
                     HttpStatus.OK);
         }
         else {
-            updatedExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+            updatedExercise = request.putWithResponseBody("/api/text/text-exercises", TextExerciseFromEditorDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
         }
 
         // Assert: Verify operation succeeded

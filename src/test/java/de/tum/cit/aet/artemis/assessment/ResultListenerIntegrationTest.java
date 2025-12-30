@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -104,17 +105,18 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExercisePoints_ShouldUpdatePointsInParticipantScores(boolean isTeamTest) throws Exception {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
-        Exercise exercise;
+        TextExercise exercise;
         if (isTeamTest) {
-            exercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
+            exercise = (TextExercise) exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
         }
         else {
-            exercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
+            exercise = (TextExercise) exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
         }
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.put("/api/text/text-exercises", exercise, HttpStatus.OK);
+        TextExerciseFromEditorDTO dto = TextExerciseFromEditorDTO.of(exercise);
+        request.put("/api/text/text-exercises", dto, HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();
         await().until(() -> participantScoreScheduleService.isIdle());
