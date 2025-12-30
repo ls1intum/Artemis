@@ -98,6 +98,7 @@ Conducting a programming exercise consists of the following main steps:
 
 Artemis supports templates for various programming languages to simplify exercise setup.
 The availability of features depends on the continuous integration system (Local CI or Jenkins) and the programming language.
+Instructors can still use those templates to generate programming exercises and then adapt and customize the settings in the repositories and build plans.
 
 ### Supported Programming Languages
 
@@ -128,8 +129,10 @@ The following table provides an overview of supported programming languages and 
 
 ### Feature Support by Language
 
-Not all templates support the same feature set. The table below provides an overview of supported features for each language:
+Not all templates support the same feature set.
+The table below provides an overview of supported features for each language:
 
+**L** = Local CI, **J** = Jenkins
 | No. | Language   | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type           | Solution Repository Checkout | Auxiliary Repositories |
 |-----|------------|----------------------|----------------------|------------------|--------------|------------------------|------------------------------|------------------------|
 | 1   | Java       | ✅                    | ✅                    | ✅                | ✅            | Gradle, Maven, DejaGnu | ❌                            | L:&nbsp;✅, J:&nbsp;❌   |
@@ -152,8 +155,6 @@ Not all templates support the same feature set. The table below provides an over
 | 18  | MATLAB     | ❌                    | ❌                    | ❌                | ❌            | n/a                    | ❌                            | L:&nbsp;✅, J:&nbsp;❌   |
 | 19  | Ruby       | ❌                    | L:&nbsp;✅; J:&nbsp;❌ | ❌                | ❌            | n/a                    | ❌                            | L:&nbsp;✅, J:&nbsp;❌   |
 | 20  | Dart       | ❌                    | L:&nbsp;✅; J:&nbsp;❌ | ❌                | ❌            | n/a                    | ❌                            | L:&nbsp;✅, J:&nbsp;❌   |
-
-**L** = Local CI, **J** = Jenkins
 
 <Callout variant={CalloutVariant.info}>
   <p><strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI. Instructors can still extend the generated programming exercises with additional features that are not available in a specific template.</p>
