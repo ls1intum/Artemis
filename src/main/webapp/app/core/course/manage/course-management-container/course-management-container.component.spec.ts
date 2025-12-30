@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +20,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -55,6 +54,7 @@ import { CourseSidebarService } from 'app/core/course/overview/services/course-s
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { CourseOperationStatus, CourseOperationType } from 'app/core/course/shared/entities/course-operation-progress.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -145,9 +145,10 @@ describe('CourseManagementContainerComponent', () => {
 
     let findSpy: jest.SpyInstance;
     let findOneForDashboardSpy: jest.SpyInstance;
-    let getDeletionSummarySpy: jest.SpyInstance;
+    let getCourseSummarySpy: jest.SpyInstance;
     let deleteSpy: jest.SpyInstance;
     let courseSidebarService: CourseSidebarService;
+    let websocketService: WebsocketService;
 
     const course = {
         id: 1,
@@ -212,6 +213,11 @@ describe('CourseManagementContainerComponent', () => {
                 localStorageService = TestBed.inject(LocalStorageService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
+                websocketService = TestBed.inject(WebsocketService);
+
+                // Mock WebsocketService.subscribe to return an empty observable
+                jest.spyOn(websocketService, 'subscribe').mockReturnValue(EMPTY);
+
                 findSpy = jest.spyOn(courseService, 'find').mockReturnValue(
                     of(
                         new HttpResponse({
@@ -240,7 +246,7 @@ describe('CourseManagementContainerComponent', () => {
                     ),
                 );
 
-                getDeletionSummarySpy = jest.spyOn(courseAdminService, 'getDeletionSummary').mockReturnValue(
+                getCourseSummarySpy = jest.spyOn(courseAdminService, 'getCourseSummary').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: {
@@ -248,16 +254,28 @@ describe('CourseManagementContainerComponent', () => {
                                 numberOfTutors: 10,
                                 numberOfEditors: 5,
                                 numberOfInstructors: 2,
-                                numberExams: 2,
-                                numberLectures: 3,
-                                numberProgrammingExercises: 5,
-                                numberTextExercises: 2,
-                                numberFileUploadExercises: 1,
-                                numberQuizExercises: 3,
-                                numberModelingExercises: 0,
-                                numberOfBuilds: 10,
-                                numberOfCommunicationPosts: 20,
+                                numberOfParticipations: 500,
+                                numberOfSubmissions: 1000,
+                                numberOfResults: 800,
+                                numberOfConversations: 5,
+                                numberOfPosts: 20,
                                 numberOfAnswerPosts: 15,
+                                numberOfCompetencies: 8,
+                                numberOfCompetencyProgress: 50,
+                                numberOfLearnerProfiles: 100,
+                                numberOfIrisChatSessions: 10,
+                                numberOfLLMTraces: 25,
+                                numberOfBuilds: 10,
+                                numberOfExams: 2,
+                                numberOfExercises: 11,
+                                numberOfProgrammingExercises: 5,
+                                numberOfTextExercises: 2,
+                                numberOfModelingExercises: 0,
+                                numberOfQuizExercises: 3,
+                                numberOfFileUploadExercises: 1,
+                                numberOfLectures: 3,
+                                numberOfFaqs: 5,
+                                numberOfTutorialGroups: 2,
                             },
                             headers: new HttpHeaders(),
                         }),
@@ -417,43 +435,47 @@ describe('CourseManagementContainerComponent', () => {
             testCourse: true,
         });
 
-        component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
-            expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
-            expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
-            expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
-            expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
-            expect(summary['artemisApp.course.delete.summary.numberInstructors']).toBe(2);
-            expect(summary['artemisApp.course.delete.summary.numberExams']).toBe(2);
-            expect(summary['artemisApp.course.delete.summary.numberLectures']).toBe(3);
-            expect(summary['artemisApp.course.delete.summary.numberProgrammingExercises']).toBe(5);
-            expect(summary['artemisApp.course.delete.summary.numberTextExercises']).toBe(2);
-            expect(summary['artemisApp.course.delete.summary.numberFileUploadExercises']).toBe(1);
-            expect(summary['artemisApp.course.delete.summary.numberQuizExercises']).toBe(3);
-            expect(summary['artemisApp.course.delete.summary.numberModelingExercises']).toBe(0);
-            expect(summary['artemisApp.course.delete.summary.numberBuilds']).toBe(10);
-            expect(summary['artemisApp.course.delete.summary.numberCommunicationPosts']).toBe(20);
-            expect(summary['artemisApp.course.delete.summary.numberAnswerPosts']).toBe(15);
+        component.fetchCourseDeletionSummary().subscribe((categories) => {
+            expect(categories.length).toBeGreaterThan(0);
+
+            // Check that meta category is present for test course
+            const metaCategory = categories.find((c) => c.titleKey === 'artemisApp.course.delete.summary.category.meta');
+            expect(metaCategory).toBeDefined();
+
+            // Check users category
+            const usersCategory = categories.find((c) => c.titleKey === 'artemisApp.course.delete.summary.category.users');
+            expect(usersCategory).toBeDefined();
+            expect(usersCategory?.items.find((i) => i.labelKey === 'artemisApp.course.delete.summary.numberOfStudents')?.value).toBe(100);
+            expect(usersCategory?.items.find((i) => i.labelKey === 'artemisApp.course.delete.summary.numberOfTutors')?.value).toBe(10);
+
+            // Check exercises category
+            const exercisesCategory = categories.find((c) => c.titleKey === 'artemisApp.course.delete.summary.category.exercises');
+            expect(exercisesCategory).toBeDefined();
+            expect(exercisesCategory?.items.find((i) => i.labelKey === 'artemisApp.course.delete.summary.numberOfProgrammingExercises')?.value).toBe(5);
+
+            // Check communication category
+            const communicationCategory = categories.find((c) => c.titleKey === 'artemisApp.course.delete.summary.category.communication');
+            expect(communicationCategory).toBeDefined();
+            expect(communicationCategory?.items.find((i) => i.labelKey === 'artemisApp.course.delete.summary.numberOfPosts')?.value).toBe(20);
         });
 
-        expect(getDeletionSummarySpy).toHaveBeenCalledWith(1);
+        expect(getCourseSummarySpy).toHaveBeenCalledWith(1);
     });
 
-    it('should return empty object if course id is undefined when fetching deletion summary', () => {
+    it('should return empty array if course id is undefined when fetching deletion summary', () => {
         component.course.set({});
 
-        component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
-            expect(summary).toEqual({});
+        component.fetchCourseDeletionSummary().subscribe((categories) => {
+            expect(categories).toEqual([]);
         });
     });
 
-    it('should return existing entries if deletion summary is null', () => {
+    it('should return empty array if deletion summary is null', () => {
         component.course.set(course1);
-        getDeletionSummarySpy.mockReturnValue(of(new HttpResponse({ body: null })));
+        getCourseSummarySpy.mockReturnValue(of(new HttpResponse({ body: null })));
 
-        component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
-            expect(summary).toEqual(expect.any(Object));
-            // Should contain only existing entries
-            expect(Object.keys(summary).length).toBeGreaterThan(0);
+        component.fetchCourseDeletionSummary().subscribe((categories) => {
+            expect(categories).toEqual([]);
         });
     });
 
@@ -469,7 +491,8 @@ describe('CourseManagementContainerComponent', () => {
             content: 'artemisApp.course.deleted',
         });
         expect(dialogErrorSourceSpy).toHaveBeenCalledExactlyOnceWith('');
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);
+        // Navigation happens when progress overlay is closed, not immediately after delete
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should handle error when deleting course', () => {
@@ -480,6 +503,42 @@ describe('CourseManagementContainerComponent', () => {
         component.deleteCourse(1);
 
         expect(dialogErrorSourceSpy).toHaveBeenCalledWith(error.message);
+    });
+
+    it('should navigate to course management when closing delete progress', () => {
+        component.operationProgress.set({
+            operationType: CourseOperationType.DELETE,
+            status: CourseOperationStatus.COMPLETED,
+            stepsCompleted: 10,
+            totalSteps: 10,
+            itemsProcessed: 0,
+            totalItems: 0,
+            failed: 0,
+            weightedProgressPercent: 100,
+        });
+
+        component.closeProgress();
+
+        expect(component.operationProgress()).toBeUndefined();
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);
+    });
+
+    it('should not navigate when closing non-delete progress', () => {
+        component.operationProgress.set({
+            operationType: CourseOperationType.RESET,
+            status: CourseOperationStatus.COMPLETED,
+            stepsCompleted: 10,
+            totalSteps: 10,
+            itemsProcessed: 0,
+            totalItems: 0,
+            failed: 0,
+            weightedProgressPercent: 100,
+        });
+
+        component.closeProgress();
+
+        expect(component.operationProgress()).toBeUndefined();
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should render controls if child has configuration', () => {

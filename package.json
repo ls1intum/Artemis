@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "8.7.0",
+    "version": "8.7.1",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -230,8 +230,8 @@
     "scripts": {
         "build": "npm run webapp:prod --",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
-        "compile:ts": "npm run prebuild && tsc --project tsconfig.app.json",
-        "compile:ts:tests": "npm run prebuild && tsc --project tsconfig.spec.json",
+        "compile": "npm run prebuild && tsc --project tsconfig.app.json",
+        "compile:tests": "npm run prebuild && tsc --project tsconfig.spec.json",
         "coverage:check-module": "node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs",
         "coverage:pr": "node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs",
         "lint": "eslint",
@@ -250,6 +250,7 @@
         "test": "npm run prebuild && ng test --coverage --log-heap-usage -w=4",
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
         "test:one": "npm run prebuild && ng test",
+        "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
         "vitest:ci": "vitest run --coverage --reporter=default --reporter=junit --outputFile=build/test-results/vitest/junit.xml",
