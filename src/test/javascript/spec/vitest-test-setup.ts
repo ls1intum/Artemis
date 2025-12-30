@@ -119,8 +119,12 @@ CSSStyleDeclaration.prototype.setProperty = function (property: string, value: s
             return;
         }
         return originalSetProperty.call(this, property, value, priority ?? '');
-    } catch {
+    } catch (error) {
         // Silently ignore CSS parsing errors from jsdom/cssstyle
+        // Log unexpected errors that might indicate real issues
+        if (error instanceof Error && !error.message.includes('Cannot create property')) {
+            console.warn('Unexpected error in CSSStyleDeclaration.setProperty:', error);
+        }
     }
 };
 
