@@ -15,8 +15,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ProblemStatementGenerationRequest } from 'app/openapi/models/problem-statement-generation-request';
 import { finalize } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
@@ -72,7 +72,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     faSave = faSave;
 
     // Injected services
-    private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private hyperionApiService = inject(HyperionProblemStatementApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
 

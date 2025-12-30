@@ -48,7 +48,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',

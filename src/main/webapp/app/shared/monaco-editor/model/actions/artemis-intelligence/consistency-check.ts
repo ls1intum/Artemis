@@ -1,19 +1,19 @@
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import type { ArtifactLocationTypeEnum } from 'app/openapi/models/artifact-location';
+import type { ConsistencyIssue, ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/models/consistency-issue';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
 
 export type InlineConsistencyIssue = {
     filePath: string;
-    type: ArtifactLocation.TypeEnum;
+    type: ArtifactLocationTypeEnum;
     startLine: number;
     endLine: number;
     description: string;
     suggestedFix: string;
-    category: ConsistencyIssue.CategoryEnum;
-    severity: ConsistencyIssue.SeverityEnum;
+    category: ConsistencyIssueCategoryEnum;
+    severity: ConsistencyIssueSeverityEnum;
 };
 
 /**
@@ -119,14 +119,14 @@ export function issuesForSelectedFile(
  * @param repo2 Selected repository scope.
  * @returns True if both represent the same repo domain.
  */
-export function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
-    if (repo1 === ArtifactLocation.TypeEnum.TemplateRepository && repo2 === RepositoryType.TEMPLATE) {
+export function isMatchingRepository(repo1: ArtifactLocationTypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
+    if (repo1 === 'TEMPLATE_REPOSITORY' && repo2 === RepositoryType.TEMPLATE) {
         return true;
-    } else if (repo1 === ArtifactLocation.TypeEnum.SolutionRepository && repo2 === RepositoryType.SOLUTION) {
+    } else if (repo1 === 'SOLUTION_REPOSITORY' && repo2 === RepositoryType.SOLUTION) {
         return true;
-    } else if (repo1 === ArtifactLocation.TypeEnum.TestsRepository && repo2 === RepositoryType.TESTS) {
+    } else if (repo1 === 'TESTS_REPOSITORY' && repo2 === RepositoryType.TESTS) {
         return true;
-    } else if (repo1 === ArtifactLocation.TypeEnum.ProblemStatement && repo2 === 'PROBLEM_STATEMENT') {
+    } else if (repo1 === 'PROBLEM_STATEMENT' && repo2 === 'PROBLEM_STATEMENT') {
         return true;
     }
 
@@ -183,15 +183,15 @@ export function humanizeCategory(category: string): string {
  * @param severity Severity enum.
  * @returns Display label for severity.
  */
-export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
+export function severityToString(severity: ConsistencyIssueSeverityEnum) {
     // Does not need to be localized, as the LLM output is english. Only and it
     // is planed to store the content on the server in the future.
     switch (severity) {
-        case ConsistencyIssue.SeverityEnum.High:
+        case 'HIGH':
             return 'HIGH';
-        case ConsistencyIssue.SeverityEnum.Medium:
+        case 'MEDIUM':
             return 'MEDIUM';
-        case ConsistencyIssue.SeverityEnum.Low:
+        case 'LOW':
             return 'LOW';
         default:
             return 'UNKNOWN';
@@ -203,17 +203,17 @@ export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
  * @param type Artifact location type.
  * @returns Display label for artifact domain.
  */
-export function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
+export function formatArtifactType(type: ArtifactLocationTypeEnum): string {
     // Does not need to be localized, as the LLM output is english. Only and it
     // is planed to store the content on the server in the future.
     switch (type) {
-        case ArtifactLocation.TypeEnum.ProblemStatement:
+        case 'PROBLEM_STATEMENT':
             return 'Problem Statement';
-        case ArtifactLocation.TypeEnum.TemplateRepository:
+        case 'TEMPLATE_REPOSITORY':
             return 'Template';
-        case ArtifactLocation.TypeEnum.SolutionRepository:
+        case 'SOLUTION_REPOSITORY':
             return 'Solution';
-        case ArtifactLocation.TypeEnum.TestsRepository:
+        case 'TESTS_REPOSITORY':
             return 'Tests';
         default:
             return 'Other';

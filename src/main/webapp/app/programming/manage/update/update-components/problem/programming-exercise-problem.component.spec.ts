@@ -12,10 +12,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from '../../../../../core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ProblemStatementGenerationRequest } from 'app/openapi/models/problem-statement-generation-request';
+import { ProblemStatementGenerationResponse } from 'app/openapi/models/problem-statement-generation-response';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
@@ -41,7 +41,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
+                { provide: HyperionProblemStatementApi, useValue: mockHyperionApiService },
                 { provide: AlertService, useValue: mockAlertService },
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -35,7 +35,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 

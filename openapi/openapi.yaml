@@ -202,7 +202,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}  
+              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-code:
     post:
       tags: [hyperion-code-generation]

@@ -1,0 +1,86 @@
+{{>licenseInfo}}
+/**
+ * {{classname}} - API service for mutations (POST, PUT, DELETE, PATCH)
+ * @generated from OpenAPI specification
+ */
+import { HttpClient{{#operations.operation}}{{#hasFormParams}}, HttpHeaders{{/hasFormParams}}{{/operations.operation}} } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+{{#imports}}
+import { {{classname}} } from '../models/{{classFilename}}';
+{{/imports}}
+
+@Injectable({ providedIn: 'root' })
+export class {{classname}} {
+    private readonly http = inject(HttpClient);
+    private readonly basePath = '{{contextPath}}';
+
+{{#operations}}
+{{#operation}}
+{{^vendorExtensions.x-is-get}}
+    /**
+     * {{summary}}
+     * {{notes}}
+{{#allParams}}
+     * @param {{paramName}} {{description}}
+{{/allParams}}
+     */
+    {{nickname}}({{#allParams}}{{paramName}}{{^required}}?{{/required}}: {{{dataType}}}{{^-last}}, {{/-last}}{{/allParams}}): Observable<{{#returnType}}{{{.}}}{{/returnType}}{{^returnType}}void{{/returnType}}> {
+{{#pathParams}}
+{{^vendorExtensions.x-is-numeric}}
+        const {{paramName}}Path = encodeURIComponent(String({{paramName}}));
+{{/vendorExtensions.x-is-numeric}}
+{{/pathParams}}
+{{#hasQueryParams}}
+        const queryParams: Record<string, string> = {};
+{{#queryParams}}
+        if ({{paramName}} !== undefined && {{paramName}} !== null) {
+{{#isArray}}
+            queryParams['{{baseName}}'] = {{paramName}}.join(',');
+{{/isArray}}
+{{^isArray}}
+            queryParams['{{baseName}}'] = String({{paramName}});
+{{/isArray}}
+        }
+{{/queryParams}}
+        const queryString = new URLSearchParams(queryParams).toString();
+        const url = `${this.basePath}{{{vendorExtensions.xPathTemplate}}}${queryString ? `?${queryString}` : ''}`;
+{{/hasQueryParams}}
+{{^hasQueryParams}}
+        const url = `${this.basePath}{{{vendorExtensions.xPathTemplate}}}`;
+{{/hasQueryParams}}
+{{#hasFormParams}}
+        const formData = new FormData();
+{{#formParams}}
+        if ({{paramName}} !== undefined && {{paramName}} !== null) {
+{{#isArray}}
+            {{paramName}}.forEach(item => formData.append('{{baseName}}', item));
+{{/isArray}}
+{{^isArray}}
+            formData.append('{{baseName}}', {{paramName}});
+{{/isArray}}
+        }
+{{/formParams}}
+        return this.http.{{httpMethod}}{{#returnType}}<{{{.}}}>{{/returnType}}{{^returnType}}<void>{{/returnType}}(url, formData);
+{{/hasFormParams}}
+{{^hasFormParams}}
+{{#bodyParam}}
+        return this.http.{{httpMethod}}{{#returnType}}<{{{.}}}>{{/returnType}}{{^returnType}}<void>{{/returnType}}(url, {{paramName}});
+{{/bodyParam}}
+{{^bodyParam}}
+{{#hasQueryParams}}
+        return this.http.{{httpMethod}}{{#returnType}}<{{{.}}}>{{/returnType}}{{^returnType}}<void>{{/returnType}}(url);
+{{/hasQueryParams}}
+{{^hasQueryParams}}
+{{#vendorExtensions.x-is-mutation}}
+        return this.http.{{httpMethod}}{{#returnType}}<{{{.}}}>{{/returnType}}{{^returnType}}<void>{{/returnType}}(url{{#isBodyAllowed}}, null{{/isBodyAllowed}});
+{{/vendorExtensions.x-is-mutation}}
+{{/hasQueryParams}}
+{{/bodyParam}}
+{{/hasFormParams}}
+    }
+
+{{/vendorExtensions.x-is-get}}
+{{/operation}}
+{{/operations}}
+}

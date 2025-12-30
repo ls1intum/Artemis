@@ -1,4 +1,4 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { RawTutorialGroupDetailGroupDTO, TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
@@ -7,10 +7,9 @@ import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { Student } from 'app/openapi/model/student';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
-import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import { Student } from 'app/openapi/models/student';
+import { TutorialGroupExport } from 'app/openapi/models/tutorial-group-export';
+import { TutorialGroupRegistrationImport } from 'app/openapi/models/tutorial-group-registration-import';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -20,16 +19,15 @@ export class TutorialGroupsService {
     private httpClient = inject(HttpClient);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
 
     private resourceURL = 'api/tutorialgroup';
 
     getUniqueCampusValues(courseId: number): Observable<HttpResponse<Array<string>>> {
-        return this.tutorialGroupApiService.getUniqueCampusValues(courseId, 'response');
+        return this.httpClient.get<Array<string>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
     }
 
     getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Array<string>>> {
-        return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response');
+        return this.httpClient.get<Array<string>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/language-values`, { observe: 'response' });
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -79,23 +77,27 @@ export class TutorialGroupsService {
     }
 
     deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.deregisterStudent(courseId, tutorialGroupId, login, 'response');
+        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
     }
 
     registerStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register/${login}`, null, { observe: 'response' });
     }
 
     registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
-        return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos, 'response');
+        return this.httpClient.post<Array<Student>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
+            observe: 'response',
+        });
     }
 
     import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
-        return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
+        return this.httpClient.post<Array<TutorialGroupRegistrationImport>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/import`, tutorialGroups, {
+            observe: 'response',
+        });
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.delete(courseId, tutorialGroupId, 'response');
+        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
     }
 
     convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
@@ -182,14 +184,23 @@ export class TutorialGroupsService {
      * @return an Observable containing the CSV file as a Blob
      */
     exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
-        return this.tutorialGroupApiService.exportTutorialGroupsToCSV(courseId, fields);
+        const params = new HttpParams({ fromObject: { fields } });
+        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/csv`, {
+            params,
+            responseType: 'blob',
+        });
     }
 
     exportToJson(courseId: number, fields: string[]): Observable<string> {
-        return this.tutorialGroupApiService.exportTutorialGroupsToJSON(courseId, fields).pipe(
-            map((data: Array<TutorialGroupExport>) => {
-                return JSON.stringify(data);
-            }),
-        );
+        const params = new HttpParams({ fromObject: { fields } });
+        return this.httpClient
+            .get<Array<TutorialGroupExport>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/json`, {
+                params,
+            })
+            .pipe(
+                map((data: Array<TutorialGroupExport>) => {
+                    return JSON.stringify(data);
+                }),
+            );
     }
 }

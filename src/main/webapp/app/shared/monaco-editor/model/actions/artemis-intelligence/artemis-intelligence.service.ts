@@ -6,10 +6,10 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { AlertService } from 'app/shared/service/alert.service';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementRewriteRequest } from 'app/openapi/model/problemStatementRewriteRequest';
-import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
+import { ProblemStatementRewriteRequest } from 'app/openapi/models/problem-statement-rewrite-request';
+import { ProblemStatementRewriteResponse } from 'app/openapi/models/problem-statement-rewrite-response';
 
 /**
  * DTO for the Iris rewriting feature.
@@ -67,7 +67,7 @@ export class ArtemisIntelligenceService {
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
-    private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private hyperionApiService = inject(HyperionProblemStatementApi);
 
     private isLoadingRewrite = signal<boolean>(false);
     private isLoadingConsistencyCheck = signal<boolean>(false);

@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateTimeString } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { TutorialGroupFreePeriodApiService } from 'app/openapi/api/tutorialGroupFreePeriodApi.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 
@@ -17,7 +16,6 @@ export class TutorialGroupFreePeriodDTO {
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodService {
     private httpClient = inject(HttpClient);
-    private tutorialGroupFreePeriodApiService = inject(TutorialGroupFreePeriodApiService);
 
     private resourceURL = 'api/tutorialgroup';
 
@@ -58,7 +56,10 @@ export class TutorialGroupFreePeriodService {
     }
 
     delete(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupFreePeriodApiService.delete(courseId, tutorialGroupConfigurationId, tutorialGroupFreePeriodId, 'response');
+        return this.httpClient.delete<void>(
+            `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
+            { observe: 'response' },
+        );
     }
 
     convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {

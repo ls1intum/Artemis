@@ -14,7 +14,9 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
+import type { CodeGenerationRequestDTORepositoryTypeEnum } from 'app/openapi/models/code-generation-request-dto';
+import type { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
+import type { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -29,10 +31,8 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -88,7 +88,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private modalService = inject(NgbModal);
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
-    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
+    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApi);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
@@ -117,7 +117,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private startCodeGeneration() {
         this.isGeneratingCode.set(true);
-        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const repositoryType = this.selectedRepository as CodeGenerationRequestDTORepositoryTypeEnum;
         const exerciseId = this.exercise!.id!;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
             next: (res) => {

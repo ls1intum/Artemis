@@ -53,7 +53,7 @@
     // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
 
     openApiGenerate {
-        generatorName = "typescript-angular"
+        generatorName = "angular21"
         inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
         outputDir = "${rootDir}/src/main/webapp/app/openapi"
         apiPackage = "api"
@@ -69,6 +69,25 @@
             supportsES6: "true",
             serviceFileSuffix: "Api.service"
         ]
+    }
+
+    def generatorRepoDir = file("$buildDir/openapi-generator-angular21")
+    def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+
+    tasks.register('fetchGenerator', Exec) {
+        outputs.dir(generatorRepoDir)
+        commandLine 'git', 'clone', 'https://github.com/ls1intum/openapi-generator-angular21.git', generatorRepoDir.absolutePath
+        onlyIf { !generatorRepoDir.exists() }
+    }
+
+    tasks.register('buildGenerator', Exec) {
+        dependsOn 'fetchGenerator'
+        workingDir generatorRepoDir
+        if (isWindows) {
+            commandLine 'cmd', '/c', 'gradlew.bat', 'publishToMavenLocal'
+        } else {
+            commandLine './gradlew', 'publishToMavenLocal'
+        }
     }
 
     tasks.register('pruneOpenApiSpec') {
@@ -209,19 +228,42 @@
 
 
     tasks.named('openApiGenerate') {
-        finalizedBy 'postProcessTsFiles'
+        dependsOn 'openApiGenerateCustom'
+        onlyIf { false }
     }
-    tasks.named('openApiGenerate') {
+
+    configurations.maybeCreate("openApiGeneratorCli")
+
+    dependencies {
+        openApiGeneratorCli "org.openapitools:openapi-generator-cli:7.17.0"
+        openApiGeneratorCli files("${generatorRepoDir}/build/libs/openapi-generator-angular21-1.0.0.jar")
+    }
+
+    tasks.register('openApiGenerateCustom', JavaExec) {
         dependsOn 'pruneOpenApiSpec'
-    }
-    tasks.named("openApiGenerate") {
+        dependsOn 'buildGenerator'
+        classpath = configurations.openApiGeneratorCli
+        mainClass = 'org.openapitools.codegen.OpenAPIGenerator'
         doFirst {
             def openapiDir = file("$rootDir/src/main/webapp/app/openapi")
             if (openapiDir.exists()) {
                 delete fileTree(dir: openapiDir, exclude: ".openapi-generator-ignore")
                 println "✔ Deleted everything under openapi/ except .openapi-generator-ignore"
             }
+            args = [
+                'generate',
+                '-g', 'angular21',
+                '-i', file("${rootDir}/openapi/openapi.yaml").absolutePath,
+                '-o', file("${rootDir}/src/main/webapp/app/openapi").absolutePath,
+                '-t', file("${rootDir}/gradle/openapi-templates/angular21").absolutePath,
+                '--api-package', 'api',
+                '--model-package', 'models',
+                '--type-mappings', 'set=Array',
+                '--language-specific-primitives', 'void',
+                '--additional-properties', 'serviceSuffix=ApiService,supportsES6=true,serviceFileSuffix=Api.service'
+            ]
         }
+        finalizedBy 'postProcessTsFiles'
     }
 
 

@@ -16,7 +16,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { titleRegex } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
+import { TutorialGroupRegistrationImport } from 'app/openapi/models/tutorial-group-registration-import';
 
 /**
  * Each row is a object with the structure
@@ -238,22 +238,20 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         // convert the 'raw' csv rows into a list of TutorialGroupImportDTOs
         const registrations = csvFixedPlaceRows
             .map((csvRow) => {
-                const registration: TutorialGroupRegistrationImport = {
+                return {
                     title: csvRow[usedTitleHeader]?.trim() || '',
+                    student: {
+                        registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
+                        login: csvRow[usedLoginHeader]?.trim() || '',
+                        firstName: csvRow[usedFirstNameHeader]?.trim() || '',
+                        lastName: csvRow[usedLastNameHeader]?.trim() || '',
+                    } as StudentDTO,
+                    campus: csvRow[usedCampusHeader]?.trim() || '',
+                    capacity: csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined,
+                    language: csvRow[usedLanguageHeader]?.trim() || '',
+                    additionalInformation: csvRow[usedAdditionalInfoHeader]?.trim() || '',
+                    isOnline: csvRow[usedIsOnlineHeader] ? Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase()) : undefined,
                 } as TutorialGroupRegistrationImport;
-                registration.student = {
-                    registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
-                    login: csvRow[usedLoginHeader]?.trim() || '',
-                    firstName: csvRow[usedFirstNameHeader]?.trim() || '',
-                    lastName: csvRow[usedLastNameHeader]?.trim() || '',
-                } as StudentDTO;
-                registration.campus = csvRow[usedCampusHeader]?.trim() || '';
-                registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
-                registration.language = csvRow[usedLanguageHeader]?.trim() || '';
-                registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
-                registration.isOnline = csvRow[usedIsOnlineHeader] ? Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase()) : undefined;
-
-                return registration;
             })
             .sort((a, b) => this.compareTitle(a, b));
 

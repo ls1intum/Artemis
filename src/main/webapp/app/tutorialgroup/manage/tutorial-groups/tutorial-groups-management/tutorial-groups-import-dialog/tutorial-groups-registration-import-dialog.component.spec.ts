@@ -12,8 +12,8 @@ import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
-import { Student } from 'app/openapi/model/student';
+import { Student } from 'app/openapi/models/student';
+import { TutorialGroupRegistrationImport } from 'app/openapi/models/tutorial-group-registration-import';
 import ErrorEnum = TutorialGroupRegistrationImport.ErrorEnum;
 jest.mock('papaparse', () => {
     const original = jest.requireActual('papaparse');

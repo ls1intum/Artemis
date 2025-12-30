@@ -77,7 +77,7 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 

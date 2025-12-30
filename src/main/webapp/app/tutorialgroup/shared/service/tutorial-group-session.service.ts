@@ -5,7 +5,6 @@ import { convertDateFromServer, toISO8601DateString } from 'app/shared/util/date
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
-import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
 
@@ -20,7 +19,6 @@ export class TutorialGroupSessionDTO {
 export class TutorialGroupSessionService {
     private httpClient = inject(HttpClient);
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
-    private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
 
     private resourceURL = 'api/tutorialgroup';
 
@@ -74,7 +72,7 @@ export class TutorialGroupSessionService {
     }
 
     delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupSessionApiService.deleteSession(courseId, tutorialGroupId, sessionId, 'response');
+        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' });
     }
 
     convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {

@@ -29,11 +29,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockProvider } from 'ng-mocks';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -41,7 +41,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
-    let codeGenerationApi: jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
+    let codeGenerationApi: jest.Mocked<Pick<HyperionCodeGenerationApi, 'generateCode'>>;
     let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
     let alertService: AlertService;
     let repoService: CodeEditorRepositoryService;
@@ -68,7 +68,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
                 { provide: Location, useValue: { replaceState: jest.fn() } },
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ActivatedRoute, useValue: { params: of({}) } },
-                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
+                { provide: HyperionCodeGenerationApi, useValue: { generateCode: jest.fn() } },
                 { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
                 { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
                 { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
@@ -85,7 +85,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
             .compileComponents();
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as any;
+        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApi) as any;
         ws = TestBed.inject(HyperionWebsocketService) as any;
         profileService = TestBed.inject(ProfileService);
         repoService = TestBed.inject(CodeEditorRepositoryService) as any;
