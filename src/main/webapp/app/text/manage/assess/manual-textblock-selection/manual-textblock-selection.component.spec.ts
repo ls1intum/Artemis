@@ -91,7 +91,7 @@ describe('ManualTextblockSelectionComponent', () => {
         const lastWord: wordSelection = { word: 'sixth', index: 56 };
         const selectedWords = [firstWord, lastWord];
         component.handleTextSelection(selectedWords);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const textBlockRef = TextBlockRef.new();
         textBlockRef.block!.startIndex = 50;

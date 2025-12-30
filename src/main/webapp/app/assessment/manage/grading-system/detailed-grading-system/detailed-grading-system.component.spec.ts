@@ -19,6 +19,8 @@ import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 jest.mock('export-to-csv', () => {
     return {
@@ -80,6 +82,7 @@ describe('Detailed Grading System Component', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -112,7 +115,7 @@ describe('Detailed Grading System Component', () => {
             .mockReturnValue(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
         const findExamStub = jest.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isExam).toBeTrue();
         expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, 1, 1);
@@ -127,7 +130,7 @@ describe('Detailed Grading System Component', () => {
             .spyOn(gradingSystemService, 'findGradingScaleForExam')
             .mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenNthCalledWith(1, 1, 1);
         expect(findGradingScaleForExamAndReturnNotFoundStub).toHaveBeenCalledOnce();

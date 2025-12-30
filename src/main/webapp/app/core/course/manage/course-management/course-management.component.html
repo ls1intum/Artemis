@@ -9,10 +9,18 @@
                 <input id="showOnlyActive" class="form-check-input" type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
                 <label for="showOnlyActive" class="form-check-label" jhiTranslate="artemisApp.course.showActive"></label>
             </div>
-            <a *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary jh-create-entity create-course" id="create-course" [routerLink]="['/course-management/new']">
-                <fa-icon [icon]="faPlus" />
-                <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel"></span>
-            </a>
+            @if (isAuthenticated() && !isAdmin()) {
+                <a class="btn btn-outline-primary" [routerLink]="['/course-requests']">
+                    <fa-icon [icon]="faBook" class="me-1" />
+                    <span jhiTranslate="global.menu.courseRequests"></span>
+                </a>
+            }
+            @if (isAdmin()) {
+                <a class="btn btn-primary jh-create-entity create-course" id="create-course" [routerLink]="['/course-management/new']">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel"></span>
+                </a>
+            }
         </div>
     </div>
     <div class="row"></div>

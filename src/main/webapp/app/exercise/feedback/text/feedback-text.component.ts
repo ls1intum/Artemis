@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -7,10 +7,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-feedback-text',
     styleUrls: ['./feedback-text.scss'],
     templateUrl: './feedback-text.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective],
 })
 export class FeedbackTextComponent implements OnInit {
     private longFeedbackService = inject(LongFeedbackTextService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     private readonly MAX_DISPLAYABLE_LENGTH = 20_000;
 
@@ -26,6 +28,8 @@ export class FeedbackTextComponent implements OnInit {
 
         if (this.feedback.feedbackReference.hasLongFeedbackText) {
             this.loadLongFeedback();
+        } else {
+            this.changeDetectorRef.markForCheck();
         }
     }
 
@@ -42,6 +46,7 @@ export class FeedbackTextComponent implements OnInit {
                 } else {
                     this.text = longFeedback;
                 }
+                this.changeDetectorRef.markForCheck();
             });
         }
     }

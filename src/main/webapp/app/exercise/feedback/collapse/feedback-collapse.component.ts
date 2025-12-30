@@ -1,15 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Component({
     selector: 'jhi-feedback-collapse',
     styleUrls: ['./feedback-collapse.scss'],
     templateUrl: './feedback-collapse.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, FeedbackTextComponent, ArtemisTranslatePipe],
 })
 /**
@@ -31,7 +31,7 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
 
-    debounceToggleCollapse = BaseApiHttpService.debounce(this.toggleCollapse.bind(this), 200);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
@@ -62,5 +62,6 @@ export class FeedbackCollapseComponent implements OnInit {
 
     toggleCollapse(): void {
         this.isCollapsed = !this.isCollapsed;
+        this.changeDetectorRef.markForCheck();
     }
 }

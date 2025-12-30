@@ -29,7 +29,7 @@ describe('GenericConfirmationDialogComponent', () => {
         component.canBeUndone = true;
         component.isDangerousAction = false;
         component.translationParameters = {};
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         initializeDialog(component, fixture, { translationKeys });
     });
 

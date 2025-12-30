@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImp
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingException;
-import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfo;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -55,6 +55,8 @@ import tech.jhipster.web.util.ResponseUtil;
 @Conditional(SharingEnabled.class)
 @Lazy
 public class ExerciseSharingResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
 
     /**
      * FileInputStream wrapper that deletes the underlying temporary file on close.
@@ -88,8 +90,6 @@ public class ExerciseSharingResource {
     }
 
     public static final String SHARING_EXPORT_RESOURCE_PATH = "export";
-
-    private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
 
     private final ExerciseSharingService exerciseSharingService;
 
@@ -140,7 +140,7 @@ public class ExerciseSharingResource {
      * POST {@code api/programming/sharing/setup-import}
      * <p>
      * Creates and persists a {@link ProgrammingExercise} in Artemis based on the provided
-     * {@link SharingSetupInfo} received from the Sharing Platform.
+     * {@link SharingSetupInfoDTO} received from the Sharing Platform.
      * </p>
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
@@ -149,7 +149,7 @@ public class ExerciseSharingResource {
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo) {
+    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
             return ResponseEntity.ok().body(exercise);

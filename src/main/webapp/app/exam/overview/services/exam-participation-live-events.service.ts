@@ -153,8 +153,7 @@ export class ExamParticipationLiveEventsService {
     private subscribeToExamLiveEvents() {
         this.currentWebsocketChannels = [`/topic/exam-participation/studentExam/${this.studentExamId}/events`, `/topic/exam-participation/exam/${this.examId}/events`];
         this.currentWebsocketReceiveSubscriptions = this.currentWebsocketChannels.map((channel) => {
-            this.websocketService.subscribe(channel);
-            return this.websocketService.receive(channel).subscribe((event: ExamLiveEvent) => this.receiveExamLiveEvent(event));
+            return this.websocketService.subscribe<ExamLiveEvent>(channel).subscribe((event: ExamLiveEvent) => this.receiveExamLiveEvent(event));
         });
     }
 
@@ -176,7 +175,6 @@ export class ExamParticipationLiveEventsService {
         this.currentWebsocketReceiveSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.currentWebsocketReceiveSubscriptions = undefined;
 
-        this.currentWebsocketChannels?.forEach((channel) => this.websocketService.unsubscribe(channel));
         this.currentWebsocketChannels = undefined;
     }
 

@@ -1,0 +1,36 @@
+diff --git a/node_modules/@angular-builders/jest/dist/options-converter.js b/node_modules/@angular-builders/jest/dist/options-converter.js
+index 7571f2f..c20d657 100644
+--- a/node_modules/@angular-builders/jest/dist/options-converter.js
++++ b/node_modules/@angular-builders/jest/dist/options-converter.js
+@@ -5,8 +5,12 @@ class OptionsConverter {
+     convertToCliArgs(options) {
+         const argv = [];
+         let nonFlagArgs;
+-        for (const option of Object.keys(options)) {
++        for (let option of Object.keys(options)) {
+             let optionValue = options[option];
++            // Jest 30: testPathPattern was renamed to testPathPatterns
++            if (option === 'testPathPattern') {
++                option = 'testPathPatterns';
++            }
+             if (option == '--') {
+                 nonFlagArgs = optionValue.join(' ');
+             }
+diff --git a/node_modules/@angular-builders/jest/dist/schema.json b/node_modules/@angular-builders/jest/dist/schema.json
+index f420f4a..911d214 100644
+--- a/node_modules/@angular-builders/jest/dist/schema.json
++++ b/node_modules/@angular-builders/jest/dist/schema.json
+@@ -395,6 +395,13 @@
+       }
+     },
+     "testPathPattern": {
++      "description": "[DEPRECATED: Use testPathPatterns] A regexp pattern string that is matched against all tests paths before executing the test.",
++      "type": "array",
++      "items": {
++        "type": "string"
++      }
++    },
++    "testPathPatterns": {
+       "description": "A regexp pattern string that is matched against all tests paths before executing the test.",
+       "type": "array",
+       "items": {

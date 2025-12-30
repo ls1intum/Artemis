@@ -3,6 +3,7 @@ import { PlagiarismCaseStudentDetailViewComponent } from 'app/plagiarism/overvie
 import { EntityResponseType, PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -14,6 +15,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
@@ -50,6 +52,7 @@ describe('Plagiarism Cases Student View Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

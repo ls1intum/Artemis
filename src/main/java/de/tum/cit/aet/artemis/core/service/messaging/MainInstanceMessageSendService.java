@@ -88,14 +88,4 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     public void sendSlideUnhideScheduleCancel(Long slideId) {
         instanceMessageReceiveService.processCancelSlideUnhide(slideId);
     }
-
-    @Override
-    public void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
-        instanceMessageReceiveService.processLectureUnitAutoIngestionSchedule(lectureUnitId);
-    }
-
-    @Override
-    public void sendLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
-        instanceMessageReceiveService.processLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
-    }
 }

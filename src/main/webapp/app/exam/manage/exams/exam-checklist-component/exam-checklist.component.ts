@@ -87,14 +87,14 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    private submittedSubscription?: Subscription;
+    private startedSubscription?: Subscription;
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.websocketService.subscribe(submittedTopic);
-        this.websocketService.receive(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
+        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.websocketService.subscribe(startedTopic);
-        this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => (this.numberOfStarted += 1));
         const exam = this.exam();
         if (exam?.course?.id && exam?.id) {
             this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
@@ -135,10 +135,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.websocketService.unsubscribe(submittedTopic);
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.websocketService.unsubscribe(startedTopic);
+        this.submittedSubscription?.unsubscribe();
+        this.startedSubscription?.unsubscribe();
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }

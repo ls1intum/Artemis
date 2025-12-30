@@ -229,7 +229,27 @@
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
                 "testCaseCommand": "Testfall einfügen",
-                "tasksOfExercise": "Teilaufgaben:"
+                "tasksOfExercise": "Teilaufgaben:",
+                "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
+                "yourRequirements": "Deine Anforderungen",
+                "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
+                "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+            },
+            "codeGeneration": {
+                "creationAssistance": "Erstellungsassistenz",
+                "generateCode": "Code generieren",
+                "generating": "Generiere...",
+                "description": "Generiere Lösung, Template und Test-Code mit KI",
+                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
+                "confirmTitle": "Code-Generierung bestätigen",
+                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
+                "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
+                "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
+                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
+                "attempts": "Versuche: {{attempts}}"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

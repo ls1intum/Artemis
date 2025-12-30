@@ -1,5 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -22,6 +25,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
@@ -50,12 +54,14 @@ let quizExercise = {
 } as QuizExercise;
 
 describe('QuizExercise Short Answer Question Statistic Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ShortAnswerQuestionStatisticComponent;
     let fixture: ComponentFixture<ShortAnswerQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jest.SpyInstance;
-    let quizServiceFindSpy: jest.SpyInstance;
+    let accountSpy: any;
+    let quizServiceFindSpy: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -65,6 +71,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ChangeDetectorRef),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -77,7 +84,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -96,8 +103,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('onInit', () => {
         it('should call functions on Init', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
             comp.websocketChannelForData = '';
 
             comp.ngOnInit();
@@ -109,8 +116,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
 
         it('should not load Quiz if not authorised', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
 
             comp.ngOnInit();
 
@@ -122,11 +129,11 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadQuiz', () => {
         it('should call functions from loadQuiz', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const generateStructureSpy = jest.spyOn(comp, 'generateShortAnswerStructure');
-            const generateLettersSpy = jest.spyOn(comp, 'generateLettersForSolutions');
-            const loadLayoutSpy = jest.spyOn(comp, 'loadLayout');
-            const loadDataSpy = jest.spyOn(comp, 'loadData');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const generateStructureSpy = vi.spyOn(comp, 'generateShortAnswerStructure');
+            const generateLettersSpy = vi.spyOn(comp, 'generateLettersForSolutions');
+            const loadLayoutSpy = vi.spyOn(comp, 'loadLayout');
+            const loadDataSpy = vi.spyOn(comp, 'loadData');
 
             comp.ngOnInit();
             comp.loadQuiz(quizExercise, false);
@@ -142,9 +149,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
-            const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
-            const addLastBarSpy = jest.spyOn(comp, 'addLastBarLayout');
-            const loadInvalidLayoutSpy = jest.spyOn(comp, 'loadInvalidLayout');
+            const resetLabelsSpy = vi.spyOn(comp, 'resetLabelsColors');
+            const addLastBarSpy = vi.spyOn(comp, 'addLastBarLayout');
+            const loadInvalidLayoutSpy = vi.spyOn(comp, 'loadInvalidLayout');
 
             comp.ngOnInit();
             comp.loadLayout();
@@ -157,9 +164,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadData', () => {
         it('should call functions from loadData', () => {
-            const resetDataSpy = jest.spyOn(comp, 'resetData');
-            const addDataSpy = jest.spyOn(comp, 'addData');
-            const updateDataSpy = jest.spyOn(comp, 'updateData');
+            const resetDataSpy = vi.spyOn(comp, 'resetData');
+            const addDataSpy = vi.spyOn(comp, 'addData');
+            const updateDataSpy = vi.spyOn(comp, 'updateData');
 
             comp.ngOnInit();
             comp.loadData();
@@ -172,26 +179,26 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('switchSolution', () => {
         it('should call functions and set values from switchSolution', () => {
-            const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
+            const loadDataInDiagramSpy = vi.spyOn(comp, 'loadDataInDiagram');
 
             comp.ngOnInit();
             comp.showSolution = true;
             comp.switchSolution();
 
             expect(loadDataInDiagramSpy).toHaveBeenCalledTimes(2);
-            expect(comp.showSolution).toBeFalse();
+            expect(comp.showSolution).toBe(false);
         });
     });
 
     describe('switchRated', () => {
         it('should call functions and set values from switchRated', () => {
-            const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
+            const loadDataInDiagramSpy = vi.spyOn(comp, 'loadDataInDiagram');
 
             comp.ngOnInit();
             comp.switchRated();
 
             expect(loadDataInDiagramSpy).toHaveBeenCalledTimes(2);
-            expect(comp.rated).toBeFalse();
+            expect(comp.rated).toBe(false);
         });
     });
 });

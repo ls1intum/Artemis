@@ -49,21 +49,21 @@ describe('ComplaintsFormComponent', () => {
 
     it('should initialize with correct values for exam complaints', fakeAsync(() => {
         fixture.componentRef.setInput('exercise', exercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
         expect(component.maxComplaintsPerCourse).toBe(1);
     }));
 
     it('should initialize with correct values for course complaints', fakeAsync(() => {
         fixture.componentRef.setInput('exercise', courseExercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
         expect(component.maxComplaintsPerCourse).toStrictEqual(studentComplaints);
     }));
 
     it('should initialize with correct values for course complaints for team exercises', fakeAsync(() => {
         fixture.componentRef.setInput('exercise', courseTeamExercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
         expect(component.maxComplaintsPerCourse).toStrictEqual(teamComplaints);
     }));
@@ -122,7 +122,7 @@ describe('ComplaintsFormComponent', () => {
         fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
         component.ngOnInit();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
 
         const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
@@ -130,7 +130,7 @@ describe('ComplaintsFormComponent', () => {
         responseTextArea.value = 'a';
         component.complaintText = 'a';
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
 
         expect(responseTextArea.maxLength).toBe(20);
@@ -143,7 +143,7 @@ describe('ComplaintsFormComponent', () => {
         fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
         component.ngOnInit();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
 
         const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
@@ -152,7 +152,7 @@ describe('ComplaintsFormComponent', () => {
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick(100);
 
         expect(complaintButton.disabled).toBeTrue();

@@ -14,7 +14,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
+import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -27,7 +27,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostingType } from '../../../shared/entities/posting.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AccountService } from '../../../../core/auth/account.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 const examples: ConversationDTO[] = [
@@ -229,14 +229,12 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should set posts and group them correctly', () => {
-            const posts = [
+            component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(2, 'hours'), author: { id: 1 } } as Post,
                 { id: 4, creationDate: dayjs().subtract(3, 'minutes'), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().subtract(1, 'minutes'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs(), author: { id: 2 } } as Post,
             ];
-
-            component.allPosts = posts;
             component.setPosts();
 
             expect(component.posts).toHaveLength(4);
@@ -258,13 +256,11 @@ examples.forEach((activeConversation) => {
         });
 
         it('should not group posts that are exactly 5 minutes apart', () => {
-            const posts = [
+            component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(10, 'minutes'), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs(), author: { id: 1 } } as Post,
             ];
-
-            component.allPosts = posts;
             component.setPosts();
 
             expect(component.groupedPosts).toHaveLength(3);
@@ -380,15 +376,13 @@ examples.forEach((activeConversation) => {
             jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
             jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
-            const postsWithForwarded: Post[] = [
+            component.allPosts = [
                 {
                     id: 1,
                     content: 'Some content...',
                     hasForwardedMessages: true,
                 } as Post,
             ];
-
-            component.allPosts = postsWithForwarded;
             component.setPosts();
 
             tick();
@@ -437,10 +431,9 @@ examples.forEach((activeConversation) => {
             component.pinnedPosts = [pinnedPost];
             component.allPosts = [pinnedPost, regularPost];
 
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.showOnlyPinned = input<boolean>(true);
-                component.applyPinnedMessageFilter();
-            });
+            fixture.componentRef.setInput('showOnlyPinned', true);
+            fixture.detectChanges();
+            component.applyPinnedMessageFilter();
 
             expect(component.posts).toEqual([pinnedPost]);
         });
@@ -450,10 +443,9 @@ examples.forEach((activeConversation) => {
             const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
             component.pinnedPosts = [pinnedPost];
             component.allPosts = [pinnedPost, regularPost];
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.showOnlyPinned = input<boolean>(false);
-                component.applyPinnedMessageFilter();
-            });
+            fixture.componentRef.setInput('showOnlyPinned', false);
+            fixture.detectChanges();
+            component.applyPinnedMessageFilter();
 
             expect(component.posts).toEqual([pinnedPost, regularPost]);
         });
@@ -538,13 +530,11 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should group posts correctly with consecutive messages from same author', () => {
-            const posts = [
+            component.posts = [
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
             ];
-
-            component.posts = posts;
             (component as any).groupPosts();
 
             expect(component.groupedPosts).toHaveLength(1);
@@ -555,13 +545,11 @@ examples.forEach((activeConversation) => {
         });
 
         it('should group posts correctly with different authors', () => {
-            const posts = [
+            component.posts = [
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 2 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
             ];
-
-            component.posts = posts;
             (component as any).groupPosts();
 
             expect(component.groupedPosts).toHaveLength(3);
@@ -572,20 +560,24 @@ examples.forEach((activeConversation) => {
 
         it('should handle multiple message deletions correctly', () => {
             // Initial posts
-            const initialPosts = [
+
+            component.posts = [
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 2 } } as Post,
                 { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post,
             ];
-
-            component.posts = initialPosts;
             (component as any).groupPosts();
 
             // Delete posts 2 and 3
-            const postsAfterDeletion = [{ id: 1, creationDate: dayjs(), author: { id: 1 } } as Post, { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post];
-
-            component.posts = postsAfterDeletion;
+            component.posts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                {
+                    id: 4,
+                    creationDate: dayjs().add(3, 'minutes'),
+                    author: { id: 2 },
+                } as Post,
+            ];
             (component as any).groupPosts();
 
             expect(component.groupedPosts).toHaveLength(2);
@@ -607,13 +599,12 @@ examples.forEach((activeConversation) => {
 
             component.currentUser = currentUser;
 
-            const posts: Post[] = [
+            component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
                 { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
                 { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
                 { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
             ];
-            component.allPosts = posts;
             const unreadPosts = (component as any).getUnreadPosts();
             expect(unreadPosts).toHaveLength(3);
             expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 2, 4]);
@@ -630,14 +621,12 @@ examples.forEach((activeConversation) => {
 
             component.currentUser = currentUser;
 
-            const posts: Post[] = [
+            component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
                 { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
                 { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
             ];
-
-            component.allPosts = posts;
 
             (component as any).computeLastReadState();
 

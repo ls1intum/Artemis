@@ -41,18 +41,18 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     @Query("""
             SELECT DISTINCT tutorialGroup.campus
             FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.instructorGroupName IN :userGroups
+            WHERE tutorialGroup.course.id = :courseId
                 AND tutorialGroup.campus IS NOT NULL
             """)
-    Set<String> findAllUniqueCampusValuesInRegisteredCourse(@Param("userGroups") Set<String> userGroups);
+    Set<String> findAllUniqueCampusValuesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT tutorialGroup.language
             FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.instructorGroupName IN :userGroups
+            WHERE tutorialGroup.course.id = :courseId
                 AND tutorialGroup.language IS NOT NULL
             """)
-    Set<String> findAllUniqueLanguageValuesInRegisteredCourse(@Param("userGroups") Set<String> userGroups);
+    Set<String> findAllUniqueLanguageValuesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT tutorialGroup

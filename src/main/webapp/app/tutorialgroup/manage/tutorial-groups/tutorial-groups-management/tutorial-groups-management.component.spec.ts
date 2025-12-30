@@ -19,6 +19,9 @@ import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-bu
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
@@ -52,6 +55,7 @@ describe('TutorialGroupsManagementComponent', () => {
                     {},
                 ),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
