@@ -129,11 +129,51 @@ The following table provides an overview of supported programming languages and 
 
 ### Feature Support by Language
 
+#### Feature Explanations
+
+The features listed in the table above provide different capabilities for programming exercises.
+
+##### Sequential Test Runs
+
+Artemis can generate a build plan which first executes structural and then behavioral tests.
+This feature helps students better concentrate on the immediate challenge at hand by running tests in a specific order.
+
+When enabled, structural tests (like checking class structure, method signatures) run first.
+Only if these pass will behavioral tests (testing actual functionality) execute.
+This prevents students from being overwhelmed by behavioral test failures when fundamental structural requirements aren't met yet.
+
+##### Package Name
+
+For some programming languages (primarily Java, Kotlin, Swift, and Go), you can specify a package name that will be used in the exercise template.
+This defines the package structure students must use in their code.
+
+The package name is configured during exercise creation and helps maintain consistent code organization across student submissions.
+
+##### Solution Repository Checkout
+
+This feature allows instructors to compare a student submission against the sample solution in the solution repository.
+When available, instructors can view differences between student code and the reference solution side-by-side, making it easier to identify where students deviate from the expected approach.
+
+**Note:** This feature is currently only supported for OCaml and Haskell exercises.
+
+##### Auxiliary Repositories
+
+Auxiliary repositories are additional repositories beyond the standard template, solution, and test repositories. They can be used to:
+- Provide additional resources needed during testing
+- Include libraries or dependencies
+- Overwrite template source code in testing scenarios
+
+Each auxiliary repository has a name, checkout directory, and description.
+They are created during exercise setup and added to the build plan automatically.
+For more details, see the [Auxiliary Repositories configuration section](/Artemis/instructor/exercises/programming-exercise#auxiliary-repositories) in Exercise Creation.
+
+
+#### Feature Support by Language Matrix
 Not all templates support the same feature set.
 The table below provides an overview of supported features for each language:
 
 **L** = Local CI, **J** = Jenkins
-| No. | Language   | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type           | Solution Repository Checkout | Auxiliary Repositories |
+| No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](#configure-static-code-analysis) | [Plagiarism Check](../plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
 |-----|------------|----------------------|----------------------|------------------|--------------|------------------------|------------------------------|------------------------|
 | 1   | Java       | ✅                    | ✅                    | ✅                | ✅            | Gradle, Maven, DejaGnu | ❌                            | L:&nbsp;✅, J:&nbsp;❌   |
 | 2   | Python     | L:&nbsp;✅; J:&nbsp;❌ | L:&nbsp;✅; J:&nbsp;❌ | ✅                | ❌            | n/a                    | ❌                            | L:&nbsp;✅, J:&nbsp;❌   |
