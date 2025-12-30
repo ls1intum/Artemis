@@ -28,7 +28,6 @@ public record IrisMessageContentDTO(@Nullable String type, @Nullable String text
             entity.setJsonContent(jsonContent);
             return entity;
         }
-        // Default to text
         return new IrisTextMessageContent(textContent);
     }
 }

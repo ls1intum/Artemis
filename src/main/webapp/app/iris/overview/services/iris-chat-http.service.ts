@@ -7,6 +7,7 @@ import { map, tap } from 'rxjs/operators';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
+import { randomInt } from 'app/shared/util/utils';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -18,11 +19,6 @@ export class IrisChatHttpService {
     protected httpClient = inject(HttpClient);
 
     protected apiPrefix: string = 'api/iris';
-
-    private randomInt(): number {
-        const maxIntJava = 2147483647;
-        return Math.floor(Math.random() * maxIntJava);
-    }
 
     /**
      * gets all messages for a session by its id
@@ -80,7 +76,7 @@ export class IrisChatHttpService {
      * @return {Response<IrisMessage>}
      */
     resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
-        message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
+        message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
         return this.httpClient.post<IrisAssistantMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {

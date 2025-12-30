@@ -19,6 +19,7 @@ import { captureException } from '@sentry/angular';
 import dayjs from 'dayjs/esm';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
+import { randomInt } from 'app/shared/util/utils';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -113,11 +114,6 @@ export class IrisChatService implements OnDestroy {
         this.updateCourseId();
     }
 
-    private randomInt(): number {
-        const maxIntJava = 2147483647;
-        return Math.floor(Math.random() * maxIntJava);
-    }
-
     /**
      * <b>Extracts the course ID from the current route URL.</b>
      *
@@ -193,7 +189,7 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], this.randomInt(), uncommittedFiles);
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
 
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisUserMessage>) => {

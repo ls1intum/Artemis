@@ -209,7 +209,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         var message = createDefaultMockTextMessage(session);
         irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
 
-        var uncommittedFiles = Map.of("src/Main.java", "public class Main { /* uncommitted changes */ }", "src/Utils.java", "public class Utils { /* new file */ }");
+        Map<String, String> uncommittedFiles = Map.of("src/Main.java", "public class Main { /* uncommitted changes */ }", "src/Utils.java",
+                "public class Utils { /* new file */ }");
 
         // Mock Pyris response
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {

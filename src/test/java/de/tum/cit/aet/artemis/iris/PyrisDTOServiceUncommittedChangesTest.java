@@ -80,7 +80,7 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testToPyrisSubmissionDTO_backwardCompatibility() {
+    void testToPyrisSubmissionDTO_withoutUncommitedFiles() {
         // Act - Call original method without uncommitted files
         var result = pyrisDTOService.toPyrisSubmissionDTO(submission);
 
