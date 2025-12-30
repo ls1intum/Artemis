@@ -733,8 +733,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Use ExecutorService to enforce a timeout on Gradle builds
         // This prevents indefinite hangs in slow CI environments
         ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<Integer> future = null;
         try {
-            Future<Integer> future = executor.submit(() -> {
+            future = executor.submit(() -> {
                 try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
                     BuildLauncher launcher = connector.newBuild();
                     launcher.setJavaHome(java17Home);
@@ -757,6 +758,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
         catch (TimeoutException e) {
             log.error("Gradle build timed out after 5 minutes in directory: {}", testRepositoryPath);
+            if (future != null) {
+                future.cancel(true);
+            }
             return -1;
         }
         catch (InterruptedException | ExecutionException e) {
@@ -788,7 +792,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                     channel.force(true);
                 }
                 catch (IOException e) {
-                    log.warn("Could not force sync for file: {}", file, e);
+                    log.warn("Could not force disk sync for file: {} - {}", file, e.getMessage());
                 }
                 return FileVisitResult.CONTINUE;
             }
