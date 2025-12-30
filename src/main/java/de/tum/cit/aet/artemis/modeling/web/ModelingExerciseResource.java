@@ -444,7 +444,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
 
         // TAs are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants()) {
+        if (submissionExportOptions.exportAllParticipants()) {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
@@ -635,10 +635,20 @@ public class ModelingExerciseResource {
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
 
-        exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
-        exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
-        exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
-        exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
+        // Only set boolean values if they are explicitly provided (not null)
+        // This allows partial updates without requiring all boolean fields
+        if (updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
+        }
+        if (updateModelingExerciseDTO.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
+        }
+        if (updateModelingExerciseDTO.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
+        }
+        if (updateModelingExerciseDTO.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
+        }
         exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
 

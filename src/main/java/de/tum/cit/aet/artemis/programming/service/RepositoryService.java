@@ -359,19 +359,27 @@ public class RepositoryService {
     }
 
     /**
-     * Get a single file/folder from repository.
+     * Retrieves the contents of a single file from the given repository.
+     * <p>
+     * This method resolves the given repository-relative filename via the underlying
+     * {@code gitService} and reads the file contents into memory.
      *
-     * @param repository in which the requested file is located.
-     * @param filename   of the file to be retrieved.
-     * @return The file if found or throw an exception.
-     * @throws IOException if the file can't be found, is corrupt, etc.
+     * @param repository the repository in which the requested file is located
+     * @param filename   repository-relative path of the file to retrieve
+     * @return the complete contents of the file as a byte array
+     *
+     * @throws FileNotFoundException if no file with the given name exists in the repository
+     * @throws IOException           if the file cannot be read due to I/O errors (e.g. permission issues, filesystem errors, or concurrent modification)
      */
     public byte[] getFile(Repository repository, String filename) throws IOException {
-        Optional<File> file = gitService.getFileByName(repository, filename);
-        if (file.isEmpty()) {
-            throw new FileNotFoundException();
+
+        Optional<File> fileOpt = gitService.getFileByName(repository, filename);
+        if (fileOpt.isEmpty()) {
+            throw new FileNotFoundException("File not found in repository: " + filename);
         }
-        try (InputStream inputStream = Files.newInputStream(file.get().toPath())) {
+
+        File file = fileOpt.get();
+        try (InputStream inputStream = Files.newInputStream(file.toPath())) {
             return inputStream.readAllBytes();
         }
     }
@@ -425,7 +433,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
-        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
+        Path safePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         FileUtils.copyToFile(inputStream, file);
     }
@@ -439,7 +447,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderPath, InputStream inputStream) throws IOException {
-        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, folderPath, false);
+        Path safePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, folderPath, false);
         checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         Files.createDirectory(repository.getLocalPath().resolve(safePath));
         // We need to add an empty keep file so that the folder can be added to the git repository
@@ -448,118 +456,201 @@ public class RepositoryService {
     }
 
     /**
-     * Checks if the path is valid within the repository context and returns the absolute path.
+     * Validates a repository-relative path and ensures that it cannot escape the
+     * repository's local root directory.
+     * <p>
+     * This method performs the following steps:
+     * <ul>
+     * <li>Unescapes the given path to handle encoded input.</li>
+     * <li>Normalizes the path to eliminate redundant elements such as {@code "."}.</li>
+     * <li>Resolves the path against the repository's local root directory.</li>
+     * <li>Verifies that the resulting absolute path is still located within the repository
+     * root (prevents path traversal attacks).</li>
+     * </ul>
      *
-     * @param repository the repository
-     * @param path       the relative path
-     * @return the full safe path
-     * @throws IllegalArgumentException if the path reaches outside of the repository
+     * @param repository the repository against which the path is validated
+     * @param path       a repository-relative path (potentially escaped)
+     * @return a normalized, repository-safe relative {@link Path}
+     *
+     * @throws IllegalArgumentException if the resolved path escapes the repository root or is otherwise unsafe
      */
     private Path checkIfPathIsValidAndReturnSafePath(Repository repository, String path) {
+
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
-        Path unknownInputPath = Path.of(unescapedPath).normalize();
-        Path absoluteRepositoryPath = repository.getLocalPath().normalize().toAbsolutePath();
-        Path absoluteInputPath = absoluteRepositoryPath.resolve(unknownInputPath).normalize();
-        if (!absoluteInputPath.startsWith(absoluteRepositoryPath)) {
-            throw new IllegalArgumentException("Path is not valid");
+        Path normalizedInputPath = Path.of(unescapedPath).normalize();
+
+        Path repositoryRoot = repository.getLocalPath().normalize().toAbsolutePath();
+        Path resolvedAbsolutePath = repositoryRoot.resolve(normalizedInputPath).normalize();
+
+        if (!resolvedAbsolutePath.startsWith(repositoryRoot)) {
+            throw new IllegalArgumentException("Illegal path traversal attempt detected. Resolved path escapes repository root. Input: " + path);
         }
-        return unknownInputPath;
+
+        return normalizedInputPath;
     }
 
     /**
-     * Checks if the path is valid and if the file exists or not.
+     * Validates a repository-relative path and verifies its existence according
+     * to the given expectation.
+     * <p>
+     * This method performs the following checks:
+     * <ul>
+     * <li>Ensures that the given path is syntactically valid and safe within the repository
+     * (e.g. no path traversal).</li>
+     * <li>Resolves the path against the repository's local root directory.</li>
+     * <li>Verifies whether the resolved path exists or does not exist, depending on
+     * {@code shouldExist}.</li>
+     * </ul>
      *
-     * @param repository  the repository
-     * @param path        the relative path
-     * @param shouldExist if the file should exist or not
-     * @return the full safe path
-     * @throws IllegalArgumentException if the existence check fails
+     * @param repository  the repository against which the path is validated
+     * @param path        a repository-relative path
+     * @param shouldExist {@code true} if the file or directory is expected to exist;
+     *                        {@code false} if it must not exist
+     * @return the validated, repository-safe relative path
+     *
+     * @throws IllegalArgumentException if the path is invalid, unsafe, or if the existence check does not match the expectation (e.g. a missing file when {@code shouldExist} is
+     *                                      {@code true},
+     *                                      or an already existing file when {@code shouldExist} is {@code false})
      */
-    private Path checkIfPathIsValidAndExistanceAndReturnSafePath(Repository repository, String path, boolean shouldExist) {
+    private Path checkIfPathIsValidAndExistenceAndReturnSafePath(Repository repository, String path, boolean shouldExist) {
         Path safePath = checkIfPathIsValidAndReturnSafePath(repository, path);
         Path fullPath = repository.getLocalPath().resolve(safePath);
-        if ((shouldExist && !fullPath.toFile().exists()) || (!shouldExist && fullPath.toFile().exists())) {
-            throw new IllegalArgumentException("Path is not valid");
+
+        boolean exists = fullPath.toFile().exists();
+
+        if (shouldExist && !exists) {
+            throw new IllegalArgumentException("Expected file to exist, but it does not: " + fullPath);
         }
+
+        if (!shouldExist && exists) {
+            throw new IllegalArgumentException("Expected file to not exist, but it already exists: " + fullPath);
+        }
+
         return safePath;
     }
 
     /**
-     * Checks if the path and the file are valid.
+     * Validates a repository-relative path and ensures that it refers to a valid,
+     * non-conflicting file within the given repository.
+     * <p>
+     * This method performs the following checks:
+     * <ul>
+     * <li>Ensures that no file with the same path already exists in the repository
+     * (e.g. to avoid name collisions).</li>
+     * <li>Resolves the path against the repository's local root directory.</li>
+     * <li>Verifies that the resolved file is considered valid according to the
+     * repository's constraints (e.g. location, permissions, or repository rules).</li>
+     * </ul>
      *
-     * @param repository the repository
-     * @param path       the relative path
-     * @return the file for the path in the repository
+     * @param repository the repository against which the path is validated
+     * @param path       a repository-relative path
+     * @return a validated {@link File} instance representing the resolved path in the repository
+     *
+     * @throws IllegalArgumentException if a file with the given path already exists in the repository or if the resolved file violates repository validity constraints
      */
     private File checkIfPathAndFileAreValidAndReturnSafeFile(Repository repository, Path path) {
         if (gitService.getFileByName(repository, path.toString()).isPresent()) {
-            throw new IllegalArgumentException("Path is not valid");
+            throw new IllegalArgumentException("A file with the given path already exists in the repository: " + path);
         }
 
-        File file = new File(Path.of(repository.getLocalPath().toString()).resolve(path).toFile(), repository);
+        File file = new File(repository.getLocalPath().resolve(path).toFile(), repository);
+
         if (!repository.isValidFile(file)) {
-            throw new IllegalArgumentException("Path is not valid");
+            throw new IllegalArgumentException("The resolved file is not valid within the repository constraints: " + file.getPath());
         }
+
         return file;
     }
 
     /**
-     * Rename a file in a repository.
+     * Renames an existing file in the given repository to a new filename within the same directory.
+     * <p>
+     * This method performs the following checks:
+     * <ul>
+     * <li>Validates that {@code fileMove.currentFilePath()} is a safe repository-relative path and that the file exists.</li>
+     * <li>Resolves the current file via {@code gitService} and verifies that it is valid according to repository constraints.</li>
+     * <li>Sanitizes {@code fileMove.newFilename()} and constructs the target path in the same parent directory.</li>
+     * <li>Validates that the target file path is allowed and does not already exist.</li>
+     * </ul>
      *
-     * @param repository in which the file is located.
-     * @param fileMove   dto for describing the old and the new filename.
-     * @throws FileNotFoundException      if the file to rename is not available.
-     * @throws FileAlreadyExistsException if the new filename is already taken.
-     * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
+     * @param repository the repository in which the file is located
+     * @param fileMove   DTO describing the current repository-relative path and the new filename
+     *
+     * @throws FileNotFoundException      if the file referenced by {@code fileMove.currentFilePath()} does not exist in the repository
+     * @throws FileAlreadyExistsException if a file with the resulting target path already exists
+     * @throws IllegalArgumentException   if the current path or the resulting target path is unsafe/invalid for the repository, or if the rename operation fails on the filesystem
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Path currentSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
+
+        Path currentSafePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
         String newFilename = FileUtil.sanitizeFilename(fileMove.newFilename());
 
-        Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
-        if (existingFile.isEmpty()) {
-            throw new FileNotFoundException();
+        Optional<File> existingFileOpt = gitService.getFileByName(repository, currentSafePath.toString());
+        if (existingFileOpt.isEmpty()) {
+            throw new FileNotFoundException("File to rename not found in repository: " + currentSafePath);
         }
-        if (!repository.isValidFile(existingFile.get())) {
-            throw new IllegalArgumentException("Existing path is not valid");
+
+        File existingFile = existingFileOpt.get();
+        if (!repository.isValidFile(existingFile)) {
+            throw new IllegalArgumentException("Resolved existing file is not valid within repository constraints: " + existingFile.getPath());
         }
-        File newFile = new File(existingFile.get().toPath().getParent().resolve(newFilename), repository);
+
+        File newFile = new File(existingFile.toPath().getParent().resolve(newFilename), repository);
         if (!repository.isValidFile(newFile)) {
-            throw new IllegalArgumentException("Existing path is not valid");
+            throw new IllegalArgumentException(
+                    "Target file path is not valid within repository constraints. " + "Existing: " + existingFile.getPath() + ", target: " + newFile.getPath());
         }
-        if (gitService.getFileByName(repository, newFile.toString()).isPresent()) {
-            throw new FileAlreadyExistsException("New path is not valid");
+
+        // Important: use repository-relative path for lookup (avoid relying on File#toString format).
+        String newRepositoryRelativePath = repository.getLocalPath().relativize(newFile.toPath()).toString();
+        if (gitService.getFileByName(repository, newRepositoryRelativePath).isPresent()) {
+            throw new FileAlreadyExistsException("Cannot rename because target already exists in repository: " + newRepositoryRelativePath);
         }
-        boolean isRenamed = existingFile.get().renameTo(newFile);
-        if (!isRenamed) {
-            throw new IllegalArgumentException("Existing path is not valid");
+
+        boolean renamed = existingFile.renameTo(newFile);
+        if (!renamed) {
+            throw new IllegalArgumentException("Rename failed on filesystem. Existing: " + existingFile.getPath() + ", target: " + newFile.getPath());
         }
     }
 
     /**
-     * Delete a file in a repository.
+     * Deletes an existing file or directory from the given repository.
+     * <p>
+     * This method performs the following checks:
+     * <ul>
+     * <li>Validates that {@code filename} is a safe repository-relative path and that it exists.</li>
+     * <li>Resolves the file via {@code gitService} and verifies that it is valid according to repository constraints.</li>
+     * </ul>
+     * If the resolved path points to a regular file it is deleted via {@link Files#delete(java.nio.file.Path)}.
+     * If it points to a directory it is deleted recursively.
      *
-     * @param repository in which the file to delete is located.
-     * @param filename   to delete.
-     * @throws IOException              if the file can't be deleted.
-     * @throws FileNotFoundException    if the file can't be found.
-     * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
+     * @param repository the repository in which the file/directory to delete is located
+     * @param filename   repository-relative path of the file/directory to delete
+     *
+     * @throws FileNotFoundException    if the file/directory does not exist in the repository
+     * @throws IllegalArgumentException if {@code filename} is unsafe/invalid or if the resolved file violates repository constraints
+     * @throws IOException              if deletion fails at the filesystem level
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
-        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filename, true);
-        Optional<File> file = gitService.getFileByName(repository, safePath.toString());
 
-        if (file.isEmpty()) {
-            throw new FileNotFoundException();
+        Path safePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, filename, true);
+        Optional<File> fileOpt = gitService.getFileByName(repository, safePath.toString());
+
+        if (fileOpt.isEmpty()) {
+            throw new FileNotFoundException("File to delete not found in repository: " + safePath);
         }
-        if (!repository.isValidFile(file.get())) {
-            throw new IllegalArgumentException();
+
+        File file = fileOpt.get();
+        if (!repository.isValidFile(file)) {
+            throw new IllegalArgumentException("Resolved file is not valid within repository constraints: " + file.getPath());
         }
-        if (file.get().isFile()) {
-            Files.delete(file.get().toPath());
+
+        if (file.isFile()) {
+            Files.delete(file.toPath());
         }
         else {
-            FileUtils.deleteDirectory(file.get());
+            // Apache Commons IO: deletes directory recursively; throws IOException on failure.
+            FileUtils.deleteDirectory(file);
         }
     }
 

@@ -91,7 +91,7 @@ public class QuizExerciseRetrievalResource {
     @GetMapping("courses/{courseId}/quiz-exercises")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForCourse(@PathVariable long courseId) {
-        log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
+        log.debug("REST request to get all quiz exercises for the course with id : {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
         var quizExerciseDTOs = new ArrayList<QuizExerciseForCourseDTO>();
@@ -113,7 +113,7 @@ public class QuizExerciseRetrievalResource {
     @GetMapping("exams/{examId}/quiz-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable long examId) {
-        log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
+        log.debug("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
         List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
         Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();

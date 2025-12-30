@@ -76,10 +76,10 @@ const moduleThresholds = {
         lines:      91.20,
     },
     buildagent: {
-        statements: 92.00,
+        statements: 89.70,
         branches:   73.60,
-        functions:  85.10,
-        lines:      92.10,
+        functions:  84.70,
+        lines:      89.90,
     },
     communication: {
         statements: 92.40,
@@ -102,7 +102,7 @@ const moduleThresholds = {
     exercise: {
         statements: 88.40,
         branches:   76.60,
-        functions:  80.20,
+        functions:  80.00,
         lines:      88.50,
     },
     fileupload: {

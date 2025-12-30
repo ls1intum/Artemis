@@ -1,11 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
+import { CourseSummaryDTO } from 'app/core/course/shared/entities/course-summary.model';
+import { CourseOperationProgressDTO } from 'app/core/course/shared/entities/course-operation-progress.model';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -52,10 +54,30 @@ export class CourseAdminService {
     }
 
     /**
-     * Returns a summary for the course providing information potentially relevant for the deletion.
-     * @param courseId - the id of the course to get the deletion summary for
+     * Returns a comprehensive summary for the course containing all relevant data counts.
+     * Used by both deletion and reset confirmation dialogs.
+     * @param courseId - the id of the course to get the summary for
      */
-    getDeletionSummary(courseId: number): Observable<HttpResponse<CourseDeletionSummaryDTO>> {
-        return this.http.get<CourseDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/deletion-summary`, { observe: 'response' });
+    getCourseSummary(courseId: number): Observable<HttpResponse<CourseSummaryDTO>> {
+        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${courseId}/summary`, { observe: 'response' });
+    }
+
+    /**
+     * Resets the course by removing all student data while preserving the course structure.
+     * @param courseId - the id of the course to reset
+     */
+    reset(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/reset`, null, { observe: 'response' });
+    }
+
+    /**
+     * Returns the current progress of a delete/reset/archive operation on the course.
+     * This is used for polling when WebSocket is not available.
+     * @param courseId - the id of the course to get the operation progress for
+     */
+    getOperationProgress(courseId: number): Observable<HttpResponse<CourseOperationProgressDTO | null>> {
+        return this.http
+            .get<CourseOperationProgressDTO>(`${this.resourceUrl}/${courseId}/operation-progress`, { observe: 'response' })
+            .pipe(tap((res) => res.body && (res.body.startedAt = convertDateFromServer(res.body.startedAt))));
     }
 }

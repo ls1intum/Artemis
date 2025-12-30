@@ -11,6 +11,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Component for displaying system health status.
@@ -19,7 +21,16 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-health',
     templateUrl: './health.component.html',
-    imports: [TranslateDirective, FaIconComponent, NgClass, JhiConnectionStatusComponent, KeyValuePipe, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        NgClass,
+        JhiConnectionStatusComponent,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HealthComponent implements OnInit {
