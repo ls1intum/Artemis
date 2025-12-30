@@ -84,11 +84,13 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
@@ -1044,6 +1046,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     /**
      * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
+     * This method converts DTOs to new entity objects to avoid Hibernate detached entity issues.
      *
      * @param quizExercise              The QuizExercise domain object to be updated
      * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
@@ -1075,8 +1078,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
         }
         if (quizExerciseFromEditorDTO.quizBatches() != null) {
+            // Convert DTOs to new entities to avoid detached entity issues
+            Set<QuizBatch> newBatches = quizExerciseFromEditorDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
             quizExercise.getQuizBatches().clear();
-            quizExercise.getQuizBatches().addAll(quizExerciseFromEditorDTO.quizBatches());
+            quizExercise.getQuizBatches().addAll(newBatches);
         }
         if (quizExerciseFromEditorDTO.releaseDate() != null) {
             quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
@@ -1091,7 +1096,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
         }
         if (quizExerciseFromEditorDTO.quizQuestions() != null) {
-            quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
+            // Convert DTOs to new entities to avoid detached entity issues
+            List<QuizQuestion> newQuestions = quizExerciseFromEditorDTO.quizQuestions().stream().map(QuizQuestionFromEditorDTO::toDomainObject).toList();
+            quizExercise.setQuizQuestions(newQuestions);
         }
     }
 
