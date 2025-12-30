@@ -46,17 +46,17 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
 
     /**
-     * Count the number of submissions for a given course.
+     * Count the number of submissions for a given set of exercises.
      *
-     * @param courseId the id of the course
-     * @return the number of submissions in the course
+     * @param exerciseIds the ids of the exercises (e.g. all in a course)
+     * @return the number of submissions in the exercises
      */
     @Query("""
             SELECT COUNT(s)
             FROM Submission s
-            WHERE s.participation.exercise.course.id = :courseId
+            WHERE s.participation.exercise.id IN :exerciseIds
             """)
-    long countByCourseId(@Param("courseId") long courseId);
+    long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Count the number of submissions for a given exercise.
@@ -380,22 +380,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Calculate the number of submissions for the given exercise by the given student.
-     *
-     * @param exerciseId   the exercise id we are interested in
-     * @param studentLogin the login of the student we are interested in
-     * @return the number of submissions belonging to the exercise and student id
-     */
-    @Query("""
-            SELECT COUNT(DISTINCT s)
-            FROM StudentParticipation p
-                JOIN p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :studentLogin
-            """)
-    int countByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("studentLogin") String studentLogin);
-
-    /**
      * @param exerciseIds the exercise ids we are interested in
      * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
@@ -615,7 +599,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
               FROM Submission s2
               WHERE s2.participation.id = :participationId
                  )
-             """)
+            """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
-
 }

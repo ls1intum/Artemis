@@ -1462,11 +1462,11 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
+    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
         request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.NOT_FOUND, String.class);
     }
 
-    void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
+    void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
         userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt1");
         request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
