@@ -770,14 +770,14 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound();
+    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_exerciseDoesNotExist_notFound();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutoralt1", roles = "TA")
-    void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden();
+    void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_isNotTeachingAssistant_forbidden();
     }
 
     @Test

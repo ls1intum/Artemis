@@ -32,6 +32,7 @@ import { LectureService } from '../services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -66,7 +67,7 @@ interface CreateLectureOption {
         CourseTitleBarTitleDirective,
     ],
 })
-export class LectureUpdateComponent implements OnInit, OnDestroy {
+export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsavedChangesComponent {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
