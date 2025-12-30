@@ -317,8 +317,8 @@ dependencies {
     implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
 
 
-    implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
-    implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
+    implementation "org.hibernate.orm:hibernate-core"
+    implementation "org.hibernate.orm:hibernate-envers"
 
     // Required for jdbc connection pooling to databases
     implementation "com.zaxxer:HikariCP:7.0.2"
@@ -442,8 +442,8 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    annotationProcessor "org.hibernate.orm:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor "org.hibernate.orm:hibernate-core:${hibernate_version}"
+    annotationProcessor "org.hibernate.orm:hibernate-jpamodelgen"
+    annotationProcessor "org.hibernate.orm:hibernate-core"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
