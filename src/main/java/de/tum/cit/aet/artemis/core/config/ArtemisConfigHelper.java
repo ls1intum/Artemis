@@ -37,7 +37,7 @@ public class ArtemisConfigHelper {
      * @return true if passkey is required for administrator features, false otherwise
      */
     public boolean isPasskeyRequiredForAdmin(Environment environment) {
-        return Boolean.TRUE.equals(environment.getProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Boolean.class, false));
+        return environment.getProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
@@ -101,6 +101,26 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the modeling module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the modeling module is enabled, false otherwise
+     */
+    public boolean isModelingEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.MODELING_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the file upload module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the file upload module is enabled, false otherwise
+     */
+    public boolean isFileUploadEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the tutorial group feature is enabled.
      *
      * @param environment the Spring environment
@@ -143,6 +163,12 @@ public class ArtemisConfigHelper {
         }
         if (isTextExerciseEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
+        if (isModelingEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_MODELING);
+        }
+        if (isFileUploadEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_FILEUPLOAD);
         }
         if (isTutorialGroupEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);

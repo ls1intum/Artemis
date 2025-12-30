@@ -27,9 +27,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -48,9 +47,7 @@ public class ExamImportService {
 
     private final Optional<TextExerciseImportApi> textExerciseImportApi;
 
-    private final ModelingExerciseImportService modelingExerciseImportService;
-
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final Optional<ModelingExerciseImportApi> modelingExerciseImportApi;
 
     private final ExamRepository examRepository;
 
@@ -76,15 +73,14 @@ public class ExamImportService {
 
     private final ChannelService channelService;
 
-    public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, ModelingExerciseImportService modelingExerciseImportService,
-            ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository,
-            QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise, CourseRepository courseRepository,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
-            GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
+    public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
+            ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
+            CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
+            Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
         this.textExerciseImportApi = textExerciseImportApi;
-        this.modelingExerciseImportService = modelingExerciseImportService;
-        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -282,13 +278,10 @@ public class ExamImportService {
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
             Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
-                    final Optional<ModelingExercise> optionalOriginalModellingExercise = modelingExerciseRepository
-                            .findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseToCopy.getId());
-                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
-                    if (optionalOriginalModellingExercise.isEmpty()) {
+                    if (modelingExerciseImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield Optional.of(modelingExerciseImportService.importModelingExercise(optionalOriginalModellingExercise.get(), (ModelingExercise) exerciseToCopy));
+                    yield modelingExerciseImportApi.get().importModelingExercise(exerciseToCopy.getId(), (ModelingExercise) exerciseToCopy);
                 }
 
                 case TEXT -> {

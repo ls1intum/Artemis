@@ -433,6 +433,16 @@ public final class Constants {
     public static final String MODULE_FEATURE_TEXT = "text";
 
     /**
+     * The name of the module feature used for Modeling Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_MODELING = "modeling";
+
+    /**
+     * The name of the module feature used for File Upload Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_FILEUPLOAD = "fileupload";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
@@ -471,6 +481,16 @@ public final class Constants {
      * The name of the property used to enable or disable text exercise functionality.
      */
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
+     * The name of the property used to enable or disable modeling exercise functionality.
+     */
+    public static final String MODELING_ENABLED_PROPERTY_NAME = "artemis.modeling.enabled";
+
+    /**
+     * The name of the property used to enable or disable file upload exercise functionality.
+     */
+    public static final String FILEUPLOAD_ENABLED_PROPERTY_NAME = "artemis.fileupload.enabled";
 
     /**
      * The name of the property used to enable or disable tutorial group functionality.

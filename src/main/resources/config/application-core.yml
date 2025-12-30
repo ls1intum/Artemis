@@ -9,6 +9,10 @@ artemis:
         enabled: true
     text:
         enabled: true
+    modeling:
+        enabled: true
+    fileupload:
+        enabled: true
     sharing:
         enabled: false
         # the shared common secret

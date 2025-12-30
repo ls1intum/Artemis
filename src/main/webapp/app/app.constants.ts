@@ -47,6 +47,10 @@ export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
 
 export const MODULE_FEATURE_TEXT = 'text';
 
+export const MODULE_FEATURE_MODELING = 'modeling';
+
+export const MODULE_FEATURE_FILEUPLOAD = 'fileupload';
+
 export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 
 export const MODULE_FEATURE_NEBULA = 'nebula';
@@ -61,6 +65,8 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM
     | typeof MODULE_FEATURE_TEXT
+    | typeof MODULE_FEATURE_MODELING
+    | typeof MODULE_FEATURE_FILEUPLOAD
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING;
