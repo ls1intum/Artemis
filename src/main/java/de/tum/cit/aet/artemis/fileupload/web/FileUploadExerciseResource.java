@@ -409,26 +409,36 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * Validates that the DTO has valid courseId/exerciseGroupId combination.
-     * Exactly one of courseId or exerciseGroupId must be set, matching the stored exercise.
+     * Validates that the DTO has valid courseId/exerciseGroupId combination matching the stored exercise type.
+     * <p>
+     * For course exercises: courseId must be set, exerciseGroupId must NOT be set.
+     * For exam exercises: exerciseGroupId must be set, courseId may optionally be set
+     * (the DTO.of() method populates it via getCourseViaExerciseGroupOrCourseMember()).
      *
      * @param dto              the update DTO
      * @param existingExercise the existing exercise entity
-     * @throws BadRequestAlertException if both or neither are set, or if they don't match the stored exercise
+     * @throws BadRequestAlertException if the required identifier is missing or if identifiers are inconsistent with exercise type
      */
     private void validateCourseAndExerciseGroupExclusivity(UpdateFileUploadExerciseDTO dto, FileUploadExercise existingExercise) {
         boolean hasCourseId = dto.courseId() != null;
         boolean hasExerciseGroupId = dto.exerciseGroupId() != null;
 
-        // Both set or neither set is invalid
-        if (hasCourseId == hasExerciseGroupId) {
-            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set, but not both.", ENTITY_NAME, "courseOrExerciseGroupRequired");
+        // Neither set is always invalid
+        if (!hasCourseId && !hasExerciseGroupId) {
+            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set.", ENTITY_NAME, "courseOrExerciseGroupRequired");
         }
 
-        // Validate consistency with stored exercise
-        if (existingExercise.isCourseExercise() && !hasCourseId) {
-            throw new BadRequestAlertException("Course exercise requires courseId.", ENTITY_NAME, "courseIdMissing");
+        // For course exercises: courseId required, exerciseGroupId must NOT be set
+        if (existingExercise.isCourseExercise()) {
+            if (!hasCourseId) {
+                throw new BadRequestAlertException("Course exercise requires courseId.", ENTITY_NAME, "courseIdMissing");
+            }
+            if (hasExerciseGroupId) {
+                throw new BadRequestAlertException("Course exercise cannot have exerciseGroupId.", ENTITY_NAME, "courseOrExerciseGroupRequired");
+            }
         }
+
+        // For exam exercises: exerciseGroupId required (courseId is optional/informational)
         if (existingExercise.isExamExercise() && !hasExerciseGroupId) {
             throw new BadRequestAlertException("Exam exercise requires exerciseGroupId.", ENTITY_NAME, "exerciseGroupIdMissing");
         }

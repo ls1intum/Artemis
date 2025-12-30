@@ -426,28 +426,25 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
-        // Test case 1: Exam exercise - send DTO with both courseId and exerciseGroupId set
+        // Test case 1: Exam exercise - send DTO with neither courseId nor exerciseGroupId set
         FileUploadExercise examExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
-        UpdateFileUploadExerciseDTO dtoWithBothSet = createDtoWithBothCourseAndExerciseGroup(examExercise);
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithBothSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
-
-        // Test case 2: Exam exercise - send DTO with neither courseId nor exerciseGroupId set
         UpdateFileUploadExerciseDTO dtoWithNeitherSet = createDtoWithNeitherCourseNorExerciseGroup(examExercise);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
-        // Test case 3: Course exercise - send DTO with both courseId and exerciseGroupId set
+        // Test case 2: Course exercise - send DTO with both courseId and exerciseGroupId set
         Course testCourse = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise courseExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(testCourse.getExercises(), "released");
         UpdateFileUploadExerciseDTO courseDtoWithBothSet = createDtoWithBothCourseAndExerciseGroup(courseExercise);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithBothSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
-        // Test case 4: Course exercise - send DTO with neither courseId nor exerciseGroupId set
+        // Test case 3: Course exercise - send DTO with neither courseId nor exerciseGroupId set
         UpdateFileUploadExerciseDTO courseDtoWithNeitherSet = createDtoWithNeitherCourseNorExerciseGroup(courseExercise);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
-     * Creates a DTO from the exercise but with both courseId and exerciseGroupId set (invalid).
+     * Creates a DTO from the exercise but with both courseId and exerciseGroupId set.
+     * This is invalid for course exercises but allowed for exam exercises.
      */
     private UpdateFileUploadExerciseDTO createDtoWithBothCourseAndExerciseGroup(FileUploadExercise exercise) {
         UpdateFileUploadExerciseDTO original = UpdateFileUploadExerciseDTO.of(exercise);
@@ -635,8 +632,25 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + 123456789 + "/re-evaluate", UpdateFileUploadExerciseDTO.of(fileUploadExercise),
-                FileUploadExercise.class, HttpStatus.NOT_FOUND);
+        // Create a DTO with matching non-existent ID (to pass ID match validation, then fail with NOT_FOUND)
+        long nonExistentId = 123456789L;
+        UpdateFileUploadExerciseDTO dtoWithNonExistentId = createDtoWithCustomId(fileUploadExercise, nonExistentId);
+
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + nonExistentId + "/re-evaluate", dtoWithNonExistentId, FileUploadExercise.class,
+                HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Creates a DTO from the exercise but with a custom ID.
+     */
+    private UpdateFileUploadExerciseDTO createDtoWithCustomId(FileUploadExercise exercise, long customId) {
+        UpdateFileUploadExerciseDTO original = UpdateFileUploadExerciseDTO.of(exercise);
+        return new UpdateFileUploadExerciseDTO(customId, original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
+                original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
+                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
+                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
+                original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), original.courseId(), original.exerciseGroupId(),
+                original.gradingCriteria(), original.competencyLinks());
     }
 
     @Test
