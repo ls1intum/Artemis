@@ -93,6 +93,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -243,43 +244,41 @@ public class ExamResource {
      * PUT /courses/{courseId}/exams : Updates an existing exam.
      * This route does not save changes to the exercise groups. This should be done via the ExerciseGroupResource.
      *
-     * @param courseId    the course to which the exam belongs
-     * @param updatedExam the exam to update
+     * @param courseId      the course to which the exam belongs
+     * @param examUpdateDTO the exam update DTO containing the new values
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    // TODO: use a DTO here
-    public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
-        log.debug("REST request to update an exam : {}", updatedExam);
+    public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examUpdateDTO) {
+        log.debug("REST request to update an exam : {}", examUpdateDTO);
 
-        if (updatedExam.getId() == null) {
-            return createExam(courseId, updatedExam);
+        if (examUpdateDTO.id() == null) {
+            throw new BadRequestAlertException("An exam update must have an ID", ENTITY_NAME, "idMissing");
         }
 
-        checkForExamConflictsElseThrow(courseId, updatedExam);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examUpdateDTO.id());
 
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, updatedExam.getId());
-
-        // Make sure that the original references are preserved.
-        Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
+        // Fetch the original exam from the database (this is the managed entity)
+        Exam originalExam = examRepository.findByIdElseThrow(examUpdateDTO.id());
         var originalExamDuration = originalExam.getDuration();
+        ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
+        ZonedDateTime originalStartDate = originalExam.getStartDate();
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
-        if (updatedExam.isTestExam() != originalExam.isTestExam()) {
+        if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }
 
-        // NOTE: Make sure that all references are preserved here
-        updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
-        updatedExam.setStudentExams(originalExam.getStudentExams());
-        updatedExam.setExamUsers(originalExam.getExamUsers());
-        updatedExam.setExamRoomAssignments(originalExam.getExamRoomAssignments());
+        // Apply DTO values to the managed entity
+        examUpdateDTO.applyTo(originalExam);
 
-        Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
+        // Validate the updated exam
+        checkForExamConflictsElseThrow(courseId, originalExam);
 
-        Exam savedExam = examRepository.save(updatedExam);
+        Channel updatedChannel = channelService.updateExamChannel(originalExam, originalExam);
+
+        Exam savedExam = examRepository.save(originalExam);
 
         User instructor = userRepository.getUser();
         final var auditEvent = new AuditEvent(instructor.getLogin(), Constants.UPDATE_EXAM, "exam=" + savedExam.getId());
@@ -290,8 +289,7 @@ public class ExamResource {
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
-        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
-                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
+        if (comparator.compare(originalVisibleDate, savedExam.getVisibleDate()) != 0 || comparator.compare(originalStartDate, savedExam.getStartDate()) != 0) {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -305,7 +303,7 @@ public class ExamResource {
         }
 
         if (updatedChannel != null) {
-            savedExam.setChannelName(updatedExam.getChannelName());
+            savedExam.setChannelName(examUpdateDTO.channelName());
         }
 
         return ResponseEntity.ok(savedExam);

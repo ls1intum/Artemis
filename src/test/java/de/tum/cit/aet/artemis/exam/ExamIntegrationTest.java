@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -378,7 +379,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private void testAllPreAuthorize(Course course, Exam exam) throws Exception {
         Exam newExam = ExamFactory.generateExam(course1);
         request.post("/api/exam/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
-        request.put("/api/exam/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
+        request.put("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.FORBIDDEN);
         request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
         request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/reset", HttpStatus.FORBIDDEN);
@@ -531,38 +532,28 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_createsExamWithoutId() throws Exception {
-        // Create instead of update if no id was set
+    void testUpdateExam_failsWithoutId() throws Exception {
+        // Update requires an ID - use entity without ID to simulate missing ID case
         Exam exam = ExamFactory.generateExam(course1, "exam1");
         exam.setTitle("Over 9000!");
-        long examCountBefore = examRepository.count();
-        Exam createdExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
-
-        assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
-        assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
-        assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());
-        // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
-        assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
-        assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
+        // Exam without ID should fail
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_failsWithoutCourse() throws Exception {
-        // No course is set -> bad request
+    void testUpdateExam_failsWithExamNotFound() throws Exception {
+        // Exam with non-existent ID -> not found
         Exam exam = ExamFactory.generateExam(course1);
-        exam.setId(1L);
-        exam.setCourse(null);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        exam.setId(999999L);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_failsWithExamIdMismatch() throws Exception {
-        // Course id in the updated exam and in the REST resource url do not match -> bad request
-        Exam exam = ExamFactory.generateExam(course1);
-        exam.setId(1L);
-        request.put("/api/exam/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    void testUpdateExam_failsWithExamCourseMismatch() throws Exception {
+        // Exam belongs to course1 but URL has course2 -> conflict (course id mismatch)
+        request.put("/api/exam/courses/" + course2.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.CONFLICT);
     }
 
     @ParameterizedTest
@@ -570,8 +561,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_failsForInvalidDates(Exam exam) throws Exception {
         // Dates in the updated exam are not valid -> bad request
-        exam.setId(1L);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        // Use exam1's ID since validation happens after fetching
+        exam.setId(exam1.getId());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -579,8 +571,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testUpdateExam_updatesExamTitle() throws Exception {
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
-        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
-        assertThat(returnedExam).isEqualTo(exam1);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getTitle()).isEqualTo(exam1.getTitle());
     }
 
     @Test
@@ -589,7 +581,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setTitle("Best exam ever");
 
-        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
@@ -600,7 +592,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusNanos(1));
 
-        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
@@ -611,7 +603,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusHours(1));
 
-        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isNotEmpty();
     }
@@ -627,7 +619,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         examWithModelingEx.setPublishResultsDate(now().minusHours(2));
         examWithModelingEx.setExampleSolutionPublicationDate(now().minusHours(1));
 
-        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", ExamUpdateDTO.of(examWithModelingEx), HttpStatus.OK);
 
         Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examWithModelingEx.getId());
         Exercise exercise = fetchedExam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
@@ -1052,7 +1044,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testCourseAndExamAccessForInstructors_notInstructorInCourse_forbidden() throws Exception {
         // Instructor10 is not instructor for the course
         // Update exam
-        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.FORBIDDEN);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.FORBIDDEN);
         // Get exam
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
         // Add student to exam
