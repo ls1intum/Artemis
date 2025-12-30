@@ -107,8 +107,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
         String login = TEST_PREFIX + "student2";
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addStudentParticipationForProgrammingExercise(exercise, login);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         seedRepositoryForParticipation(participation, "ManualTrigger.java");
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
@@ -147,8 +146,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerBuildInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         String login = TEST_PREFIX + "student2";
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addStudentParticipationForProgrammingExercise(exercise, login);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         seedRepositoryForParticipation(participation, "InstructorTrigger.java");
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
@@ -228,9 +226,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String login1 = TEST_PREFIX + "student1";
         String login2 = TEST_PREFIX + "student2";
         String login3 = TEST_PREFIX + "student3";
-        final var firstParticipation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
-        final var secondParticipation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
-        final var thirdParticipation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
+        final var firstParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
+        final var secondParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
+        final var thirdParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
 
         seedRepositoryForParticipation(firstParticipation, "TriggerSeed1.java");
         seedRepositoryForParticipation(secondParticipation, "TriggerSeed2.java");
@@ -442,8 +440,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
         String login = TEST_PREFIX + "student1";
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addStudentParticipationForProgrammingExercise(exercise, login);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         seedRepositoryForParticipation(participation, "FailedBuild.java");
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
