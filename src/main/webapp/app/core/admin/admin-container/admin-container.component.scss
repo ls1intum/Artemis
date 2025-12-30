@@ -67,8 +67,14 @@ $spacing: 0.5rem;
     }
 }
 
-.admin-body-container {
+.admin-content-wrapper {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-body-container {
+    flex: 1;
     overflow-y: auto;
 }
 

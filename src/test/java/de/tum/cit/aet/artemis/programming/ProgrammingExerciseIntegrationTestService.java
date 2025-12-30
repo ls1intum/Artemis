@@ -420,6 +420,9 @@ public class ProgrammingExerciseIntegrationTestService {
         GitService.commit(repo1.workingCopyGitRepo).setMessage("seed project and pom").call();
         repo1.workingCopyGitRepo.push().setRemote("origin").call();
 
+        // Give LocalVC time to sync after push
+        Thread.sleep(100);
+
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
         assertThat(participation).isPresent();
 
@@ -595,6 +598,10 @@ public class ProgrammingExerciseIntegrationTestService {
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
         programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
+
+        // Give LocalVC time to sync after repository creation
+        Thread.sleep(100);
+
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + userPrefix + "student1,"
                 + userPrefix + "student2";
         return request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
@@ -1455,11 +1462,11 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
+    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
         request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.NOT_FOUND, String.class);
     }
 
-    void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
+    void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
         userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt1");
         request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
@@ -1822,6 +1829,26 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Ensure the project folder exists
         Files.createDirectories(localVCBasePath.resolve(projectKey));
+
+        // Give LocalVC time to sync after pushes and verify repos are cloneable
+        Thread.sleep(100);
+
+        // Verify that all student repositories can be cloned (catches race conditions early)
+        for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
+            var repoUri = participation.getVcsRepositoryUri();
+            assertThat(repoUri).as("Participation %d should have a repository URI", participation.getId()).isNotNull();
+            try {
+                var testClonePath = Files.createTempDirectory("plagiarism-clone-test");
+                var clonedRepo = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, testClonePath, true, false);
+                assertThat(clonedRepo).as("Repository %s should be cloneable", repoUri).isNotNull();
+                assertThat(clonedRepo.getLocalPath().resolve("Main.java")).exists();
+                gitService.deleteLocalRepository(clonedRepo);
+                FileUtils.deleteDirectory(testClonePath.toFile());
+            }
+            catch (Exception e) {
+                throw new AssertionError("Failed to clone repository " + repoUri + " - LocalVC may not have synced yet", e);
+            }
+        }
     }
 
     void testGetPlagiarismResult() throws Exception {

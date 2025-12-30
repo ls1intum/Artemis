@@ -2,7 +2,7 @@ import { Component, ElementRef, Input, OnInit, computed, inject, signal, viewChi
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -21,10 +21,8 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { catchError, concatMap, filter, map, switchMap } from 'rxjs/operators';
-import { combineLatest, from, of } from 'rxjs';
-import { LectureTranscriptionService } from '../services/lecture-transcription.service';
-import { AccountService } from 'app/core/auth/account.service';
+import { concatMap, filter, map } from 'rxjs/operators';
+import { from } from 'rxjs';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({
@@ -47,8 +45,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected textUnitService = inject(TextUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    protected lectureTranscriptionService = inject(LectureTranscriptionService);
-    protected accountService = inject(AccountService);
 
     @Input() lecture: Lecture;
 
@@ -172,10 +168,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
 
         if (!name || (!fileName && !videoSource)) {
             return;
@@ -230,72 +225,23 @@ export class LectureUpdateUnitsComponent implements OnInit {
             ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
             : this.attachmentVideoUnitService.create(formData, this.lecture.id!);
 
-        save$
-            .pipe(
-                switchMap((response) => {
-                    const lectureUnit = response.body!;
-                    const lectureUnitId = lectureUnit.id!;
-
-                    // First: Handle automatic transcription generation if requested
-                    let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnitId) {
-                        const transcriptionUrl = attachmentVideoUnitFormData.playlistUrl ?? lectureUnit.videoSource;
-                        if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lecture.id!, lectureUnitId, transcriptionUrl).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }
-                    }
-
-                    return transcriptionObservable;
-                }),
-                switchMap((lectureUnit) => {
-                    // Second: Handle manual transcription save if provided
-                    if (!videoTranscription || !lectureUnit.id) {
-                        return of(lectureUnit);
-                    }
-
-                    let transcription: LectureTranscriptionDTO;
-                    try {
-                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                    } catch (e) {
-                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(lectureUnit);
-                    }
-
-                    transcription.lectureUnitId = lectureUnit.id;
-
-                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id, transcription).pipe(
-                        map(() => lectureUnit),
-                        // Swallow transcription errors so the primary save still counts as success
-                        catchError((err) => {
-                            onError(this.alertService, err);
-                            return of(lectureUnit);
-                        }),
-                    );
-                }),
-            )
-            .subscribe({
-                next: () => {
-                    this.onCloseLectureUnitForms();
-                    this.unitManagementComponent()?.loadData();
-                },
-                error: (res: HttpErrorResponse | Error) => {
-                    if (res instanceof Error) {
-                        this.alertService.error(res.message);
-                        return;
-                    }
-                    if (res.error?.params === 'file' && res?.error?.title) {
-                        this.alertService.error(res.error.title);
-                    } else {
-                        onError(this.alertService, res);
-                    }
-                },
-            });
+        save$.subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent()?.loadData();
+            },
+            error: (res: HttpErrorResponse | Error) => {
+                if (res instanceof Error) {
+                    this.alertService.error(res.message);
+                    return;
+                }
+                if (res.error?.params === 'file' && res?.error?.title) {
+                    this.alertService.error(res.error.title);
+                } else {
+                    onError(this.alertService, res);
+                }
+            },
+        });
     }
 
     /**
@@ -335,63 +281,37 @@ export class LectureUpdateUnitsComponent implements OnInit {
         // Scroll to the edit form after a brief delay to allow the form to render
         setTimeout(() => this.scrollToEditForm(), 100);
 
-        of(lectureUnit)
-            .pipe(
-                switchMap((unit) => {
-                    if (unit.type === LectureUnitType.ATTACHMENT_VIDEO && this.accountService.isAdmin()) {
-                        return combineLatest({
-                            transcription: this.lectureTranscriptionService.getTranscription(unit.id!),
-                            transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(unit.id!),
-                        });
-                    }
-                    return of({ transcription: null, transcriptionStatus: undefined });
-                }),
-            )
-            .subscribe(({ transcription, transcriptionStatus }) => {
-                switch (lectureUnit.type) {
-                    case LectureUnitType.TEXT:
-                        this.textUnitFormData = {
-                            name: this.currentlyProcessedTextUnit.name,
-                            releaseDate: this.currentlyProcessedTextUnit.releaseDate,
-                            content: this.currentlyProcessedTextUnit.content,
-                        };
-                        break;
-                    case LectureUnitType.ONLINE:
-                        this.onlineUnitFormData = {
-                            name: this.currentlyProcessedOnlineUnit.name,
-                            description: this.currentlyProcessedOnlineUnit.description,
-                            releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
-                            source: this.currentlyProcessedOnlineUnit.source,
-                        };
-                        break;
-                    case LectureUnitType.ATTACHMENT_VIDEO:
-                        this.attachmentVideoUnitFormData = {
-                            formProperties: {
-                                name: this.currentlyProcessedAttachmentVideoUnit.name,
-                                description: this.currentlyProcessedAttachmentVideoUnit.description,
-                                releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
-                                version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
-                                videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
-                            },
-                            fileProperties: {
-                                fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
-                            },
-                            transcriptionProperties: {
-                                videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
-                            },
-                            transcriptionStatus: transcriptionStatus,
-                        };
-                        // Check if playlist URL is available for existing video to enable transcription generation
-                        this.attachmentVideoUnitService
-                            .fetchAndUpdatePlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource, this.attachmentVideoUnitFormData)
-                            .subscribe({
-                                next: (updatedFormData) => {
-                                    this.attachmentVideoUnitFormData = updatedFormData;
-                                },
-                            });
-                        break;
-                }
-            });
+        switch (lectureUnit.type) {
+            case LectureUnitType.TEXT:
+                this.textUnitFormData = {
+                    name: this.currentlyProcessedTextUnit.name,
+                    releaseDate: this.currentlyProcessedTextUnit.releaseDate,
+                    content: this.currentlyProcessedTextUnit.content,
+                };
+                break;
+            case LectureUnitType.ONLINE:
+                this.onlineUnitFormData = {
+                    name: this.currentlyProcessedOnlineUnit.name,
+                    description: this.currentlyProcessedOnlineUnit.description,
+                    releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
+                    source: this.currentlyProcessedOnlineUnit.source,
+                };
+                break;
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                this.attachmentVideoUnitFormData = {
+                    formProperties: {
+                        name: this.currentlyProcessedAttachmentVideoUnit.name,
+                        description: this.currentlyProcessedAttachmentVideoUnit.description,
+                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
+                        version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
+                        videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
+                    },
+                    fileProperties: {
+                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
+                    },
+                };
+                break;
+        }
     }
 
     /**

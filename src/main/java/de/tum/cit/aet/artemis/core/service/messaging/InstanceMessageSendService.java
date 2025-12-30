@@ -98,18 +98,4 @@ public interface InstanceMessageSendService {
      * @param slideId the id of the slide whose unhiding task should be cancelled
      */
     void sendSlideUnhideScheduleCancel(Long slideId);
-
-    /**
-     * Send a message to schedule the ingestion of a lecture unit
-     *
-     * @param lectureUnitId the id of the lecture unit which should be sent to Iris
-     */
-    void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId);
-
-    /**
-     * Send a message to cancel the ingestion of a lecture unit
-     *
-     * @param lectureUnitId the id of the lecture unit that should no longer be ingested
-     */
-    void sendLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId);
 }

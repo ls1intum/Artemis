@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
-class ConsistencyCheckLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class ConsistencyCheckLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     @BeforeEach
     void setup() throws Exception {

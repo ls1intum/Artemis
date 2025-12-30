@@ -97,6 +97,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -353,7 +354,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
         String identifyingPackage = "authorization";
 
-        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+        // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
@@ -416,7 +418,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreLazyAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class)
+                // JacksonConfiguration must NOT be lazy because Jackson modules must be available when the ObjectMapper is created
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.config.JacksonConfiguration").should().beAnnotatedWith(Lazy.class)
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);

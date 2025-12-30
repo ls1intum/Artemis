@@ -60,7 +60,7 @@ public class LectureUnitProcessingService {
     // A pdf splitter that should be used to split a file into single pages
     private final Splitter pdfSinglePageSplitter = new Splitter();
 
-    public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
+    public LectureUnitProcessingService(FileService fileService, SlideSplitterService slideSplitterService, LectureRepository lectureRepository,
             AttachmentVideoUnitService attachmentVideoUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
