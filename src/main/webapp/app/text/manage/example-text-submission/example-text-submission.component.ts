@@ -12,7 +12,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
-import { notUndefined } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/shared/util/string-pure.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
