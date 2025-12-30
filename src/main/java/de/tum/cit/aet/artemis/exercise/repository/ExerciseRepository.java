@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 
@@ -722,4 +723,28 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Fetches minimal exercise information needed for deletion/reset progress tracking.
+     * This avoids loading full Exercise entities with all their associations.
+     *
+     * @param courseId the id of the course
+     * @return a set of ExerciseDeletionInfoDTOs containing only id, title, and type
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO(
+                e.id,
+                e.title,
+                CASE TYPE(e)
+                    WHEN de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN de.tum.cit.aet.artemis.text.domain.TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN de.tum.cit.aet.artemis.modeling.domain.ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    WHEN de.tum.cit.aet.artemis.quiz.domain.QuizExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END
+            )
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+            """)
+    Set<ExerciseDeletionInfoDTO> findDeletionInfoByCourseId(@Param("courseId") long courseId);
 }

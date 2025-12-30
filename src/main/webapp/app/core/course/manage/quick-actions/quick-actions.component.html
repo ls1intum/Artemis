@@ -85,11 +85,20 @@
                 [shouldToggle]="true"
                 (onClick)="navigateToCourseManagementSection(CourseManagementSection.EXAM)"
             />
+
+            <jhi-button
+                [btnType]="ButtonType.SECONDARY"
+                [btnSize]="ButtonSize.MEDIUM"
+                [title]="'artemisApp.course.import.button'"
+                [icon]="faFileImport"
+                (onClick)="openImportDialog()"
+            />
         }
     </div>
 </jhi-card-wrapper>
 
 <jhi-add-exercise-popover [course]="course()" #addExercisePopover="addExercisePopover" />
+<jhi-course-material-import-dialog #importDialog [targetCourseId]="course()?.id!" />
 
 <ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
     <div class="text-center me-3">

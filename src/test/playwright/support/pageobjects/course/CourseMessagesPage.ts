@@ -19,8 +19,8 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.click('.square-button > .ng-fa-icon');
-        await this.page.click('text=Create channel');
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Create channel' }).click();
     }
 
     /**
@@ -28,7 +28,7 @@ export class CourseMessagesPage {
      */
     async browseChannelsButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Browse Channels' }).click();
+        await this.page.locator('button', { hasText: 'Browse channels' }).click();
     }
 
     /**
@@ -379,7 +379,7 @@ export class CourseMessagesPage {
      */
     async createGroupChatButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Create Group Chat' }).click();
+        await this.page.locator('button', { hasText: 'Create group chat' }).click();
     }
 
     /**
@@ -469,9 +469,17 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Accepts the code of conduct by clicking the respective button.
+     * Accepts the code of conduct by clicking the respective button if it's visible.
+     * If the user has already accepted the code of conduct, the button won't be present.
      */
     async acceptCodeOfConductButton() {
-        await this.page.locator('#acceptCodeOfConductButton').click();
+        const button = this.page.locator('#acceptCodeOfConductButton');
+        // Wait a short time for the page to load and determine if the button should be shown
+        await this.page.waitForLoadState('networkidle');
+        if (await button.isVisible()) {
+            await button.click();
+            // Wait for the acceptance to be processed
+            await this.page.waitForLoadState('networkidle');
+        }
     }
 }

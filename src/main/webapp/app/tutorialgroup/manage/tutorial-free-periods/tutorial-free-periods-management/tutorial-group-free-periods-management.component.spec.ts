@@ -27,6 +27,8 @@ import { TutorialGroupFreePeriodsTableComponent } from 'app/tutorialgroup/manage
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodsManagementComponent>;
@@ -66,6 +68,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 mockedActivatedRoute({}, {}, { course }, {}),
                 provideHttpClient(),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         })
             .compileComponents()
