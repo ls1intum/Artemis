@@ -161,17 +161,22 @@ public class ComplaintService {
     /**
      * Count the number of unaccepted complaints of a student or team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the
      * number of complaints for a student or team in a course. Requests for more feedback are not counted here.
+     * Uses optimized query that leverages the denormalized result.exerciseId.
      *
      * @param participant the participant (student or team)
      * @param courseId    the id of the course
      * @return the number of unaccepted complaints
      */
     public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
-        if (participant instanceof User) {
-            return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(participant.getId(), courseId);
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        if (exerciseIds.isEmpty()) {
+            return 0L;
         }
-        else if (participant instanceof Team) {
-            return complaintRepository.countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(participant.getParticipantIdentifier(), courseId);
+        if (participant instanceof User) {
+            return complaintRepository.countUnacceptedComplaintsByStudentIdAndExerciseIds(participant.getId(), exerciseIds);
+        }
+        else if (participant instanceof Team team) {
+            return complaintRepository.countUnacceptedComplaintsByTeamShortNameAndExerciseIds(team.getShortName(), exerciseIds);
         }
         else {
             throw new Error("Unknown participant type");

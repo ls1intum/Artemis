@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
@@ -129,7 +130,8 @@ public class CourseAdminService {
         // Student Work
         long numberOfParticipations = participationRepository.countByCourseId(courseId);
         long numberOfSubmissions = submissionRepository.countByCourseId(courseId);
-        long numberOfResults = resultRepository.countByCourseId(courseId);
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        long numberOfResults = exerciseIds.isEmpty() ? 0L : resultRepository.countByExerciseIds(exerciseIds);
 
         // Communication
         long numberOfConversations = conversationRepository.countByCourseId(courseId);

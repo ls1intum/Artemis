@@ -88,7 +88,7 @@ public class ProgrammingExerciseService {
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // We can't use the resultService here due to a circular dependency issue.
-        return resultRepository.existsBySubmission_Participation_Exercise_Id(programmingExercise.getId());
+        return resultRepository.existsByExerciseId(programmingExercise.getId());
     }
 
     /**
