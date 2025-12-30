@@ -208,15 +208,20 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        gradingScale.setId(oldGradingScale.getId());
-        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
+
+        // Fetch the existing grading scale from the database (this is the managed entity)
+        // Note: gradeSteps are eagerly fetched due to FetchType.EAGER
+        GradingScale existingGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
 
         validatePresentationsConfiguration(gradingScale);
         updateCourseForGradingScale(gradingScale, course);
 
-        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
+        // Apply values from the detached entity to the managed entity
+        applyGradingScaleUpdates(existingGradingScale, gradingScale);
+        existingGradingScale.setCourse(course);
+
+        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 
@@ -236,16 +241,22 @@ public class GradingScaleResource {
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = api.findByIdElseThrow(examId);
-        GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        gradingScale.setId(oldGradingScale.getId());
-        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
-        if (gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
+
+        // Fetch the existing grading scale from the database (this is the managed entity)
+        // Note: gradeSteps are eagerly fetched due to FetchType.EAGER
+        GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+
+        if (gradingScale.getExam() != null && gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
             exam.setExamMaxPoints(gradingScale.getExam().getExamMaxPoints());
             api.save(exam);
         }
-        gradingScale.setExam(exam);
-        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
+
+        // Apply values from the detached entity to the managed entity
+        applyGradingScaleUpdates(existingGradingScale, gradingScale);
+        existingGradingScale.setExam(exam);
+
+        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 
@@ -320,6 +331,33 @@ public class GradingScaleResource {
                         "invalidGradedPresentationsConfiguration");
             }
         }
+    }
+
+    /**
+     * Applies values from the source grading scale to the target grading scale.
+     * This is used to update a managed entity with values from a detached entity.
+     *
+     * @param target the managed entity to update
+     * @param source the detached entity containing new values
+     */
+    private void applyGradingScaleUpdates(GradingScale target, GradingScale source) {
+        target.setGradeType(source.getGradeType());
+        target.setBonusStrategy(source.getBonusStrategy());
+        target.setPlagiarismGrade(source.getPlagiarismGrade());
+        target.setNoParticipationGrade(source.getNoParticipationGrade());
+        target.setPresentationsNumber(source.getPresentationsNumber());
+        target.setPresentationsWeight(source.getPresentationsWeight());
+
+        // Clear existing grade steps and add new ones
+        target.getGradeSteps().clear();
+        if (source.getGradeSteps() != null) {
+            for (var gradeStep : source.getGradeSteps()) {
+                gradeStep.setId(null); // Ensure new grade steps are created
+                gradeStep.setGradingScale(target);
+                target.getGradeSteps().add(gradeStep);
+            }
+        }
+        // Note: bonusFrom is not updated as it should not be affected by this endpoint
     }
 
     private static Course getCourse(GradingScale gradingScale) {
