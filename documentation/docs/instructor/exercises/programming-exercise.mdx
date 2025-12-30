@@ -77,47 +77,54 @@ import submissionPolicyActivateButton from './assets/programming/submission-poli
 
 Conducting a programming exercise consists of the following main steps:
 
-1. **Instructor prepares exercise**: Set up repositories containing the exercise code and test cases, configure build instructions, and set up the exercise in Artemis
-2. **Students work on exercise**: Students clone repositories, solve exercises, and submit solutions
-3. **Automated testing**: The continuous integration server verifies submissions by executing test cases and provides feedback
-4. **Instructor reviews results**: Review overall results of all students and react to common errors and problems
+1. `1`: **Instructor prepares exercise**: Set up repositories containing the exercise code and test cases, configure build instructions, and set up the exercise in Artemis
+2. `2`-`5`: **Students work on exercise**: Students clone repositories, solve exercises, and submit solutions
+3. `6`: **Automated testing**: The continuous integration server verifies submissions by executing test cases and provides feedback
+4. `7`: **Instructor reviews results**: Review overall results of all students and react to common errors and problems
 
-<Image src={exerciseWorkflow} alt="Exercise Workflow" size={ImageSize.large} caption="Programming Exercise Workflow" />
+<Image src={exerciseWorkflow} alt="Exercise Workflow" size={ImageSize.large} caption="Programming Exercise Workflow (detailed student perspective shown in diagram)" />
 
 <Callout variant={CalloutVariant.info}>
-  <p>Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems. Instructors have significant freedom in defining the test environment.</p>
+  <p>The workflow diagram above shows the detailed steps from the student perspective.
+    For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/Artemis/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  <p>Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems.
+    Instructors have significant freedom in defining the test environment.</p>
 </Callout>
 
 ## Exercise Templates
 
-Artemis supports templates for various programming languages to simplify exercise setup. The availability of features depends on the continuous integration system (Local CI or Jenkins) and the programming language.
+Artemis supports templates for various programming languages to simplify exercise setup.
+The availability of features depends on the continuous integration system (Local CI or Jenkins) and the programming language.
 
 ### Supported Programming Languages
 
 The following table provides an overview of supported programming languages and their corresponding templates:
 
-| No. | Programming Language | Local CI | Jenkins | Build System/Notes | Docker Image |
-|-----|---------------------|----------|---------|-------------------|--------------|
-| 1 | Java | yes | yes | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker) |
-| 2 | Python | yes | yes | pip | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker) |
-| 3 | C | yes | yes | Makefile, FACT, GCC | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker) |
-| 4 | Haskell | yes | yes | Stack | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell) |
-| 5 | Kotlin | yes | yes | Maven | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker) |
-| 6 | VHDL | yes | no | Makefile | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker) |
-| 7 | Assembler | yes | no | Makefile | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker) |
-| 8 | Swift | yes | yes | SwiftPM | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
-| 9 | OCaml | yes | no | Dune | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker) |
-| 10 | Rust | yes | yes | cargo | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker) |
-| 11 | JavaScript | yes | yes | npm | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker) |
-| 12 | R | yes | yes | built-in | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker) |
-| 13 | C++ | yes | yes | CMake | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker) |
-| 14 | TypeScript | yes | yes | npm | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker) |
-| 15 | C# | yes | yes | dotnet | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker) |
-| 16 | Go | yes | yes | built-in | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker) |
-| 17 | Bash | yes | yes | built-in | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker) |
-| 18 | MATLAB | yes | no | built-in | [matlab](https://hub.docker.com/r/mathworks/matlab) |
-| 19 | Ruby | yes | yes | Rake | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker) |
-| 20 | Dart | yes | yes | built-in | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker) |
+| No. | Programming Language | Local CI | Jenkins | Build System/Notes     | Docker Image                                                                                 |
+|-----|----------------------|----------|---------|------------------------|----------------------------------------------------------------------------------------------|
+| 1   | Java                 | yes      | yes     | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 2   | Python               | yes      | yes     | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   |
+| 3   | C                    | yes      | yes     | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             |
+| 4   | Haskell              | yes      | yes     | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     |
+| 5   | Kotlin               | yes      | yes     | Maven                  | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 6   | VHDL                 | yes      | no      | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       |
+| 7   | Assembler            | yes      | no      | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             |
+| 8   | Swift                | yes      | yes     | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
+| 9   | OCaml                | yes      | no      | Dune                   | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker)                     |
+| 10  | Rust                 | yes      | yes     | cargo                  | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker)                       |
+| 11  | JavaScript           | yes      | yes     | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
+| 12  | R                    | yes      | yes     | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             |
+| 13  | C++                  | yes      | yes     | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         |
+| 14  | TypeScript           | yes      | yes     | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
+| 15  | C#                   | yes      | yes     | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   |
+| 16  | Go                   | yes      | yes     | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           |
+| 17  | Bash                 | yes      | yes     | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       |
+| 18  | MATLAB               | yes      | no      | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
+| 19  | Ruby                 | yes      | yes     | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
+| 20  | Dart                 | yes      | yes     | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
 
 ### Feature Support by Language
 
