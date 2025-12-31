@@ -3,6 +3,7 @@ import {
     ContentChild,
     ElementRef,
     EventEmitter,
+    HostListener,
     Input,
     OnChanges,
     OnInit,
@@ -80,6 +81,7 @@ type PagingValue = number | 'all';
 export class DataTableComponent implements OnInit, OnChanges {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
+    private elementRef = inject(ElementRef);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -207,6 +209,65 @@ export class DataTableComponent implements OnInit, OnChanges {
         if (changes.allEntities || changes.customFilterKey) {
             this.updateEntities();
         }
+    }
+
+    /**
+     * Flag to prevent infinite resize event loops when we dispatch our own resize event.
+     */
+    private isDispatchingResize = false;
+
+    /**
+     * Resets the datatable element widths when the window is resized.
+     * Clears inline width styles and dispatches a resize event to trigger ngx-datatable's
+     * internal column recalculation.
+     */
+    @HostListener('window:resize')
+    onWindowResize(): void {
+        // Prevent infinite loop from our dispatched event
+        if (this.isDispatchingResize) {
+            this.isDispatchingResize = false;
+            return;
+        }
+
+        // Use a longer delay to ensure ngx-datatable has finished its internal processing
+        setTimeout(() => {
+            this.resetDatatableLayout();
+        }, 300);
+    }
+
+    /**
+     * Resets the datatable layout by clearing all inline styles and triggering recalculation.
+     * This fixes the issue where columns don't resize properly when resizing from small to large.
+     */
+    private resetDatatableLayout(): void {
+        const nativeElement = this.elementRef.nativeElement;
+
+        // Clear container element widths ONLY (not cell widths)
+        // Cell widths must be preserved to maintain column alignment across rows
+        const selectors = [
+            'datatable-header',
+            'datatable-body',
+            'datatable-body-row',
+            'datatable-row-wrapper',
+            'datatable-selection',
+            '.datatable-header-inner',
+            '.datatable-scroll',
+            '.datatable-scroller',
+            '.datatable-row-center',
+            '.datatable-row-group',
+        ];
+
+        selectors.forEach((selector) => {
+            const elements = nativeElement.querySelectorAll(selector);
+            elements.forEach((el: HTMLElement) => {
+                el.style.width = '';
+            });
+        });
+
+        // Dispatch a resize event to trigger ngx-datatable's internal recalculation
+        // This will correctly recalculate based on the current container size
+        this.isDispatchingResize = true;
+        window.dispatchEvent(new Event('resize'));
     }
 
     /**
