@@ -101,6 +101,9 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
 
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     private Path workingDirectory;
 
     private User testUser;
@@ -112,7 +115,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         testCourse = courseUtilService.createCourse();
-        workingDirectory = Files.createTempDirectory("data-export-test");
+        workingDirectory = tempFileUtilService.createTempDirectory("data-export-test");
     }
 
     @AfterEach

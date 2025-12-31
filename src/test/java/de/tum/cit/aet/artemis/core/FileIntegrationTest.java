@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -92,6 +92,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -405,7 +408,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetAttachmentVideoUnit(boolean isTutor) throws Exception {
-        Path tempFile = Files.createTempFile(tempPath, "dummy", ".pdf");
+        Path tempFile = tempFileUtilService.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
         tempFile.toFile().deleteOnExit();
