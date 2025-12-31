@@ -41,13 +41,6 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
     }
 
     /**
-     * Reset the PlantUML index counter. Should be called before each markdown render.
-     */
-    public resetIndex(): void {
-        this.plantUmlIndex = 0;
-    }
-
-    /**
      * Subscribes to injectableElementsFoundSubject.
      */
     subscribeForInjectableElementsFound() {
