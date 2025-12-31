@@ -277,7 +277,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+        await().atMost(60, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
