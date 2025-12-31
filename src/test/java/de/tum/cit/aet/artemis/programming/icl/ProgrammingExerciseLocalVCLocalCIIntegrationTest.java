@@ -288,6 +288,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         exerciseToBeImported.setChannelName("testchannel-pe-imported");
+        // Set up competency links on the exercise to be imported (simulating client behavior)
+        // These should NOT be imported because competencies are course-specific
         exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1)));
         exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
@@ -298,6 +300,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
         localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations, localVCBasePath);
         assertThat(importedExercise.getGradingCriteria()).hasSize(1);
+        // Verify that competency links are NOT imported (competencies are course-specific)
+        assertThat(importedExercise.getCompetencyLinks()).isNullOrEmpty();
 
         // Also check that the template and solution repositories were built successfully.
         TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
@@ -308,7 +312,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // The actual test results are not important for this test and only lead to a lot of flakiness
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
-        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
     @Test

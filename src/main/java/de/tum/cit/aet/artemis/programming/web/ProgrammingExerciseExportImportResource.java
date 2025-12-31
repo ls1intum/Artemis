@@ -208,6 +208,9 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        // Clear competency links from the incoming exercise - they are not imported because competencies are course-specific
+        // This prevents detached entity errors when the exercise contains competency links with serialized competency entities
+        newExercise.setCompetencyLinks(new java.util.HashSet<>());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();

@@ -10,6 +10,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+
 /**
  * DTO for creating and updating teams.
  * Uses user IDs for students and owner references.
@@ -30,5 +33,17 @@ public record TeamInputDTO(@Nullable Long id, @NotNull @Size(max = 250) String n
      */
     public Set<Long> studentsOrEmpty() {
         return students != null ? students : new HashSet<>();
+    }
+
+    /**
+     * Creates a TeamInputDTO from a Team entity.
+     *
+     * @param team the team entity to convert
+     * @return a new TeamInputDTO with data from the team
+     */
+    public static TeamInputDTO of(Team team) {
+        Set<Long> studentIds = team.getStudents() != null ? team.getStudents().stream().map(User::getId).collect(java.util.stream.Collectors.toSet()) : null;
+        Long ownerId = team.getOwner() != null ? team.getOwner().getId() : null;
+        return new TeamInputDTO(team.getId(), team.getName(), team.getShortName(), team.getImage(), studentIds, ownerId);
     }
 }

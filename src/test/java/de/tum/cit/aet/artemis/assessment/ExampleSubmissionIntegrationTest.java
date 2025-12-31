@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionInputDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -97,7 +98,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void createAndUpdateExampleModelingSubmissionTutorial(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, false, usedForTutorial);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
-                exampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+                ExampleSubmissionInputDTO.of(exampleSubmission), ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), emptyModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepository.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
@@ -105,8 +106,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false);
-        returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmission.class, HttpStatus.OK);
+        returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
+                ExampleSubmissionInputDTO.of(exampleSubmission), ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), validModel);
         storedExampleSubmission = exampleSubmissionRepository.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
@@ -120,9 +121,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void updateExampleModelingSubmission(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, false, usedForTutorial);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
-                exampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+                ExampleSubmissionInputDTO.of(exampleSubmission), ExampleSubmission.class, HttpStatus.OK);
         ExampleSubmission updateExistingExampleSubmission = request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
-                returnedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+                ExampleSubmissionInputDTO.of(returnedExampleSubmission), ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updateExistingExampleSubmission.getSubmission().getId(), emptyModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepository.findBySubmissionId(updateExistingExampleSubmission.getSubmission().getId());
@@ -131,7 +132,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         ExampleSubmission updatedExampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false);
         ExampleSubmission returnedUpdatedExampleSubmission = request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
-                updatedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+                ExampleSubmissionInputDTO.of(updatedExampleSubmission), ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedUpdatedExampleSubmission.getSubmission().getId(), validModel);
         storedExampleSubmission = exampleSubmissionRepository.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
@@ -145,7 +146,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void createAndDeleteExampleModelingSubmission(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
-                exampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+                ExampleSubmissionInputDTO.of(exampleSubmission), ExampleSubmission.class, HttpStatus.OK);
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
@@ -164,7 +165,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmission.addTutorParticipations(new TutorParticipation());
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
-                exampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+                ExampleSubmissionInputDTO.of(exampleSubmission), ExampleSubmission.class, HttpStatus.OK);
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
@@ -180,14 +181,14 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createExampleModelingSubmission_asTutor_forbidden() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, true);
-        request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, HttpStatus.FORBIDDEN);
+        request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", ExampleSubmissionInputDTO.of(exampleSubmission), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void createExampleModelingSubmission_asStudent_forbidden() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, true);
-        request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, HttpStatus.FORBIDDEN);
+        request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", ExampleSubmissionInputDTO.of(exampleSubmission), HttpStatus.FORBIDDEN);
     }
 
     @Test
