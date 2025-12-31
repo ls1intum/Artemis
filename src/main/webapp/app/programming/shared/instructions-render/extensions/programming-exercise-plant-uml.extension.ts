@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
-import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { escapeStringForUseInRegex } from 'app/shared/util/string-pure.utils';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';

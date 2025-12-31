@@ -37,7 +37,7 @@ import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exerci
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
-import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { escapeStringForUseInRegex } from 'app/shared/util/string-pure.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
