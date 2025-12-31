@@ -80,8 +80,8 @@ public class PyrisDTOService {
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
-        var mergedRepository = new HashMap<>(committedFiles);
+        Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
+        Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
