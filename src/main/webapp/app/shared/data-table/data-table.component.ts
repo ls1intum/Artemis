@@ -81,7 +81,6 @@ type PagingValue = number | 'all';
 export class DataTableComponent implements OnInit, OnChanges {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
-    private elementRef = inject(ElementRef);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -222,10 +221,26 @@ export class DataTableComponent implements OnInit, OnChanges {
     private resizeTimeout?: ReturnType<typeof setTimeout>;
 
     /**
-     * Resets the datatable element widths when the window is resized.
-     * Uses debouncing to only recalculate after user stops resizing.
-     * Clears inline width styles and dispatches a resize event to trigger ngx-datatable's
-     * internal column recalculation.
+     * Internal selectors from ngx-datatable that require inline style clearing.
+     * Note: These are internal implementation details of @siemens/ngx-datatable v25.0.0.
+     * If upgrading ngx-datatable, verify these selectors still exist.
+     */
+    private static readonly DATATABLE_SELECTORS = [
+        'datatable-header',
+        'datatable-body',
+        'datatable-body-row',
+        'datatable-row-wrapper',
+        'datatable-selection',
+        '.datatable-header-inner',
+        '.datatable-scroll',
+        '.datatable-scroller',
+        '.datatable-row-center',
+        '.datatable-row-group',
+    ];
+
+    /**
+     * Handles window resize events with debouncing.
+     * Clears inline width styles and triggers ngx-datatable's recalculation.
      */
     @HostListener('window:resize')
     onWindowResize(): void {
@@ -247,30 +262,18 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Resets the datatable layout by clearing all inline styles and triggering recalculation.
+     * Resets the datatable layout by clearing inline styles and triggering recalculation.
      * This fixes the issue where columns don't resize properly when resizing from small to large.
+     *
+     * Note: ngx-datatable's public recalculate() API alone doesn't fix this issue because
+     * the library doesn't clear stale inline width styles before recalculating.
      */
     private resetDatatableLayout(): void {
-        const nativeElement = this.elementRef.nativeElement;
-
-        // Clear container element widths only
-        const selectors = [
-            'datatable-header',
-            'datatable-body',
-            'datatable-body-row',
-            'datatable-row-wrapper',
-            'datatable-selection',
-            '.datatable-header-inner',
-            '.datatable-scroll',
-            '.datatable-scroller',
-            '.datatable-row-center',
-            '.datatable-row-group',
-        ];
-
-        selectors.forEach((selector) => {
-            const elements = nativeElement.querySelectorAll(selector);
-            elements.forEach((el: HTMLElement) => {
-                el.style.width = '';
+        // Clear inline width styles from container elements
+        DataTableComponent.DATATABLE_SELECTORS.forEach((selector) => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach((el: Element) => {
+                (el as HTMLElement).style.width = '';
             });
         });
 
