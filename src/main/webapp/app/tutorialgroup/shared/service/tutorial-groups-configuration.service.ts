@@ -7,6 +7,17 @@ import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/t
 
 type EntityResponseType = HttpResponse<TutorialGroupsConfiguration>;
 
+/**
+ * DTO for creating and updating tutorial groups configuration.
+ */
+export interface TutorialGroupsConfigurationDTO {
+    id?: number;
+    tutorialPeriodStartInclusive: string;
+    tutorialPeriodEndInclusive: string;
+    useTutorialGroupChannels: boolean;
+    usePublicTutorialGroupChannels: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsConfigurationService {
     private httpClient = inject(HttpClient);
@@ -19,19 +30,32 @@ export class TutorialGroupsConfigurationService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
     create(tutorialGroupsConfiguration: TutorialGroupsConfiguration, courseId: number, period: Date[]): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfiguration, period);
+        const dto = this.toDTO(tutorialGroupsConfiguration, period);
         return this.httpClient
-            .post<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, copy, { observe: 'response' })
+            .post<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, dto, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
 
     update(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupsConfiguration: TutorialGroupsConfiguration, period: Date[]): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfiguration, period);
+        const dto = this.toDTO(tutorialGroupsConfiguration, period, tutorialGroupConfigurationId);
         return this.httpClient
-            .put<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, copy, {
+            .put<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, dto, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
+    }
+
+    /**
+     * Converts a TutorialGroupsConfiguration to a DTO for sending to the server.
+     */
+    private toDTO(config: TutorialGroupsConfiguration, period: Date[], id?: number): TutorialGroupsConfigurationDTO {
+        return {
+            id: id,
+            tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
+            tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
+            useTutorialGroupChannels: config.useTutorialGroupChannels ?? false,
+            usePublicTutorialGroupChannels: config.usePublicTutorialGroupChannels ?? false,
+        };
     }
 
     convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
@@ -59,14 +83,5 @@ export class TutorialGroupsConfigurationService {
         }
 
         return res;
-    }
-
-    private convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfiguration: TutorialGroupsConfiguration, period: Date[]): TutorialGroupsConfiguration {
-        return Object.assign({}, tutorialGroupsConfiguration, {
-            tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
-            tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
-            useTutorialGroupChannels: tutorialGroupsConfiguration.useTutorialGroupChannels,
-            usePublicTutorialGroupChannels: tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
-        });
     }
 }

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -199,13 +200,13 @@ public class GradingScaleResource {
     /**
      * PUT /courses/{courseId}/grading-scale : Update grading scale for course
      *
-     * @param courseId     the course to which the grading scale belongs
-     * @param gradingScale the grading scale which will be updated
+     * @param courseId the course to which the grading scale belongs
+     * @param dto      the DTO containing the grading scale update values
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -214,12 +215,22 @@ public class GradingScaleResource {
         // Note: gradeSteps are eagerly fetched due to FetchType.EAGER
         GradingScale existingGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
 
-        validatePresentationsConfiguration(gradingScale);
-        updateCourseForGradingScale(gradingScale, course);
-
-        // Apply values from the detached entity to the managed entity
-        applyGradingScaleUpdates(existingGradingScale, gradingScale);
+        // Apply DTO values to the managed entity
+        dto.applyTo(existingGradingScale);
         existingGradingScale.setCourse(course);
+
+        // Validate presentations configuration
+        validatePresentationsConfiguration(existingGradingScale);
+
+        // Update course max points and presentation score if provided
+        if (dto.courseMaxPoints() != null && !Objects.equals(dto.courseMaxPoints(), course.getMaxPoints())) {
+            course.setMaxPoints(dto.courseMaxPoints());
+            courseRepository.save(course);
+        }
+        if (dto.coursePresentationScore() != null && !Objects.equals(dto.coursePresentationScore(), course.getPresentationScore())) {
+            course.setPresentationScore(dto.coursePresentationScore());
+            courseRepository.save(course);
+        }
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
@@ -228,14 +239,14 @@ public class GradingScaleResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/grading-scale : Update grading scale for exam
      *
-     * @param courseId     the course to which the exam belongs
-     * @param examId       the exam to which the grading scale belongs
-     * @param gradingScale the grading scale which will be updated
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam to which the grading scale belongs
+     * @param dto      the DTO containing the grading scale update values
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
@@ -247,13 +258,14 @@ public class GradingScaleResource {
         // Note: gradeSteps are eagerly fetched due to FetchType.EAGER
         GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
 
-        if (gradingScale.getExam() != null && gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
-            exam.setExamMaxPoints(gradingScale.getExam().getExamMaxPoints());
+        // Update exam max points if provided
+        if (dto.examMaxPoints() != null && dto.examMaxPoints() != exam.getExamMaxPoints()) {
+            exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }
 
-        // Apply values from the detached entity to the managed entity
-        applyGradingScaleUpdates(existingGradingScale, gradingScale);
+        // Apply DTO values to the managed entity
+        dto.applyTo(existingGradingScale);
         existingGradingScale.setExam(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
@@ -295,6 +307,10 @@ public class GradingScaleResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
+    /**
+     * Updates course properties based on the grading scale for create operations.
+     * This is used when creating a new grading scale where the course properties may need to be updated.
+     */
     private void updateCourseForGradingScale(GradingScale gradingScale, Course course) {
         if (gradingScale == null) {
             return;
@@ -331,33 +347,6 @@ public class GradingScaleResource {
                         "invalidGradedPresentationsConfiguration");
             }
         }
-    }
-
-    /**
-     * Applies values from the source grading scale to the target grading scale.
-     * This is used to update a managed entity with values from a detached entity.
-     *
-     * @param target the managed entity to update
-     * @param source the detached entity containing new values
-     */
-    private void applyGradingScaleUpdates(GradingScale target, GradingScale source) {
-        target.setGradeType(source.getGradeType());
-        target.setBonusStrategy(source.getBonusStrategy());
-        target.setPlagiarismGrade(source.getPlagiarismGrade());
-        target.setNoParticipationGrade(source.getNoParticipationGrade());
-        target.setPresentationsNumber(source.getPresentationsNumber());
-        target.setPresentationsWeight(source.getPresentationsWeight());
-
-        // Clear existing grade steps and add new ones
-        target.getGradeSteps().clear();
-        if (source.getGradeSteps() != null) {
-            for (var gradeStep : source.getGradeSteps()) {
-                gradeStep.setId(null); // Ensure new grade steps are created
-                gradeStep.setGradingScale(target);
-                target.getGradeSteps().add(gradeStep);
-            }
-        }
-        // Note: bonusFrom is not updated as it should not be affected by this endpoint
     }
 
     private static Course getCourse(GradingScale gradingScale) {

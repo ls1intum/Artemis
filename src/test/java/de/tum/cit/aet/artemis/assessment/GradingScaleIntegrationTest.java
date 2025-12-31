@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -53,6 +54,24 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private Course course;
 
     private Exam exam;
+
+    /**
+     * Converts a GradingScale entity to a GradingScaleUpdateDTO for testing.
+     */
+    private GradingScaleUpdateDTO toUpdateDTO(GradingScale gradingScale) {
+        Set<GradingScaleUpdateDTO.GradeStepDTO> gradeStepDTOs = new HashSet<>();
+        if (gradingScale.getGradeSteps() != null) {
+            for (GradeStep step : gradingScale.getGradeSteps()) {
+                gradeStepDTOs.add(new GradingScaleUpdateDTO.GradeStepDTO(step.getLowerBoundPercentage(), step.isLowerBoundInclusive(), step.getUpperBoundPercentage(),
+                        step.isUpperBoundInclusive(), step.getGradeName(), step.getIsPassingGrade()));
+            }
+        }
+        return new GradingScaleUpdateDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
+                gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight(), gradeStepDTOs,
+                gradingScale.getCourse() != null ? gradingScale.getCourse().getMaxPoints() : null,
+                gradingScale.getCourse() != null ? gradingScale.getCourse().getPresentationScore() : null,
+                gradingScale.getExam() != null ? gradingScale.getExam().getExamMaxPoints() : null);
+    }
 
     /**
      * Initialize variables
@@ -317,7 +336,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForCourseGradingScaleNotFound() throws Exception {
-        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toUpdateDTO(courseGradingScale), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -330,7 +349,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toUpdateDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -343,8 +362,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        GradingScale savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
-                HttpStatus.OK);
+        GradingScale savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toUpdateDTO(courseGradingScale),
+                GradingScale.class, HttpStatus.OK);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
@@ -357,7 +376,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForExamGradingScaleNotFound() throws Exception {
-        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toUpdateDTO(examGradingScale), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -372,7 +391,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
-        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toUpdateDTO(examGradingScale), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -387,8 +406,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
 
-        GradingScale savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
-                GradingScale.class, HttpStatus.OK);
+        GradingScale savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
+                toUpdateDTO(examGradingScale), GradingScale.class, HttpStatus.OK);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(examGradingScale.getGradeSteps(), gradeStep));

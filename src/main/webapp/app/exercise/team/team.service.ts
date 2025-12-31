@@ -14,6 +14,38 @@ import { filter, map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 
+/**
+ * DTO for creating and updating teams.
+ * Uses user IDs for students and owner references.
+ */
+export interface TeamInputDTO {
+    id?: number;
+    name: string;
+    shortName: string;
+    image?: string;
+    students: number[];
+    ownerId?: number;
+}
+
+/**
+ * DTO for importing teams from a list.
+ * Students are identified by login or registration number.
+ */
+export interface TeamImportDTO {
+    name: string;
+    shortName: string;
+    image?: string;
+    students: StudentIdentifierDTO[];
+}
+
+/**
+ * DTO for identifying a student by login or registration number.
+ */
+export interface StudentIdentifierDTO {
+    login?: string;
+    visibleRegistrationNumber?: string;
+}
+
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
 
@@ -126,9 +158,9 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team} team - Team to create
      */
     create(exercise: Exercise, team: Team): Observable<TeamResponse> {
-        const copy = TeamService.convertTeamDatesFromClient(team);
+        const dto = TeamService.toInputDTO(team);
         return this.http
-            .post<Team>(TeamService.resourceUrl(exercise.id!), copy, { observe: 'response' })
+            .post<Team>(TeamService.resourceUrl(exercise.id!), dto, { observe: 'response' })
             .pipe(map((res: TeamResponse) => TeamService.convertTeamResponseDatesFromServer(res)));
     }
 
@@ -138,9 +170,9 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team} team - Team to update
      */
     update(exercise: Exercise, team: Team): Observable<TeamResponse> {
-        const copy = TeamService.convertTeamDatesFromClient(team);
+        const dto = TeamService.toInputDTO(team);
         return this.http
-            .put<Team>(`${TeamService.resourceUrl(exercise.id!)}/${team.id}`, copy, { observe: 'response' })
+            .put<Team>(`${TeamService.resourceUrl(exercise.id!)}/${team.id}`, dto, { observe: 'response' })
             .pipe(map((res: TeamResponse) => TeamService.convertTeamResponseDatesFromServer(res)));
     }
 
@@ -205,8 +237,8 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team[]} teams - Teams that should be imported into the exercise
      */
     importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
-        const copy = teams.map((team) => TeamService.convertTeamDatesFromClient(team));
-        return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-from-list?importStrategyType=${importStrategyType}`, copy, {
+        const dtos: TeamImportDTO[] = teams.map((team) => TeamService.toImportDTO(team));
+        return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-from-list?importStrategyType=${importStrategyType}`, dtos, {
             observe: 'response',
         });
     }
@@ -344,5 +376,40 @@ export class TeamService implements ITeamService, OnDestroy {
             this.accountService.setAccessRightsForCourse(res.body);
         }
         return res;
+    }
+
+    /**
+     * Converts a Team to a TeamInputDTO for create/update operations.
+     * @param team the team to convert
+     * @returns the TeamInputDTO
+     */
+    private static toInputDTO(team: Team): TeamInputDTO {
+        return {
+            id: team.id,
+            name: team.name ?? '',
+            shortName: team.shortName ?? '',
+            image: team.image,
+            students: team.students?.map((student) => student.id!).filter((id) => id !== undefined) ?? [],
+            ownerId: team.owner?.id,
+        };
+    }
+
+    /**
+     * Converts a Team to a TeamImportDTO for import operations.
+     * Students are identified by login or registration number.
+     * @param team the team to convert
+     * @returns the TeamImportDTO
+     */
+    private static toImportDTO(team: Team): TeamImportDTO {
+        return {
+            name: team.name ?? '',
+            shortName: team.shortName ?? '',
+            image: team.image,
+            students:
+                team.students?.map((student) => ({
+                    login: student.login,
+                    visibleRegistrationNumber: student.visibleRegistrationNumber,
+                })) ?? [],
+        };
     }
 }
