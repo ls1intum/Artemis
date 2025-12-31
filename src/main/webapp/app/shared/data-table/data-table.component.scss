@@ -1,5 +1,14 @@
 @import 'src/main/webapp/content/scss/data-table-icons';
 
+datatable-header,
+datatable-body,
+datatable-body-row,
+.datatable-header-inner,
+.datatable-row-center,
+.datatable-row-group {
+    transition: width 0.15s ease-out;
+}
+
 .loading-container {
     height: 40vh;
 }

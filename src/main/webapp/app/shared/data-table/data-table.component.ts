@@ -217,7 +217,13 @@ export class DataTableComponent implements OnInit, OnChanges {
     private isDispatchingResize = false;
 
     /**
+     * Timeout handle for debouncing resize events.
+     */
+    private resizeTimeout?: ReturnType<typeof setTimeout>;
+
+    /**
      * Resets the datatable element widths when the window is resized.
+     * Uses debouncing to only recalculate after user stops resizing.
      * Clears inline width styles and dispatches a resize event to trigger ngx-datatable's
      * internal column recalculation.
      */
@@ -229,10 +235,15 @@ export class DataTableComponent implements OnInit, OnChanges {
             return;
         }
 
-        // Use a longer delay to ensure ngx-datatable has finished its internal processing
-        setTimeout(() => {
+        // Clear any pending resize timeout (debounce)
+        if (this.resizeTimeout) {
+            clearTimeout(this.resizeTimeout);
+        }
+
+        // Only recalculate after user stops resizing (200ms debounce)
+        this.resizeTimeout = setTimeout(() => {
             this.resetDatatableLayout();
-        }, 300);
+        }, 200);
     }
 
     /**
@@ -242,8 +253,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     private resetDatatableLayout(): void {
         const nativeElement = this.elementRef.nativeElement;
 
-        // Clear container element widths ONLY (not cell widths)
-        // Cell widths must be preserved to maintain column alignment across rows
+        // Clear container element widths only
         const selectors = [
             'datatable-header',
             'datatable-body',
@@ -265,7 +275,6 @@ export class DataTableComponent implements OnInit, OnChanges {
         });
 
         // Dispatch a resize event to trigger ngx-datatable's internal recalculation
-        // This will correctly recalculate based on the current container size
         this.isDispatchingResize = true;
         window.dispatchEvent(new Event('resize'));
     }
