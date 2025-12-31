@@ -128,7 +128,9 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
      * Students are identified by login or registration number.
      */
     private TeamImportDTO toImportDTO(Team team) {
-        var studentIdentifiers = team.getStudents() != null ? team.getStudents().stream().map(student -> new TeamImportDTO.StudentIdentifierDTO(student.getLogin(), student.getVisibleRegistrationNumber())).collect(java.util.stream.Collectors.toSet()) : new HashSet<TeamImportDTO.StudentIdentifierDTO>();
+        var studentIdentifiers = team.getStudents() != null ? team.getStudents().stream()
+                .map(student -> new TeamImportDTO.StudentIdentifierDTO(student.getLogin(), student.getVisibleRegistrationNumber())).collect(java.util.stream.Collectors.toSet())
+                : new HashSet<TeamImportDTO.StudentIdentifierDTO>();
         return new TeamImportDTO(team.getName(), team.getShortName(), team.getImage(), studentIdentifiers);
     }
 

@@ -82,14 +82,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Imports an exam on the server using a PUT request.
+     * Imports an exam on the server using a POST request.
      * @param courseId The course id into which the exam should be imported
      * @param exam The exam with exercises to import.
      */
     import(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertExamDatesFromClient(exam);
+        const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
         return this.http
-            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
+            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
@@ -443,6 +443,53 @@ export class ExamManagementService {
             examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
             examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
         });
+    }
+
+    /**
+     * Converts an Exam to an ExamImportDTO for the server.
+     * @param exam The exam to convert
+     * @param courseId The target course id
+     */
+    public static convertExamToImportDTO(exam: Exam, courseId: number): object {
+        return {
+            title: exam.title,
+            testExam: exam.testExam ?? false,
+            examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
+            visibleDate: convertDateFromClient(exam.visibleDate),
+            startDate: convertDateFromClient(exam.startDate),
+            endDate: convertDateFromClient(exam.endDate),
+            publishResultsDate: convertDateFromClient(exam.publishResultsDate),
+            examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
+            examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
+            gracePeriod: exam.gracePeriod,
+            workingTime: exam.workingTime ?? 0,
+            startText: exam.startText,
+            endText: exam.endText,
+            confirmationStartText: exam.confirmationStartText,
+            confirmationEndText: exam.confirmationEndText,
+            examMaxPoints: exam.examMaxPoints,
+            randomizeExerciseOrder: exam.randomizeExerciseOrder,
+            numberOfExercisesInExam: exam.numberOfExercisesInExam,
+            numberOfCorrectionRoundsInExam: exam.numberOfCorrectionRoundsInExam,
+            examiner: exam.examiner,
+            moduleNumber: exam.moduleNumber,
+            courseName: exam.courseName,
+            exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
+            channelName: exam.channelName,
+            courseId: courseId,
+            exerciseGroups: exam.exerciseGroups?.map((group) => ({
+                title: group.title,
+                isMandatory: group.isMandatory ?? true,
+                exercises: group.exercises?.map((exercise) => ({
+                    id: exercise.id,
+                    exerciseType: exercise.type?.toUpperCase().replace('-', '_'),
+                    title: exercise.title,
+                    shortName: exercise.shortName,
+                    maxPoints: exercise.maxPoints,
+                    bonusPoints: exercise.bonusPoints,
+                })),
+            })),
+        };
     }
 
     private processExamResponseFromServer(res: EntityResponseType): EntityResponseType {

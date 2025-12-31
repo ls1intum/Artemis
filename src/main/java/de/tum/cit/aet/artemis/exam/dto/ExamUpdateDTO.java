@@ -11,11 +11,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
- * DTO for updating exams.
+ * DTO for creating and updating exams.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamUpdateDTO(@NotNull Long id, @NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
+public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
@@ -34,6 +34,43 @@ public record ExamUpdateDTO(@NotNull Long id, @NotNull String title, boolean tes
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
                 exam.getExampleSolutionPublicationDate(), exam.getChannelName());
+    }
+
+    /**
+     * Creates a new Exam entity from this DTO.
+     * Used for create operations.
+     *
+     * @return a new Exam entity
+     */
+    public Exam toEntity() {
+        Exam exam = new Exam();
+        exam.setTitle(title);
+        exam.setTestExam(testExam);
+        exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setPublishResultsDate(publishResultsDate);
+        exam.setExamStudentReviewStart(examStudentReviewStart);
+        exam.setExamStudentReviewEnd(examStudentReviewEnd);
+        if (gracePeriod != null) {
+            exam.setGracePeriod(gracePeriod);
+        }
+        exam.setWorkingTime(workingTime);
+        exam.setStartText(startText);
+        exam.setEndText(endText);
+        exam.setConfirmationStartText(confirmationStartText);
+        exam.setConfirmationEndText(confirmationEndText);
+        exam.setExamMaxPoints(examMaxPoints);
+        exam.setRandomizeExerciseOrder(randomizeExerciseOrder);
+        exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
+        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRoundsInExam);
+        exam.setExaminer(examiner);
+        exam.setModuleNumber(moduleNumber);
+        exam.setCourseName(courseName);
+        exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        exam.setChannelName(channelName);
+        return exam;
     }
 
     /**

@@ -12,10 +12,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * DTO for creating and updating tutorial groups configuration.
  * For creation, id should be null. For updates, id is required.
  *
- * @param id                            the id of the configuration (null for creation, required for update)
- * @param tutorialPeriodStartInclusive  the start date of the tutorial period in ISO 8601 format
- * @param tutorialPeriodEndInclusive    the end date of the tutorial period in ISO 8601 format
- * @param useTutorialGroupChannels      whether to create tutorial group channels
+ * @param id                             the id of the configuration (null for creation, required for update)
+ * @param tutorialPeriodStartInclusive   the start date of the tutorial period in ISO 8601 format
+ * @param tutorialPeriodEndInclusive     the end date of the tutorial period in ISO 8601 format
+ * @param useTutorialGroupChannels       whether to create tutorial group channels
  * @param usePublicTutorialGroupChannels whether the tutorial group channels should be public
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

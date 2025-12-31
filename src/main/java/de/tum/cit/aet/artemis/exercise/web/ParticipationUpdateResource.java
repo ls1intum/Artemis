@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -173,17 +174,17 @@ public class ParticipationUpdateResource {
      * If the exercise is a programming exercise, also triggers a scheduling
      * update for the participations where the individual due date has changed.
      *
-     * @param exerciseId     of the exercise the participations belong to.
-     * @param participations for which the individual due date should be updated.
+     * @param exerciseId        of the exercise the participations belong to.
+     * @param dueDateUpdateDTOs the DTOs containing participation IDs and new due dates.
      * @return all participations where the individual due date actually changed.
      */
     @PutMapping("exercises/{exerciseId}/participations/update-individual-due-date")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
-        final boolean anyInvalidExerciseId = participations.stream()
-                .anyMatch(participation -> participation.getExercise() == null || participation.getExercise().getId() == null || exerciseId != participation.getExercise().getId());
+    public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId,
+            @RequestBody List<ParticipationDueDateUpdateDTO> dueDateUpdateDTOs) {
+        final boolean anyInvalidExerciseId = dueDateUpdateDTOs.stream().anyMatch(dto -> dto.exerciseId() != exerciseId);
         if (anyInvalidExerciseId) {
-            throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
+            throw new BadRequestAlertException("The participation needs to be connected to the specified exercise", ENTITY_NAME, "exerciseidmismatch");
         }
 
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -196,7 +197,7 @@ public class ParticipationUpdateResource {
             throw new BadRequestAlertException("Cannot set individual due dates for quiz exercises", ENTITY_NAME, "quizexercise");
         }
 
-        final List<StudentParticipation> changedParticipations = participationService.updateIndividualDueDates(exercise, participations);
+        final List<StudentParticipation> changedParticipations = participationService.updateIndividualDueDatesFromDTOs(exercise, dueDateUpdateDTOs);
         final List<StudentParticipation> updatedParticipations = studentParticipationRepository.saveAllAndFlush(changedParticipations);
 
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {

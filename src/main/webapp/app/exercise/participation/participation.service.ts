@@ -25,6 +25,15 @@ export interface ParticipationUpdateDTO {
     presentationScore?: number;
 }
 
+/**
+ * DTO for updating a participation's individual due date.
+ */
+export interface ParticipationDueDateUpdateDTO {
+    id: number;
+    exerciseId: number;
+    individualDueDate?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
     private http = inject(HttpClient);
@@ -46,16 +55,18 @@ export class ParticipationService {
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
-        const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
+        const dtos = participations.map((participation) => this.toDueDateUpdateDTO(participation, exercise.id!));
         return this.http
-            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, dtos, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
-    private convertParticipationForServer(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
-        // make sure participation and exercise are connected, because this is expected by the server
-        participation.exercise = ExerciseService.convertExerciseFromClient(exercise);
-        return this.convertParticipationDatesFromClient(participation);
+    private toDueDateUpdateDTO(participation: StudentParticipation, exerciseId: number): ParticipationDueDateUpdateDTO {
+        return {
+            id: participation.id!,
+            exerciseId: exerciseId,
+            individualDueDate: participation.individualDueDate ? convertDateFromClient(participation.individualDueDate) ?? undefined : undefined,
+        };
     }
 
     find(participationId: number): Observable<EntityResponseType> {

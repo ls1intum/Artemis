@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -709,6 +710,45 @@ public class ParticipationService {
             }
             else {
                 newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            }
+
+            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation);
+            }
+        }
+
+        return changedParticipations;
+    }
+
+    /**
+     * Updates the individual due date for each given participation using DTOs.
+     * <p>
+     * Only sets individual due dates if the exercise has a due date and the
+     * individual due date is after this regular due date.
+     *
+     * @param exercise       the exercise the participations belong to.
+     * @param dueDateUpdates the DTOs containing participation IDs and new individual due dates.
+     * @return all participations where the individual due date actually changed.
+     */
+    public List<StudentParticipation> updateIndividualDueDatesFromDTOs(final Exercise exercise, final List<ParticipationDueDateUpdateDTO> dueDateUpdates) {
+        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+
+        for (final ParticipationDueDateUpdateDTO dto : dueDateUpdates) {
+            final Optional<StudentParticipation> optionalOriginalParticipation = studentParticipationRepository.findById(dto.id());
+            if (optionalOriginalParticipation.isEmpty()) {
+                continue;
+            }
+            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
+
+            // individual due dates can only exist if the exercise has a due date
+            // they also have to be after the exercise due date
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (dto.individualDueDate() != null && dto.individualDueDate().isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = dto.individualDueDate();
             }
 
             if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {

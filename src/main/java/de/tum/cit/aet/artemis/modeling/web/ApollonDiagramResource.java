@@ -7,6 +7,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -62,27 +64,28 @@ public class ApollonDiagramResource {
     /**
      * POST /course/{courseId}/apollon-diagrams : Create a new apollonDiagram.
      *
-     * @param apollonDiagram the apollonDiagram to create
-     * @param courseId       the id of the current course
+     * @param dto      the apollonDiagram DTO to create
+     * @param courseId the id of the current course
      * @return the ResponseEntity with status 201 (Created) and with body the new apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
-    public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
-        log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
+    public ResponseEntity<ApollonDiagram> createApollonDiagram(@Valid @RequestBody ApollonDiagramUpdateDTO dto, @PathVariable Long courseId) throws URISyntaxException {
+        log.debug("REST request to save ApollonDiagram for course: {}", courseId);
 
-        if (apollonDiagram.getId() != null) {
+        if (dto.id() != null) {
             throw new BadRequestAlertException("A new apollonDiagram cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
-        if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
+        if (!Objects.equals(dto.courseId(), courseId)) {
             throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
+        ApollonDiagram apollonDiagram = dto.toEntity();
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
         return ResponseEntity.created(new URI("/api/modeling/apollon-diagrams/" + result.getId())).body(result);
     }

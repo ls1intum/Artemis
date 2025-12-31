@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionInputDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
@@ -169,6 +170,46 @@ public class ExampleSubmissionService {
             // due to Cascade.Remove this will also remove the submission and the result(s) in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);
         }
+    }
+
+    /**
+     * Creates a new example submission from a DTO.
+     *
+     * @param dto      the DTO containing the example submission data
+     * @param exercise the exercise this example submission belongs to
+     * @return the created exampleSubmission entity
+     */
+    public ExampleSubmission createFromDTO(ExampleSubmissionInputDTO dto, Exercise exercise) {
+        ExampleSubmission exampleSubmission = dto.toEntity(exercise);
+        return create(exampleSubmission);
+    }
+
+    /**
+     * Updates an existing example submission from a DTO.
+     *
+     * @param dto the DTO containing the updated data
+     * @return the updated exampleSubmission entity
+     */
+    public ExampleSubmission updateFromDTO(ExampleSubmissionInputDTO dto) {
+        // Load the existing example submission from DB to preserve relationships and avoid orphan removal
+        ExampleSubmission existingExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(dto.id());
+
+        // Update metadata fields from DTO
+        dto.applyMetadataTo(existingExampleSubmission);
+
+        // Update the submission content if provided
+        Submission existingSubmission = existingExampleSubmission.getSubmission();
+        if (existingSubmission != null) {
+            dto.applySubmissionContentTo(existingSubmission);
+            existingSubmission.setExampleSubmission(true);
+            // Rebuild connection between result and submission, if it has been lost
+            if (existingSubmission.getLatestResult() != null && existingSubmission.getLatestResult().getSubmission() == null) {
+                existingSubmission.getLatestResult().setSubmission(existingSubmission);
+            }
+            submissionRepository.save(existingSubmission);
+        }
+
+        return exampleSubmissionRepository.save(existingExampleSubmission);
     }
 
     /**

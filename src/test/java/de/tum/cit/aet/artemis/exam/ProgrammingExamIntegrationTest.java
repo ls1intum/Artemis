@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -157,7 +158,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);
         exam = examRepository.save(exam);
-        exam.setId(null);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
         programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
@@ -167,8 +167,9 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         createdProjectKey = programming.getProjectKey();
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
         request.performMvcRequest(
-                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
+                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(importDTO)))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
@@ -178,7 +179,10 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        // Save exam first to persist exercise groups
+        exam = examRepository.save(exam);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+
         ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
 
@@ -187,6 +191,13 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         exercise1.setTitle(title1);
         exercise2.setTitle(title2);
 
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
+        // Need to save exercises to get IDs for the DTO
+        exercise1.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise1.getBuildConfig()));
+        exercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise2.getBuildConfig()));
+        exerciseRepository.save(exercise1);
+        exerciseRepository.save(exercise2);
+
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.BAD_REQUEST, null);
     }
 }

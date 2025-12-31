@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionInputDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -78,37 +81,37 @@ public class ExampleSubmissionResource {
     /**
      * POST /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
      *
-     * @param exerciseId        the id of the corresponding exercise for which to init a participation
-     * @param exampleSubmission the exampleSubmission to create
+     * @param exerciseId the id of the corresponding exercise for which to init a participation
+     * @param dto        the example submission input DTO
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
-        if (exampleSubmission.getId() != null) {
+    public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @Valid @RequestBody ExampleSubmissionInputDTO dto) {
+        log.debug("REST request to save ExampleSubmission for exercise: {}", exerciseId);
+        if (dto.id() != null) {
             throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        return handleExampleSubmission(exerciseId, exampleSubmission);
+        return handleExampleSubmissionCreate(exerciseId, dto);
     }
 
     /**
      * PUT /exercises/{exerciseId}/example-submissions : Updates an existing exampleSubmission. This function is called by the text editor for saving and submitting text
-     * submissions. The submit specific handling occurs in the ExampleSubmissionService.save() function.
+     * submissions. The submit specific handling occurs in the ExampleSubmissionService.updateFromDTO() function.
      *
-     * @param exerciseId        the id of the corresponding exercise
-     * @param exampleSubmission the exampleSubmission to update
+     * @param exerciseId the id of the corresponding exercise
+     * @param dto        the example submission input DTO
      * @return the ResponseEntity with status 200 (OK) and with body the updated exampleSubmission, or with status 400 (Bad Request) if the exampleSubmission is not valid, or with
      *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
-        if (exampleSubmission.getId() == null) {
-            return createExampleSubmission(exerciseId, exampleSubmission);
+    public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @Valid @RequestBody ExampleSubmissionInputDTO dto) {
+        log.debug("REST request to update ExampleSubmission for exercise: {}", exerciseId);
+        if (dto.id() == null) {
+            return createExampleSubmission(exerciseId, dto);
         }
-        return handleExampleSubmission(exerciseId, exampleSubmission);
+        return handleExampleSubmissionUpdate(exerciseId, dto);
     }
 
     /**
@@ -140,12 +143,24 @@ public class ExampleSubmissionResource {
     }
 
     @NonNull
-    private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
-        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+    private ResponseEntity<ExampleSubmission> handleExampleSubmissionCreate(Long exerciseId, ExampleSubmissionInputDTO dto) {
+        if (!dto.exerciseId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id in the DTO", ENTITY_NAME, "idsNotMatching");
         }
-        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.createFromDTO(dto, exercise);
+        return ResponseEntity.ok(exampleSubmission);
+    }
+
+    @NonNull
+    private ResponseEntity<ExampleSubmission> handleExampleSubmissionUpdate(Long exerciseId, ExampleSubmissionInputDTO dto) {
+        if (!dto.exerciseId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id in the DTO", ENTITY_NAME, "idsNotMatching");
+        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.updateFromDTO(dto);
         return ResponseEntity.ok(exampleSubmission);
     }
 

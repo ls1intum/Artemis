@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
@@ -1766,37 +1767,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testImportExamWithExercises_asStudent_failsWithForbidden() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam1, course1.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testImportExamWithExercises_asTutor_failsWithForbidden() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_failsWithIdExists() throws Exception {
-        final Exam exam = ExamFactory.generateExam(course1);
-
-        exam.setId(2L);
-
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_failsWithCourseMismatch() throws Exception {
-        // No Course
-        final Exam examA = ExamFactory.generateExam(course1);
-        examA.setCourse(null);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
-
-        // Exam Course and REST-Course mismatch
-        final Exam examB = ExamFactory.generateExam(course1);
-        examB.setCourse(course2);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam1, course1.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -1805,22 +1784,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Visible Date after Started Date
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setVisibleDate(ZonedDateTime.now().plusHours(2));
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
-
-        // Visible Date missing
-        final Exam examB = ExamFactory.generateExam(course1);
-        examB.setVisibleDate(null);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examA, course1.getId()), HttpStatus.BAD_REQUEST, null);
 
         // Started Date after End Date
         final Exam examC = ExamFactory.generateExam(course1);
         examC.setStartDate(ZonedDateTime.now().plusHours(2));
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
-
-        // Started Date missing
-        final Exam examD = ExamFactory.generateExam(course1);
-        examD.setStartDate(null);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examD, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examC, course1.getId()), HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -1829,12 +1798,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Working Time larger than Working window
         final Exam examA = ExamFactory.generateTestExam(course1);
         examA.setWorkingTime(3 * 60 * 60);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examA, course1.getId()), HttpStatus.BAD_REQUEST, null);
 
         // Working Time larger than Working window
         final Exam examB = ExamFactory.generateTestExam(course1);
         examB.setWorkingTime(0);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examB, course1.getId()), HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -1842,7 +1811,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testImportExamWithExercises_failsWithPointConflict() throws Exception {
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setExamMaxPoints(-5);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examA, course1.getId()), HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -1851,27 +1820,27 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Correction round <= 0
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setNumberOfCorrectionRoundsInExam(0);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examA, course1.getId()), HttpStatus.BAD_REQUEST, null);
 
         // Correction round >= 2
         final Exam examB = ExamFactory.generateExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(3);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examB, course1.getId()), HttpStatus.BAD_REQUEST, null);
 
         // Correction round != 0 for test exam
         final Exam examC = ExamFactory.generateTestExam(course1);
         examC.setNumberOfCorrectionRoundsInExam(1);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examC, course1.getId()), HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_successfulWithoutExercises() throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        exam.setId(null);
 
         exam.setChannelName("channelname-imported");
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, HttpStatus.CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.isTestExam()).isFalse();
@@ -1901,9 +1870,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_successfulWithExercises() throws Exception {
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
-        exam.setId(null);
         exam.setChannelName("testchannelname-imported");
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.getCourse()).isEqualTo(course1);
@@ -1928,10 +1897,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
         quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
         quizGroup.addExercise(quiz);
-        exerciseRepository.save(quiz);
+        // Use saveAndFlush to ensure quiz questions are persisted before import
+        quizExerciseRepository.saveAndFlush(quiz);
 
-        exam.setId(null);
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, CREATED);
         assertThat(received.getExerciseGroups()).hasSize(1);
 
         ExerciseGroup receivedGroup = received.getExerciseGroups().getFirst();
@@ -1952,17 +1922,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testImportExamWithExercises_successfulWithImportToOtherCourse() throws Exception {
         setupMocks();
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course2);
-        exam.setCourse(course1);
-        exam.setId(null);
         exam.setChannelName("testchannelname");
 
-        // Null all exercise group and exercise IDs to force new entities
-        exam.getExerciseGroups().forEach(group -> {
-            group.setId(null);
-            group.getExercises().forEach(ex -> ex.setId(null));
-        });
-
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, CREATED);
         assertThat(received.getExerciseGroups()).hasSize(5);
 
         for (int i = 0; i <= 4; i++) {

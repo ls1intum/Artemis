@@ -56,16 +56,17 @@ public class AdminSystemNotificationResource {
     /**
      * POST /system-notifications : Create a new system notification.
      *
-     * @param systemNotification the system notification to create
+     * @param dto the system notification DTO to create
      * @return the ResponseEntity with status 201 (Created) and with body the new system notification, or with status 400 (Bad Request) if the system notification has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("system-notifications")
-    public ResponseEntity<SystemNotification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
-        log.debug("REST request to save SystemNotification : {}", systemNotification);
-        if (systemNotification.getId() != null) {
+    public ResponseEntity<SystemNotification> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto) throws URISyntaxException {
+        log.debug("REST request to save SystemNotification : {}", dto);
+        if (dto.id() != null) {
             throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        SystemNotification systemNotification = dto.toEntity();
         this.systemNotificationService.validateDatesElseThrow(systemNotification);
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
