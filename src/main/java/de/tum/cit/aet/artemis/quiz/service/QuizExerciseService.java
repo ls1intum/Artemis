@@ -575,7 +575,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
-        validateQuizExerciseFiles(originalQuizExercise, files, false);
+        validateQuizExerciseFiles(originalQuizExercise, files, false, oldPaths);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : originalQuizExercise.getQuizQuestions()) {
@@ -705,8 +705,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
+        validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false, oldPaths);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
 
         Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
@@ -780,6 +780,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param isCreate      On create all files get validated, on update only changed files get validated
      */
     public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles, boolean isCreate) {
+        validateQuizExerciseFiles(quizExercise, providedFiles, isCreate, null);
+    }
+
+    /**
+     * Verifies that the provided files match the provided filenames in the exercise entity.
+     *
+     * @param quizExercise  the quiz exercise to validate
+     * @param providedFiles the provided files to validate
+     * @param isCreate      On create all files get validated, on update only changed files get validated
+     * @param oldPaths      Optional map of paths that already existed in the original exercise (should not require new files)
+     */
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles, boolean isCreate,
+            @Nullable Map<FilePathType, Set<String>> oldPaths) {
         long fileCount = providedFiles.size();
 
         Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
@@ -799,8 +812,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
                 });
 
+                // A path is "new" if it doesn't exist on disk AND it wasn't in the original exercise
+                Set<String> oldPathsForType = oldPaths != null ? oldPaths.getOrDefault(type, Set.of()) : Set.of();
                 Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
-                        .collect(Collectors.toSet());
+                        .filter(filePath -> !oldPathsForType.contains(filePath)).collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
                     newFilePathsMap.put(type, newPaths);

@@ -61,6 +61,7 @@ public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, 
     @Override
     public ShortAnswerQuestion toDomainObject() {
         ShortAnswerQuestion question = new ShortAnswerQuestion();
+        question.setId(id);
         question.setTitle(title);
         question.setText(text);
         question.setHint(hint);

@@ -59,6 +59,7 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
     @Override
     public DragAndDropQuestion toDomainObject() {
         DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(id);
         question.setTitle(title);
         question.setText(text);
         question.setHint(hint);

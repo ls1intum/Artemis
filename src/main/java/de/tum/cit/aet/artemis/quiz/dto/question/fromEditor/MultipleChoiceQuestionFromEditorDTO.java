@@ -53,6 +53,7 @@ public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title
     @Override
     public MultipleChoiceQuestion toDomainObject() {
         MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        question.setId(id);
         question.setTitle(title);
         question.setText(text);
         question.setHint(hint);

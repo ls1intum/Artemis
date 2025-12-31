@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -104,7 +105,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExerciseFromEditorDTO dto = TextExerciseFromEditorDTO.of(textExercise);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.OK);
     }
 
     @Test
@@ -112,7 +114,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        TextExerciseFromEditorDTO dto = TextExerciseFromEditorDTO.of(textExercise);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -123,7 +126,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        TextExerciseFromEditorDTO dto = TextExerciseFromEditorDTO.of(textExercise);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
