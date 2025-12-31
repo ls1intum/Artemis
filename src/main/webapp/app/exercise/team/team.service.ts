@@ -12,7 +12,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercise/services/exercise.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 /**
  * DTO for creating and updating teams.
@@ -362,13 +362,6 @@ export class TeamService implements ITeamService, OnDestroy {
         team.createdDate = convertDateFromServer(team.createdDate);
         team.lastModifiedDate = convertDateFromServer(team.lastModifiedDate);
         return team;
-    }
-
-    private static convertTeamDatesFromClient(team: Team): Team {
-        return Object.assign({}, team, {
-            createdDate: convertDateFromClient(team.createdDate),
-            lastModifiedDate: convertDateFromClient(team.lastModifiedDate),
-        });
     }
 
     private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {

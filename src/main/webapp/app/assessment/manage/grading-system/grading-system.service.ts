@@ -52,7 +52,8 @@ export class GradingSystemService {
      * @param gradingScale the grading scale to be created
      */
     createGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, gradingScale, { observe: 'response' });
+        const dto = this.toUpdateDTO(gradingScale);
+        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -92,7 +93,8 @@ export class GradingSystemService {
      * @param gradingScale the grading scale to be created
      */
     createGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, gradingScale, { observe: 'response' });
+        const dto = this.toUpdateDTO(gradingScale);
+        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**

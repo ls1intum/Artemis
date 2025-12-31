@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 
 /**
- * DTO for updating LtiPlatformConfiguration.
+ * DTO for creating and updating LtiPlatformConfiguration.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LtiPlatformConfigurationUpdateDTO(@NotNull Long id, @NotNull String registrationId, @NotNull String clientId, @Nullable String originalUrl,
+public record LtiPlatformConfigurationUpdateDTO(@Nullable Long id, @Nullable String registrationId, @NotNull String clientId, @Nullable String originalUrl,
         @Nullable String customName, @NotNull String authorizationUri, @NotNull String jwkSetUri, @NotNull String tokenUri) {
 
     /**
@@ -25,6 +25,23 @@ public record LtiPlatformConfigurationUpdateDTO(@NotNull Long id, @NotNull Strin
     public static LtiPlatformConfigurationUpdateDTO of(LtiPlatformConfiguration config) {
         return new LtiPlatformConfigurationUpdateDTO(config.getId(), config.getRegistrationId(), config.getClientId(), config.getOriginalUrl(), config.getCustomName(),
                 config.getAuthorizationUri(), config.getJwkSetUri(), config.getTokenUri());
+    }
+
+    /**
+     * Creates a new LtiPlatformConfiguration entity from this DTO.
+     * Used for create operations.
+     *
+     * @return a new LtiPlatformConfiguration entity
+     */
+    public LtiPlatformConfiguration toEntity() {
+        LtiPlatformConfiguration config = new LtiPlatformConfiguration();
+        config.setClientId(clientId);
+        config.setOriginalUrl(originalUrl);
+        config.setCustomName(customName);
+        config.setAuthorizationUri(authorizationUri);
+        config.setJwkSetUri(jwkSetUri);
+        config.setTokenUri(tokenUri);
+        return config;
     }
 
     /**

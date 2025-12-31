@@ -16,13 +16,13 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * DTO for creating and updating example submissions.
  * Supports both TextSubmission and ModelingSubmission types.
  *
- * @param id                       the id of the example submission (null for creation)
- * @param exerciseId               the id of the exercise this submission belongs to
- * @param usedForTutorial          whether this submission is used for tutorial
- * @param assessmentExplanation    explanation for the assessment
- * @param textSubmissionText       the text content (for TextSubmission)
- * @param modelingSubmissionModel  the model JSON (for ModelingSubmission)
- * @param modelingExplanationText  the explanation text (for ModelingSubmission)
+ * @param id                      the id of the example submission (null for creation)
+ * @param exerciseId              the id of the exercise this submission belongs to
+ * @param usedForTutorial         whether this submission is used for tutorial
+ * @param assessmentExplanation   explanation for the assessment
+ * @param textSubmissionText      the text content (for TextSubmission)
+ * @param modelingSubmissionModel the model JSON (for ModelingSubmission)
+ * @param modelingExplanationText the explanation text (for ModelingSubmission)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExampleSubmissionInputDTO(@Nullable Long id, @NotNull Long exerciseId, @Nullable Boolean usedForTutorial, @Nullable String assessmentExplanation,

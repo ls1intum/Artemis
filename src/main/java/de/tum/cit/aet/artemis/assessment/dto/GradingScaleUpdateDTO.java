@@ -100,4 +100,3 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
         return gradingScale;
     }
 }
-

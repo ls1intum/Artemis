@@ -3,10 +3,22 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
+import { UMLDiagramType } from '@ls1intum/apollon';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<ApollonDiagram>;
+
+/**
+ * DTO for creating and updating ApollonDiagrams.
+ */
+export interface ApollonDiagramUpdateDTO {
+    id?: number;
+    title?: string;
+    jsonRepresentation?: string;
+    diagramType?: UMLDiagramType;
+    courseId: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApollonDiagramService {
@@ -21,8 +33,8 @@ export class ApollonDiagramService {
      * @param courseId - id of the course.
      */
     create(apollonDiagram: ApollonDiagram, courseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(apollonDiagram);
-        return this.http.post<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' });
+        const dto = this.toDTO(apollonDiagram, courseId);
+        return this.http.post<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, dto, { observe: 'response' });
     }
 
     /**
@@ -31,8 +43,8 @@ export class ApollonDiagramService {
      * @param courseId - id of the course.
      */
     update(apollonDiagram: ApollonDiagram, courseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(apollonDiagram);
-        return this.http.put<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' });
+        const dto = this.toDTO(apollonDiagram, courseId);
+        return this.http.put<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, dto, { observe: 'response' });
     }
 
     /**
@@ -65,8 +77,14 @@ export class ApollonDiagramService {
             .pipe(tap((res) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
-    private convert(apollonDiagram: ApollonDiagram): ApollonDiagram {
-        return Object.assign({}, apollonDiagram);
+    private toDTO(apollonDiagram: ApollonDiagram, courseId: number): ApollonDiagramUpdateDTO {
+        return {
+            id: apollonDiagram.id,
+            title: apollonDiagram.title,
+            jsonRepresentation: apollonDiagram.jsonRepresentation,
+            diagramType: apollonDiagram.diagramType,
+            courseId: courseId,
+        };
     }
 
     private sendTitlesToEntityTitleService(diagram: ApollonDiagram | undefined | null) {

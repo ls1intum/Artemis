@@ -51,8 +51,8 @@ export class TutorialGroupsConfigurationService {
     private toDTO(config: TutorialGroupsConfiguration, period: Date[], id?: number): TutorialGroupsConfigurationDTO {
         return {
             id: id,
-            tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
-            tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
+            tutorialPeriodStartInclusive: toISO8601DateString(period[0])!,
+            tutorialPeriodEndInclusive: toISO8601DateString(period[1])!,
             useTutorialGroupChannels: config.useTutorialGroupChannels ?? false,
             usePublicTutorialGroupChannels: config.usePublicTutorialGroupChannels ?? false,
         };

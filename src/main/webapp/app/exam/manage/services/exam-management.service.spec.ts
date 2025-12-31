@@ -92,14 +92,14 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
+        const expectedDTO = ExamManagementService.convertExamToImportDTO(mockExam, course.id!);
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
-        expect(req.request.body).toEqual(mockCopyExam);
+        expect(req.request.body).toEqual(expectedDTO);
 
         // CLEANUP
         req.flush(mockExam);

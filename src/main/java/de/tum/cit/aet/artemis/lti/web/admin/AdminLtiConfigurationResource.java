@@ -134,13 +134,14 @@ public class AdminLtiConfigurationResource {
     /**
      * Adds a new LTI platform configuration.
      *
-     * @param platform the new LTI platform configuration to be saved.
+     * @param dto the LTI platform configuration DTO containing the new values.
      * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
      */
     @PostMapping("lti-platform")
-    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO dto) {
         log.debug("REST request to add new LTI platform");
 
+        LtiPlatformConfiguration platform = dto.toEntity();
         String clientRegistrationId = "artemis-" + UUID.randomUUID();
         platform.setRegistrationId(clientRegistrationId);
 

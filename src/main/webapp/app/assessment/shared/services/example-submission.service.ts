@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { map } from 'rxjs/operators';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,6 +10,19 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
+
+/**
+ * DTO for creating and updating example submissions.
+ */
+export interface ExampleSubmissionInputDTO {
+    id?: number;
+    exerciseId: number;
+    usedForTutorial?: boolean;
+    assessmentExplanation?: string;
+    textSubmissionText?: string;
+    modelingSubmissionModel?: string;
+    modelingExplanationText?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
@@ -25,9 +37,9 @@ export class ExampleSubmissionService {
      * @param exerciseId Id of the exercise to which it belongs
      */
     create(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(exampleSubmission);
+        const dto = this.toInputDTO(exampleSubmission, exerciseId);
         return this.http
-            .post<ExampleSubmission>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions`, copy, {
+            .post<ExampleSubmission>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions`, dto, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
@@ -39,9 +51,9 @@ export class ExampleSubmissionService {
      * @param exerciseId Id of the exercise to which it belongs
      */
     update(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(exampleSubmission);
+        const dto = this.toInputDTO(exampleSubmission, exerciseId);
         return this.http
-            .put<ExampleSubmission>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions`, copy, {
+            .put<ExampleSubmission>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions`, dto, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
@@ -104,16 +116,28 @@ export class ExampleSubmissionService {
     }
 
     /**
-     * Convert a ExampleSubmission to a JSON which can be sent to the server.
+     * Convert an ExampleSubmission to an input DTO for sending to the server.
      */
-    private convert(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        const jsonCopy = Object.assign({}, exampleSubmission);
-        if (jsonCopy.exercise) {
-            jsonCopy.exercise = ExerciseService.convertExerciseDatesFromClient(jsonCopy.exercise);
-            jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
-            jsonCopy.exercise.categories = ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
+    private toInputDTO(exampleSubmission: ExampleSubmission, exerciseId: number): ExampleSubmissionInputDTO {
+        const dto: ExampleSubmissionInputDTO = {
+            id: exampleSubmission.id,
+            exerciseId: exerciseId,
+            usedForTutorial: exampleSubmission.usedForTutorial,
+            assessmentExplanation: exampleSubmission.assessmentExplanation,
+        };
+
+        // Add submission-specific content
+        if (exampleSubmission.submission) {
+            if ('text' in exampleSubmission.submission) {
+                dto.textSubmissionText = (exampleSubmission.submission as TextSubmission).text;
+            } else if ('model' in exampleSubmission.submission) {
+                const modelingSubmission = exampleSubmission.submission as ModelingSubmission;
+                dto.modelingSubmissionModel = modelingSubmission.model;
+                dto.modelingExplanationText = modelingSubmission.explanationText;
+            }
         }
-        return jsonCopy;
+
+        return dto;
     }
 
     /**

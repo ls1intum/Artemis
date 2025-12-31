@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
@@ -215,28 +216,26 @@ public class ExamResource {
      * POST /courses/{courseId}/exams : Create a new exam.
      *
      * @param courseId the course to which the exam belongs
-     * @param exam     the exam to create
+     * @param examDTO  the exam DTO to create
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> createExam(@PathVariable Long courseId, @RequestBody Exam exam) throws URISyntaxException {
-        log.debug("REST request to create an exam : {}", exam);
-        if (exam.getId() != null) {
+    public ResponseEntity<Exam> createExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
+        log.debug("REST request to create an exam : {}", examDTO);
+        if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
+        Exam exam = examDTO.toEntity();
         checkForExamConflictsElseThrow(courseId, exam);
 
-        // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
-        if (!exam.getExerciseGroups().isEmpty()) {
-            throw new ConflictException("A new exam cannot have exercise groups yet", ENTITY_NAME, "groupsExist");
-        }
+        // New exams don't have exercise groups, so no need to check
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
         Exam savedExam = examRepository.save(exam);
-        channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
+        channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
@@ -372,27 +371,26 @@ public class ExamResource {
     /**
      * POST /courses/{courseId}/exam-import : Imports a new exam with exercises.
      *
-     * @param courseId         the course to which the exam belongs
-     * @param examToBeImported the exam to import / create
+     * @param courseId      the course to which the exam belongs
+     * @param examImportDTO the exam import DTO containing the exam data and exercise group references
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException, IOException {
-        log.debug("REST request to import an exam : {}", examToBeImported);
-
-        // Step 1: Check if Exam has an ID
-        if (examToBeImported.getId() != null) {
-            throw new BadRequestAlertException("A imported exam cannot already have an ID", ENTITY_NAME, "idexists");
-        }
+    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO) throws URISyntaxException, IOException {
+        log.debug("REST request to import an exam : {}", examImportDTO);
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
-        // Step 3: Validate the Exam dates
+        // Load the course and create the Exam entity from the DTO
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Exam examToBeImported = examImportDTO.toEntity(course);
+
+        // Validate the Exam dates and configuration
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Step 4: Import Exam with Exercises and create a channel for the exam
+        // Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
 
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
