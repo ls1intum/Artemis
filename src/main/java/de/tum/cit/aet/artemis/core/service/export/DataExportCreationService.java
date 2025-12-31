@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -51,8 +50,6 @@ public class DataExportCreationService {
 
     private final FileService fileService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final DataExportRepository dataExportRepository;
 
     private final MailService mailService;
@@ -78,15 +75,13 @@ public class DataExportCreationService {
     private final ResourceLoaderService resourceLoaderService;
 
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
-            SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
-            DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
-            DataExportCommunicationDataService dataExportCommunicationDataService, DataExportScienceEventService dataExportScienceEventService,
-            DataExportIrisService dataExportIrisService, DataExportLearnerProfileService dataExportLearnerProfileService,
-            DataExportCompetencyProgressService dataExportCompetencyProgressService, DataExportTutorialGroupService dataExportTutorialGroupService,
-            ResourceLoaderService resourceLoaderService) {
+            DataExportRepository dataExportRepository, MailService mailService, UserService userService, DataExportExerciseCreationService dataExportExerciseCreationService,
+            DataExportExamCreationService dataExportExamCreationService, DataExportCommunicationDataService dataExportCommunicationDataService,
+            DataExportScienceEventService dataExportScienceEventService, DataExportIrisService dataExportIrisService,
+            DataExportLearnerProfileService dataExportLearnerProfileService, DataExportCompetencyProgressService dataExportCompetencyProgressService,
+            DataExportTutorialGroupService dataExportTutorialGroupService, ResourceLoaderService resourceLoaderService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
         this.mailService = mailService;
         this.userService = userService;

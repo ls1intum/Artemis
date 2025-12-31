@@ -1,0 +1,78 @@
+<div>
+    <h5 *adminTitleBarTitle id="admin-data-exports-page-heading" class="mb-0" jhiTranslate="artemisApp.dataExport.admin.title"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
+        </button>
+    </div>
+
+    @if (loading()) {
+        <div class="d-flex justify-content-center my-4">
+            <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
+        </div>
+    } @else {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><span jhiTranslate="global.field.id"></span></th>
+                        <th><span jhiTranslate="artemisApp.dataExport.admin.user"></span></th>
+                        <th><span jhiTranslate="artemisApp.dataExport.admin.userLogin"></span></th>
+                        <th><span jhiTranslate="artemisApp.dataExport.admin.createdDate"></span></th>
+                        <th><span jhiTranslate="artemisApp.dataExport.admin.creationFinishedDate"></span></th>
+                        <th><span jhiTranslate="artemisApp.dataExport.admin.status"></span></th>
+                        <th><span jhiTranslate="entity.action.actions"></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (dataExport of dataExports(); track trackIdentity($index, dataExport)) {
+                        <tr>
+                            <td>{{ dataExport.id }}</td>
+                            <td>{{ dataExport.userName ?? '-' }}</td>
+                            <td>{{ dataExport.userLogin ?? '-' }}</td>
+                            <td>{{ dataExport.createdDate | artemisDate }}</td>
+                            <td>{{ dataExport.creationFinishedDate ? (dataExport.creationFinishedDate | artemisDate) : '-' }}</td>
+                            <td>
+                                <span class="badge" [ngClass]="getStateBadgeClass(dataExport.dataExportState)">
+                                    <fa-icon [icon]="getStateIcon(dataExport.dataExportState)" class="me-1" />
+                                    {{ 'artemisApp.dataExport.admin.state.' + dataExport.dataExportState | artemisTranslate }}
+                                </span>
+                            </td>
+                            <td>
+                                @if (dataExport.downloadable) {
+                                    <button type="button" class="btn btn-success btn-sm download-btn me-1" (click)="downloadExport(dataExport)">
+                                        <fa-icon [icon]="faDownload" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.download"></span>
+                                    </button>
+                                }
+                                @if (canCancel(dataExport)) {
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="dataExport.userLogin ?? ''"
+                                        [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"
+                                        (delete)="cancelExport(dataExport)"
+                                    >
+                                        <fa-icon [icon]="faBan" />
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <span jhiTranslate="artemisApp.dataExport.admin.noExports"></span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (totalRecords() > 0) {
+            <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="onPageChange($event)" />
+        }
+    }
+</div>
+
+<jhi-admin-data-export-create-modal #createModal />
