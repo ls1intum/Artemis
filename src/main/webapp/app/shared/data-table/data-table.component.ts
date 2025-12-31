@@ -419,15 +419,30 @@ export class DataTableComponent implements OnInit, OnChanges {
     };
 
     /**
-     * Performs a case-insensitive search of "word" inside of "text".
+     * Normalizes text for searching by converting to lowercase and removing diacritical marks.
+     * This makes searches like "Dogan" match "Doğan" and "Muller" match "Müller".
+     *
+     * @param text string to normalize
+     */
+    private normalizeForSearch = (text: string): string => {
+        return text
+            .toLowerCase()
+            .normalize('NFD') // Decompose characters (e.g., "ğ" becomes "g" + combining breve)
+            .replace(/[\u0300-\u036f]/g, ''); // Remove combining diacritical marks
+    };
+
+    /**
+     * Performs a case-insensitive, diacritics-insensitive search of "word" inside of "text".
      * If "word" consists of multiple segments separated by a space, each one of them must appear in "text".
      * This relaxation has the benefit that searching for "Max Mustermann" will still find "Max Gregor Mustermann".
      * Additionally, the wildcard symbols "*" and "?" are supported.
+     * Unicode normalization ensures that "Dogan" matches "Doğan" and similar variations.
      *
      * @param text string that is searched for param "word"
      */
     private foundIn = (text: string) => (word: string) => {
-        const segments = word.toLowerCase().split(' ');
+        const normalizedText = this.normalizeForSearch(text);
+        const segments = this.normalizeForSearch(word).split(' ');
         return (
             text &&
             word &&
@@ -436,7 +451,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                     .replace(/[.+\-^${}()|[\]\\]/g, '\\$&') // escape
                     .replace(/\*/g, '.*') // multiple characters
                     .replace(/\?/g, '.'); // single character
-                return new RegExp(regex).test(text.toLowerCase());
+                return new RegExp(regex).test(normalizedText);
             })
         );
     };

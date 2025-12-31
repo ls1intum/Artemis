@@ -1,39 +1,58 @@
+/**
+ * Vitest tests for SystemNotificationManagementUpdateComponent.
+ * Tests the create/update form for system notifications including
+ * form validation and date constraints.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
 import { SystemNotificationManagementUpdateComponent } from 'app/core/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import dayjs from 'dayjs/esm';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
-    let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
-    let updateComponent: SystemNotificationManagementUpdateComponent;
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
+    let component: SystemNotificationManagementUpdateComponent;
     let adminService: AdminSystemNotificationService;
 
-    const route = {
-        parent: {
-            data: of({ notification: { id: 1, title: 'test', type: 'INFO', notificationDate: dayjs(), expireDate: dayjs().add(1, 'hour') } as SystemNotification }),
-        },
-    } as any as ActivatedRoute;
+    /** Sample notification data loaded from parent route */
+    const testNotification = {
+        id: 1,
+        title: 'test',
+        type: 'INFO',
+        notificationDate: dayjs(),
+        expireDate: dayjs().add(1, 'hour'),
+    } as SystemNotification;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FaIconComponent],
-            declarations: [SystemNotificationManagementUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
+    /** Mock activated route with parent data containing notification */
+    const mockRoute = {
+        parent: {
+            data: of({ notification: testNotification }),
+        },
+    } as unknown as ActivatedRoute;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ReactiveFormsModule, SystemNotificationManagementUpdateComponent],
             providers: [
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: mockRoute },
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -41,82 +60,100 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                updateComponentFixture = TestBed.createComponent(SystemNotificationManagementUpdateComponent);
-                updateComponent = updateComponentFixture.componentInstance;
-                adminService = TestBed.inject(AdminSystemNotificationService);
-            });
+            .overrideComponent(SystemNotificationManagementUpdateComponent, {
+                set: {
+                    imports: [ReactiveFormsModule, FaIconComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(SystemNotificationManagementUpdateComponent);
+        component = fixture.componentInstance;
+        adminService = TestBed.inject(AdminSystemNotificationService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        updateComponentFixture.detectChanges();
-        expect(updateComponent).not.toBeNull();
+    it('should initialize component', () => {
+        fixture.detectChanges();
+        expect(component).toBeDefined();
     });
 
-    it('navigate back if cancel is clicked', fakeAsync(() => {
-        const goToOverview = jest.spyOn(updateComponent, 'goToOverview');
-        updateComponentFixture.detectChanges();
+    it('should navigate back when cancel button is clicked', async () => {
+        const goToOverviewSpy = vi.spyOn(component, 'goToOverview');
+        fixture.detectChanges();
 
-        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#cancelButton');
-        button.click();
+        const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancelButton');
+        cancelButton.click();
 
-        tick();
-        expect(goToOverview).toHaveBeenCalledOnce();
-    }));
+        await vi.waitFor(() => {
+            expect(goToOverviewSpy).toHaveBeenCalledOnce();
+        });
+    });
 
-    it('should update / create if save is clicked', fakeAsync(() => {
-        const saveSpy = jest.spyOn(updateComponent, 'save');
-        jest.spyOn(adminService, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
-        updateComponentFixture.detectChanges();
+    it('should call save when save button is clicked', async () => {
+        const saveSpy = vi.spyOn(component, 'save');
+        vi.spyOn(adminService, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
+        fixture.detectChanges();
 
-        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
-        button.click();
+        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton');
+        saveButton.click();
 
-        tick();
-        expect(saveSpy).toHaveBeenCalledOnce();
-    }));
+        await vi.waitFor(() => {
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+    });
 
     it.each([
         { name: 'title', exampleValue: 'A title' },
         { name: 'type', exampleValue: SystemNotificationType.INFO },
         { name: 'notificationDate', exampleValue: dayjs() },
         { name: 'expireDate', exampleValue: dayjs() },
-    ])('should require required fields', ({ name, exampleValue }) => {
-        updateComponentFixture.detectChanges();
+    ])('should require $name field', ({ name, exampleValue }) => {
+        fixture.detectChanges();
 
-        updateComponent.form.controls[name].setValue(null);
-        updateComponentFixture.detectChanges();
-        expect(updateComponent.form.controls[name].errors?.required).toBeTrue();
+        const control = component.form.get(name);
 
-        updateComponent.form.controls[name].setValue(exampleValue);
-        updateComponentFixture.detectChanges();
-        expect(updateComponent.form.controls[name].errors?.required).toBeUndefined();
+        // Field should be required when empty
+        control?.setValue(null);
+        fixture.detectChanges();
+        expect(control?.errors?.['required']).toBe(true);
+
+        // Field should pass validation when value is provided
+        control?.setValue(exampleValue);
+        fixture.detectChanges();
+        expect(control?.errors?.['required']).toBeUndefined();
     });
 
-    it('should ensure that notification date is before expire date', fakeAsync(() => {
-        const saveSpy = jest.spyOn(updateComponent, 'save');
-        updateComponentFixture.detectChanges();
+    it('should ensure notification date is before expire date', async () => {
+        const saveSpy = vi.spyOn(component, 'save');
+        fixture.detectChanges();
 
-        updateComponent.form.controls['notificationDate'].setValue(dayjs());
-        updateComponent.form.controls['expireDate'].setValue(dayjs().subtract(1, 'hour'));
+        // Set invalid dates: notification date after expire date
+        component.form.get('notificationDate')?.setValue(dayjs());
+        component.form.get('expireDate')?.setValue(dayjs().subtract(1, 'hour'));
+        fixture.detectChanges();
 
-        updateComponentFixture.detectChanges();
-        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
-        button.click();
+        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton');
+        saveButton.click();
 
-        tick();
-        expect(saveSpy).not.toHaveBeenCalled();
+        await vi.waitFor(
+            () => {
+                // Save should not be called because dates are invalid
+                expect(saveSpy).not.toHaveBeenCalled();
+            },
+            { timeout: 100 },
+        );
 
-        updateComponent.form.controls['expireDate'].setValue(dayjs().add(1, 'hour'));
-        updateComponentFixture.detectChanges();
-        button.click();
+        // Fix the dates: expire date after notification date
+        component.form.get('expireDate')?.setValue(dayjs().add(1, 'hour'));
+        fixture.detectChanges();
+        saveButton.click();
 
-        tick();
-        expect(saveSpy).toHaveBeenCalledOnce();
-    }));
+        await vi.waitFor(() => {
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+    });
 });

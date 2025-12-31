@@ -24,7 +24,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -52,7 +51,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 
-@Lazy
+// NOTE: Do NOT add @Lazy to this class. The ObjectMapper must be properly configured with Jackson modules
+// (Hibernate6Module, JavaTimeModule, etc.) before this service is used. With @Lazy, the ObjectMapper might
+// not have all modules registered, causing "No _valueDeserializer assigned" errors when deserializing entities.
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class RequestUtilService {
@@ -787,11 +788,16 @@ public class RequestUtilService {
     }
 
     public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType) throws Exception {
-        return getMap(path, expectedStatus, keyType, valueType, new LinkedMultiValueMap<>());
+        return getMap(path, expectedStatus, keyType, valueType, new LinkedMultiValueMap<>(), new HttpHeaders());
     }
 
     public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType, @NonNull MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        return getMap(path, expectedStatus, keyType, valueType, params, new HttpHeaders());
+    }
+
+    public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType, @NonNull MultiValueMap<String, String> params,
+            HttpHeaders httpHeaders) throws Exception {
+        MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
         if (!expectedStatus.is2xxSuccessful()) {

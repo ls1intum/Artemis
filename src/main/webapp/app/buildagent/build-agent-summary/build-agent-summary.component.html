@@ -1,29 +1,30 @@
 <div style="padding-bottom: 60px">
-    @if (buildAgents) {
+    <h5 *adminTitleBarTitle id="build-agents-heading" class="mb-0" jhiTranslate="artemisApp.buildAgents.title"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-success btn-sm" (click)="resumeAllBuildAgents()">
+            <fa-icon [icon]="faPlay" />
+            <span jhiTranslate="artemisApp.buildAgents.resumeAll"></span>
+        </button>
+        <button class="btn btn-danger btn-sm" (click)="displayPauseBuildAgentModal()">
+            <fa-icon [icon]="faPause" />
+            <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
+        </button>
+        <button class="btn btn-danger btn-sm" (click)="displayClearDistributedDataModal()">
+            <fa-icon [icon]="faTrash" />
+            <span jhiTranslate="artemisApp.buildAgents.clearDistributedData.title"></span>
+        </button>
+    </div>
+    @if (buildAgents()) {
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
             <div>
-                <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.summary"></h3>
+                <h4 id="build-agents-summary-heading" jhiTranslate="artemisApp.buildAgents.summary"></h4>
                 <p>
-                    {{ buildAgents.length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds }}
-                    <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
+                    {{ buildAgents().length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds() }}
+                    <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
                 </p>
             </div>
-            <div>
-                <button class="btn btn-success" (click)="resumeAllBuildAgents()">
-                    <fa-icon [icon]="faPlay" />
-                    <span jhiTranslate="artemisApp.buildAgents.resumeAll"></span>
-                </button>
-                <button class="btn btn-danger" (click)="displayPauseBuildAgentModal()">
-                    <fa-icon [icon]="faPause" />
-                    <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
-                </button>
-                <button class="btn btn-danger" (click)="displayClearDistributedDataModal()">
-                    <fa-icon [icon]="faTrash" />
-                    <span jhiTranslate="artemisApp.buildAgents.clearDistributedData.title"></span>
-                </button>
-            </div>
         </div>
-        <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
+        <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents()">
             <ng-template let-settings="settings" let-controls="controls">
                 <ngx-datatable
                     class="bootstrap"

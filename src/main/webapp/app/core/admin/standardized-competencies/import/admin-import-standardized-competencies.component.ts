@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -25,36 +25,49 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 interface ImportCount {
     knowledgeAreas: number;
     competencies: number;
 }
 
+/**
+ * Component for importing standardized competencies from a JSON file.
+ * Allows previewing and validating the import data before submission.
+ */
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
         FontAwesomeModule,
+        NgbCollapse,
+        NgbTooltipModule,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        HtmlForMarkdownPipe,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        NgbCollapse,
-        HtmlForMarkdownPipe,
-        ArtemisTranslatePipe,
-        NgbTooltipModule,
-        TranslateDirective,
         ButtonComponent,
+        AdminTitleBarTitleDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminImportStandardizedCompetenciesComponent {
-    protected isLoading = false;
-    protected isCollapsed = false;
-    protected selectedCompetency?: StandardizedCompetencyForTree;
-    //the title of the knowledge area belonging to the selected competency
-    protected knowledgeAreaTitle = '';
-    protected sourceString = '';
-    protected importData?: KnowledgeAreasForImportDTO;
-    protected importCount?: ImportCount;
+    /** Whether import is loading */
+    protected readonly isLoading = signal(false);
+    /** Whether the help section is collapsed */
+    protected readonly isCollapsed = signal(false);
+    /** Selected competency for details view */
+    protected readonly selectedCompetency = signal<StandardizedCompetencyForTree | undefined>(undefined);
+    /** Title of the knowledge area belonging to the selected competency */
+    protected readonly knowledgeAreaTitle = signal('');
+    /** Source string for the selected competency */
+    protected readonly sourceString = signal('');
+    /** Import data from JSON file */
+    protected readonly importData = signal<KnowledgeAreasForImportDTO | undefined>(undefined);
+    /** Count of knowledge areas and competencies to import */
+    protected readonly importCount = signal<ImportCount | undefined>(undefined);
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
     private fileReader: FileReader = new FileReader();
@@ -128,35 +141,36 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForTree, knowledgeAreaTitle: string) {
-        const source = this.importData?.sources.find((source) => source.id === competency.sourceId);
-        this.sourceString = source ? sourceToString(source) : '';
-        this.knowledgeAreaTitle = knowledgeAreaTitle;
-        this.selectedCompetency = competency;
+        const data = this.importData();
+        const source = data?.sources.find((source) => source.id === competency.sourceId);
+        this.sourceString.set(source ? sourceToString(source) : '');
+        this.knowledgeAreaTitle.set(knowledgeAreaTitle);
+        this.selectedCompetency.set(competency);
     }
 
     protected closeCompetencyDetails() {
-        this.sourceString = '';
-        this.knowledgeAreaTitle = '';
-        this.selectedCompetency = undefined;
+        this.sourceString.set('');
+        this.knowledgeAreaTitle.set('');
+        this.selectedCompetency.set(undefined);
     }
 
-    importCompetencies() {
-        this.isLoading = true;
-        this.adminStandardizedCompetencyService.importStandardizedCompetencyCatalog(this.importData!).subscribe({
+    importCompetencies(): void {
+        this.isLoading.set(true);
+        this.adminStandardizedCompetencyService.importStandardizedCompetencyCatalog(this.importData()!).subscribe({
             next: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
                 this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
 
     toggleCollapse() {
-        this.isCollapsed = !this.isCollapsed;
+        this.isCollapsed.update((collapsed) => !collapsed);
     }
 
     cancel() {
@@ -164,26 +178,28 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     /**
-     * Sets the importData and counts the knowledgeAreas and standardizedCompetencies contained
-     * @private
+     * Sets the importData and counts the knowledgeAreas and standardizedCompetencies contained.
      */
-    private setImportDataAndCount() {
-        this.importData = undefined;
-        this.importCount = { knowledgeAreas: 0, competencies: 0 };
+    private setImportDataAndCount(): void {
+        this.importData.set(undefined);
+        this.importCount.set({ knowledgeAreas: 0, competencies: 0 });
 
+        let parsedData: KnowledgeAreasForImportDTO | undefined;
         try {
-            this.importData = JSON.parse(this.fileReader.result as string);
+            parsedData = JSON.parse(this.fileReader.result as string);
+            this.importData.set(parsedData);
         } catch (e) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileSyntax');
         }
         try {
-            if (this.importData) {
-                this.importCount = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
-                this.importCount.knowledgeAreas -= 1;
-                this.dataSource.data = this.importData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
+            if (parsedData) {
+                const count = this.countKnowledgeAreasAndCompetencies({ children: parsedData.knowledgeAreas });
+                count.knowledgeAreas -= 1;
+                this.importCount.set(count);
+                this.dataSource.data = parsedData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
             }
         } catch (e) {
-            this.importData = undefined;
+            this.importData.set(undefined);
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileStructure');
         }
     }

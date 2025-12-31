@@ -1648,8 +1648,9 @@ public class ProgrammingExerciseTestService {
      */
     public void exportProgrammingExerciseInstructorMaterial_shouldReturnFile(boolean saveEmbeddedFiles, boolean shouldIncludeBuildplan) throws Exception {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, saveEmbeddedFiles, shouldIncludeBuildplan);
-        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
-        await().until(zipFile::exists);
+        // Assure that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
+        await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
