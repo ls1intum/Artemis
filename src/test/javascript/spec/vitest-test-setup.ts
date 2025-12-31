@@ -15,11 +15,13 @@ import relativeTime from 'dayjs/esm/plugin/relativeTime';
 import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
 import utc from 'dayjs/esm/plugin/utc';
 import timezone from 'dayjs/esm/plugin/timezone';
+import duration from 'dayjs/esm/plugin/duration';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(duration);
 
 // Browser API mocks (not available in jsdom)
 globalThis.ResizeObserver = class ResizeObserver {
@@ -65,3 +67,38 @@ window.addEventListener('error', (event) => {
         event.stopPropagation();
     }
 });
+
+// Mock SVG methods not available in jsdom
+if (typeof SVGElement !== 'undefined') {
+    Object.defineProperty(SVGElement.prototype, 'getBBox', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+        }),
+    });
+
+    Object.defineProperty(SVGElement.prototype, 'getScreenCTM', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            a: 1,
+            b: 0,
+            c: 0,
+            d: 1,
+            e: 0,
+            f: 0,
+            inverse: vi.fn().mockReturnValue({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+        }),
+    });
+
+    Object.defineProperty(SVGElement.prototype, 'createSVGPoint', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+            matrixTransform: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        }),
+    });
+}
