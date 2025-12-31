@@ -6,6 +6,7 @@ import {
     HostListener,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
     SimpleChanges,
@@ -16,7 +17,7 @@ import {
 } from '@angular/core';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
@@ -78,9 +79,10 @@ type PagingValue = number | 'all';
         ArtemisTranslatePipe,
     ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
+export class DataTableComponent implements OnInit, OnChanges, OnDestroy {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
+    private elementRef = inject(ElementRef);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -197,6 +199,9 @@ export class DataTableComponent implements OnInit, OnChanges {
         // so that they can be used from child components
         this.onSort = this.onSort.bind(this);
         this.iconForSortPropField = this.iconForSortPropField.bind(this);
+
+        // Initialize the debounced resize subscription
+        this.initResizeSubscription();
     }
 
     /**
@@ -216,9 +221,14 @@ export class DataTableComponent implements OnInit, OnChanges {
     private isDispatchingResize = false;
 
     /**
-     * Timeout handle for debouncing resize events.
+     * Subject for emitting resize events to be debounced.
      */
-    private resizeTimeout?: ReturnType<typeof setTimeout>;
+    private resize$ = new Subject<void>();
+
+    /**
+     * Subscription for the debounced resize stream.
+     */
+    private resizeSubscription?: Subscription;
 
     /**
      * Internal selectors from ngx-datatable that require inline style clearing.
@@ -239,8 +249,17 @@ export class DataTableComponent implements OnInit, OnChanges {
     ];
 
     /**
-     * Handles window resize events with debouncing.
-     * Clears inline width styles and triggers ngx-datatable's recalculation.
+     * Initializes the debounced resize subscription.
+     */
+    private initResizeSubscription(): void {
+        this.resizeSubscription = this.resize$.pipe(debounceTime(200)).subscribe(() => {
+            this.resetDatatableLayout();
+        });
+    }
+
+    /**
+     * Handles window resize events.
+     * Emits to the resize$ subject which is debounced to avoid excessive recalculations.
      */
     @HostListener('window:resize')
     onWindowResize(): void {
@@ -250,15 +269,15 @@ export class DataTableComponent implements OnInit, OnChanges {
             return;
         }
 
-        // Clear any pending resize timeout (debounce)
-        if (this.resizeTimeout) {
-            clearTimeout(this.resizeTimeout);
-        }
+        this.resize$.next();
+    }
 
-        // Only recalculate after user stops resizing (200ms debounce)
-        this.resizeTimeout = setTimeout(() => {
-            this.resetDatatableLayout();
-        }, 200);
+    /**
+     * Cleanup subscriptions on component destroy.
+     */
+    ngOnDestroy(): void {
+        this.resizeSubscription?.unsubscribe();
+        this.resize$.complete();
     }
 
     /**
@@ -269,9 +288,11 @@ export class DataTableComponent implements OnInit, OnChanges {
      * the library doesn't clear stale inline width styles before recalculating.
      */
     private resetDatatableLayout(): void {
-        // Clear inline width styles from container elements
+        const nativeElement = this.elementRef.nativeElement;
+
+        // Clear inline width styles from container elements (scoped to this component)
         DataTableComponent.DATATABLE_SELECTORS.forEach((selector) => {
-            const elements = document.querySelectorAll(selector);
+            const elements = nativeElement.querySelectorAll(selector);
             elements.forEach((el: Element) => {
                 (el as HTMLElement).style.width = '';
             });
