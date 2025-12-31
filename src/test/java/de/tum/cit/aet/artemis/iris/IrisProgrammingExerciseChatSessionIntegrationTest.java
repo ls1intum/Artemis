@@ -223,9 +223,17 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Act - Call service method with uncommitted files
         irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
-        // Assert - Verify the session was processed
+        // Assert - Verify the session was processed and messages exist
         var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
+        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        assertThat(messages).isNotEmpty();
+        assertThat(messages).hasSizeGreaterThanOrEqualTo(1);
+        // Verify we have both USER and LLM messages
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.LLM)).isTrue();
+        // Verify messages have content
+        assertThat(messages).allMatch(m -> !m.getContent().isEmpty());
     }
 
     @Test
@@ -249,6 +257,11 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Assert - Verify the session was processed normally
         var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
+        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        assertThat(messages).isNotEmpty();
+        // Verify we have both USER and LLM messages
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.LLM)).isTrue();
     }
 
     @Test
@@ -270,6 +283,11 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Assert - Verify the session was processed normally
         var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
+        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        assertThat(messages).isNotEmpty();
+        // Verify we have both USER and LLM messages
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.LLM)).isTrue();
     }
 
     @Test
