@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -112,11 +113,30 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
             importStrategy = importStrategyType;
         }
         String url = importFromSourceExerciseUrl(importStrategy);
+        Object requestBody = body;
         if (type == ImportType.FROM_LIST) {
             url = importFromListUrl(importStrategy);
+            // Convert Team objects to TeamImportDTOs for the FROM_LIST endpoint
+            requestBody = body != null ? body.stream().map(this::toImportDTO).toList() : null;
         }
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(url, body, Team.class, HttpStatus.OK);
+        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(url, requestBody, Team.class, HttpStatus.OK);
         assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
+    }
+
+    /**
+     * Converts a Team to a TeamImportDTO for sending to the import endpoint.
+     * Students are identified by login or registration number.
+     */
+    private TeamImportDTO toImportDTO(Team team) {
+        var studentIdentifiers = team.getStudents() != null ? team.getStudents().stream().map(student -> new TeamImportDTO.StudentIdentifierDTO(student.getLogin(), student.getVisibleRegistrationNumber())).collect(java.util.stream.Collectors.toSet()) : new HashSet<TeamImportDTO.StudentIdentifierDTO>();
+        return new TeamImportDTO(team.getName(), team.getShortName(), team.getImage(), studentIdentifiers);
+    }
+
+    /**
+     * Converts a list of Teams to TeamImportDTOs for sending to the import endpoint.
+     */
+    private List<TeamImportDTO> toImportDTOs(List<Team> teams) {
+        return teams.stream().map(this::toImportDTO).toList();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -276,7 +296,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         // If the destination exercise is not a team exercise, the request should fail
         destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
         exerciseRepository.save(destinationExercise);
-        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), toImportDTOs(importedTeamsBody), HttpStatus.BAD_REQUEST);
         destinationExercise.setMode(ExerciseMode.TEAM);
         exerciseRepository.save(destinationExercise);
 
@@ -285,17 +305,17 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Team team = TeamFactory.generateTeamForExercise(destinationExercise, TEST_PREFIX + "failTeam", TEST_PREFIX + "fail", 1, null);
         // If students not added with user repo then they do not exist so it should fail
         teams.add(team);
-        request.put(importFromListUrl(), getTeamsIntoRegistrationNumberOnlyTeams(teams), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), toImportDTOs(getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
 
         // If user with given login does not exist, the request should fail
-        request.put(importFromListUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), toImportDTOs(getTeamsIntoLoginOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
 
         // If user does not have an identifier: registration number or login, the request should fail
         userTestRepository.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
-        request.put(importFromListUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), toImportDTOs(getTeamsIntoOneIdentifierTeams(teams, null)), HttpStatus.BAD_REQUEST);
 
         // If user's registration number points to same user with a login in request, it should fail
-        request.put(importFromListUrl(), addLists(getTeamsIntoLoginOnlyTeams(teams), getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), toImportDTOs(addLists(getTeamsIntoLoginOnlyTeams(teams), getTeamsIntoRegistrationNumberOnlyTeams(teams))), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -307,7 +327,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testImportTeamsFromListForbiddenAsTutor() throws Exception {
-        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
+        request.put(importFromListUrl(), toImportDTOs(importedTeamsBody), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -327,7 +347,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         course.setInstructorGroupName("Different group name");
         courseRepository.save(course);
 
-        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
+        request.put(importFromListUrl(), toImportDTOs(importedTeamsBody), HttpStatus.FORBIDDEN);
     }
 
     /**

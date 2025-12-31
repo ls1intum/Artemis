@@ -169,7 +169,7 @@ public class ParticipationResource {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
-        StudentParticipation participation = null;
+        StudentParticipation participation;
         try {
             participation = participationService.startExercise(exercise, participant, true);
         }

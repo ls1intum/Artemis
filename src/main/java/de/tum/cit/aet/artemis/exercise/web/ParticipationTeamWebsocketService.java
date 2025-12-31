@@ -159,7 +159,7 @@ public class ParticipationTeamWebsocketService {
      */
     @SubscribeMapping("topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
-        final String destination = getDestination(participationId);
+        final String destination = getDestinationPath(participationId);
         getDestinationTracker().put(stompHeaderAccessor.getSessionId(), destination);
         sendOnlineTeamStudents(participationId);
     }
@@ -269,7 +269,7 @@ public class ParticipationTeamWebsocketService {
             sendOnlineTeamStudents(participationId);
 
             SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
-            websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
+            websocketMessagingService.sendMessage(getDestinationPath(participationId, topicPath), payload);
         }
     }
 
@@ -297,7 +297,7 @@ public class ParticipationTeamWebsocketService {
         sendOnlineTeamStudents(participationId);
 
         SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, principal.getName());
-        websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
+        websocketMessagingService.sendMessage(getDestinationPath(participationId, topicPath), payload);
     }
 
     /**
@@ -307,7 +307,7 @@ public class ParticipationTeamWebsocketService {
      * @param exceptSessionID session id that should be ignored (optional)
      */
     private void sendOnlineTeamStudents(Long participationId, String exceptSessionID) {
-        final String destination = getDestination(participationId);
+        final String destination = getDestinationPath(participationId);
 
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
                 .map(login -> new OnlineTeamStudentDTO(login, getValue(getLastTypingTracker(), participationId, login), getLastActionTracker().get(participationId + "-" + login)))
@@ -395,25 +395,25 @@ public class ParticipationTeamWebsocketService {
      * @return participation id
      */
     public static Long getParticipationIdFromDestination(String destination) {
-        Pattern pattern = Pattern.compile("^" + getDestination("(\\d*)"));
+        Pattern pattern = Pattern.compile("^" + getDestinationRegexPattern());
         Matcher matcher = pattern.matcher(destination);
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 
-    private static String getDestination(Long participationId, String path) {
-        return getDestination(participationId.toString(), path);
+    private static String getDestinationPath(Long participationId, String path) {
+        return getDestinationPath(participationId.toString(), path);
     }
 
-    private static String getDestination(Long participationId) {
-        return getDestination(participationId, "");
+    private static String getDestinationPath(Long participationId) {
+        return getDestinationPath(participationId, "");
     }
 
-    private static String getDestination(String participationId, String path) {
+    private static String getDestinationPath(String participationId, String path) {
         return "/topic/participations/" + participationId + "/team" + path;
     }
 
-    private static String getDestination(String participationId) {
-        return getDestination(participationId, "");
+    private static String getDestinationRegexPattern() {
+        return getDestinationPath("(\\d*)", "");
     }
 
     private void updateValue(Map<String, Instant> map, long participationId, String username) {

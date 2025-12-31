@@ -64,22 +64,83 @@ public class ExampleSubmissionService {
     }
 
     /**
+     * Creates a new example submission with its associated submission.
+     *
+     * @param exampleSubmission the new example submission to create
+     * @return the created exampleSubmission entity
+     */
+    public ExampleSubmission create(ExampleSubmission exampleSubmission) {
+        Submission submission = exampleSubmission.getSubmission();
+        if (submission != null) {
+            submission.setExampleSubmission(true);
+            submissionRepository.save(submission);
+        }
+        return exampleSubmissionRepository.save(exampleSubmission);
+    }
+
+    /**
+     * Updates an existing example submission by loading it from the database first to avoid orphan removal issues.
+     * Only updates the submission content and example submission metadata, preserving all relationships.
+     *
+     * @param exampleSubmission the example submission with updated values
+     * @return the updated exampleSubmission entity
+     */
+    public ExampleSubmission update(ExampleSubmission exampleSubmission) {
+        // Load the existing example submission from DB to preserve relationships and avoid orphan removal
+        ExampleSubmission existingExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId());
+
+        // Update metadata fields
+        existingExampleSubmission.setUsedForTutorial(exampleSubmission.isUsedForTutorial());
+        existingExampleSubmission.setAssessmentExplanation(exampleSubmission.getAssessmentExplanation());
+
+        // Update the submission content if provided
+        Submission clientSubmission = exampleSubmission.getSubmission();
+        Submission existingSubmission = existingExampleSubmission.getSubmission();
+        if (clientSubmission != null && existingSubmission != null) {
+            // Update submission content based on type
+            updateSubmissionContent(existingSubmission, clientSubmission);
+            existingSubmission.setExampleSubmission(true);
+            // Rebuild connection between result and submission, if it has been lost
+            if (existingSubmission.getLatestResult() != null && existingSubmission.getLatestResult().getSubmission() == null) {
+                existingSubmission.getLatestResult().setSubmission(existingSubmission);
+            }
+            submissionRepository.save(existingSubmission);
+        }
+
+        return exampleSubmissionRepository.save(existingExampleSubmission);
+    }
+
+    /**
+     * Updates the content of an existing submission from a client-provided submission.
+     * Only copies content fields, not relationships or IDs.
+     *
+     * @param existing the existing submission to update
+     * @param client   the client-provided submission with new content
+     */
+    private void updateSubmissionContent(Submission existing, Submission client) {
+        if (existing instanceof TextSubmission existingText && client instanceof TextSubmission clientText) {
+            existingText.setText(clientText.getText());
+        }
+        else if (existing instanceof ModelingSubmission existingModeling && client instanceof ModelingSubmission clientModeling) {
+            existingModeling.setModel(clientModeling.getModel());
+            existingModeling.setExplanationText(clientModeling.getExplanationText());
+        }
+        // Add other submission types as needed
+    }
+
+    /**
      * First saves the corresponding submission with the exampleSubmission flag. Then the example submission itself is saved.
+     * Note: This method is maintained for backwards compatibility. Prefer using create() for new submissions
+     * and update() for existing submissions.
      *
      * @param exampleSubmission the example submission to save
      * @return the exampleSubmission entity
      */
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
-        Submission submission = exampleSubmission.getSubmission();
-        if (submission != null) {
-            submission.setExampleSubmission(true);
-            // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-            if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
-                submission.getLatestResult().setSubmission(submission);
-            }
-            submissionRepository.save(submission);
+        if (exampleSubmission.getId() != null) {
+            return update(exampleSubmission);
         }
-        return exampleSubmissionRepository.save(exampleSubmission);
+        return create(exampleSubmission);
     }
 
     /**

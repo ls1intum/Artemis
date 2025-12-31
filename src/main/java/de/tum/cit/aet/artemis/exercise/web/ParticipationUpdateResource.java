@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -86,78 +87,83 @@ public class ParticipationUpdateResource {
     }
 
     /**
-     * PUT /participations : Updates an existing participation.
+     * PUT /participations : Updates an existing participation's presentation score.
      *
-     * @param exerciseId    the id of the exercise, the participation belongs to
-     * @param participation the participation to update
+     * @param exerciseId the id of the exercise, the participation belongs to
+     * @param dto        the DTO containing the participation update information
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastTutor
-    public ResponseEntity<Participation> updateParticipation(@PathVariable long exerciseId, @RequestBody StudentParticipation participation) {
-        log.debug("REST request to update Participation : {}", participation);
-        if (participation.getId() == null) {
-            throw new BadRequestAlertException("The participation object needs to have an id to be changed", ENTITY_NAME, "idmissing");
-        }
-        if (participation.getExercise() == null || participation.getExercise().getId() == null) {
-            throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
-        }
-        if (participation.getExercise().getId() != exerciseId) {
+    public ResponseEntity<Participation> updateParticipation(@PathVariable long exerciseId, @RequestBody ParticipationUpdateDTO dto) {
+        log.debug("REST request to update Participation : {}", dto);
+        if (dto.exerciseId() != exerciseId) {
             throw new ConflictException("The exercise of the participation does not match the exercise id in the URL", ENTITY_NAME, "noidmatch");
         }
-        var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, originalParticipation.getExercise(), null);
 
-        Course course = findCourseFromParticipation(participation);
-        if (participation.getPresentationScore() != null && participation.getExercise().getPresentationScoreEnabled() != null
-                && participation.getExercise().getPresentationScoreEnabled()) {
-            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        // Load the existing participation from database to avoid orphan removal issues with detached entities
+        StudentParticipation existingParticipation = studentParticipationRepository.findByIdElseThrow(dto.id());
+        if (existingParticipation.getExercise().getId() != exerciseId) {
+            throw new ConflictException("The participation does not belong to the specified exercise", ENTITY_NAME, "noidmatch");
+        }
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
+
+        Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Double newPresentationScore = dto.presentationScore();
+
+        if (newPresentationScore != null && existingParticipation.getExercise().getPresentationScoreEnabled() != null
+                && existingParticipation.getExercise().getPresentationScoreEnabled()) {
+            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId());
 
             // Presentation Score is only valid for non practice participations
-            if (participation.isPracticeMode()) {
+            if (existingParticipation.isPracticeMode()) {
                 throw new BadRequestAlertException("Presentation score is not allowed for practice participations", ENTITY_NAME, "presentationScoreInvalid");
             }
 
             // Validity of presentationScore for basic presentations
             if (course.getPresentationScore() != null && course.getPresentationScore() > 0) {
-                if (participation.getPresentationScore() >= 1.) {
-                    participation.setPresentationScore(1.);
+                if (newPresentationScore >= 1.) {
+                    newPresentationScore = 1.;
                 }
                 else {
-                    participation.setPresentationScore(null);
+                    newPresentationScore = null;
                 }
             }
             // Validity of presentationScore for graded presentations
             if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
-                if ((participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
+                if (newPresentationScore != null && (newPresentationScore > 100. || newPresentationScore < 0.)) {
                     throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
                 }
 
-                long presentationCountForParticipant = studentParticipationRepository.countPresentationScoresForParticipant(course.getId(), participation.getParticipant().getId(),
-                        participation.getId());
+                long presentationCountForParticipant = studentParticipationRepository.countPresentationScoresForParticipant(course.getId(),
+                        existingParticipation.getParticipant().getId(), existingParticipation.getId());
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",
-                            Map.of("name", participation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
+                            Map.of("name", existingParticipation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
                 }
             }
         }
         // Validity of presentationScore for no presentations
         else {
-            participation.setPresentationScore(null);
+            newPresentationScore = null;
         }
 
-        StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
-        if (currentParticipation.getPresentationScore() != null && participation.getPresentationScore() == null || course.getPresentationScore() != null
-                && currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            log.info("{} removed the presentation score of {} for exercise with participationId {}", user.getLogin(), originalParticipation.getParticipantIdentifier(),
-                    originalParticipation.getExercise().getId());
+        // Log if presentation score was removed or reduced
+        if (existingParticipation.getPresentationScore() != null && newPresentationScore == null || course.getPresentationScore() != null
+                && existingParticipation.getPresentationScore() != null && newPresentationScore != null && existingParticipation.getPresentationScore() > newPresentationScore) {
+            log.info("{} removed the presentation score of {} for exercise with participationId {}", user.getLogin(), existingParticipation.getParticipantIdentifier(),
+                    existingParticipation.getExercise().getId());
         }
 
-        Participation updatedParticipation = studentParticipationRepository.saveAndFlush(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
+        // Apply the update to the managed entity
+        existingParticipation.setPresentationScore(newPresentationScore);
+
+        Participation updatedParticipation = studentParticipationRepository.saveAndFlush(existingParticipation);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, existingParticipation.getParticipant().getName()))
                 .body(updatedParticipation);
     }
 
@@ -208,11 +214,4 @@ public class ParticipationUpdateResource {
         return ResponseEntity.ok().body(updatedParticipations);
     }
 
-    private Course findCourseFromParticipation(StudentParticipation participation) {
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
-    }
 }

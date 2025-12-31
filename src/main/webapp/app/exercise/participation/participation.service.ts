@@ -16,6 +16,15 @@ import dayjs from 'dayjs/esm';
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
 
+/**
+ * DTO for updating a participation's presentation score.
+ */
+export interface ParticipationUpdateDTO {
+    id: number;
+    exerciseId: number;
+    presentationScore?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
     private http = inject(HttpClient);
@@ -25,9 +34,14 @@ export class ParticipationService {
     public resourceUrl = 'api/exercise/participations';
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertParticipationForServer(participation, exercise);
+        // Create DTO with only the fields needed for updating presentation score
+        const dto: ParticipationUpdateDTO = {
+            id: participation.id!,
+            exerciseId: exercise.id!,
+            presentationScore: participation.presentationScore,
+        };
         return this.http
-            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, dto, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 

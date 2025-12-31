@@ -94,23 +94,30 @@ public class AttachmentResource {
     public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
-        attachment.setId(attachmentId);
 
-        // Make sure that the original references are preserved.
-        Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
-        attachment.setAttachmentVideoUnit(originalAttachment.getAttachmentVideoUnit());
+        // Load existing attachment from DB to preserve relationships and avoid detached entity issues
+        Attachment existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+
+        // Update only the fields that should be changed from client data
+        existingAttachment.setName(attachment.getName());
+        existingAttachment.setReleaseDate(attachment.getReleaseDate());
+        existingAttachment.setUploadDate(attachment.getUploadDate());
+        existingAttachment.setVersion(attachment.getVersion());
+        existingAttachment.setAttachmentType(attachment.getAttachmentType());
+        existingAttachment.setStudentVersion(attachment.getStudentVersion());
 
         if (file != null) {
-            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(originalAttachment.getLecture().getId().toString());
+            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
-            URI oldPath = URI.create(originalAttachment.getLink());
+            URI oldPath = URI.create(existingAttachment.getLink());
             fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
             this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
+            // Set the new link
+            existingAttachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
         }
 
-        Attachment result = attachmentRepository.save(attachment);
+        Attachment result = attachmentRepository.save(existingAttachment);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result);
         }
