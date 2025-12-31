@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -149,8 +148,10 @@ public class GradingScaleResource {
         GradingScale gradingScale = dto.toEntity();
         gradingScale.setCourse(course);
 
+        // Apply DTO values to course before validation so that presentation config is validated correctly
+        applyCourseValuesFromDTO(dto, course);
         validatePresentationsConfiguration(gradingScale);
-        updateCourseFromDTO(dto, course);
+        saveCourseIfChanged(dto, course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/grading-scale/"))
@@ -224,18 +225,10 @@ public class GradingScaleResource {
         dto.applyTo(existingGradingScale);
         existingGradingScale.setCourse(course);
 
-        // Validate presentations configuration
+        // Apply DTO values to course before validation so that presentation config is validated correctly
+        applyCourseValuesFromDTO(dto, course);
         validatePresentationsConfiguration(existingGradingScale);
-
-        // Update course max points and presentation score if provided
-        if (dto.courseMaxPoints() != null && !Objects.equals(dto.courseMaxPoints(), course.getMaxPoints())) {
-            course.setMaxPoints(dto.courseMaxPoints());
-            courseRepository.save(course);
-        }
-        if (dto.coursePresentationScore() != null && !Objects.equals(dto.coursePresentationScore(), course.getPresentationScore())) {
-            course.setPresentationScore(dto.coursePresentationScore());
-            courseRepository.save(course);
-        }
+        saveCourseIfChanged(dto, course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
@@ -313,23 +306,33 @@ public class GradingScaleResource {
     }
 
     /**
-     * Updates course properties based on the DTO values for create operations.
+     * Applies course properties from DTO to the course object (in memory, does not save).
+     * This should be called before validation so that the validation uses the intended values.
      */
-    private void updateCourseFromDTO(GradingScaleUpdateDTO dto, Course course) {
+    private void applyCourseValuesFromDTO(GradingScaleUpdateDTO dto, Course course) {
         if (dto == null || course == null) {
             return;
         }
 
-        boolean needsSave = false;
-        if (dto.courseMaxPoints() != null && !Objects.equals(dto.courseMaxPoints(), course.getMaxPoints())) {
+        if (dto.courseMaxPoints() != null) {
             course.setMaxPoints(dto.courseMaxPoints());
-            needsSave = true;
         }
-        if (dto.coursePresentationScore() != null && !Objects.equals(dto.coursePresentationScore(), course.getPresentationScore())) {
+        if (dto.coursePresentationScore() != null) {
             course.setPresentationScore(dto.coursePresentationScore());
-            needsSave = true;
         }
-        if (needsSave) {
+    }
+
+    /**
+     * Saves the course if it was modified by DTO values.
+     * Should be called after validation succeeds.
+     */
+    private void saveCourseIfChanged(GradingScaleUpdateDTO dto, Course course) {
+        if (dto == null || course == null) {
+            return;
+        }
+
+        // If either value was provided in the DTO, we need to save
+        if (dto.courseMaxPoints() != null || dto.coursePresentationScore() != null) {
             courseRepository.save(course);
         }
     }

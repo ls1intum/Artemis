@@ -228,12 +228,16 @@ public class ExamResource {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
+        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examDTO.toEntity();
+        exam.setCourse(course);
+
         checkForExamConflictsElseThrow(courseId, exam);
 
         // New exams don't have exercise groups, so no need to check
 
-        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);

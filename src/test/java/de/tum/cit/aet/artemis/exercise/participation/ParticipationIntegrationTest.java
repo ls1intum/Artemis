@@ -14,8 +14,6 @@ import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +63,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -1225,7 +1224,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation = participationRepo.save(participation);
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation));
         request.putAndExpectError(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "examexercise");
     }
@@ -1240,7 +1239,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation = participationRepo.save(participation);
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation));
         request.putAndExpectError(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "quizexercise");
     }
@@ -1254,9 +1253,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         var submission = fileUploadExerciseUtilService.addFileUploadSubmission(exercise, ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
-        submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        ((StudentParticipation) submission.getParticipation()).setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
-        final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of((StudentParticipation) submission.getParticipation()));
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1281,7 +1280,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         final var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
-        final var participationsToUpdate = new StudentParticipationList(participation, participation2);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation), ParticipationDueDateUpdateDTO.of(participation2));
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1300,7 +1299,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         final var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation));
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1319,7 +1318,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation));
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1341,7 +1340,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation));
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1364,26 +1363,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = List.of(ParticipationDueDateUpdateDTO.of(participation));
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
         verify(programmingExerciseScheduleService).updateScheduling(exercise);
-    }
-
-    /**
-     * When using {@code List<StudentParticipation>} directly as body in the unit tests, the deserialization fails as
-     * there no longer is a {@code type} attribute due to type erasure. Therefore, Jackson does not know which subtype
-     * of {@link Participation} is stored in the list.
-     * <p>
-     * Using this wrapper-class avoids this issue.
-     */
-    private static class StudentParticipationList extends ArrayList<StudentParticipation> {
-
-        public StudentParticipationList(StudentParticipation... participations) {
-            this.addAll(Arrays.asList(participations));
-        }
     }
 
     @Test

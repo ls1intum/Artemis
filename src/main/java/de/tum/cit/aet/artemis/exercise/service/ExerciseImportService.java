@@ -63,7 +63,9 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
-        newExercise.setCompetencyLinks(importedExercise.getCompetencyLinks());
+        // Competency links are NOT imported because competencies are course-specific.
+        // The imported exercise goes to a different course, and the source course's competencies don't exist there.
+        newExercise.setCompetencyLinks(new java.util.HashSet<>());
 
         if (importedExercise.getPlagiarismDetectionConfig() != null) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));

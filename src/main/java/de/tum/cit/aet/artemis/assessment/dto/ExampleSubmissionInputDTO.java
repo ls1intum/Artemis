@@ -29,6 +29,31 @@ public record ExampleSubmissionInputDTO(@Nullable Long id, @NotNull Long exercis
         @Nullable String textSubmissionText, @Nullable String modelingSubmissionModel, @Nullable String modelingExplanationText) {
 
     /**
+     * Creates an ExampleSubmissionInputDTO from an ExampleSubmission entity.
+     *
+     * @param exampleSubmission the example submission entity
+     * @return the corresponding DTO
+     */
+    public static ExampleSubmissionInputDTO of(ExampleSubmission exampleSubmission) {
+        Long exerciseId = exampleSubmission.getExercise() != null ? exampleSubmission.getExercise().getId() : null;
+        String textSubmissionText = null;
+        String modelingSubmissionModel = null;
+        String modelingExplanationText = null;
+
+        Submission submission = exampleSubmission.getSubmission();
+        if (submission instanceof TextSubmission textSubmission) {
+            textSubmissionText = textSubmission.getText();
+        }
+        else if (submission instanceof ModelingSubmission modelingSubmission) {
+            modelingSubmissionModel = modelingSubmission.getModel();
+            modelingExplanationText = modelingSubmission.getExplanationText();
+        }
+
+        return new ExampleSubmissionInputDTO(exampleSubmission.getId(), exerciseId, exampleSubmission.isUsedForTutorial(), exampleSubmission.getAssessmentExplanation(),
+                textSubmissionText, modelingSubmissionModel, modelingExplanationText);
+    }
+
+    /**
      * Creates a new ExampleSubmission entity from this DTO.
      *
      * @param exercise the exercise to associate with

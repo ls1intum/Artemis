@@ -13,13 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * DTO for importing exams with exercise groups and exercises.
@@ -108,109 +101,5 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
      */
     public List<ExerciseGroupImportDTO> exerciseGroupsOrEmpty() {
         return exerciseGroups != null ? exerciseGroups : new ArrayList<>();
-    }
-
-    /**
-     * DTO for importing exercise groups.
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<ExerciseImportDTO> exercises) {
-
-        /**
-         * Creates an ExerciseGroupImportDTO from an existing ExerciseGroup entity.
-         *
-         * @param group the exercise group to convert
-         * @return the DTO representation
-         */
-        public static ExerciseGroupImportDTO of(ExerciseGroup group) {
-            List<ExerciseImportDTO> exerciseDTOs = null;
-            if (group.getExercises() != null && !group.getExercises().isEmpty()) {
-                exerciseDTOs = group.getExercises().stream().map(ExerciseImportDTO::of).toList();
-            }
-            return new ExerciseGroupImportDTO(group.getTitle(), group.getIsMandatory(), exerciseDTOs);
-        }
-
-        /**
-         * Creates a new ExerciseGroup entity from this DTO.
-         *
-         * @return a new ExerciseGroup entity
-         */
-        public ExerciseGroup toEntity() {
-            ExerciseGroup group = new ExerciseGroup();
-            group.setTitle(title);
-            group.setIsMandatory(isMandatory);
-
-            // Add exercises
-            if (exercises != null) {
-                for (ExerciseImportDTO exerciseDTO : exercises) {
-                    Exercise exercise = exerciseDTO.toEntity();
-                    if (exercise != null) {
-                        group.addExercise(exercise);
-                    }
-                }
-            }
-
-            return group;
-        }
-
-        /**
-         * Gets the list of exercises or an empty list if null.
-         *
-         * @return the exercises or empty list
-         */
-        public List<ExerciseImportDTO> exercisesOrEmpty() {
-            return exercises != null ? exercises : new ArrayList<>();
-        }
-    }
-
-    /**
-     * DTO for importing exercises. Contains the source exercise ID and optional overrides.
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exerciseType, @Nullable String title, @Nullable String shortName, @Nullable Double maxPoints,
-            @Nullable Double bonusPoints) {
-
-        /**
-         * Creates an ExerciseImportDTO from an existing Exercise entity.
-         *
-         * @param exercise the exercise to convert
-         * @return the DTO representation
-         */
-        public static ExerciseImportDTO of(Exercise exercise) {
-            return new ExerciseImportDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(), exercise.getShortName(), exercise.getMaxPoints(),
-                    exercise.getBonusPoints());
-        }
-
-        /**
-         * Creates a skeleton Exercise entity from this DTO.
-         * The actual exercise import will use the ID to look up the source exercise.
-         *
-         * @return a new Exercise entity with basic properties set
-         */
-        public Exercise toEntity() {
-            Exercise exercise = switch (exerciseType) {
-                case MODELING -> new ModelingExercise();
-                case TEXT -> new TextExercise();
-                case PROGRAMMING -> new ProgrammingExercise();
-                case FILE_UPLOAD -> new FileUploadExercise();
-                case QUIZ -> new QuizExercise();
-            };
-
-            exercise.setId(id);
-            if (title != null) {
-                exercise.setTitle(title);
-            }
-            if (shortName != null) {
-                exercise.setShortName(shortName);
-            }
-            if (maxPoints != null) {
-                exercise.setMaxPoints(maxPoints);
-            }
-            if (bonusPoints != null) {
-                exercise.setBonusPoints(bonusPoints);
-            }
-
-            return exercise;
-        }
     }
 }

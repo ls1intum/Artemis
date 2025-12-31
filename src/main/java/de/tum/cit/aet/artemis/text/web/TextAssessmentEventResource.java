@@ -130,9 +130,10 @@ public class TextAssessmentEventResource {
         // avoid access from tutor if they are not part of the course
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // make sure that the received event doesn't already have an ID
-        // reject if the logged-in user id and received event user id do not match
-        // make sure that the event submission id is not null
+        // The ID check is defense-in-depth: the DTO doesn't have an ID field, so client-specified IDs
+        // are silently ignored during JSON deserialization. This check guards against future changes.
+        // Also reject if the logged-in user id and received event user id do not match,
+        // or if the event submission id is null.
         if (event.getId() != null || !user.getId().equals(event.getUserId()) || event.getSubmissionId() == null) {
             return false;
         }
