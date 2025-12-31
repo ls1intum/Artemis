@@ -56,7 +56,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -1120,14 +1119,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     private RevCommit commitToParticipationRepository(ProgrammingExerciseStudentParticipation participation, Map<String, String> files, String message) throws Exception {
         return commitToRepository(participation.getVcsRepositoryUri(), files, message);
-    }
-
-    private RevCommit commitToRepository(VcsRepositoryUri repositoryUri, Map<String, String> files, String message) throws Exception {
-        if (repositoryUri == null) {
-            throw new IllegalStateException("Repository URI is not configured for this participation.");
-        }
-        LocalVCRepositoryUri localUri = repositoryUri instanceof LocalVCRepositoryUri local ? local : new LocalVCRepositoryUri(repositoryUri.toString());
-        return commitToRepository(localUri, files, message);
     }
 
     private RevCommit commitToRepository(String repositoryUri, Map<String, String> files, String message) throws Exception {

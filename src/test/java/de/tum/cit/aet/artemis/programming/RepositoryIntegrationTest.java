@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -48,22 +47,16 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -73,50 +66,16 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
-import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(RepositoryIntegrationTest.class);
-
-    @Autowired
-    private ExamTestRepository examRepository;
-
-    @Autowired
-    private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private PlagiarismCaseRepository plagiarismCaseRepository;
-
-    @Autowired
-    private PostTestRepository postRepository;
-
-    @Autowired
-    private BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    private PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
-    private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private TemplateProgrammingExerciseParticipationTestRepository templateParticipationRepository;
-
-    @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
     @LocalServerPort
     private int port;
@@ -1208,13 +1167,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private void updateTemplateParticipationUri(String repositorySlug) {
         var templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(buildLocalVcUri(repositorySlug));
-        templateParticipationRepository.save(templateParticipation);
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
     }
 
     private void updateSolutionParticipationUri(String repositorySlug) {
         var solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUri(buildLocalVcUri(repositorySlug));
-        solutionParticipationRepository.save(solutionParticipation);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
     }
 
     private String buildLocalVcUri(String repositorySlug) {

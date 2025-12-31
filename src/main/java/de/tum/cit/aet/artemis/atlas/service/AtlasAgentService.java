@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
@@ -13,6 +12,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,8 +39,8 @@ public class AtlasAgentService {
 
     private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
-    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory) {
+    public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
+            @Autowired(required = false) ToolCallbackProvider toolCallbackProvider, @Autowired(required = false) ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;

@@ -10,8 +10,9 @@ class GitClient {
 
         if (sshKeyName) {
             const privateKeyPath = path.join(SSH_KEYS_PATH, sshKeyName);
-            const knownHostsPath = path.join(SSH_KEYS_PATH, 'known_hosts');
-            gitSshCommand = `ssh -i ${privateKeyPath} -o UserKnownHostsFile=${knownHostsPath} -o StrictHostKeyChecking=no`;
+            // Use /dev/null for known_hosts to avoid "host key changed" errors when Docker containers restart
+            // StrictHostKeyChecking=no alone doesn't help when the key has CHANGED (vs being unknown)
+            gitSshCommand = `ssh -i ${privateKeyPath} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no`;
             git.env({ GIT_SSH_COMMAND: gitSshCommand });
         }
 

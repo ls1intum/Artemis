@@ -1,6 +1,5 @@
 import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, Router, RouterStateSnapshot } from '@angular/router';
-import { hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
-import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
+import { LectureUnsavedChangesComponent, hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { TestBed } from '@angular/core/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -8,7 +7,7 @@ import { Observable, firstValueFrom, of } from 'rxjs';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
 describe('hasLectureUnsavedChanges', () => {
-    let component: LectureUpdateComponent;
+    let component: LectureUnsavedChangesComponent;
     let currentRoute: ActivatedRouteSnapshot;
     let currentState: RouterStateSnapshot;
     let nextState: RouterStateSnapshot;
@@ -19,20 +18,15 @@ describe('hasLectureUnsavedChanges', () => {
             providers: [
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                {
-                    provide: LectureUpdateComponent,
-                    useValue: {
-                        shouldDisplayDismissWarning: true,
-                        isShowingWizardMode: false,
-                        isChangeMadeToTitleSection: jest.fn().mockReturnValue(true),
-                        isChangeMadeToPeriodSection: jest.fn().mockReturnValue(true),
-                        isChangeMadeToTitleOrPeriodSection: true,
-                    },
-                },
             ],
         }).compileComponents();
 
-        component = TestBed.inject(LectureUpdateComponent);
+        component = {
+            shouldDisplayDismissWarning: true,
+            isChangeMadeToTitleSection: jest.fn().mockReturnValue(true),
+            isChangeMadeToPeriodSection: jest.fn().mockReturnValue(true),
+            isChangeMadeToTitleOrPeriodSection: true,
+        };
         mockNgbModal = TestBed.inject(NgbModal);
         const mockModalRef = {
             componentInstance: {},

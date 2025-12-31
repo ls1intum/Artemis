@@ -1,11 +1,21 @@
 import { inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
 import { Observable, from, of } from 'rxjs';
 import { CloseEditLectureModalComponent } from 'app/lecture/manage/close-edit-lecture-modal/close-edit-lecture-modal.component';
 
-export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUpdateComponent> = (component: LectureUpdateComponent): Observable<boolean> => {
+/**
+ * Interface for components that can have unsaved lecture changes.
+ * Extracted to allow testing without importing heavy component dependencies.
+ */
+export interface LectureUnsavedChangesComponent {
+    shouldDisplayDismissWarning: boolean;
+    isChangeMadeToTitleOrPeriodSection: boolean;
+    isChangeMadeToTitleSection(): boolean;
+    isChangeMadeToPeriodSection(): boolean;
+}
+
+export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUnsavedChangesComponent> = (component: LectureUnsavedChangesComponent): Observable<boolean> => {
     if (!component.shouldDisplayDismissWarning) {
         return of(true);
     }

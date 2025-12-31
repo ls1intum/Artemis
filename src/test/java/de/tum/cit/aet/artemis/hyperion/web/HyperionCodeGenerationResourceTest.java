@@ -147,25 +147,25 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void isSupportedRepositoryType_withSolutionType_returnsTrue() {
-        boolean result = (boolean) ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.SOLUTION);
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.SOLUTION));
         assertThat(result).isTrue();
     }
 
     @Test
     void isSupportedRepositoryType_withTemplateType_returnsTrue() {
-        boolean result = (boolean) ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.TEMPLATE);
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.TEMPLATE));
         assertThat(result).isTrue();
     }
 
     @Test
     void isSupportedRepositoryType_withTestsType_returnsTrue() {
-        boolean result = (boolean) ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.TESTS);
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.TESTS));
         assertThat(result).isTrue();
     }
 
     @Test
     void isSupportedRepositoryType_withAuxiliaryType_returnsFalse() {
-        boolean result = (boolean) ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.AUXILIARY);
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.AUXILIARY));
         assertThat(result).isFalse();
     }
 
@@ -173,7 +173,7 @@ class HyperionCodeGenerationResourceTest {
     void loadProgrammingExercise_withValidId_returnsExercise() {
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
 
-        ProgrammingExercise result = (ProgrammingExercise) ReflectionTestUtils.invokeMethod(resource, "loadProgrammingExercise", 1L);
+        ProgrammingExercise result = ReflectionTestUtils.invokeMethod(resource, "loadProgrammingExercise", 1L);
 
         assertThat(result).isEqualTo(testExercise);
         verify(programmingExerciseRepository).findByIdWithTemplateAndSolutionParticipationElseThrow(1L);

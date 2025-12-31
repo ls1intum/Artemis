@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
@@ -63,7 +62,10 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @BeforeEach
     protected void mockBuildAgentServices() {
-        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
+        // Use lenient stubbing to avoid Mockito concurrency issues when tests run in parallel.
+        // Standard doReturn().when() can cause "WrongTypeOfReturnValue" errors when multiple tests
+        // simultaneously stub the same spy bean.
+        lenient().doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
         this.dockerClient = dockerClientMock;
     }
 
@@ -76,10 +78,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected SshServer sshServer;
-
-    // Repositories
-    @Autowired
-    protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -172,8 +170,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected String solutionRepositorySlug;
 
     protected String testsRepositorySlug;
-
-    protected String auxiliaryRepositorySlug;
 
     protected abstract String getTestPrefix();
 

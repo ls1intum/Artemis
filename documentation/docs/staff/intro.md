@@ -1,10 +1,10 @@
 ---
 id: intro
-title: Welcome to the Developer & Staff Guide
+title: Welcome to the Development Guide
 sidebar_label: Introduction
 ---
 
-# 🧑‍💻 Developer & Staff Setup Guide
+# 🧑‍💻 Development Guide
 
 This section provides the technical setup and configuration details needed to develop, maintain, or extend Artemis.
 

@@ -17,6 +17,7 @@ class HyperionPromptTemplateServiceTest {
 
     private HyperionPromptTemplateService templateService;
 
+    // TODO: replace with temp dir defined in yml config
     @TempDir
     Path tempDir;
 
