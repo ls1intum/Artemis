@@ -1,6 +1,7 @@
 import {
     ApplicationRef,
     Component,
+    ComponentRef,
     EnvironmentInjector,
     EventEmitter,
     Input,
@@ -86,6 +87,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
     public tasks: TaskArray;
+    // Track dynamically created task components for proper cleanup
+    private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
 
     get latestResult() {
         return this.latestResultValue;
@@ -232,12 +235,29 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Render the markdown into html.
      */
     updateMarkdown() {
+        // Destroy previously created task components to prevent memory leaks
+        this.destroyTaskComponents();
+        // Reset task index to start fresh for this render
+        this.taskIndex = 0;
+        // Reset PlantUML index as well
+        this.programmingExercisePlantUmlWrapper.resetIndex();
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
         this.latestResult = this.latestResultValue;
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();
+    }
+
+    /**
+     * Destroy all dynamically created task components to prevent memory leaks.
+     */
+    private destroyTaskComponents(): void {
+        this.taskComponentRefs.forEach((ref) => {
+            this.appRef.detachView(ref.hostView);
+            ref.destroy();
+        });
+        this.taskComponentRefs = [];
     }
 
     renderUpdatedProblemStatement() {
@@ -400,6 +420,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         componentRef.instance.taskName = taskName;
         componentRef.instance.latestResult = this.latestResult;
         componentRef.instance.testIds = testIds;
+        // Track component ref for cleanup
+        this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);
         componentRef.changeDetectorRef.detectChanges();
     }
@@ -408,6 +430,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Unsubscribes from all subscriptions.
      */
     ngOnDestroy() {
+        // Destroy dynamically created task components
+        this.destroyTaskComponents();
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
