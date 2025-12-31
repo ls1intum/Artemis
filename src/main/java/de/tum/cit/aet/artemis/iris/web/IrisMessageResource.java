@@ -97,17 +97,17 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
 
-        var message = new IrisMessage();
+        IrisMessage message = new IrisMessage();
         List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
         message.setContent(contentEntities);
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
 
-        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         irisSessionService.requestMessageFromIris(session, requestDTO.uncommittedFiles());
 
-        var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
