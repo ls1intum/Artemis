@@ -34,33 +34,39 @@ public interface QuizConfiguration {
                 }
                 // do the same for answerOptions (if quizQuestion is multiple choice)
                 if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                    // reconnect answerCounters
-                    setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
                     // reconnect answerOptions
                     setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
+                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
+                    // reconnect answerCounters (only if statistics exist)
+                    if (mcStatistic != null) {
+                        setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
+                    }
                 }
                 if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
                     // reconnect dropLocations
                     setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
                     // reconnect dragItems
                     setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
                     // reconnect correctMappings
                     setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
-                    // reconnect dropLocationCounters
-                    setQuizQuestionStatistics(dragAndDropStatistic.getDropLocationCounters(), dragAndDropQuestion, dragAndDropStatistic);
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
+                    // reconnect dropLocationCounters (only if statistics exist)
+                    if (dragAndDropStatistic != null) {
+                        setQuizQuestionStatistics(dragAndDropStatistic.getDropLocationCounters(), dragAndDropQuestion, dragAndDropStatistic);
+                    }
                 }
                 if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
                     // reconnect spots
                     setQuizQuestions(shortAnswerQuestion.getSpots(), shortAnswerQuestion);
                     // reconnect solutions
                     setQuizQuestions(shortAnswerQuestion.getSolutions(), shortAnswerQuestion);
                     // reconnect correctMappings
                     setQuizQuestions(shortAnswerQuestion.getCorrectMappings(), shortAnswerQuestion);
-                    // reconnect spotCounters
-                    setQuizQuestionStatistics(shortAnswerStatistic.getShortAnswerSpotCounters(), shortAnswerQuestion, shortAnswerStatistic);
+                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
+                    // reconnect spotCounters (only if statistics exist)
+                    if (shortAnswerStatistic != null) {
+                        setQuizQuestionStatistics(shortAnswerStatistic.getShortAnswerSpotCounters(), shortAnswerQuestion, shortAnswerStatistic);
+                    }
                 }
             }
         }

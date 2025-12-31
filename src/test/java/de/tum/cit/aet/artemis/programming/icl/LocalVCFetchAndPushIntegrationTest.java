@@ -533,10 +533,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
             request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
-            // Now set due date to the past
+            // Now set due date to the past - reload from database to avoid orphan removal issues
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
-            exercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-            programmingExerciseRepository.save(exercise);
+            var reloadedExercise = programmingExerciseRepository.findById(exercise.getId()).orElseThrow();
+            reloadedExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+            programmingExerciseRepository.save(reloadedExercise);
 
             String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
 
@@ -785,10 +786,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
             request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
-            // Now set due date to the past
+            // Now set due date to the past - reload from database to avoid orphan removal issues
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
-            exercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-            programmingExerciseRepository.save(exercise);
+            var reloadedExercise = programmingExerciseRepository.findById(exercise.getId()).orElseThrow();
+            reloadedExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+            programmingExerciseRepository.save(reloadedExercise);
 
             // Team member should be able to fetch but NOT push after due date
             try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
@@ -981,10 +983,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_instructorPracticeRepository() throws Exception {
-            // Create exercise with due date in the past
+            // Create exercise with due date in the past - reload from database to avoid orphan removal issues
             ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-instructor-practice");
-            exercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-            programmingExerciseRepository.save(exercise);
+            var reloadedExercise = programmingExerciseRepository.findById(exercise.getId()).orElseThrow();
+            reloadedExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+            programmingExerciseRepository.save(reloadedExercise);
 
             String projectKey = exercise.getProjectKey();
 

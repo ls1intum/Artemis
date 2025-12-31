@@ -109,6 +109,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -3361,7 +3362,8 @@ public class CourseTestService {
     }
 
     public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
-        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
+        var courseUpdateDTO = CourseUpdateDTO.of(course);
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(courseUpdateDTO).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + id).file(coursePart);
         if (fileContent != null) {
             var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
@@ -3399,11 +3401,13 @@ public class CourseTestService {
         Course savedCourse = courseRepo.save(course);
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
-        Course savedCourseWithFile = request.putWithMultipartFile("/api/core/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
+        Course savedCourseWithFile = request.putWithMultipartFile("/api/core/courses/" + savedCourse.getId(), CourseUpdateDTO.of(savedCourse), "course", iconFile, Course.class,
+                HttpStatus.OK, null);
         Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
 
         savedCourseWithFile.setCourseIcon(null);
-        request.putWithMultipartFile("/api/core/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
+        request.putWithMultipartFile("/api/core/courses/" + savedCourseWithFile.getId(), CourseUpdateDTO.of(savedCourseWithFile), "course", null, Course.class, HttpStatus.OK,
+                null);
         await().until(() -> !Files.exists(path));
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
