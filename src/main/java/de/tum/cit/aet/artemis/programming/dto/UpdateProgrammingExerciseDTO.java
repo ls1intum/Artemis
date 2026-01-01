@@ -87,7 +87,7 @@ public record UpdateProgrammingExerciseDTO(
         }
         if (exercise.getAuxiliaryRepositories() != null && Hibernate.isInitialized(exercise.getAuxiliaryRepositories())) {
             auxiliaryRepositoryDTOs = exercise.getAuxiliaryRepositories().isEmpty() ? List.of()
-                    : exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).collect(Collectors.toList());
+                    : exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();
         }
 
         return new UpdateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
