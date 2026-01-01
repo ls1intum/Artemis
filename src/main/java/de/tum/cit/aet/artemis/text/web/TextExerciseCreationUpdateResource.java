@@ -152,7 +152,7 @@ public class TextExerciseCreationUpdateResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
+        TextExercise result = textExerciseRepository.save(textExercise);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -266,7 +266,7 @@ public class TextExerciseCreationUpdateResource {
             textExerciseBeforeUpdate.getCompetencyLinks().addAll(updatedLinks);
         }
 
-        TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExerciseBeforeUpdate, textExerciseRepository::save);
+        TextExercise updatedTextExercise = textExerciseRepository.save(textExerciseBeforeUpdate);
 
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalExerciseCopy, updatedTextExercise);
@@ -401,7 +401,7 @@ public class TextExerciseCreationUpdateResource {
         // Apply other fields from the detached entity to the managed one
         TextExerciseFromEditorDTO.of(textExercise).applyTo(managedExercise);
 
-        TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(managedExercise, textExerciseRepository::save);
+        TextExercise updatedTextExercise = textExerciseRepository.save(managedExercise);
 
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());

@@ -175,7 +175,7 @@ public class OnlineUnitResource {
 
         OnlineUnit persistedUnit = (OnlineUnit) updatedLecture.getLectureUnits().getLast();
         // From now on, only use persistedUnit
-        lectureUnitService.saveWithCompetencyLinks(persistedUnit, onlineUnitRepository::saveAndFlush);
+        onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client

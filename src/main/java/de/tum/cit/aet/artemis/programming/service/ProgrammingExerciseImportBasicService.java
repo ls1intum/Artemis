@@ -187,7 +187,7 @@ public class ProgrammingExerciseImportBasicService {
             }
         }
 
-        final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
+        final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);

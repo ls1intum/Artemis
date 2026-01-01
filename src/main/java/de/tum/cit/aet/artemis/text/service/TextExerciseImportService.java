@@ -96,7 +96,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newExercise.setFeedbackSuggestionModule(null);
         }
 
-        TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, textExerciseRepository::save);
+        TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));

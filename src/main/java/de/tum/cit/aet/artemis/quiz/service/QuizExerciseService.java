@@ -911,7 +911,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
-        QuizExercise savedQuizExercise = exerciseService.saveWithCompetencyLinks(quizExercise, super::save);
+        QuizExercise savedQuizExercise = super.save(quizExercise);
 
         if (savedQuizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises
@@ -1036,11 +1036,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return The updated set of competency exercise links
      */
     private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
+        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
         if (courseCompetencyApi.isEmpty()) {
-            return Set.of();
+            return updatedLinks;
         }
         CourseCompetencyApi courseCompetencyApi = this.courseCompetencyApi.get();
-        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
         Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
         Set<Competency> foundCompetencies = courseCompetencyApi.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
         for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
@@ -1074,9 +1074,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (quizExerciseFromEditorDTO.channelName() != null) {
             quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
         }
+        // TODO: we must support empty competency links, so checking for null here might be a problem
         if (quizExerciseFromEditorDTO.categories() != null) {
             quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
         }
+        // TODO: we must support empty competency links, so checking for null here might be a problem
         if (quizExerciseFromEditorDTO.competencyLinks() != null) {
             // Use clear() and addAll() instead of setCompetencyLinks() to preserve the managed collection
             // This is important for orphan removal to work correctly
@@ -1096,6 +1098,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (quizExerciseFromEditorDTO.quizMode() != null) {
             quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
         }
+        // TODO: should it really be possible to update quiz batches in the quiz exercise update endpoint?
         if (quizExerciseFromEditorDTO.quizBatches() != null) {
             // Convert DTOs to new entities to avoid detached entity issues
             Set<QuizBatch> newBatches = quizExerciseFromEditorDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());

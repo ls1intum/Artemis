@@ -114,6 +114,7 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
+    // TODO: we MUST use a DTO here for the @RequestBody
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);

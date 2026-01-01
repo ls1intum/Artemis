@@ -163,7 +163,7 @@ public class TextUnitResource {
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
         TextUnit persistedUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
         // From now on, only use persistedUnit
-        lectureUnitService.saveWithCompetencyLinks(persistedUnit, textUnitRepository::saveAndFlush);
+        textUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client

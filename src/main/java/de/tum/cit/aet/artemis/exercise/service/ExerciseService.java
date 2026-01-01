@@ -20,7 +20,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +47,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -143,6 +144,8 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -150,7 +153,7 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -175,6 +178,7 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     /**
@@ -722,7 +726,7 @@ public class ExerciseService {
             if (!feedbackToBeDeleted.isEmpty()) {
                 Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
-                    existingFeedback.removeAll(feedbackToBeDeleted);
+                    feedbackToBeDeleted.forEach(existingFeedback::remove);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
                 List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));
@@ -826,52 +830,6 @@ public class ExerciseService {
     }
 
     /**
-     * Saves the exercise and links it to the competencies.
-     *
-     * @param exercise     exercise to save
-     * @param saveFunction function to save the exercise
-     * @param <T>          type of the exercise
-     * @return saved exercise
-     */
-    public <T extends Exercise> T saveWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
-        // persist exercise before linking it to the competency
-        // We need to copy the links first, then clear the original collection
-        // Using clear() instead of replacing the collection is important for orphan removal to work
-        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
-
-        // Only copy and process if the collection is initialized
-        Set<CompetencyExerciseLink> links = new HashSet<>();
-        if (Hibernate.isInitialized(competencyLinks)) {
-            links = new HashSet<>(competencyLinks);
-            competencyLinks.clear();
-        }
-
-        T savedExercise = saveFunction.apply(exercise);
-
-        if (!links.isEmpty()) {
-            // Add the new links to the saved exercise's collection
-            reconnectCompetencyExerciseLinks(exercise, links);
-            final Set<CompetencyExerciseLink> finalLinks = links;
-            competencyRelationApi.ifPresent(api -> {
-                Set<CompetencyExerciseLink> savedLinks = new HashSet<>(api.saveAllExerciseLinks(finalLinks));
-                savedExercise.getCompetencyLinks().addAll(savedLinks);
-            });
-        }
-
-        return savedExercise;
-    }
-
-    /**
-     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
-     *
-     * @param exercise exercise to reconnect the links
-     * @param links    links to reconnect
-     */
-    public void reconnectCompetencyExerciseLinks(Exercise exercise, Set<CompetencyExerciseLink> links) {
-        links.forEach(link -> link.setExercise(exercise));
-    }
-
-    /**
      * Retrieves a {@link NonQuizExerciseCalendarEventDTO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
      * and {@link ProgrammingExercise} associated to the given courseId. Each DTO encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
      * of the respective exercise.
@@ -939,5 +897,57 @@ public class ExerciseService {
             }
         }
         return events;
+    }
+
+    // TODO: we should use this for QuizExercises, ProgrammingExercises, and TextExercises as well
+    /**
+     * Update the competency links of an existing exercise based on the provided DTO.
+     * Supports removing links, updating weights of existing ones, and adding new links.
+     * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
+     * It makes sure to be Hibernate compliant by modifying the existing collection rather than replacing it.
+     *
+     * @param dto    the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
+     * @param entity the existing DB entity to update
+     */
+    // TODO: duplicated code, try to unify with LectureUnitService.updateCompetencyLinks()
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
+        }
+        // TODO: think about optimizing this by loading all new competencies in a single query
+        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+            // this handles the case where all competency links were removed
+            entity.getCompetencyLinks().clear();
+        }
+        else {
+            // 1) Existing links indexed by competency id
+            final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+
+            // 2) New state of links (reusing existing ones where possible)
+            Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
+
+            for (var dtoLink : dto.competencyLinks()) {
+                long competencyId = dtoLink.competency().id();
+                double weight = dtoLink.weight();
+
+                var existingLink = existingLinksByCompetencyId.get(competencyId);
+                if (existingLink != null) {
+                    // reuse managed entity, just update the weight
+                    existingLink.setWeight(weight);
+                    updatedLinks.add(existingLink);
+                }
+                else {
+                    // no existing link → create a new one
+                    var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    var newLink = new CompetencyExerciseLink(competency, entity, weight);
+
+                    updatedLinks.add(newLink);
+                }
+            }
+
+            // 3) Replace the contents of the managed collection, NOT the collection itself
+            entity.getCompetencyLinks().clear();
+            entity.getCompetencyLinks().addAll(updatedLinks);
+        }
     }
 }

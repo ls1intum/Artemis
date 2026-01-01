@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -22,7 +23,8 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolutionModel,
-        String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks) {
+        String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks)
+        implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a ModelingExercise entity.

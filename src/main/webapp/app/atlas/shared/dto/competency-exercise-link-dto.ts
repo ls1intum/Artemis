@@ -2,7 +2,7 @@ import { CourseCompetencyDTO, toCourseCompetencyDTO } from 'app/atlas/shared/dto
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
 export interface CompetencyExerciseLinkDTO {
-    courseCompetencyDTO: CourseCompetencyDTO;
+    competency: CourseCompetencyDTO;
     weight?: number;
     courseId?: number;
 }
@@ -16,7 +16,7 @@ export const toCompetencyExerciseLinkDTO = (link: CompetencyExerciseLink): Compe
     }
 
     return {
-        courseCompetencyDTO: toCourseCompetencyDTO(link.competency),
+        competency: toCourseCompetencyDTO(link.competency),
         weight: link.weight,
         courseId: link.competency.course?.id ?? undefined,
     };

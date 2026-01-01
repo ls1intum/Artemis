@@ -135,6 +135,8 @@ public class AttachmentVideoUnitResource {
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
+    // TODO: we MUST use a DTO here for @RequestPart AttachmentVideoUnit attachmentVideoUnit
+    // TODO: we should use a DTO here for @RequestPart(required = false) Attachment attachment
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages, @RequestPart(required = false) List<SlideOrderDTO> pageOrder,

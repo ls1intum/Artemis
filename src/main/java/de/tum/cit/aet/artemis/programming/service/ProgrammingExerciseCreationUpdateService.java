@@ -157,7 +157,7 @@ public class ProgrammingExerciseCreationUpdateService {
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
 
-        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+        var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
@@ -270,7 +270,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
-        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);

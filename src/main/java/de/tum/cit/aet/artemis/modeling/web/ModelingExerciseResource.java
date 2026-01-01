@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,10 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -130,15 +126,12 @@ public class ModelingExerciseResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    private final Optional<CompetencyApi> competencyApi;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi) {
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -152,7 +145,6 @@ public class ModelingExerciseResource {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.competencyApi = competencyApi;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -172,7 +164,6 @@ public class ModelingExerciseResource {
      *         modelingExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    // TODO: we should add courses/{courseId} here
     @PostMapping("modeling-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
@@ -193,7 +184,7 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -278,7 +269,7 @@ public class ModelingExerciseResource {
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
-        ModelingExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, modelingExerciseRepository::save);
+        ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
@@ -521,61 +512,6 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * Replaces the competency links of the given exercise according to PUT semantics.
-     * <p>
-     * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
-     * Otherwise, weights are updated for existing links and missing links are created using managed competency references.
-     *
-     * <p>
-     * <b>Hibernate note:</b> Uses {@code competencyRepository.getReferenceById(...)} to avoid creating detached entities
-     * and to keep associations consistent with the persistence context.
-     *
-     * @param dto      the update DTO containing competency link updates
-     * @param exercise the exercise to mutate
-     * @throws BadRequestAlertException if a competency does not belong to the exercise's course
-     */
-    private void updateCompetencyLinks(UpdateModelingExerciseDTO dto, ModelingExercise exercise) {
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            clearInitializedCollection(exercise.getCompetencyLinks());
-            return;
-        }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
-
-        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-
-        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
-
-        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-
-        Set<CompetencyExerciseLink> updated = new HashSet<>();
-        for (var linkDto : dto.competencyLinks()) {
-
-            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-            }
-
-            var competencyDto = linkDto.courseCompetencyDTO();
-            Long competencyId = competencyDto.id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
-        }
-
-        managedLinks.clear();
-        managedLinks.addAll(updated);
-    }
-
-    /**
      * Clears the given collection if it is initialized.
      * <p>
      * This avoids triggering lazy initialization in callers that do not fetch the collection.
@@ -656,7 +592,7 @@ public class ModelingExerciseResource {
         exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
 
         updateGradingCriteria(updateModelingExerciseDTO, exercise);
-        updateCompetencyLinks(updateModelingExerciseDTO, exercise);
+        exerciseService.updateCompetencyLinks(updateModelingExerciseDTO, exercise);
 
         return exercise;
     }
