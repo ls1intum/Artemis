@@ -48,20 +48,46 @@ class ModuleFeatureInfoContributorTest {
 
     @Test
     void testEnabledContribution() {
-        testContribution(true, moduleFeatures);
+        testContribution(true, false, moduleFeatures);
     }
 
     @Test
     void testDisabledContribution() {
-        testContribution(false, List.of());
+        testContribution(false, false, List.of());
     }
 
-    private void testContribution(boolean propertyEnabled, List<String> expectedReportFeatures) {
+    @Test
+    void testPasskeyAdminEnabled() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, true);
+        }
+        mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, true);
+
+        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
+
+        Info.Builder builder = new Info.Builder();
+        contributor.contribute(builder);
+        Info info = builder.build();
+
+        var activeModuleFeatures = info.get(ACTIVE_MODULE_FEATURES);
+        assertThat(activeModuleFeatures).isInstanceOf(List.class);
+
+        var activeModuleFeaturesList = (List<?>) activeModuleFeatures;
+        var actualAsStrings = activeModuleFeaturesList.stream().map(Object::toString).toList();
+
+        // Should include all features plus passkey-admin
+        var expectedFeatures = new java.util.ArrayList<>(moduleFeatures);
+        expectedFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
+        assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedFeatures);
+    }
+
+    private void testContribution(boolean propertyEnabled, boolean passkeyAdminRequired, List<String> expectedReportFeatures) {
         for (String key : modulePropertyNames) {
             mockProperty(key, propertyEnabled);
         }
+        mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, passkeyAdminRequired);
 
-        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv, false);
+        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
 
         Info.Builder builder = new Info.Builder();
         contributor.contribute(builder);
@@ -77,5 +103,7 @@ class ModuleFeatureInfoContributorTest {
 
     private void mockProperty(String key, Boolean value) {
         when(mockEnv.getProperty(key, Boolean.class)).thenReturn(value);
+        // Also mock the 3-argument version with default value for properties like passkey-admin
+        when(mockEnv.getProperty(key, Boolean.class, false)).thenReturn(value);
     }
 }

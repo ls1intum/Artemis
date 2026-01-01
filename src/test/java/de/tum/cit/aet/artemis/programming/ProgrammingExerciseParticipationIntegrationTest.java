@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -56,7 +57,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -92,6 +92,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -1122,14 +1125,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         return commitToRepository(participation.getVcsRepositoryUri(), files, message);
     }
 
-    private RevCommit commitToRepository(VcsRepositoryUri repositoryUri, Map<String, String> files, String message) throws Exception {
-        if (repositoryUri == null) {
-            throw new IllegalStateException("Repository URI is not configured for this participation.");
-        }
-        LocalVCRepositoryUri localUri = repositoryUri instanceof LocalVCRepositoryUri local ? local : new LocalVCRepositoryUri(repositoryUri.toString());
-        return commitToRepository(localUri, files, message);
-    }
-
     private RevCommit commitToRepository(String repositoryUri, Map<String, String> files, String message) throws Exception {
         return commitToRepository(new LocalVCRepositoryUri(repositoryUri), files, message);
     }
@@ -1151,7 +1146,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     private RevCommit writeFilesAndPush(Path remoteRepoPath, Map<String, String> files, String message) throws Exception {
-        Path workingCopy = Files.createTempDirectory(tempPath, "repo-clone");
+        Path workingCopy = tempFileUtilService.createTempDirectory(tempPath, "repo-clone");
         try (Git git = Git.cloneRepository().setURI(remoteRepoPath.toUri().toString()).setDirectory(workingCopy.toFile()).call()) {
             for (Map.Entry<String, String> entry : files.entrySet()) {
                 Path filePath = workingCopy.resolve(entry.getKey());

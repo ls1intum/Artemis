@@ -51,7 +51,7 @@ describe('AdminSidebarComponent', () => {
         expect(groups.length).toBeGreaterThan(0);
 
         expect(groups[0].translation).toBe('global.menu.admin.groups.usersAndOrganizations');
-        expect(groups[0].items).toHaveLength(2);
+        expect(groups[0].items).toHaveLength(3); // User Management, Organizations, Data Exports
     });
 
     it('should include Build System group when localCIActive is true', () => {
