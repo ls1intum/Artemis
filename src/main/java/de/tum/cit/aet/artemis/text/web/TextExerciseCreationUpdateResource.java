@@ -2,11 +2,8 @@ package de.tum.cit.aet.artemis.text.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -28,8 +25,6 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -37,7 +32,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -50,8 +44,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.dto.CompetencyExerciseLinkFromEditorDTO;
-import de.tum.cit.aet.artemis.text.dto.TextExerciseFromEditorDTO;
+import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
@@ -182,7 +175,7 @@ public class TextExerciseCreationUpdateResource {
      */
     @PutMapping("text-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody @Valid TextExerciseFromEditorDTO textExerciseDTO,
+    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody @Valid UpdateTextExerciseDTO textExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update TextExercise with DTO: {}", textExerciseDTO);
         if (textExerciseDTO.id() == null) {
@@ -257,14 +250,7 @@ public class TextExerciseCreationUpdateResource {
 
         channelService.updateExerciseChannel(originalExerciseCopy, textExerciseBeforeUpdate);
 
-        // Handle competency links
-        // Use clear() and addAll() instead of setCompetencyLinks() to preserve the managed collection
-        // This is important for orphan removal to work correctly
-        if (textExerciseDTO.competencyLinks() != null) {
-            Set<CompetencyExerciseLink> updatedLinks = updateCompetencyExerciseLinks(textExerciseBeforeUpdate, textExerciseDTO.competencyLinks(), course);
-            textExerciseBeforeUpdate.getCompetencyLinks().clear();
-            textExerciseBeforeUpdate.getCompetencyLinks().addAll(updatedLinks);
-        }
+        exerciseService.updateCompetencyLinks(textExerciseDTO, textExerciseBeforeUpdate);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExerciseBeforeUpdate);
 
@@ -313,38 +299,6 @@ public class TextExerciseCreationUpdateResource {
         }
         copy.setExerciseGroup(textExercise.getExerciseGroup());
         return copy;
-    }
-
-    /**
-     * Updates the competency exercise links based on the provided DTOs.
-     *
-     * @param textExercise the text exercise to update
-     * @param competencies the competency link DTOs
-     * @param course       the course the exercise belongs to
-     * @return the updated set of competency exercise links
-     */
-    private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(TextExercise textExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
-        if (courseCompetencyApi.isEmpty()) {
-            return Set.of();
-        }
-        CourseCompetencyApi api = this.courseCompetencyApi.get();
-        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
-        Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
-        Set<Competency> foundCompetencies = api.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
-        for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
-            Optional<Competency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
-            if (matchingCompetency.isPresent()) {
-                CompetencyExerciseLink link = new CompetencyExerciseLink();
-                link.setCompetency(matchingCompetency.get());
-                link.setWeight(dto.weight());
-                link.setExercise(textExercise);
-                updatedLinks.add(link);
-            }
-            else {
-                throw new EntityNotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
-            }
-        }
-        return updatedLinks;
     }
 
     /**
@@ -399,7 +353,7 @@ public class TextExerciseCreationUpdateResource {
         }
 
         // Apply other fields from the detached entity to the managed one
-        TextExerciseFromEditorDTO.of(textExercise).applyTo(managedExercise);
+        UpdateTextExerciseDTO.of(textExercise).applyTo(managedExercise);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(managedExercise);
 

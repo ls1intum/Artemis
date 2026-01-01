@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -37,7 +40,12 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
@@ -104,63 +112,71 @@ public class ProgrammingExerciseUpdateResource {
     }
 
     /**
-     * PUT /programming-exercises : Updates an existing updatedProgrammingExercise.
+     * PUT /programming-exercises : Updates an existing programming exercise.
      *
-     * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
-     * @param notificationText           to notify the student group about the update on the programming exercise
+     * @param updateDTO        the DTO containing the updated programming exercise data
+     * @param notificationText to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    // TODO: we MUST use a DTO here for the @RequestBody
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
-        log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
-        if (updatedProgrammingExercise.getId() == null) {
+        log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
+
+        if (updateDTO.id() == 0) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
         }
 
-        updatedProgrammingExercise.validateGeneralSettings();
+        // Load the existing exercise from the database with all necessary associations
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
 
-        // Valid exercises have set either a course or an exerciseGroup
+        // Create a copy for "before update" state to track changes
+        var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+
+        // Update the existing exercise with DTO values
+        ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
+
+        // Validate the updated exercise
+        updatedProgrammingExercise.validateGeneralSettings();
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
-        // fetch course from database to make sure client didn't change groups
+        // Fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updatedProgrammingExercise.getId());
-        if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
+        // Validate immutable fields haven't changed
+        if (!Objects.equals(originalExercise.getShortName(), updateDTO.shortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
+        if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
+
         // Check if theia Profile is enabled
         if (Arrays.asList(this.environment.getActiveProfiles()).contains(PROFILE_THEIA)) {
             // Require 1 / 3 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())
-                    && !updatedProgrammingExercise.isAllowOnlineIde()) {
+            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
                 throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
                         "noParticipationModeAllowed");
             }
         }
         else {
             // Require 1 / 2 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
                 throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
                         "noParticipationModeAllowed");
             }
         }
 
-        // Verify that the checkout directories have not been changed. This is required since the buildScript and result paths are determined during the creation of the exercise.
-        programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        // Verify that the checkout directories have not been changed
+        programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(originalExercise, updatedProgrammingExercise);
 
         // Verify that the programming language supports the selected network access option
         programmingExerciseValidationService.validateDockerFlags(updatedProgrammingExercise);
@@ -169,55 +185,197 @@ public class ProgrammingExerciseUpdateResource {
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
             throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
         }
-        // Forbid changing the course the exercise belongs to.
-        if (!Objects.equals(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(),
-                updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+
+        // Forbid changing the course the exercise belongs to
+        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
+
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, originalExercise, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
         // Changing Athena module after the due date has passed is not allowed
-        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
+        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(originalExercise, updatedProgrammingExercise, ENTITY_NAME));
 
-        // Ignore changes to the default branch
-        updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
+        // Ignore changes to the default branch - preserve the original
+        updatedProgrammingExercise.getBuildConfig().setBranch(originalExercise.getBuildConfig().getBranch());
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
-            // make sure the default value is set properly
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
         // Update the auxiliary repositories in the DB and ProgrammingExercise instance
-        auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(originalExercise, updatedProgrammingExercise);
 
-        // Update the auxiliary repositories in the VCS. This needs to be decoupled to break circular dependencies.
-        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        // Update the auxiliary repositories in the VCS
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(originalExercise, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
             updatedProgrammingExercise.setBonusPoints(0.0);
         }
 
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExerciseBeforeUpdate,
-                updatedProgrammingExercise, notificationText);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(originalExercise, updatedProgrammingExercise,
+                notificationText);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
-        slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
+        exerciseService.updatePointsInRelatedParticipantScores(originalExercise, updatedProgrammingExercise);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalExercise, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         return ResponseEntity.ok(savedProgrammingExercise);
+    }
+
+    /**
+     * Updates the existing ProgrammingExercise entity with values from the DTO.
+     * This includes updating competency links using the proper mechanism.
+     *
+     * @param dto      the DTO containing updated values
+     * @param exercise the existing exercise entity to update
+     * @return the updated exercise entity
+     */
+    private ProgrammingExercise update(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        if (dto == null) {
+            throw new BadRequestAlertException("No programming exercise was provided.", ENTITY_NAME, "isNull");
+        }
+
+        // Update base exercise fields
+        exercise.setTitle(dto.title());
+        exercise.validateTitle();
+        exercise.setShortName(dto.shortName());
+
+        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
+        exercise.setProblemStatement(newProblemStatement);
+
+        exercise.setChannelName(dto.channelName());
+        exercise.setCategories(dto.categories());
+        exercise.setDifficulty(dto.difficulty());
+
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setBonusPoints(dto.bonusPoints());
+        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+
+        exercise.setReleaseDate(dto.releaseDate());
+        exercise.setStartDate(dto.startDate());
+        exercise.setDueDate(dto.dueDate());
+        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+
+        // Only set boolean values if they are explicitly provided (not null)
+        if (dto.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
+        }
+        if (dto.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
+        }
+        if (dto.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
+        }
+
+        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
+        exercise.setGradingInstructions(dto.gradingInstructions());
+
+        // Update programming exercise specific fields
+        if (dto.allowOnlineEditor() != null) {
+            exercise.setAllowOnlineEditor(dto.allowOnlineEditor());
+        }
+        if (dto.allowOfflineIde() != null) {
+            exercise.setAllowOfflineIde(dto.allowOfflineIde());
+        }
+        exercise.setAllowOnlineIde(dto.allowOnlineIde());
+
+        if (dto.maxStaticCodeAnalysisPenalty() != null) {
+            exercise.setMaxStaticCodeAnalysisPenalty(dto.maxStaticCodeAnalysisPenalty());
+        }
+
+        exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+
+        if (dto.testCasesChanged() != null) {
+            exercise.setTestCasesChanged(dto.testCasesChanged());
+        }
+
+        exercise.setSubmissionPolicy(dto.submissionPolicy());
+        exercise.setProjectType(dto.projectType());
+        exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
+
+        // Update auxiliary repositories
+        if (dto.auxiliaryRepositories() != null) {
+            List<AuxiliaryRepository> auxRepos = dto.auxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
+            exercise.setAuxiliaryRepositories(new ArrayList<>(auxRepos));
+        }
+
+        // Update build config
+        updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
+
+        // Update grading criteria
+        updateGradingCriteria(dto, exercise);
+
+        // Update competency links using the proper mechanism
+        exerciseService.updateCompetencyLinks(dto, exercise);
+
+        return exercise;
+    }
+
+    /**
+     * Updates the build config entity with values from the DTO.
+     *
+     * @param dto         the DTO containing updated build config values
+     * @param buildConfig the existing build config entity to update
+     */
+    private void updateBuildConfig(UpdateProgrammingExerciseBuildConfigDTO dto, ProgrammingExerciseBuildConfig buildConfig) {
+        if (dto == null || buildConfig == null) {
+            return;
+        }
+
+        if (dto.sequentialTestRuns() != null) {
+            buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
+        }
+        // Note: branch is preserved from original (immutable during update)
+        if (dto.buildPlanConfiguration() != null) {
+            buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
+        }
+        if (dto.buildScript() != null) {
+            buildConfig.setBuildScript(dto.buildScript());
+        }
+        buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
+        buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
+        buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());
+        buildConfig.setSolutionCheckoutPath(dto.solutionCheckoutPath());
+        buildConfig.setTimeoutSeconds(dto.timeoutSeconds());
+        buildConfig.setDockerFlags(dto.dockerFlags());
+        buildConfig.setTheiaImage(dto.theiaImage());
+        buildConfig.setAllowBranching(dto.allowBranching());
+        buildConfig.setBranchRegex(dto.branchRegex());
+    }
+
+    /**
+     * Updates grading criteria from the DTO.
+     *
+     * @param dto      the DTO containing grading criteria
+     * @param exercise the exercise to update
+     */
+    private void updateGradingCriteria(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        if (dto.gradingCriteria() != null) {
+            exercise.getGradingCriteria().clear();
+            for (GradingCriterionDTO criterionDTO : dto.gradingCriteria()) {
+                GradingCriterion criterion = criterionDTO.toEntity();
+                criterion.setExercise(exercise);
+                exercise.getGradingCriteria().add(criterion);
+            }
+        }
     }
 
     /**
      * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
      *
      * @param exerciseId                                  of the exercise
-     * @param programmingExercise                         the ProgrammingExercise to re-evaluate and update
+     * @param updateDTO                                   the DTO containing the ProgrammingExercise data to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
      *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the
@@ -227,20 +385,23 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
-        log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
-        // check that the exercise exists for given id
-        programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
+        log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
-        // fetch course from database to make sure client didn't change groups
+        // Check that the exercise exists for given id
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        if (exerciseId != updateDTO.id()) {
+            throw new ConflictException("Exercise id in path does not match id in request body", ENTITY_NAME, "idMismatch");
+        }
+
+        // Fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateProgrammingExercise(programmingExercise, null);
+        return updateProgrammingExercise(updateDTO, null);
     }
-
 }

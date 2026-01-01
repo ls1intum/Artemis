@@ -10,5 +10,6 @@ import de.tum.cit.aet.artemis.core.dto.CompetencyLinkDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record OnlineUnitDTO(Long id, String name, ZonedDateTime releaseDate, String description, String source, Set<CompetencyLinkDTO> competencyLinks) implements LectureUnitDTO {
+public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, String description, String videoSource, Set<CompetencyLinkDTO> competencyLinks)
+        implements LectureUnitDTO {
 }

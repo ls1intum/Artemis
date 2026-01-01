@@ -40,8 +40,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -55,7 +53,6 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
@@ -83,13 +80,12 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
@@ -1028,100 +1024,61 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Method to update competency exercise links for a quiz exercise.
-     *
-     * @param quizExercise The quiz exercise to update the competency links for
-     * @param competencies The competency links from the editor DTO
-     * @param course       The course the quiz exercise belongs to
-     * @return The updated set of competency exercise links
-     */
-    private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
-        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
-        if (courseCompetencyApi.isEmpty()) {
-            return updatedLinks;
-        }
-        CourseCompetencyApi courseCompetencyApi = this.courseCompetencyApi.get();
-        Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
-        Set<Competency> foundCompetencies = courseCompetencyApi.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
-        for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
-            Optional<Competency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
-            if (matchingCompetency.isPresent()) {
-                CompetencyExerciseLink link = new CompetencyExerciseLink();
-                link.setCompetency(matchingCompetency.get());
-                link.setWeight(dto.weight());
-                link.setExercise(quizExercise);
-                updatedLinks.add(link);
-            }
-            else {
-                throw new EntityNotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
-            }
-        }
-        return updatedLinks;
-    }
-
-    /**
      * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
      * This method converts DTOs to new entity objects to avoid Hibernate detached entity issues.
      *
-     * @param quizExercise              The QuizExercise domain object to be updated
-     * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
-     * @param course                    The course the quiz exercise belongs to
+     * @param quizExercise          The QuizExercise domain object to be updated
+     * @param updateQuizExerciseDTO The DTO containing the properties to be merged into the domain object.
      */
-    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO, Course course) {
-        if (quizExerciseFromEditorDTO.title() != null) {
-            quizExercise.setTitle(quizExerciseFromEditorDTO.title());
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
+        if (updateQuizExerciseDTO.title() != null) {
+            quizExercise.setTitle(updateQuizExerciseDTO.title());
         }
-        if (quizExerciseFromEditorDTO.channelName() != null) {
-            quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
-        }
-        // TODO: we must support empty competency links, so checking for null here might be a problem
-        if (quizExerciseFromEditorDTO.categories() != null) {
-            quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
+        if (updateQuizExerciseDTO.channelName() != null) {
+            quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
         }
         // TODO: we must support empty competency links, so checking for null here might be a problem
-        if (quizExerciseFromEditorDTO.competencyLinks() != null) {
-            // Use clear() and addAll() instead of setCompetencyLinks() to preserve the managed collection
-            // This is important for orphan removal to work correctly
-            Set<CompetencyExerciseLink> updatedLinks = updateCompetencyExerciseLinks(quizExercise, quizExerciseFromEditorDTO.competencyLinks(), course);
-            quizExercise.getCompetencyLinks().clear();
-            quizExercise.getCompetencyLinks().addAll(updatedLinks);
+        if (updateQuizExerciseDTO.categories() != null) {
+            quizExercise.setCategories(updateQuizExerciseDTO.categories());
         }
-        if (quizExerciseFromEditorDTO.difficulty() != null) {
-            quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
+
+        if (updateQuizExerciseDTO.difficulty() != null) {
+            quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
         }
-        if (quizExerciseFromEditorDTO.duration() != null) {
-            quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
+        if (updateQuizExerciseDTO.duration() != null) {
+            quizExercise.setDuration(updateQuizExerciseDTO.duration());
         }
-        if (quizExerciseFromEditorDTO.randomizeQuestionOrder() != null) {
-            quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
+        if (updateQuizExerciseDTO.randomizeQuestionOrder() != null) {
+            quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
         }
-        if (quizExerciseFromEditorDTO.quizMode() != null) {
-            quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
+        if (updateQuizExerciseDTO.quizMode() != null) {
+            quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
         }
         // TODO: should it really be possible to update quiz batches in the quiz exercise update endpoint?
-        if (quizExerciseFromEditorDTO.quizBatches() != null) {
+        if (updateQuizExerciseDTO.quizBatches() != null) {
             // Convert DTOs to new entities to avoid detached entity issues
-            Set<QuizBatch> newBatches = quizExerciseFromEditorDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
+            Set<QuizBatch> newBatches = updateQuizExerciseDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
             quizExercise.getQuizBatches().clear();
             quizExercise.getQuizBatches().addAll(newBatches);
         }
-        if (quizExerciseFromEditorDTO.releaseDate() != null) {
-            quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
+        if (updateQuizExerciseDTO.releaseDate() != null) {
+            quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
         }
-        if (quizExerciseFromEditorDTO.startDate() != null) {
-            quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
+        if (updateQuizExerciseDTO.startDate() != null) {
+            quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
         }
-        if (quizExerciseFromEditorDTO.dueDate() != null) {
-            quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
+        if (updateQuizExerciseDTO.dueDate() != null) {
+            quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
         }
-        if (quizExerciseFromEditorDTO.includedInOverallScore() != null) {
-            quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
+        if (updateQuizExerciseDTO.includedInOverallScore() != null) {
+            quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
         }
-        if (quizExerciseFromEditorDTO.quizQuestions() != null) {
+        if (updateQuizExerciseDTO.quizQuestions() != null) {
             // Convert DTOs to new entities to avoid detached entity issues
-            List<QuizQuestion> newQuestions = quizExerciseFromEditorDTO.quizQuestions().stream().map(QuizQuestionFromEditorDTO::toDomainObject).toList();
+            List<QuizQuestion> newQuestions = updateQuizExerciseDTO.quizQuestions().stream().map(QuizQuestionFromEditorDTO::toDomainObject).toList();
             quizExercise.setQuizQuestions(newQuestions);
         }
+        exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
     /**

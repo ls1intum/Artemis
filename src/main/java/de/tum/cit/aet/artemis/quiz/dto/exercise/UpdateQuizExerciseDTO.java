@@ -12,11 +12,12 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEditorDTO;
 
@@ -25,9 +26,9 @@ import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEdito
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizExerciseFromEditorDTO(String title, String channelName, Set<String> categories, Set<@Valid CompetencyExerciseLinkFromEditorDTO> competencyLinks,
-        DifficultyLevel difficulty, Integer duration, Boolean randomizeQuestionOrder, QuizMode quizMode, Set<@Valid QuizBatchFromEditorDTO> quizBatches, ZonedDateTime releaseDate,
-        ZonedDateTime startDate, ZonedDateTime dueDate, IncludedInOverallScore includedInOverallScore, List<@Valid ? extends QuizQuestionFromEditorDTO> quizQuestions) {
+public record UpdateQuizExerciseDTO(String title, String channelName, Set<String> categories, Set<CompetencyLinkDTO> competencyLinks, DifficultyLevel difficulty, Integer duration,
+        Boolean randomizeQuestionOrder, QuizMode quizMode, Set<@Valid QuizBatchFromEditorDTO> quizBatches, ZonedDateTime releaseDate, ZonedDateTime startDate,
+        ZonedDateTime dueDate, IncludedInOverallScore includedInOverallScore, List<@Valid ? extends QuizQuestionFromEditorDTO> quizQuestions) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a QuizExerciseFromEditorDTO from the given QuizExercise domain object.
@@ -35,16 +36,16 @@ public record QuizExerciseFromEditorDTO(String title, String channelName, Set<St
      * @param quizExercise the quiz exercise to convert
      * @return the corresponding DTO
      */
-    public static QuizExerciseFromEditorDTO of(QuizExercise quizExercise) {
+    public static UpdateQuizExerciseDTO of(QuizExercise quizExercise) {
         List<QuizQuestionFromEditorDTO> questionDTOs = quizExercise.getQuizQuestions().stream().map(QuizQuestionFromEditorDTO::of).toList();
         Set<QuizBatchFromEditorDTO> batchDTOs = Optional.ofNullable(quizExercise.getQuizBatches()).orElse(Set.of()).stream().map(QuizBatchFromEditorDTO::of)
                 .collect(Collectors.toSet());
         // Only convert competency links if they are initialized (to avoid LazyInitializationException)
-        Set<CompetencyExerciseLinkFromEditorDTO> competencyLinkDTOs = null;
+        Set<CompetencyLinkDTO> competencyLinkDTOs = null;
         if (Hibernate.isInitialized(quizExercise.getCompetencyLinks()) && quizExercise.getCompetencyLinks() != null) {
-            competencyLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkFromEditorDTO::of).collect(Collectors.toSet());
+            competencyLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
         }
-        return new QuizExerciseFromEditorDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(), competencyLinkDTOs, quizExercise.getDifficulty(),
+        return new UpdateQuizExerciseDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(), competencyLinkDTOs, quizExercise.getDifficulty(),
                 quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), batchDTOs, quizExercise.getReleaseDate(),
                 quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(), questionDTOs);
     }

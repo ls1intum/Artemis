@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.dto.TextExerciseFromEditorDTO;
+import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -115,7 +115,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        TextExerciseFromEditorDTO dto = TextExerciseFromEditorDTO.of(exercise);
+        UpdateTextExerciseDTO dto = UpdateTextExerciseDTO.of(exercise);
         request.put("/api/text/text-exercises", dto, HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();

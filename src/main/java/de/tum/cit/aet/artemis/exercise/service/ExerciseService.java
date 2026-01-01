@@ -899,7 +899,6 @@ public class ExerciseService {
         return events;
     }
 
-    // TODO: we should use this for QuizExercises, ProgrammingExercises, and TextExercises as well
     /**
      * Update the competency links of an existing exercise based on the provided DTO.
      * Supports removing links, updating weights of existing ones, and adding new links.

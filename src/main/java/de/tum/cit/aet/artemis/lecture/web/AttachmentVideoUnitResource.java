@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 
 @Profile(PROFILE_CORE)
@@ -86,10 +88,12 @@ public class AttachmentVideoUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final LectureUnitService lectureUnitService;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService, LectureUnitRepository lectureUnitRepository) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -100,6 +104,7 @@ public class AttachmentVideoUnitResource {
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -122,40 +127,42 @@ public class AttachmentVideoUnitResource {
     /**
      * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : Updates an existing attachment video unit
      *
-     * @param lectureId             the id of the lecture to which the attachment video unit belongs to update
-     * @param attachmentVideoUnitId the id of the attachment video unit to update
-     * @param attachmentVideoUnit   the attachment video unit with updated content
-     * @param attachment            the attachment with updated content
-     * @param file                  the optional file to upload
-     * @param hiddenPages           the pages to be hidden in the attachment video unit
-     * @param pageOrder             the new order of the edited attachment video unit
-     * @param keepFilename          specifies if the original filename should be kept or not
-     * @param notificationText      the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @param lectureId              the id of the lecture to which the attachment video unit belongs to update
+     * @param attachmentVideoUnitId  the id of the attachment video unit to update
+     * @param attachmentVideoUnitDTO the attachment video unit DTO with updated content
+     * @param attachment             the attachment with updated content
+     * @param file                   the optional file to upload
+     * @param hiddenPages            the pages to be hidden in the attachment video unit
+     * @param pageOrder              the new order of the edited attachment video unit
+     * @param keepFilename           specifies if the original filename should be kept or not
+     * @param notificationText       the text to be used for the notification. No notification will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
-    // TODO: we MUST use a DTO here for @RequestPart AttachmentVideoUnit attachmentVideoUnit
     // TODO: we should use a DTO here for @RequestPart(required = false) Attachment attachment
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages, @RequestPart(required = false) List<SlideOrderDTO> pageOrder,
-            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnit);
+            @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) Attachment attachment,
+            @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages,
+            @RequestPart(required = false) List<SlideOrderDTO> pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnitDTO);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
 
         if (!validateHiddenSlidesDates(hiddenPages)) {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
+
+        // Update competency links using the proper mechanism
+        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
+
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachment, file,
                 keepFilename, hiddenPages, pageOrder);
 
         if (notificationText != null && attachment != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
-
-        log.debug("REST request to update an attachment video unit 4: {}", attachmentVideoUnit);
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
