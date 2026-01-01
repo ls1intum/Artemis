@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -53,7 +53,7 @@ describe('ExerciseUnitService', () => {
         httpMock.verify();
     });
 
-    it('should find a list of ExerciseUnit', async () => {
+    it('should find a list of ExerciseUnit', fakeAsync(() => {
         const returnedFromService = [{ ...elemDefault }];
         service
             .findAllByLectureId(1)
@@ -62,9 +62,9 @@ describe('ExerciseUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(expectedResultArray.body[0]).toEqual(elemDefault);
-    });
+    }));
 
-    it('should create an ExerciseUnit', async () => {
+    it('should create an ExerciseUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -74,5 +74,5 @@ describe('ExerciseUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    });
+    }));
 });
