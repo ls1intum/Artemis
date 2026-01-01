@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -75,7 +76,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideNoopAnimations(), MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
         component = fixture.componentInstance;
