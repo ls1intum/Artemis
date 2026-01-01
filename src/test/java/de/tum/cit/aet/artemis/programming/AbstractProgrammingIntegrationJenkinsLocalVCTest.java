@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -25,10 +24,6 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckTestService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
@@ -101,9 +96,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
     protected UserTestRepository userRepository;
 
     @Autowired
-    protected ConsistencyCheckTestService consistencyCheckTestService;
-
-    @Autowired
     protected JenkinsAuthorizationInterceptor jenkinsAuthorizationInterceptor;
 
     @Autowired
@@ -114,18 +106,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
 
     @Autowired
     protected JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
-
-    @Autowired
-    protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
-
-    @Autowired
-    protected ProgrammingExerciseService programmingExerciseService;
-
-    @Autowired
-    protected ProgrammingExerciseValidationService programmingExerciseValidationService;
-
-    @Autowired
-    protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @Autowired
     protected ContinuousIntegrationTestService continuousIntegrationTestService;
@@ -141,9 +121,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
 
     @Autowired
     protected ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
-
-    @Autowired
-    protected CourseTestService courseTestService;
 
     @Autowired
     protected CourseUtilService courseUtilService;
