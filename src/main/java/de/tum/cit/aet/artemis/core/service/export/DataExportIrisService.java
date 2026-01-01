@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.api.IrisDataExportApi;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 
 /**
@@ -91,7 +93,7 @@ public class DataExportIrisService {
     private IrisChatSessionExportDTO convertToExportDTO(IrisChatSession session) {
         List<IrisMessageExportDTO> messages = session.getMessages().stream()
                 .map(message -> new IrisMessageExportDTO(message.getId(), message.getSentAt(), message.getSender() != null ? message.getSender().name() : null,
-                        message.getContent().stream().map(content -> content.getContentAsString()).filter(content -> content != null).reduce((a, b) -> a + "\n" + b).orElse(null),
+                        message.getContent().stream().map(IrisMessageContent::getContentAsString).filter(Objects::nonNull).reduce((a, b) -> a + "\n" + b).orElse(null),
                         message.getHelpful()))
                 .toList();
 

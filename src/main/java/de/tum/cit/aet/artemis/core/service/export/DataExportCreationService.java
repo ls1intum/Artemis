@@ -21,13 +21,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
@@ -50,8 +50,6 @@ public class DataExportCreationService {
     private final ZipFileService zipFileService;
 
     private final FileService fileService;
-
-    private final SingleUserNotificationService singleUserNotificationService;
 
     private final DataExportRepository dataExportRepository;
 
@@ -77,16 +75,16 @@ public class DataExportCreationService {
 
     private final ResourceLoaderService resourceLoaderService;
 
+    private final TempFileUtilService tempFileUtilService;
+
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
-            SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
-            DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
-            DataExportCommunicationDataService dataExportCommunicationDataService, DataExportScienceEventService dataExportScienceEventService,
-            DataExportIrisService dataExportIrisService, DataExportLearnerProfileService dataExportLearnerProfileService,
-            DataExportCompetencyProgressService dataExportCompetencyProgressService, DataExportTutorialGroupService dataExportTutorialGroupService,
-            ResourceLoaderService resourceLoaderService) {
+            DataExportRepository dataExportRepository, MailService mailService, UserService userService, DataExportExerciseCreationService dataExportExerciseCreationService,
+            DataExportExamCreationService dataExportExamCreationService, DataExportCommunicationDataService dataExportCommunicationDataService,
+            DataExportScienceEventService dataExportScienceEventService, DataExportIrisService dataExportIrisService,
+            DataExportLearnerProfileService dataExportLearnerProfileService, DataExportCompetencyProgressService dataExportCompetencyProgressService,
+            DataExportTutorialGroupService dataExportTutorialGroupService, ResourceLoaderService resourceLoaderService, TempFileUtilService tempFileUtilService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
         this.mailService = mailService;
         this.userService = userService;
@@ -100,6 +98,7 @@ public class DataExportCreationService {
         this.dataExportTutorialGroupService = dataExportTutorialGroupService;
         this.dataExportsPath = dataExportsPath;
         this.resourceLoaderService = resourceLoaderService;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -213,7 +212,7 @@ public class DataExportCreationService {
             Files.createDirectories(dataExportsPath);
         }
         dataExport = dataExportRepository.save(dataExport);
-        Path workingDirectory = Files.createTempDirectory(dataExportsPath, "data-export-working-dir");
+        Path workingDirectory = tempFileUtilService.createTempDirectory(dataExportsPath, "data-export-working-dir");
         fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 30);
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExportRepository.save(dataExport);

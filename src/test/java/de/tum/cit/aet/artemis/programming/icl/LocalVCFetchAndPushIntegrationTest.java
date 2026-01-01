@@ -40,6 +40,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -75,6 +76,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
     @Autowired
     private StudentExamService studentExamService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private Course course;
 
@@ -201,7 +205,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
      */
     private Git cloneRepository(String username, String projectKey, String repositorySlug) throws GitAPIException, IOException {
         String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
-        Path clonePath = Files.createTempDirectory(tempPath, "localvc-test-clone-");
+        Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-test-clone-");
         clonedRepoPaths.add(clonePath);
 
         return Git.cloneRepository().setURI(repoUri).setDirectory(clonePath.toFile()).call();
