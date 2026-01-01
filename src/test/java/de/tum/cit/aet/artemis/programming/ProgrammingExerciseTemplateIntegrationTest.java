@@ -855,7 +855,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         SurefireReportParser reportParser = new SurefireReportParser(List.of(reportFolder), new PrintStreamLogger(System.out));
         List<ReportTestSuite> reports = reportParser.parseXMLReportFiles();
         return reports.stream().flatMap(testSuite -> testSuite.getTestCases().stream()).map(TestResult::of)
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.summingInt(testCase -> 1)));
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.summingInt(_ -> 1)));
     }
 
     private enum TestResult {

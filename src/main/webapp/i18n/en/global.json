@@ -142,6 +142,7 @@
                     "users": "Users",
                     "passkeyManagement": "Passkeys",
                     "courseRequests": "Course Requests",
+                    "dataExports": "Data Exports",
                     "iris": "Iris",
                     "lti": "LTI",
                     "competencies": "Competencies",
