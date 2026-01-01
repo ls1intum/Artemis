@@ -407,7 +407,7 @@ export class CourseMessagesPage {
      * @param user - The username of the user to add to the group chat.
      */
     async addUserToGroupChat(user: string) {
-        await this.page.locator('#users-selector0-user-input').fill(user);
+        await this.page.locator('#users-selector0-search-input').fill(user);
         await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
     }
 

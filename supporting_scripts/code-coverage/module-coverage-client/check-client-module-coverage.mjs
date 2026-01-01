@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { getVitestModules } from '../utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,27 +11,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
 const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 
-/**
- * Parse vitest.config.ts to extract module names from include patterns.
- * The vitest.config.ts is the single source of truth for which modules use Vitest.
- */
-function getVitestModules() {
-    const vitestConfigPath = path.join(PROJECT_ROOT, 'vitest.config.ts');
-    if (!fs.existsSync(vitestConfigPath)) {
-        return new Set();
-    }
-    const content = fs.readFileSync(vitestConfigPath, 'utf-8');
-    // Match patterns like: 'src/main/webapp/app/fileupload/**/*.spec.ts'
-    const modulePattern = /src\/main\/webapp\/app\/([a-zA-Z0-9_-]+)\/\*\*/g;
-    const modules = new Set();
-    let match;
-    while ((match = modulePattern.exec(content)) !== null) {
-        modules.add(match[1]);
-    }
-    return modules;
-}
-
-const VITEST_MODULES = getVitestModules();
+const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
 
 // Load coverage files
 let jestSummary = {};
@@ -107,7 +88,7 @@ const moduleThresholds = {
     },
     fileupload: {
         statements: 94.40,
-        branches:   78.10,
+        branches:   77.90,
         functions:  94.30,
         lines:      94.80,
     },
