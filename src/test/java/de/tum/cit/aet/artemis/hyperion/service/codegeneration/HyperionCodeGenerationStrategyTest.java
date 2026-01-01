@@ -1,9 +1,9 @@
-
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,8 +46,6 @@ class HyperionCodeGenerationServiceTest {
     @Mock
     private HyperionPromptTemplateService templates;
 
-    private ChatClient chatClient;
-
     private TestCodeGenerationStrategy strategy;
 
     private User user;
@@ -57,7 +55,7 @@ class HyperionCodeGenerationServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        this.chatClient = ChatClient.create(chatModel);
+        ChatClient chatClient = ChatClient.create(chatModel);
         this.strategy = new TestCodeGenerationStrategy(programmingExerciseRepository, chatClient, templates);
 
         this.user = new User();
@@ -71,8 +69,6 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withValidInput_orchestratesAllStepsAndReturnsFiles() throws Exception {
-        List<GeneratedFileDTO> expectedFiles = List.of(new GeneratedFileDTO("Sort.java", "class Sort { void sort() { /* implementation */ } }"),
-                new GeneratedFileDTO("SortTest.java", "@Test void testSort() { /* test */ }"));
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort() { /* implementation */ } }\"},{\"path\":\"SortTest.java\",\"content\":\"@Test void testSort() { /* test */ }\"}]}";
 
         setupMockTemplateAndChatResponses(coreLogicJson);
@@ -85,10 +81,10 @@ class HyperionCodeGenerationServiceTest {
 
         // Verify all 4 steps were called in correct order
         verify(chatModel, times(4)).call(any(Prompt.class));
-        verify(templates).renderObject(eq("test-plan-template"), any(Map.class));
-        verify(templates).renderObject(eq("test-structure-template"), any(Map.class));
-        verify(templates).renderObject(eq("test-headers-template"), any(Map.class));
-        verify(templates).renderObject(eq("test-logic-template"), any(Map.class));
+        verify(templates).renderObject(eq("test-plan-template"), anyMap());
+        verify(templates).renderObject(eq("test-structure-template"), anyMap());
+        verify(templates).renderObject(eq("test-headers-template"), anyMap());
+        verify(templates).renderObject(eq("test-logic-template"), anyMap());
     }
 
     @Test
@@ -131,7 +127,7 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void callChatClient_withTransientAiException_throwsNetworkingException() throws Exception {
+    void callChatClient_withTransientAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenThrow(new TransientAiException("Temporary AI service issue"));
@@ -141,7 +137,7 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void callChatClient_withNonTransientAiException_throwsNetworkingException() throws Exception {
+    void callChatClient_withNonTransientAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI configuration error"));
@@ -150,15 +146,15 @@ class HyperionCodeGenerationServiceTest {
                 .hasMessageContaining("AI request failed due to configuration or input. Check model and request.");
     }
 
-    private void setupMockTemplateAndChatResponses(String finalResponse) throws Exception {
+    private void setupMockTemplateAndChatResponses(String finalResponse) {
         String planResponse = "{\"solutionPlan\":\"Generated plan\",\"files\":[]}";
         String structureResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"stub\",\"content\":\"stub\"}]}";
         String headersResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"headers\",\"content\":\"headers\"}]}";
 
-        when(templates.renderObject(eq("test-plan-template"), any(Map.class))).thenReturn("rendered plan");
-        when(templates.renderObject(eq("test-structure-template"), any(Map.class))).thenReturn("rendered structure");
-        when(templates.renderObject(eq("test-headers-template"), any(Map.class))).thenReturn("rendered headers");
-        when(templates.renderObject(eq("test-logic-template"), any(Map.class))).thenReturn("rendered logic");
+        when(templates.renderObject(eq("test-plan-template"), anyMap())).thenReturn("rendered plan");
+        when(templates.renderObject(eq("test-structure-template"), anyMap())).thenReturn("rendered structure");
+        when(templates.renderObject(eq("test-headers-template"), anyMap())).thenReturn("rendered headers");
+        when(templates.renderObject(eq("test-logic-template"), anyMap())).thenReturn("rendered logic");
 
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(planResponse)).thenReturn(createChatResponse(structureResponse))
                 .thenReturn(createChatResponse(headersResponse)).thenReturn(createChatResponse(finalResponse));

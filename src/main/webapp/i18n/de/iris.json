@@ -155,8 +155,8 @@
                 "partiallyIngested": "Teilweise verarbeitet"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Vorlesungseinheit wird in Iris verarbeitet",
-                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Iris",
+                "lectureUnitSuccess": "Vorlesungsinhalt wird in Iris verarbeitet",
+                "lectureUnitError": "Fehler beim Senden des Vorlesungsinhalts an Iris",
                 "lectureSuccess": "Vorlesung wird in Iris verarbeitet",
                 "lectureError": "Fehler beim Senden der Vorlesung an Iris",
                 "allLecturesSuccess": "Alle Vorlesungen werden nun verarbeitet",

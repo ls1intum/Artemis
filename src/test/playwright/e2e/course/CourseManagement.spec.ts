@@ -269,11 +269,12 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseMessages,
             communicationAPIRequests,
         }) => {
-            await PlaywrightUserManagement.createUserInCourse(course.id!, studentOne, UserRole.Student, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, studentTwo, UserRole.Student, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, studentThree, UserRole.Student, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, tutor, UserRole.Tutor, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, instructor, UserRole.Instructor, navigationBar, courseManagement);
+            // Use API calls instead of UI navigation for faster user creation
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+            await courseManagementAPIRequests.addTutorToCourse(course, tutor);
+            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
 
             await exerciseAPIRequests.createProgrammingExercise({ course });
 

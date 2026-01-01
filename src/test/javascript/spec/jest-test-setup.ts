@@ -9,6 +9,17 @@ import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
 
 /*
+ * Monaco-editor 0.55+ uses the CSS Typed Object Model API (CSS.supports(), CSS.escape(), etc.)
+ * which is not available in jsdom. This polyfill provides the necessary methods.
+ */
+if (typeof CSS === 'undefined') {
+    (global as any).CSS = {
+        supports: () => false,
+        escape: (value: string) => value.replace(/([^\w-])/g, '\\$1'),
+    };
+}
+
+/*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
  * of the full module (editor.main.js) because of a ReferenceError in the language features of Monaco.
  * The following import imports the core features of the monaco editor, but leaves out the language

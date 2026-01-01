@@ -1,0 +1,94 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import setTeamMode from './assets/team-exercises/set_team_mode.png';
+import teamsButton from './assets/team-exercises/teams_button.png';
+import manageTeams from './assets/team-exercises/manage_teams.png';
+import createTeamButton from './assets/team-exercises/create_team_button.png';
+import createTeamDialog from './assets/team-exercises/create_team_dialog.png';
+import editButton from './assets/team-exercises/edit_button.png';
+import deleteButton from './assets/team-exercises/delete_button.png';
+import exportTeamsButton from './assets/team-exercises/export_teams_button.png';
+import importTeamsButton from './assets/team-exercises/import_teams_button.png';
+import importStrategy from './assets/team-exercises/import_strategy.png';
+import liveModelingEditor from './assets/team-exercises/live_modeling_editor.png';
+import teamButton from './assets/team-exercises/team_button.png';
+import teamOverviewPage from './assets/team-exercises/team_overview_page.png';
+
+# Team Exercise
+
+## Overview
+
+Team exercises are supported for:
+
+- [Programming exercises](https://artemis-platform.readthedocs.io/en/latest/user/exercises/programming.html)
+- [Modeling exercises](./modeling-exercise.mdx)
+- [Textual exercises](./textual-exercise.mdx)
+- [File upload exercises](./file-upload-exercise.mdx)
+
+Team exercises allow students to collaborate and submit solutions as a group, promoting teamwork and shared learning experiences.
+
+## Setup
+
+### Creating a Team Exercise
+
+When creating an exercise, you first need to select the mode **Team**. This is only available during the creation of the exercise, as it **cannot be changed later on**.
+The team size can also be configured, but it is just a recommendation that can be overridden when creating the actual teams.
+
+<Image src={setTeamMode} alt="Set Team Mode" size={ImageSize.large} caption="Set Team Mode in Exercise Creation" />
+
+<Callout variant={CalloutVariant.danger}>
+  <p><strong>Important:</strong> The team mode can only be set during exercise creation and cannot be changed afterward.</p>
+</Callout>
+
+### Managing Teams
+
+Instructors can click on the <img src={teamsButton} alt="Teams Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button in the course exercises page to navigate to the team management page.
+
+<Image src={manageTeams} alt="Manage Teams" size={ImageSize.large} caption="Team Management Interface" />
+
+#### Creating Teams Manually
+
+Clicking <img src={createTeamButton} alt="Create Team Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the dialog shown below. To manually create a team you must define the name, short name and students for the team. Optionally, a tutor can also be assigned to the team.
+
+<Image src={createTeamDialog} alt="Create Team Dialog" size={ImageSize.medium} caption="Create Team Dialog" />
+
+#### Editing and Deleting Teams
+
+Instructors can also <img src={editButton} alt="Edit Button" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> and <img src={deleteButton} alt="Delete Button" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> already existing teams.
+
+#### Exporting Teams
+
+To facilitate the process of creating teams, instructors can use the <img src={exportTeamsButton} alt="Export Teams Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to export the teams in an exercise to a file, which can then be imported in other exercises.
+
+<Callout variant={CalloutVariant.info}>
+  <p>Exporting teams is useful when you want to reuse the same team structure across multiple exercises in a course.</p>
+</Callout>
+
+#### Importing Teams
+
+To import teams into an exercise, instructors can use the <img src={importTeamsButton} alt="Import Teams Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. This allows them to choose between importing from a file, or importing directly from another exercise in the course. In both cases, you must choose if you want to delete all the existing teams, or only create new teams, as shown below:
+
+<Image src={importStrategy} alt="Import Strategy" size={ImageSize.medium} caption="Import Strategy Options" />
+
+## Collaboration
+
+When working on a team exercise, students can work collaboratively using the live editors.
+This is available for [Modeling exercises](./modeling-exercise.mdx) and [Textual exercises](./textual-exercise.mdx).
+
+The live editors show the status of all the team members, and allow students to simultaneously edit the same exercise:
+
+<Image src={liveModelingEditor} alt="Live Modeling Editor" size={ImageSize.large} caption="Live Modeling Editor with Team Collaboration" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>The live editors provide real-time collaboration features, allowing team members to see each other's changes instantly.</p>
+</Callout>
+
+## Team Overview
+
+The same team can be shared for multiple exercises.
+Viewing the page for a single team allows students, tutors and instructors to get an overview of all the exercises for that team along with their current status.
+To access the team overview page, users can click on <img src={teamButton} alt="Team Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> or on the team's short name.
+
+<Image src={teamOverviewPage} alt="Team Overview Page" size={ImageSize.large} caption="Team Overview Page" />

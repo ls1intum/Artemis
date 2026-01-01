@@ -3,9 +3,32 @@ import clsx from 'clsx';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
-import LinkButton from '../components/LinkButton/LinkButton';
+import Link from '@docusaurus/Link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGraduationCap, faChalkboardTeacher, faCode, faUserShield } from '@fortawesome/free-solid-svg-icons';
 
 import styles from './index.module.css';
+
+interface TileProps {
+    title: string;
+    link: string;
+    icon: any;
+}
+
+function Tile({ title, link, icon }: TileProps) {
+    return (
+        <Link to={link} className={clsx('card', styles.tile)}>
+            <div className="card__body">
+                <div className={styles.tileIcon}>
+                    <FontAwesomeIcon icon={icon} size="3x" />
+                </div>
+                <Heading as="h3" className={styles.tileTitle}>
+                    {title}
+                </Heading>
+            </div>
+        </Link>
+    );
+}
 
 function HomepageHeader() {
     const { siteConfig } = useDocusaurusContext();
@@ -16,25 +39,27 @@ function HomepageHeader() {
                     {siteConfig.title}
                 </Heading>
                 <p className="hero__subtitle">{siteConfig.tagline}</p>
-                <div className={styles.buttons}>
-                    <LinkButton to="/student/intro">
-                        Student Guide
-                    </LinkButton>
-                </div>
-                <div className={styles.buttons}>
-                    <LinkButton to="/instructor/intro">
-                        Instructor Guide
-                    </LinkButton>
-                </div>
-                <div className={styles.buttons}>
-                    <LinkButton to="/staff/intro">
-                        Staff Documentation
-                    </LinkButton>
-                </div>
-                <div className={styles.buttons}>
-                    <LinkButton to="/admin/intro">
-                        Admin Documentation
-                    </LinkButton>
+                <div className={styles.tilesContainer}>
+                    <Tile
+                        title="Student"
+                        link="/student/intro"
+                        icon={faGraduationCap}
+                    />
+                    <Tile
+                        title="Instructor"
+                        link="/instructor/intro"
+                        icon={faChalkboardTeacher}
+                    />
+                    <Tile
+                        title="Developer"
+                        link="/staff/intro"
+                        icon={faCode}
+                    />
+                    <Tile
+                        title="Admin"
+                        link="/admin/intro"
+                        icon={faUserShield}
+                    />
                 </div>
             </div>
         </header>

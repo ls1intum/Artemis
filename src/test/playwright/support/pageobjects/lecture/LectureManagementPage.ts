@@ -28,10 +28,11 @@ export class LectureManagementPage {
      */
     async deleteLecture(lecture: Lecture) {
         await this.getLecture(lecture.id!).locator('#delete-lecture').click();
-        await expect(this.page.locator('#delete')).toBeDisabled();
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
+        await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/lecture/lectures/*`);
-        await this.page.click('#delete');
+        await deleteButton.click();
         return await responsePromise;
     }
 
@@ -178,7 +179,7 @@ export class LectureManagementPage {
 /**
  * Enum for unit types, mapping to their respective button selectors.
  */
-enum UnitType {
+export enum UnitType {
     TEXT = '#createTextUnitButton',
     EXERCISE = '#createExerciseUnitButton',
     VIDEO = '#createVideoUnitButton',

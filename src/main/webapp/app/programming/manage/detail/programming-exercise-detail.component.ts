@@ -214,7 +214,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
                 .pipe(
                     tap((updatedProgrammingExercise) => {
+                        // Preserve categories from the initial exercise as the API might not return them
+                        const categories = this.programmingExercise.categories;
                         this.programmingExercise = updatedProgrammingExercise.body!;
+                        if (!this.programmingExercise.categories?.length && categories?.length) {
+                            this.programmingExercise.categories = categories;
+                        }
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
@@ -407,9 +412,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
                 { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
                 {
-                    type: DetailType.Text,
+                    type: DetailType.ExerciseCategories,
                     title: 'artemisApp.exercise.categories',
-                    data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                    data: { categories: exercise.categories },
                 },
             ],
         };

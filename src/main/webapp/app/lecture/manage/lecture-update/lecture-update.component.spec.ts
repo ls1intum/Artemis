@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider, ngMocks } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -36,6 +36,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
+
+ngMocks.globalKeep(PdfDropZoneComponent);
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;

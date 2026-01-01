@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -67,6 +68,8 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
 
+    private final Optional<CompetencyApi> competencyApi;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<PrerequisitesApi> prerequisitesApi;
@@ -84,14 +87,16 @@ public class CourseService {
     private final CourseVisibleService courseVisibleService;
 
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
+            Optional<CompetencyApi> competencyApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi,
+            Optional<ExerciseGroupApi> exerciseGroupApi, StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository,
+            CourseVisibleService courseVisibleService) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.exerciseGroupApi = exerciseGroupApi;
+        this.competencyApi = competencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.examRepositoryApi = examRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -189,7 +194,7 @@ public class CourseService {
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
+        competencyApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
         prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them

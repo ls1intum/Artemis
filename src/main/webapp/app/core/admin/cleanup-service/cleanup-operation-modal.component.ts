@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperation } from 'app/core/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/core/admin/cleanup-service/data-cleanup.service';
@@ -11,31 +11,40 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
+/**
+ * Modal component for executing and monitoring cleanup operations.
+ * Shows counts of entities to be cleaned up and allows executing the operation.
+ */
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule],
 })
 export class CleanupOperationModalComponent implements OnInit {
-    operation = input.required<CleanupOperation>();
-    counts: CleanupCount = { totalCount: 0 };
-    operationExecuted = false;
+    /** The cleanup operation to execute */
+    readonly operation = input.required<CleanupOperation>();
+
+    /** Counts of entities to be cleaned up */
+    readonly counts = signal<CleanupCount>({ totalCount: 0 });
+
+    /** Whether the operation has been executed */
+    readonly operationExecuted = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    public activeModal: NgbActiveModal = inject(NgbActiveModal);
-    private dataCleanupService: DataCleanupService = inject(DataCleanupService);
+    public readonly activeModal = inject(NgbActiveModal);
+    private readonly dataCleanupService = inject(DataCleanupService);
 
-    faTimes = faTimes;
-    faCheckCircle = faCheckCircle;
+    protected readonly faTimes = faTimes;
+    protected readonly faCheckCircle = faCheckCircle;
 
-    /**
-     * Fetch keys from the CleanupCount object for iteration.
-     */
-    get cleanupKeys(): (keyof CleanupCount)[] {
-        return Object.keys(this.counts) as (keyof CleanupCount)[];
-    }
+    /** Keys from the CleanupCount object for iteration */
+    readonly cleanupKeys = computed(() => Object.keys(this.counts()) as (keyof CleanupCount)[]);
+
+    /** Computed property to check if there are any entries to delete */
+    readonly hasEntriesToDelete = computed(() => Object.values(this.counts()).some((count) => count > 0));
 
     /**
      * Close the modal.
@@ -57,7 +66,7 @@ export class CleanupOperationModalComponent implements OnInit {
     executeCleanupOperation(): void {
         const operationHandler = {
             next: () => {
-                this.operationExecuted = true;
+                this.operationExecuted.set(true);
                 this.updateCounts();
             },
             error: (error: any) => {
@@ -110,16 +119,11 @@ export class CleanupOperationModalComponent implements OnInit {
     private updateCounts(): void {
         this.fetchCounts().subscribe({
             next: (response: HttpResponse<CleanupCount>) => {
-                this.counts = response.body!;
+                this.counts.set(response.body!);
             },
-            error: () => this.dialogErrorSource.next('An error occurred while fetching updated counts.'),
+            error: () => {
+                this.dialogErrorSource.next('An error occurred while fetching updated counts.');
+            },
         });
-    }
-
-    /**
-     * Getter to check if there are any entries to delete.
-     */
-    get hasEntriesToDelete(): boolean {
-        return Object.values(this.counts).some((count) => count > 0);
     }
 }

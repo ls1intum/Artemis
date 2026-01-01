@@ -56,6 +56,7 @@
                     <label class="required" for="teachingAssistant" jhiTranslate="artemisApp.forms.tutorialGroupForm.teachingAssistantInput.label"></label>
                     <input
                         id="teachingAssistant"
+                        name="search-filter"
                         type="text"
                         class="form-control"
                         formControlName="teachingAssistant"
@@ -67,6 +68,12 @@
                         #teachingAssistantInput="ngbTypeahead"
                         (focus)="taFocus$.next($any($event).target.value)"
                         (click)="taClick$.next($any($event).target.value)"
+                        autocomplete="nope"
+                        role="searchbox"
+                        aria-autocomplete="list"
+                        data-1p-ignore="true"
+                        data-lpignore="true"
+                        data-form-type="other"
                     />
                     <small id="taHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.forms.tutorialGroupForm.teachingAssistantInput.taHelp"></small>
                     @if (teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)) {

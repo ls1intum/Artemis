@@ -6,47 +6,28 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * This is a dto for the repository export options.
+ *
+ * @param exportAllParticipants     whether to export all participants
+ * @param filterLateSubmissions     whether to filter late submissions
+ * @param filterLateSubmissionsDate the date to filter late submissions
+ * @param participantIdentifierList the list of participant identifiers
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class SubmissionExportOptionsDTO {
+public record SubmissionExportOptionsDTO(boolean exportAllParticipants, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, String participantIdentifierList) {
 
-    private boolean exportAllParticipants;
-
-    private boolean filterLateSubmissions;
-
-    private ZonedDateTime filterLateSubmissionsDate;
-
-    private String participantIdentifierList;
-
-    public boolean isExportAllParticipants() {
-        return exportAllParticipants;
+    /**
+     * Creates a new SubmissionExportOptionsDTO with default values.
+     */
+    public SubmissionExportOptionsDTO() {
+        this(false, false, null, null);
     }
 
-    public void setExportAllParticipants(boolean exportAllParticipants) {
-        this.exportAllParticipants = exportAllParticipants;
-    }
-
-    public boolean isFilterLateSubmissions() {
-        return filterLateSubmissions;
-    }
-
-    public void setFilterLateSubmissions(boolean filterLateSubmissions) {
-        this.filterLateSubmissions = filterLateSubmissions;
-    }
-
-    public ZonedDateTime getFilterLateSubmissionsDate() {
-        return filterLateSubmissionsDate;
-    }
-
-    public void setFilterLateSubmissionsDate(ZonedDateTime filterLateSubmissionsDate) {
-        this.filterLateSubmissionsDate = filterLateSubmissionsDate;
-    }
-
-    public String getParticipantIdentifierList() {
-        return participantIdentifierList;
-    }
-
-    public void setParticipantIdentifierList(String participantIdentifierList) {
-        this.participantIdentifierList = participantIdentifierList;
+    /**
+     * Creates options for exporting all participants.
+     *
+     * @return a new SubmissionExportOptionsDTO configured to export all participants
+     */
+    public static SubmissionExportOptionsDTO exportAll() {
+        return new SubmissionExportOptionsDTO(true, false, null, null);
     }
 }
