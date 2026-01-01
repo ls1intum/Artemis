@@ -126,6 +126,12 @@
                                 entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
                                 [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                                [translateValues]="{
+                                    courseTitle: programmingExercise.course!.title,
+                                    courseType: programmingExercise.course!.testCourse
+                                        ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
+                                        : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"
                                 [additionalChecks]="

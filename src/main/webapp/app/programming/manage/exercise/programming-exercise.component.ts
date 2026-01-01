@@ -38,6 +38,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SharingInfo } from 'app/sharing/sharing.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
@@ -58,6 +59,7 @@ import { SharingInfo } from 'app/sharing/sharing.model';
         ExerciseScoresExportButtonComponent,
         SlicePipe,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {

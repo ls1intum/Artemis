@@ -23,11 +23,13 @@
                     "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
                     "numberOfAnswerPosts": "Anzahl der Antworten"
                 },
-                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {
-                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
-                    "multiple": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!.<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}es</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!.<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
                 },
+                "testCourse": "Testkurses",
+                "realCourse": "echten Kurses",
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
