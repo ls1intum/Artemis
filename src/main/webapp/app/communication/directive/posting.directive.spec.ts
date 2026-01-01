@@ -109,7 +109,15 @@ describe('PostingDirective', () => {
     });
 
     afterEach(() => {
+        // Clear any active timers to prevent test leaks
+        if (component.deleteTimer) {
+            clearTimeout(component.deleteTimer);
+        }
+        if (component.deleteInterval) {
+            clearInterval(component.deleteInterval);
+        }
         jest.clearAllMocks();
+        jest.useRealTimers();
     });
 
     it('should initialize content on ngOnInit', () => {
@@ -317,8 +325,6 @@ describe('PostingDirective', () => {
         jest.advanceTimersByTime(7000);
 
         expect(component.deleteTimerInSeconds).toBe(0);
-
-        jest.useRealTimers();
     });
 
     it('should do nothing if delete event is false', () => {

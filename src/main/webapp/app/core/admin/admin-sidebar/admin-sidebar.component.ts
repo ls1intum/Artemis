@@ -5,6 +5,7 @@ import {
     faBookOpen,
     faBroom,
     faClipboardList,
+    faDownload,
     faEye,
     faFlag,
     faGears,
@@ -78,6 +79,13 @@ export class AdminSidebarComponent {
         groups.push({
             translation: 'global.menu.admin.groups.usersAndOrganizations',
             items: [
+                {
+                    routerLink: '/admin/data-exports',
+                    icon: faDownload,
+                    title: 'Data Exports',
+                    translation: 'global.menu.admin.sidebar.dataExports',
+                    testId: 'admin-data-exports',
+                },
                 {
                     routerLink: '/admin/organization-management',
                     icon: faUniversity,
