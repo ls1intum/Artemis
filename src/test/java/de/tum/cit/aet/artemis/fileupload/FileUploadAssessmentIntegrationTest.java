@@ -564,15 +564,17 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(3);
-        var submissionResultsList = submission.getResults().stream().toList();
-        Result firstResult = submissionResultsList.getFirst();
+        Result firstResult = submission.getFirstResult();
+        assertThat(firstResult).isNotNull();
         Result lastResult = submission.getLatestResult();
+        assertThat(lastResult).isNotNull();
+        assertThat(firstResult).isNotEqualTo(lastResult);
         request.delete(
                 "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().stream().toList().get(1)).isEqualTo(lastResult);
+        assertThat(submission.getLatestResult()).isEqualTo(lastResult);
     }
 
     @Test
@@ -597,7 +599,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 + resultOfOtherSubmission.getId(), HttpStatus.BAD_REQUEST);
         submission1 = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission1.getId());
         assertThat(submission1.getResults()).hasSize(3);
-        assertThat(submission1.getResults().stream().toList().get(2)).isEqualTo(lastResult);
+        assertThat(submission1.getLatestResult()).isEqualTo(lastResult);
     }
 
     @Test
@@ -620,6 +622,6 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 HttpStatus.BAD_REQUEST);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().stream().toList().get(1)).isEqualTo(lastResult);
+        assertThat(submission.getLatestResult()).isEqualTo(lastResult);
     }
 }

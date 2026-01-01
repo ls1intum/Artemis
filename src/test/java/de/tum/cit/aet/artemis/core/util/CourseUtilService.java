@@ -659,41 +659,40 @@ public class CourseUtilService {
         quizSubmission = submissionRepository.save(quizSubmission);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
+        // Connect submissions with participations
         modelingSubmission.setParticipation(participationModeling);
-        modelingSubmission.addResult(resultModeling);
-        resultModeling.setSubmission(modelingSubmission);
         textSubmission.setParticipation(participationText);
-        textSubmission.addResult(resultText);
-        resultText.setSubmission(textSubmission);
         fileUploadSubmission.setParticipation(participationFileUpload);
-        fileUploadSubmission.addResult(resultFileUpload);
-        resultFileUpload.setSubmission(fileUploadSubmission);
         quizSubmission.setParticipation(participationQuiz);
-        quizSubmission.addResult(resultQuiz);
-        resultQuiz.setSubmission(quizSubmission);
         programmingSubmission.setParticipation(participationProgramming);
-        programmingSubmission.addResult(resultProgramming);
+
+        // Set submission references on results before saving
+        resultModeling.setSubmission(modelingSubmission);
+        resultText.setSubmission(textSubmission);
+        resultFileUpload.setSubmission(fileUploadSubmission);
+        resultQuiz.setSubmission(quizSubmission);
         resultProgramming.setSubmission(programmingSubmission);
 
-        // Save submissions
+        // Save results first to get IDs
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
+        // Add persisted results to submissions
+        modelingSubmission.addResult(resultModeling);
+        textSubmission.addResult(resultText);
+        fileUploadSubmission.addResult(resultFileUpload);
+        quizSubmission.addResult(resultQuiz);
+        programmingSubmission.addResult(resultProgramming);
+
+        // Save submissions to update relationships
         modelingSubmission = submissionRepository.save(modelingSubmission);
         textSubmission = submissionRepository.save(textSubmission);
         fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
         quizSubmission = submissionRepository.save(quizSubmission);
         programmingSubmission = submissionRepository.save(programmingSubmission);
-
-        resultModeling.setSubmission(modelingSubmission);
-        resultText.setSubmission(textSubmission);
-        resultFileUpload.setSubmission(fileUploadSubmission);
-        resultQuiz.setSubmission(quizSubmission);
-        resultProgramming.setSubmission(programmingSubmission);
-
-        // Save results
-        resultRepo.save(resultModeling);
-        resultRepo.save(resultText);
-        resultRepo.save(resultFileUpload);
-        resultRepo.save(resultQuiz);
-        resultRepo.save(resultProgramming);
 
         // Save exercises
         exerciseRepository.save(modelingExercise);

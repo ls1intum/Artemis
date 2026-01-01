@@ -756,8 +756,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         body = new ModelingAssessmentDTO(feedbacks, "text");
-        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/"
-                + submissionWithoutSecondAssessment.getResults().stream().toList().get(1).getId() + "/assessment", body, Result.class, HttpStatus.OK, params);
+        // TODO: there is no specific order any more, if at all we need to sort after result.id or result.completion_date
+        var resultId = submissionWithoutSecondAssessment.getResults().stream().toList().get(1).getId();
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(
+                API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + resultId + "/assessment", body, Result.class, HttpStatus.OK, params);
         assertThat(secondSubmittedManualResult).isNotNull();
 
         // make sure that new result correctly appears after the assessment for second correction round
@@ -916,9 +918,11 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        var submissionResultsList = submission.getResults().stream().toList();
-        Result firstResult = submissionResultsList.getFirst();
+        Result firstResult = submission.getFirstResult();
+        assertThat(firstResult).isNotNull();
         Result lastResult = submission.getLatestResult();
+        assertThat(lastResult).isNotNull();
+        assertThat(firstResult).isNotEqualTo(lastResult);
         request.delete("/api/modeling/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());

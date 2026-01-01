@@ -393,6 +393,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        manualResult.setFeedbacks(new HashSet<>(feedbacks));
         points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.score(points);
 
@@ -1047,6 +1048,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(5);
+        // TODO: there is no specific order any more, if at all we need to sort after result.id or result.completion_date
         var submissionResultsList = submission.getResults().stream().toList();
         Result firstResult = submissionResultsList.getFirst();
         Result midResult = submissionResultsList.get(2);
@@ -1059,6 +1061,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);
+        // TODO: there is no specific order any more, if at all we need to sort after result.id or result.completion_date
         var updatedSubmissionResultsList = submission.getResults().stream().toList();
         assertThat(updatedSubmissionResultsList.getFirst()).isEqualTo(firstResult);
         assertThat(updatedSubmissionResultsList.get(2)).isEqualTo(firstSemiAutomaticResult);
@@ -1107,6 +1110,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
+        // TODO: there is no specific order any more, if at all we need to sort after result.id or result.completion_date
         var instructorSubmissionResultsList = submission.getResults().stream().toList();
         Result resultToDelete = instructorSubmissionResultsList.get(0);
         Result secondResult = instructorSubmissionResultsList.get(1);
@@ -1118,6 +1122,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
+        // TODO: there is no specific order any more, if at all we need to sort after result.id or result.completion_date
         var updatedInstructorSubmissionResultsList = submission.getResults().stream().toList();
         assertThat(updatedInstructorSubmissionResultsList.get(0)).isEqualTo(secondResult);
         assertThat(updatedInstructorSubmissionResultsList.get(1)).isEqualTo(thirdResult);

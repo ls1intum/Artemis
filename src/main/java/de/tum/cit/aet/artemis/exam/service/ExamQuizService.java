@@ -81,6 +81,7 @@ public class ExamQuizService {
                 if (quizSubmission.getLatestResult() == null) {
                     result = new Result();
                     result.setAssessmentType(AssessmentType.AUTOMATIC);
+                    result.setCorrectionRound(0);
                     // set submission to calculate scores
                     result.setSubmission(quizSubmission);
                     // calculate scores and update result and submission accordingly

@@ -258,9 +258,12 @@ public class TextExerciseCreationUpdateResource {
         channelService.updateExerciseChannel(originalExerciseCopy, textExerciseBeforeUpdate);
 
         // Handle competency links
+        // Use clear() and addAll() instead of setCompetencyLinks() to preserve the managed collection
+        // This is important for orphan removal to work correctly
         if (textExerciseDTO.competencyLinks() != null) {
             Set<CompetencyExerciseLink> updatedLinks = updateCompetencyExerciseLinks(textExerciseBeforeUpdate, textExerciseDTO.competencyLinks(), course);
-            textExerciseBeforeUpdate.setCompetencyLinks(updatedLinks);
+            textExerciseBeforeUpdate.getCompetencyLinks().clear();
+            textExerciseBeforeUpdate.getCompetencyLinks().addAll(updatedLinks);
         }
 
         TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExerciseBeforeUpdate, textExerciseRepository::save);

@@ -115,6 +115,7 @@ public class TextExerciseFeedbackService {
         automaticResult.setScore(0.0);
         automaticResult.setSuccessful(null);
         automaticResult.setSubmission(textSubmission);
+        automaticResult.setCorrectionRound(0);
         try {
             // This broadcast signals the client that feedback is being generated, does not save empty result
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);

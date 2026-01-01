@@ -835,15 +835,27 @@ public class ExerciseService {
      */
     public <T extends Exercise> T saveWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
         // persist exercise before linking it to the competency
-        Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
-        exercise.setCompetencyLinks(new HashSet<>());
+        // We need to copy the links first, then clear the original collection
+        // Using clear() instead of replacing the collection is important for orphan removal to work
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
+
+        // Only copy and process if the collection is initialized
+        Set<CompetencyExerciseLink> links = new HashSet<>();
+        if (Hibernate.isInitialized(competencyLinks)) {
+            links = new HashSet<>(competencyLinks);
+            competencyLinks.clear();
+        }
 
         T savedExercise = saveFunction.apply(exercise);
 
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
-            savedExercise.setCompetencyLinks(links);
-            reconnectCompetencyExerciseLinks(savedExercise);
-            competencyRelationApi.ifPresent(api -> savedExercise.setCompetencyLinks(new HashSet<>(api.saveAllExerciseLinks(links))));
+        if (!links.isEmpty()) {
+            // Add the new links to the saved exercise's collection
+            reconnectCompetencyExerciseLinks(exercise, links);
+            final Set<CompetencyExerciseLink> finalLinks = links;
+            competencyRelationApi.ifPresent(api -> {
+                Set<CompetencyExerciseLink> savedLinks = new HashSet<>(api.saveAllExerciseLinks(finalLinks));
+                savedExercise.getCompetencyLinks().addAll(savedLinks);
+            });
         }
 
         return savedExercise;
@@ -853,9 +865,10 @@ public class ExerciseService {
      * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
      *
      * @param exercise exercise to reconnect the links
+     * @param links    links to reconnect
      */
-    public void reconnectCompetencyExerciseLinks(Exercise exercise) {
-        exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
+    public void reconnectCompetencyExerciseLinks(Exercise exercise, Set<CompetencyExerciseLink> links) {
+        links.forEach(link -> link.setExercise(exercise));
     }
 
     /**

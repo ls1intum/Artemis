@@ -214,6 +214,7 @@ public class QuizSubmissionResource {
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setCorrectionRound(0);
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
 

@@ -1304,9 +1304,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        var submissionResultsList = submission.getResults().stream().toList();
-        Result firstResult = submissionResultsList.getFirst();
+        Result firstResult = submission.getFirstResult();
+        assertThat(firstResult).isNotNull();
         Result lastResult = submission.getLatestResult();
+        assertThat(lastResult).isNotNull();
+        assertThat(firstResult).isNotEqualTo(lastResult);
         request.delete("/api/text/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());

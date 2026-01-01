@@ -101,6 +101,7 @@ public abstract class ExerciseImportService {
         newResult.setExerciseId(originalResult.getExerciseId());
         newResult.setRated(true);
         newResult.setScore(originalResult.getScore());
+        newResult.setCorrectionRound(originalResult.getCorrectionRound() != null ? originalResult.getCorrectionRound() : 0);
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
         // Cut relationship to parent because result is an ordered collection

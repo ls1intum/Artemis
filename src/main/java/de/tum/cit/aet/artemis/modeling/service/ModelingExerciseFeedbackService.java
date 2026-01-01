@@ -152,6 +152,7 @@ public class ModelingExerciseFeedbackService {
         result.setScore(0.0);
         result.setSuccessful(null);
         result.setSubmission(submission);
+        result.setCorrectionRound(0);
         return result;
     }
 

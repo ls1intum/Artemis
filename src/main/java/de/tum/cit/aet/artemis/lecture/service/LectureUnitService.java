@@ -261,18 +261,40 @@ public class LectureUnitService {
      */
     public <T extends LectureUnit> T saveWithCompetencyLinks(T lectureUnit, Function<T, T> saveFunction) {
         // persist lecture Unit before linking it to the competency
-        Set<CompetencyLectureUnitLink> links = lectureUnit.getCompetencyLinks();
-        lectureUnit.setCompetencyLinks(new HashSet<>());
+        // We need to copy the links first, then clear the original collection
+        // Using clear() instead of replacing the collection is important for orphan removal to work
+        Set<CompetencyLectureUnitLink> competencyLinks = lectureUnit.getCompetencyLinks();
+
+        // Only copy and process if the collection is initialized
+        Set<CompetencyLectureUnitLink> links = new HashSet<>();
+        if (Hibernate.isInitialized(competencyLinks)) {
+            links = new HashSet<>(competencyLinks);
+            competencyLinks.clear();
+        }
 
         T savedLectureUnit = saveFunction.apply(lectureUnit);
 
-        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
-            savedLectureUnit.setCompetencyLinks(links);
-            reconnectCompetencyLectureUnitLinks(savedLectureUnit);
-            competencyRelationApi.ifPresent(api -> savedLectureUnit.setCompetencyLinks(new HashSet<>(api.saveAllLectureUnitLinks(links))));
+        if (!links.isEmpty()) {
+            // Add the new links to the saved lecture unit's collection
+            reconnectCompetencyLectureUnitLinks(lectureUnit, links);
+            final Set<CompetencyLectureUnitLink> finalLinks = links;
+            competencyRelationApi.ifPresent(api -> {
+                Set<CompetencyLectureUnitLink> savedLinks = new HashSet<>(api.saveAllLectureUnitLinks(finalLinks));
+                savedLectureUnit.getCompetencyLinks().addAll(savedLinks);
+            });
         }
 
         return savedLectureUnit;
+    }
+
+    /**
+     * Reconnects the competency lecture unit links to the lecture unit after the cycle was broken by the deserialization.
+     *
+     * @param lectureUnit lecture unit to reconnect the links
+     * @param links       links to reconnect
+     */
+    private void reconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit, Set<CompetencyLectureUnitLink> links) {
+        links.forEach(link -> link.setLectureUnit(lectureUnit));
     }
 
     /**

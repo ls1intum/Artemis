@@ -156,6 +156,7 @@ public class QuizResultService {
                     // No rated result exists; create a new one
                     Result result = new Result().rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
                     result.setExerciseId(quizExercise.getId());
+                    result.setCorrectionRound(0);
 
                     // Associate submission with result
                     result.setSubmission(quizSubmission);

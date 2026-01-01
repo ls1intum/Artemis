@@ -409,6 +409,7 @@ public class SubmissionService {
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exerciseId);
+        result.setCorrectionRound(0);
         submission.addResult(result);
         result = resultRepository.save(result);
         submissionRepository.save(submission);
@@ -481,6 +482,8 @@ public class SubmissionService {
         }
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Preserve the correction round from the original result, or default to 0
+        newResult.setCorrectionRound(oldResult.getCorrectionRound() != null ? oldResult.getCorrectionRound() : 0);
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }

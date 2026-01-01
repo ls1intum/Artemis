@@ -169,6 +169,11 @@ public class ResultService {
         // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
         result.setRated(ratedResult);
 
+        // Set correctionRound to 0 if not already set (default for non-exam exercises)
+        if (result.getCorrectionRound() == null) {
+            result.setCorrectionRound(0);
+        }
+
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
         // this call should cascade all feedback relevant changed and save them accordingly
