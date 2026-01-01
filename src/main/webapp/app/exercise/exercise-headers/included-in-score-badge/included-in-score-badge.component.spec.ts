@@ -7,15 +7,12 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 describe('IncludedInScoreBadge', () => {
     let component: IncludedInScoreBadgeComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                const fixture = TestBed.createComponent(IncludedInScoreBadgeComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+        const fixture = TestBed.createComponent(IncludedInScoreBadgeComponent);
+        component = fixture.componentInstance;
     });
 
     it('should show no badge if no information about score inclusion is known', () => {

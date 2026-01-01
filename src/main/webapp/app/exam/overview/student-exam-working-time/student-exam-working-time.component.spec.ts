@@ -12,22 +12,19 @@ describe('StudentExamWorkingTimeComponent', () => {
     let studentExam: StudentExam;
     const regularWorkingTime = 7200;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(StudentExamWorkingTimeComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(StudentExamWorkingTimeComponent);
+        comp = fixture.componentInstance;
 
-                exam = new Exam();
-                exam.startDate = dayjs('2022-01-06T13:00:00Z');
-                exam.endDate = dayjs('2022-01-06T15:00:00Z');
+        exam = new Exam();
+        exam.startDate = dayjs('2022-01-06T13:00:00Z');
+        exam.endDate = dayjs('2022-01-06T15:00:00Z');
 
-                studentExam = new StudentExam();
-                studentExam.exam = exam;
-            });
+        studentExam = new StudentExam();
+        studentExam.exam = exam;
     });
 
     const setExamWithWorkingTime = (workingTimeSeconds: number) => {

@@ -17,16 +17,13 @@ describe('PasswordService', () => {
 
     const postURL = 'api/core/account/change-password';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: HttpClient, useClass: MockHttpService }],
-        })
-            .compileComponents()
-            .then(() => {
-                passwordService = TestBed.inject(PasswordService);
-                httpService = TestBed.inject(HttpClient);
-                postStub = vi.spyOn(httpService, 'post');
-            });
+        }).compileComponents();
+        passwordService = TestBed.inject(PasswordService);
+        httpService = TestBed.inject(HttpClient);
+        postStub = vi.spyOn(httpService, 'post');
     });
 
     afterEach(() => {

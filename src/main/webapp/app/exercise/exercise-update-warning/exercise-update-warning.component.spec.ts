@@ -9,17 +9,14 @@ describe('Exercise Update Warning Component Tests', () => {
     let fixture: ComponentFixture<ExerciseUpdateWarningComponent>;
     let comp: ExerciseUpdateWarningComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseUpdateWarningComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExerciseUpdateWarningComponent);
+        comp = fixture.componentInstance;
 
-                comp.deleteFeedback = false;
-            });
+        comp.deleteFeedback = false;
     });
 
     afterEach(() => {

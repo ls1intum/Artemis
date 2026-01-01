@@ -9,19 +9,16 @@ describe('MonacoDiffEditorComponent', () => {
     let fixture: ComponentFixture<MonacoDiffEditorComponent>;
     let comp: MonacoDiffEditorComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MonacoDiffEditorComponent],
             providers: [{ provide: ThemeService, useClass: MockThemeService }],
-        })
-            .compileComponents()
-            .then(() => {
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                fixture = TestBed.createComponent(MonacoDiffEditorComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+        fixture = TestBed.createComponent(MonacoDiffEditorComponent);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {

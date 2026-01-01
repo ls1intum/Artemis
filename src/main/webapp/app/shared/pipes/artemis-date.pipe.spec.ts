@@ -11,15 +11,12 @@ describe('ArtemisDatePipe', () => {
     let translateService: TranslateService;
     const dateTime = dayjs().year(2020).month(3).date(14).hour(9).minute(27).second(3); // 2020-03-14 09:27:03
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [ArtemisDatePipe, { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                translateService = TestBed.inject(TranslateService);
-                pipe = TestBed.inject(ArtemisDatePipe);
-            });
+        }).compileComponents();
+        translateService = TestBed.inject(TranslateService);
+        pipe = TestBed.inject(ArtemisDatePipe);
     });
 
     it('Return empty string if given date time is null or undefined', () => {

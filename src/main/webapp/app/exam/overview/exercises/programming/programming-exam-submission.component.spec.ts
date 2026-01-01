@@ -13,15 +13,12 @@ describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
     let component: ProgrammingExamSubmissionComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExamSubmissionComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExamSubmissionComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {

@@ -10,14 +10,11 @@ describe('TableEditableFieldComponent', () => {
 
     const tableInputValue = '.table-editable-field__input';
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TableEditableFieldComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(TableEditableFieldComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
     it('should render value as provided', fakeAsync(() => {

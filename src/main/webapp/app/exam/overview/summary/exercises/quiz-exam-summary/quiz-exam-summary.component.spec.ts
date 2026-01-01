@@ -71,22 +71,19 @@ describe('QuizExamSummaryComponent', () => {
     let fixture: ComponentFixture<QuizExamSummaryComponent>;
     let component: QuizExamSummaryComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizExamSummaryComponent);
-                component = fixture.componentInstance;
-                component.quizParticipation = {
-                    quizQuestions: exercise.quizQuestions!,
-                    studentParticipations: exercise.studentParticipations,
-                };
-                component.submission = { id: 2, submittedAnswers: [] };
-                component.resultsPublished = true;
-                component.exam = { id: 1 } as Exam;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(QuizExamSummaryComponent);
+        component = fixture.componentInstance;
+        component.quizParticipation = {
+            quizQuestions: exercise.quizQuestions!,
+            studentParticipations: exercise.studentParticipations,
+        };
+        component.submission = { id: 2, submittedAnswers: [] };
+        component.resultsPublished = true;
+        component.exam = { id: 1 } as Exam;
     });
 
     it('should initialize', () => {

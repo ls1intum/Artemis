@@ -33,16 +33,13 @@ describe('Directive: SortByDirective', () => {
     let fixture: ComponentFixture<TestSortByDirectiveComponent>;
     let tableHead: DebugElement;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TestSortByDirectiveComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestSortByDirectiveComponent);
-                component = fixture.componentInstance;
-                tableHead = fixture.debugElement.query(By.directive(SortByDirective));
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TestSortByDirectiveComponent);
+        component = fixture.componentInstance;
+        tableHead = fixture.debugElement.query(By.directive(SortByDirective));
     });
 
     it('should initialize predicate, order, icon when initial component predicate is _score', () => {

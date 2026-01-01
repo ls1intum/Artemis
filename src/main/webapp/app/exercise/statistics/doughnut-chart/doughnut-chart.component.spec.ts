@@ -13,14 +13,11 @@ describe('DoughnutChartComponent', () => {
     const percentage = 80;
     const max = 100;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(DoughnutChartComponent);
-                component = fixture.componentInstance;
-                router = TestBed.inject(Router);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(DoughnutChartComponent);
+        component = fixture.componentInstance;
+        router = TestBed.inject(Router);
     });
 
     beforeEach(() => {

@@ -26,20 +26,17 @@ describe('ScienceSettingsService', () => {
     let scienceSettingsService: ScienceSettingsService;
     let userSettingsService: UserSettingsService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
-        })
-            .compileComponents()
-            .then(() => {
-                scienceSettingsService = TestBed.inject(ScienceSettingsService);
-                userSettingsService = TestBed.inject(UserSettingsService);
+        }).compileComponents();
+        scienceSettingsService = TestBed.inject(ScienceSettingsService);
+        userSettingsService = TestBed.inject(UserSettingsService);
 
-                const profileService = TestBed.inject(ProfileService);
-                const profileInfo = new ProfileInfo();
-                profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-            });
+        const profileService = TestBed.inject(ProfileService);
+        const profileInfo = new ProfileInfo();
+        profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     afterEach(() => {

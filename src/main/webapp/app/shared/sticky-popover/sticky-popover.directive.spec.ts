@@ -17,18 +17,15 @@ describe('StickyPopoverDirective', () => {
     let directive: StickyPopoverDirective;
     let openStub: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [StickyPopoverComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(StickyPopoverComponent);
-                debugDirective = fixture.debugElement.query(By.directive(StickyPopoverDirective));
-                directive = debugDirective.injector.get(StickyPopoverDirective);
-                openStub = jest.spyOn(directive, 'open');
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(StickyPopoverComponent);
+        debugDirective = fixture.debugElement.query(By.directive(StickyPopoverDirective));
+        directive = debugDirective.injector.get(StickyPopoverDirective);
+        openStub = jest.spyOn(directive, 'open');
+        fixture.detectChanges();
     });
 
     afterEach(() => {

@@ -10,14 +10,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('FeedbackItemService', () => {
     let service: FeedbackItemServiceImpl;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(FeedbackItemServiceImpl);
-            });
+        }).compileComponents();
+        service = TestBed.inject(FeedbackItemServiceImpl);
     });
 
     it('should create generic feedback item', () => {

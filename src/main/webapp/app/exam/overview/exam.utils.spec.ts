@@ -8,14 +8,11 @@ import dayjs from 'dayjs/esm';
 let artemisServerDateService: ArtemisServerDateService;
 
 describe('ExamUtils', () => {
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: ArtemisServerDateService, useClass: MockArtemisServerDateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
-            });
+        }).compileComponents();
+        artemisServerDateService = TestBed.inject(ArtemisServerDateService);
     });
 
     describe('isExamResultPublished', () => {

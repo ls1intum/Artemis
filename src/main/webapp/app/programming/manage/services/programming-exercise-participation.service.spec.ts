@@ -23,22 +23,19 @@ describe('ProgrammingExerciseParticipation Service', () => {
     let entityTitleSpy: jest.SpyInstance;
     let setTitleSpy: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ProgrammingExerciseParticipationService);
-                httpMock = TestBed.inject(HttpTestingController);
-                accountService = TestBed.inject(AccountService);
-                entityTitleService = TestBed.inject(EntityTitleService);
+        }).compileComponents();
+        service = TestBed.inject(ProgrammingExerciseParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
+        accountService = TestBed.inject(AccountService);
+        entityTitleService = TestBed.inject(EntityTitleService);
 
-                titleSpy = jest.spyOn(service, 'sendTitlesToEntityTitleService');
-                accessRightsSpy = jest.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
-                entityTitleSpy = jest.spyOn(entityTitleService, 'setExerciseTitle');
-                setTitleSpy = jest.spyOn(entityTitleService, 'setTitle');
-            });
+        titleSpy = jest.spyOn(service, 'sendTitlesToEntityTitleService');
+        accessRightsSpy = jest.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
+        entityTitleSpy = jest.spyOn(entityTitleService, 'setExerciseTitle');
+        setTitleSpy = jest.spyOn(entityTitleService, 'setTitle');
     });
 
     afterEach(() => {

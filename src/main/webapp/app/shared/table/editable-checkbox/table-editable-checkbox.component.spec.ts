@@ -11,16 +11,13 @@ describe('TableEditableFieldComponent', () => {
 
     const tableCheckbox = '.table-editable-field__checkbox';
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TableEditableCheckboxComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TableEditableCheckboxComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
     it('should render checkbox with its state as the boolean value provided and send an update on change', async () => {

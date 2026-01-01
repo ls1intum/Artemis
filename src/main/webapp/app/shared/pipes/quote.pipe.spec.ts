@@ -4,14 +4,11 @@ import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 describe('QuotePipe', () => {
     let pipe: QuotePipe;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [QuotePipe],
-        })
-            .compileComponents()
-            .then(() => {
-                pipe = new QuotePipe();
-            });
+        }).compileComponents();
+        pipe = new QuotePipe();
     });
 
     it.each([undefined, ''])('should return an empty string if given nothing', (text) => {

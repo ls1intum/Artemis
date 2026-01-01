@@ -5,16 +5,13 @@ describe('FormStatusBarComponent', () => {
     let fixture: ComponentFixture<FormStatusBarComponent>;
     let comp: FormStatusBarComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FormStatusBarComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FormStatusBarComponent);
+        comp = fixture.componentInstance;
     });
 
     beforeEach(() => {

@@ -16,41 +16,38 @@ describe('ThemeService', () => {
     let storeSpy: jest.SpyInstance;
     let windowMatchMediaSpy: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: ThemeService, useClass: ThemeService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ThemeService);
-                localStorageService = TestBed.inject(LocalStorageService);
-                linkElement = {
-                    remove: jest.fn(),
-                } as unknown as HTMLElement;
-                documentGetElementMock = jest.spyOn(document, 'getElementById').mockReturnValue(linkElement);
+        }).compileComponents();
+        service = TestBed.inject(ThemeService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        linkElement = {
+            remove: jest.fn(),
+        } as unknown as HTMLElement;
+        documentGetElementMock = jest.spyOn(document, 'getElementById').mockReturnValue(linkElement);
 
-                headElement = {
-                    getElementsByTagName: jest.fn().mockReturnValue([{}, {}]),
-                    insertBefore: jest.fn(),
-                } as unknown as HTMLElement;
-                documentGetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
-                headElementGetElementsByTagNameMock = jest.spyOn(headElement, 'getElementsByTagName');
+        headElement = {
+            getElementsByTagName: jest.fn().mockReturnValue([{}, {}]),
+            insertBefore: jest.fn(),
+        } as unknown as HTMLElement;
+        documentGetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
+        headElementGetElementsByTagNameMock = jest.spyOn(headElement, 'getElementsByTagName');
 
-                newElement = {} as HTMLLinkElement;
-                documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
+        newElement = {} as HTMLLinkElement;
+        documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
 
-                storeSpy = jest.spyOn(localStorageService, 'store');
+        storeSpy = jest.spyOn(localStorageService, 'store');
 
-                windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
-                    if (query === '(prefers-color-scheme)') {
-                        return { media: '(prefers-color-scheme)', addEventListener: jest.fn() } as unknown as MediaQueryList;
-                    }
-                    if (query === '(prefers-color-scheme: dark)') {
-                        return { media: '(prefers-color-scheme: dark)', matches: false, addEventListener: jest.fn() } as unknown as MediaQueryList;
-                    }
-                    throw new Error('Should not happen');
-                });
-            });
+        windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
+            if (query === '(prefers-color-scheme)') {
+                return { media: '(prefers-color-scheme)', addEventListener: jest.fn() } as unknown as MediaQueryList;
+            }
+            if (query === '(prefers-color-scheme: dark)') {
+                return { media: '(prefers-color-scheme: dark)', matches: false, addEventListener: jest.fn() } as unknown as MediaQueryList;
+            }
+            throw new Error('Should not happen');
+        });
     });
 
     afterEach(() => {

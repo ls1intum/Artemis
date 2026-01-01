@@ -15,16 +15,13 @@ describe('CoursePrerequisitesButtonComponent', () => {
         title: 'Course A',
     } as Course;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CoursePrerequisitesButtonComponent);
-                component = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(CoursePrerequisitesButtonComponent);
+        component = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
     });
 
     afterEach(() => {

@@ -9,12 +9,9 @@ describe('PlagiarismInspectorService', () => {
     let result: PlagiarismComparison[];
     let range: Range;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(PlagiarismInspectorService);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        service = TestBed.inject(PlagiarismInspectorService);
     });
 
     const comparison1 = { id: 1, similarity: 5 };

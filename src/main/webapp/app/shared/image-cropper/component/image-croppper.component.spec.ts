@@ -26,26 +26,23 @@ describe('ImageCropperComponent', () => {
     let loadBase64ImageSpy: jest.SpyInstance;
     let loadImageFromURLSpy: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(CropService), MockProvider(CropperPositionService), MockProvider(LoadImageService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ImageCropperComponent);
-                comp = fixture.componentInstance;
-                cropperPositionService = TestBed.inject(CropperPositionService);
-                cropService = TestBed.inject(CropService);
-                loadImageService = TestBed.inject(LoadImageService);
-                resetCropperPositionSpy = jest.spyOn(cropperPositionService, 'resetCropperPosition');
-                componentCropSpy = jest.spyOn(comp, 'crop');
-                startCropImageSpy = jest.spyOn(comp.startCropImage, 'emit');
-                imageCroppedSpy = jest.spyOn(comp.imageCropped, 'emit');
-                cropServiceCropSpy = jest.spyOn(cropService, 'crop');
-                loadImageFileSpy = jest.spyOn(loadImageService, 'loadImageFile');
-                loadBase64ImageSpy = jest.spyOn(loadImageService, 'loadBase64Image');
-                loadImageFromURLSpy = jest.spyOn(loadImageService, 'loadImageFromURL');
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ImageCropperComponent);
+        comp = fixture.componentInstance;
+        cropperPositionService = TestBed.inject(CropperPositionService);
+        cropService = TestBed.inject(CropService);
+        loadImageService = TestBed.inject(LoadImageService);
+        resetCropperPositionSpy = jest.spyOn(cropperPositionService, 'resetCropperPosition');
+        componentCropSpy = jest.spyOn(comp, 'crop');
+        startCropImageSpy = jest.spyOn(comp.startCropImage, 'emit');
+        imageCroppedSpy = jest.spyOn(comp.imageCropped, 'emit');
+        cropServiceCropSpy = jest.spyOn(cropService, 'crop');
+        loadImageFileSpy = jest.spyOn(loadImageService, 'loadImageFile');
+        loadBase64ImageSpy = jest.spyOn(loadImageService, 'loadBase64Image');
+        loadImageFromURLSpy = jest.spyOn(loadImageService, 'loadImageFromURL');
     });
 
     afterEach(() => {

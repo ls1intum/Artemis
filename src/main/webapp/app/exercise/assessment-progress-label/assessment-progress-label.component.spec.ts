@@ -9,13 +9,10 @@ describe('Assessment progress label test', () => {
     let comp: AssessmentProgressLabelComponent;
     let fixture: ComponentFixture<AssessmentProgressLabelComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AssessmentProgressLabelComponent);
-                comp = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(AssessmentProgressLabelComponent);
+        comp = fixture.componentInstance;
     });
     it('should show no submission when the array is empty', () => {
         comp.submissions = [];

@@ -21,17 +21,14 @@ describe('TextblockFeedbackDropdownComponent', () => {
         structuredGradingInstructions: [gradingInstruction],
     } as GradingCriterion;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [TextblockFeedbackDropdownComponent, MockComponent(HelpIconComponent)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextblockFeedbackDropdownComponent);
-                component = fixture.componentInstance;
-                component.criterion = criterion;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TextblockFeedbackDropdownComponent);
+        component = fixture.componentInstance;
+        component.criterion = criterion;
+        fixture.detectChanges();
     });
 
     afterEach(() => {

@@ -39,17 +39,14 @@ describe('ScienceSettingsComponent', () => {
         provideHttpClient(),
     ];
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations,
             providers,
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ScienceSettingsComponent);
-                comp = fixture.componentInstance;
-                scienceSettingsServiceMock = TestBed.inject(ScienceSettingsService);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ScienceSettingsComponent);
+        comp = fixture.componentInstance;
+        scienceSettingsServiceMock = TestBed.inject(ScienceSettingsService);
     });
 
     it('should toggle setting', () => {

@@ -56,16 +56,13 @@ describe('ComplaintService', () => {
         maxComplaintTimeDays: 7,
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
-        })
-            .compileComponents()
-            .then(() => {
-                complaintService = TestBed.inject(ComplaintService);
-                accountService = TestBed.inject(AccountService);
-                httpMock = TestBed.inject(HttpTestingController);
-            });
+        }).compileComponents();
+        complaintService = TestBed.inject(ComplaintService);
+        accountService = TestBed.inject(AccountService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         exercise = {
             numberOfAssessmentsOfCorrectionRounds: [],

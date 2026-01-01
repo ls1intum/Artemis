@@ -6,12 +6,9 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 describe('Quiz Exercise Group Cell Component', () => {
     let fixture: ComponentFixture<QuizExerciseGroupCellComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizExerciseGroupCellComponent);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(QuizExerciseGroupCellComponent);
     });
 
     it('should display number of quiz questions', () => {

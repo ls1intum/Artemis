@@ -6,12 +6,9 @@ describe('ChartExerciseTypeFilter', () => {
     let exerciseTypeFilter: ChartExerciseTypeFilter;
     let results: any[];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                exerciseTypeFilter = TestBed.inject(ChartExerciseTypeFilter);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        exerciseTypeFilter = TestBed.inject(ChartExerciseTypeFilter);
     });
 
     it('should setup and execute exercise type filter correctly', () => {

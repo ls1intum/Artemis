@@ -10,18 +10,15 @@ describe('DifficultyBadge', () => {
 
     const exercise = new ProgrammingExercise(undefined, undefined);
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                const fixture = TestBed.createComponent(DifficultyBadgeComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
+        const fixture = TestBed.createComponent(DifficultyBadgeComponent);
+        component = fixture.componentInstance;
 
-                component.exercise = exercise;
-                component.showNoLevel = false;
-            });
+        component.exercise = exercise;
+        component.showNoLevel = false;
     });
 
     it('should show an info badge if no difficulty level should be shown', () => {

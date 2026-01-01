@@ -12,14 +12,11 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 describe('FeedbackUtils', () => {
     let exerciseService: ExerciseService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(ExerciseService)],
-        })
-            .compileComponents()
-            .then(() => {
-                exerciseService = TestBed.inject(ExerciseService);
-            });
+        }).compileComponents();
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     describe('prepareFeedbackComponentParameters', () => {

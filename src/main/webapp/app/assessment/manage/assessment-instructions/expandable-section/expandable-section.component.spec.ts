@@ -9,17 +9,14 @@ describe('ExpandableSectionComponent', () => {
     let fixture: ComponentFixture<ExpandableSectionComponent>;
     let localStorageService: LocalStorageService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [LocalStorageService],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExpandableSectionComponent);
-                localStorageService = TestBed.inject(LocalStorageService);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExpandableSectionComponent);
+        localStorageService = TestBed.inject(LocalStorageService);
+        component = fixture.componentInstance;
     });
     afterEach(() => {
         jest.restoreAllMocks();

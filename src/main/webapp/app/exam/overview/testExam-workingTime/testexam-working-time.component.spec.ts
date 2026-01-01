@@ -13,29 +13,26 @@ describe('TestExamWorkingTimeComponent', () => {
     let studentExam: StudentExam;
     const currentDate = dayjs();
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestExamWorkingTimeComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(TestExamWorkingTimeComponent);
+        comp = fixture.componentInstance;
 
-                exam = new Exam();
-                exam.startDate = currentDate.subtract(4, 'hour');
-                exam.endDate = currentDate;
-                exam.workingTime = 3 * 3600;
-                exam.testExam = true;
+        exam = new Exam();
+        exam.startDate = currentDate.subtract(4, 'hour');
+        exam.endDate = currentDate;
+        exam.workingTime = 3 * 3600;
+        exam.testExam = true;
 
-                studentExam = new StudentExam();
-                studentExam.exam = exam;
-                studentExam.submitted = true;
-                studentExam.started = true;
-                studentExam.startedDate = currentDate.subtract(4, 'hour');
-                studentExam.submissionDate = currentDate.subtract(2, 'hour');
-                studentExam.workingTime = exam.workingTime;
-            });
+        studentExam = new StudentExam();
+        studentExam.exam = exam;
+        studentExam.submitted = true;
+        studentExam.started = true;
+        studentExam.startedDate = currentDate.subtract(4, 'hour');
+        studentExam.submissionDate = currentDate.subtract(2, 'hour');
+        studentExam.workingTime = exam.workingTime;
     });
 
     it('should have a difference of 0 if the studentExam is not submitted', () => {

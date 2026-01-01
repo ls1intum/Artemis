@@ -8,15 +8,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('Feature Overlay Component Tests', () => {
     let fixture: ComponentFixture<FeatureOverlayComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [NgbTooltipModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FeatureOverlayComponent);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FeatureOverlayComponent);
     });
 
     it('should display tooltip and add "disabled" class when enabled is false', () => {

@@ -320,13 +320,10 @@ const courseExercises = [...modelingExercises, programmingExercise, quizExercise
 describe('ChartCategoryFilter', () => {
     let categoryFilter: ChartCategoryFilter;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                categoryFilter = TestBed.inject(ChartCategoryFilter);
-                categoryFilter.setupCategoryFilter(courseExercises);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        categoryFilter = TestBed.inject(ChartCategoryFilter);
+        categoryFilter.setupCategoryFilter(courseExercises);
     });
 
     it('should deselect and select all categories', () => {

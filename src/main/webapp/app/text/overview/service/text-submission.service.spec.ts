@@ -13,17 +13,14 @@ describe('TextSubmission Service', () => {
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(TextSubmissionService);
-                httpMock = TestBed.inject(HttpTestingController);
+        }).compileComponents();
+        service = TestBed.inject(TextSubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
 
-                elemDefault = new TextSubmission();
-            });
+        elemDefault = new TextSubmission();
     });
 
     afterEach(() => {

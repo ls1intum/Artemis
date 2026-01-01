@@ -7,15 +7,12 @@ describe('ItemCountComponent test', () => {
     let comp: ItemCountComponent;
     let fixture: ComponentFixture<ItemCountComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), TranslateDirective],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ItemCountComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ItemCountComponent);
+        comp = fixture.componentInstance;
     });
 
     describe('UI logic tests', () => {

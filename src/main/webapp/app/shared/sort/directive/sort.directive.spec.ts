@@ -24,14 +24,11 @@ describe('Directive: SortDirective', () => {
     let fixture: ComponentFixture<TestSortDirectiveComponent>;
     let tableRow: DebugElement;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestSortDirectiveComponent);
-                component = fixture.componentInstance;
-                tableRow = fixture.debugElement.query(By.directive(SortDirective));
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(TestSortDirectiveComponent);
+        component = fixture.componentInstance;
+        tableRow = fixture.debugElement.query(By.directive(SortDirective));
     });
 
     it('should update predicate, order and invoke callback function', () => {

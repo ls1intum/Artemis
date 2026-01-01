@@ -17,20 +17,17 @@ describe('AuthServerProvider', () => {
     const storedToken = 'test token with some length';
     const respPayload = { id_token: storedToken };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(AuthServerProvider);
-                localStorageService = TestBed.inject(LocalStorageService);
-                sessionStorageService = TestBed.inject(SessionStorageService);
-                httpMock = TestBed.inject(HttpTestingController);
+        }).compileComponents();
+        service = TestBed.inject(AuthServerProvider);
+        localStorageService = TestBed.inject(LocalStorageService);
+        sessionStorageService = TestBed.inject(SessionStorageService);
+        httpMock = TestBed.inject(HttpTestingController);
 
-                sessionStorageClearSpy = jest.spyOn(sessionStorageService, 'clear');
-                localStorageClearSpy = jest.spyOn(localStorageService, 'clear');
-            });
+        sessionStorageClearSpy = jest.spyOn(sessionStorageService, 'clear');
+        localStorageClearSpy = jest.spyOn(localStorageService, 'clear');
     });
 
     afterEach(() => jest.restoreAllMocks());

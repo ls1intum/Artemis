@@ -76,17 +76,14 @@ describe('ParticipantScoresDistributionComponent', () => {
         gradeSteps: [gradeStep1, gradeStep2, gradeStep3, gradeStep4],
     } as GradingScale;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(GradingSystemService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ParticipantScoresDistributionComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(ParticipantScoresDistributionComponent);
+        component = fixture.componentInstance;
 
-                component.scores = [14, 56];
-            });
+        component.scores = [14, 56];
     });
 
     afterEach(() => jest.restoreAllMocks());

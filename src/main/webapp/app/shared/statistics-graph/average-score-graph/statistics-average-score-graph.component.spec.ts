@@ -73,28 +73,25 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     const categorySet = new Set<string>(categories);
     const exerciseTypeStrings = ['text', 'programming', 'file-upload', 'quiz', 'modeling', 'quiz', 'programming', 'text', 'file-upload', 'programming', 'modeling'];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
-                component = fixture.componentInstance;
-                const routingService = TestBed.inject(ArtemisNavigationUtilService);
-                routingStub = jest.spyOn(routingService, 'routeInNewTab');
-                typeFilter = TestBed.inject(ChartExerciseTypeFilter);
-                typeFilter.typeSet = typeSet;
-                categoryFilter = TestBed.inject(ChartCategoryFilter);
-                categoryFilter.exerciseCategories = categorySet;
+        }).compileComponents();
+        fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
+        component = fixture.componentInstance;
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        routingStub = jest.spyOn(routingService, 'routeInNewTab');
+        typeFilter = TestBed.inject(ChartExerciseTypeFilter);
+        typeFilter.typeSet = typeSet;
+        categoryFilter = TestBed.inject(ChartCategoryFilter);
+        categoryFilter.exerciseCategories = categorySet;
 
-                applyTypeFilterMock = jest.spyOn(typeFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
-                applyCategoryFilterMock = jest.spyOn(categoryFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
+        applyTypeFilterMock = jest.spyOn(typeFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
+        applyCategoryFilterMock = jest.spyOn(categoryFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
 
-                component.exerciseAverageScores = returnValue;
-                component.courseAverage = courseAverageScore;
-                fixture.detectChanges();
-            });
+        component.exerciseAverageScores = returnValue;
+        component.courseAverage = courseAverageScore;
+        fixture.detectChanges();
     });
 
     afterEach(() => {

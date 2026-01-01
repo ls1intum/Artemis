@@ -7,15 +7,12 @@ describe('CategoryIssuesChartComponent', () => {
     let comp: CategoryIssuesChartComponent;
     let category: StaticCodeAnalysisCategory;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CategoryIssuesChartComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(CategoryIssuesChartComponent);
+        comp = fixture.componentInstance;
     });
 
     const initComponent = (categories: StaticCodeAnalysisCategory, maxGradedIssues: number, totalStudents: number, maxNumberOfIssues: number) => {

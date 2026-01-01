@@ -9,16 +9,13 @@ describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;
     let fixture: ComponentFixture<AssessmentComplaintAlertComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AssessmentComplaintAlertComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(AssessmentComplaintAlertComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
     });
 
     it('should create', () => {

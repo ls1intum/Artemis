@@ -12,16 +12,13 @@ describe('RemoveAuxiliaryRepositoryButton', () => {
     let comp: RemoveAuxiliaryRepositoryButtonComponent;
     let fixture: ComponentFixture<RemoveAuxiliaryRepositoryButtonComponent>;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
             providers: [provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(RemoveAuxiliaryRepositoryButtonComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(RemoveAuxiliaryRepositoryButtonComponent);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {

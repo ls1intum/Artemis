@@ -18,16 +18,13 @@ describe('RegisterService', () => {
 
     const postURL = 'api/core/public/register';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: HttpClient, useClass: MockHttpService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(RegisterService);
-                httpClient = TestBed.inject(HttpClient);
-                postSpy = vi.spyOn(httpClient, 'post');
-            });
+        }).compileComponents();
+        service = TestBed.inject(RegisterService);
+        httpClient = TestBed.inject(HttpClient);
+        postSpy = vi.spyOn(httpClient, 'post');
     });
 
     afterEach(() => {

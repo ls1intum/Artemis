@@ -13,17 +13,14 @@ describe('DragItemComponent', () => {
     let fixture: ComponentFixture<DragItemComponent>;
     let comp: DragItemComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [DragDropModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(DragItemComponent);
-                comp = fixture.componentInstance;
-                fixture.componentRef.setInput('dragItem', new DragItem());
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(DragItemComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('dragItem', new DragItem());
     });
 
     afterEach(() => {

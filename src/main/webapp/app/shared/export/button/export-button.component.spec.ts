@@ -10,17 +10,14 @@ describe('ExportButtonComponent', () => {
     let comp: ExportButtonComponent;
     let modalService: NgbModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
             declarations: [ExportButtonComponent, MockComponent(ButtonComponent)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExportButtonComponent);
-                comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExportButtonComponent);
+        comp = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
     });
 
     afterEach(() => {

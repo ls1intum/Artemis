@@ -17,48 +17,45 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
     let component: DummyImportComponent;
     let filterTree: KnowledgeAreaForTree[];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [FormsModule],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(DummyImportComponent);
-                component = componentFixture.componentInstance;
-                const dtoTree = [
+        }).compileComponents();
+        componentFixture = TestBed.createComponent(DummyImportComponent);
+        component = componentFixture.componentInstance;
+        const dtoTree = [
+            {
+                id: 1,
+                children: [
                     {
-                        id: 1,
+                        id: 11,
+                        title: 'knowledge area to filter by',
+                        parentId: 1,
                         children: [
                             {
-                                id: 11,
-                                title: 'knowledge area to filter by',
-                                parentId: 1,
-                                children: [
-                                    {
-                                        id: 111,
-                                        parentId: 11,
-                                    },
-                                ],
-                            },
-                            {
-                                id: 12,
-                                parentId: 1,
+                                id: 111,
+                                parentId: 11,
                             },
                         ],
                     },
                     {
-                        id: 2,
-                        children: [
-                            {
-                                id: 21,
-                                parentId: 2,
-                            },
-                        ],
+                        id: 12,
+                        parentId: 1,
                     },
-                ];
-                filterTree = dtoTree.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
-            });
+                ],
+            },
+            {
+                id: 2,
+                children: [
+                    {
+                        id: 21,
+                        parentId: 2,
+                    },
+                ],
+            },
+        ];
+        filterTree = dtoTree.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
     });
 
     it('should initialize', () => {

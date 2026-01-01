@@ -6,12 +6,9 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 describe('File Upload Exercise Group Cell Component', () => {
     let fixture: ComponentFixture<FileUploadExerciseGroupCellComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FileUploadExerciseGroupCellComponent);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(FileUploadExerciseGroupCellComponent);
     });
 
     it('should display file pattern', () => {

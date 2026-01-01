@@ -14,22 +14,19 @@ describe('ExerciseUnitComponent', () => {
     let exerciseUnitComponentFixture: ComponentFixture<ExerciseUnitComponent>;
     let exerciseUnitComponent: ExerciseUnitComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [ExerciseUnitComponent, MockComponent(CourseExerciseRowComponent)],
-        })
-            .compileComponents()
-            .then(() => {
-                exerciseUnitComponentFixture = TestBed.createComponent(ExerciseUnitComponent);
-                exerciseUnitComponent = exerciseUnitComponentFixture.componentInstance;
+        }).compileComponents();
+        exerciseUnitComponentFixture = TestBed.createComponent(ExerciseUnitComponent);
+        exerciseUnitComponent = exerciseUnitComponentFixture.componentInstance;
 
-                course = new Course();
-                exerciseUnit = new ExerciseUnit();
-                exerciseUnit.exercise = new TextExercise(course, undefined);
+        course = new Course();
+        exerciseUnit = new ExerciseUnit();
+        exerciseUnit.exercise = new TextExercise(course, undefined);
 
-                exerciseUnitComponent.exerciseUnit = exerciseUnit;
-                exerciseUnitComponent.course = course;
-            });
+        exerciseUnitComponent.exerciseUnit = exerciseUnit;
+        exerciseUnitComponent.course = course;
     });
 
     afterEach(() => {

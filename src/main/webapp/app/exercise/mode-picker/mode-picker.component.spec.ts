@@ -21,16 +21,13 @@ describe('Mode Picker Component', () => {
         },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [ModePickerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModePickerComponent<string>);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ModePickerComponent<string>);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {

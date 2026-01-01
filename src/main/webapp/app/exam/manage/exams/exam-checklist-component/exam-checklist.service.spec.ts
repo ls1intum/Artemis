@@ -34,15 +34,12 @@ describe('ExamChecklistService', () => {
     let result: boolean;
     let numericResult: number;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(ExamManagementService)],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ExamChecklistService);
-                examManagementService = TestBed.inject(ExamManagementService);
-            });
+        }).compileComponents();
+        service = TestBed.inject(ExamChecklistService);
+        examManagementService = TestBed.inject(ExamManagementService);
     });
 
     beforeEach(() => {

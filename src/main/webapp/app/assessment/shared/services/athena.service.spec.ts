@@ -49,16 +49,13 @@ describe('AthenaService', () => {
         feedbackSuggestionModule: 'modeling_module',
         gradingCriteria,
     } as Exercise;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
-        })
-            .compileComponents()
-            .then(() => {
-                athenaService = TestBed.inject(AthenaService);
-                httpTestingController = TestBed.inject(HttpTestingController);
-                profileService = TestBed.inject(ProfileService);
-            });
+        }).compileComponents();
+        athenaService = TestBed.inject(AthenaService);
+        httpTestingController = TestBed.inject(HttpTestingController);
+        profileService = TestBed.inject(ProfileService);
     });
 
     const elementID = 'd3184916-e518-45ac-87ca-259ad61e2562';

@@ -15,25 +15,22 @@ describe('Team Config Form Group Component', () => {
     let exercise: Exercise;
     let teamAssignmentConfig: TeamAssignmentConfig;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamConfigFormGroupComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(TeamConfigFormGroupComponent);
+        component = fixture.componentInstance;
 
-                exercise = new ProgrammingExercise(undefined, undefined);
-                exercise.id = 1;
-                teamAssignmentConfig = new TeamAssignmentConfig();
-                teamAssignmentConfig.id = 12;
-                teamAssignmentConfig.exercise = exercise;
-                teamAssignmentConfig.maxTeamSize = 5;
-                teamAssignmentConfig.minTeamSize = 2;
-                exercise.teamAssignmentConfig = teamAssignmentConfig;
-                component.exercise = exercise;
-            });
+        exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.id = 12;
+        teamAssignmentConfig.exercise = exercise;
+        teamAssignmentConfig.maxTeamSize = 5;
+        teamAssignmentConfig.minTeamSize = 2;
+        exercise.teamAssignmentConfig = teamAssignmentConfig;
+        component.exercise = exercise;
     });
 
     it('should set config correctly onNgInit with given input', () => {

@@ -8,15 +8,12 @@ describe('ModelingExplanationEditorComponent', () => {
     let fixture: ComponentFixture<ModelingExplanationEditorComponent>;
     let comp: ModelingExplanationEditorComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingExplanationEditorComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ModelingExplanationEditorComponent);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {

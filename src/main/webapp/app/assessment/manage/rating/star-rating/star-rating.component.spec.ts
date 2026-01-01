@@ -5,8 +5,8 @@ describe('StarRatingComponent', () => {
     let component: StarRatingComponent;
     let fixture: ComponentFixture<StarRatingComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({}).compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
     });
 
     beforeEach(() => {

@@ -6,13 +6,10 @@ describe('ColorSelectorComponent', () => {
     let component: ColorSelectorComponent;
     let fixture: ComponentFixture<ColorSelectorComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ColorSelectorComponent);
-                component = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(ColorSelectorComponent);
+        component = fixture.componentInstance;
     });
 
     it('should set the correct coordinates on init', () => {

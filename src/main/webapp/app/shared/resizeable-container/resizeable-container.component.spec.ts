@@ -5,8 +5,8 @@ describe('ResizeableContainerComponent', () => {
     let component: ResizeableContainerComponent;
     let fixture: ComponentFixture<ResizeableContainerComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({}).compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
     });
 
     beforeEach(() => {

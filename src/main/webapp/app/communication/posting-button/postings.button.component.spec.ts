@@ -10,16 +10,13 @@ describe('PostingButtonComponent', () => {
     let fixture: ComponentFixture<PostingButtonComponent>;
     let debugElement: DebugElement;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [PostingButtonComponent, FaIconComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingButtonComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(PostingButtonComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
     it('should have icon shown if property set', () => {

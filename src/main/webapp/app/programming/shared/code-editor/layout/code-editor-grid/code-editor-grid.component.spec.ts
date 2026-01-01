@@ -13,13 +13,10 @@ describe('CodeEditorGridComponent', () => {
     let comp: CodeEditorGridComponent;
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorGridComponent);
-                comp = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(CodeEditorGridComponent);
+        comp = fixture.componentInstance;
     });
 
     describe('Hide draggable icons', () => {

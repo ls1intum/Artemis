@@ -10,18 +10,15 @@ describe('AddAuxiliaryRepositoryButtonComponent', () => {
     let comp: AddAuxiliaryRepositoryButtonComponent;
     let fixture: ComponentFixture<AddAuxiliaryRepositoryButtonComponent>;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
             providers: [provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AddAuxiliaryRepositoryButtonComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(AddAuxiliaryRepositoryButtonComponent);
+        comp = fixture.componentInstance;
 
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-            });
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
     });
 
     afterEach(() => {

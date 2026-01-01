@@ -9,12 +9,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('Modeling Exercise Group Cell Component', () => {
     let fixture: ComponentFixture<ModelingExerciseGroupCellComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingExerciseGroupCellComponent);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] }).compileComponents();
+        fixture = TestBed.createComponent(ModelingExerciseGroupCellComponent);
     });
 
     it('should display diagram type', () => {

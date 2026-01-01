@@ -21,31 +21,28 @@ describe('ComplaintResponseService', () => {
     let accountService: AccountService;
     let expectedComplaintResponse: any;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
-        })
-            .compileComponents()
-            .then(() => {
-                expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
-                complaintResponseService = TestBed.inject(ComplaintResponseService);
-                httpTestingController = TestBed.inject(HttpTestingController);
-                accountService = TestBed.inject(AccountService);
+        }).compileComponents();
+        expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
+        complaintResponseService = TestBed.inject(ComplaintResponseService);
+        httpTestingController = TestBed.inject(HttpTestingController);
+        accountService = TestBed.inject(AccountService);
 
-                defaultComplaintResponse = new ComplaintResponse();
-                defaultComplaintResponse.id = 1;
-                defaultComplaintResponse.lockEndDate = dayjs();
-                defaultComplaintResponse.submittedTime = dayjs();
-                defaultComplaintResponse.complaint = new Complaint();
-                defaultComplaintResponse.complaint.id = 1;
+        defaultComplaintResponse = new ComplaintResponse();
+        defaultComplaintResponse.id = 1;
+        defaultComplaintResponse.lockEndDate = dayjs();
+        defaultComplaintResponse.submittedTime = dayjs();
+        defaultComplaintResponse.complaint = new Complaint();
+        defaultComplaintResponse.complaint.id = 1;
 
-                complaintResponseResolve = new ComplaintResponseUpdateDTO();
-                complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
-                complaintResponseResolve.responseText = 'response_text';
-                complaintResponseResolve.complaintIsAccepted = true;
-                complaintResponseRefresh = new ComplaintResponseUpdateDTO();
-                complaintResponseRefresh.action = ComplaintAction.REFRESH_LOCK;
-            });
+        complaintResponseResolve = new ComplaintResponseUpdateDTO();
+        complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
+        complaintResponseResolve.responseText = 'response_text';
+        complaintResponseResolve.complaintIsAccepted = true;
+        complaintResponseRefresh = new ComplaintResponseUpdateDTO();
+        complaintResponseRefresh.action = ComplaintAction.REFRESH_LOCK;
     });
 
     afterEach(() => {

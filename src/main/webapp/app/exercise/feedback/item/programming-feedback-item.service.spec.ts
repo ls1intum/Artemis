@@ -12,14 +12,11 @@ describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;
     const exercise = new ProgrammingExercise(undefined, undefined);
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ProgrammingFeedbackItemService);
-            });
+        }).compileComponents();
+        service = TestBed.inject(ProgrammingFeedbackItemService);
     });
 
     it('should create submission policy feedback item', () => {

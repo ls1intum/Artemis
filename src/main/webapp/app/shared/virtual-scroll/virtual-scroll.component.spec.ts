@@ -27,24 +27,21 @@ describe('VirtualScrollComponent', () => {
     const MIN_ITEM_HEIGHT = 126.7;
     const END_OF_LIST_THRESHOLD = 2;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: Router, useClass: MockRouter }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(VirtualScrollComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(VirtualScrollComponent);
+        comp = fixture.componentInstance;
 
-                windowScrollToSpy = jest.spyOn(window, 'scrollTo');
-                prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
-                forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
-                onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
-                jest.spyOn(comp, 'numberItemsCanRender').mockReturnValue(2);
+        windowScrollToSpy = jest.spyOn(window, 'scrollTo');
+        prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
+        forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
+        onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
+        jest.spyOn(comp, 'numberItemsCanRender').mockReturnValue(2);
 
-                // make a copy of type any to assign readonly variable scrollY and prevent circular dependency problem
-                originalWindow = window;
-            });
+        // make a copy of type any to assign readonly variable scrollY and prevent circular dependency problem
+        originalWindow = window;
     });
 
     afterEach(() => {

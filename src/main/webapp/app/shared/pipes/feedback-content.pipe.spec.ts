@@ -6,14 +6,11 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 describe('FeedbackContentPipe', () => {
     let pipe: FeedbackContentPipe;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [FeedbackContentPipe],
-        })
-            .compileComponents()
-            .then(() => {
-                pipe = new FeedbackContentPipe();
-            });
+        }).compileComponents();
+        pipe = new FeedbackContentPipe();
     });
 
     it('should return the detail text if present', () => {

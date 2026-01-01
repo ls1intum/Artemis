@@ -9,13 +9,10 @@ describe('AssessmentWarningComponent', () => {
     let component: AssessmentWarningComponent;
     let fixture: ComponentFixture<AssessmentWarningComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AssessmentWarningComponent);
-                component = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(AssessmentWarningComponent);
+        component = fixture.componentInstance;
     });
 
     it('should not be before exercise due date if the exercise has no due date', () => {

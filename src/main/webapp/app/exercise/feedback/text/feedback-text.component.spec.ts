@@ -14,18 +14,15 @@ describe('FeedbackTextComponent', () => {
 
     let getLongFeedbackStub: jest.SpyInstance;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(LongFeedbackTextService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FeedbackTextComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(FeedbackTextComponent);
+        comp = fixture.componentInstance;
 
-                const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
-                getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'find');
-            });
+        const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
+        getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'find');
     });
 
     afterEach(() => {

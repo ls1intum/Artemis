@@ -39,14 +39,11 @@ describe('Grading System Presentations Component', () => {
         presentationsWeight: 30,
     } as GradingScale;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(GradingSystemPresentationsComponent);
-                component = componentFixture.componentInstance;
-                component.presentationsConfig = { presentationType: PresentationType.NONE };
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        componentFixture = TestBed.createComponent(GradingSystemPresentationsComponent);
+        component = componentFixture.componentInstance;
+        component.presentationsConfig = { presentationType: PresentationType.NONE };
     });
 
     it('should init presentations config for no presentations', () => {

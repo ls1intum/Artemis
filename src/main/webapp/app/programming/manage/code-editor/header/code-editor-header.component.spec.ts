@@ -7,16 +7,13 @@ describe('CodeEditorHeaderComponent', () => {
     let fixture: ComponentFixture<CodeEditorHeaderComponent>;
     let comp: CodeEditorHeaderComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorHeaderComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(CodeEditorHeaderComponent);
+        comp = fixture.componentInstance;
     });
 
     it('should only allow tab sizes between 1 and the maximum size', () => {

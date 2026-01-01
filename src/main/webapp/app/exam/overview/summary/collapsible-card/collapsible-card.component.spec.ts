@@ -6,16 +6,13 @@ let fixture: ComponentFixture<CollapsibleCardComponent>;
 let component: CollapsibleCardComponent;
 
 describe('CollapsibleCardComponent', () => {
-    beforeEach(() => {
-        return TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CollapsibleCardComponent);
-                component = fixture.componentInstance;
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(CollapsibleCardComponent);
+        component = fixture.componentInstance;
 
-                component.toggleCollapse = () => {};
-                component.isCardContentCollapsed = false;
-            });
+        component.toggleCollapse = () => {};
+        component.isCardContentCollapsed = false;
     });
 
     it('should collapse and expand exercise when collapse button is clicked', fakeAsync(() => {
