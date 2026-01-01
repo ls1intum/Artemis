@@ -18,6 +18,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -35,11 +36,15 @@ public class FeatureToggleService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final ProfileService profileService;
+
     private Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            ProfileService profileService) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
+        this.profileService = profileService;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
@@ -101,6 +106,11 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.Memiris)) {
             features.put(Feature.Memiris, false);
+        }
+
+        // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
+        if (profileService.isDevActive()) {
+            features.put(Feature.LectureContentProcessing, false);
         }
     }
 
