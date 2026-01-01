@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -182,7 +183,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
-        participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(new ArrayList<>(modelingAssessment.getFeedbacks()), new ArrayList<>(storedResult.getFeedbacks()),
+                FeedbackType.MANUAL);
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
         assertThat(storedResult.getFeedbacks()).containsExactlyInAnyOrderElementsOf(modelingAssessment.getFeedbacks());
@@ -230,7 +232,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(modelingAssessment.getSubmission().getId());
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getFirstResult()).isNotNull();
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, submission.getLatestResult().getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, new ArrayList<>(submission.getLatestResult().getFeedbacks()), FeedbackType.MANUAL);
         assertThat(submission.getFirstResult().getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
 

@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -258,7 +259,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         Result updatedResult = storedResult.getSubmission().getLatestResult();
-        participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(new ArrayList<>(modelingAssessment.getFeedbacks()), new ArrayList<>(updatedResult.getFeedbacks()),
+                FeedbackType.MANUAL);
         final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
         assertThat(storedResult).as("only feedbacks are changed in the result").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
     }
@@ -287,7 +289,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         Result resultAfterComplaintResponse = resultRepository.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).orElseThrow();
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, resultAfterComplaintResponse.getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, new ArrayList<>(resultAfterComplaintResponse.getFeedbacks()), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
 

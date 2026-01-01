@@ -1,0 +1,932 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        This changeset enforces NOT NULL constraints on foreign key columns in the following relationship chains:
+        - ComplaintResponse -> Complaint -> Result -> Submission -> Participation -> Exercise
+        - Feedback -> Result
+
+        The migration:
+        1. Deletes all orphan records (where parent FK is NULL)
+        2. Backfills exercise_id for template (TPEP) and solution (SPEP) participations
+           from exercise.template_participation_id and exercise.solution_participation_id
+        3. Adds NOT NULL constraints to ensure data integrity going forward
+
+        Orphans are deleted in order from most-dependent to least-dependent entities.
+
+        NOTES:
+        - Template (TPEP) and Solution (SPEP) participations historically had exercise_id IS NULL
+          because their relationship was managed via exercise.template_participation_id and
+          exercise.solution_participation_id. This migration backfills exercise_id for these
+          participations before adding the NOT NULL constraint.
+        - TPEP/SPEP participations not referenced by any exercise are considered orphans and deleted.
+        - Coverage table chain: testwise_coverage_report_entry -> coverage_file_report -> coverage_report -> submission
+
+        =====================================================================================
+        IMPORTANT: BEFORE RUNNING THIS MIGRATION
+        =====================================================================================
+        1. Create a database backup
+        2. Run the verification scripts to check for data issues:
+           - 20251231100000_verification.sql
+           - 20251231100000_before_after_comparison.sql
+        =====================================================================================
+    -->
+
+    <changeSet id="20251231100000" author="krusche">
+
+        <!-- ==================== PHASE 1: Delete orphan complaint_responses ==================== -->
+        <!-- complaint_responses where complaint_id IS NULL -->
+        <sql>
+            DELETE FROM complaint_response WHERE complaint_id IS NULL;
+        </sql>
+
+        <!-- ==================== PHASE 2: Delete orphan complaints ==================== -->
+        <!-- First delete dependent complaint_responses, then the orphan complaints -->
+
+        <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
+            DELETE FROM complaint_response cr
+            USING complaint c
+            WHERE cr.complaint_id = c.id
+              AND c.result_id IS NULL;
+        </sql>
+
+        <sql dbms="mysql" splitStatements="true" endDelimiter=";">
+            DELETE cr
+            FROM complaint_response cr
+            JOIN complaint c ON cr.complaint_id = c.id
+            WHERE c.result_id IS NULL;
+        </sql>
+
+        <sql>
+            DELETE FROM complaint WHERE result_id IS NULL;
+        </sql>
+
+        <!-- ==================== PHASE 3: Delete orphan feedback ==================== -->
+        <!-- First delete long_feedback_text, then orphan feedback -->
+        <!-- Note: text_block.feedback_id has SET NULL, so it's handled automatically -->
+
+        <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
+            DELETE FROM long_feedback_text lft
+            USING feedback f
+            WHERE lft.feedback_id = f.id
+              AND f.result_id IS NULL;
+        </sql>
+
+        <sql dbms="mysql" splitStatements="true" endDelimiter=";">
+            DELETE lft
+            FROM long_feedback_text lft
+            JOIN feedback f ON lft.feedback_id = f.id
+            WHERE f.result_id IS NULL;
+        </sql>
+
+        <sql>
+            DELETE FROM feedback WHERE result_id IS NULL;
+        </sql>
+
+        <!-- ==================== PHASE 4: Delete orphan results ==================== -->
+        <!-- Results where submission_id IS NULL -->
+        <!-- Must delete all dependent records first -->
+
+        <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
+            <!-- Clear participant_score references -->
+            UPDATE participant_score ps
+            SET last_result_id = NULL
+            FROM result r
+            WHERE r.id = ps.last_result_id
+              AND r.submission_id IS NULL;
+
+            UPDATE participant_score ps
+            SET last_rated_result_id = NULL
+            FROM result r
+            WHERE r.id = ps.last_rated_result_id
+              AND r.submission_id IS NULL;
+
+            <!-- Delete long_feedback_text for orphan results -->
+            DELETE FROM long_feedback_text lft
+            USING feedback f
+            JOIN result r ON r.id = f.result_id
+            WHERE lft.feedback_id = f.id
+              AND r.submission_id IS NULL;
+
+            <!-- Delete feedback for orphan results -->
+            DELETE FROM feedback f
+            USING result r
+            WHERE r.id = f.result_id
+              AND r.submission_id IS NULL;
+
+            <!-- Delete assessment_note for orphan results -->
+            DELETE FROM assessment_note a
+            USING result r
+            WHERE r.id = a.result_id
+              AND r.submission_id IS NULL;
+
+            <!-- Delete result_rating for orphan results -->
+            DELETE FROM result_rating rr
+            USING result r
+            WHERE r.id = rr.result_id
+              AND r.submission_id IS NULL;
+
+            <!-- Delete complaint_response for orphan results -->
+            DELETE FROM complaint_response cr
+            USING complaint c
+            JOIN result r ON r.id = c.result_id
+            WHERE cr.complaint_id = c.id
+              AND r.submission_id IS NULL;
+
+            <!-- Delete complaint for orphan results -->
+            DELETE FROM complaint c
+            USING result r
+            WHERE r.id = c.result_id
+              AND r.submission_id IS NULL;
+        </sql>
+
+        <sql dbms="mysql" splitStatements="true" endDelimiter=";">
+            <!-- Clear participant_score references -->
+            UPDATE participant_score ps
+            JOIN result r ON r.id = ps.last_result_id
+            SET ps.last_result_id = NULL
+            WHERE r.submission_id IS NULL;
+
+            UPDATE participant_score ps
+            JOIN result r ON r.id = ps.last_rated_result_id
+            SET ps.last_rated_result_id = NULL
+            WHERE r.submission_id IS NULL;
+
+            <!-- Delete long_feedback_text for orphan results -->
+            DELETE lft
+            FROM long_feedback_text lft
+            JOIN feedback f ON f.id = lft.feedback_id
+            JOIN result r ON r.id = f.result_id
+            WHERE r.submission_id IS NULL;
+
+            <!-- Delete feedback for orphan results -->
+            DELETE f
+            FROM feedback f
+            JOIN result r ON r.id = f.result_id
+            WHERE r.submission_id IS NULL;
+
+            <!-- Delete assessment_note for orphan results -->
+            DELETE a
+            FROM assessment_note a
+            JOIN result r ON r.id = a.result_id
+            WHERE r.submission_id IS NULL;
+
+            <!-- Delete result_rating for orphan results -->
+            DELETE rr
+            FROM result_rating rr
+            JOIN result r ON r.id = rr.result_id
+            WHERE r.submission_id IS NULL;
+
+            <!-- Delete complaint_response for orphan results -->
+            DELETE cr
+            FROM complaint_response cr
+            JOIN complaint c ON cr.complaint_id = c.id
+            JOIN result r ON r.id = c.result_id
+            WHERE r.submission_id IS NULL;
+
+            <!-- Delete complaint for orphan results -->
+            DELETE c
+            FROM complaint c
+            JOIN result r ON r.id = c.result_id
+            WHERE r.submission_id IS NULL;
+        </sql>
+
+        <!-- Note: build_job.result_id has SET NULL on delete, handled automatically -->
+        <sql>
+            DELETE FROM result WHERE submission_id IS NULL;
+        </sql>
+
+        <!-- ==================== PHASE 5: Delete orphan submissions ==================== -->
+        <!-- Submissions where participation_id IS NULL AND not referenced by example_submission -->
+        <!-- NOTE: ExampleSubmissions legitimately use Submissions without participations (for tutor training) -->
+        <!-- Must delete all result dependencies first, then submission dependencies -->
+
+        <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
+            <!-- Clear participant_score references for results of orphan submissions (excluding example submissions) -->
+            UPDATE participant_score ps
+            SET last_result_id = NULL
+            FROM result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE r.id = ps.last_result_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            UPDATE participant_score ps
+            SET last_rated_result_id = NULL
+            FROM result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE r.id = ps.last_rated_result_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete long_feedback_text for results of orphan submissions (excluding example submissions) -->
+            DELETE FROM long_feedback_text lft
+            USING feedback f
+            JOIN result r ON r.id = f.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE lft.feedback_id = f.id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete feedback for results of orphan submissions (excluding example submissions) -->
+            DELETE FROM feedback f
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE r.id = f.result_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete assessment_note for results of orphan submissions (excluding example submissions) -->
+            DELETE FROM assessment_note a
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE r.id = a.result_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete result_rating for results of orphan submissions (excluding example submissions) -->
+            DELETE FROM result_rating rr
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE r.id = rr.result_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete complaint_response for results of orphan submissions (excluding example submissions) -->
+            DELETE FROM complaint_response cr
+            USING complaint c
+            JOIN result r ON r.id = c.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE cr.complaint_id = c.id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete complaint for results of orphan submissions (excluding example submissions) -->
+            DELETE FROM complaint c
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE r.id = c.result_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete results for orphan submissions (excluding example submissions) -->
+            DELETE FROM result r
+            USING submission s
+            WHERE s.id = r.submission_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete build_log_entry for orphan submissions (excluding example submissions) -->
+            DELETE FROM build_log_entry ble
+            USING submission s
+            WHERE s.id = ble.programming_submission_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- NOTE: We no longer clear example_submission references because we're preserving those submissions -->
+
+            <!-- Delete submitted_answer for orphan submissions (excluding example submissions) -->
+            DELETE FROM submitted_answer sa
+            USING submission s
+            WHERE s.id = sa.submission_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete testwise_coverage_report_entry for orphan submissions (excluding example submissions) -->
+            DELETE FROM testwise_coverage_report_entry tcre
+            USING coverage_file_report cfr
+            JOIN coverage_report cr ON cr.id = cfr.full_report_id
+            JOIN submission s ON s.id = cr.submission_id
+            WHERE tcre.file_report_id = cfr.id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete coverage_file_report for orphan submissions (excluding example submissions) -->
+            DELETE FROM coverage_file_report cfr
+            USING coverage_report cr
+            JOIN submission s ON s.id = cr.submission_id
+            WHERE cr.id = cfr.full_report_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete coverage_report for orphan submissions (excluding example submissions) -->
+            DELETE FROM coverage_report cr
+            USING submission s
+            WHERE s.id = cr.submission_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete text_block for orphan submissions (excluding example submissions) -->
+            DELETE FROM text_block tb
+            USING submission s
+            WHERE s.id = tb.submission_id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+        </sql>
+
+        <sql dbms="mysql" splitStatements="true" endDelimiter=";">
+            <!-- Clear participant_score references for results of orphan submissions (excluding example submissions) -->
+            UPDATE participant_score ps
+            JOIN result r ON r.id = ps.last_result_id
+            JOIN submission s ON s.id = r.submission_id
+            SET ps.last_result_id = NULL
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            UPDATE participant_score ps
+            JOIN result r ON r.id = ps.last_rated_result_id
+            JOIN submission s ON s.id = r.submission_id
+            SET ps.last_rated_result_id = NULL
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete long_feedback_text for results of orphan submissions (excluding example submissions) -->
+            DELETE lft
+            FROM long_feedback_text lft
+            JOIN feedback f ON f.id = lft.feedback_id
+            JOIN result r ON r.id = f.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete feedback for results of orphan submissions (excluding example submissions) -->
+            DELETE f
+            FROM feedback f
+            JOIN result r ON r.id = f.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete assessment_note for results of orphan submissions (excluding example submissions) -->
+            DELETE a
+            FROM assessment_note a
+            JOIN result r ON r.id = a.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete result_rating for results of orphan submissions (excluding example submissions) -->
+            DELETE rr
+            FROM result_rating rr
+            JOIN result r ON r.id = rr.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete complaint_response for results of orphan submissions (excluding example submissions) -->
+            DELETE cr
+            FROM complaint_response cr
+            JOIN complaint c ON cr.complaint_id = c.id
+            JOIN result r ON r.id = c.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete complaint for results of orphan submissions (excluding example submissions) -->
+            DELETE c
+            FROM complaint c
+            JOIN result r ON r.id = c.result_id
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete results for orphan submissions (excluding example submissions) -->
+            DELETE r
+            FROM result r
+            JOIN submission s ON s.id = r.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete build_log_entry for orphan submissions (excluding example submissions) -->
+            DELETE ble
+            FROM build_log_entry ble
+            JOIN submission s ON s.id = ble.programming_submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- NOTE: We no longer clear example_submission references because we're preserving those submissions -->
+
+            <!-- Delete submitted_answer for orphan submissions (excluding example submissions) -->
+            DELETE sa
+            FROM submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete testwise_coverage_report_entry for orphan submissions (excluding example submissions) -->
+            DELETE tcre
+            FROM testwise_coverage_report_entry tcre
+            JOIN coverage_file_report cfr ON cfr.id = tcre.file_report_id
+            JOIN coverage_report cr ON cr.id = cfr.full_report_id
+            JOIN submission s ON s.id = cr.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete coverage_file_report for orphan submissions (excluding example submissions) -->
+            DELETE cfr
+            FROM coverage_file_report cfr
+            JOIN coverage_report cr ON cr.id = cfr.full_report_id
+            JOIN submission s ON s.id = cr.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete coverage_report for orphan submissions (excluding example submissions) -->
+            DELETE cr
+            FROM coverage_report cr
+            JOIN submission s ON s.id = cr.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete text_block for orphan submissions (excluding example submissions) -->
+            DELETE tb
+            FROM text_block tb
+            JOIN submission s ON s.id = tb.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+        </sql>
+
+        <!-- Note: submission_version has CASCADE DELETE, handled automatically -->
+        <!-- Delete only orphan submissions that are NOT referenced by example_submission -->
+        <sql>
+            DELETE FROM submission WHERE participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = submission.id);
+        </sql>
+
+        <!-- ==================== PHASE 6: Delete orphan participations ==================== -->
+        <!-- Participations where exercise_id IS NULL -->
+        <!-- Must delete all submission dependencies first -->
+
+        <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
+            <!-- Clear participant_score references for results of submissions of orphan participations -->
+            UPDATE participant_score ps
+            SET last_result_id = NULL
+            FROM result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE r.id = ps.last_result_id
+              AND p.exercise_id IS NULL;
+
+            UPDATE participant_score ps
+            SET last_rated_result_id = NULL
+            FROM result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE r.id = ps.last_rated_result_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete long_feedback_text for results of submissions of orphan participations -->
+            DELETE FROM long_feedback_text lft
+            USING feedback f
+            JOIN result r ON r.id = f.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE lft.feedback_id = f.id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete feedback for results of submissions of orphan participations -->
+            DELETE FROM feedback f
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE r.id = f.result_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete assessment_note for results of submissions of orphan participations -->
+            DELETE FROM assessment_note a
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE r.id = a.result_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete result_rating for results of submissions of orphan participations -->
+            DELETE FROM result_rating rr
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE r.id = rr.result_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete complaint_response for results of submissions of orphan participations -->
+            DELETE FROM complaint_response cr
+            USING complaint c
+            JOIN result r ON r.id = c.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE cr.complaint_id = c.id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete complaint for results of submissions of orphan participations -->
+            DELETE FROM complaint c
+            USING result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE r.id = c.result_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete results for submissions of orphan participations -->
+            DELETE FROM result r
+            USING submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE s.id = r.submission_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete build_log_entry for submissions of orphan participations -->
+            DELETE FROM build_log_entry ble
+            USING submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE s.id = ble.programming_submission_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Clear example_submission references for orphan participations -->
+            UPDATE example_submission es
+            SET submission_id = NULL
+            FROM submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE s.id = es.submission_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete submitted_answer for submissions of orphan participations -->
+            DELETE FROM submitted_answer sa
+            USING submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE s.id = sa.submission_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete testwise_coverage_report_entry for submissions of orphan participations -->
+            DELETE FROM testwise_coverage_report_entry tcre
+            USING coverage_file_report cfr
+            JOIN coverage_report cr ON cr.id = cfr.full_report_id
+            JOIN submission s ON s.id = cr.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE tcre.file_report_id = cfr.id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete coverage_file_report for submissions of orphan participations -->
+            DELETE FROM coverage_file_report cfr
+            USING coverage_report cr
+            JOIN submission s ON s.id = cr.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE cr.id = cfr.full_report_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete coverage_report for submissions of orphan participations -->
+            DELETE FROM coverage_report cr
+            USING submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE s.id = cr.submission_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete text_block for submissions of orphan participations -->
+            DELETE FROM text_block tb
+            USING submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE s.id = tb.submission_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete submissions for orphan participations -->
+            DELETE FROM submission s
+            USING participation p
+            WHERE p.id = s.participation_id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete participation_vcs_access_token for orphan participations -->
+            DELETE FROM participation_vcs_access_token pvat
+            USING participation p
+            WHERE p.id = pvat.participation_id
+              AND p.exercise_id IS NULL;
+        </sql>
+
+        <sql dbms="mysql" splitStatements="true" endDelimiter=";">
+            <!-- Clear participant_score references for results of submissions of orphan participations -->
+            UPDATE participant_score ps
+            JOIN result r ON r.id = ps.last_result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            SET ps.last_result_id = NULL
+            WHERE p.exercise_id IS NULL;
+
+            UPDATE participant_score ps
+            JOIN result r ON r.id = ps.last_rated_result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            SET ps.last_rated_result_id = NULL
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete long_feedback_text for results of submissions of orphan participations -->
+            DELETE lft
+            FROM long_feedback_text lft
+            JOIN feedback f ON f.id = lft.feedback_id
+            JOIN result r ON r.id = f.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete feedback for results of submissions of orphan participations -->
+            DELETE f
+            FROM feedback f
+            JOIN result r ON r.id = f.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete assessment_note for results of submissions of orphan participations -->
+            DELETE a
+            FROM assessment_note a
+            JOIN result r ON r.id = a.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete result_rating for results of submissions of orphan participations -->
+            DELETE rr
+            FROM result_rating rr
+            JOIN result r ON r.id = rr.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete complaint_response for results of submissions of orphan participations -->
+            DELETE cr
+            FROM complaint_response cr
+            JOIN complaint c ON cr.complaint_id = c.id
+            JOIN result r ON r.id = c.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete complaint for results of submissions of orphan participations -->
+            DELETE c
+            FROM complaint c
+            JOIN result r ON r.id = c.result_id
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete results for submissions of orphan participations -->
+            DELETE r
+            FROM result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete build_log_entry for submissions of orphan participations -->
+            DELETE ble
+            FROM build_log_entry ble
+            JOIN submission s ON s.id = ble.programming_submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Clear example_submission references for orphan participations -->
+            UPDATE example_submission es
+            JOIN submission s ON s.id = es.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            SET es.submission_id = NULL
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete submitted_answer for submissions of orphan participations -->
+            DELETE sa
+            FROM submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete testwise_coverage_report_entry for submissions of orphan participations -->
+            DELETE tcre
+            FROM testwise_coverage_report_entry tcre
+            JOIN coverage_file_report cfr ON cfr.id = tcre.file_report_id
+            JOIN coverage_report cr ON cr.id = cfr.full_report_id
+            JOIN submission s ON s.id = cr.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete coverage_file_report for submissions of orphan participations -->
+            DELETE cfr
+            FROM coverage_file_report cfr
+            JOIN coverage_report cr ON cr.id = cfr.full_report_id
+            JOIN submission s ON s.id = cr.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete coverage_report for submissions of orphan participations -->
+            DELETE cr
+            FROM coverage_report cr
+            JOIN submission s ON s.id = cr.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete text_block for submissions of orphan participations -->
+            DELETE tb
+            FROM text_block tb
+            JOIN submission s ON s.id = tb.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete submissions for orphan participations -->
+            DELETE s
+            FROM submission s
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete participation_vcs_access_token for orphan participations -->
+            DELETE pvat
+            FROM participation_vcs_access_token pvat
+            JOIN participation p ON p.id = pvat.participation_id
+            WHERE p.exercise_id IS NULL;
+        </sql>
+
+        <!-- Backfill exercise_id for template participations from exercise.template_participation_id -->
+        <sql>
+            UPDATE participation p
+            SET exercise_id = (
+                SELECT e.id
+                FROM exercise e
+                WHERE e.template_participation_id = p.id
+            )
+            WHERE p.discriminator = 'TPEP'
+              AND p.exercise_id IS NULL;
+        </sql>
+
+        <!-- Backfill exercise_id for solution participations from exercise.solution_participation_id -->
+        <sql>
+            UPDATE participation p
+            SET exercise_id = (
+                SELECT e.id
+                FROM exercise e
+                WHERE e.solution_participation_id = p.id
+            )
+            WHERE p.discriminator = 'SPEP'
+              AND p.exercise_id IS NULL;
+        </sql>
+
+        <!-- Now delete ALL orphan participations (including TPEP/SPEP that are not referenced by any exercise) -->
+        <sql>
+            DELETE FROM participation WHERE exercise_id IS NULL;
+        </sql>
+
+        <!-- ==================== PHASE 7: Add NOT NULL constraints ==================== -->
+
+        <!-- NOTE: complaint_response.complaint_id should remain nullable because production code in
+             ComplaintResponseService.disassociateComplaintAndComplaintResponse uses a workaround pattern
+             that temporarily sets complaint to null before deleting the ComplaintResponse -->
+
+        <addNotNullConstraint tableName="complaint"
+                              columnName="result_id"
+                              columnDataType="BIGINT"/>
+
+        <!-- NOTE: feedback.result_id should remain nullable because production code in
+             ResultService.handleFeedbackPersistence uses a workaround pattern that temporarily
+             sets result to null during save operations -->
+
+        <!-- NOTE: result.submission_id should remain nullable because production code in
+             ProgrammingExerciseGradingService.processNewProgrammingExerciseResult uses a workaround
+             pattern that temporarily sets submission to null during save operations -->
+
+        <!-- NOTE: submission.participation_id should remain nullable because ExampleSubmissions
+             use Submissions without participations (for tutor training purposes) -->
+
+        <!-- NOTE: participation.exercise_id should remain nullable because JPA's orphanRemoval
+             behavior (on Exercise.studentParticipations) temporarily sets exercise_id to NULL
+             before deleting orphaned participations -->
+
+        <rollback>
+            <!-- NOTE: participation.exercise_id, submission.participation_id, result.submission_id,
+                 feedback.result_id, and complaint_response.complaint_id NOT NULL constraints were not added,
+                 so no need to drop them -->
+
+            <dropNotNullConstraint tableName="complaint"
+                                   columnName="result_id"
+                                   columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <!--
+        This changeset adds the correction_round column to the result table and removes the feedback_order
+        column from the feedback table. This is part of the migration from List to Set for Submission.results
+        and Result.feedbacks relationships.
+
+        The correction_round field replaces the index-based correction round logic that was previously
+        derived from the position in the submission's results list.
+
+        The feedback_order field is no longer needed since feedbacks are now stored in a Set without
+        specific ordering requirements.
+    -->
+    <changeSet id="20251231100001" author="krusche">
+        <!-- Add correction_round column to result table -->
+        <addColumn tableName="result">
+            <column name="correction_round" type="INT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!--
+            Populate correction_round for MANUAL and SEMI_AUTOMATIC results only.
+            AUTOMATIC and AUTOMATIC_ATHENA results keep correction_round = NULL.
+
+            For exams with multiple correction rounds:
+            - correction_round 0 = first assessment
+            - correction_round 1 = second assessment (second correction)
+
+            The correction_round is determined by the order of manual assessments
+            within a PARTICIPATION (across all submissions), not per submission.
+            This handles programming exercises where each commit creates a new submission.
+        -->
+        <sql dbms="mysql">
+            UPDATE result r
+            JOIN submission s ON s.id = r.submission_id
+            JOIN (
+                SELECT r1.id,
+                    (SELECT COUNT(*)
+                     FROM result r2
+                     JOIN submission s2 ON s2.id = r2.submission_id
+                     WHERE s2.participation_id = s1.participation_id
+                       AND r2.id &lt; r1.id
+                       AND r2.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                       AND r2.completion_date IS NOT NULL
+                    ) as round_num
+                FROM result r1
+                JOIN submission s1 ON s1.id = r1.submission_id
+                WHERE r1.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                  AND r1.completion_date IS NOT NULL
+            ) ranked ON ranked.id = r.id
+            SET r.correction_round = ranked.round_num
+            WHERE r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC');
+        </sql>
+
+        <sql dbms="postgresql">
+            UPDATE result r
+            SET correction_round = ranked.round_num
+            FROM submission s,
+            (
+                SELECT r1.id,
+                    (SELECT COUNT(*)
+                     FROM result r2
+                     JOIN submission s2 ON s2.id = r2.submission_id
+                     WHERE s2.participation_id = s1.participation_id
+                       AND r2.id &lt; r1.id
+                       AND r2.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                       AND r2.completion_date IS NOT NULL
+                    ) as round_num
+                FROM result r1
+                JOIN submission s1 ON s1.id = r1.submission_id
+                WHERE r1.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                  AND r1.completion_date IS NOT NULL
+            ) ranked
+            WHERE ranked.id = r.id
+              AND s.id = r.submission_id
+              AND r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC');
+        </sql>
+
+        <!-- For H2 (used in tests), use a simpler approach -->
+        <sql dbms="h2">
+            UPDATE result r
+            SET correction_round = (
+                SELECT COUNT(*)
+                FROM result r2
+                JOIN submission s2 ON s2.id = r2.submission_id
+                JOIN submission s1 ON s1.id = r.submission_id
+                WHERE s2.participation_id = s1.participation_id
+                  AND r2.id &lt; r.id
+                  AND r2.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                  AND r2.completion_date IS NOT NULL
+            )
+            WHERE r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+              AND r.completion_date IS NOT NULL;
+        </sql>
+
+        <rollback>
+            <!-- Drop correction_round column -->
+            <dropColumn tableName="result" columnName="correction_round"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Drop the results_order column from the result table (used by @OrderColumn) -->
+    <!-- Separate changeSet with preCondition to handle fresh databases without this column -->
+    <changeSet id="20251231100002" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="result" columnName="results_order"/>
+        </preConditions>
+        <dropColumn tableName="result" columnName="results_order"/>
+        <rollback>
+            <addColumn tableName="result">
+                <column name="results_order" type="INT"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+    <!-- Drop the feedback_order column from the feedback table -->
+    <!-- Separate changeSet with preCondition to handle fresh databases without this column -->
+    <changeSet id="20251231100003" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="feedback" columnName="feedback_order"/>
+        </preConditions>
+        <dropColumn tableName="feedback" columnName="feedback_order"/>
+        <rollback>
+            <addColumn tableName="feedback">
+                <column name="feedback_order" type="INT"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

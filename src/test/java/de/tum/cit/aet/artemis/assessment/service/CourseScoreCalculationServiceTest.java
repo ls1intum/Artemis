@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -58,6 +59,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -142,10 +146,28 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(studentParticipations).isNotEmpty();
 
         // Test with multiple results to assert they are sorted.
+        // Create submissions with distinct timestamps, newer than the original setup (which was 2 weeks ago).
+        // The last submission should have the most recent date and its result (score 60) should be used.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
-        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+        ZonedDateTime baseTime = ZonedDateTime.now().minusDays(3);
+
+        var result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        result1.getSubmission().setSubmissionDate(baseTime);
+        result1.setCompletionDate(baseTime);
+        submissionRepository.save(result1.getSubmission());
+        resultRepository.save(result1);
+
+        var result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        result2.getSubmission().setSubmissionDate(baseTime.plusDays(1));
+        result2.setCompletionDate(baseTime.plusDays(1));
+        submissionRepository.save(result2.getSubmission());
+        resultRepository.save(result2);
+
+        var result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+        result3.getSubmission().setSubmissionDate(baseTime.plusDays(2));
+        result3.setCompletionDate(baseTime.plusDays(2));
+        submissionRepository.save(result3.getSubmission());
+        resultRepository.save(result3);
 
         participantScoreScheduleService.executeScheduledTasks();
 
@@ -192,9 +214,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
         }
         else {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
+            // Score calculation uses the latest result for each exercise.
+            // With the new Set-based implementation, the score is calculated based on distinct submissions and results.
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(4.0);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(16.0);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(80.0);
         }
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));

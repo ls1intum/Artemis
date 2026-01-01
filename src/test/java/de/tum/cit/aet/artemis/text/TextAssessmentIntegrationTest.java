@@ -404,8 +404,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Participation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
 
         assertThat(participation).as("participation found").isNotNull();
-        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst()).as("result found").isNotNull();
-        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst().getAssessor()).as("assessor of participation is hidden").isNull();
+        assertThat(participation.getSubmissions().iterator().next().getResults().iterator().next()).as("result found").isNotNull();
+        assertThat(participation.getSubmissions().iterator().next().getResults().iterator().next().getAssessor()).as("assessor of participation is hidden").isNull();
     }
 
     @Test
@@ -544,7 +544,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
         assertThat(participation).as("participation found").isNotNull();
-        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst()).as("result found").isNotNull();
+        assertThat(participation.getSubmissions().iterator().next().getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getStudent()).as("student of participation is hidden").isEmpty();
     }
 
@@ -1249,7 +1249,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         secondCorrectionFeedback.setCredits(10.0);
         secondCorrectionFeedback.setPositive(true);
         submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().add(secondCorrectionFeedback);
-        textAssessmentDTO.setFeedbacks(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks());
+        textAssessmentDTO.setFeedbacks(new ArrayList<>(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks()));
 
         // assess submission and submit
         Result secondSubmittedManualResult = request.postWithResponseBody("/api/text/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"
@@ -1304,13 +1304,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        Result firstResult = submission.getResults().getFirst();
+        var submissionResultsList = submission.getResults().stream().toList();
+        Result firstResult = submissionResultsList.getFirst();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/text/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(submission.getResults().getFirst()).isEqualTo(lastResult);
+        assertThat(submission.getResults().iterator().next()).isEqualTo(lastResult);
     }
 
     @Test

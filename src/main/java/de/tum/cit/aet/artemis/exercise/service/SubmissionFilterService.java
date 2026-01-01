@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -100,9 +99,13 @@ public class SubmissionFilterService {
          * Sometimes we cannot show the last submission because the assessment due date has not yet passed,
          * but we should still show the student the latest automatically determined score.
          */
-        List<Result> automaticResults = programmingSubmission.getAutomaticResults();
+        Set<Result> automaticResults = programmingSubmission.getAutomaticResults();
         if (!automaticResults.isEmpty()) {
-            programmingSubmission.setResults(List.of(automaticResults.getLast()));
+            // Get the latest automatic result by ID (which correlates with creation order)
+            Result latestAutomatic = automaticResults.stream().max(Comparator.comparing(Result::getId)).orElse(null);
+            if (latestAutomatic != null) {
+                programmingSubmission.setResults(Set.of(latestAutomatic));
+            }
             return true;
         }
         return false;

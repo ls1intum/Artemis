@@ -720,12 +720,12 @@ public class ExerciseService {
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
-                List<Feedback> existingFeedback = result.getFeedbacks();
+                Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
                     existingFeedback.removeAll(feedbackToBeDeleted);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
-                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(existingFeedback);
+                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));
                 result.updateAllFeedbackItems(savedFeedback, exercise instanceof ProgrammingExercise);
             }
 

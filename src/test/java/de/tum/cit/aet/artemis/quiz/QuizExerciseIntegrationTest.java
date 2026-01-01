@@ -1009,7 +1009,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(newResult).isPresent();
-        assertThat(newResult.get()).isEqualTo(submission.getResults().getFirst());
+        assertThat(newResult.get()).isEqualTo(submission.getResults().iterator().next());
     }
 
     @Test

@@ -7,11 +7,13 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlace
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
@@ -24,7 +26,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
@@ -93,11 +94,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties({ "results" })
     private Submission submission;
 
+    /**
+     * The feedbacks belonging to this result.
+     * <p>
+     * Note: We use a Set instead of a List to avoid ordering issues and MultipleBagFetchException
+     * when multiple collections are fetched together. Ordering is not needed for feedbacks.
+     */
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<Feedback> feedbacks = new ArrayList<>();
+    private Set<Feedback> feedbacks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -113,11 +119,15 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
+    /**
+     * Assessment notes for this result.
+     * Note: We use a Set here instead of List to avoid Hibernate's MultipleBagFetchException
+     * when both feedbacks and assessmentNote are fetched together.
+     * It's ensured programmatically that only one note exists per result object.
+     */
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    // OneToMany is required, otherwise the lazy loading does not work
-    // it will be ensured programmatically that only ever one note exists for every result object
     @JoinColumn(name = "result_id", nullable = false)
-    private final List<AssessmentNote> assessmentNote = new ArrayList<>();
+    private final Set<AssessmentNote> assessmentNote = new HashSet<>();
 
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")
@@ -136,6 +146,13 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "exercise_id", nullable = false)
     private long exerciseId;
+
+    /**
+     * The correction round of this result (0 = first correction, 1 = second correction, etc.).
+     * This field replaces the previous index-based correction round logic from the submission's results list.
+     */
+    @Column(name = "correction_round")
+    private Integer correctionRound;
 
     public ZonedDateTime getCompletionDate() {
         return completionDate;
@@ -187,6 +204,14 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     public void setExerciseId(long exerciseId) {
         this.exerciseId = exerciseId;
+    }
+
+    public Integer getCorrectionRound() {
+        return correctionRound;
+    }
+
+    public void setCorrectionRound(Integer correctionRound) {
+        this.correctionRound = correctionRound;
     }
 
     /**
@@ -290,11 +315,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.submission = submission;
     }
 
-    public List<Feedback> getFeedbacks() {
+    public Set<Feedback> getFeedbacks() {
         return feedbacks;
     }
 
-    public Result feedbacks(List<Feedback> feedbacks) {
+    public Result feedbacks(Set<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
         return this;
     }
@@ -305,7 +330,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
-    public void addFeedbacks(List<Feedback> feedbacks) {
+    public void addFeedbacks(Collection<Feedback> feedbacks) {
         feedbacks.forEach(this::addFeedback);
     }
 
@@ -314,8 +339,9 @@ public class Result extends DomainObject implements Comparable<Result> {
         feedback.setResult(null);
     }
 
-    public void setFeedbacks(List<Feedback> feedbacks) {
-        this.feedbacks = feedbacks;
+    public void setFeedbacks(Set<Feedback> feedbacks) {
+        this.feedbacks = feedbacks != null ? feedbacks : new HashSet<>();
+        this.feedbacks.stream().filter(Objects::nonNull).forEach(feedback -> feedback.setResult(this));
     }
 
     /**
@@ -344,7 +370,8 @@ public class Result extends DomainObject implements Comparable<Result> {
         }
         // Note: If there is old feedback that gets removed here and not added again in the forEach-loop, it
         // will also be deleted in the database because of the 'orphanRemoval = true' flag.
-        getFeedbacks().clear();
+        // We clear the internal collection directly (not the copy returned by getFeedbacks())
+        this.feedbacks.clear();
         feedbacks.forEach(this::addFeedback);
     }
 
@@ -468,25 +495,25 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Checks the initialization status of the assessment note before returning. Only a single element is returned instead of the list,
+     * Checks the initialization status of the assessment note before returning. Only a single element is returned instead of the set,
      * because it is modelled that way on the client-side. Jackson therefore needs a single object for the (de-)serialization.
      *
-     * @return Null, if the field is uninitialized or the encapsulating arraylist is empty, or else, the assessment note.
+     * @return Null, if the field is uninitialized or the encapsulating set is empty, or else, the assessment note.
      */
     public AssessmentNote getAssessmentNote() {
         if (!Hibernate.isInitialized(assessmentNote) || assessmentNote.isEmpty()) {
             return null;
         }
         else {
-            return assessmentNote.getFirst();
+            return assessmentNote.iterator().next();
         }
     }
 
     /**
-     * Clears the list before adding a new assessment note. This ensures that it contains at most one element.
-     * When setting null, the list is just cleared, without adding anything afterward.
+     * Clears the set before adding a new assessment note. This ensures that it contains at most one element.
+     * When setting null, the set is just cleared, without adding anything afterward.
      *
-     * @param assessmentNote The assessment note that is added to the list as its new sole element.
+     * @param assessmentNote The assessment note that is added to the set as its new sole element.
      */
     public void setAssessmentNote(AssessmentNote assessmentNote) {
         this.assessmentNote.clear();
@@ -557,7 +584,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Returns a new list that only contains feedback that should be passed to the student.
+     * Returns a new set that only contains feedback that should be passed to the student.
      * Does not change the feedbacks attribute of this entity.
      * Also removes the test names from all feedback if it should not be shown to the student.
      *
@@ -565,11 +592,11 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      * @param exercise             used to check if students can see the test case names
-     * @return the new filtered list
+     * @return the new filtered set
      */
-    public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
+    public Set<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
         var filteredFeedback = feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toCollection(HashSet::new));
 
         if (exercise instanceof ProgrammingExercise programmingExercise && !Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
             filteredFeedback.stream().filter(Feedback::isTestFeedback).forEach(feedback -> {
@@ -628,7 +655,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
-        List<Feedback> feedbacks = getFeedbacks();
+        Set<Feedback> feedbacks = getFeedbacks();
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : feedbacks) {

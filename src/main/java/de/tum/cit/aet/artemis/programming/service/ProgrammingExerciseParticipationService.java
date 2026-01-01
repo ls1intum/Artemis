@@ -366,7 +366,7 @@ public class ProgrammingExerciseParticipationService {
         }
         Submission latestSubmission = latestSubmissionOptional.get();
         Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
-        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(List.of(latestResult)), () -> latestSubmission.setResults(List.of()));
+        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(Set.of(latestResult)), () -> latestSubmission.setResults(Set.of()));
         participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }

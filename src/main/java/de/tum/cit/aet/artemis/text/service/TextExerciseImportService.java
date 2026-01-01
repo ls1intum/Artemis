@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -221,7 +222,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      */
     private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
         Result newResult = newSubmission.getLatestResult();
-        List<Feedback> newFeedbackList = newResult.getFeedbacks();
+        Set<Feedback> newFeedbackList = newResult.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
@@ -252,7 +253,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
 
         // save the feedback (that is not yet in the database) to prevent null index exception
-        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(newFeedbackList);
+        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(newFeedbackList));
         newResult.updateAllFeedbackItems(savedFeedback, false);
         resultRepository.save(newResult);
     }

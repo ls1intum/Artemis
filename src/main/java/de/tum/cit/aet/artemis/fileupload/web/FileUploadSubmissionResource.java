@@ -334,7 +334,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.setResults(Collections.emptyList());
+                fileUploadSubmission.setResults(Collections.emptySet());
             }
         }
 

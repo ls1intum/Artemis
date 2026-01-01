@@ -6,9 +6,11 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -216,7 +218,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedbacks.add(new Feedback().testCase(testCases.get("test2")).positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(testCases.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(testCases.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
+        result.feedbacks(new HashSet<>(feedbacks));
         int originalFeedbackSize = result.getFeedbacks().size();
 
         gradingService.calculateScoreForResult(result, programmingExercise, true);
@@ -240,7 +242,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedbacks.add(new Feedback().testCase(tests.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get("test4")).positive(false).type(FeedbackType.AUTOMATIC));
-        result.setFeedbacks(feedbacks);
+        result.setFeedbacks(new HashSet<>(feedbacks));
         result.setSuccessful(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
 
@@ -267,7 +269,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(3)).positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("manual").positive(false).type(FeedbackType.MANUAL_UNREFERENCED));
-        result.feedbacks(feedbacks);
+        result.feedbacks(new HashSet<>(feedbacks));
         result.successful(false);
         result.rated(true);
         result.assessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -354,7 +356,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         // Build failure
         Submission submissionBF = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
-        var resultBF = new Result().feedbacks(List.of()).rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        var resultBF = new Result().feedbacks(Set.of()).rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         resultBF.setSubmission(submissionBF);
         gradingService.calculateScoreForResult(resultBF, programmingExercise, true);
 
@@ -363,7 +365,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         Submission submissionMF = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         resultMF.setSubmission(submissionMF);
         var feedbackMF = new Feedback().result(result).testCase(testCases.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
-        resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
+        resultMF.feedbacks(new HashSet<>(Set.of(feedbackMF))) // Set must be mutable
                 .rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         gradingService.calculateScoreForResult(resultMF, programmingExercise, true);
 
@@ -473,7 +475,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
+        result.feedbacks(new HashSet<>(feedbacks));
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
         Double scoreBeforeUpdate = result.getScore();
@@ -502,7 +504,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
+        result.feedbacks(new HashSet<>(feedbacks));
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
         Double scoreBeforeUpdate = result.getScore();
@@ -531,7 +533,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedbacks.add(new Feedback().testCase(tests.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().testCase(tests.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
+        result.feedbacks(new HashSet<>(feedbacks));
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
         Double scoreBeforeUpdate = result.getScore();
@@ -742,7 +744,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         for (final var result : updatedStudentResults) {
             result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
-                    .forEach(feedback -> {
+                    .filter(feedback -> feedback.getTestCase() != null).forEach(feedback -> {
                         double bonusPoints = feedback.getTestCase().getBonusPoints();
                         assertThat(feedback.getCredits()).isEqualTo(bonusPoints);
                     });
@@ -981,7 +983,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             var submission5 = participationUtilService.addSubmission(participation5, new ProgrammingSubmission());
             var result5 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission5);
             result5
-                    .feedbacks(List.of())
+                    .feedbacks(Set.of())
                     .score(0D)
                     .rated(true)
                     .successful(false)

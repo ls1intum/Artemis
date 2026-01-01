@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -60,7 +61,7 @@ public class AthenaFeedbackApi extends AbstractAthenaApi {
         athenaFeedbackSuggestionsService.checkLatestSubmissionHasNoAthenaResultOrThrow(submission);
     }
 
-    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
+    public void sendFeedback(Exercise exercise, Submission submission, Collection<Feedback> feedbacks) {
         athenaFeedbackSendingService.sendFeedback(exercise, submission, feedbacks);
     }
 }

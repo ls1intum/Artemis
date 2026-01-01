@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ public class AthenaFeedbackSendingService {
      * @param feedbacks  the feedback given by the tutor
      */
     @Async
-    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
+    public void sendFeedback(Exercise exercise, Submission submission, Collection<Feedback> feedbacks) {
         sendFeedback(exercise, submission, feedbacks, 1);
     }
 
@@ -81,7 +82,7 @@ public class AthenaFeedbackSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     @Async
-    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
+    public void sendFeedback(Exercise exercise, Submission submission, Collection<Feedback> feedbacks, int maxRetries) {
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }

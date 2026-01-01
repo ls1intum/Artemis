@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.text.service;
 
 import static org.hibernate.Hibernate.isInitialized;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -63,7 +64,7 @@ public class TextAssessmentService extends AssessmentService {
 
         if (result != null) {
             // Load Feedback already created for this assessment
-            final List<Feedback> assessments = feedbackRepository.findByResult(result);
+            final Set<Feedback> assessments = new HashSet<>(feedbackRepository.findByResult(result));
             result.setFeedbacks(assessments);
             result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
         }

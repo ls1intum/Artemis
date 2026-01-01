@@ -509,7 +509,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
 
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 if (!isAssessmentOver) {
                     // For assessment that's not over yet

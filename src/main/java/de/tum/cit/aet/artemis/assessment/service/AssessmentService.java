@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -105,8 +107,8 @@ public class AssessmentService {
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
 
         // Create a new result which is a copy of the original result.
-        Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, assessmentUpdate.feedbacks(),
-                assessmentUpdate.assessmentNote());
+        Set<Feedback> feedbacks = assessmentUpdate.feedbacks() != null ? new HashSet<>(assessmentUpdate.feedbacks()) : new HashSet<>();
+        Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, feedbacks, assessmentUpdate.assessmentNote());
 
         newResult.setAssessor(complaintResponse.getReviewer());
         newResult.setAssessmentType(originalResult.getAssessmentType());

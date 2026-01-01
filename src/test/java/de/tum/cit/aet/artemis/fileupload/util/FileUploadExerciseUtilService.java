@@ -238,7 +238,7 @@ public class FileUploadExerciseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-        result.setFeedbacks(feedbacks);
+        result.setFeedbacks(new HashSet<>(feedbacks));
         result.setSubmission(fileUploadSubmission);
         result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);

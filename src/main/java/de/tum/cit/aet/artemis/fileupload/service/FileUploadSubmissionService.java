@@ -8,7 +8,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -154,7 +154,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        fileUploadSubmission.setResults(new ArrayList<>());
+        fileUploadSubmission.setResults(new HashSet<>());
 
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,12 +51,12 @@ public class Complaint extends DomainObject {
     @Column(name = "complaint_type", nullable = false)
     private ComplaintType complaintType = ComplaintType.COMPLAINT;      // default value
 
-    @OneToOne(mappedBy = "complaint")
+    @OneToOne(mappedBy = "complaint", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "complaint", allowGetters = true)
     private ComplaintResponse complaintResponse;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @OneToOne(optional = false)
+    @JoinColumn(unique = true, nullable = false)
     private Result result;
 
     @ManyToOne

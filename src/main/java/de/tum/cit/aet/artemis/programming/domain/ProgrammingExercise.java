@@ -609,7 +609,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public void filterResultsForStudents(Participation participation) {
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
             }

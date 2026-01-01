@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,7 +265,8 @@ public class TextExerciseResource {
 
                 if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     // We want to have the preliminary feedback before the assessment due date too
-                    List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                    Set<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                            .collect(Collectors.toSet());
                     textSubmission.setResults(athenaResults);
                 }
 
@@ -275,7 +277,7 @@ public class TextExerciseResource {
                     textSubmission.setBlocks(textBlocks);
 
                     if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                        List<Feedback> assessments = feedbackRepository.findByResult(result);
+                        Set<Feedback> assessments = new HashSet<>(feedbackRepository.findByResult(result));
                         result.setFeedbacks(assessments);
                     }
 
@@ -284,7 +286,7 @@ public class TextExerciseResource {
                     }
 
                     // only send the one latest result to the client
-                    textSubmission.setResults(List.of(result));
+                    textSubmission.setResults(Set.of(result));
                 }
                 participation.addSubmission(textSubmission);
             }

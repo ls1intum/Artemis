@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -237,7 +238,7 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    public Result storeFeedbackInResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    public Result storeFeedbackInResult(@NonNull Result result, Collection<Feedback> feedbackList, boolean shouldSave) {
         var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.setFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -257,8 +258,8 @@ public class ResultService {
      * @return the updated (and potentially saved) result
      */
     @NonNull
-    public Result addFeedbackToResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
-        List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+    public Result addFeedbackToResult(@NonNull Result result, Collection<Feedback> feedbackList, boolean shouldSave) {
+        Set<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
     }
@@ -442,8 +443,8 @@ public class ResultService {
     }
 
     @NonNull
-    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
-        List<Feedback> savedFeedbacks = new ArrayList<>();
+    private Set<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, Collection<Feedback> feedbackList) {
+        Set<Feedback> savedFeedbacks = new HashSet<>();
 
         // Fetch long feedback texts associated with the provided feedback list
         Map<Long, LongFeedbackText> longFeedbackTextMap = longFeedbackTextRepository
@@ -724,7 +725,7 @@ public class ResultService {
      *                         non-null ID will be processed.
      * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
      */
-    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
+    public void deleteLongFeedback(Collection<Feedback> feedbackList, Result result) {
         if (feedbackList == null) {
             return;
         }

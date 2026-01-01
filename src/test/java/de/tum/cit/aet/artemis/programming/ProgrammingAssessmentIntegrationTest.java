@@ -11,8 +11,10 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -96,7 +98,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         manualResult = ParticipationFactory.generateResult(true, 90D);
-        manualResult.setFeedbacks(feedbacks);
+        manualResult.setFeedbacks(new HashSet<>(feedbacks));
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
         manualResult.setSubmission(programmingSubmission);
@@ -361,7 +363,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Double expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        manualResult.setFeedbacks(feedbacks);
+        manualResult.setFeedbacks(new HashSet<>(feedbacks));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         var score = (points / programmingExercise.getMaxPoints()) * 100.0;
         manualResult.score(score);
@@ -378,7 +380,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // Check that result is over 100% -> 105
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
-        manualResult.setFeedbacks(feedbacks);
+        manualResult.setFeedbacks(new HashSet<>(feedbacks));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
@@ -410,7 +412,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         feedbacks.add(new Feedback().credits(1.00).detailText("nice submission 2"));
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
 
-        manualResult.setFeedbacks(feedbacks);
+        manualResult.setFeedbacks(new HashSet<>(feedbacks));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
@@ -486,7 +488,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
+        manualResult.setFeedbacks(new HashSet<>(manualResult.getFeedbacks().stream().limit(1).toList()));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
@@ -512,7 +514,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
+        manualResult.setFeedbacks(new HashSet<>(manualResult.getFeedbacks().stream().limit(1).toList()));
         manualResult.setScore(77D);
         manualResult.rated(true);
 
@@ -558,7 +560,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var manualLongFeedback = new Feedback().credits(0.0);
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
-        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        var result = new Result().feedbacks(Set.of(manualLongFeedback)).score(0.0);
         result.setRated(true);
         result.setExerciseId(programmingExercise.getId());
         result = resultRepository.save(result);
@@ -568,7 +570,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
                 Result.class, HttpStatus.OK, params);
 
-        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().iterator().next().getId());
         assertThat(longFeedbackText).isPresent();
         assertThat(longFeedbackText.get().getText()).isEqualTo(longText);
     }
@@ -580,12 +582,12 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
-        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0).rated(true);
+        var result = new Result().feedbacks(Set.of(manualLongFeedback)).score(0.0).rated(true);
         result.setExerciseId(programmingExercise.getId());
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
-        manualLongFeedback = result.getFeedbacks().getFirst();
+        manualLongFeedback = result.getFeedbacks().iterator().next();
 
         // The actual complete longtext is still stored in the detailText field when the result is sent from the client
         var detailText = Feedback.class.getDeclaredField("detailText");
@@ -597,7 +599,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
                 Result.class, HttpStatus.OK, params);
 
-        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().iterator().next().getId());
         assertThat(longFeedbackText).isPresent();
         assertThat(longFeedbackText.get().getText()).isEqualTo(newLongText);
     }
@@ -652,7 +654,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(feedbacks);
+        manualResult.setFeedbacks(new HashSet<>(feedbacks));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
         return resultRepository.save(manualResult);
@@ -712,7 +714,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         result.setCompletionDate(ZonedDateTime.now());
-        result.setFeedbacks(feedbacks);
+        result.setFeedbacks(new HashSet<>(feedbacks));
         programmingSubmission.setParticipation(participation);
         result.setSubmission(programmingSubmission);
         request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results", result, Result.class, httpStatus);
@@ -770,7 +772,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(submission.getResults()).isNotNull();
             assertThat(submission.getLatestResult()).isNotNull();
             assertThat(submission.getResults()).hasSize(1);
-            assertThat(submission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            assertThat(submission.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         }
 
         // request to manually assess latest submission (correction round: 0)
@@ -802,7 +804,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
-        manualResultLockedFirstRound.setFeedbacks(feedbacks);
+        manualResultLockedFirstRound.setFeedbacks(new HashSet<>(feedbacks));
         manualResultLockedFirstRound.setRated(true);
         manualResultLockedFirstRound.setScore(80D);
 
@@ -889,7 +891,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // assess submission and submit
         final var manualResultLockedSecondRound = submissionWithoutSecondAssessment.getLatestResult();
         assertThat(manualResultLockedFirstRound).isNotEqualTo(manualResultLockedSecondRound);
-        manualResultLockedSecondRound.setFeedbacks(feedbacks);
+        manualResultLockedSecondRound.setFeedbacks(new HashSet<>(feedbacks));
         manualResultLockedSecondRound.setRated(true);
         manualResultLockedSecondRound.setScore(90D);
 
@@ -976,7 +978,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         List<Feedback> overrideFeedback = new ArrayList<>();
         addAssessmentFeedbackAndCheckScore(overrideFeedback, 10.0, 10D);
         assertThat(resultAfterComplaint).isNotNull();
-        resultAfterComplaint.setFeedbacks(overrideFeedback);
+        resultAfterComplaint.setFeedbacks(new HashSet<>(overrideFeedback));
         resultAfterComplaint.setRated(true);
         resultAfterComplaint.setScore(10D);
 
@@ -1045,9 +1047,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(5);
-        Result firstResult = submission.getResults().getFirst();
-        Result midResult = submission.getResults().get(2);
-        Result firstSemiAutomaticResult = submission.getResults().get(3);
+        var submissionResultsList = submission.getResults().stream().toList();
+        Result firstResult = submissionResultsList.getFirst();
+        Result midResult = submissionResultsList.get(2);
+        Result firstSemiAutomaticResult = submissionResultsList.get(3);
 
         Result lastResult = submission.getLatestResult();
         // we will only delete the middle automatic result at index 2
@@ -1056,9 +1059,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);
-        assertThat(submission.getResults().getFirst()).isEqualTo(firstResult);
-        assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);
-        assertThat(submission.getResults().get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
+        var updatedSubmissionResultsList = submission.getResults().stream().toList();
+        assertThat(updatedSubmissionResultsList.getFirst()).isEqualTo(firstResult);
+        assertThat(updatedSubmissionResultsList.get(2)).isEqualTo(firstSemiAutomaticResult);
+        assertThat(updatedSubmissionResultsList.get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
     }
 
     @Test
@@ -1103,9 +1107,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
-        Result resultToDelete = submission.getResults().get(0);
-        Result secondResult = submission.getResults().get(1);
-        Result thirdResult = submission.getResults().get(2);
+        var instructorSubmissionResultsList = submission.getResults().stream().toList();
+        Result resultToDelete = instructorSubmissionResultsList.get(0);
+        Result secondResult = instructorSubmissionResultsList.get(1);
+        Result thirdResult = instructorSubmissionResultsList.get(2);
         assertThat(submission.getResults()).hasSize(3);
 
         request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/"
@@ -1113,7 +1118,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(0)).isEqualTo(secondResult);
-        assertThat(submission.getResults().get(1)).isEqualTo(thirdResult);
+        var updatedInstructorSubmissionResultsList = submission.getResults().stream().toList();
+        assertThat(updatedInstructorSubmissionResultsList.get(0)).isEqualTo(secondResult);
+        assertThat(updatedInstructorSubmissionResultsList.get(1)).isEqualTo(thirdResult);
     }
 }

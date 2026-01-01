@@ -26,6 +26,7 @@ export class Result implements BaseEntity {
     public passedTestCaseCount?: number;
     public codeIssueCount?: number;
     public buildJobId?: string;
+    public correctionRound?: number;
 
     public submission?: Submission;
     public assessor?: User;

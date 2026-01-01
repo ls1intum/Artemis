@@ -2,13 +2,10 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,7 +22,6 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -94,11 +90,13 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
      * are deleted in a transactional method.
+     * <p>
+     * Note: We use a Set instead of a List to avoid ordering issues and MultipleBagFetchException.
+     * Results can be ordered by completionDate or correctionRound when needed.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
     @JsonIgnoreProperties({ "submission", "participation" })
-    private List<Result> results = new ArrayList<>();
+    private Set<Result> results = new HashSet<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -125,14 +123,17 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * Get the latest result of the submission
+     * Get the latest result of the submission (by ID, which correlates with creation order)
      *
      * @return a {@link Result} or null
      */
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+        if (results == null || results.isEmpty()) {
+            return null;
+        }
+        Result latestResult = results.stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -151,8 +152,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+        if (results == null || results.isEmpty()) {
+            return null;
+        }
+        Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null).max(Comparator.comparing(Result::getCompletionDate))
+                .orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -163,7 +167,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * Used to get result by correction round (which ignores automatic results).
-     * Works for all exercise types
+     * Works for all exercise types. Uses the correctionRound field of the Result entity.
      *
      * @param correctionRound to get result by
      * @return the result based on the given correction round
@@ -171,75 +175,67 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getResultForCorrectionRound(int correctionRound) {
-        List<Result> filteredResults = filterNonAutomaticResults();
-        if (correctionRound >= 0 && filteredResults.size() > correctionRound) {
-            return filteredResults.get(correctionRound);
+        if (results == null || results.isEmpty()) {
+            return null;
         }
-        return null;
+        return results.stream().filter(result -> result != null && !(result.isAutomatic() || result.isAthenaBased()))
+                .filter(result -> result.getCorrectionRound() != null && result.getCorrectionRound() == correctionRound).findFirst().orElse(null);
     }
 
     /**
-     * @return an unmodifiable list or all non-automatic results
+     * @return an unmodifiable list of all non-automatic results
      */
     @NonNull
     private List<Result> filterNonAutomaticResults() {
-        return results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).toList();
+        return results.stream().filter(result -> result != null && !(result.isAutomatic() || result.isAthenaBased())).toList();
     }
 
     /**
-     * Used to get result by correction round when ignoring all automatic results.
-     * The result list can contain null values when it is called here.
-     * So accessing the result list by correctionRound either yields null or a result.
+     * Checks if a result exists for the given correction round (ignoring automatic results).
+     * Uses the correctionRound field of the Result entity.
      *
      * @param correctionRound for which it is checked if the tutor has a result
      * @return true if the tutor has a result in the correctionRound, false otherwise
      */
     @JsonIgnore
     public boolean hasResultForCorrectionRound(int correctionRound) {
-        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
-        if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound) != null;
-        }
-        return false;
+        return getResultForCorrectionRound(correctionRound) != null;
     }
 
     /**
-     * removes all automatic results from a submissions result list
+     * Removes all automatic results from the submission's result set.
      * (do not save it like this in the database, as it could remove the automatic results!)
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(result -> result != null && !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**
-     * removes all elements from the results list, which are null.
+     * Removes all null elements from the results set.
      * <p>
-     * This can be used to prepare a submission before sending it to the client. In some cases the submission is loaded from the database
-     * with a results list which contains undesired null values. To get rid of them this function can be used.
-     * <p>
-     * When a submission with results is fetched for a specific assessor, hibernate wants to keep the order of the results list,
-     * as it is in the ordered column in the database.
-     * To maintain the index of the result with the assessor within the results list, null elements are used as padding.
+     * This can be used to prepare a submission before sending it to the client.
+     * Note: With Set instead of List, null values are less likely to occur,
+     * but this method is kept for safety.
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
-    public List<Result> getResults() {
+    public Set<Result> getResults() {
         return results;
     }
 
     @JsonIgnore
-    public List<Result> getAutomaticResults() {
-        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getAutomaticResults() {
+        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonIgnore
-    public List<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getManualResults() {
+        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**
@@ -248,8 +244,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @return non athena automatic results excluding null results
      */
     @JsonIgnore
-    public List<Result> getNonAthenaResults() {
-        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getNonAthenaResults() {
+        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**
@@ -261,56 +257,58 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getManualResultsById(long resultId) {
-        return getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().orElse(null);
+        return getManualResults().stream().filter(result -> result.getId().equals(resultId)).findFirst().orElse(null);
     }
 
     /**
-     * Get the first result of the submission
+     * Get the first result of the submission (by ID order, which correlates with creation order).
      *
      * @return a {@link Result} or null if no result is present
      */
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (results != null && !results.isEmpty()) {
-            return results.getFirst();
+        if (results == null || results.isEmpty()) {
+            return null;
         }
-        return null;
+        return results.stream().filter(Objects::nonNull).min(Comparator.comparing(Result::getId)).orElse(null);
     }
 
     /**
-     * Get the first manual result of the submission
+     * Get the first manual result of the submission (by ID order, which correlates with creation order).
      *
      * @return a {@link Result} or null if no result is present
      */
     @Nullable
     @JsonIgnore
     public Result getFirstManualResult() {
-        if (results != null && !results.isEmpty()) {
-            return this.getManualResults().getFirst();
+        if (results == null || results.isEmpty()) {
+            return null;
         }
-        return null;
+        return getManualResults().stream().min(Comparator.comparing(Result::getId)).orElse(null);
     }
 
     /**
-     * Add a result to the list.
+     * Add a result to the set.
      * NOTE: You must make sure to correctly persist the result in the database!
      *
      * @param result the {@link Result} which should be added
      */
     public void addResult(Result result) {
         this.results.add(result);
+        result.setSubmission(this);
     }
 
     /**
-     * Set the results list to the specified list.
+     * Set the results set to the specified set.
      * NOTE: You must correctly persist this change in the database manually!
      *
-     * @param results The list of {@link Result} which should replace the existing results of the submission
+     * @param results The set of {@link Result} which should replace the existing results of the submission
      */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(List<Result> results) {
-        this.results = results;
+    public void setResults(Set<Result> results) {
+        this.results = results != null ? results : new HashSet<>();
+        this.results.stream().filter(Objects::nonNull).forEach(result -> result.setSubmission(this));
     }
 
     public Participation getParticipation() {
@@ -379,17 +377,20 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     public abstract String getSubmissionExerciseType();
 
     /**
-     * In case user calls for correctionRound 0, but more manual results already exists
-     * and he has not requested a specific result, remove any other results
+     * In case user calls for correctionRound 0, but more manual results already exist
+     * and they have not requested a specific result, remove any other results.
      *
      * @param correctionRound for which not to remove results
      * @param resultId        specific resultId
      */
     public void removeNotNeededResults(int correctionRound, Long resultId) {
         if (correctionRound == 0 && resultId == null && getResults().size() >= 2) {
-            var resultList = new ArrayList<Result>();
-            resultList.add(getFirstManualResult());
-            setResults(resultList);
+            var resultSet = new HashSet<Result>();
+            Result firstManualResult = getFirstManualResult();
+            if (firstManualResult != null) {
+                resultSet.add(firstManualResult);
+            }
+            setResults(resultSet);
         }
     }
 

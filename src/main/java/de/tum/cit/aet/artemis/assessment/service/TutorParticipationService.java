@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStat
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.TRAINED;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -147,7 +148,7 @@ public class TutorParticipationService {
         return Optional.empty();
     }
 
-    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
+    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, Collection<Feedback> instructorFeedback) {
         List<Feedback> matchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> {
             // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
             if (tutorFeedback.getType() == MANUAL_UNREFERENCED) {

@@ -782,10 +782,10 @@ public class ParticipationService {
                 Submission latestSubmission = participation.getSubmissions().iterator().next();
                 Result latest = resultBySubmissionId.get(latestSubmission.getId());
                 if (latest != null) {
-                    latestSubmission.setResults(List.of(latest));
+                    latestSubmission.setResults(Set.of(latest));
                 }
                 else {
-                    latestSubmission.setResults(Collections.emptyList());
+                    latestSubmission.setResults(Collections.emptySet());
                 }
             }
         }

@@ -534,6 +534,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     private ComplaintResponse createLockOnComplaint(String lockOwnerLogin, boolean runOut) {
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
+        complaint.setComplaintResponse(complaintResponse); // maintain bidirectional relationship
         User tutor = userTestRepository.findOneByLogin(lockOwnerLogin).orElseThrow();
         complaintResponse.setReviewer(tutor);
         complaintResponse = complaintResponseTestRepository.saveAndFlush(complaintResponse);

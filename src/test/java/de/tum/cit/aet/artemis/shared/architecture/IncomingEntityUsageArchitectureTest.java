@@ -27,7 +27,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
-public class IncomingEntityUsageArchitectureTest {
+class IncomingEntityUsageArchitectureTest {
 
     private static final String BASE_PACKAGE = "de.tum.cit.aet.artemis";
 

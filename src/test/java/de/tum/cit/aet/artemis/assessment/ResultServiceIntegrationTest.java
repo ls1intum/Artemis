@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -172,14 +173,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         this.examRepository.save(exam);
 
         Result result = ParticipationFactory.generateResult(true, 200D).submission(modelingSubmission);
-        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Set<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(HashSet::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         Result result2 = ParticipationFactory.generateResult(true, 200D).submission(programmingSubmission);
-        List<Feedback> feedbacks2 = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Set<Feedback> feedbacks2 = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(HashSet::new));
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
@@ -198,7 +199,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         List<Feedback> feedbacks = request.getList(
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+        assertThat(feedbacks).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test

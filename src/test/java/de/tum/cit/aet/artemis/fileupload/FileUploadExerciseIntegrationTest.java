@@ -275,9 +275,17 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+
+        // Create a proper participation -> submission -> result -> feedback chain
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, TEST_PREFIX + "student1");
+        FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(true);
+        submission = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(participation, submission);
+
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
-        feedbackRepository.save(feedback);
+        result.addFeedback(feedback);
+        resultRepository.save(result);
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 
@@ -576,7 +584,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())
                 .isEqualTo(3);
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -86,7 +85,7 @@ public class ParticipationFilterService {
                     latestResult.filterSensitiveInformation();
                 }
             }
-            submission.setResults(new ArrayList<>(results));
+            submission.setResults(results);
         }
 
         // add submission to participation or set it to empty set if no submission is available

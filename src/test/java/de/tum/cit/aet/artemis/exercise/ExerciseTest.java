@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -66,9 +65,9 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         submission2.setSubmissionDate(ZonedDateTime.now().plusDays(1));
         submission3.setSubmissionDate(ZonedDateTime.now().plusDays(2));
 
-        submission1.setResults(List.of(ratedResult));
-        submission2.setResults(List.of(ratedResult));
-        submission3.setResults(List.of(ratedResult));
+        submission1.setResults(Set.of(ratedResult));
+        submission2.setResults(Set.of(ratedResult));
+        submission3.setResults(Set.of(ratedResult));
 
         submission1.setCommitHash("aaaaa");
         submission2.setCommitHash("bbbbb");
@@ -123,9 +122,9 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void filterForCourseDashboard_submissionWithoutResultsOrder() {
-        submission1.setResults(List.of());
-        submission2.setResults(List.of());
-        submission3.setResults(List.of());
+        submission1.setResults(Set.of());
+        submission2.setResults(Set.of());
+        submission3.setResults(Set.of());
 
         exerciseService.filterExerciseForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));

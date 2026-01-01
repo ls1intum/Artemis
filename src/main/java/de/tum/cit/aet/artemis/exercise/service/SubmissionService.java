@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -193,8 +195,7 @@ public class SubmissionService {
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -372,7 +373,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResults(new ArrayList<>());
+                    submission.setResults(new HashSet<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -425,25 +426,40 @@ public class SubmissionService {
      *
      * @param newResult new result to copy feedback to
      * @param oldResult old result to copy feedback from
-     * @return the list of newly created feedbacks
+     * @return the set of newly created feedbacks
      */
-    public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
-        List<Feedback> oldFeedback = oldResult.getFeedbacks();
+    public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
+        Set<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
         return newResult.getFeedbacks();
     }
 
     /**
-     * Copy feedback from a feedback list to a Result
+     * Copy feedback from a feedback set to a Result
      *
      * @param result    the result to copy feedback to
      * @param feedbacks the feedbacks which are copied
      */
-    private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+    private void copyFeedbackToResult(Result result, Set<Feedback> feedbacks) {
         if (feedbacks == null) {
             return;
         }
-        feedbacks.forEach(feedback -> {
+        // Deduplicate feedbacks by ID to avoid Cartesian product issues when feedbacks
+        // are loaded via EntityGraph with multiple collections (results.feedbacks + blocks).
+        // The same feedback may appear multiple times in the list due to JOIN operations.
+        // Note: We only deduplicate feedbacks that have an ID (loaded from DB).
+        // New feedbacks (without ID) are processed as-is.
+        List<Feedback> feedbacksWithId = feedbacks.stream().filter(f -> f != null && f.getId() != null).toList();
+        List<Feedback> feedbacksWithoutId = feedbacks.stream().filter(f -> f != null && f.getId() == null).toList();
+        List<Feedback> uniqueFeedbacksWithId = feedbacksWithId.stream().collect(
+                Collectors.collectingAndThen(Collectors.toMap(Feedback::getId, feedback -> feedback, (f1, f2) -> f1, LinkedHashMap::new), map -> new ArrayList<>(map.values())));
+        // Process feedbacks with IDs (deduplicated)
+        uniqueFeedbacksWithId.forEach(feedback -> {
+            Feedback newFeedback = feedbackService.copyFeedback(feedback);
+            result.addFeedback(newFeedback);
+        });
+        // Process feedbacks without IDs (new feedbacks)
+        feedbacksWithoutId.forEach(feedback -> {
             Feedback newFeedback = feedbackService.copyFeedback(feedback);
             result.addFeedback(newFeedback);
         });
@@ -479,9 +495,11 @@ public class SubmissionService {
      * @param assessmentNoteText the new text of the assessment note
      * @return the newly created result
      */
-    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
+    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, Set<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Preserve the correction round from the original result
+        newResult.setCorrectionRound(oldResult.getCorrectionRound());
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
@@ -560,6 +578,8 @@ public class SubmissionService {
                 // we set the assessment type to semi-automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                // Set the correction round for exam exercises with multiple correction rounds
+                result.setCorrectionRound(correctionRound);
                 result = saveNewResult(latestSubmission.get(), result);
 
                 var feedback = new Feedback();
@@ -569,7 +589,7 @@ public class SubmissionService {
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback = feedbackRepository.save(feedback);
                 feedback.setResult(result);
-                result.setFeedbacks(List.of(feedback));
+                result.setFeedbacks(Set.of(feedback));
                 resultRepository.save(result);
             }
         }
@@ -640,6 +660,8 @@ public class SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
+        // Set the correction round on the result for exam exercises with multiple correction rounds
+        result.setCorrectionRound(correctionRound);
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
         result = resultRepository.save(result);

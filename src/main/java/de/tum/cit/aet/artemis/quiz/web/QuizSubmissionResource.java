@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -115,7 +115,7 @@ public class QuizSubmissionResource {
             quizSubmission.setSubmitted(submit);
             // make sure no results are sent from client to server
             if (quizSubmission.getResults() != null && !quizSubmission.getResults().isEmpty()) {
-                quizSubmission.setResults(List.of());
+                quizSubmission.setResults(Set.of());
             }
             QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);

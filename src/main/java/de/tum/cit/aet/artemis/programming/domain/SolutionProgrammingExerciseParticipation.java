@@ -24,6 +24,8 @@ public class SolutionProgrammingExerciseParticipation extends AbstractBaseProgra
     @Override
     public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
         this.programmingExercise = programmingExercise;
+        // Also set the inherited exercise field to ensure exercise_id is persisted in the database
+        this.exercise = programmingExercise;
     }
 
     @Override

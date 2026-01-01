@@ -172,7 +172,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
         // Jenkins Setup -> Gradle Feedback is not duplicated and should be kept like this
-        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
+        assertThat(result.getFeedbacks().iterator().next().getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
     }
 
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {

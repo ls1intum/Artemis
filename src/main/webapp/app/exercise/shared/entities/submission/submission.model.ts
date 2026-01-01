@@ -69,8 +69,8 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    if (submission?.results && submission?.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
-        return submission.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
+    if (submission?.results) {
+        return submission.results.find((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && result?.correctionRound === correctionRound);
     }
     return undefined;
 }
@@ -109,22 +109,40 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
 }
 
 export function setSubmissionResultByCorrectionRound(submission: Submission, result: Result, correctionRound: number) {
-    if (!submission || !result || !submission.results) {
+    if (!submission || !result) {
         return;
     }
-    submission.results[correctionRound] = result;
+    if (!submission.results) {
+        submission.results = [];
+    }
 
-    if (submission.results.length === correctionRound + 1) {
+    // Set the correctionRound on the result
+    result.correctionRound = correctionRound;
+
+    // Find existing result with this correction round and replace it, or add the new result
+    const existingIndex = submission.results.findIndex((r) => r?.correctionRound === correctionRound);
+    if (existingIndex >= 0) {
+        submission.results[existingIndex] = result;
+    } else {
+        submission.results.push(result);
+    }
+
+    // Update latestResult if this is the highest correction round
+    const maxCorrectionRound = Math.max(...submission.results.map((r) => r?.correctionRound ?? 0));
+    if (correctionRound === maxCorrectionRound) {
         submission.latestResult = result;
     }
 }
 
 export function getFirstResult(submission: Submission | undefined): Result | undefined {
-    if (submission?.results) {
-        const length = submission.results.length;
-        if (length > 0) {
-            return submission.results[0];
+    if (submission?.results && submission.results.length > 0) {
+        // Find the result with correctionRound === 0, or fall back to the result with the lowest correctionRound
+        const firstRoundResult = submission.results.find((r) => r?.correctionRound === 0);
+        if (firstRoundResult) {
+            return firstRoundResult;
         }
+        // Fall back to result with minimum correctionRound (for backwards compatibility)
+        return submission.results.reduce((min, r) => (!min || (r?.correctionRound ?? 0) < (min?.correctionRound ?? 0) ? r : min));
     }
 }
 

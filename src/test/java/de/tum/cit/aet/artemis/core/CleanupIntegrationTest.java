@@ -361,8 +361,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor);
         oldResult1.setRated(false);
+        oldResult1 = resultRepository.save(oldResult1);
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
         oldResult2.setRated(false);
+        oldResult2 = resultRepository.save(oldResult2);
 
         var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
         var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
@@ -390,8 +392,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor);
         newResult1.setRated(false);
+        newResult1 = resultRepository.save(newResult1);
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
         newResult2.setRated(false);
+        newResult2 = resultRepository.save(newResult2);
 
         var newFeedback1 = createFeedbackWithLinkedLongFeedback();
         var newTextBlock1 = createTextBlockForFeedback(newFeedback1);

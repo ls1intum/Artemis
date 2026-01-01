@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -64,21 +63,21 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
      * Given the id of an example submission, it returns the results of the linked submission, if any
      *
      * @param exampleSubmissionId the id of the example submission we want to retrieve
-     * @return list of feedback for an example submission
+     * @return set of feedback for an example submission
      */
-    default List<Feedback> getFeedbackForExampleSubmission(long exampleSubmissionId) {
+    default Set<Feedback> getFeedbackForExampleSubmission(long exampleSubmissionId) {
         var exampleSubmission = getValueElseThrow(findByIdWithResultsAndFeedback(exampleSubmissionId), exampleSubmissionId);
         var submission = exampleSubmission.getSubmission();
 
         if (submission == null) {
-            return List.of();
+            return Set.of();
         }
 
         Result result = submission.getLatestResult();
 
         // result.isExampleResult() can have 3 values: null, false, true. We return if it is not true
         if (result == null || !Boolean.TRUE.equals(result.isExampleResult())) {
-            return List.of();
+            return Set.of();
         }
 
         return result.getFeedbacks();

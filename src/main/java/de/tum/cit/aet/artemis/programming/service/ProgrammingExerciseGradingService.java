@@ -573,10 +573,10 @@ public class ProgrammingExerciseGradingService {
      * @param weightSum                  the sum of all weights of test cases that are visible
      */
     private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
-            Set<ProgrammingExerciseTestCase> successfulTestCases, List<Feedback> staticCodeAnalysisFeedback, double weightSum) {
+            Set<ProgrammingExerciseTestCase> successfulTestCases, Set<Feedback> staticCodeAnalysisFeedback, double weightSum) {
 
         ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> successfulTestCases,
-                List<Feedback> staticCodeAnalysisFeedback) {
+                Set<Feedback> staticCodeAnalysisFeedback) {
             this(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback, calculateWeightSum(testCases));
         }
 
@@ -602,7 +602,7 @@ public class ProgrammingExerciseGradingService {
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NonNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
         List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
-        List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
+        Set<Feedback> staticCodeAnalysisFeedback = new HashSet<>();
         List<Feedback> testCaseFeedback = new ArrayList<>();
 
         for (Feedback automaticFeedback : automaticFeedbacks) {
@@ -671,7 +671,7 @@ public class ProgrammingExerciseGradingService {
      * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
      */
-    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final Set<Feedback> staticCodeAnalysisFeedback) {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
         createFeedbacksForDuplicateTests(result, exercise);
@@ -835,7 +835,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
-        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase().equals(testCase)).findFirst()
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase() != null && fb.getTestCase().equals(testCase)).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
@@ -898,11 +898,11 @@ public class ProgrammingExerciseGradingService {
      * Also updates the credits of each SCA feedback item as a side effect.
      * This allows other parts of Artemis a more simplified score calculation by just summing up all feedback points.
      *
-     * @param staticCodeAnalysisFeedback The list of static code analysis feedback
+     * @param staticCodeAnalysisFeedback The set of static code analysis feedback
      * @param programmingExercise        The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
-    private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
+    private double calculateStaticCodeAnalysisPenalty(final Set<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
         final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
@@ -947,7 +947,7 @@ public class ProgrammingExerciseGradingService {
      * @param result                     Result containing all feedback
      * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
-    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
+    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, Set<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.setScore(0D);
         result.setTestCaseCount(0);

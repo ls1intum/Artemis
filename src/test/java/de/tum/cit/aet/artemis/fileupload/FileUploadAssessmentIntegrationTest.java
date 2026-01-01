@@ -88,8 +88,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.isRated()).isTrue();
         assertThat(result.getScore()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
         assertThat(result.getFeedbacks()).hasSize(4);
-        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        var resultFeedbacksList = result.getFeedbacks().stream().toList();
+        assertThat(resultFeedbacksList.getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(resultFeedbacksList.get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
         assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
         assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
 
@@ -218,8 +219,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.isRated()).isTrue();
         assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks()).hasSize(3);
-        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        var resultFeedbacksList2 = result.getFeedbacks().stream().toList();
+        assertThat(resultFeedbacksList2.getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(resultFeedbacksList2.get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test
@@ -562,14 +564,15 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(3);
-        Result firstResult = submission.getResults().getFirst();
+        var submissionResultsList = submission.getResults().stream().toList();
+        Result firstResult = submissionResultsList.getFirst();
         Result lastResult = submission.getLatestResult();
         request.delete(
                 "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+        assertThat(submission.getResults().stream().toList().get(1)).isEqualTo(lastResult);
     }
 
     @Test
@@ -594,7 +597,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 + resultOfOtherSubmission.getId(), HttpStatus.BAD_REQUEST);
         submission1 = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission1.getId());
         assertThat(submission1.getResults()).hasSize(3);
-        assertThat(submission1.getResults().get(2)).isEqualTo(lastResult);
+        assertThat(submission1.getResults().stream().toList().get(2)).isEqualTo(lastResult);
     }
 
     @Test
@@ -617,6 +620,6 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 HttpStatus.BAD_REQUEST);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+        assertThat(submission.getResults().stream().toList().get(1)).isEqualTo(lastResult);
     }
 }

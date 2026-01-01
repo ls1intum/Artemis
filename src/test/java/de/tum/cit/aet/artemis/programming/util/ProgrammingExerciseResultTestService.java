@@ -231,8 +231,9 @@ public class ProgrammingExerciseResultTestService {
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
-        assertThat(semiAutoResult.getFeedbacks().getFirst().getType()).isEqualTo(FeedbackType.MANUAL);
-        assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
+        var semiAutoResultFeedbacksList = semiAutoResult.getFeedbacks().stream().toList();
+        assertThat(semiAutoResultFeedbacksList.getFirst().getType()).isEqualTo(FeedbackType.MANUAL);
+        assertThat(semiAutoResultFeedbacksList.get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
     }
 
     private void postResult(BuildResultNotification requestBodyMap) throws Exception {
@@ -344,7 +345,6 @@ public class ProgrammingExerciseResultTestService {
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ParticipationFactory.generateManualFeedback();
-        feedback = feedbackRepository.saveAll(feedback);
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 

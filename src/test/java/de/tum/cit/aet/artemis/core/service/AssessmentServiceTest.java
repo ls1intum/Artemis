@@ -4,9 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -116,12 +115,12 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         return fileUploadExercise;
     }
 
-    private List<Feedback> createFeedback(Exercise exercise) {
+    private Set<Feedback> createFeedback(Exercise exercise) {
         var gradingInstructionNoLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(exercise.getGradingCriteria(), 0);
         var gradingInstructionLimited = GradingCriterionUtil.findInstructionByMaxUsageCount(exercise.getGradingCriteria(), 1);
         var gradingInstructionBigLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(exercise.getGradingCriteria(), 4);
 
-        var feedbacks = new ArrayList<Feedback>();
+        var feedbacks = new HashSet<Feedback>();
         var feedbackAppliedSGINoLimit = new Feedback();
         var feedbackAppliedSGINoLimit2 = new Feedback();
         var feedbackAppliedSGILimited = new Feedback();
@@ -170,7 +169,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
-        List<Feedback> feedbacks = createFeedback(exercise);
+        Set<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
@@ -192,7 +191,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
-        List<Feedback> feedbacks = createFeedback(exercise);
+        Set<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
@@ -214,7 +213,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
-        List<Feedback> feedbacks = createFeedback(exercise);
+        Set<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
@@ -238,7 +237,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
-        List<Feedback> feedbacks = createFeedback(exercise);
+        Set<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
@@ -275,7 +274,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
-        List<Feedback> feedbacks = createFeedback(exercise);
+        Set<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
@@ -297,7 +296,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
-        List<Feedback> feedbacks = createFeedback(exercise);
+        Set<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);

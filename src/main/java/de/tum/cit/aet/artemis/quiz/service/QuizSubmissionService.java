@@ -215,7 +215,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
-            quizSubmission.setResults(List.of(result));
+            quizSubmission.setResults(Set.of(result));
 
             sendQuizResultToUser(quizExerciseId, participation);
         });

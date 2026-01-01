@@ -527,7 +527,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 const sub = submissions
                     .filter((submission) => {
-                        return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound];
+                        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
                     })
                     .map((submission) => {
                         submission.participation!.submissions = [submission];
@@ -726,6 +726,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         } else {
             return { 'correction-round': correctionRound };
         }
+    }
+
+    /**
+     * Checks if a submission has a result for the given correction round
+     * @param submission the submission to check
+     * @param correctionRound the correction round to check for
+     */
+    hasResultForCorrectionRound(submission: Submission | undefined, correctionRound: number): boolean {
+        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
     }
 
     /**

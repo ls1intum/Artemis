@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -129,7 +129,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
+    private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final Collection<Feedback> feedbacks) {
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackApi.get().sendFeedback(exercise, programmingSubmission, feedbacks);
         }

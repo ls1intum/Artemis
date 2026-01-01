@@ -393,10 +393,10 @@ public class ProgrammingExerciseFeedbackCreationService {
      * the removed feedback into account.
      *
      * @param result                     of the build run
-     * @param staticCodeAnalysisFeedback modifiable list of static code analysis feedback objects that will get filtered
+     * @param staticCodeAnalysisFeedback modifiable set of static code analysis feedback objects that will get filtered
      * @param programmingExercise        The current exercise
      */
-    public void categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+    public void categorizeScaFeedback(Result result, Set<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
         var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
 
         for (Iterator<Feedback> iterator = staticCodeAnalysisFeedback.iterator(); iterator.hasNext();) {

@@ -218,7 +218,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
         Result storedResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, new ArrayList<>(storedResult.getFeedbacks()), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
 
@@ -277,7 +277,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         request.putWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
                 Result.class, HttpStatus.OK);
         Result storedResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, new ArrayList<>(storedResult.getFeedbacks()), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
 
@@ -352,10 +352,10 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(submission.getText());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks()).isNotEmpty();
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getCredits()).isEqualTo(feedback.getCredits());
+        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().iterator().next().getCredits()).isEqualTo(feedback.getCredits());
         assertThat(copiedTextBlocks).isNotEmpty();
         assertThat(copiedTextBlocks.getFirst().getText()).isEqualTo(textBlock.getText());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
+        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().iterator().next().getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
     }
 
     @Test
@@ -391,8 +391,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
-        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacks().getFirst().getGradingInstruction().getId())
-                .isEqualTo(orginalResult.orElseThrow().getFeedbacks().getFirst().getGradingInstruction().getId());
+        assertThat(exampleSubmission.getSubmission().getResults().iterator().next().getFeedbacks().iterator().next().getGradingInstruction().getId())
+                .isEqualTo(orginalResult.orElseThrow().getFeedbacks().iterator().next().getGradingInstruction().getId());
     }
 
     @Test

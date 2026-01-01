@@ -1,0 +1,87 @@
+report
+=== MIGRATION VERIFICATION REPORT ===
+report_timestamp
+2025-12-31 16:01:34
+section
+--- ORPHAN COUNTS ---
+table_name	type	count
+complaint_response	orphan (complaint_id IS NULL)	0
+complaint	orphan (result_id IS NULL)	0
+feedback	orphan (result_id IS NULL)	41
+result	orphan (submission_id IS NULL)	0
+submission	orphan (participation_id IS NULL)	84004
+participation	orphan (exercise_id IS NULL)	13261
+section
+--- TOTAL COUNTS ---
+table_name	total_count
+complaint_response	25777
+complaint	26139
+feedback	42201256
+long_feedback_text	95320
+result	11232475
+result_rating	10465
+assessment_note	1997
+submission	11150665
+build_log_entry	13552454
+submitted_answer	2068985
+coverage_report	187
+coverage_file_report	437
+testwise_coverage_report_entry	6496
+text_block	1779752
+participation	2637830
+participation_vcs_access_token	442440
+participant_score	1712594
+example_submission	765
+section
+--- VALID RECORD COUNTS (MUST NOT CHANGE!) ---
+table_name	type	count
+complaint_response	valid (has complaint)	25777
+complaint	valid (has result)	26139
+feedback	valid (has result)	42201215
+result	valid (has submission)	11232475
+submission	valid (has participation)	11066661
+participation	valid (has exercise)	2624569
+section
+--- RECORDS WITH COMPLETE VALID CHAIN (MUST NOT CHANGE!) ---
+metric	count
+complaints with full valid chain	26139
+metric	count
+feedback with full valid chain	42199616
+metric	count
+results with full valid chain	11232175
+metric	count
+submissions with full valid chain	10971569
+section
+--- SAMPLE ORPHAN RECORDS (first 5 of each type) ---
+info
+Sample orphan complaint_responses:
+info
+Sample orphan complaints:
+info
+Sample orphan feedback:
+id	result_id	type	text
+128910086	NULL	0	NULL
+128910087	NULL	0	NULL
+128910088	NULL	0	NULL
+128910089	NULL	0	NULL
+128910092	NULL	0	NULL
+info
+Sample orphan results:
+info
+Sample orphan submissions:
+id	participation_id	submitted	submission_date
+11475163	NULL	\0	2025-10-21 10:08:18.241
+11490598	NULL	NULL	2025-10-21 10:08:18.241
+11493550	NULL	NULL	2025-10-21 10:08:18.241
+11494406	NULL	NULL	2025-10-21 10:08:18.241
+10067887	NULL	NULL	2024-12-16 17:54:10.438
+info
+Sample orphan participations:
+id	exercise_id	student_id	initialization_state
+72684	NULL	NULL	NULL
+72685	NULL	NULL	NULL
+72686	NULL	NULL	NULL
+72687	NULL	NULL	NULL
+72688	NULL	NULL	NULL
+report
+=== END OF REPORT ===

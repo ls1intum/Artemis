@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.text.web;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -185,7 +186,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-        final List<Feedback> feedbacksWithIds = result.getFeedbacks();
+        final Set<Feedback> feedbacksWithIds = result.getFeedbacks();
         saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         return ResponseEntity.ok(result);
     }
@@ -224,7 +225,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
             resultService.deleteResult(latestResult, true);
-            submission.setResults(List.of());
+            submission.setResults(Set.of());
             submissionRepository.save(submission);
         }
 
@@ -412,7 +413,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
-            textSubmission.setResults(Collections.singletonList(result));
+            textSubmission.setResults(Set.of(result));
         }
         else {
             textSubmission.getResultForCorrectionRound(correctionRound);
@@ -459,7 +460,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         var result = textSubmission.getLatestResult();
         if (result != null) {
-            final List<Feedback> assessments = feedbackRepository.findByResult(result);
+            final Set<Feedback> assessments = new HashSet<>(feedbackRepository.findByResult(result));
             result.setFeedbacks(assessments);
 
             if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
@@ -493,13 +494,14 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textSubmission to associate blocks with
      * @param feedbacks      the feedbacks to associate with the blocks
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (textBlocks == null) {
             return;
         }
 
         List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
-        Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
+        // Use merge function to handle potential duplicate references from EntityGraph loading with Cartesian products
+        Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity(), (f1, f2) -> f1));
         final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
         final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
             tb.setSubmission(textSubmission);
@@ -521,7 +523,7 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, feedbacks);
         }

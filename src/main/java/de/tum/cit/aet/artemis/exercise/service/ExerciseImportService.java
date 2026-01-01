@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,13 +117,13 @@ public abstract class ExerciseImportService {
     /**
      * This helper functions does a hard copy of the feedbacks.
      *
-     * @param originalFeedbacks             The original list of feedbacks to be copied
+     * @param originalFeedbacks             The original set of feedbacks to be copied
      * @param newResult                     The result in which we link the new feedback
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     * @return The cloned list of feedback
+     * @return The cloned set of feedback
      */
-    private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<Feedback> newFeedbacks = new ArrayList<>();
+    private Set<Feedback> copyFeedback(Set<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        Set<Feedback> newFeedbacks = new HashSet<>();
         for (final var originalFeedback : originalFeedbacks) {
             final Feedback newFeedback = feedbackService.copyFeedback(originalFeedback);
             newFeedback.setResult(newResult);
