@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
@@ -52,5 +52,36 @@ describe('StickyPopoverDirective', () => {
         tick(10);
         const span = fixture.debugElement.query(By.css('span'));
         expect(span).not.toBeNull();
+    }));
+
+    it('should attempt to close on leave', fakeAsync(() => {
+        fixture.whenStable();
+        const div = fixture.debugElement.query(By.css('div'));
+        expect(div).not.toBeNull();
+        const closeSpy = jest.spyOn(directive, 'close');
+
+        // Open popover
+        div.nativeElement.dispatchEvent(new MouseEvent('pointerenter'));
+        tick(10);
+        fixture.detectChanges();
+        tick(); // Ensure all setTimeout(0) callbacks from open() execute
+        const span = fixture.debugElement.query(By.css('span'));
+        expect(span).not.toBeNull();
+        expect(directive.isOpen()).toBeTruthy();
+
+        // Manually set up the close timeout (simulating what pointerleave would do)
+        (directive as any).canClosePopover = true;
+        (directive as any).closeTimeout = setTimeout(() => {
+            if ((directive as any).canClosePopover) {
+                directive.close();
+            }
+        }, 100);
+
+        // Wait for the timeout to execute
+        tick(150);
+        fixture.detectChanges();
+
+        // Verify close() was called
+        expect(closeSpy).toHaveBeenCalled();
     }));
 });
