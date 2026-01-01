@@ -1727,7 +1727,9 @@ public class ProgrammingExerciseTestService {
 
     public void exportProgrammingExerciseInstructorMaterial_problemStatementNull_success() throws Exception {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, false, false);
-        await().until(zipFile::exists);
+        // Assure that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
+        await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 

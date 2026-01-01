@@ -35,6 +35,7 @@ import de.jplag.swift.SwiftLanguage;
 import de.jplag.typescript.TypeScriptLanguage;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class PlagiarismDetectionServiceTest {
 
-    private static Path tempPath;
+    private static TempFileUtilService tempFileUtilService;
 
     private final PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
 
@@ -80,9 +81,10 @@ class PlagiarismDetectionServiceTest {
 
     @BeforeAll
     static void setTempPath() throws IOException {
-        // we cannot rely on spring boot value injection here as it's not an integration test.
-        tempPath = Path.of("local", "server-integration-test");
+        // Create TempFileUtilService manually since this is a unit test without Spring context
+        Path tempPath = Path.of("local", "server-integration-test");
         Files.createDirectories(tempPath);
+        tempFileUtilService = new TempFileUtilService(tempPath);
     }
 
     @Test
@@ -293,7 +295,7 @@ class PlagiarismDetectionServiceTest {
     }
 
     private Path createTemporaryDirectory() throws IOException {
-        return Files.createTempDirectory(tempPath, "plagiarismRepo");
+        return tempFileUtilService.createTempDirectory("plagiarismRepo");
     }
 
     private void setupRepositoryWithFile(String filename, String content, Repository repository) throws IOException {

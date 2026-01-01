@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -91,6 +92,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -1142,7 +1146,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     private RevCommit writeFilesAndPush(Path remoteRepoPath, Map<String, String> files, String message) throws Exception {
-        Path workingCopy = Files.createTempDirectory(tempPath, "repo-clone");
+        Path workingCopy = tempFileUtilService.createTempDirectory(tempPath, "repo-clone");
         try (Git git = Git.cloneRepository().setURI(remoteRepoPath.toUri().toString()).setDirectory(workingCopy.toFile()).call()) {
             for (Map.Entry<String, String> entry : files.entrySet()) {
                 Path filePath = workingCopy.resolve(entry.getKey());
