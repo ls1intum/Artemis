@@ -66,8 +66,8 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     @Query("""
             SELECT DISTINCT s
             FROM IrisChatSession s
-            LEFT JOIN FETCH s.messages m
-            LEFT JOIN FETCH m.content
+                LEFT JOIN FETCH s.messages m
+                LEFT JOIN FETCH m.content
             WHERE s.userId = :userId
             ORDER BY s.creationDate ASC
             """)

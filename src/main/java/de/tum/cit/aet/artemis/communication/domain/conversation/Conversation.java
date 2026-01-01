@@ -25,7 +25,6 @@ import org.springframework.data.annotation.CreatedDate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -54,14 +53,19 @@ public abstract class Conversation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
-    @JsonIncludeProperties({ "id", "name" })
+    // NOTE: Using @JsonIgnoreProperties instead of @JsonIncludeProperties to avoid Jackson deserialization issues
+    // with "No _valueDeserializer assigned" errors in nested entity hierarchies
+    // We basically want: @JsonIncludeProperties({ "id", "name" })
+    @JsonIgnoreProperties(value = { "password", "registrationNumber", "activationKey", "resetKey", "vcsAccessToken", "vcsAccessTokenExpiryDate", "groups", "authorities",
+            "organizations", "tutorialGroupRegistrations", "completedLectureUnits", "competencyProgresses", "learningPaths", "examUsers", "pushNotificationDeviceConfigurations",
+            "savedPosts", "learnerProfile" }, allowSetters = true)
     private User creator;
 
-    @JsonIgnoreProperties("conversation")
+    @JsonIgnoreProperties(value = "conversation", allowSetters = true)
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
 
-    @JsonIgnoreProperties("conversation")
+    @JsonIgnoreProperties(value = "conversation", allowSetters = true)
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<Post> posts = new HashSet<>();
 
