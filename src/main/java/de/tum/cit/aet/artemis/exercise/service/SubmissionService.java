@@ -464,7 +464,9 @@ public class SubmissionService {
             Feedback newFeedback = feedbackService.copyFeedback(feedback);
             result.addFeedback(newFeedback);
         });
-        resultRepository.save(result);
+        // Note: We intentionally do NOT save the result here. The caller is responsible for
+        // saving the result after setting the submission, to satisfy the NOT NULL constraint
+        // on result.submission_id.
     }
 
     /**

@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 @Repository
 public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<LongFeedbackText, Long> {
 
+    // TODO: remove the part "s.exampleSubmission IS FALSE" when examples submissions are migrated to example participations
     /**
      * Deletes {@link LongFeedbackText} entries linked to {@link Feedback} where the associated
      * {@link Result} has no submission or its submission has no participation.
@@ -44,11 +45,12 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
                 WHERE s IS NULL
-                    OR p IS NULL
+                    OR (s.exampleSubmission IS FALSE AND p IS NULL)
             )
             """)
     int deleteLongFeedbackTextForOrphanResult();
 
+    // TODO: remove the part "s.exampleSubmission IS FALSE" when examples submissions are migrated to example participations
     /**
      * Counts {@link LongFeedbackText} entries linked to {@link Feedback} where the associated
      * {@link Result} has no submission or its submission has no participation.
@@ -63,7 +65,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                 LEFT JOIN r.submission s
                 LEFT JOIN s.participation p
             WHERE s IS NULL
-                OR p IS NULL
+                OR (s.exampleSubmission IS FALSE AND p IS NULL)
             """)
     int countLongFeedbackTextForOrphanResult();
 

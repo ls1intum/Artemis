@@ -16,6 +16,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -83,7 +84,11 @@ public abstract class Participation extends DomainObject implements Participatio
     // to get a student participation, we also need the exercise. Dealing with Proxy
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
-    @ManyToOne
+    // Note: optional = false and nullable = false are required for orphanRemoval to work correctly
+    // with NOT NULL FK constraints. When a participation is removed from an exercise's collection,
+    // orphanRemoval causes a DELETE (not UPDATE to NULL) at flush time.
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false)
     @JsonIgnoreProperties("studentParticipations")
     protected Exercise exercise;
 

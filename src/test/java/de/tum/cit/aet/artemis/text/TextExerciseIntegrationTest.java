@@ -895,8 +895,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         channelRepository.save(channel);
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+
+        // Create a submission with a result to associate the feedback with
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Test submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(textSubmission.getParticipation(), textSubmission);
+
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
+        feedback.setResult(result);
         feedbackRepository.save(feedback);
 
         TextExercise receivedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);

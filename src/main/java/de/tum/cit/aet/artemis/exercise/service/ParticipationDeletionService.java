@@ -180,6 +180,17 @@ public class ParticipationDeletionService {
     }
 
     /**
+     * Delete a participation entity (template or solution participation). Results and submissions should be deleted first
+     * using {@link #deleteResultsAndSubmissionsOfParticipation(Long, boolean)}.
+     *
+     * @param participationId the ID of the participation to delete
+     */
+    public void deleteParticipationById(Long participationId) {
+        log.debug("Request to delete participation with id : {}", participationId);
+        participationRepository.deleteById(participationId);
+    }
+
+    /**
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
      * @param participationId         the id of the participation to delete results/submissions from.

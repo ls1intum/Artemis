@@ -111,12 +111,19 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    // Note: We deliberately do NOT use orphanRemoval here because Template/Solution participations
+    // have a complex inheritance situation: they inherit exercise from Participation (ManyToOne with NOT NULL FK)
+    // AND have a bidirectional OneToOne with ProgrammingExercise. When orphanRemoval syncs the bidirectional
+    // relationship, setProgrammingExercise(null) also sets exercise = null (see the setter), causing
+    // Hibernate to try UPDATE exercise_id = NULL before DELETE, which violates the NOT NULL constraint.
+    // These participations must be explicitly deleted in ProgrammingExerciseDeletionService.delete().
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
     private TemplateProgrammingExerciseParticipation templateParticipation;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    // Note: Same reason as templateParticipation - explicit deletion required due to inheritance complexity.
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "solution_participation_id")
     @JsonIgnoreProperties("programmingExercise")
     private SolutionProgrammingExerciseParticipation solutionParticipation;

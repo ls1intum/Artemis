@@ -19,7 +19,6 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { Observable } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -392,58 +391,6 @@ describe('Exercise Service', () => {
         expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
-    });
-
-    it.each(['create', 'update'])('should send %s request for the exercise', (action: string) => {
-        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
-
-        const category = {
-            color: '#6ae8ac',
-            category: 'category1',
-        } as ExerciseCategory;
-
-        const releaseDate = dayjs();
-
-        exercise = Object.assign({}, textExercise, {
-            categories: [category],
-            releaseDate,
-        });
-        const expectedReturnedExercise = { id: exercise.id } as Exercise;
-
-        const expectedUrl = `api/exercise/exercises`;
-        let result$: Observable<EntityResponseType>;
-        let method: string;
-        if (action === 'create') {
-            result$ = service.create(exercise);
-            method = 'POST';
-        } else if (action === 'update') {
-            result$ = service.update(exercise);
-            method = 'PUT';
-        } else {
-            throw new Error(`Unexpected action: ${action}`);
-        }
-
-        let actualReturnedExercise = undefined;
-        result$.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
-
-        const testRequest = httpMock.expectOne({
-            url: expectedUrl,
-            method,
-        });
-
-        testRequest.flush(expectedReturnedExercise);
-
-        const sentBody = testRequest.request.body;
-
-        expect(sentBody.categories).toHaveLength(1);
-        expect(sentBody.categories[0]).toBe(JSON.stringify(category));
-
-        expect(sentBody.releaseDate).toBe(releaseDate.toJSON());
-        expect(sentBody.startDate).toBeUndefined();
-
-        expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
-        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
     });
 
     it('should get exercise details', () => {

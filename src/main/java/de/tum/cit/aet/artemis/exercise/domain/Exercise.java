@@ -151,11 +151,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
+    // Note: orphanRemoval works correctly with NOT NULL FK on participation.exercise_id because:
+    // 1. Participation.exercise has @ManyToOne(optional = false) and @JoinColumn(nullable = false)
+    // 2. When a participation is removed from this collection, orphanRemoval causes DELETE at flush time
+    // 3. Hibernate won't try to UPDATE exercise_id = NULL before the DELETE
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
 
+    // Note: orphanRemoval works correctly with NOT NULL FK on participation.exercise_id (via TutorParticipation.assessedExercise)
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
@@ -308,6 +313,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void removeParticipation(StudentParticipation participation) {
         this.studentParticipations.remove(participation);
+        // Setting exercise to null is OK because orphanRemoval causes DELETE at flush time, not UPDATE to NULL.
+        // With orphanRemoval=true and @ManyToOne(optional=false) + @JoinColumn(nullable=false) on the child,
+        // Hibernate will correctly DELETE the orphaned participation.
         participation.setExercise(null);
     }
 

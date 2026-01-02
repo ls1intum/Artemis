@@ -64,17 +64,6 @@ export class ExerciseService {
     public courseResourceUrl = 'api/core/courses';
 
     /**
-     * Persist a new exercise
-     * @param { Exercise } exercise - Exercise that will be persisted
-     * return
-     */
-    create(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
-    }
-
-    /**
      * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {

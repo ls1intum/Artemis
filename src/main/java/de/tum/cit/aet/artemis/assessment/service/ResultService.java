@@ -45,13 +45,10 @@ import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -206,7 +203,7 @@ public class ResultService {
      *                                        should be false
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
-        log.debug("Delete result {}", result.getId());
+        log.debug("Delete result with id {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
         resultRepository.delete(result);
     }
@@ -231,10 +228,9 @@ public class ResultService {
     }
 
     /**
-     * Store the given feedback to the passed result (by replacing all existing feedback) with a workaround for Hibernate exceptions.
+     * Store the given feedback to the passed result (by replacing all existing feedback).
      * <p>
-     * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
-     * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
+     * The feedback items are persisted individually before being associated with the result.
      * <p>
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
@@ -244,16 +240,15 @@ public class ResultService {
      * @return the updated (and potentially saved) result
      */
     public Result storeFeedbackInResult(@NonNull Result result, Collection<Feedback> feedbackList, boolean shouldSave) {
-        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+        var savedFeedbacks = saveFeedback(result, feedbackList);
         result.setFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
     }
 
     /**
-     * Add the feedback to the passed result with a workaround for Hibernate exceptions.
+     * Add the feedback to the passed result.
      * <p>
-     * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
-     * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
+     * The feedback items are persisted individually before being added to the result.
      * <p>
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
@@ -264,7 +259,7 @@ public class ResultService {
      */
     @NonNull
     public Result addFeedbackToResult(@NonNull Result result, Collection<Feedback> feedbackList, boolean shouldSave) {
-        Set<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+        Set<Feedback> savedFeedbacks = saveFeedback(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
     }
@@ -403,26 +398,6 @@ public class ResultService {
     }
 
     /**
-     * Returns the result for the given id with authorization checks.
-     *
-     * @param participationId the id of the participation
-     * @param resultId        the id of the result
-     * @param role            the minimum role required to access the result
-     * @return the result
-     */
-    public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getSubmission().getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
-                    "Participation", "400");
-        }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
-        return result;
-    }
-
-    /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
      * @param participationId the participation id for which the results and build logs should be checked
@@ -448,7 +423,7 @@ public class ResultService {
     }
 
     @NonNull
-    private Set<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, Collection<Feedback> feedbackList) {
+    private Set<Feedback> saveFeedback(@NonNull Result result, Collection<Feedback> feedbackList) {
         Set<Feedback> savedFeedbacks = new HashSet<>();
 
         // Fetch long feedback texts associated with the provided feedback list
@@ -465,8 +440,8 @@ public class ResultService {
     }
 
     private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
-        // Temporarily detach feedback from the parent result to avoid Hibernate issues
-        feedback.setResult(null);
+        // Ensure the feedback is associated with the result
+        feedback.setResult(result);
 
         // Connect old long feedback text to the feedback before saving, otherwise it would be deleted
         if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
@@ -483,13 +458,15 @@ public class ResultService {
             }
         }
 
-        // Persist the feedback entity without the parent association
-        feedback = feedbackRepository.saveAndFlush(feedback);
-
-        // Restore associations to the result
-        feedback.setResult(result);
+        // Only persist feedback individually if the result has been saved (has an ID).
+        // Otherwise, the cascade from Result to Feedback will handle persistence when the result is saved.
+        // This avoids violating the NOT NULL constraint on feedback.result_id.
+        if (result.getId() != null) {
+            feedbackRepository.save(feedback);
+        }
     }
 
+    // TODO: this method sounds like the wrong workaround for the duplicate entries error, this should be completely reworked in the future
     @NonNull
     private Result shouldSaveResult(@NonNull Result result, boolean shouldSave) {
         if (shouldSave) {
@@ -598,7 +575,7 @@ public class ResultService {
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply grouping and aggregation with a similarity threshold of 90%
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateFeedback(allFeedbackDetails, SIMILARITY_THRESHOLD);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateFeedback(allFeedbackDetails);
 
             highestOccurrenceOfGroupedFeedback = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
             // Apply manual sorting
@@ -635,11 +612,11 @@ public class ResultService {
                 "testCaseName", Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName",
                 Comparator.comparing(FeedbackDetailDTO::taskName, String.CASE_INSENSITIVE_ORDER));
 
-        Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
+        Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (_, _) -> 0);
         return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
     }
 
-    private List<FeedbackDetailDTO> aggregateFeedback(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
+    private List<FeedbackDetailDTO> aggregateFeedback(List<FeedbackDetailDTO> feedbackDetails) {
         List<FeedbackDetailDTO> processedDetails = new ArrayList<>();
 
         for (FeedbackDetailDTO base : feedbackDetails) {
@@ -650,7 +627,7 @@ public class ResultService {
                 if (base.testCaseName().equals(processed.testCaseName()) && base.taskName().equals(processed.taskName())) {
                     double similarity = NameSimilarity.levenshteinSimilarity(base.detailTexts().getFirst(), processed.detailTexts().getFirst());
 
-                    if (similarity > similarityThreshold) {
+                    if (similarity > ResultService.SIMILARITY_THRESHOLD) {
                         // Merge the current base feedback into the processed feedback
                         List<Long> mergedFeedbackIds = new ArrayList<>(processed.feedbackIds());
                         if (processed.feedbackIds().size() < MAX_FEEDBACK_IDS) {

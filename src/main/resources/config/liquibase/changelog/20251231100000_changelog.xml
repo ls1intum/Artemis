@@ -863,35 +863,46 @@
         </sql>
 
         <!-- ==================== PHASE 7: Add NOT NULL constraints ==================== -->
-        <!-- TODO: activate the NOT NULL constraints by removing the workarounds -->
-
-        <!-- NOTE: complaint_response.complaint_id should remain nullable because production code in
-             ComplaintResponseService.disassociateComplaintAndComplaintResponse uses a workaround pattern
-             that temporarily sets complaint to null before deleting the ComplaintResponse -->
 
         <addNotNullConstraint tableName="complaint"
                               columnName="result_id"
                               columnDataType="BIGINT"/>
 
-        <!-- NOTE: feedback.result_id should remain nullable because production code in
-             ResultService.handleFeedbackPersistence uses a workaround pattern that temporarily
-             sets result to null during save operations -->
+        <addNotNullConstraint tableName="feedback"
+                              columnName="result_id"
+                              columnDataType="BIGINT"/>
 
-        <!-- NOTE: result.submission_id should remain nullable because production code in
-             ProgrammingExerciseGradingService.processNewProgrammingExerciseResult uses a workaround
-             pattern that temporarily sets submission to null during save operations -->
+        <addNotNullConstraint tableName="result"
+                              columnName="submission_id"
+                              columnDataType="BIGINT"/>
+
+        <addNotNullConstraint tableName="complaint_response"
+                              columnName="complaint_id"
+                              columnDataType="BIGINT"/>
+
+        <addNotNullConstraint tableName="participation"
+                              columnName="exercise_id"
+                              columnDataType="BIGINT"/>
 
         <!-- NOTE: submission.participation_id should remain nullable because ExampleSubmissions
              use Submissions without participations (for tutor training purposes) -->
 
-        <!-- NOTE: participation.exercise_id should remain nullable because JPA's orphanRemoval
-             behavior (on Exercise.studentParticipations) temporarily sets exercise_id to NULL
-             before deleting orphaned participations -->
-
         <rollback>
-            <!-- NOTE: participation.exercise_id, submission.participation_id, result.submission_id,
-                 feedback.result_id, and complaint_response.complaint_id NOT NULL constraints were not added,
-                 so no need to drop them -->
+            <dropNotNullConstraint tableName="participation"
+                                   columnName="exercise_id"
+                                   columnDataType="BIGINT"/>
+
+            <dropNotNullConstraint tableName="complaint_response"
+                                   columnName="complaint_id"
+                                   columnDataType="BIGINT"/>
+
+            <dropNotNullConstraint tableName="result"
+                                   columnName="submission_id"
+                                   columnDataType="BIGINT"/>
+
+            <dropNotNullConstraint tableName="feedback"
+                                   columnName="result_id"
+                                   columnDataType="BIGINT"/>
 
             <dropNotNullConstraint tableName="complaint"
                                    columnName="result_id"

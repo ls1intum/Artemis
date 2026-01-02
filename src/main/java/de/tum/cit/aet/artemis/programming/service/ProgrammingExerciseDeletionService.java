@@ -78,6 +78,7 @@ public class ProgrammingExerciseDeletionService {
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
+        // Delete results and submissions of template and solution participations first
         if (solutionProgrammingExerciseParticipation != null) {
             participationDeletionService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation.getId(), true);
         }
@@ -85,10 +86,23 @@ public class ProgrammingExerciseDeletionService {
             participationDeletionService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
 
-        // Note: we fetch the programming exercise again here with student participations to avoid Hibernate issues during the delete operation below
-        var programmingExerciseWithStudentParticipations = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(programmingExerciseId);
-        log.debug("Delete programming exercises with student participations: {}", programmingExerciseWithStudentParticipations.getStudentParticipations());
-        // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
+        // Note: We explicitly delete template and solution participations because they have a complex
+        // inheritance situation that prevents orphanRemoval from working correctly with NOT NULL FKs.
+        // See the comments in ProgrammingExercise.java for details.
+        // First, clear the references on the exercise side to break the FK relationship.
+        programmingExercise.setTemplateParticipation(null);
+        programmingExercise.setSolutionParticipation(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Now delete the participations explicitly by ID
+        if (templateProgrammingExerciseParticipation != null) {
+            participationDeletionService.deleteParticipationById(templateProgrammingExerciseParticipation.getId());
+        }
+        if (solutionProgrammingExerciseParticipation != null) {
+            participationDeletionService.deleteParticipationById(solutionProgrammingExerciseParticipation.getId());
+        }
+
+        // Delete the programming exercise
         programmingExerciseRepository.deleteById(programmingExerciseId);
     }
 

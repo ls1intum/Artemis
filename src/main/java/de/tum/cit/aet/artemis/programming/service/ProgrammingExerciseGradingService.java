@@ -315,11 +315,9 @@ public class ProgrammingExerciseGradingService {
             }
         }
 
-        // Finally, save the new result once and make sure the order column between submission and result is maintained
-        // workaround to avoid scheduling the participant score update twice. The update will only run when a submission is present.
-        processedResult.setSubmission(null);
+        // Save the new result and then the submission to maintain the bidirectional relationship.
+        // Note: The ParticipantScoreScheduleService handles duplicate score update scheduling via deduplication.
         processedResult = resultRepository.save(processedResult);
-        processedResult.setSubmission(programmingSubmission);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
@@ -1030,7 +1028,7 @@ public class ProgrammingExerciseGradingService {
                         // The key in the resulting map is the category name
                         categoryName -> categoryName,
                         // The initial value for each key is 1, representing the first occurrence
-                        categoryName -> 1,
+                        _ -> 1,
                         // If the key already exists, sum the existing value with the new value (i.e., increment the count)
                         Integer::sum));
     }
@@ -1084,7 +1082,7 @@ public class ProgrammingExerciseGradingService {
                     // Update the entry for the test case in the testCaseStatsMap, incrementing the passed and failed counts
                     testCaseStatsMap.computeIfPresent(testName,
                             // Create a new TestCaseStats object with the updated counts and replace the existing entry
-                            (key, stats) -> new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(stats.numPassed() + (int) numPassed, stats.numFailed() + (int) numFailed));
+                            (_, stats) -> new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(stats.numPassed() + (int) numPassed, stats.numFailed() + (int) numFailed));
                 });
     }
 

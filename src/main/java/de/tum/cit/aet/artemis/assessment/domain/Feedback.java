@@ -16,6 +16,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -99,7 +100,11 @@ public class Feedback extends DomainObject {
     @Column(name = "visibility")
     private Visibility visibility;
 
-    @ManyToOne
+    // Note: optional = false and nullable = false are required for orphanRemoval to work correctly
+    // with NOT NULL FK constraint on feedback.result_id. When a feedback is removed from result.feedbacks,
+    // orphanRemoval causes DELETE at flush time (not UPDATE to NULL).
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "result_id", nullable = false)
     @JsonIgnoreProperties("feedbacks")
     private Result result;
 

@@ -417,31 +417,37 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 if (result.getScore() == 10.0) {
                     final Feedback feedback1 = new Feedback().credits(2.0);
                     feedback1.setGradingInstruction(instruction1a);
+                    feedback1.setResult(result);
                     feedbackRepository.save(feedback1);
                     participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction1b);
+                    feedback2.setResult(result);
                     feedbackRepository.save(feedback2);
                     participationUtilService.addFeedbackToResult(feedback2, result);
 
                     // one feedback without grading instruction should be included in total score calculation
                     final Feedback feedback3 = new Feedback().credits(1.111);
+                    feedback3.setResult(result);
                     feedbackRepository.save(feedback3);
                     participationUtilService.addFeedbackToResult(feedback3, result);
                 }
                 else {
                     final Feedback feedback1 = new Feedback().credits(1.0);
                     feedback1.setGradingInstruction(instruction1a);
+                    feedback1.setResult(result);
                     feedbackRepository.save(feedback1);
                     participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction2);
+                    feedback2.setResult(result);
                     feedbackRepository.save(feedback2);
                     participationUtilService.addFeedbackToResult(feedback2, result);
 
                     final Feedback feedback3 = new Feedback().credits(10.0);
+                    feedback3.setResult(result);
                     feedbackRepository.save(feedback3);
                     participationUtilService.addFeedbackToResult(feedback3, result);
                 }
@@ -867,6 +873,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setPositive(false);
         feedback.setDetailText("The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
         feedback.setTestCase(testCase);
+        feedback.setResult(result);
         feedback = feedbackRepository.saveAndFlush(feedback);
 
         participationUtilService.addFeedbackToResult(feedback, result);

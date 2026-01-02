@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Long> {
 
+    // TODO: remove the part "s.exampleSubmission IS FALSE" when examples submissions are migrated to example participations
     /**
      * Deletes {@link Result} entries that have no participation and no submission.
      * Now a result is considered orphaned if its submission is null
@@ -38,11 +39,12 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                     LEFT JOIN r2.submission s
                     LEFT JOIN s.participation p
                 WHERE s IS NULL
-                    OR p IS NULL
+                    OR (s.exampleSubmission IS FALSE AND p IS NULL)
             )
             """)
     int deleteResultWithoutParticipationAndSubmission();
 
+    // TODO: remove the part "s.exampleSubmission IS FALSE" when examples submissions are migrated to example participations
     /**
      * Counts {@link Result} entries that have no participation and no submission.
      * Now a result is considered orphaned if its submission is null
@@ -56,7 +58,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                 LEFT JOIN r.submission s
                 LEFT JOIN s.participation p
             WHERE s IS NULL
-                OR p IS NULL
+                OR (s.exampleSubmission IS FALSE AND p IS NULL)
             """)
     int countResultWithoutParticipationAndSubmission();
 }

@@ -90,7 +90,11 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "rated")
     private Boolean rated;
 
-    @ManyToOne
+    // Note: optional = false and nullable = false are required for orphanRemoval to work correctly
+    // with NOT NULL FK constraint on result.submission_id. When a result is removed from submission.results,
+    // orphanRemoval causes DELETE at flush time (not UPDATE to NULL).
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "submission_id", nullable = false)
     @JsonIgnoreProperties({ "results" })
     private Submission submission;
 

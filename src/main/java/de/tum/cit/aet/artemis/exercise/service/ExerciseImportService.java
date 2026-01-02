@@ -104,13 +104,10 @@ public abstract class ExerciseImportService {
         newResult.setCorrectionRound(originalResult.getCorrectionRound() != null ? originalResult.getCorrectionRound() : 0);
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
-        // Cut relationship to parent because result is an ordered collection
-        newResult.setSubmission(null);
+        // Set the submission on the result - required for NOT NULL constraint on result.submission_id
+        newResult.setSubmission(newSubmission);
 
         newResult = resultRepository.save(newResult);
-
-        // Restore relationship to parent.
-        newResult.setSubmission(newSubmission);
 
         return newResult;
     }
