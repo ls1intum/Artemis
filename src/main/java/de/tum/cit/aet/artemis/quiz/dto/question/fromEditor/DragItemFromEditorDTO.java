@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
  * @param text            the text of the drag item (for text-based items)
  * @param pictureFilePath the picture file path (for image-based items)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pictureFilePath) {
 

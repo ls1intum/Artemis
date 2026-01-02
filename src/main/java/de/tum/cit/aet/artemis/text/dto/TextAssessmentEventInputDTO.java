@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.text.domain.TextBlockType;
  * request body will be silently ignored during deserialization (Jackson's default behavior
  * for unknown properties). The server always generates new IDs for created events.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextAssessmentEventInputDTO(@NotNull Long userId, @NotNull TextAssessmentEventType eventType, @Nullable FeedbackType feedbackType,
         @Nullable TextBlockType segmentType, @NotNull Long courseId, @NotNull Long textExerciseId, @NotNull Long participationId, @NotNull Long submissionId) {

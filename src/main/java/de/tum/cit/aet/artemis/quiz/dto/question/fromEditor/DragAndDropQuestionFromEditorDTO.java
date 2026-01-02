@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param dragItems          the list of drag items
  * @param correctMappings    the list of correct mappings
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationFromEditorDTO> dropLocations,

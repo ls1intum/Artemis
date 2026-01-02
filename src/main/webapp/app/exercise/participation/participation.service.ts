@@ -65,7 +65,7 @@ export class ParticipationService {
         return {
             id: participation.id!,
             exerciseId: exerciseId,
-            individualDueDate: participation.individualDueDate ? convertDateFromClient(participation.individualDueDate) ?? undefined : undefined,
+            individualDueDate: convertDateFromClient(participation.individualDueDate),
         };
     }
 

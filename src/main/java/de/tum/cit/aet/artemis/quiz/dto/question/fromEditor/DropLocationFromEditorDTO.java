@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
  * @param width  the width
  * @param height the height
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double posX, @NotNull Double posY, @NotNull Double width, @NotNull Double height) {
 

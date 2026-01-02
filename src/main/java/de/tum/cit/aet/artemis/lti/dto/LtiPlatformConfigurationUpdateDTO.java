@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
  * DTO for creating and updating LtiPlatformConfiguration.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LtiPlatformConfigurationUpdateDTO(@Nullable Long id, @Nullable String registrationId, @NotNull String clientId, @Nullable String originalUrl,
         @Nullable String customName, @NotNull String authorizationUri, @NotNull String jwkSetUri, @NotNull String tokenUri) {

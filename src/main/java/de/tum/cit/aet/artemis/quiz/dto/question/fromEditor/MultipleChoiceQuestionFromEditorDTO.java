@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param answerOptions  the list of answer options
  * @param singleChoice   whether only one answer can be selected
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, @NotEmpty List<@Valid AnswerOptionFromEditorDTO> answerOptions, @NotNull Boolean singleChoice)

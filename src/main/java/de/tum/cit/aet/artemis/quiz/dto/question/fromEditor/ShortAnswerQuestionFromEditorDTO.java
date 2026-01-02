@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param similarityValue the similarity value for comparing answers
  * @param matchLetterCase whether to match letter case
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, @NotEmpty List<@Valid ShortAnswerSpotFromEditorDTO> spots,

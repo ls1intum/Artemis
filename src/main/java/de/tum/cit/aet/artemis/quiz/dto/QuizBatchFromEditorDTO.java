@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
  * @param startTime the start time of the batch
  * @param password  the password for the batch (for batched mode)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizBatchFromEditorDTO(Long id, ZonedDateTime startTime, String password) {
 

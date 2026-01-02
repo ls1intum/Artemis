@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param width  the width of the input field
  * @param spotNr the spot number in the text
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, @NotNull Integer spotNr) {
 

@@ -75,16 +75,6 @@ export class ExerciseService {
     }
 
     /**
-     * Update existing exercise
-     * @param { Exercise } exercise - Exercise that will be updated
-     */
-    update(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
-    }
-
-    /**
      * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {

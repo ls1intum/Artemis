@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
 import jakarta.validation.constraints.NotEmpty;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
  * @param tempID the temporary ID for matching during creation (can be null for persisted entities, will use id instead)
  * @param text   the solution text
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerSolutionFromEditorDTO(Long id, Long tempID, @NotEmpty String text) {
 

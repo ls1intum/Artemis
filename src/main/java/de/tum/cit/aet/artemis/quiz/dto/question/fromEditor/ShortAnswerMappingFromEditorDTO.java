@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param solutionTempId the temporary ID of the associated solution (can be null for persisted entities, will use real ID)
  * @param spotTempId     the temporary ID of the associated spot (can be null for persisted entities, will use real ID)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerMappingFromEditorDTO(Long id, Long solutionTempId, Long spotTempId) {
 

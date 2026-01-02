@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
  * @param dragItemTempId     the temporary ID of the associated drag item (can be null for persisted entities, will use real ID)
  * @param dropLocationTempId the temporary ID of the associated drop location (can be null for persisted entities, will use real ID)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropMappingFromEditorDTO(Long id, Long dragItemTempId, Long dropLocationTempId) {
 
