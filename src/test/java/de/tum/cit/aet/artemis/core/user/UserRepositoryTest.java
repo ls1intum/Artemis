@@ -46,4 +46,30 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(actual).doesNotContainAnyElementsOf(unexpected.stream().map(User::getLogin).toList());
         assertThat(actual).containsAll(expected.stream().map(User::getLogin).toList());
     }
+
+    @Test
+    void testIsSuperAdmin() {
+        // Create a super admin user
+        userUtilService.addSuperAdmin(TEST_PREFIX);
+        User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+        // Create a regular admin user
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        User admin = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        // Create a regular user
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
+
+        // Test that super admin is correctly identified
+        assertThat(userRepository.isSuperAdmin(superAdmin.getLogin())).isTrue();
+
+        // Test that regular admin is not identified as super admin
+        assertThat(userRepository.isSuperAdmin(admin.getLogin())).isFalse();
+
+        // Test that regular user is not identified as super admin
+        assertThat(userRepository.isSuperAdmin(regularUser.getLogin())).isFalse();
+
+        // Test with non-existent user
+        assertThat(userRepository.isSuperAdmin("nonexistentuser")).isFalse();
+    }
 }
