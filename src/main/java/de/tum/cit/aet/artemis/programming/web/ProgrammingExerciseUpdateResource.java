@@ -389,8 +389,8 @@ public class ProgrammingExerciseUpdateResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
-        // Check that the exercise exists for given id
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // Check that the exercise exists for given id (with grading criteria and example submissions for re-evaluation)
+        var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(exerciseId);
 
         if (exerciseId != updateDTO.id()) {
             throw new ConflictException("Exercise id in path does not match id in request body", ENTITY_NAME, "idMismatch");

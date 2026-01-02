@@ -93,7 +93,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories", "templateParticipation",
+            "solutionParticipation" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
@@ -638,6 +639,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithGradingCriteria(exerciseId), exerciseId);
+    }
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.exampleSubmissions
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteriaAndExampleSubmissions(@Param("exerciseId") long exerciseId);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithGradingCriteriaAndExampleSubmissions(exerciseId), exerciseId);
     }
 
     /**

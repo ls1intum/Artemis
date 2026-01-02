@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -55,8 +56,8 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
-        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class,
-                HttpStatus.OK);
+        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         // The result from the put response should be updated with the new data.
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
