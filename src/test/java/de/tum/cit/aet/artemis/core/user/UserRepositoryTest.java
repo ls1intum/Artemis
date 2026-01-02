@@ -54,8 +54,9 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
         // Create a regular admin user
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        User admin = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin = userRepository.save(admin);
 
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");

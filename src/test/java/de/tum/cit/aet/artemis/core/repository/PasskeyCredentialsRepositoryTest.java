@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,17 +57,19 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
         superAdminUser = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
     }
 
+    @AfterEach
+    void tearDown() {
+        passkeyCredentialsRepository.deleteAll();
+    }
+
     @Test
     void testFindPasskeysForAdminUsers() {
-        PasskeyCredential adminPasskey = createAndSavePasskey(adminUser, "Admin Passkey", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
-        passkeyCredentialsRepository.save(adminPasskey);
+        createAndSavePasskey(adminUser, "Admin Passkey", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
 
         // Create passkey for regular user (should not be included)
-        PasskeyCredential regularUserPasskey = createAndSavePasskey(regularUser, "Student Passkey", false, artemisUserCredentialRepository, passkeyCredentialsRepository);
-        passkeyCredentialsRepository.save(regularUserPasskey);
+        createAndSavePasskey(regularUser, "Student Passkey", false, artemisUserCredentialRepository, passkeyCredentialsRepository);
 
-        PasskeyCredential superAdminPasskey = createAndSavePasskey(superAdminUser, "Super Admin Passkey", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
-        passkeyCredentialsRepository.save(superAdminPasskey);
+        createAndSavePasskey(superAdminUser, "Super Admin Passkey", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
 
         // Retrieve all passkeys for admin users
         List<PasskeyAdminDTO> result = passkeyCredentialsRepository.findPasskeysForAdminUsers();
@@ -80,8 +83,7 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void testFindPasskeysForAdminUsers_NoAdminPasskeys() {
-        PasskeyCredential regularUserPasskey = createAndSavePasskey(regularUser, "Student Passkey", false, artemisUserCredentialRepository, passkeyCredentialsRepository);
-        passkeyCredentialsRepository.save(regularUserPasskey);
+        createAndSavePasskey(regularUser, "Student Passkey", false, artemisUserCredentialRepository, passkeyCredentialsRepository);
 
         List<PasskeyAdminDTO> result = passkeyCredentialsRepository.findPasskeysForAdminUsers();
 

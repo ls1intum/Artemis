@@ -36,6 +36,7 @@ public class PasskeyCredentialFactory {
         artemisUserCredentialRepository.save(credentialRecord);
         PasskeyCredential savedPasskey = passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString()).orElseThrow();
         savedPasskey.setSuperAdminApproved(isSuperAdminApproved);
+        passkeyCredentialsRepository.save(savedPasskey);
 
         return savedPasskey;
     }
