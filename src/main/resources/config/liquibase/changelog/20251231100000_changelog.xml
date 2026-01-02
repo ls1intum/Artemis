@@ -287,6 +287,30 @@
 
             <!-- NOTE: We no longer clear example_submission references because we're preserving those submissions -->
 
+            <!-- Delete multiple_choice_submitted_answer_selected_options for orphan submissions (excluding example submissions) -->
+            DELETE FROM multiple_choice_submitted_answer_selected_options mcso
+            USING submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE mcso.multiple_choice_submitted_answers_id = sa.id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete drag_and_drop_mapping for orphan submissions (excluding example submissions) -->
+            DELETE FROM drag_and_drop_mapping ddm
+            USING submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE ddm.submitted_answer_id = sa.id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete short_answer_submitted_text for orphan submissions (excluding example submissions) -->
+            DELETE FROM short_answer_submitted_text sast
+            USING submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE sast.submitted_answer_id = sa.id
+              AND s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
             <!-- Delete submitted_answer for orphan submissions (excluding example submissions) -->
             DELETE FROM submitted_answer sa
             USING submission s
@@ -407,6 +431,30 @@
               AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
 
             <!-- NOTE: We no longer clear example_submission references because we're preserving those submissions -->
+
+            <!-- Delete multiple_choice_submitted_answer_selected_options for orphan submissions (excluding example submissions) -->
+            DELETE mcso
+            FROM multiple_choice_submitted_answer_selected_options mcso
+            JOIN submitted_answer sa ON sa.id = mcso.multiple_choice_submitted_answers_id
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete drag_and_drop_mapping for orphan submissions (excluding example submissions) -->
+            DELETE ddm
+            FROM drag_and_drop_mapping ddm
+            JOIN submitted_answer sa ON sa.id = ddm.submitted_answer_id
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
+
+            <!-- Delete short_answer_submitted_text for orphan submissions (excluding example submissions) -->
+            DELETE sast
+            FROM short_answer_submitted_text sast
+            JOIN submitted_answer sa ON sa.id = sast.submitted_answer_id
+            JOIN submission s ON s.id = sa.submission_id
+            WHERE s.participation_id IS NULL
+              AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = s.id);
 
             <!-- Delete submitted_answer for orphan submissions (excluding example submissions) -->
             DELETE sa
@@ -548,6 +596,30 @@
             WHERE s.id = es.submission_id
               AND p.exercise_id IS NULL;
 
+            <!-- Delete multiple_choice_submitted_answer_selected_options for submissions of orphan participations -->
+            DELETE FROM multiple_choice_submitted_answer_selected_options mcso
+            USING submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE mcso.multiple_choice_submitted_answers_id = sa.id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete drag_and_drop_mapping for submissions of orphan participations -->
+            DELETE FROM drag_and_drop_mapping ddm
+            USING submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE ddm.submitted_answer_id = sa.id
+              AND p.exercise_id IS NULL;
+
+            <!-- Delete short_answer_submitted_text for submissions of orphan participations -->
+            DELETE FROM short_answer_submitted_text sast
+            USING submitted_answer sa
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE sast.submitted_answer_id = sa.id
+              AND p.exercise_id IS NULL;
+
             <!-- Delete submitted_answer for submissions of orphan participations -->
             DELETE FROM submitted_answer sa
             USING submission s
@@ -684,6 +756,30 @@
             JOIN submission s ON s.id = es.submission_id
             JOIN participation p ON p.id = s.participation_id
             SET es.submission_id = NULL
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete multiple_choice_submitted_answer_selected_options for submissions of orphan participations -->
+            DELETE mcso
+            FROM multiple_choice_submitted_answer_selected_options mcso
+            JOIN submitted_answer sa ON sa.id = mcso.multiple_choice_submitted_answers_id
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete drag_and_drop_mapping for submissions of orphan participations -->
+            DELETE ddm
+            FROM drag_and_drop_mapping ddm
+            JOIN submitted_answer sa ON sa.id = ddm.submitted_answer_id
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
+            WHERE p.exercise_id IS NULL;
+
+            <!-- Delete short_answer_submitted_text for submissions of orphan participations -->
+            DELETE sast
+            FROM short_answer_submitted_text sast
+            JOIN submitted_answer sa ON sa.id = sast.submitted_answer_id
+            JOIN submission s ON s.id = sa.submission_id
+            JOIN participation p ON p.id = s.participation_id
             WHERE p.exercise_id IS NULL;
 
             <!-- Delete submitted_answer for submissions of orphan participations -->
