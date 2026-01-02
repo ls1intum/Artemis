@@ -561,9 +561,14 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var manualLongFeedback = new Feedback().credits(0.0);
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
-        var result = new Result().feedbacks(Set.of(manualLongFeedback)).score(0.0);
+        var result = new Result().score(0.0);
         result.setRated(true);
         result.setExerciseId(programmingExercise.getId());
+        // Set submission before saving (submission_id is NOT NULL)
+        result.setSubmission(programmingSubmission);
+        // Set result on feedback before adding (feedback.result_id is NOT NULL)
+        manualLongFeedback.setResult(result);
+        result.setFeedbacks(Set.of(manualLongFeedback));
         result = resultRepository.save(result);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -583,8 +588,13 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
-        var result = new Result().feedbacks(Set.of(manualLongFeedback)).score(0.0).rated(true);
+        var result = new Result().score(0.0).rated(true);
         result.setExerciseId(programmingExercise.getId());
+        // Set submission before saving (submission_id is NOT NULL)
+        result.setSubmission(programmingSubmission);
+        // Set result on feedback before adding (feedback.result_id is NOT NULL)
+        manualLongFeedback.setResult(result);
+        result.setFeedbacks(Set.of(manualLongFeedback));
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
@@ -950,10 +960,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         initialResult.setExerciseId(programmingExercise.getId());
+        // Set submission before saving (submission_id is NOT NULL)
+        initialResult.setSubmission(programmingSubmission);
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);
-        initialResult.setSubmission(programmingSubmission);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // complaining

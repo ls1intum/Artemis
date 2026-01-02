@@ -652,15 +652,12 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionForModelingEditor_badRequest() throws Exception {
+        // Test that endpoint returns BAD_REQUEST for non-modeling exercise (wrong type)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentParticipation participation = new StudentParticipation();
         participation.setParticipant(user);
-        participation.setExercise(null);
-        StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
-        request.get("/api/modeling/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
-
         participation.setExercise(textExercise);
-        studentParticipation = studentParticipationRepository.save(participation);
+        StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
         request.get("/api/modeling/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 

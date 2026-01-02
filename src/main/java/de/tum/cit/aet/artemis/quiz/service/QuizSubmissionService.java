@@ -146,11 +146,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         result.setCorrectionRound(0);
+        // setup result - submission relation before saving (submission_id is NOT NULL)
+        result.setSubmission(quizSubmission);
         // save result
         result = resultRepository.save(result);
-
-        // setup result - submission relation
-        result.setSubmission(quizSubmission);
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
         quizSubmission.addResult(result);

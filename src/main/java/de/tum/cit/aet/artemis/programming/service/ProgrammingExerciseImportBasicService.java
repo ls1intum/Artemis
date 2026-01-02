@@ -139,8 +139,12 @@ public class ProgrammingExerciseImportBasicService {
     @Transactional // TODO: NOT OK --> apply the transaction on a smaller scope
     // IMPORTANT: the transactional context only works if you invoke this method
     // from another class
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newProgrammingExercise) {
         prepareBasicExerciseInformation(originalProgrammingExercise, newProgrammingExercise);
+
+        // Save the exercise first to get an ID before setting up participations.
+        // Participations have a NOT NULL constraint on exercise_id, so the exercise must be persisted first.
+        newProgrammingExercise = programmingExerciseRepository.save(newProgrammingExercise);
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newProgrammingExercise);

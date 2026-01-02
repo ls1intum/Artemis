@@ -454,9 +454,14 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission, String assessorLogin, List<Feedback> feedbacks) {
-        Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(new HashSet<>(feedbacks));
+        Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setExerciseId(submission.getParticipation().getExercise().getId());
+        // Set result reference on each feedback before save (feedback.result_id is NOT NULL)
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
+        result.setFeedbacks(new HashSet<>(feedbacks));
         return resultRepo.save(result);
     }
 

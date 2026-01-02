@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
@@ -41,16 +42,19 @@ public class ProgrammingExerciseDeletionService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExerciseRepository exerciseRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -89,7 +93,7 @@ public class ProgrammingExerciseDeletionService {
         // Note: We explicitly delete template and solution participations because they have a complex
         // inheritance situation that prevents orphanRemoval from working correctly with NOT NULL FKs.
         // See the comments in ProgrammingExercise.java for details.
-        // First, clear the references on the exercise side to break the FK relationship.
+        // Clear references on the exercise side to break FK relationships
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
@@ -102,8 +106,13 @@ public class ProgrammingExerciseDeletionService {
             participationDeletionService.deleteParticipationById(solutionProgrammingExerciseParticipation.getId());
         }
 
+        // Fetch the exercise fresh with studentParticipations to ensure L2 cache has correct data.
+        // StudentParticipations were already deleted by deleteAllByExercise in ExerciseDeletionService,
+        // so this fetch will return an empty collection and update the L2 cache.
+        var exerciseToDelete = exerciseRepository.findByIdWithStudentParticipationsElseThrow(programmingExerciseId);
+
         // Delete the programming exercise
-        programmingExerciseRepository.deleteById(programmingExerciseId);
+        exerciseRepository.delete(exerciseToDelete);
     }
 
     private void deleteBuildPlans(ProgrammingExercise programmingExercise) {

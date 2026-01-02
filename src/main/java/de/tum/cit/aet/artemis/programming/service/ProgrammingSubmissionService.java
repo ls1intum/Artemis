@@ -512,8 +512,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             Result existingResult = optionalExistingResult.get();
             automaticFeedbacks = existingResult.getFeedbacks().stream().map(feedbackService::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
             for (Feedback feedback : automaticFeedbacks) {
-                feedback = feedbackRepository.save(feedback);
+                // Set result before saving (feedback.result_id is NOT NULL)
                 feedback.setResult(newResult);
+                feedback = feedbackRepository.save(feedback);
             }
 
             newResult.copyProgrammingExerciseCounters(existingResult);

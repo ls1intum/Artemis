@@ -218,7 +218,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Remove the template participation from the programming exercise.
         programmingExercise.setTemplateParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
-        templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
+        // Use deleteById to avoid JPA merge issues with detached entity references
+        templateProgrammingExerciseParticipationRepository.deleteById(templateParticipation.getId());
 
         localVCLocalCITestService.testFetchReturnsError(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
         localVCLocalCITestService.testPushReturnsError(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
@@ -229,7 +230,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Remove the solution participation from the programming exercise.
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
-        solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
+        // Use deleteById to avoid JPA merge issues with detached entity references
+        solutionProgrammingExerciseParticipationRepository.deleteById(solutionParticipation.getId());
 
         localVCLocalCITestService.testFetchReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
         localVCLocalCITestService.testPushReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);

@@ -277,6 +277,25 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
     @Test
     void testDeletionOfStaticCodeAnalysisCategoriesOnExerciseDeletion() {
+        // Save IDs before unlinking to use for deletion
+        var templateParticipation = programmingExerciseSCAEnabled.getTemplateParticipation();
+        var solutionParticipation = programmingExerciseSCAEnabled.getSolutionParticipation();
+        Long templateParticipationId = templateParticipation != null ? templateParticipation.getId() : null;
+        Long solutionParticipationId = solutionParticipation != null ? solutionParticipation.getId() : null;
+
+        // Unlink participations before deletion (participations have FK constraint on exercise)
+        programmingExerciseSCAEnabled.setTemplateParticipation(null);
+        programmingExerciseSCAEnabled.setSolutionParticipation(null);
+        programmingExerciseRepository.save(programmingExerciseSCAEnabled);
+
+        // Delete participations by ID
+        if (templateParticipationId != null) {
+            templateProgrammingExerciseParticipationRepository.deleteById(templateParticipationId);
+        }
+        if (solutionParticipationId != null) {
+            solutionProgrammingExerciseParticipationRepository.deleteById(solutionParticipationId);
+        }
+
         programmingExerciseRepository.delete(programmingExerciseSCAEnabled);
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(categories).isEmpty();

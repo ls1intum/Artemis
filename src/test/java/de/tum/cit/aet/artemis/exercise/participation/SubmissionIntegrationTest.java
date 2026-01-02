@@ -67,12 +67,12 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result1);
         submission.addResult(result2);
@@ -95,15 +95,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -125,15 +125,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);

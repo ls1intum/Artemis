@@ -473,7 +473,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         solutionRepository.workingCopyGitRepo.push().call();
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
-        solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
+        // Use deleteById to avoid JPA merge issues with detached entity references
+        solutionProgrammingExerciseParticipationRepository.deleteById(solutionParticipation.getId());
         assertThatExceptionOfType(VersionControlException.class)
                 .isThrownBy(() -> processNewPush(solutionCommitHash, solutionRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities()))
                 .withMessageContaining(expectedErrorMessage);
@@ -484,7 +485,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         templateRepository.workingCopyGitRepo.push().call();
         programmingExercise.setTemplateParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
-        templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
+        // Use deleteById to avoid JPA merge issues with detached entity references
+        templateProgrammingExerciseParticipationRepository.deleteById(templateParticipation.getId());
 
         assertThatExceptionOfType(VersionControlException.class)
                 .isThrownBy(() -> processNewPush(templateCommitHash, templateRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities()))

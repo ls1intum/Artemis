@@ -172,8 +172,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testGetModelingExercise_setGradingInstructionFeedbackUsed() throws Exception {
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+
+        // Create a submission and result before creating feedback
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission("model", true);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(submission.getParticipation(), submission);
+
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
+        feedback.setResult(result);
         feedbackRepository.save(feedback);
 
         conversationUtilService.addChannelToExercise(classExercise);
