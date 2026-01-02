@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.repository;
 
-import static de.tum.cit.aet.artemis.core.authentication.CredentialRecordFactory.createCredentialRecord;
+import static de.tum.cit.aet.artemis.core.authentication.PasskeyCredentialFactory.createAndSavePasskey;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
@@ -10,7 +10,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.web.webauthn.api.CredentialRecord;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
@@ -59,14 +58,14 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void testFindPasskeysForAdminUsers() {
-        PasskeyCredential adminPasskey = createPasskey(adminUser, "Admin Passkey", true);
+        PasskeyCredential adminPasskey = createAndSavePasskey(adminUser, "Admin Passkey", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
         passkeyCredentialsRepository.save(adminPasskey);
 
         // Create passkey for regular user (should not be included)
-        PasskeyCredential regularUserPasskey = createPasskey(regularUser, "Student Passkey", false);
+        PasskeyCredential regularUserPasskey = createAndSavePasskey(regularUser, "Student Passkey", false, artemisUserCredentialRepository, passkeyCredentialsRepository);
         passkeyCredentialsRepository.save(regularUserPasskey);
 
-        PasskeyCredential superAdminPasskey = createPasskey(superAdminUser, "Super Admin Passkey", true);
+        PasskeyCredential superAdminPasskey = createAndSavePasskey(superAdminUser, "Super Admin Passkey", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
         passkeyCredentialsRepository.save(superAdminPasskey);
 
         // Retrieve all passkeys for admin users
@@ -81,7 +80,7 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void testFindPasskeysForAdminUsers_NoAdminPasskeys() {
-        PasskeyCredential regularUserPasskey = createPasskey(regularUser, "Student Passkey", false);
+        PasskeyCredential regularUserPasskey = createAndSavePasskey(regularUser, "Student Passkey", false, artemisUserCredentialRepository, passkeyCredentialsRepository);
         passkeyCredentialsRepository.save(regularUserPasskey);
 
         List<PasskeyAdminDTO> result = passkeyCredentialsRepository.findPasskeysForAdminUsers();
@@ -92,7 +91,7 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
     @Test
     void testFindPasskeysForAdminUsers_VerifyDTOFields() {
         // Create passkey for admin user with specific data
-        PasskeyCredential adminPasskey = createPasskey(adminUser, "Test Passkey Label", true);
+        PasskeyCredential adminPasskey = createAndSavePasskey(adminUser, "Test Passkey Label", true, artemisUserCredentialRepository, passkeyCredentialsRepository);
         adminPasskey.setLastUsed(Instant.now().minusSeconds(86400)); // 1 day ago
         passkeyCredentialsRepository.save(adminPasskey);
 
@@ -111,14 +110,5 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
         assertThat(dto.userId()).isEqualTo(adminUser.getId());
         assertThat(dto.userLogin()).isEqualTo(adminUser.getLogin());
         assertThat(dto.userName()).contains(adminUser.getFirstName()).contains(adminUser.getLastName());
-    }
-
-    private PasskeyCredential createPasskey(User user, String label, boolean isSuperAdminApproved) {
-        CredentialRecord credentialRecord = createCredentialRecord(user, label);
-        artemisUserCredentialRepository.save(credentialRecord);
-        PasskeyCredential savedPasskey = passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString()).orElseThrow();
-        savedPasskey.setSuperAdminApproved(isSuperAdminApproved);
-
-        return savedPasskey;
     }
 }
