@@ -153,7 +153,7 @@ describe('AdminContainerComponent', () => {
     it('should detect passkey feature flags from profile info', () => {
         const profileInfoWithPasskey: ProfileInfo = {
             ...mockProfileInfo,
-            activeModuleFeatures: ['passkey', 'passkeyRequiredForAdministratorFeatures'],
+            activeModuleFeatures: ['passkey', 'passkey-admin'],
         };
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithPasskey);
