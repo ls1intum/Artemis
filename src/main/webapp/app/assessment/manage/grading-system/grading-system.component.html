@@ -5,23 +5,23 @@
     </h2>
     <jhi-documentation-button [type]="documentationType" />
 </div>
-@if (childComponent) {
-    <div class="course-body-container">
-        <div class="d-flex">
-            <button (click)="childComponent.generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
-                <span jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
+<div class="course-body-container" [hidden]="!childComponent">
+    <div class="d-flex">
+        <button (click)="childComponent?.generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
+            <span jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
+        </button>
+        <jhi-grading-system-info-modal />
+        <div class="ms-auto">
+            <label class="btn btn-primary me-1 mb-1">
+                <span jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
+                <input type="file" accept=".json,.csv" style="display: none" (change)="childComponent?.onCSVFileSelect($event)" />
+            </label>
+            <button (click)="childComponent?.exportGradingStepsToCsv()" class="btn btn-primary mb-1" type="button">
+                <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
             </button>
-            <jhi-grading-system-info-modal />
-            <div class="ms-auto">
-                <label class="btn btn-primary me-1 mb-1">
-                    <span jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
-                    <input type="file" accept=".json,.csv" style="display: none" (change)="childComponent.onCSVFileSelect($event)" />
-                </label>
-                <button (click)="childComponent.exportGradingStepsToCsv()" class="btn btn-primary mb-1" type="button">
-                    <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
-                </button>
-            </div>
         </div>
+    </div>
+    @if (childComponent) {
         <div class="dropdown-container">
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
@@ -29,7 +29,7 @@
                     <jhi-help-icon text="artemisApp.course.maxPoints.info" />
                 }
                 @if (isExam) {
-                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}" />
+                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" [ngbTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" container="body" />
                 }
                 <input type="number" class="form-control" [(ngModel)]="childComponent.maxPoints" min="1" (change)="childComponent.onChangeMaxPoints(childComponent.maxPoints)" />
             </div>
@@ -65,8 +65,8 @@
             [presentationsConfig]="childComponent.presentationsConfig"
             (presentationsConfigChange)="childComponent.onPresentationsConfigChange($event)"
         />
-    </div>
-}
+    }
+</div>
 <div class="tab-bar" id="tab-bar">
     <div class="col-12 no-indent">
         <div>

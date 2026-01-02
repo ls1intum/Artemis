@@ -392,6 +392,7 @@ describe('GradingSystemPresentationsComponent', () => {
 
     describe('presentationsConfigChange output', () => {
         it('should emit config change on initialization', () => {
+            vi.useFakeTimers();
             const gradingScale = createGradingScaleWithGradedPresentations();
             const config = createDefaultPresentationsConfig();
             const emitSpy = vi.spyOn(component.presentationsConfigChange, 'emit');
@@ -400,9 +401,13 @@ describe('GradingSystemPresentationsComponent', () => {
             fixture.componentRef.setInput('presentationsConfig', config);
             fixture.detectChanges();
 
+            // The emission is deferred via setTimeout to prevent NG0103 errors
+            vi.runAllTimers();
+
             expect(emitSpy).toHaveBeenCalled();
             const emittedConfig = emitSpy.mock.calls[0][0];
             expect(emittedConfig.presentationType).toBe(PresentationType.GRADED);
+            vi.useRealTimers();
         });
 
         it('should emit config change when presentation type changes', () => {

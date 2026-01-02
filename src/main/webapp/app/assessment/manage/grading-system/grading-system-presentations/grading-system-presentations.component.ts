@@ -1,4 +1,4 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, untracked } from '@angular/core';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -123,11 +123,31 @@ export class GradingSystemPresentationsComponent {
     readonly presentationsConfigChange = output<PresentationsConfig>();
 
     // =========================================================================
+    // Private Properties
+    // =========================================================================
+
+    private readonly destroyRef = inject(DestroyRef);
+    private pendingEmitTimeout?: ReturnType<typeof setTimeout>;
+
+    // =========================================================================
     // Constructor
     // =========================================================================
 
     constructor() {
         this.setupInputChangeEffect();
+        this.setupCleanup();
+    }
+
+    /**
+     * Sets up cleanup logic to cancel any pending timeouts when the component is destroyed.
+     * This prevents NG0953 errors (Unexpected emit for destroyed OutputRef).
+     */
+    private setupCleanup(): void {
+        this.destroyRef.onDestroy(() => {
+            if (this.pendingEmitTimeout) {
+                clearTimeout(this.pendingEmitTimeout);
+            }
+        });
     }
 
     /**
@@ -137,6 +157,9 @@ export class GradingSystemPresentationsComponent {
      * When either the grading scale or presentations config changes, this effect
      * determines the current presentation type based on the grading scale settings
      * and updates the config accordingly.
+     *
+     * Uses untracked for the initialization to prevent NG0103 errors (expression changed
+     * after it was checked) by deferring the config change emission to the next microtask.
      */
     private setupInputChangeEffect(): void {
         effect(() => {
@@ -145,7 +168,10 @@ export class GradingSystemPresentationsComponent {
 
             // Only initialize if both inputs are available
             if (scale && config) {
-                this.initializePresentationConfig();
+                // Use untracked to avoid re-triggering the effect when we modify the config
+                untracked(() => {
+                    this.initializePresentationConfig();
+                });
             }
         });
     }
@@ -160,6 +186,10 @@ export class GradingSystemPresentationsComponent {
      * This method determines which presentation type is currently active by examining
      * the grading scale properties and updates the config to match. It also syncs
      * the presentation number and weight values.
+     *
+     * The config change emission is deferred to the next microtask to prevent NG0103
+     * errors (expression changed after it was checked) when this method is called
+     * from the effect during change detection.
      */
     private initializePresentationConfig(): void {
         const config = this.presentationsConfig();
@@ -179,7 +209,10 @@ export class GradingSystemPresentationsComponent {
         config.presentationsNumber = scale.presentationsNumber;
         config.presentationsWeight = scale.presentationsWeight;
 
-        this.emitConfigChange();
+        // Defer emission to the next task to avoid NG0103 errors
+        // (expression changed after it was checked) when called during change detection.
+        // Store the timeout ID so it can be cancelled if the component is destroyed.
+        this.pendingEmitTimeout = setTimeout(() => this.emitConfigChange());
     }
 
     // =========================================================================

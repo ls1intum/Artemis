@@ -6,6 +6,10 @@
     [style]="{ width: '50rem' }"
     appendTo="body"
     [draggable]="false"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [baseZIndex]="10000"
 >
     <table class="table">
         <tr>
@@ -39,9 +43,7 @@
         </tr>
     </table>
     <ng-template pTemplate="footer">
-        <button pButton severity="secondary" (click)="close()" jhiTranslate="entity.action.close"></button>
+        <button pButton severity="secondary" [label]="'entity.action.close' | artemisTranslate" (click)="close()"></button>
     </ng-template>
 </p-dialog>
-<div>
-    <button class="btn" (click)="open()"><fa-icon [icon]="farQuestionCircle" /></button>
-</div>
+<button class="btn btn-link" (click)="open()" type="button"><fa-icon [icon]="farQuestionCircle" /></button>
