@@ -81,6 +81,16 @@ public class ExamRepositoryApi extends AbstractExamApi {
     }
 
     /**
+     * Finds all exercise IDs for a given exam.
+     *
+     * @param examId the ID of the exam
+     * @return set of exercise IDs
+     */
+    public Set<Long> findExerciseIdsByExamId(Long examId) {
+        return examRepository.findExerciseIdsByExamId(examId);
+    }
+
+    /**
      * Counts the number of student exams for a given exam.
      * This is used for calculating weighted progress during course deletion/reset.
      *
