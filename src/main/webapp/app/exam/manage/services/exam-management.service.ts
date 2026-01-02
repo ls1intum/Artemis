@@ -22,6 +22,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
+import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -41,9 +42,9 @@ export class ExamManagementService {
      * @param exam The exam to create.
      */
     create(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertExamDatesFromClient(exam);
+        const dto = toExamUpdateDTO(exam);
         return this.http
-            .post<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
+            .post<Exam>(`${this.resourceUrl}/${courseId}/exams`, dto, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
@@ -53,9 +54,9 @@ export class ExamManagementService {
      * @param exam The exam to update.
      */
     update(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertExamDatesFromClient(exam);
+        const dto = toExamUpdateDTO(exam);
         return this.http
-            .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
+            .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, dto, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
@@ -432,17 +433,6 @@ export class ExamManagementService {
         return this.http
             .delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
-    }
-
-    public static convertExamDatesFromClient(exam: Exam): Exam {
-        return Object.assign({}, exam, {
-            startDate: convertDateFromClient(exam.startDate),
-            endDate: convertDateFromClient(exam.endDate),
-            visibleDate: convertDateFromClient(exam.visibleDate),
-            publishResultsDate: convertDateFromClient(exam.publishResultsDate),
-            examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
-            examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
-        });
     }
 
     /**

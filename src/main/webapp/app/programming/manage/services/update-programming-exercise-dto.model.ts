@@ -1,4 +1,3 @@
-import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
@@ -97,11 +96,11 @@ export interface UpdateProgrammingExerciseDTO {
     gradingInstructions?: string;
 
     // Timeline fields
-    releaseDate?: dayjs.Dayjs | string | null;
-    startDate?: dayjs.Dayjs | string | null;
-    dueDate?: dayjs.Dayjs | string | null;
-    assessmentDueDate?: dayjs.Dayjs | string | null;
-    exampleSolutionPublicationDate?: dayjs.Dayjs | string | null;
+    releaseDate?: string;
+    startDate?: string;
+    dueDate?: string;
+    assessmentDueDate?: string;
+    exampleSolutionPublicationDate?: string;
 
     // Course/ExerciseGroup references (by ID)
     courseId?: number;
@@ -122,7 +121,7 @@ export interface UpdateProgrammingExerciseDTO {
     programmingLanguage?: ProgrammingLanguage;
     packageName?: string;
     showTestNamesToStudents: boolean;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs | string | null;
+    buildAndTestStudentSubmissionsAfterDueDate?: string;
     testCasesChanged?: boolean;
     projectKey?: string;
     submissionPolicy?: SubmissionPolicy;

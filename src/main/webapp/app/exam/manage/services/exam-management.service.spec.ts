@@ -20,6 +20,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;
@@ -57,15 +58,15 @@ describe('Exam Management Service Tests', () => {
 
     it('should create an exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
+        const mockExam: Exam = { id: 1, title: 'Test Exam' };
+        const expectedDTO = toExamUpdateDTO(mockExam);
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toEqual(mockCopyExam);
+        expect(req.request.body).toEqual(expectedDTO);
 
         // CLEANUP
         req.flush(mockExam);
@@ -74,15 +75,15 @@ describe('Exam Management Service Tests', () => {
 
     it('should update an exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
+        const mockExam: Exam = { id: 1, title: 'Test Exam' };
+        const expectedDTO = toExamUpdateDTO(mockExam);
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toEqual(mockCopyExam);
+        expect(req.request.body).toEqual(expectedDTO);
 
         // CLEANUP
         req.flush(mockExam);
@@ -127,9 +128,9 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
         const expected: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
+
         // WHEN
-        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
+        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
@@ -147,9 +148,9 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
+
         // WHEN
-        service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
+        service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
