@@ -177,7 +177,6 @@ public class MailSendingService {
         }
 
         executeSend(recipient, subject, content, false, true);
-
     }
 
     /**

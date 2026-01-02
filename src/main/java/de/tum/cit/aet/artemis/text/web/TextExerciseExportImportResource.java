@@ -133,7 +133,7 @@ public class TextExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
 
         // TAs are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants()) {
+        if (submissionExportOptions.exportAllParticipants()) {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, textExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 

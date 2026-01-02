@@ -116,9 +116,9 @@ public class IrisMessage extends DomainObject {
     }
 
     public void addContent(IrisMessageContent... content) {
-        for (IrisMessageContent c : content) {
-            c.setMessage(this);
-            this.content.add(c);
+        for (IrisMessageContent messageContent : content) {
+            messageContent.setMessage(this);
+            this.content.add(messageContent);
         }
     }
 
