@@ -7,6 +7,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPER
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.core.env.Environment;
 
 /**
@@ -24,6 +27,17 @@ public class ArtemisConfigHelper {
      */
     public boolean isPasskeyEnabled(Environment environment) {
         return getPropertyOrExitArtemis(PASSKEY_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if passkey is required for administrator features.
+     * This only applies when passkey is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if passkey is required for administrator features, false otherwise
+     */
+    public boolean isPasskeyRequiredForAdmin(Environment environment) {
+        return Boolean.TRUE.equals(environment.getProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Boolean.class, false));
     }
 
     /**
@@ -104,6 +118,49 @@ public class ArtemisConfigHelper {
      */
     public boolean isNebulaEnabled(Environment environment) {
         return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Gets the list of all enabled module features based on configuration.
+     *
+     * @param environment the Spring environment
+     * @return list of enabled feature names
+     */
+    public List<String> getEnabledFeatures(Environment environment) {
+        List<String> enabledFeatures = new ArrayList<>();
+
+        if (isAtlasEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLAS);
+        }
+        if (isHyperionEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isExamEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_EXAM);
+        }
+        if (isPlagiarismEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_PLAGIARISM);
+        }
+        if (isTextExerciseEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
+        if (isTutorialGroupEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
+        }
+        if (isPasskeyEnabled(environment)) {
+            enabledFeatures.add(Constants.FEATURE_PASSKEY);
+            if (isPasskeyRequiredForAdmin(environment)) {
+                enabledFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
+            }
+        }
+        if (isNebulaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_NEBULA);
+        }
+        if (isSharingEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
+        }
+
+        return enabledFeatures;
     }
 
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {

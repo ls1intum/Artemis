@@ -73,9 +73,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 
-class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
+class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";
 

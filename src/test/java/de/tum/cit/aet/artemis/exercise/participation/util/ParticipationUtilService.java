@@ -959,7 +959,7 @@ public class ParticipationUtilService {
      * @return A List of Results with eagerly loaded submissions and feedbacks
      */
     public List<Result> getResultsForExercise(Exercise exercise) {
-        return resultRepo.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
+        return resultRepo.findWithEagerSubmissionAndFeedbackByExerciseId(exercise.getId());
     }
 
     public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UriService uriService,
