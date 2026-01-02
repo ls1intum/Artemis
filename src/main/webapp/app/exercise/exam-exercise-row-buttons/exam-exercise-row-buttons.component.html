@@ -138,6 +138,8 @@
         <button
             jhiDeleteButton
             [entityTitle]="exercise.title || ''"
+            entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+            [fetchEntitySummary]="fetchProgrammingExerciseDeletionSummary(exercise.id!)"
             deleteQuestion="artemisApp.programmingExercise.delete.question"
             [translateValues]="{
                 courseTitle: course.title,

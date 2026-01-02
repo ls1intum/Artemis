@@ -1,7 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { formatProgrammingExerciseDeletionSummary } from 'app/programming/shared/utils/programming-exercise.utils';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -170,6 +172,10 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    fetchProgrammingExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return formatProgrammingExerciseDeletionSummary(this.programmingExerciseService.getDeletionSummary(exerciseId));
     }
 
     /**
