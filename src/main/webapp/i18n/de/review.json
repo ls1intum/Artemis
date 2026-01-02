@@ -1,0 +1,17 @@
+{
+    "artemisApp": {
+        "review": {
+            "addCommentTitle": "Review-Kommentar hinzuf\u00fcgen",
+            "addCommentPlaceholder": "Kommentar hinzuf\u00fcgen...",
+            "addCommentSubmit": "Kommentar hinzuf\u00fcgen",
+            "addCommentCancel": "Abbrechen",
+            "saveFailed": "Der Review-Kommentar konnte nicht gespeichert werden.",
+            "loadFailed": "Die Review-Kommentare konnten nicht geladen werden.",
+            "commentMenu": "Kommentar-Aktionen",
+            "deleteComment": "Kommentar l\u00f6schen",
+            "deleteFailed": "Der Review-Kommentar konnte nicht gel\u00f6scht werden.",
+            "replyPlaceholder": "Antwort hinzuf\u00fcgen...",
+            "replySubmit": "Antworten"
+        }
+    }
+}

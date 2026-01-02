@@ -24,6 +24,12 @@
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="true"
+            [reviewCommentThreads]="reviewCommentThreads()"
+            [selectedAuxiliaryRepositoryId]="selectedRepositoryId"
+            (onSubmitReviewComment)="onSubmitReviewComment($event)"
+            (onDeleteReviewComment)="onDeleteReviewComment($event)"
+            (onReplyReviewComment)="onReplyReviewComment($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>

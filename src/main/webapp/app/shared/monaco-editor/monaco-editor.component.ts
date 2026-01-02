@@ -453,6 +453,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Removes the line decorations hover button and restores default options.
+     */
+    clearLineDecorationsHoverButton(): void {
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = undefined;
+        this._editor.updateOptions({
+            folding: true,
+            lineDecorationsWidth: 0,
+        });
+    }
+
+    /**
      * Highlights a range of lines in the editor using the specified class names.
      * @param startLine The number of the first line to highlight.
      * @param endLine The number of the last line to highlight.

@@ -1,0 +1,35 @@
+<div class="monaco-review-comment-widget monaco-review-comment-thread">
+    @for (comment of comments(); track comment.id; let first = $first) {
+        <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
+            <div class="monaco-review-comment-header">
+                <div class="monaco-review-comment-title">{{ comment.authorName }}</div>
+                <div class="monaco-review-comment-menu" ngbDropdown>
+                    <button
+                        type="button"
+                        class="btn btn-link p-0"
+                        ngbDropdownToggle
+                        [attr.aria-label]="'artemisApp.review.commentMenu' | artemisTranslate"
+                        [title]="'artemisApp.review.commentMenu' | artemisTranslate"
+                    >
+                        <span class="monaco-review-comment-menu-dots" aria-hidden="true"></span>
+                    </button>
+                    <div ngbDropdownMenu>
+                        <button type="button" class="dropdown-item" (click)="deleteComment(comment.id)">
+                            {{ 'artemisApp.review.deleteComment' | artemisTranslate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="monaco-review-comment-text">{{ comment.text }}</div>
+        </div>
+    }
+    <div class="monaco-review-comment-reply">
+        <div class="monaco-review-comment-separator"></div>
+        <textarea class="monaco-review-comment-textarea" [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate" [(ngModel)]="replyText"></textarea>
+        <div class="monaco-review-comment-actions">
+            <button type="button" class="btn btn-primary btn-sm" (click)="submitReply()">
+                {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
+            </button>
+        </div>
+    </div>
+</div>

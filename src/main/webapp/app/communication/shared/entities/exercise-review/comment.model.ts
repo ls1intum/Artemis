@@ -9,6 +9,7 @@ export interface Comment {
     id: number;
     threadId: number;
     authorId?: number;
+    authorName?: string;
     inReplyToId?: number;
     type: CommentType;
     content: CommentContent;

@@ -1,0 +1,102 @@
+.monaco-review-comment-widget {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    background-color: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+}
+
+.monaco-review-comment-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.monaco-review-comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.monaco-review-comment-menu {
+    margin-bottom: 0.5rem;
+}
+
+.monaco-review-comment-menu .btn-link {
+    text-decoration: none;
+    font-weight: 700;
+    line-height: 1;
+    width: 1.25rem;
+    height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    box-shadow: none;
+}
+
+.monaco-review-comment-menu .btn-link:focus,
+.monaco-review-comment-menu .btn-link:focus-visible,
+.monaco-review-comment-menu .btn-link:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.monaco-review-comment-menu .dropdown-toggle::after {
+    display: none;
+}
+
+.monaco-review-comment-menu-dots {
+    display: inline-block;
+    width: 0.25rem;
+    height: 0.25rem;
+    border-radius: 50%;
+    background-color: currentColor;
+    box-shadow:
+        0 -0.4rem 0 0 currentColor,
+        0 0.4rem 0 0 currentColor;
+}
+
+.monaco-review-comment-textarea {
+    width: 100%;
+    min-height: 5rem;
+    resize: vertical;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-family: inherit;
+}
+
+.monaco-review-comment-text {
+    width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    padding-left: 0.5rem;
+}
+
+.monaco-review-comment-reply {
+    margin-top: 0.75rem;
+}
+
+.monaco-review-comment-item + .monaco-review-comment-item {
+    margin-top: 0.75rem;
+}
+
+.monaco-review-comment-item--with-divider {
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+}
+
+.monaco-review-comment-separator {
+    border-top: 1px solid var(--border-color);
+    margin-bottom: 0.75rem;
+}
+
+.monaco-review-comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}

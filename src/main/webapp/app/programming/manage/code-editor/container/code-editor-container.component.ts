@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -29,6 +29,7 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { CommentThread } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -92,6 +93,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     disableAutoSave = false;
 
+    readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly reviewCommentThreads = input<CommentThread[]>([]);
+    readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
+
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     isProblemStatementVisible = input<boolean>(true);
@@ -108,6 +113,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output()
     onDiscardSuggestion = new EventEmitter<Feedback>();
+
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onDeleteReviewComment = output<number>();
+    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
+    @Output()
+    onAddReviewComment = new EventEmitter<{ lineNumber: number; fileName: string }>();
     @Input()
     course?: Course;
 

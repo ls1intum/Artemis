@@ -154,9 +154,13 @@ public class ExerciseReviewCommentService {
      * @param commentId the comment id
      */
     public void deleteComment(long commentId) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
+        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
+        CommentThread thread = comment.getThread();
         commentRepository.delete(comment);
+        if (commentRepository.countByThreadId(thread.getId()) == 0) {
+            commentThreadRepository.delete(thread);
+        }
     }
 
     /**
