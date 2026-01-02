@@ -126,12 +126,32 @@ public class ProgrammingExerciseUpdateResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
-        if (updateDTO.id() == 0) {
+        if (updateDTO.id() == null || updateDTO.id() == 0) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
+        }
+
+        // Validate that either courseId or exerciseGroupId is set, but not both
+        if (updateDTO.courseId() == null && updateDTO.exerciseGroupId() == null) {
+            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set", ENTITY_NAME, "noCourseOrExerciseGroup");
+        }
+        if (updateDTO.courseId() != null && updateDTO.exerciseGroupId() != null) {
+            throw new BadRequestAlertException("A programming exercise can only be associated with either a course or an exercise group, not both", ENTITY_NAME,
+                    "bothCourseAndExerciseGroupSet");
         }
 
         // Load the existing exercise from the database with all necessary associations
         var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+
+        // Validate that courseId or exerciseGroupId hasn't changed
+        // For course exercises: courseId must match
+        // For exam exercises: exerciseGroupId must match
+        Long existingCourseId = programmingExerciseBeforeUpdate.isCourseExercise() && programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember() != null
+                ? programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId()
+                : null;
+        Long existingExerciseGroupId = programmingExerciseBeforeUpdate.getExerciseGroup() != null ? programmingExerciseBeforeUpdate.getExerciseGroup().getId() : null;
+        if (!Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId())) {
+            throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
+        }
 
         // Create a copy for "before update" state to track changes
         var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
@@ -157,6 +177,9 @@ public class ProgrammingExerciseUpdateResource {
         }
         if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
+        }
+        if (!Objects.equals(originalExercise.getTemplateRepositoryUri(), updateDTO.templateRepositoryUri())) {
+            throw new BadRequestAlertException("The template repository URI cannot be changed", ENTITY_NAME, "templateRepositoryUriCannotChange");
         }
 
         // Check if theia Profile is enabled
@@ -392,7 +415,7 @@ public class ProgrammingExerciseUpdateResource {
         // Check that the exercise exists for given id (with grading criteria and example submissions for re-evaluation)
         var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(exerciseId);
 
-        if (exerciseId != updateDTO.id()) {
+        if (updateDTO.id() == null || exerciseId != updateDTO.id()) {
             throw new ConflictException("Exercise id in path does not match id in request body", ENTITY_NAME, "idMismatch");
         }
 

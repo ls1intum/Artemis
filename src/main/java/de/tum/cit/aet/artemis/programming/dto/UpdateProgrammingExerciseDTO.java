@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateProgrammingExerciseDTO(
         // Core identification
-        long id,
+        @Nullable Long id,
 
         // Exercise base fields
         String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty, Double maxPoints, Double bonusPoints,
@@ -69,7 +69,10 @@ public record UpdateProgrammingExerciseDTO(
             throw new BadRequestAlertException("No programming exercise was provided.", "programmingExercise", "programmingExercise.isNull");
         }
 
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        // For course exercises: set courseId, leave exerciseGroupId null
+        // For exam exercises: set exerciseGroupId, leave courseId null
+        Long courseId = exercise.isCourseExercise() && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId()
+                : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterionDTO> gradingCriterionDTOs = null;
