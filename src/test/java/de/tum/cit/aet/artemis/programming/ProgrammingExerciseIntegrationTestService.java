@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -208,6 +209,9 @@ public class ProgrammingExerciseIntegrationTestService {
     private ZipFileTestUtilService zipFileTestUtilService;
 
     @Autowired
+    private TempFileUtilService tempFileUtilService;
+
+    @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
@@ -289,7 +293,7 @@ public class ProgrammingExerciseIntegrationTestService {
         GitService.commit(studentRepository1.workingCopyGitRepo).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         studentRepository1.workingCopyGitRepo.push().call();
 
-        this.plagiarismChecksTestReposDir = Files.createTempDirectory(tempPath, "jplag-repos").toFile();
+        this.plagiarismChecksTestReposDir = tempFileUtilService.createTempDirectory("jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -1838,7 +1842,7 @@ public class ProgrammingExerciseIntegrationTestService {
             var repoUri = participation.getVcsRepositoryUri();
             assertThat(repoUri).as("Participation %d should have a repository URI", participation.getId()).isNotNull();
             try {
-                var testClonePath = Files.createTempDirectory("plagiarism-clone-test");
+                var testClonePath = tempFileUtilService.createTempDirectory("plagiarism-clone-test");
                 var clonedRepo = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, testClonePath, true, false);
                 assertThat(clonedRepo).as("Repository %s should be cloneable", repoUri).isNotNull();
                 assertThat(clonedRepo.getLocalPath().resolve("Main.java")).exists();
