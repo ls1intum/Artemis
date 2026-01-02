@@ -336,6 +336,30 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         assertThat(response.getId()).isNotNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessage_newFormatWithJsonContent() throws Exception {
+        // Test new format with JSON content
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockJsonMessage(session);
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // No assertion needed - just verify the call was made
+        });
+
+        // Create request DTO with JSON content
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+        assertThat(response.getContent()).hasSize(3);
+        assertThat(response.getContent().get(0)).isInstanceOf(de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent.class);
+    }
+
     private static String exerciseChatUrl(long sessionId) {
         return "/api/iris/programming-exercise-chat/" + sessionId + "/sessions";
     }
