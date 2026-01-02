@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.SystemNotificationType;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotificati
  * DTO for creating and updating SystemNotifications.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SystemNotificationUpdateDTO(@Nullable Long id, @Nullable String title, @Nullable String text, @Nullable ZonedDateTime notificationDate,
         @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 /**
  * DTO for importing exercise groups.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<ExerciseImportDTO> exercises) {
 

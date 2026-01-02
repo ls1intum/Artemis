@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
  * @param students  the set of student user IDs
  * @param ownerId   the owner user ID
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TeamInputDTO(@Nullable Long id, @NotNull @Size(max = 250) String name, @NotNull @Size(max = 10) String shortName, @Nullable @Size(max = 500) String image,
         @Nullable Set<Long> students, @Nullable Long ownerId) {

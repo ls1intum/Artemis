@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * DTO for updating text exercises.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateTextExerciseDTO(
         // Base exercise fields

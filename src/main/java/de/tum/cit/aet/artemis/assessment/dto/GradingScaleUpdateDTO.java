@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
  * @param coursePresentationScore optional: presentation score for the course
  * @param examMaxPoints           optional: max points for the exam (for exam grading scales)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
         @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * @param modelingSubmissionModel the model JSON (for ModelingSubmission)
  * @param modelingExplanationText the explanation text (for ModelingSubmission)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExampleSubmissionInputDTO(@Nullable Long id, @NotNull Long exerciseId, @Nullable Boolean usedForTutorial, @Nullable String assessmentExplanation,
         @Nullable String textSubmissionText, @Nullable String modelingSubmissionModel, @Nullable String modelingExplanationText) {

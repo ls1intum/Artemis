@@ -82,9 +82,11 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         weight: link.weight,
     }));
 
-    // Determine courseId and exerciseGroupId
-    const courseId = textExercise.course?.id ?? textExercise.exerciseGroup?.exam?.course?.id;
+    // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive)
+    // For course exercises: set courseId, leave exerciseGroupId undefined
+    // For exam exercises: set exerciseGroupId, leave courseId undefined
     const exerciseGroupId = textExercise.exerciseGroup?.id;
+    const courseId = exerciseGroupId ? undefined : textExercise.course?.id;
 
     // Convert categories to JSON strings
     const categories = ExerciseService.stringifyExerciseDTOCategories(textExercise);

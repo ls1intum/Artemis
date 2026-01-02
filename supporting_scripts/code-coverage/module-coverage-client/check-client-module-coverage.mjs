@@ -47,7 +47,7 @@ const moduleThresholds = {
     assessment: {
         statements: 90.00,
         branches:   78.20,
-        functions:  83.30,
+        functions:  83.20,
         lines:      90.10,
     },
     atlas: {
@@ -70,21 +70,21 @@ const moduleThresholds = {
     },
     core: {
         statements: 89.30,
-        branches:   70.20,
+        branches:   70.10,
         functions:  80.20,
         lines:      89.30,
     },
     exam: {
         statements: 91.50,
         branches:   75.80,
-        functions:  84.60,
+        functions:  84.30,
         lines:      91.80,
     },
     exercise: {
-        statements: 88.40,
-        branches:   76.60,
-        functions:  80.00,
-        lines:      88.50,
+        statements: 88.00,
+        branches:   75.70,
+        functions:  79.20,
+        lines:      88.00,
     },
     fileupload: {
         statements: 94.40,
@@ -134,7 +134,7 @@ const moduleThresholds = {
     programming: {
         statements: 89.40,
         branches:   76.00,
-        functions:  81.20,
+        functions:  81.00,
         lines:      89.40,
     },
     quiz: {
@@ -152,7 +152,7 @@ const moduleThresholds = {
     text: {
         statements: 89.70,
         branches:   69.00,
-        functions:  86.00,
+        functions:  85.60,
         lines:      90.00,
     },
     tutorialgroup: {

@@ -106,6 +106,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 score: 8,
                 rated: true,
                 hasComplaint: true,
+                correctionRound: 0,
                 submission,
                 participation,
             } as unknown as Result,
@@ -653,7 +654,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should not load feedback suggestions if there already are assessments', fakeAsync(() => {
-        // preparation already added an assessment
+        // Set up component with existing assessments
+        component['setPropertiesFromServerResponse'](participation);
         const athenaServiceFeedbackSuggestionsSpy = jest.spyOn(athenaService, 'getTextFeedbackSuggestions');
         component.loadFeedbackSuggestions();
         tick();
@@ -661,18 +663,23 @@ describe('TextSubmissionAssessmentComponent', () => {
     }));
 
     it('should validate assessments on component init', async () => {
+        component['setPropertiesFromServerResponse'](participation);
         component.assessmentsAreValid = false;
         await component.ngOnInit();
         expect(component.assessmentsAreValid).toBeTrue();
     });
 
     it('should allow overriding directly after submitting', async () => {
+        component['setPropertiesFromServerResponse'](participation);
         component.isAssessor = true;
         component.submit();
         expect(component.canOverride).toBeTrue();
     });
 
     it('should not invalidate assessment after saving', async () => {
+        component['setPropertiesFromServerResponse'](participation);
+        component.validateFeedback();
+        jest.spyOn(textAssessmentService, 'save').mockReturnValue(of({ body: { id: 1 } as Result } as HttpResponse<Result>));
         component.save();
         expect(component.assessmentsAreValid).toBeTrue();
     });

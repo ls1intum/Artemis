@@ -144,6 +144,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     score: 8,
                     rated: true,
                     hasComplaint: true,
+                    correctionRound: 0,
                     feedbacks: [
                         {
                             id: 2,

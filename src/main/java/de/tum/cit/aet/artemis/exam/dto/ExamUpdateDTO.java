@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * DTO for creating and updating exams.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,

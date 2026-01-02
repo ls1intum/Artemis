@@ -190,9 +190,11 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
           }
         : undefined;
 
-    // Determine courseId and exerciseGroupId
-    const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
+    // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive)
+    // For course exercises: set courseId, leave exerciseGroupId undefined
+    // For exam exercises: set exerciseGroupId, leave courseId undefined
     const exerciseGroupId = exercise.exerciseGroup?.id;
+    const courseId = exerciseGroupId ? undefined : exercise.course?.id;
 
     // Convert categories to JSON strings
     const categories = ExerciseService.stringifyExerciseDTOCategories(exercise);
