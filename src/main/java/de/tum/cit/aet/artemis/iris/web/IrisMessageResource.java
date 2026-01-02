@@ -98,14 +98,16 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         IrisMessage message = new IrisMessage();
-        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
+        var contentList = requestDTO.content() != null ? requestDTO.content() : List.<IrisMessageContentDTO>of();
+        List<IrisMessageContent> contentEntities = contentList.stream().map(IrisMessageContentDTO::toEntity).toList();
         message.setContent(contentEntities);
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
 
         IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
-        irisSessionService.requestMessageFromIris(session, requestDTO.uncommittedFiles());
+        var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
