@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -315,14 +316,14 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Updates the timeline attributes of the given programming exercise
+     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
      *
-     * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText           optional text for a notification to all students about the update
+     * @param timelineUpdateDTO containing the timeline changes that have to be saved
+     * @param notificationText  optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+    public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
@@ -330,13 +331,8 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
 
-        programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
-        programmingExercise.setStartDate(updatedProgrammingExercise.getStartDate());
-        programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-        programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
-        programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
-        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
+        // Apply the DTO values to the existing exercise
+        timelineUpdateDTO.applyTo(programmingExercise);
 
         programmingExercise.validateDates();
 

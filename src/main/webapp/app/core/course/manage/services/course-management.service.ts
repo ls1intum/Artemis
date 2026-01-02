@@ -30,6 +30,7 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { toCourseUpdateDTO } from 'app/core/course/shared/entities/course-update-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -85,9 +86,9 @@ export class CourseManagementService {
      * @param courseImage - the course icon file
      */
     update(courseId: number, courseUpdate: Course, courseImage?: Blob): Observable<EntityResponseType> {
-        const copy = CourseManagementService.convertCourseDatesFromClient(courseUpdate);
+        const dto = toCourseUpdateDTO(courseUpdate);
         const formData = new FormData();
-        formData.append('course', objectToJsonBlob(copy));
+        formData.append('course', objectToJsonBlob(dto));
         if (courseImage) {
             // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
             formData.append('file', courseImage, 'placeholderName.png');

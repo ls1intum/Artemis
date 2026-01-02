@@ -863,6 +863,7 @@
         </sql>
 
         <!-- ==================== PHASE 7: Add NOT NULL constraints ==================== -->
+        <!-- TODO: activate the NOT NULL constraints by removing the workarounds -->
 
         <!-- NOTE: complaint_response.complaint_id should remain nullable because production code in
              ComplaintResponseService.disassociateComplaintAndComplaintResponse uses a workaround pattern
