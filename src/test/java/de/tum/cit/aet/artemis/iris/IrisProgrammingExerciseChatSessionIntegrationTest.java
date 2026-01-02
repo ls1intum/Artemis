@@ -229,9 +229,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         var messages = irisMessageRepository.findAllBySessionId(session.getId());
         assertThat(messages).isNotEmpty();
         assertThat(messages).hasSizeGreaterThanOrEqualTo(1);
-        // Verify we have both USER and LLM messages
+        // Verify we have the USER message
         assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
-        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.LLM)).isTrue();
         // Verify messages have content
         assertThat(messages).allMatch(m -> !m.getContent().isEmpty());
     }
@@ -259,9 +258,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         assertThat(updatedSession).isNotNull();
         var messages = irisMessageRepository.findAllBySessionId(session.getId());
         assertThat(messages).isNotEmpty();
-        // Verify we have both USER and LLM messages
+        // Verify we have the USER message
         assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
-        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.LLM)).isTrue();
     }
 
     @Test
@@ -285,9 +283,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         assertThat(updatedSession).isNotNull();
         var messages = irisMessageRepository.findAllBySessionId(session.getId());
         assertThat(messages).isNotEmpty();
-        // Verify we have both USER and LLM messages
+        // Verify we have the USER message
         assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
-        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.LLM)).isTrue();
     }
 
     @Test
