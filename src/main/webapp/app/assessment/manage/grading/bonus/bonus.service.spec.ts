@@ -5,9 +5,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { cloneDeep } from 'lodash-es';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -367,7 +367,7 @@ describe('Bonus Service', () => {
             sourceGradingScale,
         };
 
-        const gradingSystemService = TestBed.inject(GradingSystemService);
+        const gradingSystemService = TestBed.inject(GradingService);
         gradingSystemService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
         gradingSystemService.setGradePoints(bonusToGradeStepsDTO.gradeSteps, bonusToGradeStepsDTO.maxPoints!);
 
@@ -439,7 +439,7 @@ describe('Bonus Service', () => {
             gradeStep.upperBoundInclusive = false;
         });
 
-        const gradingSystemService = TestBed.inject(GradingSystemService);
+        const gradingSystemService = TestBed.inject(GradingService);
         gradingSystemService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
         gradingSystemService.setGradePoints(bonusToGradeStepsDTOWithoutIncludedBounds.gradeSteps, bonusToGradeStepsDTOWithoutIncludedBounds.maxPoints!);
 

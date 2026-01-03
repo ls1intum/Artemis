@@ -28,7 +28,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -57,7 +57,7 @@ describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseManagementService: CourseManagementService;
-    let gradingSystemService: GradingSystemService;
+    let gradingSystemService: GradingService;
     let plagiarismCasesService: PlagiarismCasesService;
     let profileService: ProfileService;
 
@@ -283,7 +283,7 @@ describe('CourseScoresComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 MockProvider(ParticipantScoresService),
-                MockProvider(GradingSystemService, {
+                MockProvider(GradingService, {
                     findGradingScaleForCourse: () => {
                         return of(
                             new HttpResponse({
@@ -304,7 +304,7 @@ describe('CourseScoresComponent', () => {
                 fixture = TestBed.createComponent(CourseScoresComponent);
                 component = fixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
-                gradingSystemService = TestBed.inject(GradingSystemService);
+                gradingSystemService = TestBed.inject(GradingService);
                 plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
                 jest.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
                 profileService = fixture.debugElement.injector.get(ProfileService);

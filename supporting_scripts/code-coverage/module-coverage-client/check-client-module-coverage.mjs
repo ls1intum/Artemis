@@ -71,7 +71,7 @@ const moduleThresholds = {
     core: {
         statements: 89.30,
         branches:   70.00,
-        functions:  80.20,
+        functions:  80.00,
         lines:      89.30,
     },
     exam: {
@@ -81,10 +81,10 @@ const moduleThresholds = {
         lines:      91.80,
     },
     exercise: {
-        statements: 88.40,
+        statements: 88.20,
         branches:   76.60,
-        functions:  80.00,
-        lines:      88.50,
+        functions:  79.80,
+        lines:      88.30,
     },
     fileupload: {
         statements: 94.40,

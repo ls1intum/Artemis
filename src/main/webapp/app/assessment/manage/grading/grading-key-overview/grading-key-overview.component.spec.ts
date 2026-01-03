@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading/grading-key-overview/grading-key-overview.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
+import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -45,7 +45,7 @@ describe('GradingKeyOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(GradingSystemService),
+                MockProvider(GradingService),
                 MockProvider(BonusService),
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<Bonus>;
@@ -12,7 +12,7 @@ export type EntityResponseType = HttpResponse<Bonus>;
 @Injectable({ providedIn: 'root' })
 export class BonusService {
     private http = inject(HttpClient);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingSystemService = inject(GradingService);
 
     public resourceUrl = 'api/assessment';
 

@@ -55,12 +55,12 @@ export default defineConfig({
                 'src/main/webapp/app/tutorialgroup/**/*.ts',    // include tutorial group for code coverage
                 'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
             ],
-            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
+            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
-                lines: 91.80,
-                statements: 91.50,
-                branches: 76.70,
-                functions: 84.60,
+                lines: 92.20,
+                statements: 92.20,
+                branches: 77.60,
+                functions: 89.50,
             },
         },
     },

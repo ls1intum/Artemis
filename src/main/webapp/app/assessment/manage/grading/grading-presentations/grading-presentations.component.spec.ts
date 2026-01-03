@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import {
-    GradingSystemPresentationsComponent,
-    PresentationType,
-    PresentationsConfig,
-} from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
+import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -14,8 +10,8 @@ import { TranslateService } from '@ngx-translate/core';
 
 describe('GradingSystemPresentationsComponent', () => {
     setupTestBed({ zoneless: true });
-    let component: GradingSystemPresentationsComponent;
-    let fixture: ComponentFixture<GradingSystemPresentationsComponent>;
+    let component: GradingPresentationsComponent;
+    let fixture: ComponentFixture<GradingPresentationsComponent>;
 
     // =========================================================================
     // Test Data Factory Functions
@@ -92,13 +88,13 @@ describe('GradingSystemPresentationsComponent', () => {
         return TestBed.configureTestingModule({
             providers: [MockProvider(TranslateService)],
         })
-            .overrideComponent(GradingSystemPresentationsComponent, {
+            .overrideComponent(GradingPresentationsComponent, {
                 remove: { imports: [TranslateDirective] },
                 add: { imports: [MockDirective(TranslateDirective)] },
             })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(GradingSystemPresentationsComponent);
+                fixture = TestBed.createComponent(GradingPresentationsComponent);
                 component = fixture.componentInstance;
             });
     });

@@ -18,7 +18,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -74,7 +74,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
     private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
-    private readonly gradingSystemService = inject(GradingSystemService);
+    private readonly gradingSystemService = inject(GradingService);
 
     protected readonly faTable = faTable;
     protected readonly faTimes = faTimes;

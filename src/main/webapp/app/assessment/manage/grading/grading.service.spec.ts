@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -13,7 +13,7 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 
 describe('GradingSystemService', () => {
     setupTestBed({ zoneless: true });
-    let service: GradingSystemService;
+    let service: GradingService;
     let httpMock: HttpTestingController;
 
     const courseId = 123;
@@ -47,10 +47,10 @@ describe('GradingSystemService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [GradingSystemService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [GradingService, provideHttpClient(), provideHttpClientTesting()],
         });
 
-        service = TestBed.inject(GradingSystemService);
+        service = TestBed.inject(GradingService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 

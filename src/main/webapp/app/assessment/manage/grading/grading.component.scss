@@ -1,3 +1,13 @@
+.grading-scale-table-row td {
+    width: 17%;
+
+    input {
+        min-width: 50%;
+        background: var(--base-grading-input-background);
+        color: var(--base-grading-input-color);
+    }
+}
+
 .tab-bar {
     display: flex;
     align-items: center;

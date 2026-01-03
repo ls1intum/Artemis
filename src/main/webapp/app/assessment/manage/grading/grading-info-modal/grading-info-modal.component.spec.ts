@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { GradingSystemInfoModalComponent } from 'app/assessment/manage/grading-system/grading-system-info-modal/grading-system-info-modal.component';
+import { GradingInfoModalComponent } from 'app/assessment/manage/grading/grading-info-modal/grading-info-modal.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,20 +10,20 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 describe('GradingSystemInfoModalComponent', () => {
     setupTestBed({ zoneless: true });
-    let component: GradingSystemInfoModalComponent;
-    let fixture: ComponentFixture<GradingSystemInfoModalComponent>;
+    let component: GradingInfoModalComponent;
+    let fixture: ComponentFixture<GradingInfoModalComponent>;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [MockProvider(TranslateService)],
         })
-            .overrideComponent(GradingSystemInfoModalComponent, {
+            .overrideComponent(GradingInfoModalComponent, {
                 remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
                 add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
             })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(GradingSystemInfoModalComponent);
+                fixture = TestBed.createComponent(GradingInfoModalComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
             });

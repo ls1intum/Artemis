@@ -1,13 +1,13 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading-system/bonus/bonus.component';
+import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { BonusService, EntityResponseType } from 'app/assessment/manage/grading-system/bonus/bonus.service';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { BonusService, EntityResponseType } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { of, throwError } from 'rxjs';
@@ -30,7 +30,7 @@ describe('BonusComponent', () => {
     let fixture: ComponentFixture<BonusComponent>;
 
     let bonusService: BonusService;
-    let gradingSystemService: GradingSystemService;
+    let gradingSystemService: GradingService;
 
     let findGradeStepsSpy: MockInstance;
     let findWithBonusSpy: MockInstance;
@@ -272,7 +272,7 @@ describe('BonusComponent', () => {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
-                MockProvider(GradingSystemService),
+                MockProvider(GradingService),
                 MockProvider(BonusService),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -284,7 +284,7 @@ describe('BonusComponent', () => {
         fixture = TestBed.createComponent(BonusComponent);
         component = fixture.componentInstance;
         bonusService = TestBed.inject(BonusService);
-        gradingSystemService = TestBed.inject(GradingSystemService);
+        gradingSystemService = TestBed.inject(GradingService);
 
         findBonusForExamSpy = vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
         findWithBonusSpy = vi

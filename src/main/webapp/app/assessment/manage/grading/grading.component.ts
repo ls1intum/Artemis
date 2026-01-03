@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
-import { EntityResponseType, GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { EntityResponseType, GradingService } from 'app/assessment/manage/grading/grading-service';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -14,7 +15,19 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { PresentationType, PresentationsConfig } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
+import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingInfoModalComponent } from 'app/assessment/manage/grading/grading-info-modal/grading-info-modal.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
+import { parse } from 'papaparse';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -37,20 +50,47 @@ export enum GradeEditMode {
     PERCENTAGE,
 }
 
+export enum GradingViewMode {
+    INTERVAL = 'interval',
+    DETAILED = 'detailed',
+}
+
 @Component({
-    template: '',
+    selector: 'jhi-grading',
+    templateUrl: './grading.component.html',
+    styleUrls: ['./grading.component.scss'],
+    imports: [
+        TranslateDirective,
+        GradingInfoModalComponent,
+        FaIconComponent,
+        NgbTooltip,
+        FormsModule,
+        GradingPresentationsComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        DocumentationButtonComponent,
+        ModePickerComponent,
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
+        DeleteButtonDirective,
+    ],
 })
-export abstract class BaseGradingSystemComponent implements OnInit {
-    protected gradingSystemService = inject(GradingSystemService);
-    private route = inject(ActivatedRoute);
-    private translateService = inject(TranslateService);
-    private courseService = inject(CourseManagementService);
-    private examService = inject(ExamManagementService);
+export class GradingComponent implements OnInit {
+    private readonly gradingService = inject(GradingService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly translateService = inject(TranslateService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly examService = inject(ExamManagementService);
 
-    GradeType = GradeType;
-    ButtonSize = ButtonSize;
-    GradingScale = GradingScale;
+    // Template constants
+    readonly GradeType = GradeType;
+    readonly GradeEditMode = GradeEditMode;
+    readonly GradingViewMode = GradingViewMode;
+    readonly ButtonSize = ButtonSize;
+    readonly GradingScale = GradingScale;
+    readonly documentationType: DocumentationType = 'Grading';
 
+    // State
     gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
     existingGradingScale = false;
@@ -68,29 +108,51 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     maxPoints?: number;
 
     /**
+     * The current view mode for the grading system.
+     * INTERVAL shows a simplified view with percentage intervals.
+     * DETAILED shows all fields for each grade step.
+     */
+    readonly viewMode = signal<GradingViewMode>(GradingViewMode.INTERVAL);
+
+    /**
+     * Edit mode for interval view (percentage or points).
+     */
+    gradeEditMode = GradeEditMode.PERCENTAGE;
+
+    /**
+     * Mode picker options for switching between percentage and points in interval view.
+     */
+    readonly intervalModePickerOptions: ModePickerOption<GradeEditMode>[] = [
+        {
+            value: GradeEditMode.PERCENTAGE,
+            labelKey: 'artemisApp.gradingSystem.intervalTab.percentageMode',
+            btnClass: 'btn-secondary',
+        },
+        {
+            value: GradeEditMode.POINTS,
+            labelKey: 'artemisApp.gradingSystem.intervalTab.pointsMode',
+            btnClass: 'btn-info',
+        },
+    ];
+
+    /**
      * Configuration for presentation settings in the grading system.
-     * This object is passed to the GradingSystemPresentationsComponent as an input.
-     * When the child component modifies presentation settings, it emits the updated
-     * config via its presentationsConfigChange output, and this parent component
-     * updates its local copy via onPresentationsConfigChange().
-     *
-     * This explicit synchronization mechanism ensures clear data flow between
-     * parent and child components rather than relying on implicit object mutation.
-     *
-     * The presentationsConfig is used during save() for validation and to sync
-     * presentationScore to the course entity.
      */
     presentationsConfig: PresentationsConfig = { presentationType: PresentationType.NONE };
 
     // Icons
-    faSave = faSave;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faExclamationTriangle = faExclamationTriangle;
-    faInfo = faInfo;
+    readonly faSave = faSave;
+    readonly faPlus = faPlus;
+    readonly faTimes = faTimes;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faInfo = faInfo;
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
 
     ngOnInit(): void {
-        this.route.parent?.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             this.isLoading = true;
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
@@ -98,23 +160,38 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 this.isExam = true;
             }
             if (this.isExam) {
-                this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
+                this.handleFindObservable(this.gradingService.findGradingScaleForExam(this.courseId!, this.examId!));
             } else {
-                this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
+                this.handleFindObservable(this.gradingService.findGradingScaleForCourse(this.courseId!));
             }
         });
     }
 
+    // =========================================================================
+    // View Mode
+    // =========================================================================
+
+    /**
+     * Switches the view mode between interval and detailed views.
+     */
+    setViewMode(mode: GradingViewMode): void {
+        this.viewMode.set(mode);
+    }
+
+    // =========================================================================
+    // Presentations Config
+    // =========================================================================
+
     /**
      * Handles updates to the presentations configuration emitted by the child component.
-     * This method provides explicit synchronization between the GradingSystemPresentationsComponent
-     * and this parent component, replacing implicit object mutation with a clear data flow pattern.
-     *
-     * @param config - The updated presentations configuration from the child component
      */
     onPresentationsConfigChange(config: PresentationsConfig): void {
         this.presentationsConfig = config;
     }
+
+    // =========================================================================
+    // Data Loading
+    // =========================================================================
 
     private handleFindObservable(findObservable: Observable<EntityResponseType>) {
         findObservable
@@ -147,12 +224,10 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     /**
      * If the grading scale exists, sorts its grade steps,
      * and sets the inclusivity and first passing grade properties
-     *
-     * @param gradingScale the grading scale retrieved from the get request
      */
     handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
-            gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(gradingScale.gradeSteps);
+            gradingScale.gradeSteps = this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
             this.gradingScale = gradingScale;
             this.existingGradingScale = true;
             this.setBoundInclusivity();
@@ -160,13 +235,17 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
     }
 
+    // =========================================================================
+    // Save
+    // =========================================================================
+
     /**
      * Sorts the grade steps by lower bound percentage, sets their inclusivity
      * and passing grade properties and saves the grading scale via the service
      */
     save(): void {
         this.isLoading = true;
-        this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
+        this.gradingScale.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.setInclusivity();
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
         // new grade steps shouldn't have ids set
@@ -183,32 +262,80 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
         if (this.existingGradingScale) {
             if (this.isExam) {
-                this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
+                this.handleSaveObservable(this.gradingService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
             } else {
-                this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale));
+                this.handleSaveObservable(this.gradingService.updateGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         } else {
             if (this.isExam) {
-                this.handleSaveObservable(this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
+                this.handleSaveObservable(this.gradingService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
             } else {
-                this.handleSaveObservable(this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale));
+                this.handleSaveObservable(this.gradingService.createGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         }
     }
 
+    private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
+        saveObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
+            )
+            .subscribe((gradingSystemResponse) => {
+                this.handleSaveResponse(gradingSystemResponse.body!);
+            });
+    }
+
+    private handleSaveResponse(newGradingScale?: GradingScale): void {
+        if (newGradingScale) {
+            newGradingScale.gradeSteps = this.gradingService.sortGradeSteps(newGradingScale.gradeSteps);
+            this.existingGradingScale = true;
+        }
+    }
+
+    // =========================================================================
+    // Delete
+    // =========================================================================
+
     /**
-     * Checks if the currently entered grade steps are valid based on multiple criteria:
-     * - there must be at least one grade step
-     * - if max points are defined, they should be at least 0
-     * - all fields must be filled out
-     * - the percentage values must be at least 0
-     * - if max points are defined, all points values must be at least 0
-     * - all grade names must be unique
-     * - the first passing must be set if the scale is of GRADE type
-     * - the bonus points are at least 0 if the scale is of BONUS type
-     * - the bonus points must be strictly ascending in values
-     * - the max and min % of adjacent grade steps overlap
-     * - the first grade step begins at 0%
+     * Deletes a grading scale for the given course/exam via the service
+     */
+    delete(): void {
+        if (!this.existingGradingScale) {
+            return;
+        }
+        this.isLoading = true;
+        if (this.isExam) {
+            this.handleDeleteObservable(this.gradingService.deleteGradingScaleForExam(this.courseId!, this.examId!));
+        } else {
+            this.handleDeleteObservable(this.gradingService.deleteGradingScaleForCourse(this.courseId!));
+        }
+        this.gradingScale = new GradingScale();
+        this.gradingScale.course = this.course;
+    }
+
+    handleDeleteObservable(deleteObservable: Observable<HttpResponse<void>>) {
+        deleteObservable
+            .pipe(
+                catchError(() => of(new HttpResponse<void>({ status: 400 }))),
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(() => {
+                this.existingGradingScale = false;
+                this.dialogErrorSource.next('');
+            });
+    }
+
+    // =========================================================================
+    // Validation
+    // =========================================================================
+
+    /**
+     * Checks if the currently entered grade steps are valid based on multiple criteria
      */
     validGradeSteps(): boolean {
         if (!this.gradingScale || this.gradingScale.gradeSteps.length === 0) {
@@ -247,7 +374,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 }
             }
         } else {
-            // ensures that all updated have taken place before the grading key can be saved, not really an error, therefore no message is necessary
+            // ensures that all updated have taken place before the grading key can be saved
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 if (gradeStep.lowerBoundPoints != undefined || gradeStep.upperBoundPoints != undefined) {
                     return false;
@@ -255,12 +382,12 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             }
         }
         if (this.gradingScale.gradeType === GradeType.GRADE) {
-            // check if all grade names are unique if the grading scale is of type GRADE
+            // check if all grade names are unique
             if (!this.gradingScale.gradeSteps.map((gradeStep) => gradeStep.gradeName).every((gradeName, index, gradeNames) => gradeNames.indexOf(gradeName) === index)) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.nonUniqueGradeNames');
                 return false;
             }
-            // check if the first passing grade is set if the grading scale is of type GRADE
+            // check if the first passing grade is set
             if (this.firstPassingGrade === undefined || this.firstPassingGrade === '') {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.unsetFirstPassingGrade');
                 return false;
@@ -269,7 +396,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
         let sortedGradeSteps: GradeStep[] = [];
         this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
-        sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
+        sortedGradeSteps = this.gradingService.sortGradeSteps(sortedGradeSteps);
         if (this.gradingScale.gradeType === GradeType.BONUS) {
             // check if when the grade type is BONUS the bonus points are at least 0
             for (const gradeStep of sortedGradeSteps) {
@@ -306,42 +433,27 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     }
 
     /**
-     * Checks if the currently entered presentation settings correspond to a valid presentation type based on multiple criteria:
-     * - if the presentationType is NONE:
-     * -- the presentationsNumber and presentationsWeight must be undefined
-     * -- the presentationScore must be 0 or undefined
-     * - if the presentationType is BASIC:
-     * -- the presentationsNumber and presentationsWeight must be undefined
-     * -- the presentationScore must be above 0
-     * - if the presentationType is GRADED:
-     * -- the presentationsNumber must be a whole number above 0
-     * -- the presentationsWeight must be between 0 and 99
-     * -- the presentationScore must be 0 or undefined
+     * Checks if the currently entered presentation settings are valid
      */
     validPresentationsConfig(): boolean {
         if (this.presentationsConfig.presentationType === PresentationType.NONE) {
-            // The presentationsNumber and presentationsWeight must be undefined
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            // The presentationScore must be 0 or undefined
             if (this.presentationsConfig.presentationScore !== undefined) {
                 return false;
             }
         }
         if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
-            // The presentationsNumber and presentationsWeight must be undefined
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            // The presentationScore must be above 0
             if ((this.course?.presentationScore ?? 0) <= 0) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
                 return false;
             }
         }
         if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
-            // The presentationsNumber must be a whole number above 0
             if (
                 this.presentationsConfig.presentationsNumber === undefined ||
                 !Number.isInteger(this.presentationsConfig.presentationsNumber) ||
@@ -350,7 +462,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
                 return false;
             }
-            // The presentationsWeight must be between 0 and 100
             if (
                 this.presentationsConfig.presentationsWeight === undefined ||
                 this.presentationsConfig.presentationsWeight < 0 ||
@@ -359,7 +470,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
                 return false;
             }
-            // The presentationScore must be 0 or undefined
             if ((this.course?.presentationScore ?? 0) > 0) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
                 return false;
@@ -369,45 +479,14 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         return true;
     }
 
-    private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
-        saveObservable
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
-            )
-            .subscribe((gradingSystemResponse) => {
-                this.handleSaveResponse(gradingSystemResponse.body!);
-            });
-    }
-
-    /**
-     * Sorts the grading scale's grade steps after it has been saved
-     * and sets the existingGradingScale property
-     *
-     * @param newGradingScale the grading scale that was just saved
-     */
-    private handleSaveResponse(newGradingScale?: GradingScale): void {
-        if (newGradingScale) {
-            newGradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(newGradingScale.gradeSteps);
-            this.existingGradingScale = true;
-        }
-    }
-
-    /**
-     * Determines if the max points for the course/exam are valid
-     */
     maxPointsValid(): boolean {
         return this.maxPoints != undefined && this.maxPoints! > 0;
     }
 
-    /**
-     * Sets the percentage value of a grade step for one of its bounds
-     *
-     * @param gradeStep the grade step
-     * @param lowerBound the bound
-     */
+    // =========================================================================
+    // Points/Percentage Conversion
+    // =========================================================================
+
     setPercentage(gradeStep: GradeStep, lowerBound: boolean) {
         if (lowerBound) {
             gradeStep.lowerBoundPercentage = (gradeStep.lowerBoundPoints! / this.maxPoints!) * 100;
@@ -416,13 +495,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
     }
 
-    /**
-     * Sets the absolute points value of a grade step for one of its bounds.
-     * Sets the value only if the course/exam has max points set
-     *
-     * @param gradeStep the grade step
-     * @param lowerBound the bound
-     */
     setPoints(gradeStep: GradeStep, lowerBound: boolean): void {
         if (!this.maxPoints) {
             return;
@@ -435,13 +507,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
     }
 
-    /**
-     * Recalculates both point bounds of all grade steps in the grading scale based on the new max points value
-     *
-     * @param maxPoints
-     */
     onChangeMaxPoints(maxPoints?: number): void {
-        // if max points aren't defined, the grade step point bounds should also be undefined
         if (maxPoints == undefined || maxPoints < 0) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 gradeStep.lowerBoundPoints = undefined;
@@ -455,46 +521,14 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
     }
 
-    /**
-     * Deletes a grading scale for the given course/exam via the service
-     */
-    delete(): void {
-        if (!this.existingGradingScale) {
-            return;
-        }
-        this.isLoading = true;
-        if (this.isExam) {
-            this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!));
-        } else {
-            this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!));
-        }
-        this.gradingScale = new GradingScale();
-        this.gradingScale.course = this.course;
-    }
+    // =========================================================================
+    // Inclusivity
+    // =========================================================================
 
-    handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
-        deleteObservable
-            .pipe(
-                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe(() => {
-                this.existingGradingScale = false;
-                this.dialogErrorSource.next('');
-            });
-    }
-
-    /**
-     * Sets the lowerBoundInclusivity property based on grade steps based on the grade steps
-     * Called on initialization
-     */
     setBoundInclusivity(): void {
         const lastStepId = this.gradingScale.gradeSteps.last()?.id;
         this.lowerBoundInclusivity = this.gradingScale.gradeSteps.every((gradeStep) => {
             if (gradeStep.id === lastStepId) {
-                // ignore the last grade step since its inclusivity gets set differently.
                 return true;
             }
             return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0;
@@ -502,29 +536,59 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     }
 
     /**
-     * Sets the inclusivity for all grade steps based on the lowerBoundInclusivity property
-     * Called before a post/put request
-     *
-     * @abstract
+     * Sets the inclusivity for all grade steps based on the lowerBoundInclusivity property.
+     * Implementation differs between interval and detailed modes.
      */
-    abstract setInclusivity(): void;
+    setInclusivity(): void {
+        if (this.viewMode() === GradingViewMode.DETAILED) {
+            this.setInclusivityDetailed();
+        } else {
+            this.setInclusivityInterval();
+        }
+    }
 
-    /**
-     * Sets the firstPassingGrade property based on the grade steps
-     * Called on initialization
-     */
+    private setInclusivityInterval(): void {
+        const gradeSteps = this.gradingScale?.gradeSteps;
+        if (!(gradeSteps?.length > 0)) {
+            return;
+        }
+
+        gradeSteps.forEach((gradeStep) => {
+            gradeStep.lowerBoundInclusive = this.lowerBoundInclusivity;
+            gradeStep.upperBoundInclusive = !this.lowerBoundInclusivity;
+        });
+
+        // Always true for first and last
+        gradeSteps.first()!.lowerBoundInclusive = true;
+        gradeSteps.last()!.upperBoundInclusive = true;
+    }
+
+    private setInclusivityDetailed(): void {
+        const gradeSteps = this.gradingScale.gradeSteps;
+        let sortedGradeSteps = gradeSteps.slice();
+        sortedGradeSteps = this.gradingService.sortGradeSteps(sortedGradeSteps);
+
+        gradeSteps.forEach((gradeStep) => {
+            if (this.lowerBoundInclusivity) {
+                gradeStep.lowerBoundInclusive = true;
+                gradeStep.upperBoundInclusive = sortedGradeSteps.last()!.gradeName === gradeStep.gradeName;
+            } else {
+                gradeStep.lowerBoundInclusive = sortedGradeSteps.first()!.gradeName === gradeStep.gradeName;
+                gradeStep.upperBoundInclusive = true;
+            }
+        });
+    }
+
+    // =========================================================================
+    // Passing Grades
+    // =========================================================================
+
     determineFirstPassingGrade(): void {
         this.firstPassingGrade = this.gradingScale.gradeSteps.find((gradeStep) => {
             return gradeStep.isPassingGrade;
         })?.gradeName;
     }
 
-    /**
-     * Sets the isPassingGrade property for all grade steps based on the lowerBoundInclusive property
-     * Called before a post/put request
-     *
-     * @param gradeSteps the grade steps which will be adjusted
-     */
     setPassingGrades(gradeSteps: GradeStep[]): GradeStep[] {
         let passingGrade = false;
         gradeSteps.forEach((gradeStep) => {
@@ -552,10 +616,33 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
     }
 
+    // =========================================================================
+    // Grade Step CRUD
+    // =========================================================================
+
     /**
-     * Create a new grade step add the end of the current grade step set
+     * Creates a new grade step. In interval mode, handles the sticky grade step at the end.
      */
     createGradeStep(): void {
+        if (this.viewMode() === GradingViewMode.DETAILED) {
+            this.createGradeStepBasic();
+            return;
+        }
+
+        // Interval mode: handle sticky grade step
+        if (this.gradingScale?.gradeSteps?.length === 0) {
+            this.createGradeStepBasic();
+        }
+
+        const stickyGradeStep = this.gradingScale.gradeSteps.pop()!;
+        this.createGradeStepBasic();
+        this.gradingScale.gradeSteps.push(stickyGradeStep);
+
+        const selectedIndex = this.gradingScale.gradeSteps.length - 2;
+        this.setPercentageInterval(selectedIndex);
+    }
+
+    private createGradeStepBasic(): void {
         if (!this.gradingScale) {
             this.gradingScale = new GradingScale();
         }
@@ -578,26 +665,89 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     }
 
     /**
-     * Delete grade step at given index
-     *
-     * @param index the index of the grade step
+     * Deletes a grade step. In interval mode, handles percentage recalculation.
      */
     deleteGradeStep(index: number): void {
+        if (this.viewMode() === GradingViewMode.DETAILED) {
+            this.gradingScale.gradeSteps.splice(index, 1);
+            return;
+        }
+
+        // Interval mode: handle percentage recalculation
+        this.setPercentageInterval(index, 0);
         this.gradingScale.gradeSteps.splice(index, 1);
+        const gradeSteps = this.gradingScale.gradeSteps;
+
+        if (gradeSteps.length > 0) {
+            if (gradeSteps.last()!.upperBoundPercentage < 100) {
+                gradeSteps.last()!.upperBoundPercentage = 100;
+            }
+            gradeSteps.first()!.lowerBoundInclusive = true;
+            gradeSteps.last()!.upperBoundInclusive = true;
+        }
     }
 
-    /**
-     * Generates a default grading scale to be used as template
-     */
+    // =========================================================================
+    // Interval-specific Methods
+    // =========================================================================
+
+    setPercentageInterval(selectedIndex: number, newPercentageInterval?: number): void {
+        const gradeSteps = this.gradingScale.gradeSteps;
+        let previousGradeStep: GradeStep | undefined = undefined;
+
+        for (let i = selectedIndex; i < gradeSteps.length; i++) {
+            const currentGradeStep = gradeSteps[i];
+            let currentInterval: number;
+
+            if (previousGradeStep) {
+                currentInterval = this.getPercentageInterval(currentGradeStep);
+                currentGradeStep.lowerBoundPercentage = previousGradeStep.upperBoundPercentage;
+            } else {
+                currentInterval = newPercentageInterval ?? this.getPercentageInterval(currentGradeStep);
+            }
+
+            currentGradeStep.upperBoundPercentage = currentGradeStep.lowerBoundPercentage + currentInterval;
+
+            this.setPoints(currentGradeStep, true);
+            this.setPoints(currentGradeStep, false);
+
+            previousGradeStep = currentGradeStep;
+        }
+    }
+
+    setPointsInterval(selectedIndex: number, newPointsInterval: number): void {
+        const gradeStep = this.gradingScale.gradeSteps[selectedIndex];
+        if (gradeStep.lowerBoundPoints == undefined) {
+            throw new Error(`lowerBoundPoints are not set yet for selectedIndex: '${selectedIndex}'`);
+        }
+        gradeStep.upperBoundPoints = gradeStep.lowerBoundPoints + newPointsInterval;
+        this.setPercentage(gradeStep, false);
+        this.setPercentageInterval(selectedIndex);
+    }
+
+    getPercentageInterval(gradeStep: GradeStep): number {
+        return gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
+    }
+
+    getPointsInterval(gradeStep: GradeStep): number | undefined {
+        if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined) {
+            return undefined;
+        }
+        const raw = gradeStep.upperBoundPoints - gradeStep.lowerBoundPoints;
+        const floored = raw < 0.5 ? 0.5 : raw;
+        return parseFloat(floored.toFixed(6));
+    }
+
+    // =========================================================================
+    // Default Grading Scale
+    // =========================================================================
+
     generateDefaultGradingScale(): void {
         this.gradingScale = this.getDefaultGradingScale();
         this.firstPassingGrade = this.gradingScale.gradeSteps[3].gradeName;
         this.lowerBoundInclusivity = true;
     }
 
-    /**
-     * Returns the mock grading scale from the university course PSE
-     */
     getDefaultGradingScale(): GradingScale {
         const gradeStep1: GradeStep = {
             gradeName: '5.0',
@@ -729,10 +879,10 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         };
     }
 
-    /**
-     * Triggered when csv file is uploaded
-     * @param event file read event
-     */
+    // =========================================================================
+    // CSV Import/Export
+    // =========================================================================
+
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             await this.readGradingStepsFromCSVFile(event.target.files[0]);
@@ -745,10 +895,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
     }
 
-    /**
-     * Import grade steps from csv file
-     * @param csvFile the csv file
-     */
     private async readGradingStepsFromCSVFile(csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
@@ -762,7 +908,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             return;
         }
 
-        // parse and set the grade type
         const gradeType = csvGradeSteps[0]['bonusPoints' as keyof CsvGradeStep] === undefined ? GradeType.GRADE : GradeType.BONUS;
         if (gradeType === GradeType.BONUS) {
             this.gradingScale.gradeType = GradeType.BONUS;
@@ -773,12 +918,18 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         this.gradingScale.gradeSteps = this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType);
     }
 
-    /**
-     * Map the imported csv objects to GradeStep object
-     * In case that the grade type of the imported file is bonus, attribute gradeName will be set with the bonusPoints attribute
-     * @param csvGradeSteps Imported grade steps as csv objects
-     * @param gradeType Implicit Grade Type of imported csv file
-     */
+    parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {
+        return new Promise((resolve, reject) => {
+            parse(csvFile, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false,
+                complete: (results) => resolve(results.data as CsvGradeStep[]),
+                error: (error) => reject(error),
+            });
+        });
+    }
+
     mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[], gradeType: GradeType): GradeStep[] {
         return csvGradeSteps.map(
             (csvGradeStep: CsvGradeStep) =>
@@ -798,30 +949,12 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         );
     }
 
-    /**
-     * Parse CSV file to a list of CsvGradeStep objects
-     * This method uses the 'papaparse' dependency, but Angular can not lazy load it in an abstract class.
-     * Therefore, the implementation is moved to the concrete classes (code duplication for the benefit of reducing main bundle size).
-     * @param csvFile the read csv file
-     * @abstract
-     */
-    abstract parseCSVFile(csvFile: File): Promise<CsvGradeStep[]>;
-
-    /**
-     * Download the current grade steps to a csv file to the client
-     */
     exportGradingStepsToCsv(): void {
         const headers = this.gradingScale.gradeType === GradeType.GRADE ? Object.keys(csvColumnsGrade) : Object.keys(csvColumnsBonus);
-
         const rows = this.gradingScale.gradeSteps.map((gradeStep) => this.convertToCsvRow(gradeStep));
-
         this.exportAsCSV(rows, headers);
     }
 
-    /**
-     * Convert a grade step to a csv row. Undefined values are mapped to empty strings
-     * @param gradeStep
-     */
     convertToCsvRow(gradeStep: GradeStep): any {
         return {
             ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
@@ -832,11 +965,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         };
     }
 
-    /**
-     * Start the user download for the csv file
-     * @param rows rows representing each a grade step in csv structure
-     * @param headers names of the csv columns
-     */
     exportAsCSV(rows: any[], headers: string[]): void {
         const options = {
             fieldSeparator: ',',
@@ -854,12 +982,20 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         download(csvExportConfig)(csvData);
     }
 
-    /**
-     * Returns true if grading scale goes above the maxPoints.
-     */
-    abstract shouldShowGradingStepsAboveMaxPointsWarning(): boolean;
+    // =========================================================================
+    // Warnings
+    // =========================================================================
 
-    protected isAnyGradingStepAboveMaxPoints(steps: GradeStep[]): boolean {
+    shouldShowGradingStepsAboveMaxPointsWarning(): boolean {
+        if (this.viewMode() === GradingViewMode.DETAILED) {
+            return this.isAnyGradingStepAboveMaxPoints(this.gradingScale.gradeSteps);
+        } else {
+            const steps = [...this.gradingScale.gradeSteps].slice(0, this.gradingScale.gradeSteps.length - 1);
+            return this.isAnyGradingStepAboveMaxPoints(steps);
+        }
+    }
+
+    private isAnyGradingStepAboveMaxPoints(steps: GradeStep[]): boolean {
         for (const step of steps) {
             if (step.upperBoundInclusive && step.upperBoundPercentage > 100) {
                 return true;

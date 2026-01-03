@@ -16,7 +16,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/modal/export-modal.component';
@@ -52,7 +52,7 @@ describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
-    let gradingSystemService: GradingSystemService;
+    let gradingSystemService: GradingService;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -266,7 +266,7 @@ describe('ExamScoresComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(GradingSystemService, {
+                MockProvider(GradingService, {
                     findGradingScaleForExam: () => {
                         return of(
                             new HttpResponse({
@@ -296,7 +296,7 @@ describe('ExamScoresComponent', () => {
         fixture = TestBed.createComponent(ExamScoresComponent);
         comp = fixture.componentInstance;
         examService = TestBed.inject(ExamManagementService);
-        gradingSystemService = TestBed.inject(GradingSystemService);
+        gradingSystemService = TestBed.inject(GradingService);
         const participationScoreService = TestBed.inject(ParticipantScoresService);
         findExamScoresSpy = jest
             .spyOn(participationScoreService, 'findExamScores')

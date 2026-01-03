@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
+import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -27,7 +27,7 @@ describe('GradingKeyTableComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyTableComponent>;
     let component: GradingKeyTableComponent;
-    let gradingSystemService: GradingSystemService;
+    let gradingSystemService: GradingService;
     let bonusService: BonusService;
     let scoresStorageService: ScoresStorageService;
 
@@ -84,7 +84,7 @@ describe('GradingKeyTableComponent', () => {
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
-                    MockProvider(GradingSystemService),
+                    MockProvider(GradingService),
                     MockProvider(BonusService),
                     MockProvider(ScoresStorageService),
                 ],
@@ -105,7 +105,7 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    gradingSystemService = TestBed.inject(GradingService);
                     bonusService = TestBed.inject(BonusService);
                     scoresStorageService = TestBed.inject(ScoresStorageService);
 
@@ -189,7 +189,7 @@ describe('GradingKeyTableComponent', () => {
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
-                    MockProvider(GradingSystemService),
+                    MockProvider(GradingService),
                     MockProvider(BonusService),
                     MockProvider(ScoresStorageService),
                 ],
@@ -210,7 +210,7 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    gradingSystemService = TestBed.inject(GradingService);
                     scoresStorageService = TestBed.inject(ScoresStorageService);
 
                     vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
@@ -286,7 +286,7 @@ describe('GradingKeyTableComponent', () => {
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
-                    MockProvider(GradingSystemService),
+                    MockProvider(GradingService),
                     MockProvider(BonusService),
                     MockProvider(ScoresStorageService),
                 ],
@@ -307,7 +307,7 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    gradingSystemService = TestBed.inject(GradingService);
                     bonusService = TestBed.inject(BonusService);
 
                     vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of(new HttpResponse({ body: bonus })));
@@ -358,7 +358,7 @@ describe('GradingKeyTableComponent', () => {
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
-                    MockProvider(GradingSystemService),
+                    MockProvider(GradingService),
                     MockProvider(BonusService),
                     MockProvider(ScoresStorageService),
                 ],
@@ -379,7 +379,7 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingSystemService);
+                    gradingSystemService = TestBed.inject(GradingService);
 
                     vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(undefined));
                     vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);

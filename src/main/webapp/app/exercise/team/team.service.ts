@@ -176,7 +176,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {number} teamId - Team to delete
      */
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id!)}/${teamId}`, { observe: 'response' });
+        return this.http.delete<void>(`${TeamService.resourceUrl(exercise.id!)}/${teamId}`, { observe: 'response' });
     }
 
     /**

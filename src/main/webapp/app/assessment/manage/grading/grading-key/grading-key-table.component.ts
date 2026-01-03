@@ -1,15 +1,15 @@
 import { Component, OnInit, inject, model } from '@angular/core';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
-import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
-import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-helper';
+import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading/grading-key-overview/grading-key-helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
@@ -25,7 +25,7 @@ import { ScoresStorageService } from 'app/core/course/manage/course-scores/score
 })
 export class GradingKeyTableComponent implements OnInit {
     private route = inject(ActivatedRoute);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingSystemService = inject(GradingService);
     private bonusService = inject(BonusService);
     private scoresStorageService = inject(ScoresStorageService);
 

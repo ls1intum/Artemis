@@ -10,7 +10,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
@@ -90,7 +90,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private changeDetector = inject(ChangeDetectorRef);
     private languageHelper = inject(JhiLanguageHelper);
     private localeConversionService = inject(LocaleConversionService);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingSystemService = inject(GradingService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private profileService = inject(ProfileService);
 

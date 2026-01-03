@@ -12,7 +12,7 @@ export type EntityResponseType = HttpResponse<GradingScale>;
 export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 
 @Injectable({ providedIn: 'root' })
-export class GradingSystemService {
+export class GradingService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/assessment/courses';
@@ -51,8 +51,8 @@ export class GradingSystemService {
      *
      * @param courseId the course for which the grading scale will be deleted
      */
-    deleteGradingScaleForCourse(courseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
+    deleteGradingScaleForCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
     }
 
     /**
@@ -93,8 +93,8 @@ export class GradingSystemService {
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the grading scale will be deleted
      */
-    deleteGradingScaleForExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
+    deleteGradingScaleForExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
     }
 
     /**

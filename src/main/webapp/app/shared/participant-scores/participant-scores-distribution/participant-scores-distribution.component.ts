@@ -2,7 +2,7 @@ import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -23,7 +23,7 @@ interface NgxClickEvent {
     imports: [BarChartModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
 })
 export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingSystemService = inject(GradingService);
     private translateService = inject(TranslateService);
 
     @Input()

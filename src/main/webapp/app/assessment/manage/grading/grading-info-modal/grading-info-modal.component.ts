@@ -7,11 +7,11 @@ import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    selector: 'jhi-grading-system-info-modal',
-    templateUrl: './grading-system-info-modal.component.html',
+    selector: 'jhi-system-info-modal',
+    templateUrl: './grading-info-modal.component.html',
     imports: [TranslateDirective, FaIconComponent, DialogModule, ButtonModule, ArtemisTranslatePipe],
 })
-export class GradingSystemInfoModalComponent {
+export class GradingInfoModalComponent {
     // Icons
     farQuestionCircle = faQuestionCircle;
 

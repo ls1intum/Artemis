@@ -22,7 +22,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
@@ -104,7 +104,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private languageHelper = inject(JhiLanguageHelper);
     private localeConversionService = inject(LocaleConversionService);
     private participantScoresService = inject(ParticipantScoresService);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingSystemService = inject(GradingService);
     private courseManagementService = inject(CourseManagementService);
 
     public examScoreDTO: ExamScoreDTO;

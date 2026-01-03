@@ -47,19 +47,19 @@ export interface PresentationsConfig {
  *
  * @example
  * ```html
- * <jhi-grading-system-presentations
+ * <jhi-grading-presentations
  *   [gradingScale]="gradingScale"
  *   [presentationsConfig]="presentationsConfig">
- * </jhi-grading-system-presentations>
+ * </jhi-grading-presentations>
  * ```
  */
 @Component({
-    selector: 'jhi-grading-system-presentations',
-    templateUrl: './grading-system-presentations.component.html',
-    styleUrls: ['./grading-system-presentations.component.scss'],
+    selector: 'jhi-grading-presentations',
+    templateUrl: './grading-presentations.component.html',
+    styleUrls: ['./grading-presentations.component.scss'],
     imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent],
 })
-export class GradingSystemPresentationsComponent {
+export class GradingPresentationsComponent {
     // =========================================================================
     // Template Constants (exposed for use in template)
     // =========================================================================

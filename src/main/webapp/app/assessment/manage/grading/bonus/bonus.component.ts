@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
-import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
@@ -11,7 +11,7 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
+import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
@@ -55,7 +55,7 @@ export enum BonusStrategyDiscreteness {
 })
 export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingSystemService = inject(GradingService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
@@ -309,7 +309,7 @@ export class BonusComponent implements OnInit {
     }
 
     /**
-     * @see GradingSystemService.getGradingScaleTitle
+     * @see GradingService.getGradingScaleTitle
      * @param gradingScale
      */
     getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
@@ -317,7 +317,7 @@ export class BonusComponent implements OnInit {
     }
 
     /**
-     * @see GradingSystemService.getGradingScaleMaxPoints
+     * @see GradingService.getGradingScaleMaxPoints
      * @param gradingScale
      */
     getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
@@ -325,7 +325,7 @@ export class BonusComponent implements OnInit {
     }
 
     /**
-     * @see GradingSystemService.hasPointsSet
+     * @see GradingService.hasPointsSet
      */
     hasPointsSet(): boolean {
         return !!this.bonus.sourceGradingScale?.gradeSteps && this.gradingSystemService.hasPointsSet(this.bonus.sourceGradingScale.gradeSteps);
