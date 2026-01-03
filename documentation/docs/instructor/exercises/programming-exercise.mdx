@@ -833,13 +833,19 @@ Left side configuration options:
 
 **Examples:**
 
-**Example 1:** Exercise with 3 test cases, max 10 points, 10 bonus points possible (max score 200%). TC A: weight 2, TC B & C: weight 1 (all multipliers 1, bonus points 0). Student passing only TC A receives 50% = 5 points.
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Example 1:</strong> Given an exercise with 3 test cases, maximum points of 10 and 10 achievable bonus points. The highest achievable score is 200%. Test Case (TC) A has weight 2, TC B and TC C have weight 1 (bonus multipliers 1 and bonus points 0 for all test cases). A student that only passes TC A will receive 50% of the maximum points (5 points).</p>
+</Callout>
 
-**Example 2:** Same as Example 1, but TC A has bonus multiplier 2. TC A: (2×2)/(2+1+1)×100 = 100% = 10 points. TC B/C: (1/4)×100 = 25% = 2.5 points each. Passing all: 150% = 10 points + 5 bonus points.
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases he will receive a score of 150%, which amounts to 10 points and 5 bonus points.</p>
+</Callout>
 
-**Example 3:** Same as Example 2, but TC B has 5 bonus points. TC B now: 2.5 + 5 = 7.5 points. Passing all: 10 + 7.5 + 2.5 = 20 points = 200%.
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases he will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.</p>
+</Callout>
 
-Right side displays statistics:
+The right side displays statistics:
 
 - **Weight Distribution**: Impact of each test on score
 - **Total Points**: Percentage of points awarded per test case across all students
