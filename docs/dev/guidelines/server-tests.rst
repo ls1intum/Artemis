@@ -2,7 +2,7 @@
 Server Tests
 ************
 
-This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out :ref:`this <best_practices_for_test_cases>`.
+This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out best_practices_for_test_cases.
 
 You can execute server tests with the following commands:
 
