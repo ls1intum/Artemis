@@ -876,23 +876,31 @@ Issues are grouped into categories. The following table shows the category mappi
 | **Naming & Format** | Rules that ensure the readability of the source code (name conventions, imports, indentation, annotations, white spaces) | Checkstyle imports<br/>Checkstyle indentation<br/>Checkstyle naming<br/>Checkstyle whitespace         |                       |                 |
 | **Miscellaneous**   | Uncategorized rules                                                                                                      | Checkstyle miscellaneous                                                                              |                       | GCC Misc        |
 
-Other languages use tool-specific categories:
-- **JavaScript, TypeScript, C++, R**: Use `Lint` category only
-- **Dart**: Uses analyzer categories (TODO, HINT, COMPILE_TIME_ERROR, etc.)
-- **Python**: Uses Ruff's tool names
-- **Ruby**: Uses Rubocop's Department names
-- **Rust**: Uses Clippy's lint groups
+Other languages use categories defined by their static code analysis tool:
 
-Left side configuration:
+- **JavaScript, TypeScript, C++, R**: Only use the `Lint` category
+- **Dart**: Dart's analyzer can generate these categories:
+  - `TODO`
+  - `HINT`
+  - `COMPILE_TIME_ERROR`
+  - `CHECKED_MODE_COMPILE_TIME_ERROR`
+  - `STATIC_WARNING`
+  - `SYNTACTIC_ERROR`
+  - `LINT`
+- **Python**: Uses [Ruff's tool names](https://docs.astral.sh/ruff/rules/)
+- **Ruby**: Uses [Rubocop's Department names](https://docs.rubocop.org/rubocop/cops.html)
+- **Rust**: Uses [Clippy's lint groups](https://rust-lang.github.io/rust-clippy/stable/index.html)
 
-- **Category**: Category name
+On the left side of the page, instructors can configure the static code analysis categories:
+
+- **Category**: The name of the category defined by Artemis
 - **State**:
-  - **INACTIVE**: Issues not shown, don't influence score
-  - **FEEDBACK**: Issues shown but don't influence score
-  - **GRADED**: Issues shown and deduct points according to Penalty/Max Penalty
-- **Penalty**: Points deducted per issue
-- **Max Penalty**: Limit on points deducted for this category
-- **Detected Issues**: Visualization of issue distribution
+  - `INACTIVE`: Code quality issues of an inactive category are not shown to students and do not influence the score calculation
+  - `FEEDBACK`: Code quality issues of a feedback category are shown to students but do not influence the score calculation
+  - `GRADED`: Code quality issues of a graded category are shown to students and deduct points according to the Penalty and Max Penalty configuration
+- **Penalty**: Artemis deducts the selected amount of points for each code quality issue from points achieved by passing test cases
+- **Max Penalty**: Limits the amount of points deducted for code quality issues belonging to this category
+- **Detected Issues**: Visualizes how many students encountered a specific number of issues in this category
 
 ### Verify Exercise Configuration
 
