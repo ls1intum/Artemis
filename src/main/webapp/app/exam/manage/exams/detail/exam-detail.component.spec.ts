@@ -261,7 +261,7 @@ describe('ExamDetailComponent', () => {
     it('should delete an exam when delete exam is called', () => {
         // GIVEN
         component.exam = exam;
-        const responseFakeDelete = {} as HttpResponse<any[]>;
+        const responseFakeDelete = new HttpResponse<void>({ status: 200 });
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
         jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
         jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
