@@ -321,4 +321,72 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.form.get('minimumSize')?.hasError('required')).toBeTrue();
         expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('required')).toBeTrue();
     });
+
+    describe('integer validator', () => {
+        it('should reject non-integer similarityThreshold', () => {
+            comp.ngOnInit();
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+
+            comp.form.patchValue({ similarityThreshold: 50.5 });
+
+            expect(comp.form.get('similarityThreshold')?.hasError('notInteger')).toBeTrue();
+            expect(comp.form.valid).toBeFalse();
+        });
+
+        it('should reject non-integer minimumScore', () => {
+            comp.ngOnInit();
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+
+            comp.form.patchValue({ minimumScore: 22.5 });
+
+            expect(comp.form.get('minimumScore')?.hasError('notInteger')).toBeTrue();
+            expect(comp.form.valid).toBeFalse();
+        });
+
+        it('should reject non-integer minimumSize', () => {
+            comp.ngOnInit();
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+
+            comp.form.patchValue({ minimumSize: 50.5 });
+
+            expect(comp.form.get('minimumSize')?.hasError('notInteger')).toBeTrue();
+            expect(comp.form.valid).toBeFalse();
+        });
+
+        it('should reject non-integer response period', () => {
+            comp.ngOnInit();
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+
+            comp.form.patchValue({ continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7.5 });
+
+            expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger')).toBeTrue();
+            expect(comp.form.valid).toBeFalse();
+        });
+
+        it('should accept integer values', () => {
+            comp.ngOnInit();
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+
+            comp.form.patchValue({
+                similarityThreshold: 50,
+                minimumScore: 22,
+                minimumSize: 50,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+            });
+
+            expect(comp.form.get('similarityThreshold')?.hasError('notInteger')).toBeFalse();
+            expect(comp.form.get('minimumScore')?.hasError('notInteger')).toBeFalse();
+            expect(comp.form.get('minimumSize')?.hasError('notInteger')).toBeFalse();
+            expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger')).toBeFalse();
+            expect(comp.form.valid).toBeTrue();
+        });
+
+        it('should return null for empty value (let required validator handle it)', () => {
+            const result = ExerciseUpdatePlagiarismComponent.integerValidator({ value: null } as any);
+            expect(result).toBeNull();
+
+            const result2 = ExerciseUpdatePlagiarismComponent.integerValidator({ value: '' } as any);
+            expect(result2).toBeNull();
+        });
+    });
 });
