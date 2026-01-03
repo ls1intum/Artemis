@@ -122,7 +122,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
-    private gradingSystemService = inject(GradingService);
+    private gradingService = inject(GradingService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     categoryFilter = inject(ChartCategoryFilter);
 
@@ -294,7 +294,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     private calculateCourseGrade(): void {
-        this.gradingSystemService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
+        this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists = true;
                 this.gradeDTO = gradeDTO;

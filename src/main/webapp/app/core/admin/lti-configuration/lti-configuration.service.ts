@@ -24,7 +24,7 @@ export class LtiConfigurationService {
      * @param ltiPlatformConfiguration The configuration to add.
      * @return Observable of the HTTP response.
      */
-    addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
+    addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<LtiPlatformConfiguration>> {
         return this.http.post<LtiPlatformConfiguration>(`api/lti/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
     }
 

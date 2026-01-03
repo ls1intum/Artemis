@@ -53,7 +53,7 @@ export interface ITeamService {
      * @param {Exercise} exercise - Exercise the team belongs to
      * @param {number} teamId - Team to delete
      */
-    delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
+    delete(exercise: Exercise, teamId: number): Observable<HttpResponse<void>>;
 
     /**
      * Check if a given team short name exists in a course
@@ -175,7 +175,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Exercise} exercise - Exercise the team belongs to
      * @param {number} teamId - Team to delete
      */
-    delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>> {
+    delete(exercise: Exercise, teamId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${TeamService.resourceUrl(exercise.id!)}/${teamId}`, { observe: 'response' });
     }
 

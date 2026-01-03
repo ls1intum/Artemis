@@ -367,9 +367,9 @@ describe('Bonus Service', () => {
             sourceGradingScale,
         };
 
-        const gradingSystemService = TestBed.inject(GradingService);
-        gradingSystemService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
-        gradingSystemService.setGradePoints(bonusToGradeStepsDTO.gradeSteps, bonusToGradeStepsDTO.maxPoints!);
+        const gradingService = TestBed.inject(GradingService);
+        gradingService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
+        gradingService.setGradePoints(bonusToGradeStepsDTO.gradeSteps, bonusToGradeStepsDTO.maxPoints!);
 
         const bonusExamples = service.generateBonusExamples(bonus, bonusToGradeStepsDTO);
         expect(bonusExamples).toEqual(expectedBonusExamples);
@@ -439,9 +439,9 @@ describe('Bonus Service', () => {
             gradeStep.upperBoundInclusive = false;
         });
 
-        const gradingSystemService = TestBed.inject(GradingService);
-        gradingSystemService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
-        gradingSystemService.setGradePoints(bonusToGradeStepsDTOWithoutIncludedBounds.gradeSteps, bonusToGradeStepsDTOWithoutIncludedBounds.maxPoints!);
+        const gradingService = TestBed.inject(GradingService);
+        gradingService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
+        gradingService.setGradePoints(bonusToGradeStepsDTOWithoutIncludedBounds.gradeSteps, bonusToGradeStepsDTOWithoutIncludedBounds.maxPoints!);
 
         const bonusExamples = service.generateBonusExamples(bonus, bonusToGradeStepsDTOWithoutIncludedBounds);
         expect(bonusExamples).toEqual(expectedBonusExamples);

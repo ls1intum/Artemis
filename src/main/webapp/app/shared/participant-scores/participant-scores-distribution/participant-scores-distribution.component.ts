@@ -23,7 +23,7 @@ interface NgxClickEvent {
     imports: [BarChartModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
 })
 export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
-    private gradingSystemService = inject(GradingService);
+    private gradingService = inject(GradingService);
     private translateService = inject(TranslateService);
 
     @Input()
@@ -176,7 +176,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         let index = 0;
         if (this.gradingScaleExists) {
             this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
+                if (this.gradingService.matchGradePercentage(gradeStep, percentage)) {
                     index = i;
                 }
             });

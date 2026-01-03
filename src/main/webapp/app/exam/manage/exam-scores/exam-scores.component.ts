@@ -104,7 +104,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private languageHelper = inject(JhiLanguageHelper);
     private localeConversionService = inject(LocaleConversionService);
     private participantScoresService = inject(ParticipantScoresService);
-    private gradingSystemService = inject(GradingService);
+    private gradingService = inject(GradingService);
     private courseManagementService = inject(CourseManagementService);
 
     public examScoreDTO: ExamScoreDTO;
@@ -173,7 +173,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']).pipe(catchError(() => of(new HttpResponse<ScoresDTO[]>())));
 
             // find grading scale if one exists and handle case when it doesn't
-            const gradingScaleObservable = this.gradingSystemService
+            const gradingScaleObservable = this.gradingService
                 .findGradingScaleForExam(params['courseId'], params['examId'])
                 .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
 
@@ -212,7 +212,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScale = gradingScaleResponse.body!;
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
                         this.hasBonus = this.studentResults?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy;
-                        this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+                        this.gradingScale!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale!.gradeSteps);
                         this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
@@ -304,7 +304,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
                 groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
                 if (this.gradingScaleExists) {
-                    const gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
+                    const gradeStep = this.gradingService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
                     groupResult.averageGrade = gradeStep!.gradeName;
                 }
             }
@@ -498,8 +498,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelativePassed = (examStatistics.meanPointsPassed / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelativePassed = (examStatistics.medianPassed / this.examScoreDTO.maxPoints) * 100;
-                examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
-                examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
+                examStatistics.meanGradePassed = this.gradingService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
+                examStatistics.medianGradePassed = this.gradingService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
                 examStatistics.standardGradeDeviationPassed = this.hasNumericGrades ? standardDeviation(studentGradesPassed) : undefined;
             }
             // Calculate statistics for the first assessments of passed exams if second correction exists
@@ -510,11 +510,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (this.examScoreDTO.maxPoints) {
                     examStatistics.meanPointsRelativePassedInFirstCorrection = (examStatistics.meanPointsPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     examStatistics.medianRelativePassedInFirstCorrection = (examStatistics.medianPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
-                    examStatistics.meanGradePassedInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                    examStatistics.meanGradePassedInFirstCorrection = this.gradingService.findMatchingGradeStep(
                         this.gradingScale!.gradeSteps,
                         examStatistics.meanPointsRelativePassedInFirstCorrection,
                     )!.gradeName;
-                    examStatistics.medianGradePassedInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                    examStatistics.medianGradePassedInFirstCorrection = this.gradingService.findMatchingGradeStep(
                         this.gradingScale!.gradeSteps,
                         examStatistics.medianRelativePassedInFirstCorrection,
                     )!.gradeName;
@@ -544,11 +544,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 examStatistics.meanPointsRelativeSubmitted = (examStatistics.meanPointsSubmitted / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelativeSubmitted = (examStatistics.medianSubmitted / this.examScoreDTO.maxPoints) * 100;
                 if (this.gradingScaleExists) {
-                    examStatistics.meanGradeSubmitted = this.gradingSystemService.findMatchingGradeStep(
+                    examStatistics.meanGradeSubmitted = this.gradingService.findMatchingGradeStep(
                         this.gradingScale!.gradeSteps,
                         examStatistics.meanPointsRelativeSubmitted,
                     )!.gradeName;
-                    examStatistics.medianGradeSubmitted = this.gradingSystemService.findMatchingGradeStep(
+                    examStatistics.medianGradeSubmitted = this.gradingService.findMatchingGradeStep(
                         this.gradingScale!.gradeSteps,
                         examStatistics.medianRelativeSubmitted,
                     )!.gradeName;
@@ -564,11 +564,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     examStatistics.meanPointsRelativeInFirstCorrection = (examStatistics.meanPointsInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     examStatistics.medianRelativeInFirstCorrection = (examStatistics.medianInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     if (this.gradingScaleExists) {
-                        examStatistics.meanGradeInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        examStatistics.meanGradeInFirstCorrection = this.gradingService.findMatchingGradeStep(
                             this.gradingScale!.gradeSteps,
                             examStatistics.meanPointsRelativeInFirstCorrection,
                         )!.gradeName;
-                        examStatistics.medianGradeInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        examStatistics.medianGradeInFirstCorrection = this.gradingService.findMatchingGradeStep(
                             this.gradingScale!.gradeSteps,
                             examStatistics.medianRelativeInFirstCorrection,
                         )!.gradeName;
@@ -601,11 +601,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 examStatistics.meanPointsRelativeTotal = (examStatistics.meanPointsTotal / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelativeTotal = (examStatistics.medianTotal / this.examScoreDTO.maxPoints) * 100;
                 if (this.gradingScaleExists) {
-                    examStatistics.meanGradeTotal = this.gradingSystemService.findMatchingGradeStep(
-                        this.gradingScale!.gradeSteps,
-                        examStatistics.meanPointsRelativeTotal,
-                    )!.gradeName;
-                    examStatistics.medianGradeTotal = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
+                    examStatistics.meanGradeTotal = this.gradingService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativeTotal)!.gradeName;
+                    examStatistics.medianGradeTotal = this.gradingService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
                     examStatistics.standardGradeDeviationTotal = this.hasNumericGrades ? standardDeviation(studentGradesTotal) : undefined;
                 }
             }
@@ -618,11 +615,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     examStatistics.meanPointsRelativeTotalInFirstCorrection = (examStatistics.meanPointsTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     examStatistics.medianRelativeTotalInFirstCorrection = (examStatistics.medianTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                     if (this.gradingScaleExists) {
-                        examStatistics.meanGradeTotalInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        examStatistics.meanGradeTotalInFirstCorrection = this.gradingService.findMatchingGradeStep(
                             this.gradingScale!.gradeSteps,
                             examStatistics.meanPointsRelativeTotalInFirstCorrection,
                         )!.gradeName;
-                        examStatistics.medianGradeTotalInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        examStatistics.medianGradeTotalInFirstCorrection = this.gradingService.findMatchingGradeStep(
                             this.gradingScale!.gradeSteps,
                             examStatistics.medianRelativeTotalInFirstCorrection,
                         )!.gradeName;
@@ -1069,22 +1066,22 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private determineGradesSubmittedAndNonEmpty(atLeastOneExam: boolean): void {
         if (atLeastOneExam) {
-            this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+            this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty = this.gradingService.findMatchingGradeStep(
                 this.gradingScale!.gradeSteps,
                 this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty,
             )!.gradeName;
 
-            this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+            this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty = this.gradingService.findMatchingGradeStep(
                 this.gradingScale!.gradeSteps,
                 this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty,
             )!.gradeName;
             if (this.hasSecondCorrectionAndStarted) {
-                this.aggregatedExamResults.meanGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                this.aggregatedExamResults.meanGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale!.gradeSteps,
                     this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection,
                 )!.gradeName;
 
-                this.aggregatedExamResults.medianGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                this.aggregatedExamResults.medianGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale!.gradeSteps,
                     this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection!,
                 )!.gradeName;
@@ -1173,22 +1170,22 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private determineGradesNonEmpty(atLeastOneExam: boolean): void {
         if (atLeastOneExam) {
-            this.aggregatedExamResults.meanGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+            this.aggregatedExamResults.meanGradeNonEmpty = this.gradingService.findMatchingGradeStep(
                 this.gradingScale!.gradeSteps,
                 this.aggregatedExamResults.meanScoreNonEmpty,
             )!.gradeName;
 
-            this.aggregatedExamResults.medianGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+            this.aggregatedExamResults.medianGradeNonEmpty = this.gradingService.findMatchingGradeStep(
                 this.gradingScale!.gradeSteps,
                 this.aggregatedExamResults.medianScoreNonEmpty,
             )!.gradeName;
             if (this.hasSecondCorrectionAndStarted) {
-                this.aggregatedExamResults.meanGradeNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                this.aggregatedExamResults.meanGradeNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale!.gradeSteps,
                     this.aggregatedExamResults.meanScoreNonEmptyInFirstCorrection,
                 )!.gradeName;
 
-                this.aggregatedExamResults.medianGradeNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                this.aggregatedExamResults.medianGradeNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale!.gradeSteps,
                     this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection,
                 )!.gradeName;

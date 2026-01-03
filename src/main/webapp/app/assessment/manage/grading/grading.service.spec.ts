@@ -11,7 +11,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { lastValueFrom } from 'rxjs';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 
-describe('GradingSystemService', () => {
+describe('GradingService', () => {
     setupTestBed({ zoneless: true });
     let service: GradingService;
     let httpMock: HttpTestingController;

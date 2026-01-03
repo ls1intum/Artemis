@@ -497,8 +497,8 @@ export class ExamManagementService {
      * @param courseId the id of the course of the exam
      * @param examId The id of the exam to archive
      */
-    archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+    archiveExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 
     cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {

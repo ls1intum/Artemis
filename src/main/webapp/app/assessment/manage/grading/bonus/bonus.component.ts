@@ -55,7 +55,7 @@ export enum BonusStrategyDiscreteness {
 })
 export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);
-    private gradingSystemService = inject(GradingService);
+    private gradingService = inject(GradingService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
@@ -141,17 +141,17 @@ export class BonusComponent implements OnInit {
                     throw error;
                 }),
             ),
-            this.gradingSystemService.findWithBonusGradeTypeForInstructor(this.state).pipe(
+            this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
                 tap((gradingScales) => {
                     this.sourceGradingScales = gradingScales.body?.resultsOnPage || [];
                 }),
             ),
-            this.gradingSystemService.findGradeSteps(this.courseId, this.examId).pipe(
+            this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
                         this.bonusToGradeStepsDTO = gradeSteps;
-                        this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
-                        this.gradingSystemService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
+                        this.gradingService.sortGradeSteps(gradeSteps.gradeSteps);
+                        this.gradingService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
                     } else {
                         throw new Error(`No grade steps found for bonus calculation. Bonus to course id "${this.courseId}", exam id "${this.examId}"`);
                     }
@@ -212,8 +212,8 @@ export class BonusComponent implements OnInit {
                 return weight < 0;
             case BonusStrategy.GRADES_CONTINUOUS:
             case BonusStrategy.GRADES_DISCRETE:
-                const maxGradeValue = this.gradingSystemService.getNumericValueForGradeName(this.gradingSystemService.maxGrade(bonusToGradeSteps));
-                const firstGradeValue = this.gradingSystemService.getNumericValueForGradeName(bonusToGradeSteps[0]?.gradeName);
+                const maxGradeValue = this.gradingService.getNumericValueForGradeName(this.gradingService.maxGrade(bonusToGradeSteps));
+                const firstGradeValue = this.gradingService.getNumericValueForGradeName(bonusToGradeSteps[0]?.gradeName);
                 return this.bonusService.doesBonusExceedMax(firstGradeValue!, maxGradeValue!, weight);
             default:
                 return false;
@@ -313,7 +313,7 @@ export class BonusComponent implements OnInit {
      * @param gradingScale
      */
     getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
-        return this.gradingSystemService.getGradingScaleTitle(gradingScale);
+        return this.gradingService.getGradingScaleTitle(gradingScale);
     }
 
     /**
@@ -321,14 +321,14 @@ export class BonusComponent implements OnInit {
      * @param gradingScale
      */
     getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
-        return this.gradingSystemService.getGradingScaleMaxPoints(gradingScale);
+        return this.gradingService.getGradingScaleMaxPoints(gradingScale);
     }
 
     /**
      * @see GradingService.hasPointsSet
      */
     hasPointsSet(): boolean {
-        return !!this.bonus.sourceGradingScale?.gradeSteps && this.gradingSystemService.hasPointsSet(this.bonus.sourceGradingScale.gradeSteps);
+        return !!this.bonus.sourceGradingScale?.gradeSteps && this.gradingService.hasPointsSet(this.bonus.sourceGradingScale.gradeSteps);
     }
 
     /**
@@ -337,10 +337,10 @@ export class BonusComponent implements OnInit {
      * @param gradingScale the selected bonus source grading scale
      */
     private setBonusSourcePoints(gradingScale: GradingScale) {
-        if (!this.gradingSystemService.hasPointsSet(gradingScale.gradeSteps)) {
-            this.gradingSystemService.setGradePoints(gradingScale.gradeSteps, this.getGradingScaleMaxPoints(gradingScale));
+        if (!this.gradingService.hasPointsSet(gradingScale.gradeSteps)) {
+            this.gradingService.setGradePoints(gradingScale.gradeSteps, this.getGradingScaleMaxPoints(gradingScale));
         }
-        this.gradingSystemService.sortGradeSteps(gradingScale.gradeSteps);
+        this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
     }
 
     calculateDynamicExample() {
@@ -370,6 +370,6 @@ export class BonusComponent implements OnInit {
     }
 
     maxPossibleGrade() {
-        return this.gradingSystemService.maxGrade(this.bonusToGradeStepsDTO.gradeSteps);
+        return this.gradingService.maxGrade(this.bonusToGradeStepsDTO.gradeSteps);
     }
 }

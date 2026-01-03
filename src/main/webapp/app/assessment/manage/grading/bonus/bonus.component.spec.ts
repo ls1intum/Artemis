@@ -30,7 +30,7 @@ describe('BonusComponent', () => {
     let fixture: ComponentFixture<BonusComponent>;
 
     let bonusService: BonusService;
-    let gradingSystemService: GradingService;
+    let gradingService: GradingService;
 
     let findGradeStepsSpy: MockInstance;
     let findWithBonusSpy: MockInstance;
@@ -284,13 +284,11 @@ describe('BonusComponent', () => {
         fixture = TestBed.createComponent(BonusComponent);
         component = fixture.componentInstance;
         bonusService = TestBed.inject(BonusService);
-        gradingSystemService = TestBed.inject(GradingService);
+        gradingService = TestBed.inject(GradingService);
 
         findBonusForExamSpy = vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
-        findWithBonusSpy = vi
-            .spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor')
-            .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
-        findGradeStepsSpy = vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
+        findWithBonusSpy = vi.spyOn(gradingService, 'findWithBonusGradeTypeForInstructor').mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
+        findGradeStepsSpy = vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
         vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });
 
@@ -303,8 +301,8 @@ describe('BonusComponent', () => {
         // below (i.e. we inject it directly into the component)
         findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const sortGradeStepsSpy = vi.spyOn(gradingSystemService, 'sortGradeSteps');
-        const setGradePointsSpy = vi.spyOn(gradingSystemService, 'setGradePoints');
+        const sortGradeStepsSpy = vi.spyOn(gradingService, 'sortGradeSteps');
+        const setGradePointsSpy = vi.spyOn(gradingService, 'setGradePoints');
 
         fixture.changeDetectorRef.detectChanges();
         component.setBonus(bonus);
@@ -381,7 +379,7 @@ describe('BonusComponent', () => {
     });
 
     it('should check bonus strategy and weight mismatch', () => {
-        vi.spyOn(gradingSystemService, 'getNumericValueForGradeName').mockImplementation((gradeName) => parseFloat(gradeName!));
+        vi.spyOn(gradingService, 'getNumericValueForGradeName').mockImplementation((gradeName) => parseFloat(gradeName!));
         vi.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
 
         component.bonus = { ...bonus, bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 };
@@ -520,7 +518,7 @@ describe('BonusComponent', () => {
     });
 
     it('should forward grading scale title call to service', () => {
-        const gradingSystemSpy = vi.spyOn(gradingSystemService, 'getGradingScaleTitle');
+        const gradingSystemSpy = vi.spyOn(gradingService, 'getGradingScaleTitle');
 
         component.getGradingScaleTitle(bonus.sourceGradingScale!);
 
@@ -529,7 +527,7 @@ describe('BonusComponent', () => {
     });
 
     it('should forward grading scale max points call to service', () => {
-        const gradingSystemSpy = vi.spyOn(gradingSystemService, 'getGradingScaleMaxPoints');
+        const gradingSystemSpy = vi.spyOn(gradingService, 'getGradingScaleMaxPoints');
 
         component.getGradingScaleMaxPoints(bonus.sourceGradingScale!);
 
@@ -538,7 +536,7 @@ describe('BonusComponent', () => {
     });
 
     it('should forward has points set call to service', () => {
-        const gradingSystemSpy = vi.spyOn(gradingSystemService, 'hasPointsSet');
+        const gradingSystemSpy = vi.spyOn(gradingService, 'hasPointsSet');
 
         component.bonus = { ...bonus, sourceGradingScale: {} as GradingScale };
         component.hasPointsSet();

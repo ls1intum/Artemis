@@ -90,7 +90,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private changeDetector = inject(ChangeDetectorRef);
     private languageHelper = inject(JhiLanguageHelper);
     private localeConversionService = inject(LocaleConversionService);
-    private gradingSystemService = inject(GradingService);
+    private gradingService = inject(GradingService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private profileService = inject(ProfileService);
 
@@ -268,7 +268,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const findGradeScoresObservable = this.courseManagementService.findGradeScores(courseId);
         // alternative course scores calculation using participant scores table
         // find grading scale if it exists for course
-        const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+        const gradingScaleObservable = this.gradingService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
 
         const plagiarismCasesObservable = this.plagiarismEnabled
             ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
@@ -476,9 +476,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     setUpGradingScale(gradingScale: GradingScale) {
         this.gradingScaleExists = true;
         this.gradingScale = gradingScale;
-        this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
+        this.gradingScale.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.isBonus = this.gradingScale.gradeType === GradeType.BONUS;
-        this.maxGrade = this.gradingSystemService.maxGrade(this.gradingScale.gradeSteps);
+        this.maxGrade = this.gradingService.maxGrade(this.gradingScale.gradeSteps);
     }
 
     /**
@@ -489,7 +489,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         if (this.maxNumberOfOverallPoints >= 0 && this.gradingScale) {
             const plagiarismMap = this.createStudentPlagiarismMap(plagiarismCases);
             const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
-            this.averageGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentage)!.gradeName;
+            this.averageGrade = this.gradingService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentage)!.gradeName;
             for (const student of this.studentStatistics) {
                 student.gradeStep = this.findStudentGradeStep(student, this.gradingScale, plagiarismMap);
             }
@@ -518,7 +518,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         } else {
             const overallPercentageForStudent =
                 studentStatistics.overallPoints && this.maxNumberOfOverallPoints ? (studentStatistics.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
-            return this.gradingSystemService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
+            return this.gradingService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
         }
     }
 

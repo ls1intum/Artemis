@@ -27,7 +27,7 @@ describe('GradingKeyTableComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingKeyTableComponent>;
     let component: GradingKeyTableComponent;
-    let gradingSystemService: GradingService;
+    let gradingService: GradingService;
     let bonusService: BonusService;
     let scoresStorageService: ScoresStorageService;
 
@@ -105,19 +105,19 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingService);
+                    gradingService = TestBed.inject(GradingService);
                     bonusService = TestBed.inject(BonusService);
                     scoresStorageService = TestBed.inject(ScoresStorageService);
 
-                    vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
-                    vi.spyOn(gradingSystemService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
-                    vi.spyOn(gradingSystemService, 'setGradePoints').mockImplementation((steps, maxPoints) => {
+                    vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
+                    vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
+                    vi.spyOn(gradingService, 'setGradePoints').mockImplementation((steps, maxPoints) => {
                         steps.forEach((step) => {
                             step.lowerBoundPoints = (maxPoints * step.lowerBoundPercentage) / 100;
                             step.upperBoundPoints = (maxPoints * step.upperBoundPercentage) / 100;
                         });
                     });
-                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+                    vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
 
                     fixture = TestBed.createComponent(GradingKeyTableComponent);
                     component = fixture.componentInstance;
@@ -140,7 +140,7 @@ describe('GradingKeyTableComponent', () => {
         it('should load grade steps from service', () => {
             fixture.detectChanges();
 
-            expect(gradingSystemService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
+            expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
             expect(component.title).toBe('Test Exam');
             expect(component.gradeSteps).toHaveLength(2);
             expect(component.isBonus).toBe(false);
@@ -151,7 +151,7 @@ describe('GradingKeyTableComponent', () => {
         it('should set grade points for exam', () => {
             fixture.detectChanges();
 
-            expect(gradingSystemService.setGradePoints).toHaveBeenCalledWith(expect.any(Array), 100);
+            expect(gradingService.setGradePoints).toHaveBeenCalledWith(expect.any(Array), 100);
         });
 
         it('should set studentGradeOrBonusPointsOrGradeBonus from query params', () => {
@@ -210,13 +210,13 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingService);
+                    gradingService = TestBed.inject(GradingService);
                     scoresStorageService = TestBed.inject(ScoresStorageService);
 
-                    vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
-                    vi.spyOn(gradingSystemService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
-                    vi.spyOn(gradingSystemService, 'setGradePoints').mockImplementation(() => {});
-                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+                    vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
+                    vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
+                    vi.spyOn(gradingService, 'setGradePoints').mockImplementation(() => {});
+                    vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
                     vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
                         new CourseScores(200, 200, 0, { absoluteScore: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
                     );
@@ -243,7 +243,7 @@ describe('GradingKeyTableComponent', () => {
             fixture.detectChanges();
 
             expect(scoresStorageService.getStoredTotalScores).toHaveBeenCalledWith(courseId);
-            expect(gradingSystemService.setGradePoints).toHaveBeenCalledWith(expect.any(Array), 200);
+            expect(gradingService.setGradePoints).toHaveBeenCalledWith(expect.any(Array), 200);
         });
     });
 
@@ -307,15 +307,15 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingService);
+                    gradingService = TestBed.inject(GradingService);
                     bonusService = TestBed.inject(BonusService);
 
                     vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of(new HttpResponse({ body: bonus })));
-                    vi.spyOn(gradingSystemService, 'getGradingScaleTitle').mockReturnValue('Source Exam');
-                    vi.spyOn(gradingSystemService, 'getGradingScaleMaxPoints').mockReturnValue(50);
-                    vi.spyOn(gradingSystemService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
-                    vi.spyOn(gradingSystemService, 'setGradePoints').mockImplementation(() => {});
-                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+                    vi.spyOn(gradingService, 'getGradingScaleTitle').mockReturnValue('Source Exam');
+                    vi.spyOn(gradingService, 'getGradingScaleMaxPoints').mockReturnValue(50);
+                    vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
+                    vi.spyOn(gradingService, 'setGradePoints').mockImplementation(() => {});
+                    vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
 
                     fixture = TestBed.createComponent(GradingKeyTableComponent);
                     component = fixture.componentInstance;
@@ -379,10 +379,10 @@ describe('GradingKeyTableComponent', () => {
                 })
                 .compileComponents()
                 .then(() => {
-                    gradingSystemService = TestBed.inject(GradingService);
+                    gradingService = TestBed.inject(GradingService);
 
-                    vi.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(undefined));
-                    vi.spyOn(gradingSystemService, 'hasPointsSet').mockReturnValue(false);
+                    vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(undefined));
+                    vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
 
                     fixture = TestBed.createComponent(GradingKeyTableComponent);
                     component = fixture.componentInstance;

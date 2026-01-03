@@ -47,7 +47,7 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     protected readonly IS_AT_LEAST_EDITOR = IS_AT_LEAST_EDITOR;
 
-    private readonly gradingSystemService = inject(GradingService);
+    private readonly gradingService = inject(GradingService);
 
     @Input() exercise: Exercise;
 
@@ -56,7 +56,7 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     ngDoCheck(): void {
         if (!this.gradeStepsDTOSub && this.exercise.course?.id) {
-            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(this.exercise.course.id).subscribe((gradeStepsDTO) => {
+            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(this.exercise.course.id).subscribe((gradeStepsDTO) => {
                 if (gradeStepsDTO.body) {
                     this.gradeStepsDTO = gradeStepsDTO.body;
                 }

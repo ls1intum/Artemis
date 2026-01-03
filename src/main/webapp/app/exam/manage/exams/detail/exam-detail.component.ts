@@ -49,7 +49,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private gradingSystemService = inject(GradingService);
+    private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
 
@@ -100,7 +100,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             this.isAdmin = this.accountService.isAdmin();
             this.getExamDetailSections();
 
-            this.gradingSystemService.findGradingScaleForExam(this.exam.course!.id!, this.exam.id!).subscribe((gradingSystemResponse) => {
+            this.gradingService.findGradingScaleForExam(this.exam.course!.id!, this.exam.id!).subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
                     this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
                 }

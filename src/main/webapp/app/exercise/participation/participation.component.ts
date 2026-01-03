@@ -74,7 +74,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
     private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
-    private readonly gradingSystemService = inject(GradingService);
+    private readonly gradingService = inject(GradingService);
 
     protected readonly faTable = faTable;
     protected readonly faTimes = faTimes;
@@ -166,7 +166,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     private loadGradingScale(courseId?: number) {
         if (courseId) {
-            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
+            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
                 if (gradeStepsDTO.body) {
                     this.gradeStepsDTO = gradeStepsDTO.body;
                 }
