@@ -21,6 +21,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Result } from '../../../exercise/shared/entities/result/result.model';
 import { AssessmentNote } from '../../shared/entities/assessment-note.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('AssessmentLayoutComponent', () => {
     setupTestBed({ zoneless: true });
@@ -76,9 +77,20 @@ describe('AssessmentLayoutComponent', () => {
         expect(assessmentComplaintAlertComponent).toBeTruthy();
     });
 
-    it('should include jhi-assessment-note', () => {
+    it('should include jhi-assessment-note when submission exists', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.changeDetectorRef.detectChanges();
+
         const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
         expect(assessmentNoteComponent).not.toBeNull();
+    });
+
+    it('should not include jhi-assessment-note when no submission exists', () => {
+        fixture.componentRef.setInput('submission', undefined);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
     });
 
     it('should include jhi-complaints-for-tutor-form', () => {
