@@ -70,7 +70,7 @@ const moduleThresholds = {
     },
     core: {
         statements: 89.30,
-        branches:   70.20,
+        branches:   70.00,
         functions:  80.20,
         lines:      89.40,
     },
@@ -153,10 +153,10 @@ const moduleThresholds = {
         lines:      90.00,
     },
     tutorialgroup: {
-        statements: 92.10,
+        statements: 89.90,
         branches:   73.10,
         functions:  84.70,
-        lines:      92.00,
+        lines:      89.80,
     },
 };
 

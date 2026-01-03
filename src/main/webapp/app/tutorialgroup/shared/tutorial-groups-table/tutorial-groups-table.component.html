@@ -62,7 +62,7 @@
                         <a class="th-link" [routerLink]="['/courses', course().id!, 'communication']" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></a>
                     </th>
                 }
-                @if (extraColumn) {
+                @if (extraColumn()) {
                     <th></th>
                 }
             </tr>
@@ -79,7 +79,7 @@
                     }"
                     [tutorialGroup]="tutorialGroup"
                     [course]="course()"
-                    [extraColumn]="extraColumn"
+                    [extraColumn]="extraColumn()"
                     [showIdColumn]="showIdColumn()"
                     [showChannelColumn]="showChannelColumn()"
                     [timeZone]="timeZone()"

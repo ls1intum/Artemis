@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
@@ -20,6 +22,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupSessionRowComponent } from 'app/tutorialgroup/shared/tutorial-group-sessions-table/tutorial-group-session-row/tutorial-group-session-row.component';
 
 describe('TutorialGroupSessionRowComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TutorialGroupSessionRowComponent;
     let fixture: ComponentFixture<TutorialGroupSessionRowComponent>;
     let session: TutorialGroupSession;
@@ -27,8 +31,7 @@ describe('TutorialGroupSessionRowComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, MockDirective(NgbPopover), ArtemisTranslatePipe, ArtemisDatePipe],
-            declarations: [TutorialGroupSessionRowComponent],
+            imports: [FormsModule, MockDirective(NgbPopover), ArtemisTranslatePipe, ArtemisDatePipe, TutorialGroupSessionRowComponent],
             providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -44,7 +47,7 @@ describe('TutorialGroupSessionRowComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should display session canceled button when sessions are cancelled', () => {
@@ -55,38 +58,36 @@ describe('TutorialGroupSessionRowComponent', () => {
         expect(sessionCanceledButton).not.toBeNull();
     });
 
-    it('should save attendance count when input is changed', fakeAsync(() => {
+    it('should save attendance count when input is changed', async () => {
         const tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
-        const updateAttendanceCountSpy = jest
+        const updateAttendanceCountSpy = vi
             .spyOn(tutorialGroupSessionService, 'updateAttendanceCount')
             .mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: { ...session, attendanceCount: 5 } })));
-        const attendanceChangedSpy = jest.spyOn(component.attendanceChanged, 'emit');
+        const attendanceChangedSpy = vi.spyOn(component.attendanceChanged, 'emit');
         changeAttendanceInputAndSave();
 
-        fixture.whenStable().then(() => {
-            expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
-            expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
-            expect(attendanceChangedSpy).toHaveBeenCalledOnce();
-            expect(attendanceChangedSpy).toHaveBeenCalledWith({ ...session, attendanceCount: 5 });
-            expect(component.attendanceDiffersFromPersistedValue()).toBeFalse();
-            expect(component.localSession().attendanceCount).toBe(5);
-        });
-    }));
+        await fixture.whenStable();
+        expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
+        expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
+        expect(attendanceChangedSpy).toHaveBeenCalledOnce();
+        expect(attendanceChangedSpy).toHaveBeenCalledWith({ ...session, attendanceCount: 5 });
+        expect(component.attendanceDiffersFromPersistedValue()).toBe(false);
+        expect(component.localSession().attendanceCount).toBe(5);
+    });
 
-    it('should reset attendance count when server call fails', fakeAsync(() => {
+    it('should reset attendance count when server call fails', async () => {
         const tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
-        const updateAttendanceCountSpy = jest.spyOn(tutorialGroupSessionService, 'updateAttendanceCount').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-        const attendanceChangedSpy = jest.spyOn(component.attendanceChanged, 'emit');
+        const updateAttendanceCountSpy = vi.spyOn(tutorialGroupSessionService, 'updateAttendanceCount').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        const attendanceChangedSpy = vi.spyOn(component.attendanceChanged, 'emit');
         changeAttendanceInputAndSave();
 
-        fixture.whenStable().then(() => {
-            expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
-            expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
-            expect(attendanceChangedSpy).not.toHaveBeenCalled();
-            expect(component.attendanceDiffersFromPersistedValue()).toBeFalse();
-            expect(component.localSession().attendanceCount).toBe(component.persistedAttendanceCount);
-        });
-    }));
+        await fixture.whenStable();
+        expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
+        expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
+        expect(attendanceChangedSpy).not.toHaveBeenCalled();
+        expect(component.attendanceDiffersFromPersistedValue()).toBe(false);
+        expect(component.localSession().attendanceCount).toBe(component.persistedAttendanceCount);
+    });
     function changeAttendanceInputAndSave() {
         const attendanceCountInput = fixture.debugElement.query(By.css('input'));
         attendanceCountInput.nativeElement.value = 5;
@@ -94,7 +95,7 @@ describe('TutorialGroupSessionRowComponent', () => {
         attendanceCountInput.nativeElement.dispatchEvent(new Event('change'));
         runOnPushChangeDetection(fixture);
         expect(component.localSession().attendanceCount).toBe(5);
-        expect(component.attendanceDiffersFromPersistedValue()).toBeTrue();
+        expect(component.attendanceDiffersFromPersistedValue()).toBe(true);
 
         const saveButton = fixture.debugElement.query(By.css('.input-group button')).nativeElement;
         saveButton.click();

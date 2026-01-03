@@ -14,7 +14,7 @@
             </div>
         } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {
             <div class="entity-summary-table">
-                <p-table [value]="categorizedEntitySummary()!" styleClass="p-datatable-sm p-datatable-gridlines">
+                <p-table [value]="categorizedEntitySummary()!" class="p-datatable-sm p-datatable-gridlines">
                     <ng-template #body let-category>
                         <tr class="category-header-row">
                             <td colspan="4" class="category-header-cell">
@@ -43,7 +43,7 @@
             </div>
         } @else if (entitySummary() && objectKeys(entitySummary()!).length > 0) {
             <div class="entity-summary-table">
-                <p-table [value]="[entitySummary()!]" styleClass="p-datatable-sm p-datatable-gridlines">
+                <p-table [value]="[entitySummary()!]" class="p-datatable-sm p-datatable-gridlines">
                     <ng-template #body let-summary>
                         @for (summaryKey of objectKeys(summary); track summaryKey) {
                             @if (summary[summaryKey] !== undefined) {
