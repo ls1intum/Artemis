@@ -45,10 +45,10 @@ if (fs.existsSync(vitestSummaryPath)) {
 
 const moduleThresholds = {
     assessment: {
-        statements: 90.00,
-        branches:   78.20,
-        functions:  83.30,
-        lines:      90.10,
+        statements: 93.00,
+        branches:   82.00,
+        functions:  91.80,
+        lines:      93.70,
     },
     atlas: {
         statements: 91.30,
@@ -57,8 +57,8 @@ const moduleThresholds = {
         lines:      91.20,
     },
     buildagent: {
-        statements: 89.70,
-        branches:   73.60,
+        statements: 89.80,
+        branches:   74.60,
         functions:  84.70,
         lines:      89.90,
     },
@@ -138,10 +138,10 @@ const moduleThresholds = {
         lines:      89.40,
     },
     quiz: {
-        statements: 88.80,
-        branches:   72.10,
-        functions:  82.70,
-        lines:      89.00,
+        statements: 90.00,
+        branches:   75.10,
+        functions:  87.00,
+        lines:      90.00,
     },
     shared: {
         statements: 88.00,
@@ -156,10 +156,10 @@ const moduleThresholds = {
         lines:      90.00,
     },
     tutorialgroup: {
-        statements: 89.90,
-        branches:   72.90,
-        functions:  84.50,
-        lines:      89.80,
+        statements: 91.00,
+        branches:   74.00,
+        functions:  87.00,
+        lines:      81.00,
     },
 };
 
