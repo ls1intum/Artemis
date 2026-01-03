@@ -860,7 +860,21 @@ Configure visibility and grading of code quality issues by category.
   <p>The Code Analysis tab is only available if static code analysis is enabled for the exercise.</p>
 </Callout>
 
-Issues are grouped into categories. Category mappings for Java, Swift, and C are documented in the old documentation section on Static Code Analysis Default Configuration.
+Issues are grouped into categories. The following table shows the category mappings for Java, Swift, and C:
+
+| Category            | Description                                                                                                              | Java                                                                                                  | Swift                 | C               |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------|-----------------|
+| **Bad Practice**    | Code that violates recommended and essential coding practices                                                            | Spotbugs BAD_PRACTICE<br/>Spotbugs I18N<br/>PMD Best Practices                                        |                       | GCC BadPractice |
+| **Code Style**      | Code that is confusing and hard to maintain                                                                              | Spotbugs STYLE<br/>Checkstyle blocks<br/>Checkstyle coding<br/>Checkstyle modifier<br/>PMD Code Style | Swiftlint (all rules) |                 |
+| **Potential Bugs**  | Coding mistakes, error-prone code or threading errors                                                                    | Spotbugs CORRECTNESS<br/>Spotbugs MT_CORRECTNESS<br/>PMD Error Prone<br/>PMD Multithreading           |                       | GCC Memory      |
+| **Duplicated Code** | Code clones                                                                                                              | PMD CPD                                                                                               |                       |                 |
+| **Security**        | Vulnerable code, unchecked inputs and security flaws                                                                     | Spotbugs MALICIOUS_CODE<br/>Spotbugs SECURITY<br/>PMD Security                                        |                       | GCC Security    |
+| **Performance**     | Inefficient code                                                                                                         | Spotbugs PERFORMANCE<br/>PMD Performance                                                              |                       |                 |
+| **Design**          | Program structure/architecture and object design                                                                         | Checkstyle design<br/>PMD Design                                                                      |                       |                 |
+| **Code Metrics**    | Violations of code complexity metrics or size limitations                                                                | Checkstyle metrics<br/>Checkstyle sizes                                                               |                       |                 |
+| **Documentation**   | Code with missing or flawed documentation                                                                                | Checkstyle javadoc<br/>Checkstyle annotation<br/>PMD Documentation                                    |                       |                 |
+| **Naming & Format** | Rules that ensure the readability of the source code (name conventions, imports, indentation, annotations, white spaces) | Checkstyle imports<br/>Checkstyle indentation<br/>Checkstyle naming<br/>Checkstyle whitespace         |                       |                 |
+| **Miscellaneous**   | Uncategorized rules                                                                                                      | Checkstyle miscellaneous                                                                              |                       | GCC Misc        |
 
 Other languages use tool-specific categories:
 - **JavaScript, TypeScript, C++, R**: Use `Lint` category only
