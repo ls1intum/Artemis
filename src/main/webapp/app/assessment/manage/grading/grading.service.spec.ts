@@ -455,7 +455,7 @@ describe('GradingService', () => {
             expect(service.getNumericValueForGradeName(undefined)).toBeUndefined();
         });
 
-        it('should return undefined and capture exception for non-numeric grade name', () => {
+        it('should return undefined for non-numeric grade name', () => {
             expect(service.getNumericValueForGradeName('Pass')).toBeUndefined();
         });
     });

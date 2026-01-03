@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
-describe('GradingSystemInfoModalComponent', () => {
+describe('GradingInfoModalComponent', () => {
     setupTestBed({ zoneless: true });
     let component: GradingInfoModalComponent;
     let fixture: ComponentFixture<GradingInfoModalComponent>;

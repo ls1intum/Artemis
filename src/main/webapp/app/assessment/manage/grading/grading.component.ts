@@ -312,22 +312,23 @@ export class GradingComponent implements OnInit {
         } else {
             this.handleDeleteObservable(this.gradingService.deleteGradingScaleForCourse(this.courseId!));
         }
-        this.gradingScale = new GradingScale();
-        this.gradingScale.course = this.course;
     }
 
     handleDeleteObservable(deleteObservable: Observable<HttpResponse<void>>) {
-        deleteObservable
-            .pipe(
-                catchError(() => of(new HttpResponse<void>({ status: 400 }))),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe(() => {
+        deleteObservable.subscribe({
+            next: () => {
+                // Reset state only on successful delete
                 this.existingGradingScale = false;
+                this.gradingScale = new GradingScale();
+                this.gradingScale.course = this.course;
                 this.dialogErrorSource.next('');
-            });
+                this.isLoading = false;
+            },
+            error: () => {
+                // Keep current state unchanged on error so UI remains consistent with server
+                this.isLoading = false;
+            },
+        });
     }
 
     // =========================================================================
@@ -630,10 +631,15 @@ export class GradingComponent implements OnInit {
         }
 
         // Interval mode: handle sticky grade step
+        // If no grade steps exist, create initial step and sticky step, then return
         if (this.gradingScale?.gradeSteps?.length === 0) {
             this.createGradeStepBasic();
+            // Create the sticky grade step as well
+            this.createGradeStepBasic();
+            return;
         }
 
+        // Pop the existing sticky grade step, add new step, then re-append sticky step
         const stickyGradeStep = this.gradingScale.gradeSteps.pop()!;
         this.createGradeStepBasic();
         this.gradingScale.gradeSteps.push(stickyGradeStep);

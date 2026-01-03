@@ -211,6 +211,10 @@ export class GradingPresentationsComponent {
 
         // Defer emission to the next task to avoid NG0103 errors
         // (expression changed after it was checked) when called during change detection.
+        // Cancel any previously scheduled timeout to avoid duplicate emissions and race conditions.
+        if (this.pendingEmitTimeout) {
+            clearTimeout(this.pendingEmitTimeout);
+        }
         // Store the timeout ID so it can be cancelled if the component is destroyed.
         this.pendingEmitTimeout = setTimeout(() => this.emitConfigChange());
     }

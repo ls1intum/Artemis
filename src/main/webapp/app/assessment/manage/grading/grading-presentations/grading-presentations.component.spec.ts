@@ -8,7 +8,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 
-describe('GradingSystemPresentationsComponent', () => {
+describe('GradingPresentationsComponent', () => {
     setupTestBed({ zoneless: true });
     let component: GradingPresentationsComponent;
     let fixture: ComponentFixture<GradingPresentationsComponent>;
