@@ -89,15 +89,7 @@ describe('ModelingExercise Management Component', () => {
     });
 
     it('should delete exercise', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                    headers,
-                }),
-            ),
-        );
+        jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         comp.course = course;
         comp.ngOnInit();

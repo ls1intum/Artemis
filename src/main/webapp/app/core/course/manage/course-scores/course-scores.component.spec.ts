@@ -28,7 +28,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -57,7 +57,7 @@ describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseManagementService: CourseManagementService;
-    let gradingSystemService: GradingSystemService;
+    let gradingService: GradingService;
     let plagiarismCasesService: PlagiarismCasesService;
     let profileService: ProfileService;
 
@@ -237,7 +237,7 @@ describe('CourseScoresComponent', () => {
 
     const setupMocks = () => {
         jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
+        jest.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
         fixture.detectChanges();
     };
@@ -283,7 +283,7 @@ describe('CourseScoresComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 MockProvider(ParticipantScoresService),
-                MockProvider(GradingSystemService, {
+                MockProvider(GradingService, {
                     findGradingScaleForCourse: () => {
                         return of(
                             new HttpResponse({
@@ -304,7 +304,7 @@ describe('CourseScoresComponent', () => {
                 fixture = TestBed.createComponent(CourseScoresComponent);
                 component = fixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
-                gradingSystemService = TestBed.inject(GradingSystemService);
+                gradingService = TestBed.inject(GradingService);
                 plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
                 jest.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
                 profileService = fixture.debugElement.injector.get(ProfileService);
@@ -388,10 +388,10 @@ describe('CourseScoresComponent', () => {
 
     it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
         jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
-        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
+        jest.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
+        jest.spyOn(gradingService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
         const matchingGradeStep = gradingScale.gradeSteps[0];
-        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
+        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(
             of(
                 new HttpResponse<PlagiarismCaseDTO[]>({
@@ -500,9 +500,9 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should set grading scale properties correctly', () => {
-        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep]);
-        jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
-        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
+        jest.spyOn(gradingService, 'sortGradeSteps').mockReturnValue([gradeStep]);
+        jest.spyOn(gradingService, 'maxGrade').mockReturnValue('A');
+        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
         component.setUpGradingScale(gradingScale);
         component.calculateGradingScaleInformation();

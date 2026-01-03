@@ -152,7 +152,7 @@ describe('Lecture', () => {
                         );
                     },
                     delete: () => {
-                        return of(new HttpResponse({ status: 200 }));
+                        return of(new HttpResponse<void>({ status: 200 }));
                     },
                 }),
                 MockProvider(IrisSettingsService),
