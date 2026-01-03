@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * @param exerciseTitle   the exercise title
  * @param exerciseType    the exercise type (e.g., TEXT, MODELING, PROGRAMMING)
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record RatingListItemDTO(Long id, Integer rating, AssessmentType assessmentType, String assessorLogin, String assessorName, Long resultId, Long submissionId,
         Long participationId, Long exerciseId, String exerciseTitle, ExerciseType exerciseType) {
 
