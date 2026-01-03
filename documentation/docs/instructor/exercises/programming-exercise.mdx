@@ -754,7 +754,8 @@ On exercise import, configurations are copied from the imported exercise.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the build plan script.</p>
+  <p>Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the task/script that executes the tools in the build plan.</p>
+  <p><strong>Special case:</strong> PMD and PMD CPD share a common plugin. To disable one or the other, instructors must delete the execution of the specific tool from the build plan.</p>
 </Callout>
 
 ### Adapt Interactive Problem Statement
