@@ -876,6 +876,14 @@ Issues are grouped into categories. The following table shows the category mappi
 | **Naming & Format** | Rules that ensure the readability of the source code (name conventions, imports, indentation, annotations, white spaces) | Checkstyle imports<br/>Checkstyle indentation<br/>Checkstyle naming<br/>Checkstyle whitespace         |                       |                 |
 | **Miscellaneous**   | Uncategorized rules                                                                                                      | Checkstyle miscellaneous                                                                              |                       | GCC Misc        |
 
+<Callout variant={CalloutVariant.info}>
+  <p>For Swift, only the category <strong>Code Style</strong> can contain code quality issues currently. All other categories displayed on the grading page are dummies.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  <p>The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the rules. For details on the default configuration and active rules, see the <a href="#static-code-analysis-default-configuration">Static Code Analysis Default Configuration</a> section below.</p>
+</Callout>
+
 Other languages use categories defined by their static code analysis tool:
 
 - **JavaScript, TypeScript, C++, R**: Only use the `Lint` category
@@ -989,6 +997,161 @@ After verifying the exercise configuration, the **Feedback Analysis** feature he
     style={{border: 0}}>
     Video tutorial for feedback analysis on TUM-Live.
 </iframe>
+
+## Static Code Analysis Default Configuration
+
+The following sections list the rules that are active for the default static code analysis configuration.
+
+### Java
+
+#### Spotbugs
+
+All tool categories and their rules are active by default except for the `NOISE` and `EXPERIMENTAL` category. Refer to the [Spotbugs documentation](https://spotbugs.readthedocs.io/) for a description of all rules.
+
+#### Checkstyle
+
+This table contains all rules that are activated by default when creating a new programming exercise. You can suppress a complete category by changing its visibility in the grading settings. For a more fine-granular configuration, you can add or remove rules by editing the `checkstyle-configuration.xml` file. For a description of the rules refer to the [Checkstyle documentation](https://checkstyle.sourceforge.io/).
+
+| Category (Tool/Artemis)                                                                         | Rule                         | Properties                                                |
+|-------------------------------------------------------------------------------------------------|------------------------------|-----------------------------------------------------------|
+| **[Coding](https://checkstyle.org/checks/coding/index.html) / Code Style**                      | EmptyStatement               |                                                           |
+|                                                                                                 | EqualsHashCode               |                                                           |
+|                                                                                                 | HiddenField                  | ignoreConstructorParameter="true"                         |
+|                                                                                                 |                              | ignoreSetter="true"                                       |
+|                                                                                                 |                              | setterCanReturnItsClass="true"                            |
+|                                                                                                 | IllegalInstantiation         |                                                           |
+|                                                                                                 | InnerAssignment              |                                                           |
+|                                                                                                 | MagicNumber                  |                                                           |
+|                                                                                                 | MissingSwitchDefault         |                                                           |
+|                                                                                                 | MultipleVariableDeclarations |                                                           |
+|                                                                                                 | SimplifyBooleanExpression    |                                                           |
+|                                                                                                 | SimplifyBooleanReturn        |                                                           |
+| **[Class Design](https://checkstyle.org/checks/design/index.html) / Design**                    | FinalClass                   |                                                           |
+|                                                                                                 | HideUtilityClassConstructor  |                                                           |
+|                                                                                                 | InterfaceIsType              |                                                           |
+|                                                                                                 | VisibilityModifier           |                                                           |
+| **[Block Checks](https://checkstyle.org/checks/blocks/index.html) / Code Style**                | AvoidNestedBlocks            |                                                           |
+|                                                                                                 | EmptyBlock                   |                                                           |
+|                                                                                                 | NeedBraces                   |                                                           |
+| **[Modifiers](https://checkstyle.org/checks/modifier/index.html) / Code Style**                 | ModifierOrder                |                                                           |
+|                                                                                                 | RedundantModifier            |                                                           |
+| **[Size Violations](https://checkstyle.org/checks/sizes/index.html) / Code Metrics**            | MethodLength                 |                                                           |
+|                                                                                                 | ParameterNumber              |                                                           |
+|                                                                                                 | FileLength                   |                                                           |
+|                                                                                                 | LineLength                   | max="120"                                                 |
+| **[Imports](https://checkstyle.org/checks/imports/index.html) / Naming & Formatting**           | IllegalImport                |                                                           |
+|                                                                                                 | RedundantImport              |                                                           |
+|                                                                                                 | UnusedImports                | processJavadoc="false"                                    |
+| **[Naming Conventions](https://checkstyle.org/checks/naming/index.html) / Naming & Formatting** | ConstantName                 |                                                           |
+|                                                                                                 | LocalFinalVariableName       |                                                           |
+|                                                                                                 | LocalVariableName            |                                                           |
+|                                                                                                 | MemberName                   |                                                           |
+|                                                                                                 | MethodName                   |                                                           |
+|                                                                                                 | ParameterName                |                                                           |
+|                                                                                                 | TypeName                     |                                                           |
+| **[Whitespace](https://checkstyle.org/checks/whitespace/index.html) / Naming & Formatting**     | EmptyForIteratorPad          |                                                           |
+|                                                                                                 | GenericWhitespace            |                                                           |
+|                                                                                                 | MethodParamPad               |                                                           |
+|                                                                                                 | NoWhitespaceAfter            |                                                           |
+|                                                                                                 | NoWhitespaceBefore           |                                                           |
+|                                                                                                 | OperatorWrap                 |                                                           |
+|                                                                                                 | ParenPad                     |                                                           |
+|                                                                                                 | TypecastParenPad             |                                                           |
+|                                                                                                 | WhitespaceAfter              |                                                           |
+|                                                                                                 | WhitespaceAround             |                                                           |
+| **[Javadoc Comments](https://checkstyle.org/checks/javadoc/index.html) / Documentation**        | InvalidJavadocPosition       |                                                           |
+|                                                                                                 | JavadocMethod                |                                                           |
+|                                                                                                 | JavadocType                  |                                                           |
+|                                                                                                 | JavadocStyle                 |                                                           |
+|                                                                                                 | MissingJavadocMethod         | allowMissingPropertyJavadoc="true"                        |
+|                                                                                                 |                              | allowedAnnotations="Override,Test"                        |
+|                                                                                                 |                              | tokens="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF" |
+| **[Miscellaneous](https://checkstyle.org/checks/misc/index.html) / Miscellaneous**              | ArrayTypeStyle               |                                                           |
+|                                                                                                 | UpperEll                     |                                                           |
+|                                                                                                 | NewlineAtEndOfFile           |                                                           |
+|                                                                                                 | Translation                  |                                                           |
+
+#### PMD
+
+For a description of the rules refer to the [PMD documentation](https://pmd.github.io/).
+
+| Category (Tool/Artemis)              | Rule                                          |
+|--------------------------------------|-----------------------------------------------|
+| **Best Practices / Bad Practice**    | AvoidUsingHardCodedIP                         |
+|                                      | CheckResultSet                                |
+|                                      | UnusedFormalParameter                         |
+|                                      | UnusedLocalVariable                           |
+|                                      | UnusedPrivateField                            |
+|                                      | UnusedPrivateMethod                           |
+|                                      | PrimitiveWrapperInstantiation                 |
+| **Code Style / Code Style**          | UnnecessaryImport                             |
+|                                      | ExtendsObject                                 |
+|                                      | ForLoopShouldBeWhileLoop                      |
+|                                      | TooManyStaticImports                          |
+|                                      | UnnecessaryFullyQualifiedName                 |
+|                                      | UnnecessaryModifier                           |
+|                                      | UnnecessaryReturn                             |
+|                                      | UselessParentheses                            |
+|                                      | UselessQualifiedThis                          |
+|                                      | EmptyControlStatement                         |
+| **Design / Design**                  | CollapsibleIfStatements                       |
+|                                      | SimplifiedTernary                             |
+|                                      | UselessOverridingMethod                       |
+| **Error Prone / Potential Bugs**     | AvoidBranchingStatementAsLastInLoop           |
+|                                      | AvoidDecimalLiteralsInBigDecimalConstructor   |
+|                                      | AvoidMultipleUnaryOperators                   |
+|                                      | AvoidUsingOctalValues                         |
+|                                      | BrokenNullCheck                               |
+|                                      | CheckSkipResult                               |
+|                                      | ClassCastExceptionWithToArray                 |
+|                                      | DontUseFloatTypeForLoopIndices                |
+|                                      | ImportFromSamePackage                         |
+|                                      | JumbledIncrementer                            |
+|                                      | MisplacedNullCheck                            |
+|                                      | OverrideBothEqualsAndHashcode                 |
+|                                      | ReturnFromFinallyBlock                        |
+|                                      | UnconditionalIfStatement                      |
+|                                      | UnnecessaryConversionTemporary                |
+|                                      | UnusedNullCheckInEquals                       |
+|                                      | UselessOperationOnImmutable                   |
+| **Multithreading / Potential Bugs**  | AvoidThreadGroup                              |
+|                                      | DontCallThreadRun                             |
+|                                      | DoubleCheckedLocking                          |
+| **Performance / Performance**        | BigIntegerInstantiation                       |
+| **Security / Security**              | All rules                                     |
+
+#### PMD CPD
+
+Artemis uses the following default configuration to detect code duplications for the category Copy/Paste Detection. For a description of the various PMD CPD configuration parameters refer to the [PMD CPD documentation](https://pmd.github.io/pmd/pmd_userdocs_cpd.html).
+
+```xml
+<!-- Minimum amount of duplicated tokens triggering the copy-paste detection -->
+<minimumTokens>60</minimumTokens>
+<!-- Ignore literal value differences when evaluating a duplicate block.
+If true, foo=42; and foo=43; will be seen as equivalent -->
+<ignoreLiterals>true</ignoreLiterals>
+<!-- Similar to ignoreLiterals but for identifiers, i.e. variable names, methods names.
+If activated, most tokens will be ignored, so minimumTokens must be lowered significantly -->
+<ignoreIdentifiers>false</ignoreIdentifiers>
+```
+
+### C
+
+#### GCC
+
+For a description of the rules/warnings refer to the [GCC Documentation](https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html). For readability reasons the rule/warning prefix `-Wanalyzer-` is omitted.
+
+| Category (Tool/Artemis)                 | Rule                                                                                                                                                                                    |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Memory Management / Potential Bugs**  | free-of-non-heap<br/>malloc-leak<br/>file-leak<br/>mismatching-deallocation                                                                                                             |
+| **Undefined Behavior / Potential Bugs** | double-free<br/>null-argument<br/>use-after-free<br/>use-of-uninitialized-value<br/>write-to-const<br/>write-to-string-literal<br/>possible-null-argument<br/>possible-null-dereference |
+| **Bad Practice / Bad Practice**         | double-fclose<br/>too-complex<br/>stale-setjmp-buffer                                                                                                                                   |
+| **Security / Security**                 | exposure-through-output-file<br/>unsafe-call-within-signal-handler<br/>use-of-pointer-in-stale-stack-frame<br/>tainted-array-index                                                      |
+| **Miscellaneous / Miscellaneous**       | Rules not matching to above categories                                                                                                                                                  |
+
+<Callout variant={CalloutVariant.info}>
+  <p>GCC output can still contain normal warnings and compilation errors. These will also be added to the Miscellaneous category. Usually it's best to disable this category, as it contains errors not related to the SCA. Therefore, if the warning/error does not belong to the first four categories above, it is not an SCA issue as of GCC 11.1.0.</p>
+</Callout>
 
 ## Exercise Import
 
