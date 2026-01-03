@@ -103,6 +103,9 @@ export class TextAssessmentAreaComponent {
     removeTextBlockRef(ref: TextBlockRef): void {
         const currentRefs = this.textBlockRefs();
         const index = currentRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
+        if (index === -1) {
+            return;
+        }
         const newRefs = [...currentRefs];
         newRefs.splice(index, 1);
         this.textBlockRefs.set(newRefs);

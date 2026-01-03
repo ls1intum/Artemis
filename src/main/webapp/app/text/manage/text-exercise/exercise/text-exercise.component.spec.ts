@@ -59,7 +59,7 @@ describe('TextExercise Management Component', () => {
         modalService = TestBed.inject(NgbModal);
 
         // Set exercises via internal property since textExercises is a signal input
-        comp['internalTextExercises'] = [textExercise];
+        comp.internalTextExercises.set([textExercise]);
         // Initialize filter which is normally done in ngOnInit
         comp['filter'] = new ExerciseFilter();
     });
@@ -114,7 +114,7 @@ describe('TextExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('EXT', '', 'text');
 
             // THEN
-            expect(comp['internalTextExercises']).toHaveLength(1);
+            expect(comp.internalTextExercises()).toHaveLength(1);
             expect(comp.filteredTextExercises).toHaveLength(1);
         });
 
@@ -123,7 +123,7 @@ describe('TextExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp['internalTextExercises']).toHaveLength(1);
+            expect(comp.internalTextExercises()).toHaveLength(1);
             expect(comp.filteredTextExercises).toHaveLength(0);
         });
     });
@@ -134,6 +134,6 @@ describe('TextExercise Management Component', () => {
 
         // THEN
         expect(comp.selectedExercises[0]).toMatchObject({ id: textExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp['internalTextExercises'].length);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.internalTextExercises().length);
     });
 });

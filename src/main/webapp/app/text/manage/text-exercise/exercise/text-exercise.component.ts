@@ -1,4 +1,4 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -51,7 +51,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     private accountService = inject(AccountService);
 
     textExercises = input<TextExercise[]>([]);
-    internalTextExercises: TextExercise[] = [];
+    internalTextExercises = signal<TextExercise[]>([]);
     filteredTextExercises: TextExercise[] = [];
 
     // Icons
@@ -64,34 +64,35 @@ export class TextExerciseComponent extends ExerciseComponent {
         // Sync input to internal state
         effect(() => {
             const inputValue = this.textExercises();
-            this.internalTextExercises = inputValue ?? [];
+            this.internalTextExercises.set(inputValue ?? []);
         });
     }
 
     protected get exercises() {
-        return this.internalTextExercises;
+        return this.internalTextExercises();
     }
 
     protected loadExercises(): void {
         this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe({
             next: (res: HttpResponse<TextExercise[]>) => {
-                this.internalTextExercises = res.body!;
+                const exercises = res.body ?? [];
 
                 // reconnect exercise with course
-                this.internalTextExercises.forEach((exercise) => {
+                exercises.forEach((exercise) => {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.selectedExercises = [];
                 });
+                this.internalTextExercises.set(exercises);
                 this.applyFilter();
-                this.emitExerciseCount(this.internalTextExercises.length);
+                this.emitExerciseCount(this.internalTextExercises().length);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     protected applyFilter(): void {
-        this.filteredTextExercises = this.internalTextExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        this.filteredTextExercises = this.internalTextExercises().filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredTextExercises.length);
     }
 
@@ -109,7 +110,9 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.internalTextExercises, this.predicate, this.reverse);
+        const exercises = [...this.internalTextExercises()];
+        this.sortService.sortByProperty(exercises, this.predicate, this.reverse);
+        this.internalTextExercises.set(exercises);
         this.applyFilter();
     }
 

@@ -506,6 +506,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
+                this.isLoading.set(false);
                 this.handleError(err.error);
             },
         });
