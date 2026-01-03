@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BuildAgentSummaryComponent } from 'app/buildagent/build-agent-summary/build-agent-summary.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -20,18 +22,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildAgentSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: BuildAgentSummaryComponent;
     let fixture: ComponentFixture<BuildAgentSummaryComponent>;
 
     const mockWebsocketService = {
-        subscribe: jest.fn(),
+        subscribe: vi.fn(),
     };
 
     const mockBuildAgentsService = {
-        getBuildAgentSummary: jest.fn().mockReturnValue(of([])),
-        pauseAllBuildAgents: jest.fn().mockReturnValue(of({})),
-        resumeAllBuildAgents: jest.fn().mockReturnValue(of({})),
-        clearDistributedData: jest.fn().mockReturnValue(of({})),
+        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
+        pauseAllBuildAgents: vi.fn().mockReturnValue(of({})),
+        resumeAllBuildAgents: vi.fn().mockReturnValue(of({})),
+        clearDistributedData: vi.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -110,7 +114,7 @@ describe('BuildAgentSummaryComponent', () => {
     ];
     let websocketSubject: Subject<BuildAgentInformation[]>;
     let alertService: AlertService;
-    let alertServiceAddAlertStub: jest.SpyInstance;
+    let alertServiceAddAlertStub: ReturnType<typeof vi.spyOn>;
     let modalService: NgbModal;
 
     beforeEach(async () => {
@@ -134,11 +138,11 @@ describe('BuildAgentSummaryComponent', () => {
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         modalService = TestBed.inject(NgbModal);
-        alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
+        alertServiceAddAlertStub = vi.spyOn(alertService, 'addAlert');
 
         websocketSubject = new Subject<BuildAgentInformation[]>();
         mockWebsocketService.subscribe.mockReturnValue(websocketSubject.asObservable());
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should load build agents on initialization', () => {
@@ -147,13 +151,13 @@ describe('BuildAgentSummaryComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildAgentsService.getBuildAgentSummary).toHaveBeenCalled();
-        expect(component.buildAgents).toEqual(mockBuildAgents);
+        expect(component.buildAgents()).toEqual(mockBuildAgents);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {
         component.ngOnInit();
-        const unsubscribeSpy = jest.spyOn(component.websocketSubscription!, 'unsubscribe');
+        const unsubscribeSpy = vi.spyOn(component.buildAgentsWebsocketSubscription!, 'unsubscribe');
 
         component.ngOnDestroy();
 
@@ -162,38 +166,40 @@ describe('BuildAgentSummaryComponent', () => {
 
     it('should cancel a build job', () => {
         const buildJob = mockRunningJobs1[0];
-        const spy = jest.spyOn(component, 'cancelBuildJob');
+        const spy = vi.spyOn(component, 'cancelBuildJob');
 
         component.ngOnInit();
         component.cancelBuildJob(buildJob.id!);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildJob.id!);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(buildJob.id!);
     });
 
     it('should cancel all build jobs of a build agent', () => {
         const buildAgent = mockBuildAgents[0];
-        const spy = jest.spyOn(component, 'cancelAllBuildJobs');
+        const spy = vi.spyOn(component, 'cancelAllBuildJobs');
 
         component.ngOnInit();
         component.cancelAllBuildJobs(buildAgent.buildAgent);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.buildAgent);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(buildAgent.buildAgent);
     });
 
     it('should calculate the build capacity and current builds', () => {
         component.ngOnInit();
         websocketSubject.next(mockBuildAgents);
 
-        expect(component.buildCapacity).toBe(4);
-        expect(component.currentBuilds).toBe(4);
+        expect(component.buildCapacity()).toBe(4);
+        expect(component.currentBuilds()).toBe(4);
     });
 
     it('should calculate the build capacity and current builds when there are no build agents', () => {
         component.ngOnInit();
         websocketSubject.next([]);
 
-        expect(component.buildCapacity).toBe(0);
-        expect(component.currentBuilds).toBe(0);
+        expect(component.buildCapacity()).toBe(0);
+        expect(component.currentBuilds()).toBe(0);
     });
 
     it('should call correct service method when pausing and resuming build agents', () => {
@@ -250,7 +256,7 @@ describe('BuildAgentSummaryComponent', () => {
         const modalRef = {
             result: Promise.resolve('close'),
         } as NgbModalRef;
-        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
 
         component.displayPauseBuildAgentModal();
         expect(openSpy).toHaveBeenCalledOnce();

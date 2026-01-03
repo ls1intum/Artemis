@@ -6,8 +6,13 @@
     display: grid;
     grid-template-rows: min-content auto auto;
     row-gap: 10px;
-    max-height: 100vh;
-    overflow: hidden;
+
+    // In assessment context, the wrapper is inside assessment-layout which handles scrolling
+    // In non-assessment context (e.g., student code editor), constrain to viewport
+    &:not(.assessment-wrapper) {
+        max-height: 100vh;
+        overflow: hidden;
+    }
 
     .collapsed--horizontal {
         width: 50px !important;
@@ -78,7 +83,6 @@
         display: flex;
         flex-flow: column nowrap;
         height: 200px;
-        max-height: calc(100vh - 550px);
         overflow: auto;
 
         /* Hide grip when bottom area is empty */
@@ -93,6 +97,11 @@
         > * {
             height: inherit;
         }
+    }
+
+    // In non-assessment mode, constrain the bottom section to fit in the viewport
+    &:not(.assessment-wrapper) .editor-bottom {
+        max-height: calc(100vh - 550px);
     }
 }
 

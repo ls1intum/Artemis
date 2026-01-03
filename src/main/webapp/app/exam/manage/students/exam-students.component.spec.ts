@@ -1,4 +1,5 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +17,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
@@ -24,6 +24,14 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+// Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
+@Component({
+    selector: 'jhi-user-import-button',
+    template: '',
+    standalone: true,
+})
+class UsersImportButtonStubComponent {}
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -63,10 +71,9 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, FaIconComponent],
+            imports: [NgxDatatableModule, FaIconComponent, UsersImportButtonStubComponent],
             declarations: [
                 ExamStudentsComponent,
-                MockComponent(UsersImportButtonComponent),
                 MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),
                 MockDirective(TranslateDirective),

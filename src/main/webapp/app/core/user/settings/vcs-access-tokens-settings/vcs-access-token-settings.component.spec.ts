@@ -12,6 +12,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/core/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
@@ -37,6 +39,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
             ],
         }).compileComponents();

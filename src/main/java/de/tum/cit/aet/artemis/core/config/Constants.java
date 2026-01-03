@@ -181,6 +181,8 @@ public final class Constants {
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
+    public static final String RESET_COURSE = "RESET_COURSE";
+
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
@@ -277,6 +279,8 @@ public final class Constants {
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    public static final String COURSE_OPERATION_PROGRESS_STATUS = "course-operation-progress-status";
 
     public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
@@ -403,7 +407,7 @@ public final class Constants {
     /**
      * The name of the module feature indicating passkey is required for administrator features.
      */
-    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkeyRequiredForAdministratorFeatures";
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkey-admin";
 
     /**
      * The name of the module feature used for Atlas functionality.
@@ -439,6 +443,11 @@ public final class Constants {
      * The name of the module feature used for nebula functionality.
      */
     public static final String MODULE_FEATURE_NEBULA = "nebula";
+
+    /**
+     * The name of the module feature used for Sharing functionality.
+     */
+    public static final String MODULE_FEATURE_SHARING = "sharing";
 
     /**
      * The name of the property used to enable or disable Atlas functionality.

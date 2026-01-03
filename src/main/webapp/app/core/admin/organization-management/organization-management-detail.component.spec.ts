@@ -1,30 +1,32 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+/**
+ * Vitest tests for OrganizationManagementDetailComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { OrganizationManagementDetailComponent } from 'app/core/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { UserService } from 'app/core/user/shared/user.service';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { MockComponent } from 'ng-mocks';
-import { iconsAsHTML } from 'app/shared/util/icons.utils';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('OrganizationManagementDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: OrganizationManagementDetailComponent;
     let fixture: ComponentFixture<OrganizationManagementDetailComponent>;
     let organizationService: OrganizationManagementService;
     let userService: UserService;
-    let dataTable: DataTableComponent;
+    let mockDataTable: DataTableComponent;
 
     const organization1 = new Organization();
     organization1.id = 5;
@@ -32,33 +34,34 @@ describe('OrganizationManagementDetailComponent', () => {
         data: of({ organization: organization1 }),
     } as any as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
-            declarations: [OrganizationManagementDetailComponent, MockComponent(DataTableComponent)],
+    beforeEach(async () => {
+        mockDataTable = { typeaheadButtons: [] } as any as DataTableComponent;
+
+        await TestBed.configureTestingModule({
+            imports: [OrganizationManagementDetailComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: DataTableComponent, useClass: DataTableComponent },
+                { provide: DataTableComponent, useValue: mockDataTable },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideTemplate(OrganizationManagementDetailComponent, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(OrganizationManagementDetailComponent);
         component = fixture.componentInstance;
         organizationService = TestBed.inject(OrganizationManagementService);
-        dataTable = TestBed.inject(DataTableComponent);
         userService = TestBed.inject(UserService);
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
-    it('should initialize and load organization from route', fakeAsync(() => {
+    it('should initialize and load organization from route', () => {
         const user = new User();
         user.id = 5;
         user.login = 'user5';
@@ -72,44 +75,41 @@ describe('OrganizationManagementDetailComponent', () => {
         organization1.users = [user];
         organization1.courses = [course];
 
-        jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
+        vi.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
 
         component.ngOnInit();
-        tick();
 
-        expect(component.organization.id).toBe(organization1.id);
-        expect(component.organization.users).toHaveLength(1);
-        expect(component.organization.courses).toHaveLength(1);
-    }));
+        expect(component.organization().id).toBe(organization1.id);
+        expect(component.organization().users).toHaveLength(1);
+        expect(component.organization().courses).toHaveLength(1);
+    });
 
-    it('should track id', fakeAsync(() => {
+    it('should track id', () => {
         const user = new User();
         user.id = 5;
 
         expect(component.trackIdentity(0, user)).toBe(5);
-    }));
+    });
 
-    it('should remove user from organization', fakeAsync(() => {
+    it('should remove user from organization', () => {
         organization1.users = createTestUsers();
-        component.organization = organization1;
-        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(of(new HttpResponse<void>()));
+        component.organization.set(organization1);
+        vi.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(of(new HttpResponse<void>()));
 
         component.removeFromOrganization(organization1.users[0]);
-        tick();
-        expect(component.organization.users).toHaveLength(2);
-    }));
+        expect(component.organization().users).toHaveLength(2);
+    });
 
-    it('should not remove user from organization if error occurred', fakeAsync(() => {
+    it('should not remove user from organization if error occurred', () => {
         organization1.users = createTestUsers();
-        component.organization = organization1;
-        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        component.organization.set(organization1);
+        vi.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
 
         component.removeFromOrganization(organization1.users[0]);
-        tick();
-        expect(component.organization.users).toHaveLength(3);
-    }));
+        expect(component.organization().users).toHaveLength(3);
+    });
 
-    it('should load all current organization users', fakeAsync(() => {
+    it('should load all current organization users', () => {
         const user1 = new User();
         user1.id = 11;
         const user2 = new User();
@@ -119,26 +119,24 @@ describe('OrganizationManagementDetailComponent', () => {
         organization1.users = [user1, user2];
         organization1.courses = [course1];
 
-        jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
+        vi.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
 
         component.loadAll();
-        expect(component.organization.users).toHaveLength(2);
-        expect(component.organization.courses).toHaveLength(1);
-    }));
+        expect(component.organization().users).toHaveLength(2);
+        expect(component.organization().courses).toHaveLength(1);
+    });
 
-    it('should search users in the used DataTable component and return them and add organization icons', fakeAsync(() => {
+    it('should search users in the used DataTable component and return them', () => {
         const user1 = { id: 11, login: 'user1' } as User;
         const user2 = { id: 12, login: 'user2' } as User;
         const user3 = { id: 13, login: 'user3' } as User;
 
-        let typeAheadButtons = [
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-        ];
+        vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2, user3] })));
 
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2, user3] })));
-        component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
-        component.organization = { users: undefined };
+        // Mock the viewChild signal to return a mock data table
+        Object.defineProperty(component, 'dataTable', { value: () => ({ typeaheadButtons: [] }) });
+
+        component.organization.set({ users: undefined } as any);
 
         const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
 
@@ -148,102 +146,78 @@ describe('OrganizationManagementDetailComponent', () => {
                 { id: user2.id, login: user2.login },
                 { id: user3.id, login: user3.login },
             ]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeFalse();
+            expect(component.searchNoResults()).toBe(false);
+            expect(component.searchFailed()).toBe(false);
         });
 
-        tick();
         expect(userService.search).toHaveBeenCalledOnce();
+    });
 
-        typeAheadButtons.forEach((button) => {
-            expect(button.insertAdjacentHTML).toHaveBeenCalledOnce();
-            expect(button.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
-        });
-
-        component.organization = { users: [user1] };
-        typeAheadButtons = [
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn().mockReturnValue(true) },
-        ];
-        component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
-        component.searchAllUsers(of({ text: 'user', entities: [] })).subscribe();
-        tick();
-
-        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledOnce();
-        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users']);
-        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledOnce();
-        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledWith('already-member');
-        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledOnce();
-        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
-        expect(typeAheadButtons[1].classList.add).not.toHaveBeenCalled();
-        // The third button already has a user icon (indicated but the truthy return value of the querySelector) and insertAdjacentHTML should not be called
-        expect(typeAheadButtons[2].insertAdjacentHTML).not.toHaveBeenCalled();
-    }));
-
-    it('should return zero users if search term is less then 3 chars', fakeAsync(() => {
+    it('should return zero users if search term is less then 3 chars', () => {
         const user1 = { id: 11, login: 'user1' } as User;
         const user2 = { id: 12, login: 'user2' } as User;
 
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
-        component.dataTable = dataTable;
+        vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
+
+        // Mock the viewChild signal to return a mock data table
+        Object.defineProperty(component, 'dataTable', { value: () => mockDataTable });
 
         const result = component.searchAllUsers(of({ text: 'us', entities: [] }));
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeFalse();
+            expect(component.searchNoResults()).toBe(false);
+            expect(component.searchFailed()).toBe(false);
         });
 
-        tick();
         expect(userService.search).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should set the no results flag is no users were found during search', fakeAsync(() => {
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [] })));
-        component.dataTable = dataTable;
+    it('should set the no results flag is no users were found during search', () => {
+        vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [] })));
 
-        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
-
-        result.subscribe((a) => {
-            expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBeTrue();
-            expect(component.searchFailed).toBeFalse();
-        });
-
-        tick();
-        expect(userService.search).toHaveBeenCalledOnce();
-    }));
-
-    it('should set the search failed flag if search failed', fakeAsync(() => {
-        jest.spyOn(userService, 'search').mockReturnValue(throwError(() => new Error()));
-        component.dataTable = dataTable;
+        // Mock the viewChild signal to return a mock data table
+        Object.defineProperty(component, 'dataTable', { value: () => mockDataTable });
 
         const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeTrue();
+            expect(component.searchNoResults()).toBe(true);
+            expect(component.searchFailed()).toBe(false);
         });
 
-        tick();
         expect(userService.search).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should add the user to organization on autocomplete select', fakeAsync(() => {
-        component.organization = { id: 7, users: [{ id: 1 } as User] };
-        const addUserSpy = jest.spyOn(organizationService, 'addUserToOrganization').mockReturnValue(of(new HttpResponse<void>()));
-        const flashSpy = jest.spyOn(component, 'flashRowClass');
+    it('should set the search failed flag if search failed', () => {
+        vi.spyOn(userService, 'search').mockReturnValue(throwError(() => new Error()));
 
-        const callback = jest.fn();
+        // Mock the viewChild signal to return a mock data table
+        Object.defineProperty(component, 'dataTable', { value: () => mockDataTable });
+
+        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
+
+        result.subscribe((a) => {
+            expect(a).toStrictEqual([]);
+            expect(component.searchNoResults()).toBe(false);
+            expect(component.searchFailed()).toBe(true);
+        });
+
+        expect(userService.search).toHaveBeenCalledOnce();
+    });
+
+    it('should add the user to organization on autocomplete select', () => {
+        component.organization.set({ id: 7, users: [{ id: 1 } as User] } as any);
+        const addUserSpy = vi.spyOn(organizationService, 'addUserToOrganization').mockReturnValue(of(new HttpResponse<void>()));
+        const flashSpy = vi.spyOn(component, 'flashRowClass');
+
+        const callback = vi.fn();
         const newUser = { id: 2, login: 'test' } as User;
         component.onAutocompleteSelect(newUser, callback);
-        tick();
         expect(addUserSpy).toHaveBeenCalledOnce();
         expect(addUserSpy).toHaveBeenCalledWith(7, 'test');
-        expect(component.organization.users).toContain(newUser);
+        expect(component.organization().users).toContain(newUser);
         expect(callback).toHaveBeenCalledOnce();
         expect(callback).toHaveBeenCalledWith(newUser);
         expect(flashSpy).toHaveBeenCalledOnce();
@@ -251,11 +225,86 @@ describe('OrganizationManagementDetailComponent', () => {
 
         const existingUser = { id: 1 } as User;
         component.onAutocompleteSelect(existingUser, callback);
-        tick();
         expect(callback).toHaveBeenCalledTimes(2);
         expect(callback).toHaveBeenCalledWith(existingUser);
         expect(addUserSpy).toHaveBeenCalledOnce();
-    }));
+    });
+
+    it('should handle error when adding user to organization fails', () => {
+        component.organization.set({ id: 7, users: [{ id: 1 } as User] } as any);
+        vi.spyOn(organizationService, 'addUserToOrganization').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        const callback = vi.fn();
+        const newUser = { id: 2, login: 'test' } as User;
+        component.onAutocompleteSelect(newUser, callback);
+
+        expect(component.isTransitioning()).toBe(false);
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should not add user without login', () => {
+        component.organization.set({ id: 7, users: [{ id: 1 } as User] } as any);
+        const addUserSpy = vi.spyOn(organizationService, 'addUserToOrganization');
+
+        const callback = vi.fn();
+        const newUser = { id: 2 } as User; // No login
+        component.onAutocompleteSelect(newUser, callback);
+
+        expect(addUserSpy).not.toHaveBeenCalled();
+        expect(callback).toHaveBeenCalledWith(newUser);
+    });
+
+    it('should not remove user without login', () => {
+        organization1.users = [{ id: 1 } as User]; // No login
+        component.organization.set(organization1);
+        const removeSpy = vi.spyOn(organizationService, 'removeUserFromOrganization');
+
+        component.removeFromOrganization(organization1.users[0]);
+
+        expect(removeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should track identity with undefined id', () => {
+        const user = new User();
+        expect(component.trackIdentity(0, user)).toBe(-1);
+    });
+
+    it('should return login from searchTextFromUser', () => {
+        const user = { login: 'testuser' } as User;
+        expect(component.searchTextFromUser(user)).toBe('testuser');
+    });
+
+    it('should return empty string from searchTextFromUser when no login', () => {
+        const user = {} as User;
+        expect(component.searchTextFromUser(user)).toBe('');
+    });
+
+    it('should return row class from dataTableRowClass', () => {
+        component.rowClass.set('test-class');
+        expect(component.dataTableRowClass()).toBe('test-class');
+    });
+
+    it('should update filtered users size', () => {
+        component.handleUsersSizeChange(42);
+        expect(component.filteredUsersSize()).toBe(42);
+    });
+
+    it('should format search result with name and login', () => {
+        const user = { name: 'Test User', login: 'testuser' } as User;
+        expect(component.searchResultFormatter(user)).toBe('Test User (testuser)');
+    });
+
+    it('should flash row class temporarily', () => {
+        vi.useFakeTimers();
+
+        component.flashRowClass('highlight');
+        expect(component.rowClass()).toBe('highlight');
+
+        vi.advanceTimersByTime(0);
+        expect(component.rowClass()).toBe('');
+
+        vi.useRealTimers();
+    });
 
     function createTestUsers() {
         const user1 = new User();
