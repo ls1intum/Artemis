@@ -71,10 +71,10 @@
             }
         </td>
     }
-    @if (extraColumn) {
+    @if (extraColumn()) {
         <td>
             <div class="extra-buttons">
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }" />
+                <ng-template [ngTemplateOutlet]="extraColumn()" [ngTemplateOutletContext]="{ $implicit: session }" />
             </div>
         </td>
     }

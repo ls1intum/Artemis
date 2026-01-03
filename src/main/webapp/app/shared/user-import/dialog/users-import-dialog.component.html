@@ -1,17 +1,20 @@
-<form id="userImportDialogForm" name="importForm" role="form" novalidate>
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span [jhiTranslate]="'artemisApp.importUsers.dialogTitle'"> Import users into: </span>
-        </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
-    </div>
-    <div class="modal-body">
+<p-dialog
+    [header]="'artemisApp.importUsers.dialogTitle' | artemisTranslate"
+    [modal]="true"
+    [visible]="dialogVisible()"
+    [closable]="true"
+    (visibleChange)="dialogVisible.set($event)"
+    (onHide)="clear()"
+    [style]="{ width: '70rem' }"
+    appendTo="body"
+>
+    <form id="userImportDialogForm" name="importForm" role="form" novalidate>
         <div class="form-group">
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText"></p>
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.dialogText"></p>
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
         </div>
-        @if (!examUserMode) {
+        @if (!examUserMode()) {
             <div class="d-flex justify-content-center align-items-center">
                 <table class="table table-bordered w-auto">
                     <thead>
@@ -43,7 +46,7 @@
                 <span>user_1, user_2, user_3</span>
             </div>
         }
-        @if (examUserMode) {
+        @if (examUserMode()) {
             <div class="d-flex justify-content-center align-items-center">
                 <table class="table table-bordered w-auto">
                     <thead>
@@ -101,7 +104,7 @@
                 }
             </div>
         </div>
-        @if (usersToImport && usersToImport.length > 0 && !examUserMode) {
+        @if (usersToImport && usersToImport.length > 0 && !examUserMode()) {
             <div class="form-group mt-4">
                 <div>
                     <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
@@ -133,7 +136,7 @@
                 </table>
             </div>
         }
-        @if (examUsersToImport && examUsersToImport.length > 0 && examUserMode) {
+        @if (examUsersToImport && examUsersToImport.length > 0 && examUserMode()) {
             <div class="form-group mt-4 table-responsive">
                 <div>
                     <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
@@ -169,66 +172,68 @@
                 </table>
             </div>
         }
-    </div>
-    <div class="modal-footer justify-content-between">
-        @if (usersToImport && usersToImport.length > 0) {
-            <div class="flex-shrink-0 me-2 d-flex">
-                @if (!hasImported) {
-                    <div>
-                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
-                        <span>&nbsp;{{ usersToImport.length }}</span>
-                    </div>
-                } @else {
-                    <div>
-                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
-                        <span>{{ numberOfUsersImported }}</span>
-                    </div>
-                    <div class="ms-2">
-                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
-                        <span
-                            ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
-                        >
-                    </div>
-                }
-            </div>
-        }
-        @if (examUsersToImport && examUsersToImport.length > 0) {
-            <div class="flex-shrink-0 me-2 d-flex">
-                @if (!hasImported) {
-                    <div>
-                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
-                        <span>&nbsp;{{ examUsersToImport.length }}</span>
-                    </div>
-                } @else {
-                    <div>
-                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
-                        <span>{{ numberOfUsersImported }}</span>
-                    </div>
-                    <div class="ms-2">
-                        <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
-                        <span
-                            ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
-                        >
-                    </div>
-                }
-            </div>
-        }
-        <div class="flex-grow-1 d-flex justify-content-end">
-            @if (!hasImported) {
-                <button type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                </button>
-                <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
-                    <fa-icon [icon]="faUpload" class="me-2" />
-                    <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
-                </button>
-            } @else {
-                <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="faCheck" class="me-2" />
-                    <span jhiTranslate="entity.action.finish"></span>
-                </button>
+    </form>
+    <ng-template pTemplate="footer">
+        <div class="d-flex justify-content-between w-100">
+            @if (usersToImport && usersToImport.length > 0) {
+                <div class="flex-shrink-0 me-2 d-flex">
+                    @if (!hasImported) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
+                            <span>&nbsp;{{ usersToImport.length }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
+                            <span>{{ numberOfUsersImported }}</span>
+                        </div>
+                        <div class="ms-2">
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
+                            <span
+                                ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                            >
+                        </div>
+                    }
+                </div>
             }
+            @if (examUsersToImport && examUsersToImport.length > 0) {
+                <div class="flex-shrink-0 me-2 d-flex">
+                    @if (!hasImported) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
+                            <span>&nbsp;{{ examUsersToImport.length }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
+                            <span>{{ numberOfUsersImported }}</span>
+                        </div>
+                        <div class="ms-2">
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
+                            <span
+                                ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                            >
+                        </div>
+                    }
+                </div>
+            }
+            <div class="flex-grow-1 d-flex justify-content-end">
+                @if (!hasImported) {
+                    <button type="button" class="btn btn-secondary cancel me-2" (click)="clear()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                    <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
+                        <fa-icon [icon]="faUpload" class="me-2" />
+                        <span jhiTranslate="entity.action.to-import"></span>
+                        <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
+                    </button>
+                } @else {
+                    <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                        <fa-icon [icon]="faCheck" class="me-2" />
+                        <span jhiTranslate="entity.action.finish"></span>
+                    </button>
+                }
+            </div>
         </div>
-    </div>
-</form>
+    </ng-template>
+</p-dialog>
