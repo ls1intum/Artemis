@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -48,6 +49,7 @@ import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -79,6 +81,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
@@ -790,7 +795,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri());
-        Path remoteClonePath = Files.createTempDirectory("repositoryintegration-remote-clone");
+        Path remoteClonePath = tempFileUtilService.createTempDirectory("repositoryintegration-remote-clone");
         try (Repository remoteRepository = gitService.getOrCheckoutRepositoryWithLocalPath(repositoryUri, remoteClonePath, true, true);
                 Git remoteGit = Git.wrap(remoteRepository)) {
 
@@ -829,7 +834,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri());
-        Path remoteClonePath = Files.createTempDirectory("repositoryintegration-reset-remote");
+        Path remoteClonePath = tempFileUtilService.createTempDirectory("repositoryintegration-reset-remote");
         try (Repository remoteRepository = gitService.getOrCheckoutRepositoryWithLocalPath(repositoryUri, remoteClonePath, true, true);
                 Git remoteGit = Git.wrap(remoteRepository)) {
 

@@ -418,6 +418,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             log.warn("Could not retrieve commit hash for {} - the repository may not have any commits yet", repositoryLabel);
             return null;
         }
-        return commitHash.getName();
+        return commitHash;
     }
 }

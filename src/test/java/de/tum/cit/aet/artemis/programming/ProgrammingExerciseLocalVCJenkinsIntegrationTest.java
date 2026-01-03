@@ -37,9 +37,11 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -50,9 +52,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 // TODO: rewrite this test to use LocalVC
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "progexlocalvcjenkins";
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     @BeforeEach
     void setup() throws Exception {
@@ -459,7 +464,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testNotCreatedError() throws Exception {
-        var teamLocalPath = Files.createTempDirectory("teamLocalRepo");
+        var teamLocalPath = tempFileUtilService.createTempDirectory("teamLocalRepo");
         try {
             doReturn(teamLocalPath).when(gitServiceSpy).getDefaultLocalCheckOutPathOfRepo(any());
             doThrow(new IOException("Checkout got interrupted!")).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());

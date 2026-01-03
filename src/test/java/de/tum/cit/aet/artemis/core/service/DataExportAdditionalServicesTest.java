@@ -101,6 +101,9 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
 
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     private Path workingDirectory;
 
     private User testUser;
@@ -112,7 +115,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         testCourse = courseUtilService.createCourse();
-        workingDirectory = Files.createTempDirectory("data-export-test");
+        workingDirectory = tempFileUtilService.createTempDirectory("data-export-test");
     }
 
     @AfterEach
@@ -270,7 +273,55 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
                 });
                 assertThat(sessions).isNotEmpty();
                 assertThat(sessions.getFirst().messages()).isNotEmpty();
+                // Verify message content is properly exported (tests the back-reference fix)
+                var firstMessage = sessions.getFirst().messages().getFirst();
+                assertThat(firstMessage.content()).isNotNull();
+                assertThat(firstMessage.content()).isNotEmpty();
+                assertThat(firstMessage.sender()).isNotNull();
             }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportIrisChatSessionsWithMultipleMessages() throws IOException {
+            // Create Iris chat session if Iris is available
+            irisChatSessionUtilService.ifPresent(service -> service.createAndSaveCourseChatSessionForUser(testCourse, testUser));
+
+            // Run export
+            dataExportIrisService.createIrisExport(testUser.getId(), workingDirectory);
+
+            // Verify all messages are exported with content
+            Path irisFile = workingDirectory.resolve("iris_chat_sessions.json");
+            if (irisChatSessionUtilService.isPresent()) {
+                assertThat(irisFile).exists();
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.registerModule(new JavaTimeModule());
+                List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
+                });
+                assertThat(sessions).isNotEmpty();
+                // Find the session created in this test (the latest one)
+                var latestSession = sessions.getLast();
+                // The factory creates 2 messages (LLM and USER)
+                assertThat(latestSession.messages()).hasSize(2);
+                // Verify all messages have content
+                for (var message : latestSession.messages()) {
+                    assertThat(message.content()).isNotNull();
+                    assertThat(message.content()).isNotEmpty();
+                    assertThat(message.sender()).isIn("LLM", "USER");
+                }
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportIrisChatSessionsNoSessionsCreatesNoFile() throws IOException {
+            // Run export without creating any sessions
+            dataExportIrisService.createIrisExport(testUser.getId(), workingDirectory);
+
+            // Verify no file is created when there are no sessions
+            Path irisFile = workingDirectory.resolve("iris_chat_sessions.json");
+            assertThat(irisFile).doesNotExist();
         }
 
     }

@@ -930,7 +930,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", classExercise, HttpStatus.FORBIDDEN);
+        request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", UpdateModelingExerciseDTO.of(classExercise), HttpStatus.FORBIDDEN);
     }
 
     @Test

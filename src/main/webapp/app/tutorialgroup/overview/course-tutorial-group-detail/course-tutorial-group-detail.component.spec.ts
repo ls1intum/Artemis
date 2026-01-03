@@ -1,3 +1,5 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupDetailComponent } from './course-tutorial-group-detail.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -5,10 +7,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockDirective, MockService } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { RawTutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
@@ -21,6 +24,8 @@ import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 describe('CourseTutorialGroupDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseTutorialGroupDetailComponent;
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
 
@@ -28,20 +33,20 @@ describe('CourseTutorialGroupDetailComponent', () => {
     mockTranslateService.use('en');
     const mockAccountService = new MockAccountService();
     mockAccountService.userIdentity.set(new User(undefined, 'artemis_admin'));
+    const mockRouter = new MockRouter();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseTutorialGroupDetailComponent],
+            imports: [CourseTutorialGroupDetailComponent, MockDirective(TranslateDirective), MockDirective(RouterLink)],
             providers: [
                 { provide: TranslateService, useValue: mockTranslateService },
                 { provide: AccountService, useValue: mockAccountService },
-                { provide: OneToOneChatService, useValue: MockService(OneToOneChatService) },
-                { provide: AlertService, useValue: MockService(AlertService) },
-                { provide: LectureService, useValue: MockService(LectureService) },
-                { provide: Router, useValue: MockService(Router) },
-                { provide: ActivatedRoute, useValue: MockService(ActivatedRoute) },
+                { provide: Router, useValue: mockRouter },
+                MockProvider(OneToOneChatService),
+                MockProvider(AlertService),
+                MockProvider(LectureService),
+                MockProvider(ActivatedRoute),
             ],
-            declarations: [MockDirective(TranslateDirective), MockDirective(RouterLink)],
         }).compileComponents();
 
         const lectureService = TestBed.inject(LectureService);
@@ -50,24 +55,28 @@ describe('CourseTutorialGroupDetailComponent', () => {
         fixture = TestBed.createComponent(CourseTutorialGroupDetailComponent);
         component = fixture.componentInstance;
 
-        jest.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(true);
+        vi.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(true);
 
         fixture.componentRef.setInput('course', { id: 1 } as Course);
     });
 
     beforeAll(() => {
         process.env.TZ = 'Europe/Berlin'; // pin TZ
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         // pick a winter date (no DST jump). Any fixed date works, just be consistent.
-        jest.setSystemTime(new Date('2025-01-14T10:00:00+01:00'));
+        vi.setSystemTime(new Date('2025-01-14T10:00:00+01:00'));
     });
 
     afterAll(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display no conversation links if messaging disabled', () => {
-        jest.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(false);
+        vi.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(false);
         const raw: RawTutorialGroupDetailGroupDTO = {
             id: 1,
             title: 'TG 1 MN 13',
@@ -387,17 +396,17 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
         const nextSession = component.nextSession();
         expect(nextSession).toBeDefined();
-        expect(nextSession!.date.endsWith(nextSessionStart.format('DD.MM.YYYY'))).toBeTrue();
+        expect(nextSession!.date.endsWith(nextSessionStart.format('DD.MM.YYYY'))).toBe(true);
 
         // compute the expected string from the same source to avoid TZ drift
         const expectedTime = `${nextSessionStart.format('HH:mm')}-${nextSessionEnd.format('HH:mm')}`;
         expect(nextSession!.time).toBe(expectedTime);
 
         expect(nextSession!.location).toBe('01.05.13');
-        expect(nextSession!.isCancelled).toBeFalse();
-        expect(nextSession!.locationChanged).toBeFalse();
-        expect(nextSession!.timeChanged).toBeFalse();
-        expect(nextSession!.dateChanged).toBeFalse();
+        expect(nextSession!.isCancelled).toBe(false);
+        expect(nextSession!.locationChanged).toBe(false);
+        expect(nextSession!.timeChanged).toBe(false);
+        expect(nextSession!.dateChanged).toBe(false);
         expect(nextSession!.attendance).toBeUndefined();
     });
 
