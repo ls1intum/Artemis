@@ -88,6 +88,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -539,20 +540,9 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastTutor
-    // TODO use a DTO/DAO record in the future, this could be directly instantiated in the database to avoid fetching additional data:
-    // ActiveExamDTO {
-    // id: long
-    // title: String
-    // startDate: ZonedDateTime
-    // endDate: ZonedDateTime
-    // course: {
-    // id: long
-    // title: String},
-    // testExam: boolean
-    // }
-    public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
+    public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        Page<Exam> page = examService.getAllActiveExams(pageable, user);
+        Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
