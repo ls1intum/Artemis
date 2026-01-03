@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, Signal, effect, inject, model, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, tap } from 'rxjs';
@@ -28,16 +28,33 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     readonly faQuestionCircle = faQuestionCircle;
     isFormValid = signal(false);
 
+    static integerValidator(control: AbstractControl): ValidationErrors | null {
+        const value = control.value;
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+        if (!Number.isInteger(value)) {
+            return { notInteger: true };
+        }
+        return null;
+    }
+
     constructor() {
         this.form = this.fb.group({
             continuousPlagiarismControlEnabled: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlEnabled],
             continuousPlagiarismControlPostDueDateChecksEnabled: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPostDueDateChecksEnabled],
-            similarityThreshold: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.similarityThreshold, [Validators.required, Validators.min(0), Validators.max(100)]],
-            minimumScore: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumScore, [Validators.required, Validators.min(0), Validators.max(100)]],
-            minimumSize: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumSize, [Validators.required, Validators.min(0)]],
+            similarityThreshold: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.similarityThreshold,
+                [Validators.required, Validators.min(0), Validators.max(100), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+            minimumScore: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumScore,
+                [Validators.required, Validators.min(0), Validators.max(100), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+            minimumSize: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumSize, [Validators.required, Validators.min(0), ExerciseUpdatePlagiarismComponent.integerValidator]],
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: [
                 DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
-                [Validators.required, Validators.min(7), Validators.max(31)],
+                [Validators.required, Validators.min(7), Validators.max(31), ExerciseUpdatePlagiarismComponent.integerValidator],
             ],
         });
 
