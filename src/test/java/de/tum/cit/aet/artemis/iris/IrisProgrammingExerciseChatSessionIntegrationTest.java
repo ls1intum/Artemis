@@ -311,12 +311,12 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateMessage_newFormatWithUncommittedFiles() throws Exception {
-        // Test new format with uncommitted files
+    void testCreateMessageWithUncommittedFiles() throws Exception {
+        // Test with uncommitted files
         var session = createSessionForUser("student1");
         var message = createDefaultMockTextMessage(session);
 
-        var uncommittedFiles = Map.of("src/Main.java", "public class Main { // uncommitted }", "src/Utils.java", "public class Utils { }");
+        Map<String, String> uncommittedFiles = Map.of("src/Main.java", "public class Main { // uncommitted }", "src/Utils.java", "public class Utils { }");
 
         // Mock Pyris response
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
@@ -338,8 +338,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateMessage_newFormatWithJsonContent() throws Exception {
-        // Test new format with JSON content
+    void testCreateMessageWithJsonContent() throws Exception {
+        // Test with JSON content
         var session = createSessionForUser("student1");
         var message = createDefaultMockJsonMessage(session);
 
