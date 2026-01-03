@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
@@ -13,6 +15,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('TutorialGroupManagementResolve', () => {
+    setupTestBed({ zoneless: true });
+
     let resolver: TutorialGroupManagementResolve;
     let service: CourseManagementService;
     let router: Router;
@@ -40,8 +44,8 @@ describe('TutorialGroupManagementResolve', () => {
     it('should navigate to tutorial-groups-checklist if course has no tutorialGroupsConfiguration', () => {
         const course: Course = new Course();
         course.id = 1;
-        jest.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(router, 'navigate');
+        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(router, 'navigate');
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
     });
@@ -50,8 +54,8 @@ describe('TutorialGroupManagementResolve', () => {
         const course: Course = new Course();
         course.id = 1;
         course.tutorialGroupsConfiguration = { id: 1 };
-        jest.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(router, 'navigate');
+        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(router, 'navigate');
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
     });
@@ -60,8 +64,8 @@ describe('TutorialGroupManagementResolve', () => {
         const course: Course = new Course();
         course.id = 1;
         course.tutorialGroupsConfiguration = { id: 2 };
-        jest.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(router, 'navigate');
+        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(router, 'navigate');
         resolver
             .resolve(
                 { params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot,
