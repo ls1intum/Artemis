@@ -1,7 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -10,7 +13,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -25,14 +27,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
-@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
-class MarkdownEditorStubComponent {
-    @Input() markdown: string;
-    @Input() enableResize = false;
-    @Output() markdownChange = new EventEmitter<string>();
-}
-
 describe('TutorialGroupFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupFormComponent>;
     let component: TutorialGroupFormComponent;
     const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
@@ -60,11 +57,16 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
-            declarations: [
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                NgbTypeaheadModule,
+                NgbTimepickerModule,
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
+                FaIconComponent,
                 TutorialGroupFormComponent,
                 ScheduleFormComponent,
-                MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDateRangePipe),
@@ -88,21 +90,26 @@ describe('TutorialGroupFormComponent', () => {
                 provideHttpClient(),
                 { provide: ThemeService, useClass: MockThemeService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TutorialGroupFormComponent, {
+                remove: { imports: [MarkdownEditorMonacoComponent] },
+                add: { imports: [MockComponent(MarkdownEditorMonacoComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupFormComponent);
         validTeachingAssistant = new User();
         validTeachingAssistant.login = 'testLogin';
         component = fixture.componentInstance;
         fixture.componentRef.setInput('course', course);
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('with schedule', () => {
@@ -129,8 +136,8 @@ describe('TutorialGroupFormComponent', () => {
             testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
         });
 
-        it('should block submit when required property is missing', fakeAsync(() => {
-            jest.spyOn(console, 'warn').mockImplementation(() => {});
+        it('should block submit when required property is missing', () => {
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
 
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             const requiredScheduleControlNames = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
@@ -141,26 +148,26 @@ describe('TutorialGroupFormComponent', () => {
             for (const controlName of requiredScheduleControlNames) {
                 testFormIsInvalidOnMissingRequiredProperty(controlName, 'schedule');
             }
-        }));
+        });
 
-        it('should block submit when time range is invalid', fakeAsync(() => {
+        it('should block submit when time range is invalid', async () => {
             setValidFormValues();
-            runOnPushChangeDetection(fixture);
-            expect(component.form.valid).toBeTrue();
-            expect(component.isSubmitPossible).toBeTrue();
+            await runOnPushChangeDetection(fixture);
+            expect(component.form.valid).toBe(true);
+            expect(component.isSubmitPossible).toBe(true);
 
             component.form.get('schedule')!.get('endTime')!.setValue('11:00:00');
             component.form.get('schedule')!.get('startTime')!.setValue('12:00:00');
-            runOnPushChangeDetection(fixture);
-            expect(component.form.invalid).toBeTrue();
-            expect(component.isSubmitPossible).toBeFalse();
+            await runOnPushChangeDetection(fixture);
+            expect(component.form.invalid).toBe(true);
+            expect(component.isSubmitPossible).toBe(false);
 
             clickSubmit(false);
-        }));
+        });
 
-        it('should correctly set form values in edit mode', () => {
+        it('should correctly set form values in edit mode', async () => {
             fixture.componentRef.setInput('isEditMode', true);
-            runOnPushChangeDetection(fixture);
+            await runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -179,7 +186,7 @@ describe('TutorialGroupFormComponent', () => {
                 },
             };
             fixture.componentRef.setInput('formData', formData);
-            component.ngOnChanges();
+            await runOnPushChangeDetection(fixture);
 
             const groupFormControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of groupFormControlNames) {
@@ -193,14 +200,14 @@ describe('TutorialGroupFormComponent', () => {
             }
         });
 
-        it('should submit valid form', fakeAsync(() => {
+        it('should submit valid form', async () => {
             setValidFormValues();
-            runOnPushChangeDetection(fixture);
-            expect(component.form.valid).toBeTrue();
-            expect(component.isSubmitPossible).toBeTrue();
+            await runOnPushChangeDetection(fixture);
+            expect(component.form.valid).toBe(true);
+            expect(component.isSubmitPossible).toBe(true);
 
             clickSubmit(true);
-        }));
+        });
     });
 
     describe('without schedule', () => {
@@ -219,18 +226,18 @@ describe('TutorialGroupFormComponent', () => {
             testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
         });
 
-        it('should block submit when required property is missing', fakeAsync(() => {
-            jest.spyOn(console, 'warn').mockImplementation(() => {});
+        it('should block submit when required property is missing', () => {
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
 
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             for (const controlName of requiredGroupControlNames) {
                 testFormIsInvalidOnMissingRequiredProperty(controlName);
             }
-        }));
+        });
 
-        it('should correctly set form values in edit mode', () => {
+        it('should correctly set form values in edit mode', async () => {
             fixture.componentRef.setInput('isEditMode', true);
-            runOnPushChangeDetection(fixture);
+            await runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -243,7 +250,7 @@ describe('TutorialGroupFormComponent', () => {
             };
 
             fixture.componentRef.setInput('formData', formData);
-            component.ngOnChanges();
+            await runOnPushChangeDetection(fixture);
 
             const formControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of formControlNames) {
@@ -252,15 +259,14 @@ describe('TutorialGroupFormComponent', () => {
             expect(component.additionalInformation).toEqual(formData.additionalInformation);
         });
 
-        it('should submit valid form', fakeAsync(() => {
+        it('should submit valid form', async () => {
             setValidFormValues();
-            runOnPushChangeDetection(fixture);
-            fixture.whenStable().then(() => {
-                expect(component.form.valid).toBeTrue();
-                expect(component.isSubmitPossible).toBeTrue();
-                clickSubmit(true);
-            });
-        }));
+            await runOnPushChangeDetection(fixture);
+            await fixture.whenStable();
+            expect(component.form.valid).toBe(true);
+            expect(component.isSubmitPossible).toBe(true);
+            clickSubmit(true);
+        });
     });
 
     // === helper functions ===
