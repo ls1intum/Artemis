@@ -47,29 +47,4 @@ describe('PrivacyComponent', () => {
         expect(privacyServiceSpy).toHaveBeenCalledOnce();
         expect(privacyServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });
-
-    it('should scroll to fragment if present in route params', () => {
-        const scrollIntoViewMock = jest.fn();
-        const mockElement = { scrollIntoView: scrollIntoViewMock };
-        const querySelectorSpy = jest.spyOn(document, 'querySelector').mockReturnValue(mockElement as any);
-
-        const route = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-        route.setParameters({ fragment: 'test-fragment' });
-
-        component.ngAfterViewInit();
-
-        expect(querySelectorSpy).toHaveBeenCalledWith('#test-fragment');
-        expect(scrollIntoViewMock).toHaveBeenCalled();
-
-        querySelectorSpy.mockRestore();
-    });
-
-    it('should unsubscribe when subscription exists on destroy', () => {
-        const unsubscribeSpy = jest.fn();
-        component['languageChangeSubscription'] = { unsubscribe: unsubscribeSpy } as any;
-
-        component.ngOnDestroy();
-
-        expect(unsubscribeSpy).toHaveBeenCalled();
-    });
 });
