@@ -632,47 +632,128 @@ Use the slider to adjust the time limit for build plan execution:
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
 
-Default container configuration usually doesn't need changes.
+In most cases, the default container configuration does not need to be changed.
 
-Configure network access, environment variables, and resource limits:
+Currently, instructors can change whether the container has internet access, add additional environment variables, and configure resource limits such as CPU and memory.
 
 <Image src={dockerFlagsEdit} alt="Docker Flags Edit" size={ImageSize.large} caption="Container Configuration" />
 
-- **Internet Access**: Disable to prevent students from downloading dependencies during builds. Dependencies must be cached in the Docker image
-- **Environment Variables**: Add specific variables required by the build process
-- **Resource Limits**: Configure CPU cores, memory, and memory swap allocation. Values may be limited by administrator settings
+Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
+If internet access is disabled, the container cannot access the internet during the build process. Thus, it will not be able to download additional dependencies.
+The dependencies must then be included/cached in the Docker image.
+
+Additional environment variables can be added to the container configuration.
+This can be useful if the build process requires specific variables to be set.
+
+Instructors can also adjust resource limits for the container.
+The number of CPU cores allocated to the container can be modified, as well as the maximum amount of memory and memory swap that the container is allowed to use.
+These settings help ensure that resource usage is balanced while allowing for flexibility in configuring the build environment.
+If set too high, the specified values may be overwritten by the maximum restrictions set by the administrators.
+Contact the administrators for more information.
+
+We plan to add more options to the container configuration in the future.
 
 ### Configure Static Code Analysis
 
 If static code analysis was activated, the **Test** repository contains configuration files.
 
-For Java exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool. Artemis generates default configurations with predefined rules. Instructors can freely customize these files.
+For Java exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool.
+Artemis generates default configurations with predefined rules. Instructors can freely customize these files.
 
 On exercise import, configurations are copied from the imported exercise.
 
 #### Supported Static Code Analysis Tools
 
-| No. | Language | Supported Tools | Configuration File |
-|-----|----------|----------------|-------------------|
-| 1 | Java | [Spotbugs](https://spotbugs.github.io/) | spotbugs-exclusions.xml |
-| | | [Checkstyle](https://checkstyle.org/) | checkstyle-configuration.xml |
-| | | [PMD](https://pmd.github.io/) | pmd-configuration.xml |
-| | | PMD CPD | (via PMD plugin) |
-| 2 | Python | [Ruff](https://docs.astral.sh/ruff/) | ruff-student.toml |
-| 3 | C | GCC | (via compiler flags) |
-| 8 | Swift | [SwiftLint](https://realm.github.io/SwiftLint/) | .swiftlint.yml |
-| 10 | Rust | [Clippy](https://doc.rust-lang.org/clippy/) | clippy.toml |
-| 11/14 | JavaScript/TypeScript | [ESLint](https://eslint.org/) | eslint.config.mjs |
-| 12 | R | [lintr](https://lintr.r-lib.org/) | .lintr |
-| 13 | C++ | [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) | .clang-tidy |
-| 19 | Ruby | [Rubocop](https://rubocop.org/) | .rubocop.yml |
-| 20 | Dart | [dart analyze](https://dart.dev/tools/analysis) | analysis_options.yaml |
+<table>
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>Language</th>
+      <th>Supported Tools</th>
+      <th>Configuration File</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowSpan={4}>1</td>
+      <td rowSpan={4}>Java</td>
+      <td><a href="https://spotbugs.github.io/">Spotbugs</a></td>
+      <td>spotbugs-exclusions.xml</td>
+    </tr>
+    <tr>
+      <td><a href="https://checkstyle.org/">Checkstyle</a></td>
+      <td>checkstyle-configuration.xml</td>
+    </tr>
+    <tr>
+      <td><a href="https://pmd.github.io/">PMD</a></td>
+      <td>pmd-configuration.xml</td>
+    </tr>
+    <tr>
+      <td>PMD CPD</td>
+      <td>(via PMD plugin)</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Python</td>
+      <td><a href="https://docs.astral.sh/ruff/">Ruff</a></td>
+      <td>ruff-student.toml</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>C</td>
+      <td>GCC</td>
+      <td>(via compiler flags)</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Swift</td>
+      <td><a href="https://realm.github.io/SwiftLint/">SwiftLint</a></td>
+      <td>.swiftlint.yml</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Rust</td>
+      <td><a href="https://doc.rust-lang.org/clippy/">Clippy</a></td>
+      <td>clippy.toml</td>
+    </tr>
+    <tr>
+      <td>11/14</td>
+      <td>JavaScript/TypeScript</td>
+      <td><a href="https://eslint.org/">ESLint</a></td>
+      <td>eslint.config.mjs</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>R</td>
+      <td><a href="https://lintr.r-lib.org/">lintr</a></td>
+      <td>.lintr</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>C++</td>
+      <td><a href="https://clang.llvm.org/extra/clang-tidy/">Clang-Tidy</a></td>
+      <td>.clang-tidy</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>Ruby</td>
+      <td><a href="https://rubocop.org/">Rubocop</a></td>
+      <td>.rubocop.yml</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>Dart</td>
+      <td><a href="https://dart.dev/tools/analysis">dart analyze</a></td>
+      <td>analysis_options.yaml</td>
+    </tr>
+  </tbody>
+</table>
 
 <Callout variant={CalloutVariant.info}>
   <p>Maven plugins for Java static code analysis tools provide additional configuration options. GCC can be configured by passing flags in the tasks. See <a href="https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html">GCC Documentation</a>.</p>
 </Callout>
 
-<Callout variant={CalloutVariant.tip}>
+<Callout variant={CalloutVariant.info}>
   <p>Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the build plan script.</p>
 </Callout>
 
