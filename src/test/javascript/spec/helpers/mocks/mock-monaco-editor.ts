@@ -32,6 +32,7 @@ const createMockEditor = () => {
         getModel: () => createMockModel(),
         setModel: () => {},
         onDidChangeCursorPosition: () => ({ dispose: () => {} }),
+        onDidChangeCursorSelection: () => ({ dispose: () => {} }),
         onDidChangeModelContent: () => ({ dispose: () => {} }),
         onDidFocusEditorText: () => ({ dispose: () => {} }),
         onDidBlurEditorText: () => ({ dispose: () => {} }),
@@ -70,7 +71,6 @@ const createMockEditor = () => {
         onDidScrollChange: () => ({ dispose: () => {} }),
         getId: () => editorId,
         getOption: (optionId: number) => {
-            // Return option-specific mock values based on EditorOption IDs
             const optionValues: Record<number, unknown> = {
                 19: true, // automaticLayout
                 61: 14, // fontSize
