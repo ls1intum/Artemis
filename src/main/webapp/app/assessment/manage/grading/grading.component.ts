@@ -631,15 +631,14 @@ export class GradingComponent implements OnInit {
         }
 
         // Interval mode: handle sticky grade step
-        // If no grade steps exist, create initial step and sticky step, then return
+        // If no grade steps exist, create an initial step first (which will become the sticky step)
         if (this.gradingScale?.gradeSteps?.length === 0) {
             this.createGradeStepBasic();
-            // Create the sticky grade step as well
-            this.createGradeStepBasic();
-            return;
         }
 
-        // Pop the existing sticky grade step, add new step, then re-append sticky step
+        // Pop the existing sticky grade step, add new step, then re-append sticky step.
+        // Because the array is empty after popping, the new step gets lowerBound=0 and upperBound=100,
+        // giving it a proper interval of 100. This ensures setPercentageInterval works correctly.
         const stickyGradeStep = this.gradingScale.gradeSteps.pop()!;
         this.createGradeStepBasic();
         this.gradingScale.gradeSteps.push(stickyGradeStep);
