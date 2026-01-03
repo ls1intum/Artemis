@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ActiveExamDTO(Long id, String title, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, CourseForActiveExamDTO course) {
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseForActiveExamDTO(Long id, String title) {
     }
 
