@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { EntityResponseType, ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation, ExampleSubmissionMode } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -33,7 +33,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
-type ExampleSubmissionResponseType = EntityResponseType;
+type ExampleParticipationResponseType = EntityResponseType;
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -56,7 +56,7 @@ type ExampleSubmissionResponseType = EntityResponseType;
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleParticipationService = inject(ExampleParticipationService);
     private tutorParticipationService = inject(TutorParticipationService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private exerciseService = inject(ExerciseService);
@@ -64,11 +64,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     isNewSubmission: boolean;
     areNewAssessments = true;
 
-    // Is set to true, if there are any changes to the submission.text or exampleSubmissionusedForTutorial
+    // Is set to true, if there are any changes to the submission.text or exampleParticipation usedForTutorial
     unsavedSubmissionChanges = false;
     private exerciseId: number;
-    private exampleSubmissionId: number;
-    exampleSubmission = new ExampleSubmission();
+    private exampleParticipationId: number;
+    exampleParticipation = new ExampleParticipation();
     assessmentsAreValid = false;
     result?: Result;
     unreferencedFeedback: Feedback[] = [];
@@ -104,28 +104,28 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * Reads route params and loads the example submission on initialWithContext.
+     * Reads route params and loads the example participation on initialWithContext.
      */
     async ngOnInit(): Promise<void> {
         await super.ngOnInit();
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
+        const exampleParticipationId = this.route.snapshot.paramMap.get('exampleSubmissionId');
         this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
         this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
 
-        if (exampleSubmissionId === 'new') {
+        if (exampleParticipationId === 'new') {
             this.isNewSubmission = true;
-            this.exampleSubmissionId = -1;
+            this.exampleParticipationId = -1;
         } else {
-            this.exampleSubmissionId = +exampleSubmissionId!;
+            this.exampleParticipationId = +exampleParticipationId!;
         }
         this.loadAll();
     }
 
     /**
      * Loads the exercise.
-     * Also loads the example submission if the new parameter is not set.
+     * Also loads the example participation if the new parameter is not set.
      */
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
@@ -137,9 +137,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
         this.state.edit();
 
-        this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body!;
-            this.submission = this.exampleSubmission.submission as TextSubmission;
+        this.exampleParticipationService.get(this.exampleParticipationId).subscribe(async (exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+            this.exampleParticipation = exampleParticipationResponse.body!;
+            this.submission = this.exampleParticipationService.getSubmission(this.exampleParticipation) as TextSubmission;
             await this.fetchExampleResult();
             if (this.toComplete) {
                 this.state = State.forCompletion(this);
@@ -149,7 +149,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
-            if (this.exampleSubmission.usedForTutorial) {
+            if (this.exampleParticipation.usedForTutorial) {
                 this.selectedMode = ExampleSubmissionMode.ASSESS_CORRECTLY;
             } else {
                 this.selectedMode = ExampleSubmissionMode.READ_AND_CONFIRM;
@@ -180,7 +180,12 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 .subscribe((result) => {
                     if (result && result.id) {
                         this.result = result;
-                        this.exampleSubmission.submission = this.submission = result.submission;
+                        this.submission = result.submission;
+                        if (this.exampleParticipation.submissions) {
+                            this.exampleParticipation.submissions[0] = this.submission!;
+                        } else {
+                            this.exampleParticipation.submissions = [this.submission!];
+                        }
                         this.updateExampleAssessmentSolution(result);
                     } else {
                         if (result && !result.id) {
@@ -199,26 +204,26 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * Creates the example submission.
+     * Creates the example participation.
      */
     createNewExampleTextSubmission(): void {
-        const newExampleSubmission = new ExampleSubmission();
-        newExampleSubmission.submission = this.submission!;
-        newExampleSubmission.exercise = this.exercise;
-        newExampleSubmission.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+        const newExampleParticipation = new ExampleParticipation();
+        newExampleParticipation.submissions = [this.submission!];
+        newExampleParticipation.exercise = this.exercise;
+        newExampleParticipation.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
 
-        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
-            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmission.exercise = this.exercise;
-                this.exampleSubmissionId = this.exampleSubmission.id!;
-                this.submission = this.exampleSubmission.submission as TextSubmission;
+        this.exampleParticipationService.create(newExampleParticipation, this.exerciseId).subscribe({
+            next: (exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+                this.exampleParticipation = exampleParticipationResponse.body!;
+                this.exampleParticipation.exercise = this.exercise;
+                this.exampleParticipationId = this.exampleParticipation.id!;
+                this.submission = this.exampleParticipationService.getSubmission(this.exampleParticipation) as TextSubmission;
                 this.isNewSubmission = false;
                 this.unsavedSubmissionChanges = false;
                 this.state.edit();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
+                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleParticipationId);
 
                 this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
             },
@@ -227,7 +232,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * Updates the example submission.
+     * Updates the example participation.
      */
     updateExampleTextSubmission(): void {
         this.saveSubmissionIfNeeded().subscribe({
@@ -239,31 +244,31 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
-    saveSubmissionIfNeeded(): Observable<ExampleSubmissionResponseType> {
+    saveSubmissionIfNeeded(): Observable<ExampleParticipationResponseType> {
         // If there are no unsaved changes, no need for server call
         if (!this.unsavedSubmissionChanges) {
-            return of({} as ExampleSubmissionResponseType);
+            return of({} as ExampleParticipationResponseType);
         }
 
-        return this.exampleSubmissionService.update(this.exampleSubmissionForNetwork(), this.exerciseId).pipe(
-            tap((exampleSubmissionResponse) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
+        return this.exampleParticipationService.update(this.exampleParticipationForNetwork(), this.exerciseId).pipe(
+            tap((exampleParticipationResponse) => {
+                this.exampleParticipation = exampleParticipationResponse.body!;
                 this.unsavedSubmissionChanges = false;
             }),
         );
     }
 
     public async startAssessment(): Promise<void> {
-        this.exampleSubmissionService
-            .prepareForAssessment(this.exerciseId, this.exampleSubmissionId)
+        this.exampleParticipationService
+            .prepareForAssessment(this.exerciseId, this.exampleParticipationId)
             .pipe(
                 mergeMap(() => {
-                    return this.exampleSubmissionService.get(this.exampleSubmissionId);
+                    return this.exampleParticipationService.get(this.exampleParticipationId);
                 }),
             )
-            .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.submission = this.exampleSubmission.submission as TextSubmission;
+            .subscribe((exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+                this.exampleParticipation = exampleParticipationResponse.body!;
+                this.submission = this.exampleParticipationService.getSubmission(this.exampleParticipation) as TextSubmission;
 
                 this.result = new Result();
                 this.result.submission = this.submission;
@@ -286,7 +291,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
 
         this.saveSubmissionIfNeeded()
-            .pipe(switchMap(() => this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback)))
+            .pipe(switchMap(() => this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleParticipation.id!, this.assessments, this.textBlocksWithFeedback)))
             .subscribe({
                 next: (response) => {
                     this.result = response.body!;
@@ -333,7 +338,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * Checks the assessment of the tutor to the example submission tutorial.
+     * Checks the assessment of the tutor to the example participation tutorial.
      * The tutor is informed if its assessment is different from the one of the instructor.
      */
     checkAssessment(): void {
@@ -344,7 +349,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
 
         const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
-        command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
+        command.assessExampleParticipation(this.exampleParticipationForNetwork(), this.exerciseId);
     }
 
     /**
@@ -374,21 +379,22 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
-    private exampleSubmissionForNetwork() {
-        const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission = Object.assign({}, this.submission);
+    private exampleParticipationForNetwork() {
+        const exampleParticipation = Object.assign({}, this.exampleParticipation);
+        const submission = Object.assign({}, this.submission);
+        exampleParticipation.submissions = [submission];
 
         if (this.result) {
             const result = Object.assign({}, this.result);
-            setLatestSubmissionResult(exampleSubmission.submission, result);
+            setLatestSubmissionResult(submission, result);
             result.feedbacks = this.assessments;
             delete result?.submission;
         } else {
-            delete exampleSubmission.submission.results;
-            delete exampleSubmission.submission.latestResult;
+            delete submission.results;
+            delete submission.latestResult;
         }
 
-        return exampleSubmission;
+        return exampleParticipation;
     }
 
     /**
@@ -400,11 +406,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * After the tutor declared that he read and understood the example submission a corresponding submission will be added to the
+     * After the tutor declared that he read and understood the example participation a corresponding submission will be added to the
      * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
      */
     readAndUnderstood(): void {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
+        this.tutorParticipationService.assessExampleParticipation(this.exampleParticipation, this.exerciseId).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
@@ -421,7 +427,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
     editSubmission(): void {
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        this.assessmentsService.deleteExampleAssessment(this.exercise!.id!, this.exampleSubmission?.id!).subscribe(() => {
+        this.assessmentsService.deleteExampleAssessment(this.exercise!.id!, this.exampleParticipation?.id!).subscribe(() => {
             delete this.submission?.blocks;
             if (this.submission && this.submission.results) {
                 this.submission.results = undefined;
@@ -437,7 +443,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     onModeChange(mode: ExampleSubmissionMode) {
         this.selectedMode = mode;
         this.unsavedSubmissionChanges = true;
-        this.exampleSubmission.usedForTutorial = mode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+        this.exampleParticipation.usedForTutorial = mode === ExampleSubmissionMode.ASSESS_CORRECTLY;
     }
 
     private updateExampleAssessmentSolution(result: Result) {

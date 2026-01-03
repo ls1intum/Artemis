@@ -337,16 +337,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e
-                LEFT JOIN FETCH e.exampleSubmissions examplesub
-                LEFT JOIN FETCH examplesub.submission exsub
-                LEFT JOIN FETCH exsub.results
-            WHERE e.id = :exerciseId
-            """)
-    Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.submissionPolicy
             WHERE e.id = :exerciseId
@@ -521,10 +511,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @NonNull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return getValueElseThrow(findByIdWithEagerParticipations(exerciseId), exerciseId);
-    }
-
-    default Exercise findByIdWithEagerExampleSubmissionsElseThrow(Long exerciseId) {
-        return getValueElseThrow(findByIdWithEagerExampleSubmissions(exerciseId), exerciseId);
     }
 
     /**

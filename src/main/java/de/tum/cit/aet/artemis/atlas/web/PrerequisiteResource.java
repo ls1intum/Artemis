@@ -321,7 +321,7 @@ public class PrerequisiteResource {
         var prerequisite = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
         checkCourseForPrerequisite(course, prerequisite);
 
-        courseCompetencyService.deleteCourseCompetency(prerequisite, course);
+        courseCompetencyService.deleteCourseCompetency(prerequisite);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, prerequisite.getTitle())).build();
     }

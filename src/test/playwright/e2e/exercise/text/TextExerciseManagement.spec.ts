@@ -5,7 +5,7 @@ import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 test.describe('Text exercise management', { tag: '@fast' }, () => {
@@ -54,8 +54,9 @@ test.describe('Text exercise management', { tag: '@fast' }, () => {
         await textExerciseExampleSubmissionCreation.typeExampleSubmission(submission);
 
         const submissionCreationResponse = await textExerciseExampleSubmissionCreation.clickCreateNewExampleSubmission();
-        const exampleSubmission: ExampleSubmission = await submissionCreationResponse.json();
-        const textSubmission: TextSubmission = exampleSubmission.submission!;
+        const exampleParticipation: ExampleParticipation = await submissionCreationResponse.json();
+        // ExampleParticipation inherits from Participation, so submission is in the submissions array
+        const textSubmission: TextSubmission = exampleParticipation.submissions![0] as TextSubmission;
         expect(submissionCreationResponse.status()).toBe(200);
         expect(textSubmission.text).toBe(submission);
 

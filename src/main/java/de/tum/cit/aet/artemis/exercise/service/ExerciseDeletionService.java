@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -14,8 +13,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
-import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
+import de.tum.cit.aet.artemis.assessment.service.ExampleParticipationService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -51,7 +51,9 @@ public class ExerciseDeletionService {
 
     private final QuizExerciseService quizExerciseService;
 
-    private final ExampleSubmissionService exampleSubmissionService;
+    private final ExampleParticipationService exampleParticipationService;
+
+    private final ExampleParticipationRepository exampleParticipationRepository;
 
     private final Optional<StudentExamApi> studentExamApi;
 
@@ -71,14 +73,15 @@ public class ExerciseDeletionService {
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
-            Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            TutorParticipationRepository tutorParticipationRepository, ExampleParticipationService exampleParticipationService,
+            ExampleParticipationRepository exampleParticipationRepository, Optional<StudentExamApi> studentExamApi, Optional<LectureUnitApi> lectureUnitApi,
+            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
         this.tutorParticipationRepository = tutorParticipationRepository;
-        this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleParticipationService = exampleParticipationService;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.quizExerciseService = quizExerciseService;
         this.studentExamApi = studentExamApi;
         this.lectureUnitApi = lectureUnitApi;
@@ -147,10 +150,8 @@ public class ExerciseDeletionService {
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationDeletionService.deleteAllByExercise(exercise, false);
 
-        // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
-        exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
-        exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));
-        exercise.setExampleSubmissions(new HashSet<>());
+        // Delete all example participations for this exercise
+        exampleParticipationRepository.findAllByExerciseId(exerciseId).forEach(exampleParticipation -> exampleParticipationService.deleteById(exampleParticipation.getId()));
 
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());

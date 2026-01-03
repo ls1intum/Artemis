@@ -145,8 +145,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void createModelingSubmission_badRequest() throws Exception {
+        // Create a participation and submission that is already submitted
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
-        modelingSubmissionRepo.save(submission);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        // Try to submit again - should fail with BAD_REQUEST because already submitted
         request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
     }
 

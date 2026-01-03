@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
-import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -142,7 +142,7 @@ public class ParticipationUtilService {
     private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
-    private ExampleSubmissionTestRepository exampleSubmissionRepo;
+    private ExampleParticipationTestRepository exampleParticipationRepo;
 
     @Autowired
     private ParticipationService participationService;
@@ -858,21 +858,25 @@ public class ParticipationUtilService {
     }
 
     /**
-     * Saves the given ExampleSubmission to the corresponding repository.
+     * Saves the given ExampleParticipation to the corresponding repository.
+     * Then saves the associated Submission (either modeling or text) to the corresponding repository.
      *
-     * @param exampleSubmission The ExampleSubmission to save
-     * @return The saved ExampleSubmission
+     * @param exampleParticipation The ExampleParticipation to save
+     * @return The saved ExampleParticipation
      */
-    public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
-        Submission submission;
-        if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
-            submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+    public ExampleParticipation saveExampleParticipation(ExampleParticipation exampleParticipation) {
+        exampleParticipation = exampleParticipationRepo.save(exampleParticipation);
+        Submission submission = exampleParticipation.getSubmission();
+        exampleParticipation.addSubmission(submission);
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        submission.setParticipation(exampleParticipation);
+        if (exampleParticipation.getSubmission() instanceof ModelingSubmission) {
+            modelingSubmissionRepo.save((ModelingSubmission) submission);
         }
         else {
-            submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+            textSubmissionRepo.save((TextSubmission) submission);
         }
-        exampleSubmission.setSubmission(submission);
-        return exampleSubmissionRepo.save(exampleSubmission);
+        return exampleParticipation;
     }
 
     /**
@@ -888,39 +892,42 @@ public class ParticipationUtilService {
     }
 
     /**
-     * Generates an ExampleSubmission for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleSubmission if
+     * Generates an ExampleParticipation for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleParticipation
+     * if
      * the Exercise is a TextExercise.
      *
-     * @param modelOrText             The uml model or text for the ExampleSubmission
-     * @param exercise                The Exercise for which the ExampleSubmission is created
-     * @param flagAsExampleSubmission True, if the submission is an ExampleSubmission
-     * @return The generated ExampleSubmission
+     * @param modelOrText             The uml model or text for the ExampleParticipation
+     * @param exercise                The Exercise for which the ExampleParticipation is created
+     * @param flagAsExampleSubmission True, if the submission is an example submission
+     * @return The generated ExampleParticipation
      */
-    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) {
-        return generateExampleSubmission(modelOrText, exercise, flagAsExampleSubmission, false);
+    public ExampleParticipation generateExampleParticipation(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) {
+        return generateExampleParticipation(modelOrText, exercise, flagAsExampleSubmission, false);
     }
 
     /**
-     * Generates an ExampleSubmission for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleSubmission if
+     * Generates an ExampleParticipation for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleParticipation
+     * if
      * the Exercise is a TextExercise.
      *
-     * @param modelOrText             The uml model for the ExampleSubmission
-     * @param exercise                The Exercise for which the ExampleSubmission is created
-     * @param flagAsExampleSubmission True, if the submission is an ExampleSubmission
-     * @param usedForTutorial         True, if the ExampleSubmission is used for a tutorial
-     * @return The generated ExampleSubmission
+     * @param modelOrText             The uml model for the ExampleParticipation
+     * @param exercise                The Exercise for which the ExampleParticipation is created
+     * @param flagAsExampleSubmission True, if the submission is an example submission
+     * @param usedForTutorial         True, if the ExampleParticipation is used for a tutorial
+     * @return The generated ExampleParticipation
      */
-    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
+    public ExampleParticipation generateExampleParticipation(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
         Submission submission;
         if (exercise instanceof ModelingExercise) {
             submission = ParticipationFactory.generateModelingSubmission(modelOrText, false);
         }
         else {
+            // Don't save the submission here - it will be saved after associating with participation
+            // because participation_id is NOT NULL
             submission = ParticipationFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
-            submission = saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
-        return ParticipationFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
+        return ParticipationFactory.generateExampleParticipation(submission, exercise, usedForTutorial);
     }
 
     /**

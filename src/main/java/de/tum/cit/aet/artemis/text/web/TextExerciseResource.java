@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
@@ -100,7 +100,7 @@ public class TextExerciseResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final ExampleParticipationRepository exampleParticipationRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -112,7 +112,7 @@ public class TextExerciseResource {
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            StudentParticipationRepository studentParticipationRepository, ExampleParticipationRepository exampleParticipationRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
             Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi) {
         this.feedbackRepository = feedbackRepository;
@@ -123,7 +123,7 @@ public class TextExerciseResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.courseRepository = courseRepository;
@@ -193,10 +193,10 @@ public class TextExerciseResource {
             }
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
+        Set<ExampleParticipation> exampleParticipations = this.exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(exerciseId);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
-        textExercise.setExampleSubmissions(exampleSubmissions);
+        textExercise.setExampleParticipations(exampleParticipations);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
         return ResponseEntity.ok().body(textExercise);

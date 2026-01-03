@@ -4,7 +4,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import type { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
@@ -100,7 +100,7 @@ export abstract class Exercise implements BaseEntity {
     public studentParticipations?: StudentParticipation[];
     public tutorParticipations?: TutorParticipation[];
     public course?: Course;
-    public exampleSubmissions?: ExampleSubmission[];
+    public exampleParticipations?: ExampleParticipation[];
     public attachments?: Attachment[];
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];

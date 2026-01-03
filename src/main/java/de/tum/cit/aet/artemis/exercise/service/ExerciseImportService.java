@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 public abstract class ExerciseImportService {
 
-    protected final ExampleSubmissionRepository exampleSubmissionRepository;
+    protected final ExampleParticipationRepository exampleParticipationRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -31,9 +31,9 @@ public abstract class ExerciseImportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
-    protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+    protected ExerciseImportService(ExampleParticipationRepository exampleParticipationRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FeedbackService feedbackService) {
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;

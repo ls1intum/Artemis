@@ -740,7 +740,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
-        ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(null, false);
+        // Use factory to generate unsaved submission (participation_id is NOT NULL, so we can't save with null participation)
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setBuildFailed(false);
         submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 AssessmentType.AUTOMATIC, true);
         request.put("/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
@@ -1098,7 +1100,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     private void deleteAssessmentAsForbiddenUser() throws Exception {
-        ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(null, false);
+        // Use factory to generate unsaved submission (participation_id is NOT NULL, so we can't save with null participation)
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setBuildFailed(false);
         submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 AssessmentType.AUTOMATIC, true);
         assertThat(submission.getResults()).hasSize(1);

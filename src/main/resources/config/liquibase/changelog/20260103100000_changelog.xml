@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        This changeset migrates ExampleSubmission to ExampleParticipation (a subclass of Participation).
+
+        Motivation:
+        - ExampleSubmissions previously used Submissions without a participation_id (NULL)
+        - This prevented adding a NOT NULL constraint on submission.participation_id
+        - By introducing ExampleParticipation as a Participation subclass, all submissions will have a valid participation
+
+        Migration steps:
+        1. Create example_participation_details secondary table (follows @SecondaryTable pattern like programming_exercise_details)
+        2. Create ExampleParticipation records in participation table for each ExampleSubmission
+        3. Populate the secondary table with ExampleSubmission-specific fields
+        4. Update submission.participation_id to point to the new ExampleParticipation
+        5. Migrate the TutorParticipation junction table
+        6. Drop the old example_submission table
+        7. Add NOT NULL constraint on submission.participation_id
+
+        =====================================================================================
+        IMPORTANT: BEFORE RUNNING THIS MIGRATION
+        =====================================================================================
+        1. Create a database backup
+        2. Ensure the 20251231100000 migration has already been applied
+        =====================================================================================
+    -->
+
+    <!-- ==================== PHASE 0: Modify discriminator column to allow 'EP' value ==================== -->
+    <changeSet id="20260103100000-0" author="krusche">
+        <!-- For MySQL, modify the enum to include 'EP' -->
+        <sql dbms="mysql">
+            ALTER TABLE participation MODIFY COLUMN discriminator enum('P','SP','PESP','SPEP','TPEP','EP') NOT NULL;
+        </sql>
+
+        <!-- For H2, modify the enum to include 'EP' -->
+        <sql dbms="h2">
+            ALTER TABLE participation ALTER COLUMN discriminator SET DATA TYPE enum('P','SP','PESP','SPEP','TPEP','EP');
+        </sql>
+
+        <!-- For PostgreSQL, the discriminator is typically varchar, no change needed -->
+
+        <rollback>
+            <sql dbms="mysql">
+                ALTER TABLE participation MODIFY COLUMN discriminator enum('P','SP','PESP','SPEP','TPEP') NOT NULL;
+            </sql>
+            <sql dbms="h2">
+                ALTER TABLE participation ALTER COLUMN discriminator SET DATA TYPE enum('P','SP','PESP','SPEP','TPEP');
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== PHASE 1: Create secondary table for ExampleParticipation ==================== -->
+    <changeSet id="20260103100000-1" author="krusche">
+        <createTable tableName="example_participation_details">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="used_for_tutorial" type="boolean"/>
+            <column name="assessment_explanation" type="varchar(2000)"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="example_participation_details"
+            baseColumnNames="id"
+            referencedTableName="participation"
+            referencedColumnNames="id"
+            constraintName="fk_example_participation_details_participation"
+            onDelete="CASCADE"/>
+
+        <rollback>
+            <dropTable tableName="example_participation_details"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== PHASE 2: Create temporary mapping table ==================== -->
+    <!-- We need this to track the relationship between old example_submission IDs and new participation IDs -->
+    <changeSet id="20260103100000-2" author="krusche">
+        <createTable tableName="example_submission_migration_map">
+            <column name="old_example_submission_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="new_participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="example_submission_migration_map"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== PHASE 3: Create ExampleParticipation records ==================== -->
+    <changeSet id="20260103100000-3" author="krusche">
+        <!-- Insert ExampleParticipation records for each ExampleSubmission that has a submission -->
+        <sql dbms="mysql">
+            INSERT INTO participation (discriminator, exercise_id, initialization_state, test_run, attempt)
+            SELECT 'EP', es.exercise_id, 'INITIALIZED', false, 0
+            FROM example_submission es
+            WHERE es.submission_id IS NOT NULL
+              AND es.exercise_id IS NOT NULL;
+        </sql>
+
+        <sql dbms="postgresql">
+            INSERT INTO participation (discriminator, exercise_id, initialization_state, test_run, attempt)
+            SELECT 'EP', es.exercise_id, 'INITIALIZED', false, 0
+            FROM example_submission es
+            WHERE es.submission_id IS NOT NULL
+              AND es.exercise_id IS NOT NULL;
+        </sql>
+
+        <sql dbms="h2">
+            INSERT INTO participation (discriminator, exercise_id, initialization_state, test_run, attempt)
+            SELECT 'EP', es.exercise_id, 'INITIALIZED', false, 0
+            FROM example_submission es
+            WHERE es.submission_id IS NOT NULL
+              AND es.exercise_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <!-- ==================== PHASE 4: Build mapping table ==================== -->
+    <!-- Map old example_submission IDs to new participation IDs using row numbers to handle multiple per exercise -->
+    <changeSet id="20260103100000-4" author="krusche">
+        <sql dbms="mysql">
+            INSERT INTO example_submission_migration_map (old_example_submission_id, new_participation_id)
+            SELECT es_ranked.id, p_ranked.participation_id
+            FROM (
+                SELECT es.id, es.exercise_id,
+                       ROW_NUMBER() OVER (PARTITION BY es.exercise_id ORDER BY es.id) as rn
+                FROM example_submission es
+                WHERE es.submission_id IS NOT NULL AND es.exercise_id IS NOT NULL
+            ) es_ranked
+            JOIN (
+                SELECT p.id as participation_id, p.exercise_id,
+                       ROW_NUMBER() OVER (PARTITION BY p.exercise_id ORDER BY p.id) as rn
+                FROM participation p
+                WHERE p.discriminator = 'EP'
+            ) p_ranked ON es_ranked.exercise_id = p_ranked.exercise_id AND es_ranked.rn = p_ranked.rn;
+        </sql>
+
+        <sql dbms="postgresql">
+            INSERT INTO example_submission_migration_map (old_example_submission_id, new_participation_id)
+            SELECT es_ranked.id, p_ranked.participation_id
+            FROM (
+                SELECT es.id, es.exercise_id,
+                       ROW_NUMBER() OVER (PARTITION BY es.exercise_id ORDER BY es.id) as rn
+                FROM example_submission es
+                WHERE es.submission_id IS NOT NULL AND es.exercise_id IS NOT NULL
+            ) es_ranked
+            JOIN (
+                SELECT p.id as participation_id, p.exercise_id,
+                       ROW_NUMBER() OVER (PARTITION BY p.exercise_id ORDER BY p.id) as rn
+                FROM participation p
+                WHERE p.discriminator = 'EP'
+            ) p_ranked ON es_ranked.exercise_id = p_ranked.exercise_id AND es_ranked.rn = p_ranked.rn;
+        </sql>
+
+        <sql dbms="h2">
+            INSERT INTO example_submission_migration_map (old_example_submission_id, new_participation_id)
+            SELECT es_ranked.id, p_ranked.participation_id
+            FROM (
+                SELECT es.id, es.exercise_id,
+                       ROW_NUMBER() OVER (PARTITION BY es.exercise_id ORDER BY es.id) as rn
+                FROM example_submission es
+                WHERE es.submission_id IS NOT NULL AND es.exercise_id IS NOT NULL
+            ) es_ranked
+            JOIN (
+                SELECT p.id as participation_id, p.exercise_id,
+                       ROW_NUMBER() OVER (PARTITION BY p.exercise_id ORDER BY p.id) as rn
+                FROM participation p
+                WHERE p.discriminator = 'EP'
+            ) p_ranked ON es_ranked.exercise_id = p_ranked.exercise_id AND es_ranked.rn = p_ranked.rn;
+        </sql>
+    </changeSet>
+
+    <!-- ==================== PHASE 5: Populate secondary table ==================== -->
+    <changeSet id="20260103100000-5" author="krusche">
+        <sql dbms="mysql">
+            INSERT INTO example_participation_details (id, used_for_tutorial, assessment_explanation)
+            SELECT m.new_participation_id, es.used_for_tutorial, es.assessment_explanation
+            FROM example_submission es
+            JOIN example_submission_migration_map m ON m.old_example_submission_id = es.id;
+        </sql>
+
+        <sql dbms="postgresql">
+            INSERT INTO example_participation_details (id, used_for_tutorial, assessment_explanation)
+            SELECT m.new_participation_id, es.used_for_tutorial, es.assessment_explanation
+            FROM example_submission es
+            JOIN example_submission_migration_map m ON m.old_example_submission_id = es.id;
+        </sql>
+
+        <sql dbms="h2">
+            INSERT INTO example_participation_details (id, used_for_tutorial, assessment_explanation)
+            SELECT m.new_participation_id, es.used_for_tutorial, es.assessment_explanation
+            FROM example_submission es
+            JOIN example_submission_migration_map m ON m.old_example_submission_id = es.id;
+        </sql>
+    </changeSet>
+
+    <!-- ==================== PHASE 6: Update submission.participation_id ==================== -->
+    <changeSet id="20260103100000-6" author="krusche">
+        <sql dbms="mysql">
+            UPDATE submission s
+            JOIN example_submission es ON es.submission_id = s.id
+            JOIN example_submission_migration_map m ON m.old_example_submission_id = es.id
+            SET s.participation_id = m.new_participation_id;
+        </sql>
+
+        <sql dbms="postgresql">
+            UPDATE submission s
+            SET participation_id = m.new_participation_id
+            FROM example_submission es
+            JOIN example_submission_migration_map m ON m.old_example_submission_id = es.id
+            WHERE es.submission_id = s.id;
+        </sql>
+
+        <sql dbms="h2">
+            UPDATE submission s
+            SET participation_id = (
+                SELECT m.new_participation_id
+                FROM example_submission es
+                JOIN example_submission_migration_map m ON m.old_example_submission_id = es.id
+                WHERE es.submission_id = s.id
+            )
+            WHERE EXISTS (
+                SELECT 1 FROM example_submission es WHERE es.submission_id = s.id
+            );
+        </sql>
+    </changeSet>
+
+    <!-- ==================== PHASE 7: Create new TutorParticipation junction table ==================== -->
+    <changeSet id="20260103100000-7" author="krusche">
+        <createTable tableName="tutor_participation_trained_example_participations">
+            <column name="tutor_participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="example_participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey
+            tableName="tutor_participation_trained_example_participations"
+            columnNames="tutor_participation_id, example_participation_id"
+            constraintName="pk_tutor_part_trained_example_part"/>
+
+        <addForeignKeyConstraint
+            baseTableName="tutor_participation_trained_example_participations"
+            baseColumnNames="tutor_participation_id"
+            referencedTableName="tutor_participation"
+            referencedColumnNames="id"
+            constraintName="fk_tutor_part_trained_example_part_tutor"/>
+
+        <addForeignKeyConstraint
+            baseTableName="tutor_participation_trained_example_participations"
+            baseColumnNames="example_participation_id"
+            referencedTableName="participation"
+            referencedColumnNames="id"
+            constraintName="fk_tutor_part_trained_example_part_participation"/>
+
+        <rollback>
+            <dropTable tableName="tutor_participation_trained_example_participations"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== PHASE 8: Migrate TutorParticipation junction data ==================== -->
+    <changeSet id="20260103100000-8" author="krusche">
+        <sql>
+            INSERT INTO tutor_participation_trained_example_participations (tutor_participation_id, example_participation_id)
+            SELECT tptes.tutor_participation_id, m.new_participation_id
+            FROM tutor_participation_trained_example_submissions tptes
+            JOIN example_submission_migration_map m ON m.old_example_submission_id = tptes.trained_example_submissions_id;
+        </sql>
+    </changeSet>
+
+    <!-- ==================== PHASE 9: Drop old junction table ==================== -->
+    <changeSet id="20260103100000-9" author="krusche">
+        <dropTable tableName="tutor_participation_trained_example_submissions"/>
+
+        <rollback>
+            <createTable tableName="tutor_participation_trained_example_submissions">
+                <column name="tutor_participation_id" type="bigint">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="trained_example_submissions_id" type="bigint">
+                    <constraints nullable="false"/>
+                </column>
+            </createTable>
+            <addPrimaryKey tableName="tutor_participation_trained_example_submissions"
+                           columnNames="tutor_participation_id, trained_example_submissions_id"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== PHASE 10: Drop example_submission table ==================== -->
+    <changeSet id="20260103100000-10" author="krusche">
+        <dropTable tableName="example_submission"/>
+
+        <rollback>
+            <createTable tableName="example_submission">
+                <column name="id" type="bigint" autoIncrement="true">
+                    <constraints primaryKey="true" nullable="false"/>
+                </column>
+                <column name="used_for_tutorial" type="boolean"/>
+                <column name="exercise_id" type="bigint"/>
+                <column name="submission_id" type="bigint"/>
+                <column name="assessment_explanation" type="varchar(2000)"/>
+            </createTable>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== PHASE 11: Drop temporary mapping table ==================== -->
+    <changeSet id="20260103100000-11" author="krusche">
+        <dropTable tableName="example_submission_migration_map"/>
+    </changeSet>
+
+    <!-- ==================== PHASE 12: Add NOT NULL constraint on submission.participation_id ==================== -->
+    <changeSet id="20260103100000-12" author="krusche">
+        <!-- First delete any remaining orphan submissions (should not exist after migration) -->
+        <sql>
+            DELETE FROM submission WHERE participation_id IS NULL;
+        </sql>
+
+        <addNotNullConstraint
+            tableName="submission"
+            columnName="participation_id"
+            columnDataType="BIGINT"/>
+
+        <rollback>
+            <dropNotNullConstraint
+                tableName="submission"
+                columnName="participation_id"
+                columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

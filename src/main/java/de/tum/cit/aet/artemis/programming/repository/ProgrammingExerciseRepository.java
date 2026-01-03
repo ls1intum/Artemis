@@ -641,19 +641,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return getValueElseThrow(findByIdWithGradingCriteria(exerciseId), exerciseId);
     }
 
-    @Query("""
-            SELECT DISTINCT e
-            FROM ProgrammingExercise e
-                LEFT JOIN FETCH e.gradingCriteria
-                LEFT JOIN FETCH e.exampleSubmissions
-            WHERE e.id = :exerciseId
-            """)
-    Optional<ProgrammingExercise> findByIdWithGradingCriteriaAndExampleSubmissions(@Param("exerciseId") long exerciseId);
-
-    default ProgrammingExercise findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(long exerciseId) {
-        return getValueElseThrow(findByIdWithGradingCriteriaAndExampleSubmissions(exerciseId), exerciseId);
-    }
-
     /**
      * Find a programming exercise by its id and fetch related plagiarism detection config, team config and grading criteria.
      * Throws an EntityNotFoundException if the exercise cannot be found.
@@ -1066,7 +1053,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         CompetencyLinks(ProgrammingExercise_.COMPETENCY_LINKS),
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
-        ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
         Attachments(ProgrammingExercise_.ATTACHMENTS),
         PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
         PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);

@@ -208,7 +208,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 // Test that certain properties were filtered out as the test user is a student
                 assertThat(exerciseServer.getGradingInstructions()).as("Grading instructions were filtered out").isNull();
                 assertThat(exerciseServer.getTutorParticipations()).as("Tutor participations not included").isEmpty();
-                assertThat(exerciseServer.getExampleSubmissions()).as("Example submissions not included").isEmpty();
+                assertThat(exerciseServer.getExampleParticipations()).as("Example submissions not included").isEmpty();
 
                 // Test presence and absence of exercise type specific properties
                 switch (exerciseServer) {
@@ -564,7 +564,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseForAssessmentDashboard = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
                 assertThat(exerciseForAssessmentDashboard.getTutorParticipations()).as("Tutor participation was created").hasSize(1);
-                assertThat(exerciseForAssessmentDashboard.getExampleSubmissions()).as("Example submissions are not null").isEmpty();
+                assertThat(exerciseForAssessmentDashboard.getExampleParticipations()).as("Example submissions are not null").isEmpty();
 
                 // Test that certain properties were set correctly
                 assertThat(exerciseForAssessmentDashboard.getReleaseDate()).as("Release date is present").isNotNull();
@@ -595,10 +595,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
-        var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
-        participationUtilService.addExampleSubmission(exampleSubmission);
+        var exampleSubmission = participationUtilService.generateExampleParticipation(validModel, exercise, true);
+        participationUtilService.saveExampleParticipation(exampleSubmission);
         Exercise receivedExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
-        assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
+        assertThat(receivedExercise.getExampleParticipations()).as("Example submission without assessment is removed from exercise").isEmpty();
     }
 
     @Test

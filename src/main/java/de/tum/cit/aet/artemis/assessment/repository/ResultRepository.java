@@ -24,7 +24,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -865,16 +865,16 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Given the example submission list, it returns the results of the linked submission, if any
+     * Given the example participation list, it returns the results of the linked submissions, if any
      *
-     * @param exampleSubmissions list of the example submission we want to retrieve
-     * @return list of result for example submissions
+     * @param exampleParticipations list of the example participations we want to retrieve
+     * @return list of results for example participations
      */
-    default List<Result> getResultForExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+    default List<Result> getResultForExampleParticipations(Set<ExampleParticipation> exampleParticipations) {
         List<Result> results = new ArrayList<>();
-        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
-            Submission submission = exampleSubmission.getSubmission();
-            if (!submission.isEmpty() && submission.getLatestResult() != null) {
+        for (ExampleParticipation exampleParticipation : exampleParticipations) {
+            Submission submission = exampleParticipation.getSubmission();
+            if (submission != null && !submission.isEmpty() && submission.getLatestResult() != null) {
                 Result result = findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(submission.getLatestResult().getId());
                 results.add(result);
             }

@@ -1,16 +1,14 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
-export class ExampleSubmission implements BaseEntity {
-    public id?: number;
-
+export class ExampleParticipation extends Participation {
     public usedForTutorial?: boolean;
-    public exercise?: Exercise;
-    public submission?: Submission;
-    public tutorParticipations?: TutorParticipation[];
     public assessmentExplanation?: string;
+    public tutorParticipations?: TutorParticipation[];
+
+    constructor() {
+        super(ParticipationType.EXAMPLE);
+    }
 }
 
 export enum ExampleSubmissionMode {
@@ -18,7 +16,7 @@ export enum ExampleSubmissionMode {
     ASSESS_CORRECTLY = 'assessCorrectly',
 }
 
-export class ExampleSubmissionDTO {
+export class ExampleParticipationDTO {
     public id: number;
     public usedForTutorial: boolean;
     public submissionId: number;

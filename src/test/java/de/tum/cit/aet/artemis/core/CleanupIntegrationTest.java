@@ -531,8 +531,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDeleteOldSubmissionVersions() throws Exception {
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
 
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        // Create participation and set on submission before saving (participation_id is NOT NULL)
+        var participation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        submission.setParticipation(participation);
         submission = submissionRepository.save(submission);
         SubmissionVersion submissionVersion1 = ParticipationFactory.generateSubmissionVersion("test1", submission, student);
         submissionVersion1 = submissionVersionRepository.save(submissionVersion1);

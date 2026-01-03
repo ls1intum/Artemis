@@ -31,7 +31,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
@@ -132,7 +132,7 @@ public class ExerciseService {
 
     private final RatingService ratingService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final ExampleParticipationRepository exampleParticipationRepository;
 
     private final QuizBatchService quizBatchService;
 
@@ -151,7 +151,7 @@ public class ExerciseService {
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
             UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
+            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleParticipationRepository exampleParticipationRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
             ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
         this.exerciseRepository = exerciseRepository;
@@ -172,7 +172,7 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.examLiveEventsApi = examLiveEventsApi;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
@@ -458,28 +458,41 @@ public class ExerciseService {
     }
 
     /**
-     * checks the example submissions of the exercise and removes unnecessary associations to other objects
+     * Finds and prepares example participations for the given exercise.
+     * Removes unnecessary associations to prevent recursions in JSON serialization.
      *
-     * @param exercise the exercise for which example submissions should be checked
+     * @param exercise the exercise for which example participations should be prepared
+     * @return the example participations with results, ready for serialization
      */
-    public void checkExampleSubmissions(Exercise exercise) {
-        // Avoid recursions
-        if (!exercise.getExampleSubmissions().isEmpty()) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
-            exercise.setExampleSubmissions(exampleSubmissionsWithResults);
-            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
-        }
+    public Set<ExampleParticipation> getExampleParticipationsWithResultsForExercise(Exercise exercise) {
+        Set<ExampleParticipation> exampleParticipations = exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(exercise.getId());
+        // Avoid recursions by clearing back-references
+        exampleParticipations.forEach(exampleParticipation -> {
+            exampleParticipation.setExercise(null);
+            exampleParticipation.setTutorParticipations(null);
+        });
+        return exampleParticipations;
     }
 
     /**
-     * Find all example submissions for the given exercise.
+     * Find all example participations for the given exercise.
      *
-     * @param exercise the exercise for which example submissions should be found
-     * @return the example submissions for the given exercise
+     * @param exercise the exercise for which example participations should be found
+     * @return the example participations for the given exercise
      */
-    public Set<ExampleSubmission> findExampleSubmissionsForExercise(Exercise exercise) {
-        return exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
+    public Set<ExampleParticipation> findExampleParticipationsForExercise(Exercise exercise) {
+        return exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(exercise.getId());
+    }
+
+    /**
+     * Loads example participations with results for the given exercise and sets them on the exercise's transient field.
+     * This method is used to populate the exercise with example participations before sending it to the client.
+     *
+     * @param exercise the exercise for which example participations should be loaded and set
+     */
+    public void checkExampleParticipations(Exercise exercise) {
+        Set<ExampleParticipation> exampleParticipations = getExampleParticipationsWithResultsForExercise(exercise);
+        exercise.setExampleParticipations(exampleParticipations);
     }
 
     /**
@@ -716,9 +729,10 @@ public class ExerciseService {
 
         List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(exercise.getId());
 
-        // add example submission results that belong exercise
-        if (!exercise.getExampleSubmissions().isEmpty()) {
-            results.addAll(resultRepository.getResultForExampleSubmissions(exercise.getExampleSubmissions()));
+        // add example participation results that belong to the exercise
+        Set<ExampleParticipation> exampleParticipations = exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(exercise.getId());
+        if (!exampleParticipations.isEmpty()) {
+            results.addAll(resultRepository.getResultForExampleParticipations(exampleParticipations));
         }
 
         // re-calculate the results after updating the feedback

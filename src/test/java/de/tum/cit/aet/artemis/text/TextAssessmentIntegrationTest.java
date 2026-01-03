@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
@@ -104,7 +104,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private ExampleSubmissionTestRepository exampleSubmissionRepository;
+    private ExampleParticipationTestRepository exampleParticipationRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -204,12 +204,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        participationUtilService.addExampleSubmission(exampleSubmission);
-        request.delete("/api/text/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
-                HttpStatus.NO_CONTENT);
-        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNull();
-        assertThat(textBlockRepository.findAllBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
+        final var exampleParticipation = ParticipationFactory.generateExampleParticipation(textSubmission, textExercise, true);
+        participationUtilService.saveExampleParticipation(exampleParticipation);
+        request.delete("/api/text/exercises/" + exampleParticipation.getExercise().getId() + "/example-participations/" + exampleParticipation.getId()
+                + "/example-text-assessment/feedback", HttpStatus.NO_CONTENT);
+        assertThat(exampleParticipationRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleParticipation.getId()).getSubmission().getLatestResult()).isNull();
+        assertThat(textBlockRepository.findAllBySubmissionId(exampleParticipation.getSubmission().getId())).isEmpty();
     }
 
     @Test
@@ -218,12 +218,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        participationUtilService.addExampleSubmission(exampleSubmission);
+        final var exampleParticipation = ParticipationFactory.generateExampleParticipation(textSubmission, textExercise, true);
+        participationUtilService.saveExampleParticipation(exampleParticipation);
         long randomId = 4532;
-        request.delete("/api/text/exercises/" + randomId + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback", HttpStatus.BAD_REQUEST);
-        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
-        assertThat(textBlockRepository.findAllBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
+        request.delete("/api/text/exercises/" + randomId + "/example-participations/" + exampleParticipation.getId() + "/example-text-assessment/feedback", HttpStatus.BAD_REQUEST);
+        assertThat(exampleParticipationRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleParticipation.getId()).getSubmission().getLatestResult().getFeedbacks())
+                .isEmpty();
+        assertThat(textBlockRepository.findAllBySubmissionId(exampleParticipation.getSubmission().getId())).isEmpty();
     }
 
     @Test
@@ -650,8 +651,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(isExample);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        participationUtilService.addExampleSubmission(exampleSubmission);
+        final var exampleParticipation = ParticipationFactory.generateExampleParticipation(textSubmission, textExercise, true);
+        participationUtilService.saveExampleParticipation(exampleParticipation);
 
         Result result = request.getNullable("/api/text/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus,
                 Result.class);
@@ -673,8 +674,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        participationUtilService.addExampleSubmission(exampleSubmission);
+        final var exampleParticipation = ParticipationFactory.generateExampleParticipation(textSubmission, textExercise, true);
+        participationUtilService.saveExampleParticipation(exampleParticipation);
         long randomId = 23454;
         Result result = request.get("/api/text/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.BAD_REQUEST, Result.class);
 

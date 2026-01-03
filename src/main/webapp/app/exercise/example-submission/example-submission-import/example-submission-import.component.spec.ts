@@ -6,7 +6,7 @@ import { Submission, SubmissionType } from 'app/exercise/shared/entities/submiss
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -27,7 +27,7 @@ describe('ExampleSubmissionImportComponent', () => {
     let searchSpy: jest.SpyInstance;
     let searchResult: SearchResult<Submission>;
     let submission: Submission;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleParticipationService: ExampleParticipationService;
     let getSubmissionSizeSpy: jest.SpyInstance;
     let exercise: Exercise;
 
@@ -50,9 +50,9 @@ describe('ExampleSubmissionImportComponent', () => {
                 fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
                 component = fixture.componentInstance;
                 pagingService = TestBed.inject(ExampleSubmissionImportPagingService);
-                exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+                exampleParticipationService = TestBed.inject(ExampleParticipationService);
                 searchSpy = jest.spyOn(pagingService, 'search');
-                getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize').mockReturnValue(2);
+                getSubmissionSizeSpy = jest.spyOn(exampleParticipationService, 'getSubmissionSize').mockReturnValue(2);
             });
     });
 

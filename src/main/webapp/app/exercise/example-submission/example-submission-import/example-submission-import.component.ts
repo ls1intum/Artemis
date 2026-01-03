@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -34,7 +34,7 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
     ],
 })
 export class ExampleSubmissionImportComponent extends ImportComponent<Submission> {
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleParticipationService = inject(ExampleParticipationService);
 
     exercise: Exercise;
 
@@ -52,7 +52,7 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
 
     protected override onSearchResult() {
         this.content?.resultsOnPage?.forEach((submission) => {
-            submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
+            submission.submissionSize = this.exampleParticipationService.getSubmissionSize(submission, this.exercise);
         });
     }
 

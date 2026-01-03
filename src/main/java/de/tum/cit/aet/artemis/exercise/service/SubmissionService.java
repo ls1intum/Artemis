@@ -611,9 +611,10 @@ public class SubmissionService {
             Submission submission = new ProgrammingSubmission();
             submission.setSubmissionDate(ZonedDateTime.now());
             submission.setType(SubmissionType.INSTRUCTOR);
-            submission = submissionRepository.save(submission);
-            studentParticipation.setSubmissions(Set.of(submission));
+            // Set participation BEFORE saving (participation_id is NOT NULL)
             submission.setParticipation(studentParticipation);
+            studentParticipation.setSubmissions(Set.of(submission));
+            submission = submissionRepository.save(submission);
             participationRepository.save(studentParticipation);
         }
     }

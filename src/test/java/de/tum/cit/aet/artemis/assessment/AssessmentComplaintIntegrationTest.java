@@ -727,7 +727,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 }
                 case TextExercise textExercise -> {
                     assertThat(textExercise.getExampleSolution()).as("Exercise only contains title and ID").isNull();
-                    assertThat(textExercise.getExampleSubmissions()).as("Exercise only contains title and ID").isNull();
+                    assertThat(textExercise.getExampleParticipations()).as("Exercise only contains title and ID").isEmpty();
                 }
                 case ProgrammingExercise programmingExercise -> assertThat(programmingExercise.getProgrammingLanguage()).as("Exercise only contains title and ID").isNull();
                 default -> {

@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
-import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -79,7 +79,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     private ParticipationService participationService;
 
     @Autowired
-    private ExampleSubmissionTestRepository exampleSubmissionRepository;
+    private ExampleParticipationTestRepository exampleParticipationRepository;
 
     @Autowired
     private AssessmentService assessmentService;
@@ -187,15 +187,15 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutor() throws Exception {
-        ExampleSubmission storedExampleSubmission = participationUtilService
-                .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
+        ExampleParticipation storedExampleParticipation = participationUtilService
+                .saveExampleParticipation(participationUtilService.generateExampleParticipation(validModel, classExercise, true, true));
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList,
+        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleParticipation.getId() + "/example-assessment", feedbackList,
                 Result.class, HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
-        assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
+        assertThat(exampleParticipationRepository.findById(storedExampleParticipation.getId())).isPresent();
         var result = request.get(
-                "/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+                "/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleParticipation.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, Result.class);
         for (Feedback feedback : result.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
@@ -207,28 +207,28 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
-        ExampleSubmission storedExampleSubmission = participationUtilService
-                .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, false));
+        ExampleParticipation storedExampleParticipation = participationUtilService
+                .saveExampleParticipation(participationUtilService.generateExampleParticipation(validModel, classExercise, true, false));
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList,
+        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleParticipation.getId() + "/example-assessment", feedbackList,
                 Result.class, HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
-        assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        request.get("/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+        assertThat(exampleParticipationRepository.findById(storedExampleParticipation.getId())).isPresent();
+        request.get("/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleParticipation.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, Result.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExampleAssessmentAsInstructor() throws Exception {
-        ExampleSubmission storedExampleSubmission = participationUtilService
-                .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
+        ExampleParticipation storedExampleParticipation = participationUtilService
+                .saveExampleParticipation(participationUtilService.generateExampleParticipation(validModel, classExercise, true, true));
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList,
+        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleParticipation.getId() + "/example-assessment", feedbackList,
                 Result.class, HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
-        assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        request.get("/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+        assertThat(exampleParticipationRepository.findById(storedExampleParticipation.getId())).isPresent();
+        request.get("/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleParticipation.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, Result.class);
     }
 

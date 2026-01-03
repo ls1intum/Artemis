@@ -275,7 +275,7 @@
                                     </p>
 
                                     @if (stats.toReview.done < stats.toReview.total) {
-                                        <button class="btn btn-primary review-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId, true, false)">
+                                        <button class="btn btn-primary review-example-submission mb-4" (click)="openExampleSubmission(nextExampleParticipationId, true, false)">
                                             @if (stats.toReview.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -288,12 +288,12 @@
 
                                     @if (stats.toReview.done >= stats.toReview.total) {
                                         <ul>
-                                            @for (exampleSubmission of exampleSubmissionsToReview; track exampleSubmission; let i = $index) {
+                                            @for (exampleParticipation of exampleParticipationsToReview; track exampleParticipation; let i = $index) {
                                                 <li>
-                                                    <button class="btn btn-link review-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, true, false)">
+                                                    <button class="btn btn-link review-example-submission" (click)="openExampleSubmission(exampleParticipation.id!, true, false)">
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
-                                                    @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
+                                                    @if (hasBeenCompletedByTutor(exampleParticipation.id!)) {
                                                         <fa-icon class="text-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
@@ -310,7 +310,7 @@
                                         {{ stats.toAssess.total }})
                                     </p>
                                     @if (stats.toAssess.done < stats.toAssess.total) {
-                                        <button class="btn btn-primary assess-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId, false, true)">
+                                        <button class="btn btn-primary assess-example-submission mb-4" (click)="openExampleSubmission(nextExampleParticipationId, false, true)">
                                             @if (stats.toAssess.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -323,12 +323,12 @@
 
                                     @if (stats.toAssess.done >= stats.toAssess.total) {
                                         <ul>
-                                            @for (exampleSubmission of exampleSubmissionsToAssess; track exampleSubmission; let i = $index) {
+                                            @for (exampleParticipation of exampleParticipationsToAssess; track exampleParticipation; let i = $index) {
                                                 <li>
-                                                    <button class="btn btn-link assess-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, false, true)">
+                                                    <button class="btn btn-link assess-example-submission" (click)="openExampleSubmission(exampleParticipation.id!, false, true)">
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
-                                                    @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
+                                                    @if (hasBeenCompletedByTutor(exampleParticipation.id!)) {
                                                         <fa-icon class="text-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>

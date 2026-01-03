@@ -719,6 +719,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteSubmission() {
         submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         fileUploadSubmissionRepository.delete(submittedFileUploadSubmission);
         assertThat(fileUploadSubmissionRepository.findAll()).doesNotContain(submittedFileUploadSubmission);
@@ -728,6 +729,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOnDeleteSubmission() {
         submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }

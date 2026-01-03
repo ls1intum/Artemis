@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -29,19 +30,19 @@ public class TextSubmissionImportApi extends AbstractTextApi {
     }
 
     /**
-     * Imports a student submission to an exercise.
+     * Imports a student submission as an example participation.
      *
      * @param submissionId                  of the submission to be imported
      * @param exerciseId                    of the exercise to import the submission into
      * @param gradingInstructionCopyTracker mapping of the gradingInstructionID to the gradingInstruction
+     * @param targetParticipation           the example participation to associate with the new submission
      * @return the imported text submission
      */
-    public TextSubmission importStudentSubmission(long submissionId, long exerciseId, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    public TextSubmission importStudentSubmission(long submissionId, long exerciseId, Map<Long, GradingInstruction> gradingInstructionCopyTracker,
+            ExampleParticipation targetParticipation) {
         TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);
         checkGivenExerciseIdSameForSubmissionParticipation(exerciseId, textSubmission.getParticipation().getExercise().getId());
-        // example submission does not need participation
-        textSubmission.setParticipation(null);
-        return textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker);
+        return textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker, targetParticipation);
     }
 
     private void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {

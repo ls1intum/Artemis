@@ -15,15 +15,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
-import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
+import de.tum.cit.aet.artemis.assessment.service.ExampleParticipationService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -49,7 +50,10 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     private SubmissionService submissionService;
 
     @Autowired
-    private ExampleSubmissionService exampleSubmissionService;
+    private ExampleParticipationService exampleParticipationService;
+
+    @Autowired
+    private ExampleParticipationTestRepository exampleParticipationRepository;
 
     @Autowired
     private TutorParticipationService tutorParticipationService;
@@ -96,7 +100,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         for (Exercise exercise : new Exercise[] { textExercise, modelingExercise }) {
             exercise.setTitle("exercise name");
             exerciseRepository.save(exercise);
-            path = "/api/assessment/exercises/" + exercise.getId() + "/assess-example-submission";
+            path = "/api/assessment/exercises/" + exercise.getId() + "/assess-example-participation";
         }
 
         textBlockIds = new ArrayList<>();
@@ -108,9 +112,9 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
         var tutorId = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId();
 
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
+        ExampleParticipation exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
         var tutorParticipationDTO = request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.OK);
-        assertThat(tutorParticipationDTO.trainedExampleSubmissions()).as("Tutor participation has example submission").hasSize(1);
+        assertThat(tutorParticipationDTO.trainedExampleParticipations()).as("Tutor participation has example submission").hasSize(1);
         assertThat(tutorParticipationDTO.tutorId()).as("Tutor participation belongs to correct tutor").isEqualTo(tutorId);
         assertThat(tutorParticipationDTO.exerciseId()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise.getId());
         assertThat(tutorParticipationDTO.status()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
@@ -123,18 +127,20 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
-        ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
+        ExampleParticipation exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var existing = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
-        exampleSubmission.addTutorParticipations(existing);
-        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
+        var existing = tutorParticipationRepository.findWithEagerExampleParticipationAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
+        // Refetch with tutorParticipations loaded to avoid LazyInitializationException
+        exampleSubmission = exampleParticipationRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId()).orElseThrow();
+        exampleSubmission.addTutorParticipation(existing);
+        exampleSubmission = exampleParticipationService.save(exampleSubmission);
 
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
 
-        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-participation";
         request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
@@ -144,18 +150,20 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
-        ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
+        ExampleParticipation exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var existing = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
-        exampleSubmission.addTutorParticipations(existing);
-        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
+        var existing = tutorParticipationRepository.findWithEagerExampleParticipationAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
+        // Refetch with tutorParticipations loaded to avoid LazyInitializationException
+        exampleSubmission = exampleParticipationRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId()).orElseThrow();
+        exampleSubmission.addTutorParticipation(existing);
+        exampleSubmission = exampleParticipationService.save(exampleSubmission);
 
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
 
-        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-participation";
         request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
@@ -166,17 +174,17 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        ExampleParticipation exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
-        exampleSubmission.addTutorParticipations(tutorParticipation);
-        exampleSubmissionService.save(exampleSubmission);
+        exampleSubmission.addTutorParticipation(tutorParticipation);
+        exampleParticipationService.save(exampleSubmission);
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
-        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-participation";
         request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
@@ -186,42 +194,46 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        ExampleParticipation exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
-        exampleSubmission.addTutorParticipations(tutorParticipation);
-        exampleSubmissionService.save(exampleSubmission);
+        exampleSubmission.addTutorParticipation(tutorParticipation);
+        exampleParticipationService.save(exampleSubmission);
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
-        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-participation";
         request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
     @NonNull
-    private ExampleSubmission prepareTextExampleSubmission(boolean usedForTutorial) throws Exception {
+    private ExampleParticipation prepareTextExampleSubmission(boolean usedForTutorial) throws Exception {
         var exampleSubmissionText = "This is first sentence:This is second sentence.";
-        ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(exampleSubmissionText, textExercise, false, usedForTutorial);
+        ExampleParticipation exampleSubmission = participationUtilService.generateExampleParticipation(exampleSubmissionText, textExercise, false, usedForTutorial);
+
+        // Save first to get submission ID (needed for textBlock.computeId())
+        exampleSubmission = exampleParticipationService.save(exampleSubmission);
         TextSubmission textSubmission = (TextSubmission) exampleSubmission.getSubmission();
 
         for (var sentence : exampleSubmissionText.split(":")) {
-            var block = new TextBlock();
             var startIndex = exampleSubmissionText.indexOf(sentence);
 
             var textBlock = new TextBlock().text(sentence).startIndex(startIndex).endIndex(startIndex + sentence.length()).submission(textSubmission).manual();
             textBlock.computeId();
-            textSubmission.addBlock(block);
+            textSubmission.addBlock(textBlock);
 
             // Store the id in textBlockIds for later access.
             textBlockIds.add(textBlock.getId());
         }
 
-        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
+        exampleSubmission = exampleParticipationService.save(exampleSubmission);
 
         if (usedForTutorial) {
-            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), textExercise.getId());
+            // Fetch fresh submission with results loaded to avoid LazyInitializationException
+            var freshSubmission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
+            var result = submissionService.saveNewEmptyResult(freshSubmission, textExercise.getId());
             result.setExampleResult(true);
             result.setExerciseId(textExercise.getId());
 
@@ -240,10 +252,10 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @NonNull
-    private ExampleSubmission prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
+    private ExampleParticipation prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
-        exampleSubmissionService.save(exampleSubmission);
+        ExampleParticipation exampleSubmission = participationUtilService.generateExampleParticipation(validModel, modelingExercise, false, usedForTutorial);
+        exampleParticipationService.save(exampleSubmission);
         if (usedForTutorial) {
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), modelingExercise.getId());
             result.setExampleResult(true);

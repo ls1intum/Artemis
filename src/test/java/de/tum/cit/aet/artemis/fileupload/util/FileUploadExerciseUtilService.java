@@ -226,9 +226,11 @@ public class FileUploadExerciseUtilService {
             String assessorLogin, List<Feedback> feedbacks) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
 
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        fileUploadSubmission.setParticipation(participation);
+        participation.addSubmission(fileUploadSubmission);
         submissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
@@ -246,7 +248,6 @@ public class FileUploadExerciseUtilService {
             feedback.setResult(result);
         }
         result = resultRepo.save(result);
-        fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);

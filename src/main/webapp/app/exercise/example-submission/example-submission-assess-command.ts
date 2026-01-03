@@ -2,7 +2,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 export interface FeedbackMarker {
@@ -17,8 +17,8 @@ export class ExampleSubmissionAssessCommand {
         private feedbackMarker: FeedbackMarker,
     ) {}
 
-    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, exerciseId).subscribe({
+    assessExampleParticipation(exampleParticipation: ExampleParticipation, exerciseId: number) {
+        this.tutorParticipationService.assessExampleParticipation(exampleParticipation, exerciseId).subscribe({
             next: () => this.onSuccess(),
             error: (error: HttpErrorResponse) => this.onFailure(error),
         });

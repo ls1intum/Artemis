@@ -258,9 +258,8 @@ public class TextExerciseCreationUpdateResource {
         exerciseService.updatePointsInRelatedParticipantScores(originalExerciseCopy, updatedTextExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, originalExerciseCopy.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
-        // Fetch the exercise with example submissions for the check
-        TextExercise exerciseWithExampleSubmissions = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(updatedTextExercise.getId());
-        exerciseService.checkExampleSubmissions(exerciseWithExampleSubmissions);
+        // Load example participations into the transient field for the response
+        exerciseService.checkExampleParticipations(updatedTextExercise);
         exerciseService.notifyAboutExerciseChanges(originalExerciseCopy, updatedTextExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(originalExerciseCopy, updatedTextExercise));
 
@@ -340,7 +339,7 @@ public class TextExerciseCreationUpdateResource {
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         // Fetch the managed entity and merge grading criteria
-        TextExercise managedExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(exerciseId);
+        TextExercise managedExercise = textExerciseRepository.findWithGradingCriteriaByIdElseThrow(exerciseId);
 
         // Clear existing grading criteria and add the new ones
         managedExercise.getGradingCriteria().clear();
@@ -360,9 +359,8 @@ public class TextExerciseCreationUpdateResource {
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
 
-        // Fetch with example submissions for the check
-        TextExercise exerciseWithExampleSubmissions = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(updatedTextExercise.getId());
-        exerciseService.checkExampleSubmissions(exerciseWithExampleSubmissions);
+        // Load example participations into the transient field for the response
+        exerciseService.checkExampleParticipations(updatedTextExercise);
 
         exerciseVersionService.createExerciseVersion(updatedTextExercise);
         return ResponseEntity.ok(updatedTextExercise);

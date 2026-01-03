@@ -141,6 +141,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
+        // Set participation BEFORE storeFile which may save the submission (participation_id is NOT NULL)
+        fileUploadSubmission.setParticipation(participation);
         URI newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
 
         // update submission properties

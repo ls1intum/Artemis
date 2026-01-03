@@ -2,11 +2,11 @@ import { Component, OnInit, ViewChild, computed, effect, inject, signal, untrack
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation, ExampleSubmissionMode } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
@@ -54,7 +54,7 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     private exerciseService = inject(ExerciseService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleParticipationService = inject(ExampleParticipationService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private tutorParticipationService = inject(TutorParticipationService);
     private alertService = inject(AlertService);
@@ -72,7 +72,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     isNewSubmission: boolean;
     assessmentMode = false;
     exerciseId: number;
-    exampleSubmission: ExampleSubmission;
+    exampleParticipation: ExampleParticipation;
     modelingSubmission: ModelingSubmission;
     umlModel: UMLModel;
     explanationText: string;
@@ -113,7 +113,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         },
     ];
 
-    private exampleSubmissionId: number;
+    private exampleParticipationId: number;
 
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
@@ -149,16 +149,16 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
+        const exampleParticipationId = this.route.snapshot.paramMap.get('exampleParticipationId');
         this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
         this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
 
-        if (exampleSubmissionId === 'new') {
+        if (exampleParticipationId === 'new') {
             this.isNewSubmission = true;
-            this.exampleSubmissionId = -1;
+            this.exampleParticipationId = -1;
         } else {
             // (+) converts string 'id' to a number
-            this.exampleSubmissionId = +exampleSubmissionId!;
+            this.exampleParticipationId = +exampleParticipationId!;
         }
 
         // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
@@ -173,14 +173,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         let exerciseSource$ = this.exerciseService.find(this.exerciseId);
 
         if (this.isNewSubmission) {
-            this.exampleSubmission = new ExampleSubmission();
+            this.exampleParticipation = new ExampleParticipation();
             // We don't need to load anything else
         } else {
-            const exampleSubmissionSource$ = this.exampleSubmissionService.get(this.exampleSubmissionId).pipe(
-                tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                    this.exampleSubmission = exampleSubmissionResponse.body!;
-                    if (this.exampleSubmission.submission) {
-                        this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+            const exampleParticipationSource$ = this.exampleParticipationService.get(this.exampleParticipationId).pipe(
+                tap((exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+                    this.exampleParticipation = exampleParticipationResponse.body!;
+                    const submission = this.exampleParticipationService.getSubmission(this.exampleParticipation);
+                    if (submission) {
+                        this.modelingSubmission = submission as ModelingSubmission;
                         if (this.modelingSubmission.model) {
                             this.umlModel = JSON.parse(this.modelingSubmission.model);
                         }
@@ -188,13 +189,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                         this.explanationText = this.modelingSubmission.explanationText ?? '';
                     }
 
-                    if (this.exampleSubmission.usedForTutorial) {
+                    if (this.exampleParticipation.usedForTutorial) {
                         this.selectedMode = ExampleSubmissionMode.ASSESS_CORRECTLY;
                     } else {
                         this.selectedMode = ExampleSubmissionMode.READ_AND_CONFIRM;
                     }
 
-                    this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
+                    this.assessmentExplanation = this.exampleParticipation.assessmentExplanation!;
 
                     if (this.toComplete) {
                         this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
@@ -209,10 +210,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 }),
             );
 
-            // exampleSubmissionSource$ should set the umlModel before exerciseSource$ sets the exercise in order
+            // exampleParticipationSource$ should set the umlModel before exerciseSource$ sets the exercise in order
             // to prevent ModelingAssessmentComponent from displaying the model as empty due to race condition between
             // two requests.
-            exerciseSource$ = forkJoin([exerciseSource$, exampleSubmissionSource$]).pipe(map(([exercise]) => exercise));
+            exerciseSource$ = forkJoin([exerciseSource$, exampleParticipationSource$]).pipe(map(([exercise]) => exercise));
         }
 
         exerciseSource$.subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
@@ -236,17 +237,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         modelingSubmission.explanationText = this.explanationText;
         modelingSubmission.exampleSubmission = true;
 
-        const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
-        newExampleSubmission.submission = modelingSubmission;
-        newExampleSubmission.exercise = this.exercise;
+        const newExampleParticipation: ExampleParticipation = this.exampleParticipation;
+        newExampleParticipation.submissions = [modelingSubmission];
+        newExampleParticipation.exercise = this.exercise;
 
-        newExampleSubmission.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
-        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
-            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmissionId = this.exampleSubmission.id!;
-                if (this.exampleSubmission.submission) {
-                    this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+        newExampleParticipation.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+        this.exampleParticipationService.create(newExampleParticipation, this.exerciseId).subscribe({
+            next: (exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+                this.exampleParticipation = exampleParticipationResponse.body!;
+                this.exampleParticipationId = this.exampleParticipation.id!;
+                const submission = this.exampleParticipationService.getSubmission(this.exampleParticipation);
+                if (submission) {
+                    this.modelingSubmission = submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
                         this.umlModel = JSON.parse(this.modelingSubmission.model);
                     }
@@ -258,7 +260,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
+                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleParticipationId);
             },
             error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
@@ -282,17 +284,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             delete this.result.submission;
         }
 
-        const exampleSubmission = this.exampleSubmission;
-        exampleSubmission.submission = this.modelingSubmission;
-        exampleSubmission.exercise = this.exercise;
-        exampleSubmission.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+        const exampleParticipation = this.exampleParticipation;
+        exampleParticipation.submissions = [this.modelingSubmission];
+        exampleParticipation.exercise = this.exercise;
+        exampleParticipation.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
 
-        return this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).pipe(
-            tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmissionId = this.exampleSubmission.id!;
-                if (this.exampleSubmission.submission) {
-                    this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+        return this.exampleParticipationService.update(exampleParticipation, this.exerciseId).pipe(
+            tap((exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+                this.exampleParticipation = exampleParticipationResponse.body!;
+                this.exampleParticipationId = this.exampleParticipation.id!;
+                const submission = this.exampleParticipationService.getSubmission(this.exampleParticipation);
+                if (submission) {
+                    this.modelingSubmission = submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
                         this.umlModel = JSON.parse(this.modelingSubmission.model);
                     }
@@ -352,9 +355,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
-        if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.assessments) {
+        if (this.assessmentExplanation !== this.exampleParticipation.assessmentExplanation && this.assessments) {
             this.updateAssessmentExplanationAndExampleAssessment();
-        } else if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
+        } else if (this.assessmentExplanation !== this.exampleParticipation.assessmentExplanation) {
             this.updateAssessmentExplanation();
         } else if (this.assessments) {
             this.updateExampleAssessment();
@@ -362,15 +365,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private updateAssessmentExplanationAndExampleAssessment() {
-        this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
-        this.exampleSubmissionService
-            .update(this.exampleSubmission, this.exerciseId)
+        this.exampleParticipation.assessmentExplanation = this.assessmentExplanation;
+        this.exampleParticipationService
+            .update(this.exampleParticipation, this.exerciseId)
             .pipe(
-                tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                    this.exampleSubmission = exampleSubmissionResponse.body!;
-                    this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
+                tap((exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+                    this.exampleParticipation = exampleParticipationResponse.body!;
+                    this.assessmentExplanation = this.exampleParticipation.assessmentExplanation!;
                 }),
-                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId)),
+                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleParticipationId)),
             )
             .subscribe({
                 next: (result: Result) => {
@@ -384,18 +387,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     /**
-     * Updates the example submission with the assessment explanation text from the input field if it is different from the explanation already saved with the example submission.
+     * Updates the example participation with the assessment explanation text from the input field if it is different from the explanation already saved with the example participation.
      */
     private updateAssessmentExplanation() {
-        this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
-        this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body!;
-            this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
+        this.exampleParticipation.assessmentExplanation = this.assessmentExplanation;
+        this.exampleParticipationService.update(this.exampleParticipation, this.exerciseId).subscribe((exampleParticipationResponse: HttpResponse<ExampleParticipation>) => {
+            this.exampleParticipation = exampleParticipationResponse.body!;
+            this.assessmentExplanation = this.exampleParticipation.assessmentExplanation!;
         });
     }
 
     private updateExampleAssessment() {
-        this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId).subscribe({
+        this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleParticipationId).subscribe({
             next: (result: Result) => {
                 this.updateAssessment(result);
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
@@ -461,14 +464,16 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return;
         }
 
-        const exampleSubmission = Object.assign({}, this.exampleSubmission);
+        const exampleParticipation = Object.assign({}, this.exampleParticipation);
+        const submission = Object.assign({}, this.modelingSubmission);
+        exampleParticipation.submissions = [submission];
         const result = new Result();
-        setLatestSubmissionResult(exampleSubmission.submission, result);
+        setLatestSubmissionResult(submission, result);
         delete result.submission;
-        getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.assessments;
+        getLatestSubmissionResult(submission)!.feedbacks = this.assessments;
 
         const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
-        command.assessExampleSubmission(exampleSubmission, this.exerciseId);
+        command.assessExampleParticipation(exampleParticipation, this.exerciseId);
     }
 
     markAllFeedbackToCorrect() {
@@ -501,8 +506,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
-            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
+        this.tutorParticipationService.assessExampleParticipation(this.exampleParticipation, this.exerciseId).subscribe(() => {
+            this.alertService.success('artemisApp.exampleParticipation.readSuccessfully');
             this.back();
         });
     }

@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -169,11 +169,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -234,6 +229,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @Transient
     private String channelNameTransient;
+
+    /**
+     * Transient field to store example participations when needed for serialization.
+     * ExampleParticipations are queried separately via ExampleParticipationRepository.
+     */
+    @Transient
+    private Set<ExampleParticipation> exampleParticipationsTransient = new HashSet<>();
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
@@ -402,25 +404,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             return this.getExerciseGroup().getExam();
         }
         return null;
-    }
-
-    public Set<ExampleSubmission> getExampleSubmissions() {
-        return exampleSubmissions;
-    }
-
-    public Exercise addExampleSubmission(ExampleSubmission exampleSubmission) {
-        this.exampleSubmissions.add(exampleSubmission);
-        exampleSubmission.setExercise(this);
-        return this;
-    }
-
-    public void removeExampleSubmission(ExampleSubmission exampleSubmission) {
-        this.exampleSubmissions.remove(exampleSubmission);
-        exampleSubmission.setExercise(null);
-    }
-
-    public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
-        this.exampleSubmissions = exampleSubmissions;
     }
 
     public Set<Attachment> getAttachments() {
@@ -661,6 +644,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setChannelName(String channelNameTransient) {
         this.channelNameTransient = channelNameTransient;
+    }
+
+    @JsonProperty("exampleParticipations")
+    public Set<ExampleParticipation> getExampleParticipations() {
+        return exampleParticipationsTransient;
+    }
+
+    @JsonProperty("exampleParticipations")
+    public void setExampleParticipations(Set<ExampleParticipation> exampleParticipations) {
+        this.exampleParticipationsTransient = exampleParticipations;
     }
 
     @Nullable
@@ -921,8 +914,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
-                .forEach(Collection::clear);
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, attachments, plagiarismCases).filter(Objects::nonNull).forEach(Collection::clear);
     }
 
     /**

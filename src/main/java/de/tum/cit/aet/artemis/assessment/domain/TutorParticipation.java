@@ -45,9 +45,9 @@ public class TutorParticipation extends DomainObject {
 
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "tutor_participation_trained_example_submissions", joinColumns = @JoinColumn(name = "tutor_participation_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "trained_example_submissions_id", referencedColumnName = "id"))
+    @JoinTable(name = "tutor_participation_trained_example_participations", joinColumns = @JoinColumn(name = "tutor_participation_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "example_participation_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "tutorParticipations" })
-    private Set<ExampleSubmission> trainedExampleSubmissions = new HashSet<>();
+    private Set<ExampleParticipation> trainedExampleParticipations = new HashSet<>();
 
     public TutorParticipationStatus getStatus() {
         return status;
@@ -88,18 +88,18 @@ public class TutorParticipation extends DomainObject {
         this.tutor = user;
     }
 
-    public Set<ExampleSubmission> getTrainedExampleSubmissions() {
-        return trainedExampleSubmissions;
+    public Set<ExampleParticipation> getTrainedExampleParticipations() {
+        return trainedExampleParticipations;
     }
 
-    public TutorParticipation addTrainedExampleSubmissions(ExampleSubmission exampleSubmission) {
-        this.trainedExampleSubmissions.add(exampleSubmission);
-        exampleSubmission.getTutorParticipations().add(this);
+    public TutorParticipation addTrainedExampleParticipation(ExampleParticipation exampleParticipation) {
+        this.trainedExampleParticipations.add(exampleParticipation);
+        exampleParticipation.getTutorParticipations().add(this);
         return this;
     }
 
-    public void setTrainedExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
-        this.trainedExampleSubmissions = exampleSubmissions;
+    public void setTrainedExampleParticipations(Set<ExampleParticipation> exampleParticipations) {
+        this.trainedExampleParticipations = exampleParticipations;
     }
 
     @Override

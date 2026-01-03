@@ -58,8 +58,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      */
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status!;
-        const exerciseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.id');
-        const courseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
+        const exerciseId = get(this.tutorParticipation, 'trainedExampleParticipations[0].exercise.id');
+        const courseId = get(this.tutorParticipation, 'trainedExampleParticipations[0].exercise.course.id');
 
         if (courseId && exerciseId) {
             this.routerLink = `/course-management/${courseId}/assessment-dashboard/${exerciseId}`;
@@ -143,11 +143,11 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             return 'opaque';
         }
 
-        if (step === this.TRAINED && this.exercise.exampleSubmissions && this.tutorParticipation.trainedExampleSubmissions) {
-            const reviewedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter((exampleSubmission) => !exampleSubmission.usedForTutorial);
-            const exercisesToReview = this.exercise.exampleSubmissions.filter((exampleSubmission) => !exampleSubmission.usedForTutorial);
-            const assessedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter((exampleSubmission) => exampleSubmission.usedForTutorial);
-            const exercisesToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission) => exampleSubmission.usedForTutorial);
+        if (step === this.TRAINED && this.exercise.exampleParticipations && this.tutorParticipation.trainedExampleParticipations) {
+            const reviewedByTutor = this.tutorParticipation.trainedExampleParticipations.filter((exampleParticipation) => !exampleParticipation.usedForTutorial);
+            const exercisesToReview = this.exercise.exampleParticipations.filter((exampleParticipation) => !exampleParticipation.usedForTutorial);
+            const assessedByTutor = this.tutorParticipation.trainedExampleParticipations.filter((exampleParticipation) => exampleParticipation.usedForTutorial);
+            const exercisesToAssess = this.exercise.exampleParticipations.filter((exampleParticipation) => exampleParticipation.usedForTutorial);
 
             // Returns 'orange' if there are still open example reviews or assessments
             if (

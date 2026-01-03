@@ -58,29 +58,33 @@
                     </tr>
                 </thead>
                 <tbody class="markdown-preview">
-                    @for (exampleSubmission of exercise.exampleSubmissions; track exampleSubmission; let i = $index) {
+                    @for (exampleParticipation of exercise.exampleParticipations; track exampleParticipation; let i = $index) {
                         <tr>
                             <td>
-                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
-                                    {{ exampleSubmission.id }}
+                                <a [routerLink]="getLinkToExampleSubmission(exampleParticipation.id!)" class="btn-link">
+                                    {{ exampleParticipation.id }}
                                 </a>
                             </td>
                             <td>
-                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
+                                <a [routerLink]="getLinkToExampleSubmission(exampleParticipation.id!)" class="btn-link">
                                     {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                 </a>
                             </td>
                             <td>
-                                @if (exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0) {
-                                    <jhi-result [result]="exampleSubmission.submission!.results![0]" [exercise]="exercise" />
+                                @if (getSubmission(exampleParticipation); as submission) {
+                                    @if (submission.results && submission.results.length > 0) {
+                                        <jhi-result [result]="submission.results[0]" [exercise]="exercise" />
+                                    } @else {
+                                        <jhi-result />
+                                    }
                                 } @else {
                                     <jhi-result />
                                 }
                             </td>
                             <td>
-                                {{ exampleSubmission.submission!.submissionSize }}
+                                {{ getSubmission(exampleParticipation)?.submissionSize }}
                             </td>
-                            <td>{{ 'artemisApp.exampleSubmission.' + (exampleSubmission.usedForTutorial ? 'assessCorrectly' : 'readAndConfirm') | artemisTranslate }}</td>
+                            <td>{{ 'artemisApp.exampleSubmission.' + (exampleParticipation.usedForTutorial ? 'assessCorrectly' : 'readAndConfirm') | artemisTranslate }}</td>
                             <td>
                                 @if (createdExampleAssessment[i]) {
                                     <span jhiTranslate="global.generic.yes"></span>
@@ -98,7 +102,7 @@
                             </td>
                             @if (exercise.course.isAtLeastEditor) {
                                 <td>
-                                    <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
+                                    <button (click)="deleteExampleParticipation(i)" class="btn btn-danger col-auto">
                                         <fa-icon [icon]="faTimes" />
                                         {{ 'entity.action.delete' | artemisTranslate }}
                                     </button>

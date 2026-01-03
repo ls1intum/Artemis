@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
@@ -95,24 +95,25 @@ public class TutorParticipationResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/assess-example-submission: Add an example submission to the tutor participation of the given exercise.
+     * POST /exercises/:exerciseId/assess-example-participation: Add an example participation to the tutor participation of the given exercise.
      * If it is just for review (not used for tutorial), the method just records that the tutor has read it.
      * If it is a tutorial, the method checks if the assessment given by the tutor matches the instructor one.
      * If yes, then it returns the participation, if not, it returns an error.
      *
-     * @param exerciseId        the id of the exercise of the tutorParticipation
-     * @param exampleSubmission the example submission that will be added
+     * @param exerciseId           the id of the exercise of the tutorParticipation
+     * @param exampleParticipation the example participation that will be added
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @PostMapping("exercises/{exerciseId}/assess-example-submission")
+    @PostMapping("exercises/{exerciseId}/assess-example-participation")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorParticipationDTO> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        log.debug("REST request to add example submission to exercise id : {}", exerciseId);
+    public ResponseEntity<TutorParticipationDTO> assessExampleParticipationForTutorParticipation(@PathVariable Long exerciseId,
+            @RequestBody ExampleParticipation exampleParticipation) {
+        log.debug("REST request to add example participation to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
-        TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
+        TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleParticipation(exercise, exampleParticipation, user);
 
         TutorParticipationDTO dto = TutorParticipationDTO.of(resultTutorParticipation);
         return ResponseEntity.ok().body(dto);

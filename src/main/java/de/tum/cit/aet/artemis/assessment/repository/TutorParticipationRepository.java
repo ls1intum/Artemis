@@ -25,15 +25,15 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Repository
 public interface TutorParticipationRepository extends ArtemisJpaRepository<TutorParticipation, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
-    TutorParticipation findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
+    @EntityGraph(type = LOAD, attributePaths = { "trainedExampleParticipations", "trainedExampleParticipations.submissions", "trainedExampleParticipations.submissions.results" })
+    TutorParticipation findWithEagerExampleParticipationAndResultsByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
     Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "trainedExampleParticipations", "trainedExampleParticipations.submissions", "trainedExampleParticipations.submissions.results" })
     List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "trainedExampleParticipations", "trainedExampleParticipations.submissions", "trainedExampleParticipations.submissions.results" })
     List<TutorParticipation> findAllByAssessedExercise_ExerciseGroup_Exam_IdAndTutor_Id(long examId, long tutorId);
 
     @Transactional // ok because of delete

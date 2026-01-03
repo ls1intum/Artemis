@@ -136,6 +136,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
         // calculate scores
         quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        quizSubmission.setParticipation(participation);
         // save parent submission object
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
@@ -153,7 +155,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
         quizSubmission.addResult(result);
-        quizSubmission.setParticipation(participation);
 
         // save submission to set result index column
         quizSubmissionRepository.save(quizSubmission);

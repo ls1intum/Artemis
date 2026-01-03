@@ -26,10 +26,10 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -55,11 +55,11 @@ public class TutorParticipationService {
 
     private static final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final ExampleParticipationRepository exampleParticipationRepository;
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
-    private final ExampleSubmissionService exampleSubmissionService;
+    private final ExampleParticipationService exampleParticipationService;
 
     /**
      * Wraps the information of tutor feedback validation (during tutor training).
@@ -67,11 +67,11 @@ public class TutorParticipationService {
     record FeedbackCorrectionError(String reference, FeedbackCorrectionErrorType type) {
     }
 
-    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExampleSubmissionService exampleSubmissionService) {
+    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleParticipationRepository exampleParticipationRepository,
+            ExampleParticipationService exampleParticipationService) {
         this.tutorParticipationRepository = tutorParticipationRepository;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleParticipationRepository = exampleParticipationRepository;
+        this.exampleParticipationService = exampleParticipationService;
     }
 
     /**
@@ -83,7 +83,7 @@ public class TutorParticipationService {
      * @return a tutor participation object for the pair (exercise, tutor) passed as argument
      */
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {
-        TutorParticipation participation = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, tutor);
+        TutorParticipation participation = tutorParticipationRepository.findWithEagerExampleParticipationAndResultsByAssessedExerciseAndTutor(exercise, tutor);
 
         if (participation == null) {
             participation = new TutorParticipation();
@@ -104,8 +104,8 @@ public class TutorParticipationService {
      */
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
         TutorParticipation tutorParticipation = new TutorParticipation();
-        Long exampleSubmissionsCount = exampleSubmissionRepository.countAllByExerciseId(exercise.getId());
-        tutorParticipation.setStatus(exampleSubmissionsCount == 0 ? TRAINED : REVIEWED_INSTRUCTIONS);
+        Long exampleParticipationsCount = exampleParticipationRepository.countAllByExerciseId(exercise.getId());
+        tutorParticipation.setStatus(exampleParticipationsCount == 0 ? TRAINED : REVIEWED_INSTRUCTIONS);
         tutorParticipation.setTutor(tutor);
         tutorParticipation.setAssessedExercise(exercise);
         return tutorParticipationRepository.saveAndFlush(tutorParticipation);
@@ -193,15 +193,15 @@ public class TutorParticipationService {
     }
 
     /**
-     * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
+     * Validates the tutor example participation. If invalid, throw bad request exception with information which feedback are incorrect.
      */
-    private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        var latestResult = tutorExampleSubmission.getSubmission().getLatestResult();
+    private void validateTutorialExampleParticipation(ExampleParticipation tutorExampleParticipation) {
+        var latestResult = tutorExampleParticipation.getSubmission().getLatestResult();
         if (latestResult == null) {
             throw new BadRequestAlertException("The training does not contain an assessment", ENTITY_NAME, "invalid_assessment");
         }
         var tutorFeedback = latestResult.getFeedbacks();
-        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+        var instructorFeedback = exampleParticipationRepository.getFeedbackForExampleParticipation(tutorExampleParticipation.getId());
         boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
 
         var unreferencedInstructorFeedbackCount = instructorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList().size();
@@ -238,82 +238,83 @@ public class TutorParticipationService {
     }
 
     /**
-     * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as argument.
-     * If it is valid (e.g: if it is an example submission used for tutorial, we check the result is close enough to the one of the instructor)
+     * Given an exercise, it adds to the tutor participation of that exercise the example participation passed as argument.
+     * If it is valid (e.g: if it is an example participation used for tutorial, we check the result is close enough to the one of the instructor)
      *
-     * @param exercise               - the exercise we are referring to
-     * @param tutorExampleSubmission - the example submission to add
-     * @param user                   - the user who invokes this request
+     * @param exercise                  - the exercise we are referring to
+     * @param tutorExampleParticipation - the example participation to add
+     * @param user                      - the user who invokes this request
      * @return the updated tutor participation
-     * @throws EntityNotFoundException  if example submission or tutor participation is not found
-     * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
+     * @throws EntityNotFoundException  if example participation or tutor participation is not found
+     * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example participations
      */
-    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission tutorExampleSubmission, User user)
+    public TutorParticipation addExampleParticipation(Exercise exercise, ExampleParticipation tutorExampleParticipation, User user)
             throws EntityNotFoundException, BadRequestAlertException {
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
-        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(tutorExampleSubmission.getId());
+        Optional<ExampleParticipation> exampleParticipationFromDatabase = exampleParticipationRepository
+                .findByIdWithResultsAndTutorParticipations(tutorExampleParticipation.getId());
 
-        if (existingTutorParticipation == null || exampleSubmissionFromDatabase.isEmpty()) {
-            throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
+        if (existingTutorParticipation == null || exampleParticipationFromDatabase.isEmpty()) {
+            throw new EntityNotFoundException("There isn't such example participation, or there isn't any tutor participation for this exercise");
         }
 
-        ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
+        ExampleParticipation originalExampleParticipation = exampleParticipationFromDatabase.get();
 
-        // Cannot start an example submission if the tutor hasn't participated in the exercise yet
+        // Cannot start an example participation if the tutor hasn't participated in the exercise yet
         if (existingTutorParticipation.getStatus() == NOT_PARTICIPATED) {
-            throw new BadRequestAlertException("The tutor needs review the instructions before assessing example submissions", ENTITY_NAME, "wrongStatus");
+            throw new BadRequestAlertException("The tutor needs review the instructions before assessing example participations", ENTITY_NAME, "wrongStatus");
         }
 
         // Check if it is a tutorial or not
-        boolean isTutorial = Boolean.TRUE.equals(originalExampleSubmission.isUsedForTutorial());
+        boolean isTutorial = Boolean.TRUE.equals(originalExampleParticipation.isUsedForTutorial());
 
         // If it is a tutorial we check the assessment
         if (isTutorial) {
-            validateTutorialExampleSubmission(tutorExampleSubmission);
+            validateTutorialExampleParticipation(tutorExampleParticipation);
         }
 
-        Set<ExampleSubmission> alreadyAssessedSubmissions = new HashSet<>(existingTutorParticipation.getTrainedExampleSubmissions());
+        Set<ExampleParticipation> alreadyAssessedParticipations = new HashSet<>(existingTutorParticipation.getTrainedExampleParticipations());
 
-        // If the example submission was already assessed, we do not assess it again, we just return the current participation
-        if (alreadyAssessedSubmissions.contains(tutorExampleSubmission)) {
+        // If the example participation was already assessed, we do not assess it again, we just return the current participation
+        if (alreadyAssessedParticipations.contains(tutorExampleParticipation)) {
             return existingTutorParticipation;
         }
 
-        long numberOfExampleSubmissionsForTutor = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId()).stream()
-                // We are only interested in example submissions with an assessment as these are the ones that can be reviewed/assessed by tutors.
-                // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
+        long numberOfExampleParticipationsForTutor = exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(exercise.getId()).stream()
+                // We are only interested in example participations with an assessment as these are the ones that can be reviewed/assessed by tutors.
+                // Otherwise, the tutor could not reach the total number of example participations, if there are example participations without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
                 // to assess student submissions in the assessment dashboard.
-                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null
-                        && Boolean.TRUE.equals(exSub.getSubmission().getLatestResult().isExampleResult()))
+                .filter(exPart -> exPart.getSubmission() != null && exPart.getSubmission().getLatestResult() != null
+                        && Boolean.TRUE.equals(exPart.getSubmission().getLatestResult().isExampleResult()))
                 .count();
-        int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
+        int numberOfAlreadyAssessedParticipations = alreadyAssessedParticipations.size() + 1;  // +1 because we haven't added yet the one we just did
 
         /*
          * When the tutor has read and assessed all the exercises, the tutor status goes to the next step.
          */
-        if (numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissionsForTutor) {
+        if (numberOfAlreadyAssessedParticipations >= numberOfExampleParticipationsForTutor) {
             existingTutorParticipation.setStatus(TRAINED);
         }
 
-        // keep example submission set reference with loaded submission.results to reconnect after save response from DB
-        var exampleSubmissionSet = existingTutorParticipation.getTrainedExampleSubmissions();
+        // keep example participation set reference with loaded submission.results to reconnect after save response from DB
+        var exampleParticipationSet = existingTutorParticipation.getTrainedExampleParticipations();
 
-        existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(originalExampleSubmission);
-        exampleSubmissionService.save(originalExampleSubmission);
+        existingTutorParticipation = existingTutorParticipation.addTrainedExampleParticipation(originalExampleParticipation);
+        exampleParticipationService.save(originalExampleParticipation);
         existingTutorParticipation = tutorParticipationRepository.saveAndFlush(existingTutorParticipation);
 
-        existingTutorParticipation.setTrainedExampleSubmissions(exampleSubmissionSet);
-        existingTutorParticipation.getTrainedExampleSubmissions().add(originalExampleSubmission);
+        existingTutorParticipation.setTrainedExampleParticipations(exampleParticipationSet);
+        existingTutorParticipation.getTrainedExampleParticipations().add(originalExampleParticipation);
 
         return existingTutorParticipation;
     }
 
     /**
-     * This method removes the tutor participation for the example submission of an exercise
+     * This method removes the tutor participation for the example participation of an exercise
      *
-     * @param exercise the exercise to which the example submission and tutor participation are linked to
+     * @param exercise the exercise to which the example participation and tutor participation are linked to
      * @param user     the user for which the tutor participation should be removed
      */
     public void removeTutorParticipations(Exercise exercise, User user) {
@@ -321,13 +322,14 @@ public class TutorParticipationService {
             return;
         }
 
-        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-        TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, user);
+        Set<ExampleParticipation> exampleParticipations = exampleParticipationRepository.findAllByExerciseId(exercise.getId());
+        TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleParticipationAndResultsByAssessedExerciseAndTutor(exercise, user);
 
-        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
-            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId());
-            if (exampleSubmissionWithTutorParticipation.isPresent()) {
-                exampleSubmissionWithTutorParticipation.get().removeTutorParticipations(tutorParticipation);
+        for (ExampleParticipation exampleParticipation : exampleParticipations) {
+            Optional<ExampleParticipation> exampleParticipationWithTutorParticipation = exampleParticipationRepository
+                    .findByIdWithResultsAndTutorParticipations(exampleParticipation.getId());
+            if (exampleParticipationWithTutorParticipation.isPresent()) {
+                exampleParticipationWithTutorParticipation.get().removeTutorParticipation(tutorParticipation);
                 tutorParticipationRepository.delete(tutorParticipation);
             }
         }

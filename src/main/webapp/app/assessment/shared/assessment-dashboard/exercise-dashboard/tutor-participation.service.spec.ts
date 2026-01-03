@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { ExampleSubmissionDTO } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipationDTO } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -45,16 +45,12 @@ describe('Tutor Participation Service', () => {
         tick();
     }));
 
-    it('should assess ExampleSubmission for an exercise', fakeAsync(() => {
+    it('should assess ExampleParticipation for an exercise', fakeAsync(() => {
         const dtoTrained = new TutorParticipationDTO(2, EXERCISE_ID, TutorParticipationStatus.TRAINED, TUTOR_ID);
-        const exampleDto: ExampleSubmissionDTO = {
-            id: 9,
-            usedForTutorial: true,
-            submissionId: 7,
-        };
+        const exampleDto = new ExampleParticipationDTO(9, true, 7);
 
         service
-            .assessExampleSubmission(exampleDto, EXERCISE_ID)
+            .assessExampleParticipation(exampleDto, EXERCISE_ID)
             .pipe(take(1))
             .subscribe((resp) => {
                 expect(resp.body).toMatchObject({

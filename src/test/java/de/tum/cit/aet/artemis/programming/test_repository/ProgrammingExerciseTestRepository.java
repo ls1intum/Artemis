@@ -34,7 +34,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH p.categories
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
-                LEFT JOIN FETCH p.exampleSubmissions
                 LEFT JOIN FETCH p.tutorParticipations
                 LEFT JOIN FETCH p.testCases
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories

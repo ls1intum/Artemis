@@ -327,9 +327,7 @@ public class CourseCompetencyService {
             competenciesToCreate.add(competency);
         }
 
-        List<CourseCompetency> importedCompetencies = courseCompetencyRepository.saveAll(competenciesToCreate);
-
-        return importedCompetencies;
+        return courseCompetencyRepository.saveAll(competenciesToCreate);
     }
 
     /**
@@ -342,9 +340,8 @@ public class CourseCompetencyService {
      */
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
         competencyToCreate.setCourse(course);
-        var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
 
-        return persistedCompetency;
+        return courseCompetencyRepository.save(competencyToCreate);
     }
 
     /**
@@ -444,9 +441,8 @@ public class CourseCompetencyService {
      * Deletes a course competency and all its relations.
      *
      * @param courseCompetency the course competency to delete
-     * @param course           the course the competency belongs to
      */
-    public void deleteCourseCompetency(CourseCompetency courseCompetency, Course course) {
+    public void deleteCourseCompetency(CourseCompetency courseCompetency) {
         competencyRelationRepository.deleteAllByCompetencyId(courseCompetency.getId());
         competencyProgressService.deleteProgressForCompetency(courseCompetency.getId());
 

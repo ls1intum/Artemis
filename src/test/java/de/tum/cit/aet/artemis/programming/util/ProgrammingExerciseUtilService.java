@@ -718,12 +718,11 @@ public class ProgrammingExerciseUtilService {
     public Result addTemplateSubmissionWithResult(ProgrammingExercise programmingExercise) {
         var templateParticipation = programmingExercise.getTemplateParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission = submissionRepository.save(submission);
-        // TODO check if it needs to be persisted like before
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
-        templateParticipation.addSubmission(submission);
+        // Set participation BEFORE saving (participation_id is NOT NULL)
         submission.setParticipation(templateParticipation);
+        templateParticipation.addSubmission(submission);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
@@ -740,19 +739,18 @@ public class ProgrammingExerciseUtilService {
      * @return the newly created result
      */
     public Result addSolutionSubmissionWithResult(ProgrammingExercise programmingExercise) {
-        var templateParticipation = programmingExercise.getSolutionParticipation();
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission = submissionRepository.save(submission);
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
-        templateParticipation.addSubmission(submission);
-        submission.setParticipation(templateParticipation);
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        submission.setParticipation(solutionParticipation);
+        solutionParticipation.addSubmission(submission);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
-
         result = resultRepo.save(result);
-        solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         return result;
     }
 
@@ -779,9 +777,9 @@ public class ProgrammingExerciseUtilService {
         }
 
         studentParticipationRepo.save(participation);
-        programmingSubmissionRepo.save(submission);
-
+        // Set participation BEFORE saving (participation_id is NOT NULL)
         submission.setParticipation(participation);
+        programmingSubmissionRepo.save(submission);
 
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());

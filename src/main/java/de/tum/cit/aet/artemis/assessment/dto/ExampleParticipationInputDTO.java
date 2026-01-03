@@ -7,19 +7,20 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
- * DTO for creating and updating example submissions.
+ * DTO for creating and updating example participations.
  * Supports both TextSubmission and ModelingSubmission types.
  *
- * @param id                      the id of the example submission (null for creation)
- * @param exerciseId              the id of the exercise this submission belongs to
- * @param usedForTutorial         whether this submission is used for tutorial
+ * @param id                      the id of the example participation (null for creation)
+ * @param exerciseId              the id of the exercise this participation belongs to
+ * @param usedForTutorial         whether this participation is used for tutorial
  * @param assessmentExplanation   explanation for the assessment
  * @param textSubmissionText      the text content (for TextSubmission)
  * @param modelingSubmissionModel the model JSON (for ModelingSubmission)
@@ -27,22 +28,22 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExampleSubmissionInputDTO(@Nullable Long id, @NotNull Long exerciseId, @Nullable Boolean usedForTutorial, @Nullable String assessmentExplanation,
+public record ExampleParticipationInputDTO(@Nullable Long id, @NotNull Long exerciseId, @Nullable Boolean usedForTutorial, @Nullable String assessmentExplanation,
         @Nullable String textSubmissionText, @Nullable String modelingSubmissionModel, @Nullable String modelingExplanationText) {
 
     /**
-     * Creates an ExampleSubmissionInputDTO from an ExampleSubmission entity.
+     * Creates an ExampleParticipationInputDTO from an ExampleParticipation entity.
      *
-     * @param exampleSubmission the example submission entity
+     * @param exampleParticipation the example participation entity
      * @return the corresponding DTO
      */
-    public static ExampleSubmissionInputDTO of(ExampleSubmission exampleSubmission) {
-        Long exerciseId = exampleSubmission.getExercise() != null ? exampleSubmission.getExercise().getId() : null;
+    public static ExampleParticipationInputDTO of(ExampleParticipation exampleParticipation) {
+        Long exerciseId = exampleParticipation.getExercise() != null ? exampleParticipation.getExercise().getId() : null;
         String textSubmissionText = null;
         String modelingSubmissionModel = null;
         String modelingExplanationText = null;
 
-        Submission submission = exampleSubmission.getSubmission();
+        Submission submission = exampleParticipation.getSubmission();
         if (submission instanceof TextSubmission textSubmission) {
             textSubmissionText = textSubmission.getText();
         }
@@ -51,48 +52,54 @@ public record ExampleSubmissionInputDTO(@Nullable Long id, @NotNull Long exercis
             modelingExplanationText = modelingSubmission.getExplanationText();
         }
 
-        return new ExampleSubmissionInputDTO(exampleSubmission.getId(), exerciseId, exampleSubmission.isUsedForTutorial(), exampleSubmission.getAssessmentExplanation(),
+        return new ExampleParticipationInputDTO(exampleParticipation.getId(), exerciseId, exampleParticipation.isUsedForTutorial(), exampleParticipation.getAssessmentExplanation(),
                 textSubmissionText, modelingSubmissionModel, modelingExplanationText);
     }
 
     /**
-     * Creates a new ExampleSubmission entity from this DTO.
+     * Creates a new ExampleParticipation entity from this DTO.
      *
      * @param exercise the exercise to associate with
-     * @return a new ExampleSubmission entity
+     * @return a new ExampleParticipation entity
      */
-    public ExampleSubmission toEntity(Exercise exercise) {
-        ExampleSubmission exampleSubmission = new ExampleSubmission();
-        exampleSubmission.setExercise(exercise);
-        exampleSubmission.setUsedForTutorial(usedForTutorial);
-        exampleSubmission.setAssessmentExplanation(assessmentExplanation);
+    public ExampleParticipation toEntity(Exercise exercise) {
+        ExampleParticipation exampleParticipation = new ExampleParticipation();
+        exampleParticipation.setExercise(exercise);
+        exampleParticipation.setUsedForTutorial(usedForTutorial);
+        exampleParticipation.setAssessmentExplanation(assessmentExplanation);
+        exampleParticipation.setInitializationState(InitializationState.INITIALIZED);
 
         // Create appropriate submission type based on which fields are present
+        Submission submission = null;
         if (textSubmissionText != null) {
             TextSubmission textSubmission = new TextSubmission();
             textSubmission.setText(textSubmissionText);
             textSubmission.setExampleSubmission(true);
-            exampleSubmission.setSubmission(textSubmission);
+            submission = textSubmission;
         }
         else if (modelingSubmissionModel != null) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
             modelingSubmission.setModel(modelingSubmissionModel);
             modelingSubmission.setExplanationText(modelingExplanationText);
             modelingSubmission.setExampleSubmission(true);
-            exampleSubmission.setSubmission(modelingSubmission);
+            submission = modelingSubmission;
         }
 
-        return exampleSubmission;
+        if (submission != null) {
+            exampleParticipation.addSubmission(submission);
+        }
+
+        return exampleParticipation;
     }
 
     /**
-     * Applies this DTO's metadata to an existing ExampleSubmission entity.
+     * Applies this DTO's metadata to an existing ExampleParticipation entity.
      *
-     * @param exampleSubmission the example submission to update
+     * @param exampleParticipation the example participation to update
      */
-    public void applyMetadataTo(ExampleSubmission exampleSubmission) {
-        exampleSubmission.setUsedForTutorial(usedForTutorial);
-        exampleSubmission.setAssessmentExplanation(assessmentExplanation);
+    public void applyMetadataTo(ExampleParticipation exampleParticipation) {
+        exampleParticipation.setUsedForTutorial(usedForTutorial);
+        exampleParticipation.setAssessmentExplanation(assessmentExplanation);
     }
 
     /**

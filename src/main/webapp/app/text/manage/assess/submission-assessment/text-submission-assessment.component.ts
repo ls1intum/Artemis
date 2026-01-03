@@ -28,7 +28,7 @@ import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-b
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -68,7 +68,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private route = inject(ActivatedRoute);
     private complaintService = inject(ComplaintService);
     private submissionService = inject(SubmissionService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleParticipationService = inject(ExampleParticipationService);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
 
@@ -553,7 +553,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe({
+            this.exampleParticipationService.import(this.submission.id!, this.exercise.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

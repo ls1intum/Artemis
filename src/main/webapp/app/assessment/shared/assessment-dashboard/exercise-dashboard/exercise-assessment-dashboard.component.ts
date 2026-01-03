@@ -8,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -157,11 +157,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     tutorParticipationStatus: TutorParticipationStatus;
     assessedSubmissionsByRound: Map<number, Submission[]> = new Map<number, Submission[]>();
     unassessedSubmissionByRound?: Map<number, Submission> = new Map<number, Submission>();
-    exampleSubmissionsToReview: ExampleSubmission[] = [];
-    exampleSubmissionsToAssess: ExampleSubmission[] = [];
-    exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
+    exampleParticipationsToReview: ExampleParticipation[] = [];
+    exampleParticipationsToAssess: ExampleParticipation[] = [];
+    exampleParticipationsCompletedByTutor: ExampleParticipation[] = [];
     tutorParticipation: TutorParticipation;
-    nextExampleSubmissionId: number;
+    nextExampleParticipationId: number;
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
     submissionsWithMoreFeedbackRequests: SubmissionWithComplaintDTO[] = [];
@@ -339,21 +339,25 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 this.tutorParticipation = this.exercise.tutorParticipations![0];
                 this.tutorParticipationStatus = this.tutorParticipation.status!;
-                if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
-                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
-                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
+                if (this.exercise.exampleParticipations && this.exercise.exampleParticipations.length > 0) {
+                    this.exampleParticipationsToReview = this.exercise.exampleParticipations.filter(
+                        (exampleParticipation: ExampleParticipation) => !exampleParticipation.usedForTutorial,
+                    );
+                    this.exampleParticipationsToAssess = this.exercise.exampleParticipations.filter(
+                        (exampleParticipation: ExampleParticipation) => exampleParticipation.usedForTutorial,
+                    );
                 }
-                this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions || [];
+                this.exampleParticipationsCompletedByTutor = this.tutorParticipation.trainedExampleParticipations || [];
 
-                this.stats.toReview.total = this.exampleSubmissionsToReview.length;
-                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter((e) => !e.usedForTutorial).length;
-                this.stats.toAssess.total = this.exampleSubmissionsToAssess.length;
-                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter((e) => e.usedForTutorial).length;
+                this.stats.toReview.total = this.exampleParticipationsToReview.length;
+                this.stats.toReview.done = this.exampleParticipationsCompletedByTutor.filter((e) => !e.usedForTutorial).length;
+                this.stats.toAssess.total = this.exampleParticipationsToAssess.length;
+                this.stats.toAssess.done = this.exampleParticipationsCompletedByTutor.filter((e) => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id!;
+                    this.nextExampleParticipationId = this.exampleParticipationsToReview[this.stats.toReview.done].id!;
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id!;
+                    this.nextExampleParticipationId = this.exampleParticipationsToAssess[this.stats.toAssess.done].id!;
                 }
 
                 // exercise belongs to an exam
@@ -458,9 +462,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     get yourStatusTitle(): string {
         switch (this.tutorParticipationStatus) {
             case TutorParticipationStatus.TRAINED:
-                // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
+                // If we are in 'TRAINED' state, but never really "trained" on example participations, display the
                 // 'REVIEWED_INSTRUCTIONS' state text instead.
-                if (!this.exercise.exampleSubmissions || this.exercise.exampleSubmissions.length === 0) {
+                if (!this.exercise.exampleParticipations || this.exercise.exampleParticipations.length === 0) {
                     return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
                 }
 
@@ -652,11 +656,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Returns whether the example submission for the given id has already been completed
-     * @param exampleSubmissionId Id of the example submission which to check for completion
+     * Returns whether the example participation for the given id has already been completed
+     * @param exampleParticipationId Id of the example participation which to check for completion
      */
-    hasBeenCompletedByTutor(exampleSubmissionId: number) {
-        return this.exampleSubmissionsCompletedByTutor.filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
+    hasBeenCompletedByTutor(exampleParticipationId: number) {
+        return this.exampleParticipationsCompletedByTutor.filter((exampleParticipation) => exampleParticipation.id === exampleParticipationId).length > 0;
     }
 
     private onError(error: string) {

@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -35,10 +36,16 @@ class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private SubmissionTestRepository submissionRepository;
 
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    private static final String TEST_PREFIX = "feedbackservicetest";
+
     private TextExercise exercise;
 
     @BeforeEach
     void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         Course course = courseUtilService.createCourse();
         exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exercise = exerciseRepository.save(exercise);
@@ -65,8 +72,10 @@ class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
     void copyFeedbackWithLongFeedback() {
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10);
 
-        // Create a submission and result for the feedback (result_id and exercise_id are NOT NULL)
+        // Create a participation and submission for the feedback (participation_id is NOT NULL)
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
         TextSubmission submission = new TextSubmission();
+        submission.setParticipation(participation);
         submission = submissionRepository.save(submission);
 
         Result result = new Result();

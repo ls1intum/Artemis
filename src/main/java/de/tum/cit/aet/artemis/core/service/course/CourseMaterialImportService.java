@@ -316,7 +316,7 @@ public class CourseMaterialImportService {
     }
 
     private Optional<ModelingExercise> importModelingExercise(ModelingExercise exercise, Course targetCourse) {
-        var optionalOriginal = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exercise.getId());
+        var optionalOriginal = modelingExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
