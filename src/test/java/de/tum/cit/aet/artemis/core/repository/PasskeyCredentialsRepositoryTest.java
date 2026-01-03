@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.repository.passkey.ArtemisUserCredentialRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -34,7 +35,7 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
     private ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userTestRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -49,7 +50,7 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
     void setUp() {
         adminUser = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
         adminUser.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
-        adminUser = userRepository.save(adminUser);
+        adminUser = userTestRepository.save(adminUser);
 
         regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "student");
 
