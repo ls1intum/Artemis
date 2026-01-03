@@ -568,9 +568,9 @@ Write test cases in the Test repository using language-specific frameworks:
 Check the build plan results:
 
 - Template and solution build plans should not have **Build Failed** status
-- If build fails, check build errors in the build plan
+- If the build fails, check build errors in the build plan
 
-<Callout variant={CalloutVariant.tip}>
+<Callout variant={CalloutVariant.warning}>
   <p><strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.</p>
 </Callout>
 
@@ -585,28 +585,28 @@ Predefined build scripts in bash exist for all languages, project types, and con
 You can also use a custom Docker image. Make sure to:
 - Publish the image in a publicly available repository (e.g., DockerHub)
 - Build for both amd64 and arm64 architectures
-- Keep image size small (build agents download before execution)
+- Keep the image size small (build agents download before execution)
 - Include all build dependencies to avoid downloading in every build
 
-<Callout variant={CalloutVariant.tip}>
+<Callout variant={CalloutVariant.info}>
   <p>Test custom exercises locally before publishing Docker images and uploading to Artemis for better development experience.</p>
 </Callout>
 
 ### Edit Repositories Checkout Paths (Optional)
 
-**Only available with Integrated Code Lifecycle**
+**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
 
-This section is optional. Preconfigured checkout paths usually don't need changes.
+Preconfigured checkout paths usually don't need changes.
 
 Checkout paths depend on the programming language and project type:
 
-<Image src={checkoutPathsPreview} alt="Checkout Paths Preview" size={ImageSize.medium} caption="Checkout Paths Preview" />
+<Image src={checkoutPathsPreview} alt="Checkout Paths Preview" size={ImageSize.medium} caption="Checkout Paths Preview (Java)" />
 
 To change checkout paths, click **edit repositories checkout path**:
 
-<Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths" />
+<Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths (Java)" />
 
-Update the build script accordingly (see Adapt Build Script section).
+Update the build script accordingly (see the [Adapt Build Script](#adapt-build-script-optional) section).
 
 <Callout variant={CalloutVariant.warning}>
   <p><strong>Important:</strong></p>
@@ -620,25 +620,25 @@ Update the build script accordingly (see Adapt Build Script section).
 
 ### Edit Maximum Build Duration (Optional)
 
-**Only available with Integrated Code Lifecycle**
+**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
 
-This section is optional. The default maximum build duration (120 seconds) usually doesn't need changes.
+The default maximum build duration (120 seconds) usually doesn't need changes.
 
 Use the slider to adjust the time limit for build plan execution:
 
-<Image src={timeoutSlider} alt="Timeout Slider" size={ImageSize.medium} caption="Maximum Build Duration Slider" />
+<Image src={timeoutSlider} alt="Timeout Slider" size={ImageSize.large} caption="Maximum Build Duration Slider" />
 
 ### Edit Container Configuration (Optional)
 
-**Only available with Integrated Code Lifecycle**
+**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
 
-This section is optional. Default container configuration usually doesn't need changes.
+Default container configuration usually doesn't need changes.
 
 Configure network access, environment variables, and resource limits:
 
 <Image src={dockerFlagsEdit} alt="Docker Flags Edit" size={ImageSize.large} caption="Container Configuration" />
 
-- **Internet Access**: Disable to prevent students from downloading dependencies during builds. Dependencies must be cached in Docker image
+- **Internet Access**: Disable to prevent students from downloading dependencies during builds. Dependencies must be cached in the Docker image
 - **Environment Variables**: Add specific variables required by the build process
 - **Resource Limits**: Configure CPU cores, memory, and memory swap allocation. Values may be limited by administrator settings
 
