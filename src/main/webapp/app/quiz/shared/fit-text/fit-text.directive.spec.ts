@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -13,7 +13,7 @@ import { FitTextDirective } from './fit-text.directive';
     imports: [FitTextDirective],
 })
 class TestFitTextComponent {
-    @ViewChild('fitTextEl', { read: ElementRef }) fitTextEl!: ElementRef;
+    fitTextEl = viewChild.required<ElementRef>('fitTextEl');
 }
 
 describe('FitTextDirective', () => {
@@ -57,7 +57,7 @@ describe('FitTextDirective', () => {
     it('should initialize with default values', () => {
         fixture.detectChanges();
         // Directive should be attached without errors
-        expect(component.fitTextEl).toBeTruthy();
+        expect(component.fitTextEl()).toBeTruthy();
     });
 
     it('should support activateOnResize input', () => {

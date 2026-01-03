@@ -40,4 +40,7 @@
             </button>
         }
     </div>
+
+    <jhi-session-management #sessionManagementDialog [course]="course()" [tutorialGroupId]="tutorialGroup().id!" (dialogClosed)="onSessionDialogClosed()" />
+    <jhi-registered-students #registeredStudentsDialog [course]="course()" [tutorialGroupId]="tutorialGroup().id!" (dialogClosed)="onRegistrationDialogClosed()" />
 }
