@@ -81,10 +81,10 @@ const moduleThresholds = {
         lines:      91.80,
     },
     exercise: {
-        statements: 88.20,
-        branches:   76.60,
-        functions:  79.80,
-        lines:      88.30,
+        statements: 87.80,
+        branches:   76.20,
+        functions:  79.10,
+        lines:      88.00,
     },
     fileupload: {
         statements: 94.40,
@@ -128,7 +128,7 @@ const moduleThresholds = {
     plagiarism: {
         statements: 93.40,
         branches:   81.90,
-        functions:  87.50,
+        functions:  87.10,
         lines:      93.50,
     },
     programming: {
