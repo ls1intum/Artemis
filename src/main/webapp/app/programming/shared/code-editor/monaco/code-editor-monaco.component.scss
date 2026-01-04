@@ -27,7 +27,8 @@
 }
 
 .monaco-add-review-comment-button:hover::before {
-    background-color: var(--monaco-editor-add-feedback-button-hover-background);
+    background-color: var(--link-color);
+    color: var(--white);
 }
 
 .monaco-add-review-comment-button::before {
@@ -35,12 +36,12 @@
     content: '\ea6b'; // codicon-comment-add
     font-family: codicon;
     font-size: 1.1em;
-    background-color: var(--monaco-editor-add-feedback-button-background);
-    color: var(--monaco-editor-add-feedback-button-text);
+    background-color: var(--link-color);
+    color: var(--white);
     border-radius: 35%;
 
     // Cosmetic adjustment: create a small gap between the button and the line number
-    padding-left: 1px;
+    padding-left: 0;
     margin-left: 1px;
 }
 

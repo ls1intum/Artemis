@@ -41,10 +41,8 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentDraftWidgetComponent } from 'app/communication/exercise-review/review-comment-draft-widget.component';
-import { ReviewCommentThreadComment, ReviewCommentThreadWidgetComponent } from 'app/communication/exercise-review/review-comment-thread-widget.component';
+import { ReviewCommentThreadWidgetComponent } from 'app/communication/exercise-review/review-comment-thread-widget.component';
 import { CommentThread, CommentThreadLocationType } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
-import { Comment } from 'app/communication/shared/entities/exercise-review/comment.model';
-import { CommentContent } from 'app/communication/shared/entities/exercise-review/comment-content.model';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -114,6 +112,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
     readonly onDeleteReviewComment = output<number>();
     readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
@@ -133,6 +133,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private reviewCommentLinesByFile: { [fileName: string]: number[] } = {};
     private reviewCommentWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
     private savedReviewCommentWidgetRefs: Map<string, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
+    private reviewThreadCollapseState: Map<number, boolean> = new Map();
 
     readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
         this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
@@ -513,9 +514,16 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             const line = (thread.lineNumber ?? 1) - 1;
             const widgetKey = this.getSavedReviewCommentWidgetKey(thread.id);
             const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
-            widgetRef.setInput('comments', this.buildThreadCommentDisplays(thread.comments ?? []));
+            widgetRef.setInput('thread', thread);
+            if (!this.reviewThreadCollapseState.has(thread.id)) {
+                this.reviewThreadCollapseState.set(thread.id, thread.resolved);
+            }
+            widgetRef.setInput('initialCollapsed', this.reviewThreadCollapseState.get(thread.id) ?? false);
             widgetRef.instance.onDelete.subscribe((commentId) => this.onDeleteReviewComment.emit(commentId));
             widgetRef.instance.onReply.subscribe((text) => this.onReplyReviewComment.emit({ threadId: thread.id, text }));
+            widgetRef.instance.onUpdate.subscribe((event) => this.onUpdateReviewComment.emit(event));
+            widgetRef.instance.onToggleResolved.subscribe((resolved) => this.onToggleResolveReviewThread.emit({ threadId: thread.id, resolved }));
+            widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.reviewThreadCollapseState.set(thread.id, collapsed));
             this.savedReviewCommentWidgetRefs.set(widgetKey, widgetRef);
             this.editor().addLineWidget(line + 1, `review-comment-thread-${thread.id}`, widgetRef.location.nativeElement);
         }
@@ -564,50 +572,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     private getSavedReviewCommentWidgetKey(threadId: number): string {
         return `${threadId}`;
-    }
-
-    private formatReviewCommentText(comment: Comment): string {
-        const content = comment.content as CommentContent | undefined;
-        if (!content) {
-            return '';
-        }
-        if (content.contentType === 'USER') {
-            return content.text ?? '';
-        }
-        const severity = content.severity ?? '';
-        const category = content.category ?? '';
-        const description = content.description ?? '';
-        return [severity, category, description].filter(Boolean).join(' - ');
-    }
-
-    private buildThreadCommentDisplays(comments: Comment[]): ReviewCommentThreadComment[] {
-        if (!comments.length) {
-            return [];
-        }
-        return [...comments]
-            .sort((a, b) => {
-                const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
-                const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
-                if (aDate !== bDate) {
-                    return aDate - bDate;
-                }
-                return (a.id ?? 0) - (b.id ?? 0);
-            })
-            .map((comment) => ({
-                id: comment.id,
-                authorName: this.getCommentAuthorName(comment),
-                text: this.formatReviewCommentText(comment),
-            }));
-    }
-
-    private getCommentAuthorName(comment: Comment): string {
-        if (comment.authorName) {
-            return comment.authorName;
-        }
-        if (comment.authorId !== undefined && comment.authorId !== null) {
-            return `User ${comment.authorId}`;
-        }
-        return '';
     }
 
     private matchesSelectedRepository(thread: CommentThread): boolean {

@@ -1,17 +1,28 @@
 {
     "artemisApp": {
         "review": {
-            "addCommentTitle": "Add review comment",
-            "addCommentPlaceholder": "Add comment...",
-            "addCommentSubmit": "Add comment",
+            "addCommentTitle": "Start a thread",
+            "addCommentPlaceholder": "Initial comment...",
+            "addCommentSubmit": "Start thread",
             "addCommentCancel": "Cancel",
             "saveFailed": "Could not save the review comment.",
             "loadFailed": "Could not load review comments.",
             "commentMenu": "Comment actions",
-            "deleteComment": "Delete comment",
+            "deleteComment": "Delete",
             "deleteFailed": "Could not delete the review comment.",
             "replyPlaceholder": "Add reply...",
-            "replySubmit": "Reply"
+            "replySubmit": "Reply",
+            "commentedOn": "commented on {{date}}",
+            "lastEdited": "last edited: {{date}}",
+            "editComment": "Edit",
+            "editCancel": "Cancel",
+            "editSubmit": "Update",
+            "threadTitle": "Comment thread on line {{line}}",
+            "resolveThread": "Resolve",
+            "unresolveThread": "Unresolve",
+            "resolveFailed": "Could not update the thread status.",
+            "threadResolved": "Resolved",
+            "threadOutdated": "Outdated"
         }
     }
 }

@@ -51,6 +51,6 @@ public interface CommentRepository extends ArtemisJpaRepository<Comment, Long> {
      * @param commentId the comment id
      * @return the comment with thread and exercise
      */
-    @EntityGraph(attributePaths = { "thread", "thread.exercise" })
+    @EntityGraph(attributePaths = { "thread", "thread.exercise", "author" })
     Optional<Comment> findWithThreadById(long commentId);
 }

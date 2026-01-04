@@ -12,11 +12,27 @@
     margin-bottom: 0.5rem;
 }
 
+.monaco-review-comment-meta {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    margin-top: 0.1rem;
+    opacity: 0.75;
+}
+
+.monaco-review-comment-meta-separator {
+    margin: 0 0.35rem;
+}
+
 .monaco-review-comment-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+}
+
+.monaco-review-comment-menu {
+    align-self: center;
 }
 
 .monaco-review-comment-menu {
@@ -68,6 +84,11 @@
     font-family: inherit;
 }
 
+.monaco-review-comment-textarea--compact {
+    min-height: 2rem;
+    resize: vertical;
+}
+
 .monaco-review-comment-text {
     width: 100%;
     white-space: pre-wrap;
@@ -82,6 +103,83 @@
 
 .monaco-review-comment-item + .monaco-review-comment-item {
     margin-top: 0.75rem;
+}
+
+.monaco-review-comment-thread-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.monaco-review-comment-thread-header--collapsed {
+    margin-bottom: 0.25rem;
+}
+
+.monaco-review-comment-thread-divider {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.75rem;
+}
+
+.monaco-review-comment-thread-title {
+    font-size: 0.9rem;
+}
+
+.monaco-review-comment-thread-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    margin-left: 0.35rem;
+    background-color: var(--border-color);
+    color: var(--secondary-text-color);
+}
+
+.monaco-review-comment-thread-tag--resolved {
+    background-color: rgba(25, 135, 84, 0.15);
+    color: var(--success);
+}
+
+.monaco-review-comment-thread-tag--outdated {
+    background-color: rgba(108, 117, 125, 0.15);
+    color: var(--secondary-text-color);
+}
+
+.monaco-review-comment-thread-toggle {
+    text-decoration: none;
+    line-height: 1;
+    border: 0;
+    box-shadow: none;
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.monaco-review-comment-thread-toggle--collapsed {
+    display: inline-block;
+    transform: rotate(90deg);
+}
+
+.monaco-review-comment-thread-toggle:focus,
+.monaco-review-comment-thread-toggle:focus-visible,
+.monaco-review-comment-thread-toggle:active {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.monaco-review-comment-menu-dots {
+    transform: translateY(1px);
+}
+
+.monaco-review-comment-thread-toggle span {
+    position: relative;
+    top: 1px;
 }
 
 .monaco-review-comment-item--with-divider {

@@ -1,17 +1,28 @@
 {
     "artemisApp": {
         "review": {
-            "addCommentTitle": "Review-Kommentar hinzuf\u00fcgen",
-            "addCommentPlaceholder": "Kommentar hinzuf\u00fcgen...",
-            "addCommentSubmit": "Kommentar hinzuf\u00fcgen",
+            "addCommentTitle": "Thread starten",
+            "addCommentPlaceholder": "Erster Kommentar...",
+            "addCommentSubmit": "Thread starten",
             "addCommentCancel": "Abbrechen",
             "saveFailed": "Der Review-Kommentar konnte nicht gespeichert werden.",
             "loadFailed": "Die Review-Kommentare konnten nicht geladen werden.",
             "commentMenu": "Kommentar-Aktionen",
-            "deleteComment": "Kommentar l\u00f6schen",
+            "deleteComment": "L\u00f6schen",
             "deleteFailed": "Der Review-Kommentar konnte nicht gel\u00f6scht werden.",
             "replyPlaceholder": "Antwort hinzuf\u00fcgen...",
-            "replySubmit": "Antworten"
+            "replySubmit": "Antworten",
+            "commentedOn": "kommentiert am {{date}}",
+            "lastEdited": "zuletzt bearbeitet: {{date}}",
+            "editComment": "Bearbeiten",
+            "editCancel": "Abbrechen",
+            "editSubmit": "Aktualisieren",
+            "threadTitle": "Kommentar-Thread in Zeile {{line}}",
+            "resolveThread": "Erledigen",
+            "unresolveThread": "Wieder öffnen",
+            "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
+            "threadResolved": "Erledigt",
+            "threadOutdated": "Veraltet"
         }
     }
 }

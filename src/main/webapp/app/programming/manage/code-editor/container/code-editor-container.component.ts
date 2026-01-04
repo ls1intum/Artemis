@@ -117,6 +117,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
     readonly onDeleteReviewComment = output<number>();
     readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
     @Output()
     onAddReviewComment = new EventEmitter<{ lineNumber: number; fileName: string }>();
     @Input()

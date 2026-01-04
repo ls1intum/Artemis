@@ -131,7 +131,7 @@ public class ExerciseReviewCommentService {
         validateContentMatchesType(comment.getType(), comment.getContent());
 
         if (comment.getInReplyTo() != null) {
-            Comment replyTarget = commentRepository.findById(comment.getInReplyTo().getId())
+            Comment replyTarget = commentRepository.findWithThreadById(comment.getInReplyTo().getId())
                     .orElseThrow(() -> new EntityNotFoundException("Comment", comment.getInReplyTo().getId()));
             if (!Objects.equals(replyTarget.getThread().getId(), thread.getId())) {
                 throw new BadRequestAlertException("Reply target does not belong to thread", COMMENT_ENTITY_NAME, "replyThreadMismatch");
@@ -174,7 +174,8 @@ public class ExerciseReviewCommentService {
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
         thread.setResolved(resolved);
-        return commentThreadRepository.save(thread);
+        CommentThread saved = commentThreadRepository.save(thread);
+        return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
     }
 
     /**
@@ -188,7 +189,8 @@ public class ExerciseReviewCommentService {
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
         thread.setOutdated(outdated);
-        return commentThreadRepository.save(thread);
+        CommentThread saved = commentThreadRepository.save(thread);
+        return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
     }
 
     /**
@@ -199,12 +201,13 @@ public class ExerciseReviewCommentService {
      * @return the updated comment
      */
     public Comment updateCommentContent(long commentId, CommentContentDTO content) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
+        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
         validateContentMatchesType(comment.getType(), content);
         comment.setContent(content);
         comment.setLastModifiedDate(Instant.now());
-        return commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+        return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
     }
 
     private void validateContentMatchesType(CommentType type, CommentContentDTO content) {

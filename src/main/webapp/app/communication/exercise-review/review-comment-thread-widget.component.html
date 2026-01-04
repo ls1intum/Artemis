@@ -1,35 +1,96 @@
 <div class="monaco-review-comment-widget monaco-review-comment-thread">
-    @for (comment of comments(); track comment.id; let first = $first) {
-        <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
-            <div class="monaco-review-comment-header">
-                <div class="monaco-review-comment-title">{{ comment.authorName }}</div>
-                <div class="monaco-review-comment-menu" ngbDropdown>
-                    <button
-                        type="button"
-                        class="btn btn-link p-0"
-                        ngbDropdownToggle
-                        [attr.aria-label]="'artemisApp.review.commentMenu' | artemisTranslate"
-                        [title]="'artemisApp.review.commentMenu' | artemisTranslate"
-                    >
-                        <span class="monaco-review-comment-menu-dots" aria-hidden="true"></span>
-                    </button>
-                    <div ngbDropdownMenu>
-                        <button type="button" class="dropdown-item" (click)="deleteComment(comment.id)">
-                            {{ 'artemisApp.review.deleteComment' | artemisTranslate }}
+    <div class="monaco-review-comment-thread-header" [class.monaco-review-comment-thread-header--collapsed]="!showThreadBody">
+        <div class="monaco-review-comment-thread-title">
+            {{ 'artemisApp.review.threadTitle' | artemisTranslate: { line: getThreadLineLabel() } }}
+            @if (thread()?.resolved) {
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--resolved">
+                    {{ 'artemisApp.review.threadResolved' | artemisTranslate }}
+                </span>
+            }
+            @if (thread()?.outdated) {
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--outdated">
+                    {{ 'artemisApp.review.threadOutdated' | artemisTranslate }}
+                </span>
+            }
+        </div>
+        <button type="button" class="btn btn-link p-0 monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
+            <span [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody" aria-hidden="true">▾</span>
+        </button>
+    </div>
+    @if (showThreadBody) {
+        <div class="monaco-review-comment-thread-divider"></div>
+        @for (comment of orderedComments(); track comment.id; let first = $first) {
+            <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
+                <div class="monaco-review-comment-header">
+                    <div class="monaco-review-comment-title">
+                        {{ getCommentAuthorName(comment) }}
+                        @if (comment.createdDate) {
+                            <div class="monaco-review-comment-meta">
+                                {{ 'artemisApp.review.commentedOn' | artemisTranslate: { date: comment.createdDate | artemisDate } }}
+                                @if (isEdited(comment)) {
+                                    <span class="monaco-review-comment-meta-separator">·</span>
+                                    {{ 'artemisApp.review.lastEdited' | artemisTranslate: { date: comment.lastModifiedDate | artemisDate } }}
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="monaco-review-comment-menu" ngbDropdown>
+                        <button
+                            type="button"
+                            class="btn btn-link p-0"
+                            ngbDropdownToggle
+                            [attr.aria-label]="'artemisApp.review.commentMenu' | artemisTranslate"
+                            [title]="'artemisApp.review.commentMenu' | artemisTranslate"
+                        >
+                            <span class="monaco-review-comment-menu-dots" aria-hidden="true"></span>
                         </button>
+                        <div ngbDropdownMenu>
+                            <button type="button" class="dropdown-item" (click)="startEditing(comment)">
+                                <fa-icon [icon]="faPen" class="me-2" />
+                                {{ 'artemisApp.review.editComment' | artemisTranslate }}
+                            </button>
+                            <button type="button" class="dropdown-item text-danger" (click)="deleteComment(comment.id)">
+                                <fa-icon [icon]="faTrash" class="me-2" />
+                                {{ 'artemisApp.review.deleteComment' | artemisTranslate }}
+                            </button>
+                        </div>
                     </div>
                 </div>
+                @if (isEditing(comment)) {
+                    <textarea class="monaco-review-comment-textarea" [(ngModel)]="editText"></textarea>
+                    <div class="monaco-review-comment-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditing()">
+                            {{ 'artemisApp.review.editCancel' | artemisTranslate }}
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" (click)="saveEditing()">
+                            {{ 'artemisApp.review.editSubmit' | artemisTranslate }}
+                        </button>
+                    </div>
+                } @else {
+                    <div class="monaco-review-comment-text">{{ formatReviewCommentText(comment) }}</div>
+                }
             </div>
-            <div class="monaco-review-comment-text">{{ comment.text }}</div>
+        }
+        <div class="monaco-review-comment-reply">
+            <div class="monaco-review-comment-separator"></div>
+            <textarea
+                class="monaco-review-comment-textarea monaco-review-comment-textarea--compact"
+                [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
+                [(ngModel)]="replyText"
+                rows="1"
+            ></textarea>
+            <div class="monaco-review-comment-actions">
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="toggleResolved()">
+                    @if (thread()?.resolved) {
+                        {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
+                    } @else {
+                        {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
+                    }
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="submitReply()">
+                    {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
+                </button>
+            </div>
         </div>
     }
-    <div class="monaco-review-comment-reply">
-        <div class="monaco-review-comment-separator"></div>
-        <textarea class="monaco-review-comment-textarea" [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate" [(ngModel)]="replyText"></textarea>
-        <div class="monaco-review-comment-actions">
-            <button type="button" class="btn btn-primary btn-sm" (click)="submitReply()">
-                {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
-            </button>
-        </div>
-    </div>
 </div>

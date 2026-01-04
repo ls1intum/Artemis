@@ -383,6 +383,43 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe();
     }
 
+    onUpdateReviewComment(event: { commentId: number; text: string }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
+        this.exerciseReviewCommentService
+            .updateCommentContent(exerciseId, event.commentId, { content: commentContent })
+            .pipe(
+                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.saveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
+    onToggleResolveReviewThread(event: { threadId: number; resolved: boolean }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        this.exerciseReviewCommentService
+            .updateThreadResolvedState(exerciseId, event.threadId, event.resolved)
+            .pipe(
+                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.resolveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
     private loadReviewCommentThreads(exerciseId: number): void {
         this.exerciseReviewCommentService
             .getThreads(exerciseId)
