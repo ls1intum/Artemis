@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
@@ -10,6 +12,7 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 import { HttpErrorResponse } from '@angular/common/http';
 
 describe('Tutor Participation Service', () => {
+    setupTestBed({ zoneless: true });
     let service: TutorParticipationService;
     let httpMock: HttpTestingController;
 
@@ -26,10 +29,10 @@ describe('Tutor Participation Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should create a TutorParticipationDTO for an exercise', fakeAsync(() => {
+    it('should create a TutorParticipationDTO for an exercise', () => {
         const dtoReviewed = new TutorParticipationDTO(1, EXERCISE_ID, TutorParticipationStatus.REVIEWED_INSTRUCTIONS, TUTOR_ID);
         service
             .create(EXERCISE_ID)
@@ -42,10 +45,9 @@ describe('Tutor Participation Service', () => {
             });
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(dtoReviewed);
-        tick();
-    }));
+    });
 
-    it('should assess ExampleParticipation for an exercise', fakeAsync(() => {
+    it('should assess ExampleParticipation for an exercise', () => {
         const dtoTrained = new TutorParticipationDTO(2, EXERCISE_ID, TutorParticipationStatus.TRAINED, TUTOR_ID);
         const exampleDto = new ExampleParticipationDTO(9, true, 7);
 
@@ -61,8 +63,7 @@ describe('Tutor Participation Service', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(dtoTrained);
-        tick();
-    }));
+    });
 
     it('should fail from creating a TutorParticipationDTO', () => {
         let capturedError: HttpErrorResponse | undefined;

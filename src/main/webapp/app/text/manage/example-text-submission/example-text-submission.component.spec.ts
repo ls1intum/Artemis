@@ -1,5 +1,11 @@
+/**
+ * Tests for ExampleTextSubmissionComponent.
+ * Verifies the component's behavior for creating, editing, and assessing example text submissions.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
@@ -39,8 +45,10 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExampleTextSubmissionComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
     let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;
@@ -58,18 +66,19 @@ describe('ExampleTextSubmissionComponent', () => {
     let submission: TextSubmission;
     let activatedRouteSnapshot: ActivatedRouteSnapshot;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const route: ActivatedRoute = {
             snapshot: {
                 paramMap: convertToParamMap({ exerciseId: EXERCISE_ID }),
                 queryParamMap: convertToParamMap({}),
             },
         } as any;
-        TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent],
-            declarations: [
-                MockDirective(TranslateDirective),
+        await TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                FaIconComponent,
                 ExampleTextSubmissionComponent,
+                MockDirective(TranslateDirective),
                 MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(ScoreDisplayComponent),
@@ -87,14 +96,43 @@ describe('ExampleTextSubmissionComponent', () => {
                 },
                 LocalStorageService,
                 SessionStorageService,
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ExampleTextSubmissionComponent, {
+                remove: {
+                    imports: [
+                        TranslateDirective,
+                        HelpIconComponent,
+                        ConfirmAutofocusButtonComponent,
+                        ResizeableContainerComponent,
+                        ScoreDisplayComponent,
+                        TextAssessmentAreaComponent,
+                        AssessmentInstructionsComponent,
+                        UnreferencedFeedbackComponent,
+                        ArtemisTranslatePipe,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(ConfirmAutofocusButtonComponent),
+                        MockComponent(ResizeableContainerComponent),
+                        MockComponent(ScoreDisplayComponent),
+                        MockComponent(TextAssessmentAreaComponent),
+                        MockComponent(AssessmentInstructionsComponent),
+                        MockComponent(UnreferencedFeedbackComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
         comp = fixture.componentInstance;
@@ -116,7 +154,7 @@ describe('ExampleTextSubmissionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
@@ -126,9 +164,9 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
-        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        jest.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
-        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
         await comp.ngOnInit();
@@ -149,8 +187,8 @@ describe('ExampleTextSubmissionComponent', () => {
         };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
-        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        jest.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -164,7 +202,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const feedback = Feedback.forText(textBlock2, 3, 'Test');
         result.feedbacks = [feedback];
 
-        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
         await comp.ngOnInit();
@@ -177,24 +215,24 @@ describe('ExampleTextSubmissionComponent', () => {
     });
 
     const verifyBlockIsInReferencedState = (block: TextBlockRef) => {
-        expect(block.deletable).toBeFalse();
-        expect(block.selectable).toBeTrue();
-        expect(block.highlighted).toBeTrue();
+        expect(block.deletable).toBe(false);
+        expect(block.selectable).toBe(true);
+        expect(block.highlighted).toBe(true);
     };
 
     const verifyBlockIsInUnReferencedState = (block: TextBlockRef) => {
-        expect(block.deletable).toBeTrue();
-        expect(block.selectable).toBeFalse();
-        expect(block.highlighted).toBeFalse();
+        expect(block.deletable).toBe(true);
+        expect(block.selectable).toBe(false);
+        expect(block.highlighted).toBe(false);
     };
 
     it('should not fail while fetching submission with null result for existing example submission in tutorial submission mode', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { toComplete: 'true' };
-        jest.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         // @ts-ignore
-        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
 
         // WHEN
         await comp.ngOnInit();
@@ -208,9 +246,9 @@ describe('ExampleTextSubmissionComponent', () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleParticipationId: 'new' };
-        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        jest.spyOn(exampleParticipationService, 'get').mockImplementation();
-        jest.spyOn(assessmentsService, 'getExampleResult').mockImplementation();
+        vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleParticipationService, 'get').mockImplementation();
+        vi.spyOn(assessmentsService, 'getExampleResult').mockImplementation();
 
         // WHEN
         await comp.ngOnInit();
@@ -224,8 +262,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should switch state when starting assessment', async () => {
         // GIVEN
-        jest.spyOn(exampleParticipationService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
-        jest.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
+        vi.spyOn(exampleParticipationService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
 
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
@@ -276,7 +314,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.state.assess();
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
-        jest.spyOn(assessmentsService, 'saveExampleAssessment').mockReturnValue(httpResponse(result));
+        vi.spyOn(assessmentsService, 'saveExampleAssessment').mockReturnValue(httpResponse(result));
 
         // WHEN
         fixture.detectChanges();
@@ -287,13 +325,13 @@ describe('ExampleTextSubmissionComponent', () => {
     });
 
     it('should not save the assessment when it is invalid', () => {
-        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
         comp.saveAssessments();
 
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('editing submission from assessment state switches state', fakeAsync(() => {
+    it('editing submission from assessment state switches state', async () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
@@ -315,13 +353,13 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.state = State.forExistingAssessmentWithContext(comp);
         comp['prepareTextBlocksAndFeedbacks']();
         comp.validateFeedback();
-        jest.spyOn(assessmentsService, 'deleteExampleAssessment').mockReturnValue(of(undefined));
+        vi.spyOn(assessmentsService, 'deleteExampleAssessment').mockReturnValue(of(undefined));
 
         // WHEN
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         comp.editSubmission();
-        tick();
+        await fixture.whenStable();
 
         // THEN
         expect(comp.state.constructor.name).toBe('EditState');
@@ -332,7 +370,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.result).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
-    }));
+    });
 
     it('should verify correct tutorial submission', async () => {
         // GIVEN
@@ -343,8 +381,8 @@ describe('ExampleTextSubmissionComponent', () => {
         };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
-        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        jest.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -355,7 +393,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         await comp.ngOnInit();
 
@@ -363,7 +401,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.textBlockRefs[0].feedback!.credits = 2;
         comp.validateFeedback();
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        jest.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(httpResponse(null));
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(httpResponse(null));
 
         // WHEN
         fixture.detectChanges();
@@ -377,13 +415,13 @@ describe('ExampleTextSubmissionComponent', () => {
     });
 
     it('should not check the assessment when it is invalid', () => {
-        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
         comp.checkAssessment();
 
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
+    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', async () => {
         // GIVEN
         const textBlockRefA = TextBlockRef.new();
         textBlockRefA.block!.id = 'ID';
@@ -413,45 +451,47 @@ describe('ExampleTextSubmissionComponent', () => {
             status: 400,
         });
 
-        jest.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(throwError(() => errorResponse));
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
-        comp.ngOnInit();
-        tick();
+        await comp.ngOnInit();
+        await fixture.whenStable();
 
         comp.checkAssessment();
-        tick();
+        await fixture.whenStable();
 
         // THEN
         expect(feedbackA.correctionStatus).toBe(FeedbackCorrectionErrorType.INCORRECT_SCORE);
         expect(feedbackB.correctionStatus).toBe('CORRECT');
-    }));
+    });
 
-    it('should create new example submission', fakeAsync(() => {
+    it('should create new example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = jest.spyOn(exampleParticipationService, 'create').mockReturnValue(httpResponse(exampleParticipation));
-        const alertSuccessSpy = jest.spyOn(alertService, 'success');
+        const createStub = vi.spyOn(exampleParticipationService, 'create').mockReturnValue(httpResponse(exampleParticipation));
+        const alertSuccessSpy = vi.spyOn(alertService, 'success');
+        // Mock the navigation util to avoid window.location.href regex matching issues
+        vi.spyOn(comp['navigationUtilService'], 'replaceNewWithIdInUrl').mockImplementation(() => {});
 
         comp.createNewExampleTextSubmission();
-        tick();
+        await fixture.whenStable();
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should not create example submission', fakeAsync(() => {
+    it('should not create example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = jest.spyOn(exampleParticipationService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
-        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        const createStub = vi.spyOn(exampleParticipationService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         comp.createNewExampleTextSubmission();
-        tick();
+        await fixture.whenStable();
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should read and understood', () => {
         // GIVEN
@@ -462,11 +502,11 @@ describe('ExampleTextSubmissionComponent', () => {
             tutorId: 3,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };
-        jest.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(of(new HttpResponse({ body: dto })));
-        const alertSpy = jest.spyOn(alertService, 'success');
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const alertSpy = vi.spyOn(alertService, 'success');
 
         const router = TestBed.inject(Router);
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routerSpy = vi.spyOn(router, 'navigate');
         comp.exercise = exercise;
         comp.exampleParticipation = exampleParticipation;
 
@@ -483,7 +523,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should go back with exam', async () => {
         // GIVEN
         const router = TestBed.inject(Router);
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routerSpy = vi.spyOn(router, 'navigate');
         const examExercise = {
             id: EXERCISE_ID,
             exerciseGroup: {
@@ -527,8 +567,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should update example text submission', () => {
         // GIVEN
-        const alertSuccessSpy = jest.spyOn(alertService, 'success');
-        const exampleParticipationServiceSpy = jest.spyOn(exampleParticipationService, 'update');
+        const alertSuccessSpy = vi.spyOn(alertService, 'success');
+        const exampleParticipationServiceSpy = vi.spyOn(exampleParticipationService, 'update');
         exampleParticipationServiceSpy.mockReturnValue(httpResponse(exampleParticipation));
         comp.unsavedSubmissionChanges = true;
 
@@ -538,7 +578,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(exampleParticipationServiceSpy).toHaveBeenCalledOnce();
         expect(comp.exampleParticipation).toEqual(exampleParticipation);
-        expect(comp.unsavedSubmissionChanges).toBeFalse();
+        expect(comp.unsavedSubmissionChanges).toBe(false);
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
     });

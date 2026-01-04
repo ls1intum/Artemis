@@ -175,18 +175,17 @@ export const examManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/grading-system',
-        loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
+        path: ':examId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
-        loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
     },
     {
         path: ':examId/bonus',
-        loadComponent: () => import('app/assessment/manage/grading-system/bonus/bonus.component').then((m) => m.BonusComponent),
+        loadComponent: () => import('app/assessment/manage/grading/bonus/bonus.component').then((m) => m.BonusComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.bonus.title',
@@ -291,7 +290,7 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
-        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
@@ -300,7 +299,7 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/bonus-grading-key',
-        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',

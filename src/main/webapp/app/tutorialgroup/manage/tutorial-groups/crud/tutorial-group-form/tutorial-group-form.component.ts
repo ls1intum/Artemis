@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnChanges, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -44,7 +44,7 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9: \\-]{0,19}$');
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTypeahead, MarkdownEditorMonacoComponent, ScheduleFormComponent, FaIconComponent, ArtemisTranslatePipe],
 })
-export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
+export class TutorialGroupFormComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
     private courseManagementService = inject(CourseManagementService);
     private tutorialGroupService = inject(TutorialGroupsService);
@@ -95,6 +95,18 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     faSave = faSave;
 
     ngUnsubscribe = new Subject<void>();
+
+    constructor() {
+        // Effect to handle formData changes (replaces ngOnChanges)
+        effect(() => {
+            const formData = this.formData();
+            const editMode = this.isEditMode();
+            this.initializeForm();
+            if (editMode && formData) {
+                this.setFormValues(formData);
+            }
+        });
+    }
 
     get titleControl() {
         return this.form.get('title');
@@ -194,14 +206,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-    }
-
-    ngOnChanges() {
-        this.initializeForm();
-        const formData = this.formData();
-        if (this.isEditMode() && formData) {
-            this.setFormValues(formData);
-        }
     }
 
     submitForm() {

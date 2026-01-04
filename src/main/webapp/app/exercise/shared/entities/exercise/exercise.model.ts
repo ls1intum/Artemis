@@ -183,7 +183,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         return faQuestion as IconProp;
     }
 
-    const icons = {
+    const icons: Record<string, IconProp> = {
         [ExerciseType.PROGRAMMING]: faKeyboard,
         [ExerciseType.MODELING]: faProjectDiagram,
         [ExerciseType.QUIZ]: faCheckDouble,
@@ -191,7 +191,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
-    return icons[exerciseType] as IconProp;
+    return icons[exerciseType] ?? (faQuestion as IconProp);
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {
