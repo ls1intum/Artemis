@@ -680,6 +680,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
     }
 
+    // Public variable is needed, passing data via query param resets the UI
     public static openPostId: number | undefined;
     openThread(postToOpen: Post | undefined) {
         CourseConversationsComponent.openPostId = postToOpen?.id;
