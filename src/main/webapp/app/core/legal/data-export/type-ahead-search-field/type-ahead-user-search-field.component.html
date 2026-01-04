@@ -1,7 +1,8 @@
-<label class="mb-1 form-check-label" for="typeahead-user-login" jhiTranslate="artemisApp.dataExport.loginOrName"></label>
+<label class="mb-1 form-check-label" for="typeahead-search" jhiTranslate="artemisApp.dataExport.loginOrName"></label>
 <div class="search-container">
     <input
-        id="typeahead-user-login"
+        id="typeahead-search"
+        name="search-filter"
         type="text"
         class="form-control"
         [(ngModel)]="loginOrName"
@@ -14,6 +15,12 @@
         (blur)="onChange()"
         [resultFormatter]="resultFormatter"
         [inputFormatter]="inputFormatter"
+        autocomplete="nope"
+        role="searchbox"
+        aria-autocomplete="list"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-form-type="other"
     />
 
     <div class="search-info" [class.active]="searching">

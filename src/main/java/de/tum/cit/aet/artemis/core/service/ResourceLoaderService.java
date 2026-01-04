@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -42,18 +41,18 @@ public class ResourceLoaderService {
     @Value("${artemis.template-path:#{null}}")
     private Optional<Path> templateFileSystemPath;
 
-    private final Path tempPath;
-
     private final ResourcePatternResolver resourceLoader;
+
+    private final TempFileUtilService tempFileUtilService;
 
     /**
      * Files that start with a prefix that is included in this list can be overwritten from the file system
      */
     private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates"));
 
-    public ResourceLoaderService(ResourceLoader resourceLoader, @Value("${artemis.temp-path}") Path tempPath) {
+    public ResourceLoaderService(ResourceLoader resourceLoader, TempFileUtilService tempFileUtilService) {
         this.resourceLoader = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
-        this.tempPath = tempPath;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -222,7 +221,7 @@ public class ResourceLoaderService {
         }
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
-            Path resourcePath = Files.createTempFile(tempPath, UUID.randomUUID().toString(), "");
+            Path resourcePath = tempFileUtilService.createTempFile(UUID.randomUUID().toString(), "");
             File file = resourcePath.toFile();
             file.deleteOnExit();
             FileUtils.copyInputStreamToFile(resource.getInputStream(), file);

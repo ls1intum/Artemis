@@ -299,7 +299,7 @@ The ``docker-compose.yml`` file could look like this for an Artemis, Jenkins and
           - "traefik.http.services.artemis.loadbalancer.server.port=8080"
 
       artemis-db:
-        image: mysql:9.4.0
+        image: mysql:9.5.0
         container_name: "mysql"
         restart: unless-stopped
         volumes:

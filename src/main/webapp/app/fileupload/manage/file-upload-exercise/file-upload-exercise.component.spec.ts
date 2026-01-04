@@ -149,7 +149,7 @@ describe('FileUploadExerciseComponent', () => {
     describe('deleteFileUploadExercise', () => {
         it('should delete exercise and broadcast event', async () => {
             const eventManager = TestBed.inject(EventManager);
-            vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: {} })));
+            vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
             await component.deleteFileUploadExercise(456);
 

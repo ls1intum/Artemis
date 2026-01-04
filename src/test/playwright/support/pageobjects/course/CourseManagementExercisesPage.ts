@@ -36,7 +36,7 @@ export class CourseManagementExercisesPage {
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${TEXT_EXERCISE_BASE}/*`);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
 
@@ -45,7 +45,7 @@ export class CourseManagementExercisesPage {
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/*`);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
 
@@ -54,7 +54,7 @@ export class CourseManagementExercisesPage {
         await exerciseElement.locator(`#delete-quiz-${exercise.id}`).click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/*`);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
 
@@ -63,7 +63,7 @@ export class CourseManagementExercisesPage {
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*`);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
 
@@ -72,7 +72,7 @@ export class CourseManagementExercisesPage {
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${UPLOAD_EXERCISE_BASE}/*`);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
 
@@ -128,7 +128,7 @@ export class CourseManagementExercisesPage {
         await endButton.scrollIntoViewIfNeeded();
         await endButton.click();
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
     }
 
     async shouldContainExerciseWithName(exerciseID: number) {

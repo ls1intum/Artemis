@@ -120,6 +120,22 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
 
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
+    /**
+     * Finds all conversation participations for a user for GDPR data export.
+     *
+     * @param userId the ID of the user
+     * @return list of all conversation participations for the user
+     */
+    @Query("""
+            SELECT cp
+            FROM ConversationParticipant cp
+            LEFT JOIN FETCH cp.conversation c
+            LEFT JOIN FETCH c.course
+            WHERE cp.user.id = :userId
+            ORDER BY c.course.title, c.creationDate DESC
+            """)
+    List<ConversationParticipant> findAllByUserIdWithConversationAndCourse(@Param("userId") Long userId);
+
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant

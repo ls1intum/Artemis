@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -28,9 +29,12 @@ public class LectureApi extends AbstractLectureApi {
 
     private final LectureImportService lectureImportService;
 
-    public LectureApi(LectureService lectureService, LectureImportService lectureImportService) {
+    private final LectureRepository lectureRepository;
+
+    public LectureApi(LectureService lectureService, LectureImportService lectureImportService, LectureRepository lectureRepository) {
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
+        this.lectureRepository = lectureRepository;
     }
 
     public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
@@ -43,6 +47,27 @@ public class LectureApi extends AbstractLectureApi {
 
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         lectureService.delete(lecture, updateCompetencyProgress);
+    }
+
+    /**
+     * Deletes a lecture by its ID.
+     *
+     * @param lectureId                the ID of the lecture to delete
+     * @param updateCompetencyProgress whether to update competency progress after deletion
+     */
+    public void deleteById(long lectureId, boolean updateCompetencyProgress) {
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        lectureService.delete(lecture, updateCompetencyProgress);
+    }
+
+    /**
+     * Finds all lecture IDs for a given course.
+     *
+     * @param courseId the ID of the course
+     * @return set of lecture IDs
+     */
+    public Set<Long> findLectureIdsByCourseId(long courseId) {
+        return lectureRepository.findLectureIdsByCourseId(courseId);
     }
 
     public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {

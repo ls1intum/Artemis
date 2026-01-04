@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthDetails, HealthKey } from 'app/core/admin/health/health.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -6,13 +6,17 @@ import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 
+/**
+ * Modal component for displaying detailed health information of a specific health indicator.
+ */
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, CommonModule],
 })
 export class HealthModalComponent {
-    private activeModal = inject(NgbActiveModal);
+    private readonly activeModal = inject(NgbActiveModal);
 
     health?: { key: HealthKey; value: HealthDetails };
 
