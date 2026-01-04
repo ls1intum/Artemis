@@ -103,7 +103,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * @returns shouldShow - Whether the notification should be shown
      */
     shouldShowNotification(notification: CourseNotification): boolean {
-        const courseId = this.route.snapshot['root']?.firstChild?.firstChild?.paramMap?.get('courseId');
+        const courseId = this.route.firstChild?.firstChild?.snapshot.paramMap.get('courseId');
 
         if (courseId && Number(courseId) === notification.courseId) {
             const routeParams = this.route.snapshot.queryParamMap;
