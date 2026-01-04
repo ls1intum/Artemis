@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,31 +10,43 @@ import { takeUntil } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe, DialogModule, ButtonDirective],
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
-    activeModal = inject(NgbActiveModal);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
     private fb = inject(FormBuilder);
 
     ngUnsubscribe = new Subject<void>();
 
+    readonly dialogVisible = signal<boolean>(false);
+    readonly confirmed = output<void>();
+
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
     form: FormGroup;
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
-    @Input() course: Course;
-    @Input() tutorialGroupId: number;
-    @Input() tutorialGroupSession: TutorialGroupSession;
+    readonly course = input.required<Course>();
+    readonly tutorialGroupId = input.required<number>();
+    readonly tutorialGroupSession = input.required<TutorialGroupSession>();
 
     ngOnInit(): void {
         this.initializeForm();
+    }
+
+    open(): void {
+        this.initializeForm();
+        this.dialogVisible.set(true);
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
     }
 
     get reasonControl() {
@@ -56,11 +67,11 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
         if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
             return '';
         } else {
-            return tutorialGroupSession.start.tz(this.course.timeZone).format('LLLL') + ' - ' + tutorialGroupSession.end.tz(this.course.timeZone).format('LT');
+            return tutorialGroupSession.start.tz(this.course().timeZone).format('LLLL') + ' - ' + tutorialGroupSession.end.tz(this.course().timeZone).format('LT');
         }
     }
     cancelOrActivate(): void {
-        if (this.tutorialGroupSession.status === TutorialGroupSessionStatus.ACTIVE) {
+        if (this.tutorialGroupSession().status === TutorialGroupSessionStatus.ACTIVE) {
             this.cancelSession();
         } else {
             this.activateSession();
@@ -69,30 +80,32 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     cancelSession(): void {
         this.tutorialGroupSessionService
-            .cancel(this.course.id!, this.tutorialGroupId, this.tutorialGroupSession.id!, this.reasonControl?.value)
+            .cancel(this.course().id!, this.tutorialGroupId(), this.tutorialGroupSession().id!, this.reasonControl?.value)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
-                    this.activeModal.close('confirmed');
+                    this.close();
+                    this.confirmed.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.activeModal.close('error');
+                    this.close();
                 },
             });
     }
 
     activateSession(): void {
         this.tutorialGroupSessionService
-            .activate(this.course.id!, this.tutorialGroupId, this.tutorialGroupSession.id!)
+            .activate(this.course().id!, this.tutorialGroupId(), this.tutorialGroupSession().id!)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
-                    this.activeModal.close('confirmed');
+                    this.close();
+                    this.confirmed.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.activeModal.close('error');
+                    this.close();
                 },
             });
     }

@@ -24,7 +24,7 @@
                 @if (tutorialGroup().tutorialGroupSchedule) {
                     <th jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.columns.notes"></th>
                 }
-                @if (extraColumn) {
+                @if (extraColumn()) {
                     <th></th>
                 }
             </tr>
@@ -34,7 +34,7 @@
             @if (nextSession) {
                 <tr
                     jhi-session-row
-                    [extraColumn]="extraColumn"
+                    [extraColumn]="extraColumn()"
                     [session]="nextSession"
                     [tutorialGroup]="tutorialGroup()"
                     [timeZone]="timeZone()"
@@ -61,7 +61,7 @@
                 <tr
                     [hidden]="isCollapsed"
                     jhi-session-row
-                    [extraColumn]="extraColumn"
+                    [extraColumn]="extraColumn()"
                     [session]="session"
                     [timeZone]="timeZone()"
                     [tutorialGroup]="tutorialGroup()"
@@ -86,7 +86,7 @@
                     <tr
                         [hidden]="isCollapsed"
                         jhi-session-row
-                        [extraColumn]="extraColumn"
+                        [extraColumn]="extraColumn()"
                         [session]="session"
                         [tutorialGroup]="tutorialGroup()"
                         [timeZone]="timeZone()"
