@@ -25,4 +25,14 @@ public class ModelingSubmissionApi extends AbstractModelingApi {
     public ModelingSubmission save(ModelingSubmission submission) {
         return modelingSubmissionRepository.save(submission);
     }
+
+    /**
+     * Finds a modeling submission by id, throwing an exception if not found.
+     *
+     * @param submissionId the id of the submission
+     * @return the found submission
+     */
+    public ModelingSubmission findByIdElseThrow(long submissionId) {
+        return modelingSubmissionRepository.findByIdElseThrow(submissionId);
+    }
 }

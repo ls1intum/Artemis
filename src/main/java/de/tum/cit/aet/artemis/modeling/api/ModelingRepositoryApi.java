@@ -31,4 +31,14 @@ public class ModelingRepositoryApi extends AbstractModelingApi {
     public Optional<ModelingExercise> findForVersioningById(long exerciseId) {
         return modelingExerciseRepository.findForVersioningById(exerciseId);
     }
+
+    /**
+     * Finds a modeling exercise by id, throwing an exception if not found.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the found exercise
+     */
+    public ModelingExercise findByIdElseThrow(long exerciseId) {
+        return modelingExerciseRepository.findByIdElseThrow(exerciseId);
+    }
 }
