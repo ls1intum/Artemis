@@ -97,13 +97,25 @@ public record CourseCreateDTO(
         course.setLanguage(language);
         course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
 
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
+        // Complaint settings - only override defaults if values are explicitly provided (non-null/non-zero)
+        if (maxComplaints != null) {
+            course.setMaxComplaints(maxComplaints);
+        }
+        if (maxTeamComplaints != null) {
+            course.setMaxTeamComplaints(maxTeamComplaints);
+        }
+        if (maxComplaintTimeDays > 0) {
+            course.setMaxComplaintTimeDays(maxComplaintTimeDays);
+        }
+        if (maxRequestMoreFeedbackTimeDays > 0) {
+            course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
+        }
+        if (maxComplaintTextLimit > 0) {
+            course.setMaxComplaintTextLimit(maxComplaintTextLimit);
+        }
+        if (maxComplaintResponseTextLimit > 0) {
+            course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
+        }
 
         // UI settings
         course.setColor(color);

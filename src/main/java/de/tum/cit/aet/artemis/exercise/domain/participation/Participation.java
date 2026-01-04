@@ -91,7 +91,7 @@ public abstract class Participation extends DomainObject implements Participatio
     // orphanRemoval causes a DELETE (not UPDATE to NULL) at flush time.
     @ManyToOne(optional = false)
     @JoinColumn(name = "exercise_id", nullable = false)
-    @JsonIgnoreProperties({ "studentParticipations", "tutorParticipations", "course" })
+    @JsonIgnoreProperties({ "studentParticipations", "tutorParticipations" })
     protected Exercise exercise;
 
     /**
