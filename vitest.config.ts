@@ -29,6 +29,8 @@ export default defineConfig({
             'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
             'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
             'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
+            'src/main/webapp/app/text/**/*.spec.ts',            // include text module tests
+            'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
             'src/main/webapp/app/tutorialgroup/**/*.spec.ts',   // include tutorial group tests
             'src/main/webapp/app/quiz/**/*.spec.ts',            // include quiz tests
         ],
@@ -50,15 +52,17 @@ export default defineConfig({
                 'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
                 'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts',       // include buildagent for code coverage
+                'src/main/webapp/app/text/**/*.ts',             // include text module for code coverage
+                'src/main/webapp/app/assessment/**/*.ts',       // include assessment for code coverage
                 'src/main/webapp/app/tutorialgroup/**/*.ts',    // include tutorial group for code coverage
                 'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
             ],
-            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
+            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
-                lines: 91.80,
-                statements: 91.50,
-                branches: 76.70,
-                functions: 84.60,
+                lines: 92.20,
+                statements: 92.20,
+                branches: 77.30,
+                functions: 89.50,
             },
         },
     },

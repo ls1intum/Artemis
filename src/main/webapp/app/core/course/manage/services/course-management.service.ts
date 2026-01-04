@@ -484,8 +484,8 @@ export class CourseManagementService {
      * Archives the course of the specified courseId.
      * @param courseId The id of the course to archive
      */
-    archiveCourse(courseId: number): Observable<HttpResponse<any>> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
+    archiveCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
     }
 
     cleanupCourse(courseId: number): Observable<HttpResponse<void>> {
