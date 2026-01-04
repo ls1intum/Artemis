@@ -21,6 +21,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     let courseNotificationWebsocketService: CourseNotificationWebsocketService;
     let courseNotificationService: CourseNotificationService;
     let websocketNotificationSubject: Subject<CourseNotification>;
+    let mockRoute: MockActivatedRoute;
     let componentAsAny: any;
 
     const createMockNotification = (id: number, courseId: number): CourseNotification => {
@@ -34,6 +35,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             {
                 courseTitle: 'Test Course',
                 courseIconUrl: 'test-icon-url',
+                channelId: 20,
             },
             '/',
         );
@@ -52,13 +54,15 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             decreaseNotificationCountBy: jest.fn(),
         } as unknown as CourseNotificationService;
 
+        mockRoute = new MockActivatedRoute();
+
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent],
             declarations: [CourseNotificationPopupOverlayComponent, MockComponent(CourseNotificationComponent)],
             providers: [
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: mockRoute },
             ],
         }).compileComponents();
 
@@ -84,6 +88,29 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         expect(componentAsAny.notifications).toHaveLength(1);
         expect(componentAsAny.notifications[0]).toBe(mockNotification);
+
+        discardPeriodicTasks();
+    }));
+
+    it('should not add notification when conversation is open', fakeAsync(() => {
+        const mockNotification = createMockNotification(1, 101);
+
+        // Mocking router: course 101, channel 20 open
+        mockRoute.setParameters({ channelId: 20 });
+        // @ts-ignore
+        mockRoute.paramMap['get'] = function (string: any) {
+            return string === 'courseId' ? 101 : undefined;
+        };
+        // @ts-ignore
+        mockRoute.snapshot['root'] = mockRoute.root;
+        mockRoute.snapshot.queryParamMap['get'] = function (string: any) {
+            return string === 'conversationId' ? 20 : undefined;
+        };
+
+        websocketNotificationSubject.next(mockNotification);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(componentAsAny.notifications).toHaveLength(0);
 
         discardPeriodicTasks();
     }));
