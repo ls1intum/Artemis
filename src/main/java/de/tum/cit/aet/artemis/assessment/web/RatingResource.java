@@ -11,6 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,22 +23,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.RatingListItemDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Rating.
@@ -58,15 +62,11 @@ public class RatingResource {
 
     private final ResultRepository resultRepository;
 
-    private final CourseRepository courseRepository;
-
-    public RatingResource(RatingService ratingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            CourseRepository courseRepository) {
+    public RatingResource(RatingService ratingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
         this.ratingService = ratingService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
-        this.courseRepository = courseRepository;
     }
 
     /**
@@ -78,7 +78,6 @@ public class RatingResource {
     @GetMapping("results/{resultId}/rating")
     @EnforceAtLeastStudent
     public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
-        // TODO allow for Instructors
         if (!authCheckService.isAdmin()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
@@ -126,23 +125,18 @@ public class RatingResource {
     }
 
     /**
-     * GET /course/:courseId/rating : Get all ratings for the "courseId" Course
+     * GET /course/:courseId/rating : Get paginated ratings for the "courseId" Course
      *
      * @param courseId - Id of the course that the ratings are fetched for
-     * @return List of Ratings for the course
+     * @param pageable - Pagination information (page, size, sort)
+     * @return List of RatingListItemDTO with pagination info in headers
      */
     @GetMapping("course/{courseId}/rating")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
-        responseRatings.forEach(rating -> {
-            rating.getResult().getSubmission().getParticipation().getExercise().setCourse(null);
-            rating.getResult().getSubmission().getParticipation().getExercise().setExerciseGroup(null);
-            rating.getResult().setSubmission(null);
-        });
-        return ResponseEntity.ok(responseRatings);
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, Pageable pageable) {
+        Page<RatingListItemDTO> ratings = ratingService.getAllRatingsForDashboard(courseId, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), ratings);
+        return new ResponseEntity<>(ratings.getContent(), headers, HttpStatus.OK);
     }
 
     /**

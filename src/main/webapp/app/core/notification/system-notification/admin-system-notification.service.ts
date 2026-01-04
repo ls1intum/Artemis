@@ -41,6 +41,6 @@ export class AdminSystemNotificationService {
      * @param systemNotificationId The id of the notification to delete.
      */
     delete(systemNotificationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' });
     }
 }
