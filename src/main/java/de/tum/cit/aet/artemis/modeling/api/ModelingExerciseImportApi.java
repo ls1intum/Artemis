@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.api;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
@@ -7,7 +8,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
@@ -73,5 +76,16 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
      */
     public ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exerciseId);
+    }
+
+    /**
+     * Copies a modeling submission with its results and feedback.
+     *
+     * @param originalSubmission            the original submission to copy
+     * @param gradingInstructionCopyTracker mapping from original GradingInstruction IDs to new instances
+     * @return the copied submission
+     */
+    public Submission copySubmission(Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        return modelingExerciseImportService.copySubmission(originalSubmission, gradingInstructionCopyTracker);
     }
 }
