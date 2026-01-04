@@ -14,6 +14,7 @@ import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -83,6 +84,15 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.isExpanded = !this.isExpanded;
         this.expandTooltip()?.close();
     }
+
+    /**
+     * Emits the close post thread and resets the open post variable
+     */
+    closeThread() {
+        this.closePostThread.emit();
+        CourseConversationsComponent.openPostId = undefined;
+    }
+
     /**
      * makes message thread section expandable by configuring 'interact'
      */

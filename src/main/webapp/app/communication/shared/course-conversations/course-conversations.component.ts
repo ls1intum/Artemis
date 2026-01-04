@@ -680,7 +680,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
     }
 
+    public static openPostId: number | undefined;
     openThread(postToOpen: Post | undefined) {
+        CourseConversationsComponent.openPostId = postToOpen?.id;
         this.postInThread = postToOpen;
     }
 

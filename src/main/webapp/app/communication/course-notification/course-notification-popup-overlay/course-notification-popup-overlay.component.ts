@@ -5,7 +5,9 @@ import { CourseNotificationComponent } from 'app/communication/course-notificati
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 
@@ -26,6 +28,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
     private readonly courseNotificationService = inject(CourseNotificationService);
 
+    private readonly route = inject(ActivatedRoute);
+
     protected notifications: CourseNotification[] = [];
     protected isExpanded: boolean = false;
 
@@ -38,6 +42,13 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
             if (this.notifications.findIndex((existingNotification) => existingNotification.notificationId === notification.notificationId) !== -1) {
+                return;
+            }
+
+            // Don't show the notification to the user if not needed, e.g. conversation open
+            if (!this.shouldShowNotification(notification)) {
+                // Calling closeClicked ensures the notification gets marked as seen
+                this.closeClicked(notification);
                 return;
             }
 
@@ -83,6 +94,37 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         this.courseNotificationService.setNotificationStatusInMap(notification.courseId!, [notification.notificationId!], CourseNotificationViewingStatus.SEEN);
         this.courseNotificationService.decreaseNotificationCountBy(notification.courseId!, 1);
         this.removeNotification(notification.notificationId!);
+    }
+
+    /**
+     * Checks whether it makes sense to show a notification to the user in the current context.
+     *
+     * @param notification - The notification to potentially show
+     * @returns shouldShow - Whether the notification should be shown
+     */
+    shouldShowNotification(notification: CourseNotification): boolean {
+        const courseId = this.route.snapshot.root.children.first()?.children.first()?.paramMap.get('courseId');
+
+        if (courseId && Number(courseId) === notification.courseId) {
+            const routeParams = this.route.snapshot.queryParamMap;
+            const notificationParams = notification.parameters;
+
+            // Communication
+            const conversationId = routeParams.get('conversationId');
+            if (conversationId && notificationParams && 'channelId' in notificationParams && conversationId == notificationParams['channelId']) {
+                // Announcements/Posts in currently open channel
+                if (notification.notificationType === 'newPostNotification' || notification.notificationType === 'newAnnouncementNotification') {
+                    return false;
+                }
+
+                // Replies in currently open thread
+                const threadId = CourseConversationsComponent.openPostId;
+                if (notification.notificationType === 'newAnswerNotification' && 'postId' in notificationParams && threadId == notificationParams['postId']) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
