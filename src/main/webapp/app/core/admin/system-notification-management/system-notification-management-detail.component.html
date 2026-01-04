@@ -1,9 +1,9 @@
 @if (notification(); as notif) {
     <div>
-        <h2>
+        <h5 *adminTitleBarTitle id="system-notification-detail-heading" class="mb-0">
             <span jhiTranslate="artemisApp.systemNotification.systemNotification"></span>
             [{{ notif.id }}]
-        </h2>
+        </h5>
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="global.field.id"></span></dt>
             <dd>

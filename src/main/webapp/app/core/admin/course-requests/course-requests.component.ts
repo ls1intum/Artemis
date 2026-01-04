@@ -19,6 +19,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { getCurrentAndFutureSemesters } from 'app/shared/util/semester-utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Admin component for managing course creation requests.
@@ -38,6 +40,8 @@ import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
         ReactiveFormsModule,
         RouterLink,
         FaIconComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
         NgbPagination,
         CourseRequestFormComponent,
     ],

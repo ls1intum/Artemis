@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -87,9 +86,6 @@ class HyperionCodeGenerationExecutionServiceTest {
     private HyperionTestRepositoryService testStrategy;
 
     @Mock
-    private HyperionCodeGenerationService mockStrategy;
-
-    @Mock
     private ProgrammingSubmissionService programmingSubmissionService;
 
     private HyperionCodeGenerationExecutionService service;
@@ -115,22 +111,22 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
-    void resolveStrategy_withSolutionRepositoryType_returnsSolutionStrategy() throws Exception {
-        HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.SOLUTION);
+    void resolveStrategy_withSolutionRepositoryType_returnsSolutionStrategy() {
+        HyperionCodeGenerationService result = ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.SOLUTION);
 
         assertThat(result).isEqualTo(solutionStrategy);
     }
 
     @Test
-    void resolveStrategy_withTemplateRepositoryType_returnsTemplateStrategy() throws Exception {
-        HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TEMPLATE);
+    void resolveStrategy_withTemplateRepositoryType_returnsTemplateStrategy() {
+        HyperionCodeGenerationService result = ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TEMPLATE);
 
         assertThat(result).isEqualTo(templateStrategy);
     }
 
     @Test
-    void resolveStrategy_withTestsRepositoryType_returnsTestStrategy() throws Exception {
-        HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TESTS);
+    void resolveStrategy_withTestsRepositoryType_returnsTestStrategy() {
+        HyperionCodeGenerationService result = ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TESTS);
 
         assertThat(result).isEqualTo(testStrategy);
     }
@@ -153,31 +149,31 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Test
     void extractBuildLogs_withNullResult_returnsDefaultMessage() {
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", (Object) null);
+        String result = ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", (Object) null);
 
         assertThat(result).isEqualTo("Build failed to produce a result.");
     }
 
     @Test
-    void cleanupRepository_withValidInputs_callsGitService() throws Exception {
+    void cleanupRepository_withValidInputs_callsGitService() {
         Repository mockRepository = mock(Repository.class);
         ReflectionTestUtils.invokeMethod(service, "cleanupRepository", mockRepository, "commit-hash");
         verify(gitService, times(1)).resetToOriginHead(mockRepository);
     }
 
     @Test
-    void cleanupRepository_withNullRepository_doesNotThrow() throws Exception {
-        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", (Object) null, "commit-hash");
+    void cleanupRepository_withNullRepository_doesNotThrow() {
+        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", null, "commit-hash");
     }
 
     @Test
-    void cleanupRepository_withNullCommitHash_doesNotThrow() throws Exception {
+    void cleanupRepository_withNullCommitHash_doesNotThrow() {
         Repository mockRepository = mock(Repository.class);
-        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", mockRepository, (Object) null);
+        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", mockRepository, null);
     }
 
     @Test
-    void setupRepository_withNullRepositoryUri_returnsFalse() throws Exception {
+    void setupRepository_withNullRepositoryUri_returnsFalse() {
         // Don't set any repository URI, so getRepositoryURI will return null
 
         Object result = ReflectionTestUtils.invokeMethod(service, "setupRepository", exercise, RepositoryType.SOLUTION);
@@ -232,16 +228,14 @@ class HyperionCodeGenerationExecutionServiceTest {
     void commitAndGetHash_withSuccessfulCommit_returnsHash() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
-        ObjectId mockCommitId = mock(ObjectId.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
         doNothing().when(repositoryService).commitChanges(mockRepository, user);
-        when(gitService.getLastCommitHash(repositoryUri)).thenReturn(mockCommitId);
-        when(mockCommitId.getName()).thenReturn("new-commit-hash");
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
 
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
+        String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
 
         assertThat(result).isEqualTo("new-commit-hash");
         verify(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
@@ -251,17 +245,15 @@ class HyperionCodeGenerationExecutionServiceTest {
     void commitAndGetHash_withCIException_stillReturnsHash() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
-        ObjectId mockCommitId = mock(ObjectId.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
         doNothing().when(repositoryService).commitChanges(mockRepository, user);
-        when(gitService.getLastCommitHash(repositoryUri)).thenReturn(mockCommitId);
-        when(mockCommitId.getName()).thenReturn("new-commit-hash");
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash",
                 RepositoryType.SOLUTION);
 
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
+        String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
 
         assertThat(result).isEqualTo("new-commit-hash");
     }
@@ -270,15 +262,13 @@ class HyperionCodeGenerationExecutionServiceTest {
     void commitAndGetHash_withTestsRepositoryType_createsTestSubmissionAndTriggersCI() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
-        ObjectId mockCommitId = mock(ObjectId.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
         doNothing().when(repositoryService).commitChanges(mockRepository, user);
-        when(gitService.getLastCommitHash(repositoryUri)).thenReturn(mockCommitId);
-        when(mockCommitId.getName()).thenReturn("commit-tests");
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("commit-tests");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
 
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.TESTS);
+        String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.TESTS);
 
         assertThat(result).isEqualTo("commit-tests");
         verify(programmingSubmissionService, times(1)).createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), "commit-tests");
@@ -286,7 +276,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
-    void extractBuildLogs_withProgrammingSubmission_returnsConcatenatedLogs() throws Exception {
+    void extractBuildLogs_withProgrammingSubmission_returnsConcatenatedLogs() {
         Result mockResult = mock(Result.class);
         ProgrammingSubmission mockSubmission = mock(ProgrammingSubmission.class);
         BuildLogEntry logEntry1 = mock(BuildLogEntry.class);
@@ -298,29 +288,29 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(logEntry1.getLog()).thenReturn("Error in line 1");
         when(logEntry2.getLog()).thenReturn("Error in line 2");
 
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", mockResult);
+        String result = ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", mockResult);
 
         assertThat(result).isEqualTo("Error in line 1\nError in line 2");
     }
 
     @Test
-    void extractBuildLogs_withNonProgrammingSubmission_returnsDefaultMessage() throws Exception {
+    void extractBuildLogs_withNonProgrammingSubmission_returnsDefaultMessage() {
         Result mockResult = mock(Result.class);
 
         when(mockResult.getSubmission()).thenReturn(null);
 
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", mockResult);
+        String result = ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", mockResult);
 
         assertThat(result).isEqualTo("Build failed to produce a result.");
     }
 
     @Test
-    void waitForBuildResult_withNoParticipation_returnsNull() throws Exception {
+    void waitForBuildResult_withNoParticipation_returnsNull() {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
 
-        Result resultSolution = (Result) ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
-        Result resultTemplate = (Result) ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
+        Result resultSolution = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+        Result resultTemplate = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
 
         assertThat(resultSolution).isNull();
         assertThat(resultTemplate).isNull();

@@ -38,9 +38,9 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_returnsGeneratedDraft() throws Exception {
+    void generateProblemStatement_returnsGeneratedDraft() {
         String generatedDraft = "Generated draft problem statement";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
 
         var course = new Course();
         course.setTitle("Test Course");
@@ -52,7 +52,7 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_throwsExceptionOnAIFailure() throws Exception {
+    void generateProblemStatement_throwsExceptionOnAIFailure() {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI service unavailable"));
 
         var course = new Course();
@@ -65,10 +65,10 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_throwsExceptionOnExcessivelyLongResponse() throws Exception {
+    void generateProblemStatement_throwsExceptionOnExcessivelyLongResponse() {
         // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
         String excessivelyLongDraft = "a".repeat(50_001);
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongDraft)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongDraft)))));
 
         var course = new Course();
         course.setId(456L);
@@ -80,9 +80,9 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_handlesNullUserPrompt() throws Exception {
+    void generateProblemStatement_handlesNullUserPrompt() {
         String generatedDraft = "Generated draft with default prompt";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
 
         var course = new Course();
         course.setTitle("Test Course");
@@ -96,9 +96,9 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_handlesNullCourseFields() throws Exception {
+    void generateProblemStatement_handlesNullCourseFields() {
         String generatedDraft = "Generated draft with default course info";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
 
         var course = new Course();
         // Leave title and description null
@@ -111,10 +111,10 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_acceptsMaximumLengthResponse() throws Exception {
+    void generateProblemStatement_acceptsMaximumLengthResponse() {
         // Generate a string exactly at MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
         String maxLengthDraft = "a".repeat(50_000);
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(maxLengthDraft)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(maxLengthDraft)))));
 
         var course = new Course();
         course.setTitle("Test Course");

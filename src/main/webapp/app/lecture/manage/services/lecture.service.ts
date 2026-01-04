@@ -119,8 +119,8 @@ export class LectureService {
             );
     }
 
-    delete(lectureId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
+    delete(lectureId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {

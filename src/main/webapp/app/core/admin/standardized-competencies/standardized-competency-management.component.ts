@@ -32,6 +32,8 @@ import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standard
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -53,6 +55,8 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

@@ -2,6 +2,7 @@ import { UserCredentials } from './users';
 import { Locator, Page, expect } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
+import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
 
 /**
  * A class that encapsulates static helper command methods.
@@ -57,7 +58,16 @@ export class Commands {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
             } catch (error) {
-                await page.reload();
+                // Check if the page is still open before reloading
+                if (page.isClosed()) {
+                    throw new Error(`Page was closed while waiting for element matching "${locator}"`);
+                }
+                try {
+                    await page.reload();
+                } catch (reloadError) {
+                    // If reload fails (e.g., page closed), throw a descriptive error
+                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`);
+                }
             }
         }
 
@@ -73,11 +83,36 @@ export class Commands {
      * @param interval - Interval in milliseconds between checks for the build to finish.
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
      */
-    static waitForExerciseBuildToFinish = async (page: Page, exerciseAPIRequests: ExerciseAPIRequests, exerciseId: number, interval: number = 2000, timeout: number = 60000) => {
-        let exerciseParticipation: StudentParticipation;
+    static waitForExerciseBuildToFinish = async (
+        page: Page,
+        exerciseAPIRequests: ExerciseAPIRequests,
+        exerciseId: number,
+        interval: number = POLLING_INTERVAL,
+        timeout: number = BUILD_FINISH_TIMEOUT,
+    ) => {
+        let exerciseParticipation: StudentParticipation | undefined;
         const startTime = Date.now();
 
-        exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+        const getParticipation = async (): Promise<StudentParticipation | undefined> => {
+            try {
+                return await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+            } catch {
+                return undefined;
+            }
+        };
+
+        // Wait for participation to be available
+        while (Date.now() - startTime < timeout) {
+            exerciseParticipation = await getParticipation();
+            if (exerciseParticipation) {
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+
+        if (!exerciseParticipation) {
+            throw new Error(`Timed out waiting for participation for exercise ${exerciseId}`);
+        }
 
         const numberOfBuildResults = exerciseParticipation.submissions
             ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
@@ -85,9 +120,9 @@ export class Commands {
 
         console.log('Waiting for build of an exercise to finish...');
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+            exerciseParticipation = await getParticipation();
 
-            const currentBuildResultsCount = exerciseParticipation.submissions
+            const currentBuildResultsCount = exerciseParticipation?.submissions
                 ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
                 : 0;
 
@@ -99,6 +134,65 @@ export class Commands {
         }
 
         throw new Error('Timed out while waiting for build to finish.');
+    };
+
+    /**
+     * Waits for the build of a specific participation to finish.
+     * This method uses a student-accessible endpoint (by participation ID).
+     * Use this when logged in as a student who owns the participation.
+     *
+     * @param exerciseAPIRequests - ExerciseAPIRequests object.
+     * @param participationId - ID of the participation to wait for.
+     * @param interval - Interval in milliseconds between checks.
+     * @param timeout - Timeout in milliseconds to wait for the build to finish.
+     */
+    static waitForParticipationBuildToFinish = async (
+        exerciseAPIRequests: ExerciseAPIRequests,
+        participationId: number,
+        interval: number = POLLING_INTERVAL,
+        timeout: number = BUILD_FINISH_TIMEOUT,
+    ) => {
+        const startTime = Date.now();
+
+        const countResults = (participation: StudentParticipation): number => {
+            return participation.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+        };
+
+        let initialResultCount = 0;
+
+        // Get initial result count
+        try {
+            const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+            initialResultCount = countResults(participation);
+            console.log(`[waitForParticipationBuildToFinish] Initial result count for participation ${participationId}: ${initialResultCount}`);
+        } catch (e) {
+            console.log(`[waitForParticipationBuildToFinish] Could not get initial results for participation ${participationId}: ${e}`);
+        }
+
+        console.log(`[waitForParticipationBuildToFinish] Waiting for build of participation ${participationId} to finish (timeout: ${timeout}ms)...`);
+        let pollCount = 0;
+        while (Date.now() - startTime < timeout) {
+            try {
+                const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+                const currentResultCount = countResults(participation);
+                pollCount++;
+
+                if (pollCount % 5 === 0) {
+                    console.log(`[waitForParticipationBuildToFinish] Poll #${pollCount}: current result count = ${currentResultCount}, waiting for > ${initialResultCount}`);
+                }
+
+                if (currentResultCount > initialResultCount) {
+                    console.log(`[waitForParticipationBuildToFinish] Build finished! Result count increased from ${initialResultCount} to ${currentResultCount}`);
+                    return participation;
+                }
+            } catch (e) {
+                console.log(`[waitForParticipationBuildToFinish] Poll failed: ${e}`);
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+
+        throw new Error(`Timed out waiting for build to finish for participation ${participationId}. Initial results: ${initialResultCount}, timeout: ${timeout}ms`);
     };
 
     static toggleSidebar = async (page: Page) => {

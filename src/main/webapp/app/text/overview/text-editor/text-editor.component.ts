@@ -305,19 +305,25 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     ngOnDestroy() {
+        // Auto-save unsaved changes when navigating away from the component.
+        // This ensures students don't lose their work if they accidentally navigate away
+        // without explicitly saving their text submission.
         if (!this.canDeactivate() && this.textExercise.id) {
             let newSubmission = new TextSubmission();
             if (this.submission) {
                 newSubmission = this.submission;
             }
             newSubmission.text = this.answer;
-            if (this.submission.id) {
+            if (this.submission?.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
                     this.submission = response.body!;
                     setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-                    // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation!.submissions = [this.submission];
-                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    // Reconnect the submission to its participation so that the submission status
+                    // is displayed correctly in the result component after auto-save.
+                    if (this.submission.participation) {
+                        this.submission.participation.submissions = [this.submission];
+                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    }
                 });
             }
         }
