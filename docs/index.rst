@@ -22,28 +22,8 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   user/assessment
-   user/exercises
-   user/quiz-training
-   user/lectures
-   user/exam_mode
+   user/user-guide
    user/communication
-   user/faqs
-   user/tutorialgroups
-   user/plagiarism-check
-   user/learning-analytics
-   user/adaptive-learning
-   user/notifications
-   user/user-experience
-   user/grading
-   user/courses/customizable
-   user/markdown-support
-   user/integrated-code-lifecycle
-   user/exports
-   user/sharing
-   user/mobile-applications
-   user/lti
-   user/calendar
 
 
 .. toctree::
