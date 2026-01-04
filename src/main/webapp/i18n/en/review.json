@@ -22,7 +22,9 @@
             "unresolveThread": "Unresolve",
             "resolveFailed": "Could not update the thread status.",
             "threadResolved": "Resolved",
-            "threadOutdated": "Outdated"
+            "threadOutdated": "Outdated",
+            "threadVersion": "created in version {{versionId}}",
+            "threadCommit": "created in commit {{commitSha}}"
         }
     }
 }

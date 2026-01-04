@@ -22,7 +22,9 @@
             "unresolveThread": "Wieder öffnen",
             "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
             "threadResolved": "Erledigt",
-            "threadOutdated": "Veraltet"
+            "threadOutdated": "Veraltet",
+            "threadVersion": "erstellt in Version {{versionId}}",
+            "threadCommit": "erstellt in Commit {{commitSha}}"
         }
     }
 }

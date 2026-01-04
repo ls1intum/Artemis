@@ -124,6 +124,14 @@
 
 .monaco-review-comment-thread-title {
     font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.monaco-review-comment-thread-title-text {
+    flex: 0 0 auto;
 }
 
 .monaco-review-comment-thread-tag {
@@ -146,6 +154,17 @@
 .monaco-review-comment-thread-tag--outdated {
     background-color: rgba(108, 117, 125, 0.15);
     color: var(--secondary-text-color);
+}
+
+.monaco-review-comment-thread-meta--truncate {
+    display: inline-block;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
 }
 
 .monaco-review-comment-thread-toggle {
@@ -177,9 +196,13 @@
     transform: translateY(1px);
 }
 
-.monaco-review-comment-thread-toggle span {
-    position: relative;
-    top: 1px;
+.monaco-review-comment-thread-toggle-icon {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid currentColor;
 }
 
 .monaco-review-comment-item--with-divider {

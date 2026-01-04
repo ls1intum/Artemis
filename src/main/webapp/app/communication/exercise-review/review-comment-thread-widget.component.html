@@ -1,7 +1,17 @@
 <div class="monaco-review-comment-widget monaco-review-comment-thread">
     <div class="monaco-review-comment-thread-header" [class.monaco-review-comment-thread-header--collapsed]="!showThreadBody">
         <div class="monaco-review-comment-thread-title">
-            {{ 'artemisApp.review.threadTitle' | artemisTranslate: { line: getThreadLineLabel() } }}
+            <span class="monaco-review-comment-thread-title-text">
+                {{ 'artemisApp.review.threadTitle' | artemisTranslate: { line: getThreadLineLabel() } }}
+            </span>
+            @if (getThreadMeta(); as meta) {
+                <span
+                    class="monaco-review-comment-thread-meta monaco-review-comment-meta"
+                    [class.monaco-review-comment-thread-meta--truncate]="meta.key === 'artemisApp.review.threadCommit'"
+                >
+                    {{ meta.key | artemisTranslate: meta.params }}
+                </span>
+            }
             @if (thread()?.resolved) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--resolved">
                     {{ 'artemisApp.review.threadResolved' | artemisTranslate }}
@@ -14,7 +24,7 @@
             }
         </div>
         <button type="button" class="btn btn-link p-0 monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
-            <span [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody" aria-hidden="true">▾</span>
+            <span class="monaco-review-comment-thread-toggle-icon" [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody" aria-hidden="true"></span>
         </button>
     </div>
     @if (showThreadBody) {
@@ -28,7 +38,7 @@
                             <div class="monaco-review-comment-meta">
                                 {{ 'artemisApp.review.commentedOn' | artemisTranslate: { date: comment.createdDate | artemisDate } }}
                                 @if (isEdited(comment)) {
-                                    <span class="monaco-review-comment-meta-separator">·</span>
+                                    <span class="monaco-review-comment-meta-separator">|</span>
                                     {{ 'artemisApp.review.lastEdited' | artemisTranslate: { date: comment.lastModifiedDate | artemisDate } }}
                                 }
                             </div>

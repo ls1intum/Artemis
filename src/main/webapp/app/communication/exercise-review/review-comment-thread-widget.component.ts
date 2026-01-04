@@ -5,7 +5,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { CommentThread } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
 import { Comment } from 'app/communication/shared/entities/exercise-review/comment.model';
 import { CommentContent } from 'app/communication/shared/entities/exercise-review/comment-content.model';
 
@@ -135,5 +135,20 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
 
     isEditing(comment: Comment): boolean {
         return this.editingCommentId === comment.id;
+    }
+
+    getThreadMeta(): { key: string; params: { versionId?: number; commitSha?: string } } | undefined {
+        const thread = this.thread();
+        if (!thread) {
+            return undefined;
+        }
+
+        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT && thread.initialVersionId) {
+            return { key: 'artemisApp.review.threadVersion', params: { versionId: thread.initialVersionId } };
+        }
+        if (thread.targetType !== CommentThreadLocationType.PROBLEM_STATEMENT && thread.initialCommitSha) {
+            return { key: 'artemisApp.review.threadCommit', params: { commitSha: thread.initialCommitSha } };
+        }
+        return undefined;
     }
 }
