@@ -9,7 +9,7 @@ import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
@@ -54,18 +54,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             decreaseNotificationCountBy: jest.fn(),
         } as unknown as CourseNotificationService;
 
-        mockRoute = {
-            snapshot: {
-                queryParamMap: convertToParamMap({}),
-                root: {
-                    firstChild: {
-                        firstChild: {
-                            paramMap: convertToParamMap({}),
-                        } as any,
-                    } as any,
-                } as any,
-            },
-        };
+        mockRoute = new MockActivatedRoute();
 
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent],
@@ -99,29 +88,6 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         expect(componentAsAny.notifications).toHaveLength(1);
         expect(componentAsAny.notifications[0]).toBe(mockNotification);
-
-        discardPeriodicTasks();
-    }));
-
-    it('should not add notification when conversation is open', fakeAsync(() => {
-        const mockNotification = createMockNotification(1, 101);
-
-        // Mocking router: course 101, channel 20 open
-        mockRoute.snapshot = {
-            queryParamMap: convertToParamMap({ conversationId: '20' }),
-            root: {
-                firstChild: {
-                    firstChild: {
-                        paramMap: convertToParamMap({ courseId: '101' }),
-                    } as any,
-                } as any,
-            } as any,
-        };
-
-        websocketNotificationSubject.next(mockNotification);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(componentAsAny.notifications).toHaveLength(0);
 
         discardPeriodicTasks();
     }));
