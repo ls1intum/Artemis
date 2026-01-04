@@ -880,7 +880,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         quizExercise.setDuration(3600);
         quizExerciseService.endQuiz(quizExercise);
-        quizExercise.setIsOpenForPractice(true);
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
 
         // generate unrated submissions for each student
@@ -1086,24 +1085,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @EnumSource(QuizMode.class)
-    void testPerformOpenForPractice(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, quizMode);
-
-        // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-
-        quizExercise.setDuration(180);
-        quizExerciseService.endQuiz(quizExercise);
-        quizExerciseService.save(quizExercise);
-
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class,
-                OK);
-        assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource(value = "testPerformJoin_args")
     void testPerformJoin(QuizMode quizMode, ZonedDateTime release, ZonedDateTime due, QuizBatch batch, String password, HttpStatus resultJoin, HttpStatus resultStart)
             throws Exception {
@@ -1163,7 +1144,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    @ValueSource(strings = { "start-now", "set-visible", "open-for-practice" })
+    @ValueSource(strings = { "start-now", "set-visible" })
     void testPerformPutActionAsNonEditorForbidden(String action) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
@@ -1348,6 +1329,34 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     /**
+     * test that categories are included in QuizExerciseForCourseDTO
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testQuizExerciseForCourseDTOIncludesCategories() throws Exception {
+        // Create a quiz exercise with future release date (so it can be updated)
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), QuizMode.SYNCHRONIZED);
+
+        // Add categories to the quiz
+        quizExercise.setCategories(new java.util.HashSet<>(Set.of("category1", "category2")));
+        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        long courseId = updatedQuizExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        long quizExerciseId = updatedQuizExercise.getId();
+
+        // Call the quiz-exercises API
+        List<QuizExerciseForCourseDTO> quizzes = request.getList("/api/quiz/courses/" + courseId + "/quiz-exercises", OK, QuizExerciseForCourseDTO.class);
+
+        // Find the DTO for the created quiz
+        QuizExerciseForCourseDTO dto = quizzes.stream().filter(q -> q.id() == quizExerciseId).findFirst().orElseThrow();
+
+        // Assert categories are included in the DTO
+        assertThat(dto.categories()).isNotNull();
+        assertThat(dto.categories()).hasSize(2);
+        assertThat(dto.categories()).containsExactlyInAnyOrder("category1", "category2");
+    }
+
+    /**
      * test create and update quiz exercise with competency
      */
     @Test
@@ -1521,7 +1530,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     void importQuizExerciseToSameCourse() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now.plusHours(2), null, QuizMode.SYNCHRONIZED);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
                         new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
@@ -1541,7 +1549,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 .isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         assertThat(importedExercise.getQuizQuestions()).as("Imported exercise has same number of questions").hasSameSizeAs(quizExercise.getQuizQuestions());
-        assertThat(importedExercise.isIsOpenForPractice()).as("Imported exercise is not open for practice").isFalse();
     }
 
     /**
@@ -1776,10 +1783,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(quizExercise.isQuizStarted()).isTrue();
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
 
-        // open-for-practice
-        quizExercise.setIsOpenForPractice(true);
-        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-
         // misspelled request
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -1856,7 +1859,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
-        assertThat(quizExercise.isIsOpenForPractice()).as("Quiz Question is open for practice has been set to false").isFalse();
         assertThat(quizExercise.getReleaseDate()).as("Quiz Question is released").isBeforeOrEqualTo(ZonedDateTime.now());
         assertThat(quizExercise.getDueDate()).as("Quiz Question due date has been set to null").isNull();
         assertThat(quizExercise.getQuizBatches()).as("Quiz Question batches has been set to empty").isEmpty();

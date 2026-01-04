@@ -9,11 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +21,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -42,11 +36,11 @@ import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @Lazy
 @Service
@@ -67,21 +61,18 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, @Lazy InstanceMessageSendService instanceMessageSendService) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
-        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
@@ -121,10 +112,9 @@ public class PyrisWebhookService {
         LectureTranscriptionsRepositoryApi transcriptionsRepositoryApi = lectureTranscriptionsRepositoryApi
                 .orElseThrow(() -> new LectureApiNotPresentException(LectureTranscriptionsRepositoryApi.class));
         Optional<LectureTranscription> lectureTranscription = transcriptionsRepositoryApi.findByLectureUnit_Id(attachmentVideoUnit.getId());
-        int version = attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : 1;
 
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
-        api.save(attachmentVideoUnit);
+        attachmentVideoUnit = (AttachmentVideoUnit) api.save(attachmentVideoUnit);
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
@@ -134,7 +124,7 @@ public class PyrisWebhookService {
                     attachmentVideoUnit.getVideoSource());
         }
 
-        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : null, null,
+        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
                 lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, attachmentVideoUnit.getVideoSource());
     }
 
@@ -154,27 +144,6 @@ public class PyrisWebhookService {
     }
 
     /**
-     * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
-     *
-     * @param newAttachmentVideoUnits the new attachment Units to be sent to pyris for ingestion
-     */
-    public void autoUpdateAttachmentVideoUnitsInPyris(List<AttachmentVideoUnit> newAttachmentVideoUnits) {
-        var course = newAttachmentVideoUnits.stream().map(AttachmentVideoUnit::getLecture).filter(Objects::nonNull).map(Lecture::getCourse).filter(Objects::nonNull).findFirst();
-
-        if (course.isEmpty()) {
-            return;
-        }
-
-        var settings = irisSettingsService.getSettingsForCourse(course.get());
-        if (!settings.enabled()) {
-            return;
-        }
-        for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
-            instanceMessageSendService.sendLectureUnitAutoIngestionSchedule(attachmentVideoUnit.getId());
-        }
-    }
-
-    /**
      * delete the lectures from the vector database on pyris
      *
      * @param attachmentVideoUnits The attachmentVideoUnit that got Updated / erased
@@ -182,11 +151,14 @@ public class PyrisWebhookService {
      */
     public String deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits = new ArrayList<>();
-        attachmentVideoUnits.stream().filter(
-                unit -> (unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf")) || unit.getVideoSource() != null)
-                .forEach(unit -> {
-                    toUpdateAttachmentVideoUnits.add(processAttachmentVideoUnitForDeletion(unit));
-                });
+        attachmentVideoUnits.stream().filter(unit -> {
+            Attachment attachment = unit.getAttachment();
+            boolean hasPdf = attachment != null && attachment.getAttachmentType() == AttachmentType.FILE && attachment.getLink() != null && attachment.getLink().endsWith(".pdf");
+            boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
+            return hasPdf || hasVideo;
+        }).forEach(unit -> {
+            toUpdateAttachmentVideoUnits.add(processAttachmentVideoUnitForDeletion(unit));
+        });
         if (!toUpdateAttachmentVideoUnits.isEmpty()) {
             return executeLectureDeletionWebhook(toUpdateAttachmentVideoUnits);
         }
@@ -239,64 +211,6 @@ public class PyrisWebhookService {
                 toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
         return jobToken;
-    }
-
-    /**
-     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
-     *
-     * @param courseId id of the course
-     * @return The ingestion state of the lecture
-     *
-     */
-    public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
-        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        Set<Lecture> lectures = api.findAllByCourseId(courseId);
-        return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
-
-    }
-
-    /**
-     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
-     *
-     * @param courseId  id of the course
-     * @param lectureId id of the lecture
-     * @return The ingestion state of the lecture
-     *
-     */
-    private IngestionState getLectureIngestionState(long courseId, long lectureId) {
-        Map<Long, IngestionState> states = getLectureUnitsIngestionState(courseId, lectureId);
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.DONE)) {
-            return IngestionState.DONE;
-        }
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.NOT_STARTED)) {
-            return IngestionState.NOT_STARTED;
-        }
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.ERROR)) {
-            return IngestionState.ERROR;
-        }
-
-        if (states.containsValue(IngestionState.DONE) || states.containsValue(IngestionState.IN_PROGRESS)) {
-            return IngestionState.PARTIALLY_INGESTED;
-        }
-
-        return IngestionState.NOT_STARTED;
-    }
-
-    /**
-     * uses send an api call to get all the ingestion states of the lecture units of one lecture in Pyris
-     *
-     * @param courseId  id of the course
-     * @param lectureId id of the lecture
-     * @return The ingestion state of the lecture Unit
-     */
-    public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        List<LectureUnit> lectureunits = api.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
-        return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }
 
     /**

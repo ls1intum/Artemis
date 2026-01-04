@@ -1,22 +1,22 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, TemplateRef, inject, input, output, viewChild } from '@angular/core';
-import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Subject, from } from 'rxjs';
-import { catchError, takeUntil } from 'rxjs/operators';
+import { ChangeDetectionStrategy, Component, OnDestroy, input, output, signal, viewChild } from '@angular/core';
+import { NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-groups-import-button',
     templateUrl: './tutorial-groups-import-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective],
+    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, TutorialGroupsRegistrationImportDialogComponent, DialogModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsImportButtonComponent implements OnDestroy {
-    private modalService = inject(NgbModal);
-
     ngUnsubscribe = new Subject<void>();
 
-    warningRef = viewChild<TemplateRef<any>>('warning');
+    readonly warningDialogVisible = signal<boolean>(false);
+    readonly importDialog = viewChild<TutorialGroupsRegistrationImportDialogComponent>('importDialog');
 
     courseId = input.required<number>();
 
@@ -24,36 +24,16 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
 
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialogComponent, {
-            size: 'xl',
-            scrollable: false,
-            backdrop: 'static',
-            animation: false,
-        });
-        modalRef.componentInstance.courseId = this.courseId;
-
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.openWarning();
-            });
+        this.importDialog()?.open();
     }
 
-    openWarning() {
-        if (this.warningRef()) {
-            const modalRef: NgbModalRef = this.modalService.open(this.warningRef(), { centered: true, animation: false });
-            from(modalRef.result)
-                .pipe(
-                    catchError(() => EMPTY),
-                    takeUntil(this.ngUnsubscribe),
-                )
-                .subscribe(() => {
-                    this.importFinished.emit();
-                });
-        }
+    onImportCompleted(): void {
+        this.warningDialogVisible.set(true);
+    }
+
+    closeWarningDialog() {
+        this.warningDialogVisible.set(false);
+        this.importFinished.emit();
     }
 
     ngOnDestroy(): void {

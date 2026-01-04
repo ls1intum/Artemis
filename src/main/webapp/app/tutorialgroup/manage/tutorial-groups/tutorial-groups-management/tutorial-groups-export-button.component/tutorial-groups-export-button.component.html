@@ -1,48 +1,53 @@
 <button id="exportDialogButton" (click)="openExportDialog($event)" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.buttonHeader'" ngbDropdownItem></button>
 
-<ng-template #exportDialog let-modal>
-    <div class="modal-header">
-        <h4 class="modal-title" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.header'"></h4>
-        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('cancel')"></button>
-    </div>
-    <div class="modal-body">
-        <form>
-            <p [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.description'"></p>
+<p-dialog
+    [header]="'artemisApp.tutorialGroupExportDialog.header' | artemisTranslate"
+    [modal]="true"
+    [visible]="dialogVisible()"
+    [closable]="true"
+    (visibleChange)="dialogVisible.set($event)"
+    [style]="{ width: '30rem' }"
+    appendTo="body"
+>
+    <form>
+        <p [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.description'"></p>
+        <div>
+            <div class="form-check mb-3">
+                <input id="selectAllId" class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
+                <label class="form-check-label" for="selectAllId" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
+            </div>
+        </div>
+        @for (field of availableFields; track field; let i = $index) {
             <div>
-                <div class="form-check mb-3">
-                    <input id="selectAllId" class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
-                    <label class="form-check-label" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
+                <div class="form-check mb-2">
+                    <input
+                        id="fieldId-{{ i }}"
+                        class="form-check-input"
+                        type="checkbox"
+                        [value]="field.value"
+                        [checked]="field.selected"
+                        (change)="onFieldSelectionChange(field)"
+                    />
+                    <label class="form-check-label" for="fieldId-{{ i }}">{{ field.value }}</label>
                 </div>
             </div>
-            @for (field of availableFields; track field) {
-                <div>
-                    <div class="form-check mb-2">
-                        <input id="fieldId" class="form-check-input" type="checkbox" [value]="field.value" [checked]="field.selected" (change)="onFieldSelectionChange(field)" />
-                        <label class="form-check-label">{{ field.value }}</label>
-                    </div>
-                </div>
-            }
-        </form>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.cancel'"></button>
+        }
+    </form>
+    <ng-template pTemplate="footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDialog()" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.cancel'"></button>
         <button
             type="button"
             class="btn btn-primary"
-            (click)="exportJSON(modal)"
+            (click)="exportJSON()"
             [disabled]="selectedFields.length === 0"
             [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportJSON'"
-        >
-            >
-        </button>
+        ></button>
         <button
             type="button"
             class="btn btn-primary"
-            (click)="exportCSV(modal)"
+            (click)="exportCSV()"
             [disabled]="selectedFields.length === 0"
             [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportCSV'"
-        >
-            >
-        </button>
-    </div>
-</ng-template>
+        ></button>
+    </ng-template>
+</p-dialog>

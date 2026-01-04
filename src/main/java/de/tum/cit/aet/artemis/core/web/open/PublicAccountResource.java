@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
@@ -132,7 +131,7 @@ public class PublicAccountResource {
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the activation key is invalid or expired.
      */
     @GetMapping("activate")
     @EnforceNothing
@@ -142,7 +141,7 @@ public class PublicAccountResource {
         }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
-            throw new InternalServerErrorException("No user was found for this activation key");
+            throw new BadRequestAlertException("The activation key is invalid", "user", "invalidActivationKey");
         }
         return ResponseEntity.ok().build();
     }

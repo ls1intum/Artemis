@@ -2,6 +2,8 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Inhalt gelöscht",
+            "retryProcessing": "Verarbeitung wiederholen",
+            "processingRetryStarted": "Verarbeitungswiederholung gestartet",
             "home": {
                 "title": "Vorlesungsinhalte"
             },
@@ -91,6 +93,21 @@
             "transcriptionProcessing": "Transkription wird verarbeitet",
             "transcriptionFailed": "Transkription fehlgeschlagen",
             "hasTranscription": "Transkription vollständig",
+            "awaitingProcessing": "Wartet auf Verarbeitung",
+            "processingTranscribing": "Transkription läuft",
+            "processingIngesting": "Indizierung läuft",
+            "processingComplete": "Verarbeitung abgeschlossen",
+            "processingFailed": "Verarbeitung fehlgeschlagen",
+            "processing": {
+                "cancelled": "Verarbeitung wurde abgebrochen",
+                "error": {
+                    "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
+                    "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
+                    "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
+                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen"
+                }
+            },
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Inhaltsüberschriften) und unterteilt das PDF in mehrere Dateien.",
@@ -186,7 +203,11 @@
                 "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
-                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
+                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen.",
+                "cancelButton": "Transkription abbrechen",
+                "cancelSuccess": "Transkription erfolgreich abgebrochen.",
+                "cancelError": "Transkription konnte nicht abgebrochen werden.",
+                "cancelConfirm": "Möchtest du die laufende Transkription wirklich abbrechen?"
             },
             "videoPlayer": {
                 "transcript": "Transkript",
