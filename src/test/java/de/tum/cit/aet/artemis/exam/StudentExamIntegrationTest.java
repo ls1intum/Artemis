@@ -13,7 +13,6 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -73,6 +72,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -197,6 +197,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -1515,7 +1518,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private String commitNewFileToParticipationRepo(ProgrammingExerciseStudentParticipation participation) throws Exception {
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri());
-        Path cloneDirectory = Files.createTempDirectory("student-repo-" + participation.getId());
+        Path cloneDirectory = tempFileUtilService.createTempDirectory(tempPath, "student-repo-" + participation.getId());
         Path remotePath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
         try (Git git = Git.cloneRepository().setURI(remotePath.toUri().toString()).setDirectory(cloneDirectory.toFile()).call()) {
             String fileName = "update-" + UUID.randomUUID() + ".txt";
@@ -2505,7 +2508,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
 
-        List<Result> results = resultRepository.findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
+        List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExerciseId);
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);

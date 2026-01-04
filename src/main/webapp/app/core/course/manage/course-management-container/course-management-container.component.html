@@ -33,14 +33,38 @@
                             }
                             @if (isSettingsPage()) {
                                 <button
+                                    id="reset-course"
+                                    *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                                    [buttonSize]="ButtonSize.SMALL"
+                                    jhiDeleteButton
+                                    [entityTitle]="course()?.title || ''"
+                                    [fetchCategorizedEntitySummary]="fetchCourseResetSummary()"
+                                    deleteQuestion="artemisApp.course.reset.question"
+                                    [translateValues]="{
+                                        courseType: course()?.testCourse
+                                            ? ('artemisApp.course.reset.testCourse' | artemisTranslate)
+                                            : ('artemisApp.course.reset.realCourse' | artemisTranslate),
+                                    }"
+                                    deleteConfirmationText="artemisApp.course.reset.typeNameToConfirm"
+                                    [actionType]="ActionType.Reset"
+                                    (delete)="resetCourse(course()!.id!)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faUndo" />
+                                </button>
+                                <button
                                     id="delete-course"
                                     *jhiHasAnyAuthority="'ROLE_ADMIN'"
                                     [buttonSize]="ButtonSize.SMALL"
                                     jhiDeleteButton
                                     [entityTitle]="course()?.title || ''"
-                                    entitySummaryTitle="artemisApp.course.delete.summary.title"
-                                    [fetchEntitySummary]="fetchCourseDeletionSummary()"
+                                    [fetchCategorizedEntitySummary]="fetchCourseDeletionSummary()"
                                     deleteQuestion="artemisApp.course.delete.question"
+                                    [translateValues]="{
+                                        courseType: course()?.testCourse
+                                            ? ('artemisApp.course.delete.testCourse' | artemisTranslate)
+                                            : ('artemisApp.course.delete.realCourse' | artemisTranslate),
+                                    }"
                                     deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
                                     (delete)="deleteCourse(course()!.id!)"
                                     [dialogError]="dialogError$"
@@ -80,3 +104,6 @@
 <ng-template #routerOutlet>
     <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
 </ng-template>
+
+<!-- Progress overlay for long-running course operations (delete, reset, archive) -->
+<jhi-course-operation-progress [progress]="operationProgress()" (closeOverlay)="closeProgress()" />

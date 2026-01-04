@@ -76,4 +76,51 @@ describe('Course Admin Service', () => {
         req.flush({});
         tick();
     }));
+
+    it('should get course summary', fakeAsync(() => {
+        const expectedSummary = {
+            numberOfStudents: 10,
+            numberOfTutors: 2,
+            numberOfEditors: 1,
+            numberOfInstructors: 1,
+            numberOfParticipations: 50,
+            numberOfSubmissions: 200,
+            numberOfConversations: 5,
+            numberOfPosts: 100,
+            numberOfAnswerPosts: 50,
+            numberOfCompetencies: 10,
+            numberOfCompetencyProgress: 30,
+            numberOfLearnerProfiles: 10,
+            numberOfIrisChatSessions: 5,
+            numberOfLLMTraces: 25,
+            numberOfBuilds: 200,
+            numberOfExams: 2,
+            numberOfExercises: 5,
+            numberOfProgrammingExercises: 2,
+            numberOfTextExercises: 1,
+            numberOfModelingExercises: 1,
+            numberOfQuizExercises: 1,
+            numberOfFileUploadExercises: 0,
+            numberOfLectures: 3,
+            numberOfFaqs: 5,
+            numberOfTutorialGroups: 2,
+        };
+        courseAdminService
+            .getCourseSummary(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(expectedSummary));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/summary` });
+        req.flush(expectedSummary);
+        tick();
+    }));
+
+    it('should reset a course', fakeAsync(() => {
+        courseAdminService
+            .reset(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/reset` });
+        req.flush({});
+        tick();
+    }));
 });

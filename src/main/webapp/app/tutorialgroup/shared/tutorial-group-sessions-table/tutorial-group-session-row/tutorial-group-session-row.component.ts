@@ -3,7 +3,6 @@ import {
     ChangeDetectorRef,
     Component,
     HostBinding,
-    Input,
     Signal,
     TemplateRef,
     ViewEncapsulation,
@@ -48,8 +47,7 @@ export class TutorialGroupSessionRowComponent {
 
     readonly showIdColumn = input(false);
 
-    // TODO: Skipped for now
-    @Input() extraColumn: TemplateRef<any>;
+    readonly extraColumn = input<TemplateRef<any>>();
 
     readonly session = input.required<TutorialGroupSession>();
     readonly localSession = signal<TutorialGroupSession>({} as TutorialGroupSession);
