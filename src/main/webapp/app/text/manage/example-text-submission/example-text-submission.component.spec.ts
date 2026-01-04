@@ -247,8 +247,8 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleParticipationId: 'new' };
         vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleParticipationService, 'get').mockImplementation();
-        vi.spyOn(assessmentsService, 'getExampleResult').mockImplementation();
+        vi.spyOn(exampleParticipationService, 'get').mockImplementation(() => httpResponse(exampleParticipation));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockImplementation(() => of(result));
 
         // WHEN
         await comp.ngOnInit();
