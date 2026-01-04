@@ -940,7 +940,7 @@ Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'midd
 - **Test cases**: OK
 - **Hints**: OK
 
-<Image src={programmingEditStatus} alt="Programming Edit Status" size={ImageSize.medium} caption="Problem Statement Verification Status" />
+<Image src={programmingEditStatus} alt="Programming Edit Status" size={ImageSize.large} caption="Problem Statement Verification Status" />
 
 ### Feedback Analysis
 
@@ -971,7 +971,8 @@ After verifying the exercise configuration, the **Feedback Analysis** feature he
 
 3. **Aggregated Feedback**
 
-   Groups similar feedback together to highlight frequently occurring errors.
+   - To avoid many single entries in case of testcases using random values and generating similar feedback, **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
+   - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
 
 4. **Detailed Inspection**
 
@@ -1541,7 +1542,7 @@ Exercise import copies repositories, build plans, interactive problem statement,
    - **Update Template**: Update template files in repositories. Useful for outdated exercises. For Java, replaces JUnit4 with Ares (JUnit5) and updates dependencies. May require test case adaptation
 
    <Callout variant={CalloutVariant.info}>
-     <p>Enabling/disabling static code analysis compared to the original automatically sets <strong>Recreate Build Plans</strong> and <strong>Update Template</strong>. Plugins, dependencies, and SCA configurations are added/deleted/copied accordingly.</p>
+     <p>**Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise. The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.</p>
    </Callout>
 
 4. **Complete Import**
@@ -2039,6 +2040,10 @@ With the example configuration shown above, participants can submit 5 times. Aft
   <p>If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.</p>
 </Callout>
 
+<Callout variant={CalloutVariant.info}>
+  <p>The participant may still work on their solution locally, but cannot submit it to Artemis to receive feedback.</p>
+</Callout>
+
 #### 3. Submission Penalty
 
 Participants can submit as often as they want. For each submission exceeding the limit, the penalty is deducted from the score.
@@ -2055,9 +2060,9 @@ Example: Student achieves 6 out of 12 points on 4th submission. With 1.5 point p
 
 Students receive feedback explaining the deduction:
 
-<Image src={submissionPenaltyFeedbackElement} alt="Submission Penalty Feedback" size={ImageSize.medium} caption="Submission Penalty Feedback Example" />
+<Image src={submissionPenaltyFeedbackElement} alt="Submission Penalty Feedback" size={ImageSize.large} caption="Submission Penalty Feedback Example" />
 
-<Image src={submissionPenaltyFeedbackElement2} alt="Submission Penalty Feedback 2" size={ImageSize.medium} caption="Submission Penalty Feedback Details" />
+<Image src={submissionPenaltyFeedbackElement2} alt="Submission Penalty Feedback 2" size={ImageSize.large} caption="Submission Penalty Feedback Details" />
 
 ### Updating Submission Policies
 
