@@ -9,9 +9,11 @@ import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
     let component: CourseNotificationPopupOverlayComponent;
@@ -56,6 +58,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             providers: [
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
 
