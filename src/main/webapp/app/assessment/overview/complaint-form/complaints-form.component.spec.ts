@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
@@ -13,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
 describe('ComplaintsFormComponent', () => {
+    setupTestBed({ zoneless: true });
     const teamComplaints = 42;
     const studentComplaints = 69;
     const course: Course = { maxTeamComplaints: teamComplaints, maxComplaints: studentComplaints, maxComplaintTextLimit: 20 };
@@ -47,57 +50,57 @@ describe('ComplaintsFormComponent', () => {
             });
     });
 
-    it('should initialize with correct values for exam complaints', fakeAsync(() => {
+    it('should initialize with correct values for exam complaints', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
-        expect(component.maxComplaintsPerCourse).toBe(1);
-    }));
 
-    it('should initialize with correct values for course complaints', fakeAsync(() => {
+        expect(component.maxComplaintsPerCourse).toBe(1);
+    });
+
+    it('should initialize with correct values for course complaints', () => {
         fixture.componentRef.setInput('exercise', courseExercise);
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
-        expect(component.maxComplaintsPerCourse).toStrictEqual(studentComplaints);
-    }));
 
-    it('should initialize with correct values for course complaints for team exercises', fakeAsync(() => {
+        expect(component.maxComplaintsPerCourse).toStrictEqual(studentComplaints);
+    });
+
+    it('should initialize with correct values for course complaints for team exercises', () => {
         fixture.componentRef.setInput('exercise', courseTeamExercise);
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
+
         expect(component.maxComplaintsPerCourse).toStrictEqual(teamComplaints);
-    }));
+    });
 
     it('should submit after complaint creation', () => {
-        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
-        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
+        const createMock = vi.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
+        const submitSpy = vi.spyOn(component.onSubmit, 'emit');
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledOnce();
-        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
         expect(submitSpy).toHaveBeenCalledWith();
     });
 
     it('should throw unknown error after complaint creation', () => {
-        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
-        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const createMock = vi.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
+        const submitSpy = vi.spyOn(component.onSubmit, 'emit');
+        const errorSpy = vi.spyOn(alertService, 'error');
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledOnce();
+        expect(createMock).toHaveBeenCalledTimes(1);
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should throw known error after complaint creation', () => {
         const error = { error: { errorKey: 'tooManyComplaints' } } as HttpErrorResponse;
-        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
-        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const createMock = vi.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
+        const submitSpy = vi.spyOn(component.onSubmit, 'emit');
+        const errorSpy = vi.spyOn(alertService, 'error');
         const numberOfComplaints = 42;
         component.maxComplaintsPerCourse = numberOfComplaints;
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledOnce();
+        expect(createMock).toHaveBeenCalledTimes(1);
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
     });
 
@@ -106,24 +109,23 @@ describe('ComplaintsFormComponent', () => {
         fixture.componentRef.setInput('exercise', courseExercise);
         component.ngOnInit();
 
-        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const submitSpy = vi.spyOn(component.onSubmit, 'emit');
+        const errorSpy = vi.spyOn(alertService, 'error');
         // 26 characters
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
         component.createComplaint();
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: 20 });
     });
 
-    it('text area should have the correct max length', fakeAsync(() => {
+    it('text area should have the correct max length', () => {
         // Get course
         fixture.componentRef.setInput('exercise', courseExercise);
         fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
         component.ngOnInit();
 
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
 
         const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
         const complaintButton = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement;
@@ -131,20 +133,18 @@ describe('ComplaintsFormComponent', () => {
         component.complaintText = 'a';
 
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
 
         expect(responseTextArea.maxLength).toBe(20);
-        expect(complaintButton.disabled).toBeFalse();
-    }));
+        expect(complaintButton.disabled).toBe(false);
+    });
 
-    it('submit complaint button should be disabled', fakeAsync(() => {
+    it('submit complaint button should be disabled', () => {
         // Get course
         fixture.componentRef.setInput('exercise', courseExercise);
         fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
         component.ngOnInit();
 
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
 
         const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
         const complaintButton = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement;
@@ -153,8 +153,7 @@ describe('ComplaintsFormComponent', () => {
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
 
         fixture.changeDetectorRef.detectChanges();
-        tick(100);
 
-        expect(complaintButton.disabled).toBeTrue();
-    }));
+        expect(complaintButton.disabled).toBe(true);
+    });
 });

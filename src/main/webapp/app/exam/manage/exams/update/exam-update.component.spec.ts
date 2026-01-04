@@ -16,7 +16,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -89,7 +89,7 @@ describe('ExamUpdateComponent', () => {
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(GradingSystemService, {
+                    MockProvider(GradingService, {
                         findGradingScaleForExam: () => {
                             return of(
                                 new HttpResponse({
@@ -714,7 +714,7 @@ describe('ExamUpdateComponent', () => {
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(GradingSystemService, {
+                    MockProvider(GradingService, {
                         findGradingScaleForExam: () => {
                             return of(
                                 new HttpResponse({

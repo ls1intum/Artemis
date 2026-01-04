@@ -1,4 +1,6 @@
-import { Component, Input, SimpleChange, SimpleChanges, input, viewChild, viewChildren } from '@angular/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { Component, input, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
@@ -19,7 +21,7 @@ import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tu
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
-    @Input() tutorialGroupSession: TutorialGroupSession;
+    tutorialGroupSession = input<TutorialGroupSession>();
 }
 
 @Component({
@@ -44,6 +46,8 @@ class MockWrapperComponent {
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
     let tableInstance: TutorialGroupSessionsTableComponent;
@@ -82,16 +86,16 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should pass the session to the headers', () => {
         expect(tableInstance.sessions()).toEqual([sessionOne, sessionTwo]);
         expect(tableInstance.timeZone()).toBe('Europe/Berlin');
         expect(mockExtraColumns).toHaveLength(2);
-        mockExtraColumns.sort((a, b) => a.tutorialGroupSession!.id! - b.tutorialGroupSession!.id!);
-        expect(mockExtraColumns[0].tutorialGroupSession).toEqual(sessionOne);
-        expect(mockExtraColumns[1].tutorialGroupSession).toEqual(sessionTwo);
+        mockExtraColumns.sort((a, b) => a.tutorialGroupSession()!.id! - b.tutorialGroupSession()!.id!);
+        expect(mockExtraColumns[0].tutorialGroupSession()).toEqual(sessionOne);
+        expect(mockExtraColumns[1].tutorialGroupSession()).toEqual(sessionTwo);
         expect(fixture.nativeElement.querySelectorAll('jhi-mock-extra-column')).toHaveLength(2);
     });
 
@@ -101,6 +105,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
 });
 
 describe('TutorialGroupSessionTableComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupSessionsTableComponent>;
     let component: TutorialGroupSessionsTableComponent;
     let pastSession: TutorialGroupSession;
@@ -111,7 +117,7 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -143,13 +149,13 @@ describe('TutorialGroupSessionTableComponent', () => {
                 fixture.componentRef.setInput('sessions', [upcomingSession, pastSession]);
                 fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
                 fixture.componentRef.setInput('timeZone', timeZone);
-                jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
+                vi.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
                 fixture.detectChanges();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -157,10 +163,8 @@ describe('TutorialGroupSessionTableComponent', () => {
     });
 
     it('should sync next session and upcoming sessions when attendance changed', () => {
-        const changes = {} as SimpleChanges;
-        changes.sessions = new SimpleChange([], component.sessions(), true);
-        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
-        component.ngOnChanges(changes);
+        // Effects run automatically when inputs change via setInput
+        fixture.detectChanges();
 
         const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSession;
         component.onAttendanceChanged(sessionWithAttendanceData);
@@ -171,11 +175,9 @@ describe('TutorialGroupSessionTableComponent', () => {
     });
 
     it('should sync next session and past sessions when attendance changed', () => {
-        const changes = {} as SimpleChanges;
-        changes.sessions = new SimpleChange([], component.sessions(), true);
-        tutorialGroup.nextSession = pastSession;
-        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
-        component.ngOnChanges(changes);
+        // Create a new object to trigger the signal change
+        fixture.componentRef.setInput('tutorialGroup', { ...tutorialGroup, nextSession: pastSession });
+        fixture.detectChanges();
 
         const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSession;
         component.onAttendanceChanged(sessionWithAttendanceData);
@@ -186,10 +188,8 @@ describe('TutorialGroupSessionTableComponent', () => {
     });
 
     it('should split sessions into upcoming and past', () => {
-        const changes = {} as SimpleChanges;
-        changes.sessions = new SimpleChange([], component.sessions(), true);
-        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
-        component.ngOnChanges(changes);
+        // Effects run automatically when inputs are set
+        fixture.detectChanges();
         expect(component.upcomingSessions).toHaveLength(1);
         expect(component.upcomingSessions).toEqual([upcomingSession]);
         expect(component.pastSessions).toHaveLength(1);
