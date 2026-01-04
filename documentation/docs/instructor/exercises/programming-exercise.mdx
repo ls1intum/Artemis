@@ -1012,113 +1012,399 @@ All tool categories and their rules are active by default except for the `NOISE`
 
 This table contains all rules that are activated by default when creating a new programming exercise. You can suppress a complete category by changing its visibility in the grading settings. For a more fine-granular configuration, you can add or remove rules by editing the `checkstyle-configuration.xml` file. For a description of the rules refer to the [Checkstyle documentation](https://checkstyle.sourceforge.io/).
 
-| Category (Tool/Artemis)                                                                         | Rule                         | Properties                                                |
-|-------------------------------------------------------------------------------------------------|------------------------------|-----------------------------------------------------------|
-| **[Coding](https://checkstyle.org/checks/coding/index.html) / Code Style**                      | EmptyStatement               |                                                           |
-|                                                                                                 | EqualsHashCode               |                                                           |
-|                                                                                                 | HiddenField                  | ignoreConstructorParameter="true"                         |
-|                                                                                                 |                              | ignoreSetter="true"                                       |
-|                                                                                                 |                              | setterCanReturnItsClass="true"                            |
-|                                                                                                 | IllegalInstantiation         |                                                           |
-|                                                                                                 | InnerAssignment              |                                                           |
-|                                                                                                 | MagicNumber                  |                                                           |
-|                                                                                                 | MissingSwitchDefault         |                                                           |
-|                                                                                                 | MultipleVariableDeclarations |                                                           |
-|                                                                                                 | SimplifyBooleanExpression    |                                                           |
-|                                                                                                 | SimplifyBooleanReturn        |                                                           |
-| **[Class Design](https://checkstyle.org/checks/design/index.html) / Design**                    | FinalClass                   |                                                           |
-|                                                                                                 | HideUtilityClassConstructor  |                                                           |
-|                                                                                                 | InterfaceIsType              |                                                           |
-|                                                                                                 | VisibilityModifier           |                                                           |
-| **[Block Checks](https://checkstyle.org/checks/blocks/index.html) / Code Style**                | AvoidNestedBlocks            |                                                           |
-|                                                                                                 | EmptyBlock                   |                                                           |
-|                                                                                                 | NeedBraces                   |                                                           |
-| **[Modifiers](https://checkstyle.org/checks/modifier/index.html) / Code Style**                 | ModifierOrder                |                                                           |
-|                                                                                                 | RedundantModifier            |                                                           |
-| **[Size Violations](https://checkstyle.org/checks/sizes/index.html) / Code Metrics**            | MethodLength                 |                                                           |
-|                                                                                                 | ParameterNumber              |                                                           |
-|                                                                                                 | FileLength                   |                                                           |
-|                                                                                                 | LineLength                   | max="120"                                                 |
-| **[Imports](https://checkstyle.org/checks/imports/index.html) / Naming & Formatting**           | IllegalImport                |                                                           |
-|                                                                                                 | RedundantImport              |                                                           |
-|                                                                                                 | UnusedImports                | processJavadoc="false"                                    |
-| **[Naming Conventions](https://checkstyle.org/checks/naming/index.html) / Naming & Formatting** | ConstantName                 |                                                           |
-|                                                                                                 | LocalFinalVariableName       |                                                           |
-|                                                                                                 | LocalVariableName            |                                                           |
-|                                                                                                 | MemberName                   |                                                           |
-|                                                                                                 | MethodName                   |                                                           |
-|                                                                                                 | ParameterName                |                                                           |
-|                                                                                                 | TypeName                     |                                                           |
-| **[Whitespace](https://checkstyle.org/checks/whitespace/index.html) / Naming & Formatting**     | EmptyForIteratorPad          |                                                           |
-|                                                                                                 | GenericWhitespace            |                                                           |
-|                                                                                                 | MethodParamPad               |                                                           |
-|                                                                                                 | NoWhitespaceAfter            |                                                           |
-|                                                                                                 | NoWhitespaceBefore           |                                                           |
-|                                                                                                 | OperatorWrap                 |                                                           |
-|                                                                                                 | ParenPad                     |                                                           |
-|                                                                                                 | TypecastParenPad             |                                                           |
-|                                                                                                 | WhitespaceAfter              |                                                           |
-|                                                                                                 | WhitespaceAround             |                                                           |
-| **[Javadoc Comments](https://checkstyle.org/checks/javadoc/index.html) / Documentation**        | InvalidJavadocPosition       |                                                           |
-|                                                                                                 | JavadocMethod                |                                                           |
-|                                                                                                 | JavadocType                  |                                                           |
-|                                                                                                 | JavadocStyle                 |                                                           |
-|                                                                                                 | MissingJavadocMethod         | allowMissingPropertyJavadoc="true"                        |
-|                                                                                                 |                              | allowedAnnotations="Override,Test"                        |
-|                                                                                                 |                              | tokens="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF" |
-| **[Miscellaneous](https://checkstyle.org/checks/misc/index.html) / Miscellaneous**              | ArrayTypeStyle               |                                                           |
-|                                                                                                 | UpperEll                     |                                                           |
-|                                                                                                 | NewlineAtEndOfFile           |                                                           |
-|                                                                                                 | Translation                  |                                                           |
+<table>
+  <thead>
+    <tr>
+      <th>Category (Tool/Artemis)</th>
+      <th>Rule</th>
+      <th>Properties</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowSpan={12}><strong><a href="https://checkstyle.org/checks/coding/index.html">Coding</a> / Code Style</strong></td>
+      <td>EmptyStatement</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>EqualsHashCode</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>HiddenField</td>
+      <td>ignoreConstructorParameter="true"</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>ignoreSetter="true"</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>setterCanReturnItsClass="true"</td>
+    </tr>
+    <tr>
+      <td>IllegalInstantiation</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>InnerAssignment</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MagicNumber</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MissingSwitchDefault</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MultipleVariableDeclarations</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>SimplifyBooleanExpression</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>SimplifyBooleanReturn</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/design/index.html">Class Design</a> / Design</strong></td>
+      <td>FinalClass</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>HideUtilityClassConstructor</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>InterfaceIsType</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>VisibilityModifier</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowSpan={3}><strong><a href="https://checkstyle.org/checks/blocks/index.html">Block Checks</a> / Code Style</strong></td>
+      <td>AvoidNestedBlocks</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>EmptyBlock</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>NeedBraces</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowSpan={2}><strong><a href="https://checkstyle.org/checks/modifier/index.html">Modifiers</a> / Code Style</strong></td>
+      <td>ModifierOrder</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>RedundantModifier</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/sizes/index.html">Size Violations</a> / Code Metrics</strong></td>
+      <td>MethodLength</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>ParameterNumber</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>FileLength</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>LineLength</td>
+      <td>max="120"</td>
+    </tr>
+    <tr>
+      <td rowSpan={3}><strong><a href="https://checkstyle.org/checks/imports/index.html">Imports</a> / Naming &amp; Formatting</strong></td>
+      <td>IllegalImport</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>RedundantImport</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>UnusedImports</td>
+      <td>processJavadoc="false"</td>
+    </tr>
+    <tr>
+      <td rowSpan={7}><strong><a href="https://checkstyle.org/checks/naming/index.html">Naming Conventions</a> / Naming &amp; Formatting</strong></td>
+      <td>ConstantName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>LocalFinalVariableName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>LocalVariableName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MemberName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MethodName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>ParameterName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>TypeName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowSpan={10}><strong><a href="https://checkstyle.org/checks/whitespace/index.html">Whitespace</a> / Naming &amp; Formatting</strong></td>
+      <td>EmptyForIteratorPad</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>GenericWhitespace</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MethodParamPad</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>NoWhitespaceAfter</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>NoWhitespaceBefore</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>OperatorWrap</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>ParenPad</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>TypecastParenPad</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>WhitespaceAfter</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>WhitespaceAround</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowSpan={7}><strong><a href="https://checkstyle.org/checks/javadoc/index.html">Javadoc Comments</a> / Documentation</strong></td>
+      <td>InvalidJavadocPosition</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>JavadocMethod</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>JavadocType</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>JavadocStyle</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>MissingJavadocMethod</td>
+      <td>allowMissingPropertyJavadoc="true"</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>allowedAnnotations="Override,Test"</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>tokens="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF"</td>
+    </tr>
+    <tr>
+      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/misc/index.html">Miscellaneous</a> / Miscellaneous</strong></td>
+      <td>ArrayTypeStyle</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>UpperEll</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>NewlineAtEndOfFile</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Translation</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
 
 #### PMD
 
 For a description of the rules refer to the [PMD documentation](https://pmd.github.io/).
 
-| Category (Tool/Artemis)              | Rule                                          |
-|--------------------------------------|-----------------------------------------------|
-| **Best Practices / Bad Practice**    | AvoidUsingHardCodedIP                         |
-|                                      | CheckResultSet                                |
-|                                      | UnusedFormalParameter                         |
-|                                      | UnusedLocalVariable                           |
-|                                      | UnusedPrivateField                            |
-|                                      | UnusedPrivateMethod                           |
-|                                      | PrimitiveWrapperInstantiation                 |
-| **Code Style / Code Style**          | UnnecessaryImport                             |
-|                                      | ExtendsObject                                 |
-|                                      | ForLoopShouldBeWhileLoop                      |
-|                                      | TooManyStaticImports                          |
-|                                      | UnnecessaryFullyQualifiedName                 |
-|                                      | UnnecessaryModifier                           |
-|                                      | UnnecessaryReturn                             |
-|                                      | UselessParentheses                            |
-|                                      | UselessQualifiedThis                          |
-|                                      | EmptyControlStatement                         |
-| **Design / Design**                  | CollapsibleIfStatements                       |
-|                                      | SimplifiedTernary                             |
-|                                      | UselessOverridingMethod                       |
-| **Error Prone / Potential Bugs**     | AvoidBranchingStatementAsLastInLoop           |
-|                                      | AvoidDecimalLiteralsInBigDecimalConstructor   |
-|                                      | AvoidMultipleUnaryOperators                   |
-|                                      | AvoidUsingOctalValues                         |
-|                                      | BrokenNullCheck                               |
-|                                      | CheckSkipResult                               |
-|                                      | ClassCastExceptionWithToArray                 |
-|                                      | DontUseFloatTypeForLoopIndices                |
-|                                      | ImportFromSamePackage                         |
-|                                      | JumbledIncrementer                            |
-|                                      | MisplacedNullCheck                            |
-|                                      | OverrideBothEqualsAndHashcode                 |
-|                                      | ReturnFromFinallyBlock                        |
-|                                      | UnconditionalIfStatement                      |
-|                                      | UnnecessaryConversionTemporary                |
-|                                      | UnusedNullCheckInEquals                       |
-|                                      | UselessOperationOnImmutable                   |
-| **Multithreading / Potential Bugs**  | AvoidThreadGroup                              |
-|                                      | DontCallThreadRun                             |
-|                                      | DoubleCheckedLocking                          |
-| **Performance / Performance**        | BigIntegerInstantiation                       |
-| **Security / Security**              | All rules                                     |
+<table>
+  <thead>
+    <tr>
+      <th>Category (Tool/Artemis)</th>
+      <th>Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowSpan={7}><strong>Best Practices / Bad Practice</strong></td>
+      <td>AvoidUsingHardCodedIP</td>
+    </tr>
+    <tr>
+      <td>CheckResultSet</td>
+    </tr>
+    <tr>
+      <td>UnusedFormalParameter</td>
+    </tr>
+    <tr>
+      <td>UnusedLocalVariable</td>
+    </tr>
+    <tr>
+      <td>UnusedPrivateField</td>
+    </tr>
+    <tr>
+      <td>UnusedPrivateMethod</td>
+    </tr>
+    <tr>
+      <td>PrimitiveWrapperInstantiation</td>
+    </tr>
+    <tr>
+      <td rowSpan={10}><strong>Code Style / Code Style</strong></td>
+      <td>UnnecessaryImport</td>
+    </tr>
+    <tr>
+      <td>ExtendsObject</td>
+    </tr>
+    <tr>
+      <td>ForLoopShouldBeWhileLoop</td>
+    </tr>
+    <tr>
+      <td>TooManyStaticImports</td>
+    </tr>
+    <tr>
+      <td>UnnecessaryFullyQualifiedName</td>
+    </tr>
+    <tr>
+      <td>UnnecessaryModifier</td>
+    </tr>
+    <tr>
+      <td>UnnecessaryReturn</td>
+    </tr>
+    <tr>
+      <td>UselessParentheses</td>
+    </tr>
+    <tr>
+      <td>UselessQualifiedThis</td>
+    </tr>
+    <tr>
+      <td>EmptyControlStatement</td>
+    </tr>
+    <tr>
+      <td rowSpan={3}><strong>Design / Design</strong></td>
+      <td>CollapsibleIfStatements</td>
+    </tr>
+    <tr>
+      <td>SimplifiedTernary</td>
+    </tr>
+    <tr>
+      <td>UselessOverridingMethod</td>
+    </tr>
+    <tr>
+      <td rowSpan={17}><strong>Error Prone / Potential Bugs</strong></td>
+      <td>AvoidBranchingStatementAsLastInLoop</td>
+    </tr>
+    <tr>
+      <td>AvoidDecimalLiteralsInBigDecimalConstructor</td>
+    </tr>
+    <tr>
+      <td>AvoidMultipleUnaryOperators</td>
+    </tr>
+    <tr>
+      <td>AvoidUsingOctalValues</td>
+    </tr>
+    <tr>
+      <td>BrokenNullCheck</td>
+    </tr>
+    <tr>
+      <td>CheckSkipResult</td>
+    </tr>
+    <tr>
+      <td>ClassCastExceptionWithToArray</td>
+    </tr>
+    <tr>
+      <td>DontUseFloatTypeForLoopIndices</td>
+    </tr>
+    <tr>
+      <td>ImportFromSamePackage</td>
+    </tr>
+    <tr>
+      <td>JumbledIncrementer</td>
+    </tr>
+    <tr>
+      <td>MisplacedNullCheck</td>
+    </tr>
+    <tr>
+      <td>OverrideBothEqualsAndHashcode</td>
+    </tr>
+    <tr>
+      <td>ReturnFromFinallyBlock</td>
+    </tr>
+    <tr>
+      <td>UnconditionalIfStatement</td>
+    </tr>
+    <tr>
+      <td>UnnecessaryConversionTemporary</td>
+    </tr>
+    <tr>
+      <td>UnusedNullCheckInEquals</td>
+    </tr>
+    <tr>
+      <td>UselessOperationOnImmutable</td>
+    </tr>
+    <tr>
+      <td rowSpan={3}><strong>Multithreading / Potential Bugs</strong></td>
+      <td>AvoidThreadGroup</td>
+    </tr>
+    <tr>
+      <td>DontCallThreadRun</td>
+    </tr>
+    <tr>
+      <td>DoubleCheckedLocking</td>
+    </tr>
+    <tr>
+      <td rowSpan={1}><strong>Performance / Performance</strong></td>
+      <td>BigIntegerInstantiation</td>
+    </tr>
+    <tr>
+      <td rowSpan={1}><strong>Security / Security</strong></td>
+      <td>All rules</td>
+    </tr>
+  </tbody>
+</table>
 
 #### PMD CPD
 
@@ -1141,13 +1427,81 @@ If activated, most tokens will be ignored, so minimumTokens must be lowered sign
 
 For a description of the rules/warnings refer to the [GCC Documentation](https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html). For readability reasons the rule/warning prefix `-Wanalyzer-` is omitted.
 
-| Category (Tool/Artemis)                 | Rule                                                                                                                                                                                    |
-|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Memory Management / Potential Bugs**  | free-of-non-heap<br/>malloc-leak<br/>file-leak<br/>mismatching-deallocation                                                                                                             |
-| **Undefined Behavior / Potential Bugs** | double-free<br/>null-argument<br/>use-after-free<br/>use-of-uninitialized-value<br/>write-to-const<br/>write-to-string-literal<br/>possible-null-argument<br/>possible-null-dereference |
-| **Bad Practice / Bad Practice**         | double-fclose<br/>too-complex<br/>stale-setjmp-buffer                                                                                                                                   |
-| **Security / Security**                 | exposure-through-output-file<br/>unsafe-call-within-signal-handler<br/>use-of-pointer-in-stale-stack-frame<br/>tainted-array-index                                                      |
-| **Miscellaneous / Miscellaneous**       | Rules not matching to above categories                                                                                                                                                  |
+<table>
+  <thead>
+    <tr>
+      <th>Category (Tool/Artemis)</th>
+      <th>Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowSpan={4}><strong>Memory Management / Potential Bugs</strong></td>
+      <td>free-of-non-heap</td>
+    </tr>
+    <tr>
+      <td>malloc-leak</td>
+    </tr>
+    <tr>
+      <td>file-leak</td>
+    </tr>
+    <tr>
+      <td>mismatching-deallocation</td>
+    </tr>
+    <tr>
+      <td rowSpan={8}><strong>Undefined Behavior / Potential Bugs</strong></td>
+      <td>double-free</td>
+    </tr>
+    <tr>
+      <td>null-argument</td>
+    </tr>
+    <tr>
+      <td>use-after-free</td>
+    </tr>
+    <tr>
+      <td>use-of-uninitialized-value</td>
+    </tr>
+    <tr>
+      <td>write-to-const</td>
+    </tr>
+    <tr>
+      <td>write-to-string-literal</td>
+    </tr>
+    <tr>
+      <td>possible-null-argument</td>
+    </tr>
+    <tr>
+      <td>possible-null-dereference</td>
+    </tr>
+    <tr>
+      <td rowSpan={3}><strong>Bad Practice / Bad Practice</strong></td>
+      <td>double-fclose</td>
+    </tr>
+    <tr>
+      <td>too-complex</td>
+    </tr>
+    <tr>
+      <td>stale-setjmp-buffer</td>
+    </tr>
+    <tr>
+      <td rowSpan={4}><strong>Security / Security</strong></td>
+      <td>exposure-through-output-file</td>
+    </tr>
+    <tr>
+      <td>unsafe-call-within-signal-handler</td>
+    </tr>
+    <tr>
+      <td>use-of-pointer-in-stale-stack-frame</td>
+    </tr>
+    <tr>
+      <td>tainted-array-index</td>
+    </tr>
+    <tr>
+      <td rowSpan={1}><strong>Miscellaneous / Miscellaneous</strong></td>
+      <td>Rules not matching to above categories</td>
+    </tr>
+  </tbody>
+</table>
 
 <Callout variant={CalloutVariant.info}>
   <p>GCC output can still contain normal warnings and compilation errors. These will also be added to the Miscellaneous category. Usually it's best to disable this category, as it contains errors not related to the SCA. Therefore, if the warning/error does not belong to the first four categories above, it is not an SCA issue as of GCC 11.1.0.</p>
