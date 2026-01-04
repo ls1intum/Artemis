@@ -14,7 +14,14 @@
             [showVisualButton]="false"
             [showEditButton]="false"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [reviewCommentThreads]="reviewCommentThreads()"
             (markdownChange)="updateProblemStatement($event)"
+            (onSubmitReviewComment)="handleSubmitReviewComment($event)"
+            (onDeleteReviewComment)="handleDeleteReviewComment($event)"
+            (onReplyReviewComment)="handleReplyReviewComment($event)"
+            (onUpdateReviewComment)="handleUpdateReviewComment($event)"
+            (onToggleResolveReviewThread)="handleToggleResolveReviewThread($event)"
         />
     }
     @if (editMode) {

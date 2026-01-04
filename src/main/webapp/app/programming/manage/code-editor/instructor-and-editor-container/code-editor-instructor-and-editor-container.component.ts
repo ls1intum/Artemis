@@ -38,6 +38,8 @@ import { CommentThread, CommentThreadLocationType, CreateCommentThread } from 'a
 import { CommentType, CreateComment } from 'app/communication/shared/entities/exercise-review/comment.model';
 import { UserCommentContent } from 'app/communication/shared/entities/exercise-review/comment-content.model';
 
+const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
+
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
@@ -322,6 +324,41 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.selectedRepository === RepositoryType.AUXILIARY) {
             createThread.auxiliaryRepositoryId = this.selectedRepositoryId;
         }
+        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
+        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
+
+        this.exerciseReviewCommentService
+            .createThread(exerciseId, createThread)
+            .pipe(
+                map((response) => response.body?.id),
+                switchMap((threadId) => {
+                    if (!threadId) {
+                        return throwError(() => new Error('missingThreadId'));
+                    }
+                    return this.exerciseReviewCommentService.createComment(exerciseId, threadId, createComment);
+                }),
+                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.saveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
+    onSubmitProblemStatementReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        const createThread: CreateCommentThread = {
+            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+            filePath: PROBLEM_STATEMENT_FILE_PATH,
+            initialFilePath: PROBLEM_STATEMENT_FILE_PATH,
+            lineNumber: event.lineNumber,
+            initialLineNumber: event.lineNumber,
+        };
         const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
         const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
 

@@ -14,6 +14,7 @@ import {
     computed,
     inject,
     input,
+    output,
     signal,
 } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -49,6 +50,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { CommentThread } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -111,6 +113,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly reviewCommentThreads = input<CommentThread[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
 
     @Input()
     get exercise() {
@@ -125,6 +129,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() instructionChange = new EventEmitter<string>();
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onDeleteReviewComment = output<number>();
+    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
@@ -228,6 +237,26 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.unsavedChanges = true;
         }
         this.instructionChange.emit(problemStatement);
+    }
+
+    handleSubmitReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
+        this.onSubmitReviewComment.emit(event);
+    }
+
+    handleDeleteReviewComment(commentId: number): void {
+        this.onDeleteReviewComment.emit(commentId);
+    }
+
+    handleReplyReviewComment(event: { threadId: number; text: string }): void {
+        this.onReplyReviewComment.emit(event);
+    }
+
+    handleUpdateReviewComment(event: { commentId: number; text: string }): void {
+        this.onUpdateReviewComment.emit(event);
+    }
+
+    handleToggleResolveReviewThread(event: { threadId: number; resolved: boolean }): void {
+        this.onToggleResolveReviewThread.emit(event);
     }
 
     /**
