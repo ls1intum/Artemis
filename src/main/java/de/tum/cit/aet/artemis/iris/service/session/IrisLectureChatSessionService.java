@@ -23,9 +23,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
@@ -96,12 +93,7 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
-        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
-        pyrisPipelineService.executePipeline("lecture-chat", user.getSelectedLLMUsage(), settings.variant().jsonValue(), Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), session.getTitle(), conversation, new PyrisUserDTO(user), dto.settings(),
-                        dto.initialStages(), settings.customInstructions()),
-                stages -> irisChatWebsocketService.sendMessage(session, null, stages));
+        pyrisPipelineService.executeLectureChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
     }
 
     /**

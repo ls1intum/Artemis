@@ -183,6 +183,7 @@ public class PyrisPipelineService {
         // @formatter:off
         executePipeline(
             "lecture-chat",
+            user.getSelectedLLMUsage(),
             variant,
             Optional.empty(),
             pyrisJobService.addLectureChatJob(course.getId(), lecture.getId(), session.getId(), lastMessageId),
