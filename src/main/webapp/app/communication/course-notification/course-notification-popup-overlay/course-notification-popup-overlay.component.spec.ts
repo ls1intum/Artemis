@@ -9,7 +9,7 @@ import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
@@ -54,7 +54,18 @@ describe('CourseNotificationPopupOverlayComponent', () => {
             decreaseNotificationCountBy: jest.fn(),
         } as unknown as CourseNotificationService;
 
-        mockRoute = new MockActivatedRoute();
+        mockRoute = {
+            snapshot: {
+                queryParamMap: convertToParamMap({}),
+                root: {
+                    firstChild: {
+                        firstChild: {
+                            paramMap: convertToParamMap({}),
+                        } as any,
+                    } as any,
+                } as any,
+            },
+        };
 
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent],
@@ -96,13 +107,15 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
 
         // Mocking router: course 101, channel 20 open
-        mockRoute.setParameters({ channelId: 20 });
-        mockRoute.paramMap['get'] = function (string: any) {
-            return string === 'courseId' ? '101' : null;
-        };
-        mockRoute.snapshot['root'] = mockRoute.root;
-        mockRoute.snapshot.queryParamMap['get'] = function (name: any) {
-            return name === 'conversationId' ? '20' : null;
+        mockRoute.snapshot = {
+            queryParamMap: convertToParamMap({ conversationId: '20' }),
+            root: {
+                firstChild: {
+                    firstChild: {
+                        paramMap: convertToParamMap({ courseId: '101' }),
+                    } as any,
+                } as any,
+            } as any,
         };
 
         websocketNotificationSubject.next(mockNotification);
