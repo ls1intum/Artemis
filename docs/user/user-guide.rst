@@ -18,8 +18,8 @@ Exercises
 - **General Information:** `Exercise Overview <https://ls1intum.github.io/Artemis/instructor/exercises/intro>`__
 - **Programming Exercises:**
 
-  - `Student Guide <https://docs.artemis.cit.tum.de/student/exercises/programming-exercise>`__
-  - `Instructor Guide <https://docs.artemis.cit.tum.de/instructor/exercises/programming-exercise>`__
+  - `Student Guide <https://ls1intum.github.io/Artemis/student/exercises/programming-exercise>`__
+  - `Instructor Guide <https://ls1intum.github.io/Artemis/instructor/exercises/programming-exercise>`__
 
 - **Quiz Exercises:**
 
