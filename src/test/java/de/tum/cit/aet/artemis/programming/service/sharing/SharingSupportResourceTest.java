@@ -116,10 +116,7 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
                 .performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
                         .header("Authorization", "Bearer " + sharingPlatformMockProvider.getTestSharingApiKey()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        // Installation name can be set from: HOSTNAME env var, local hostname, or fallback to UNKNOWN_INSTALLATION_NAME
-        String hostnameEnv = System.getenv("HOSTNAME");
-        String expectedInstallationName = hostnameEnv != null ? hostnameEnv : InetAddress.getLocalHost().getCanonicalHostName();
-        assertThat(sharingConnectorService.getInstallationName()).isIn(SharingConnectorService.UNKNOWN_INSTALLATION_NAME, expectedInstallationName);
+        assertThat(sharingConnectorService.getInstallationName()).isIn(SharingConnectorService.UNKNOWN_INSTALLATION_NAME, InetAddress.getLocalHost().getCanonicalHostName());
     }
 
 }
