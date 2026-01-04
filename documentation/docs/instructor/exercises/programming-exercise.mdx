@@ -1595,21 +1595,25 @@ The following sections explain repository types and access rights for different 
 
 ### Repository Types
 
-- **Base**: Repositories set up during exercise creation (template, solution, tests, auxiliary repositories)
-- **Student Assignment**: Student's assignment repository copied from template. Includes team assignments
-- **Teaching Assistant (TA) Assignment**: Assignment repository created by a TA for themselves
-- **Instructor Assignment**: Assignment repository created by editor/instructor. Not available for exam exercises
-- **Student Practice**: Student's practice repository (from template or assignment). Created after due date. Not available for exams
-- **TA Practice**: Practice repository created by TA. Not available for exams
-- **Instructor Practice**: Practice repository created by editor/instructor. Not available for exams
-- **Instructor Exam Test Run**: Test run repository for exam testing before release. Should be deleted before exam
+| Repository Type               | Description                                                                                                  |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------|
+| Base                          | Repositories set up during exercise creation (template, solution, tests, auxiliary repositories)             |
+| Student Assignment            | Student's assignment repository copied from template. Includes team assignments                              |
+| Teaching Assistant Assignment | Assignment repository created by a Teaching Assistant for themselves                                         |
+| Instructor Assignment         | Assignment repository created by editor/instructor. Not available for exam exercises                         |
+| Student Practice              | Student's practice repository (from template or assignment). Created after due date. Not available for exams |
+| Teaching Assistant Practice   | Practice repository created by Teaching Assistant. Not available for exams                                   |
+| Instructor Practice           | Practice repository created by editor/instructor. Not available for exams                                    |
+| Instructor Exam Test Run      | Test run repository for exam testing before release. Should be deleted before exam                           |
 
 ### User Roles
 
-- **Student (S)**: Course student
-- **Teaching Assistant (TA)**: Course tutor
-- **Editor**: Course editor
-- **Instructor (I)**: Course instructor
+| Role               | Description       |
+|--------------------|-------------------|
+| Student            | Course student    |
+| Teaching Assistant | Course tutor      |
+| Editor             | Course editor     |
+| Instructor         | Course instructor |
 
 <Callout variant={CalloutVariant.info}>
   <p>Editors and instructors have the same access rights in the table below.</p>
@@ -1630,50 +1634,50 @@ The following sections explain repository types and access rights for different 
 
 ### Access Rights Table
 
-| Repository Type | Role | Time Period | Access |
-|----------------|------|-------------|--------|
-| Base | S | all | none |
-| | TA | all | R |
-| | I | all | R/W |
-| Student Assignment | S | Before start | none |
-| | S | Working time | R/W |
-| | S | After due | R¹ |
-| | TA | all | R |
-| | I | all | R/W |
-| TA Assignment | S | all | none |
-| | TA | Before start | R |
-| | TA | Working time | R/W |
-| | TA | After due | R |
-| | I | all | R/W |
-| Instructor Assignment | S | all | none |
-| | TA | all | R |
-| | I | all | R/W² |
-| Student Practice | S | Before start | none |
-| | S | Working time | none |
-| | S | After due | R/W |
-| | TA | Before start | none |
-| | TA | Working time | none |
-| | TA | After due | R |
-| | I | Before start | none |
-| | I | Working time | none |
-| | I | After due | R/W |
-| TA Practice | S | all | none |
-| | TA | Before start | none |
-| | TA | Working time | none |
-| | TA | After due | R/W |
-| | I | Before start | none |
-| | I | Working time | none |
-| | I | After due | R/W |
-| Instructor Practice | S | all | none |
-| | TA | Before start | none |
-| | TA | Working time | none |
-| | TA | After due | R |
-| | I | Before start | none |
-| | I | Working time | none |
-| | I | After due | R/W |
-| Instructor Exam Test Run | S | all | none |
-| | TA | all | R |
-| | I | all | R/W |
+| Repository Type               | Role               | Time Period  | Access |
+|-------------------------------|--------------------|--------------|--------|
+| Base                          | Student            | all          | none   |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W    |
+| Student Assignment            | Student            | Before start | none   |
+|                               | Student            | Working time | R/W    |
+|                               | Student            | After due    | R¹     |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W    |
+| Teaching Assistant Assignment | Student            | all          | none   |
+|                               | Teaching Assistant | Before start | R      |
+|                               | Teaching Assistant | Working time | R/W    |
+|                               | Teaching Assistant | After due    | R      |
+|                               | Instructor         | all          | R/W    |
+| Instructor Assignment         | Student            | all          | none   |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W²   |
+| Student Practice              | Student            | Before start | none   |
+|                               | Student            | Working time | none   |
+|                               | Student            | After due    | R/W    |
+|                               | Teaching Assistant | Before start | none   |
+|                               | Teaching Assistant | Working time | none   |
+|                               | Teaching Assistant | After due    | R      |
+|                               | Instructor         | Before start | none   |
+|                               | Instructor         | Working time | none   |
+|                               | Instructor         | After due    | R/W    |
+| Teaching Assistant Practice   | Student            | all          | none   |
+|                               | Teaching Assistant | Before start | none   |
+|                               | Teaching Assistant | Working time | none   |
+|                               | Teaching Assistant | After due    | R/W    |
+|                               | Instructor         | Before start | none   |
+|                               | Instructor         | Working time | none   |
+|                               | Instructor         | After due    | R/W    |
+| Instructor Practice           | Student            | all          | none   |
+|                               | Teaching Assistant | Before start | none   |
+|                               | Teaching Assistant | Working time | none   |
+|                               | Teaching Assistant | After due    | R      |
+|                               | Instructor         | Before start | none   |
+|                               | Instructor         | Working time | none   |
+|                               | Instructor         | After due    | R/W    |
+| Instructor Exam Test Run      | Student            | all          | none   |
+|                               | Teaching Assistant | all          | R      |
+|                               | Instructor         | all          | R/W    |
 
 **Notes:**
 
@@ -1682,7 +1686,7 @@ The following sections explain repository types and access rights for different 
 2. Instructors can access Instructor Assignment repository via online editor from Course Management (Edit in editor) or Course Overview (Open code editor). After due date, push only via online editor from Course Management or local Git client. Online editor from Course Overview shows locked repository.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Practice repositories, TA assignment, and instructor assignment repositories only exist for course exercises.</p>
+  <p>Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.</p>
 </Callout>
 
 ## Testing with Ares
@@ -1691,7 +1695,7 @@ Ares is a JUnit 5 extension for easy and secure Java testing on Artemis.
 
 Main features:
 
-- Security manager to prevent students crashing tests or cheating
+- Security manager to prevent students from crashing tests or cheating
 - More robust tests and builds with limits on time, threads, and I/O
 - Support for public and hidden Artemis tests with custom due dates
 - Utilities for improved feedback (multiline error messages, exception location hints)
@@ -1761,7 +1765,7 @@ public void test_LinkedList_add() {
 }
 ```
 
-<Callout variant={CalloutVariant.tip}>
+<Callout variant={CalloutVariant.info}>
   <p>For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).</p>
 </Callout>
 
@@ -2087,14 +2091,14 @@ Select **None** as policy type and press <img src={submissionPolicyUpdateButton}
 
 ## Java DejaGnu: Blackbox Testing
 
-Classical testing frameworks like JUnit allow writing whitebox tests, which enforce assumptions about code structure (class names, method names, signatures). This requires specifying all structural aspects for tests to run on student submissions.
+Classical testing frameworks like JUnit allow writing whitebox tests, which enforce assumptions about code structure (class names, method names, signatures). This requires specifying all structural aspects for tests to run on student submissions. That may be okay or even desired for a beginner course.
 
 For advanced courses, this is a downside: students cannot make their own structural decisions and gain experience in this important programming aspect.
 
-[DejaGnu](https://www.gnu.org/software/dejagnu/) enables blackbox tests for command line interfaces. Tests are written in Expect Script (extension of Tcl). Expect is a Unix utility for automatic interaction with programs exposing text terminal interfaces.
+[DejaGnu](https://www.gnu.org/software/dejagnu/) enables blackbox tests for command line interfaces. Tests are written in Expect Script (extension of Tcl). Expect is a Unix utility for automatic interaction with programs exposing text terminal interfaces in a robust way.
 
 Test scripts:
-- Start the program as a separate process
+- Start the program as a separate process (possibly several times)
 - Interact via textual inputs (standard input)
 - Read outputs and make assertions (exact or regex matching)
 - Decide next inputs based on output, simulating user interaction
@@ -2103,9 +2107,9 @@ For exercises, only specify:
 - Command line interface syntax
 - Rough output format guidance
 
-Source code structure is up to students.
+Source code structure is up to students as far as you want.
 
-Source code structure quality assessment can be done manually after submission deadline. The template uses Maven to compile student code, so it can be extended with regular unit tests (e.g., [architecture tests](https://www.archunit.org/) for cyclic package dependencies).
+Source code structure quality assessment can be done manually after submission deadline. The template uses Maven to compile student code, so it can be extended with regular unit tests (e.g., [architecture tests](https://www.archunit.org/) for cyclic package dependencies) and report the results for both to the student.
 
 **Usage:** Consult [official documentation](https://www.gnu.org/software/dejagnu/manual/index.html) and initial test-repository content. DejaGnu files are in the `testsuite` directory. The `….tests` directory contains three example test execution scripts.
 
@@ -2117,7 +2121,7 @@ Variables in SCREAMING_SNAKE_CASE (e.g., `MAIN_CLASS`) are replaced with actual 
 
 Best Expect documentation: [Exploring Expect](https://books.google.com.sg/books?id=t8C4pEDQ8s0C) book. The Artemis default template contains reusable helper functions in `config/default.exp` for common I/O use cases.
 
-This exercise type simplifies reusing existing exercises from the [Praktomat](https://github.com/KITPraktomatTeam/Praktomat) autograder system.
+This exercise type makes it quite easy to reuse existing exercises from the [Praktomat](https://github.com/KITPraktomatTeam/Praktomat) autograder system.
 
 ## Sending Feedback back to Artemis
 
