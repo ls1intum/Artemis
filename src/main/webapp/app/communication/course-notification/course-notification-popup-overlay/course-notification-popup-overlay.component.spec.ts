@@ -97,14 +97,12 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         // Mocking router: course 101, channel 20 open
         mockRoute.setParameters({ channelId: 20 });
-        // @ts-ignore
         mockRoute.paramMap['get'] = function (string: any) {
-            return string === 'courseId' ? 101 : undefined;
+            return string === 'courseId' ? '101' : null;
         };
-        // @ts-ignore
         mockRoute.snapshot['root'] = mockRoute.root;
-        mockRoute.snapshot.queryParamMap['get'] = function (string: any) {
-            return string === 'conversationId' ? 20 : undefined;
+        mockRoute.snapshot.queryParamMap['get'] = function (name: any) {
+            return name === 'conversationId' ? '20' : null;
         };
 
         websocketNotificationSubject.next(mockNotification);
