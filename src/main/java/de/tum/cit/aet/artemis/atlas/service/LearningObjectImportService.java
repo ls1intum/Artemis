@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -201,7 +202,7 @@ public class LearningObjectImportService {
                         api::importFileUploadExercise);
             }
             case ModelingExercise modelingExercise -> {
-                var api = modelingExerciseImportApi.orElseThrow(() -> new IllegalStateException("Modeling module is not enabled"));
+                var api = modelingExerciseImportApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingExerciseImportApi.class));
                 yield importOrLoadExercise(modelingExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findByIdWithExampleSubmissionsAndResultsElseThrow,
                         api::importModelingExercise);
             }

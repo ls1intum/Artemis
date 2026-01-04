@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.api;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -36,12 +37,9 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
      * @param targetExercise   the target exercise to import into
      * @return the imported exercise, or empty if the source exercise was not found
      */
-    public Optional<ModelingExercise> importModelingExercise(long sourceExerciseId, ModelingExercise targetExercise) {
+    public Optional<ModelingExercise> importModelingExercise(long sourceExerciseId, @NonNull ModelingExercise targetExercise) {
         Optional<ModelingExercise> optionalOriginal = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(sourceExerciseId);
-        if (optionalOriginal.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(modelingExerciseImportService.importModelingExercise(optionalOriginal.get(), targetExercise));
+        return optionalOriginal.map(modelingExercise -> modelingExerciseImportService.importModelingExercise(modelingExercise, targetExercise));
     }
 
     /**
@@ -51,7 +49,7 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
      * @param targetExercise   the target exercise to import into
      * @return the imported exercise
      */
-    public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise targetExercise) {
+    public ModelingExercise importModelingExercise(ModelingExercise templateExercise, @NonNull ModelingExercise targetExercise) {
         return modelingExerciseImportService.importModelingExercise(templateExercise, targetExercise);
     }
 
