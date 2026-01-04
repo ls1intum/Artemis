@@ -1,11 +1,13 @@
-<div class="tutorial-group-import-dialog">
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span jhiTranslate="artemisApp.tutorialGroupImportDialog.dialogTitle"></span>
-        </h4>
-        <button type="button" class="btn-close" (click)="clear()"></button>
-    </div>
-    <div class="modal-body">
+<p-dialog
+    [header]="'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate"
+    [modal]="true"
+    [visible]="dialogVisible()"
+    [closable]="true"
+    (visibleChange)="dialogVisible.set($event)"
+    [style]="{ width: '70rem' }"
+    appendTo="body"
+>
+    <div class="tutorial-group-import-dialog">
         <!-- Intro-->
         <div class="form-group">
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.description"></p>
@@ -426,44 +428,46 @@
             </div>
         }
     </div>
-    <div class="modal-footer justify-content-between">
-        @if (allRegistrations && allRegistrations.length > 0) {
-            <div class="flex-shrink-0 me-2 d-flex">
+    <ng-template pTemplate="footer">
+        <div class="d-flex justify-content-between w-100">
+            @if (allRegistrations && allRegistrations.length > 0) {
+                <div class="flex-shrink-0 me-2 d-flex">
+                    @if (!isImportDone) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations.length }"></strong>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported" [translateValues]="{ count: numberOfImportedRegistrations }"></strong>
+                        </div>
+                        <div class="ms-2">
+                            <strong
+                                jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.notImported"
+                                [translateValues]="{ count: numberOfNotImportedRegistration }"
+                            ></strong>
+                        </div>
+                    }
+                </div>
+            }
+            <div class="flex-grow-1 d-flex justify-content-end gap-2">
                 @if (!isImportDone) {
-                    <div>
-                        <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations.length }"></strong>
-                    </div>
+                    <button type="button" class="btn btn-secondary cancel" (click)="clear()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
+                @if (!isImportDone) {
+                    <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
+                        <fa-icon [icon]="faFileImport" class="me-2" />
+                        <span jhiTranslate="entity.action.to-import"></span>
+                        <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
+                    </button>
                 } @else {
-                    <div>
-                        <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported" [translateValues]="{ count: numberOfImportedRegistrations }"></strong>
-                    </div>
-                    <div class="ms-2">
-                        <strong
-                            jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.notImported"
-                            [translateValues]="{ count: numberOfNotImportedRegistration }"
-                        ></strong>
-                    </div>
+                    <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                        <fa-icon [icon]="faCheck" class="me-2" />
+                        <span jhiTranslate="entity.action.finish"></span>
+                    </button>
                 }
             </div>
-        }
-        <div class="flex-grow-1 d-flex justify-content-end gap-2">
-            @if (!isImportDone) {
-                <button type="button" class="btn btn-secondary cancel" data-dismiss="modal" (click)="clear()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                </button>
-            }
-            @if (!isImportDone) {
-                <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
-                    <fa-icon [icon]="faFileImport" class="me-2" />
-                    <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
-                </button>
-            } @else {
-                <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="faCheck" class="me-2" />
-                    <span jhiTranslate="entity.action.finish"></span>
-                </button>
-            }
         </div>
-    </div>
-</div>
+    </ng-template>
+</p-dialog>

@@ -16,7 +16,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/modal/export-modal.component';
@@ -52,7 +52,7 @@ describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
-    let gradingSystemService: GradingSystemService;
+    let gradingService: GradingService;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -266,7 +266,7 @@ describe('ExamScoresComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(GradingSystemService, {
+                MockProvider(GradingService, {
                     findGradingScaleForExam: () => {
                         return of(
                             new HttpResponse({
@@ -296,7 +296,7 @@ describe('ExamScoresComponent', () => {
         fixture = TestBed.createComponent(ExamScoresComponent);
         comp = fixture.componentInstance;
         examService = TestBed.inject(ExamManagementService);
-        gradingSystemService = TestBed.inject(GradingSystemService);
+        gradingService = TestBed.inject(GradingService);
         const participationScoreService = TestBed.inject(ParticipantScoresService);
         findExamScoresSpy = jest
             .spyOn(participationScoreService, 'findExamScores')
@@ -370,7 +370,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should have correct entries', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         fixture.detectChanges();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
@@ -452,7 +452,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should skip not submitted exams', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
 
@@ -715,8 +715,8 @@ describe('ExamScoresComponent', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: gradingScale })));
-        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
+        jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: gradingScale })));
+        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
         expect(comp.gradingScaleExists).toBeTrue();
@@ -734,7 +734,7 @@ describe('ExamScoresComponent', () => {
         comp.examScoreDTO = examScoreDTO;
         comp.aggregatedExamResults = new AggregatedExamResult();
         comp.course = { accuracyOfScores: 1 };
-        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
+        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();
 
@@ -746,7 +746,7 @@ describe('ExamScoresComponent', () => {
         examScoreDTOOnePassing.studentResults[0].hasPassed = true;
         it('should set table state correctly if non empty submissions filter is activated', () => {
             jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
+            jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
             comp.filterForNonEmptySubmissions = false;
             comp.ngOnInit();
 
@@ -792,7 +792,7 @@ describe('ExamScoresComponent', () => {
 
         it('should set table state correctly if only submitted exams filter is activated', () => {
             jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
+            jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
             comp.filterForSubmittedExams = false;
             comp.ngOnInit();
 
@@ -838,7 +838,7 @@ describe('ExamScoresComponent', () => {
 
         it('should set table state correctly if both exams are activated', () => {
             jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
+            jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
             comp.filterForNonEmptySubmissions = false;
             comp.filterForSubmittedExams = false;
             comp.ngOnInit();

@@ -1,16 +1,7 @@
-<div class="mt-n1 me-n1 course-info-bar">
-    <div class="row justify-content-between">
-        <div class="col-md-8">
-            <h2>
-                <span jhiTranslate="artemisApp.ratingList.title"></span>
-            </h2>
-        </div>
-    </div>
-</div>
-<div class="col-12 mt-4">
+<div class="col-12">
     <div class="row table-responsive">
         <div [hidden]="ratings.length !== 0">
-            <span jhiTranslate="artemisApp.ratingList.noRatingToShow"></span>
+            <span>{{ 'artemisApp.ratingList.noRatingToShow' | translate }}</span>
         </div>
         <table class="table" [hidden]="ratings.length === 0">
             <thead>
@@ -19,66 +10,82 @@
                         <a class="th-link">#</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="result.participation.exercise.title">
-                        <a class="th-link" jhiTranslate="artemisApp.ratingList.exercise"></a>
+                    <th jhiSortBy="exerciseTitle">
+                        <a class="th-link">{{ 'artemisApp.ratingList.exercise' | translate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="result.participation.exercise.type">
-                        <a class="th-link" jhiTranslate="artemisApp.ratingList.exerciseType"></a>
+                    <th jhiSortBy="exerciseType">
+                        <a class="th-link">{{ 'artemisApp.ratingList.exerciseType' | translate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="result.assessor.login">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorLogin"></a>
+                    <th jhiSortBy="assessorLogin">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorLogin' | translate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="result.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></a>
+                    <th jhiSortBy="assessorName">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | translate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="rating.result.assessmentType">
-                        <a class="th-link" jhiTranslate="artemisApp.ratingList.assessmentType"></a>
+                    <th jhiSortBy="assessmentType">
+                        <a class="th-link">{{ 'artemisApp.ratingList.assessmentType' | translate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="rating">
-                        <a class="th-link" jhiTranslate="artemisApp.ratingList.rating"></a>
+                        <a class="th-link">{{ 'artemisApp.ratingList.rating' | translate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th class="text-center" jhiTranslate="artemisApp.ratingList.actions"></th>
+                    <th class="text-center">{{ 'artemisApp.ratingList.actions' | translate }}</th>
                 </tr>
             </thead>
             <tbody>
-                @for (rating of ratings; track rating) {
+                @for (rating of ratings; track rating.id) {
                     <tr>
                         <td>
                             {{ rating.id }}
                         </td>
                         <td>
-                            <span>{{ rating.result?.submission?.participation?.exercise?.title }}</span>
+                            <span>{{ rating.exerciseTitle }}</span>
                         </td>
                         <td>
-                            <span>{{ rating.result?.submission?.participation?.exercise?.type }}</span>
+                            <fa-icon [icon]="getExerciseIcon(rating.exerciseType)" [ngbTooltip]="getExerciseTypeTooltip(rating.exerciseType) | translate" container="body" />
                         </td>
                         <td>
-                            <span>{{ rating.result?.assessor?.login }}</span>
+                            <span>{{ rating.assessorLogin ?? '-' }}</span>
                         </td>
                         <td>
-                            <span>{{ rating.result?.assessor?.name }}</span>
+                            <span>{{ rating.assessorName ?? '-' }}</span>
                         </td>
                         <td>
-                            <span>{{ rating.result?.assessmentType }}</span>
+                            <span>{{ getAssessmentTypeTranslationKey(rating.assessmentType) | translate }}</span>
                         </td>
                         <td>
                             <span><star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating.rating || 0" size="24" [readOnly]="true" [totalStars]="5" /></span>
                         </td>
                         <td class="text-center">
-                            <button class="btn btn-primary btn-sm" (click)="openResult(rating)">
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                <span jhiTranslate="artemisApp.ratingList.openSubmission"></span>
-                            </button>
+                            <!-- TODO: also support navigating into Athena assessments in the future -->
+                            @if (rating.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+                                <button class="btn btn-primary btn-sm" (click)="openResult(rating)">
+                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                    <span>{{ 'artemisApp.ratingList.openSubmission' | translate }}</span>
+                                </button>
+                            }
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+        @if (totalElements > pageSize) {
+            <div class="d-flex justify-content-center mt-3">
+                <ngb-pagination
+                    [collectionSize]="totalElements"
+                    [(page)]="page"
+                    [pageSize]="pageSize"
+                    [maxSize]="5"
+                    [rotate]="true"
+                    [boundaryLinks]="true"
+                    (pageChange)="onPageChange()"
+                />
+            </div>
+        }
     </div>
 </div>
