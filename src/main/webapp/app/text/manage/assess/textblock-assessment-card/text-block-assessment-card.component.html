@@ -3,28 +3,28 @@
     [draggable]="true"
     (drop)="connectStructuredGradingInstructionsWithTextBlock($event)"
     (dragover)="$event.preventDefault()"
-    [textContent]="textBlockRef.block!.text"
+    [textContent]="textBlockRef().block!.text"
     (click)="select()"
-    [class.text-with-feedback]="!!textBlockRef.feedback"
-    [class.active]="selected"
-    [class.positive-feedback]="textBlockRef.feedback?.credits! > 0"
-    [class.negative-feedback]="textBlockRef.feedback?.credits! < 0"
-    [class.neutral-feedback]="textBlockRef.feedback?.credits === 0"
-    [class.clickable]="textBlockRef.selectable"
-    [class.highlighted]="textBlockRef.highlighted"
+    [class.text-with-feedback]="!!textBlockRef().feedback"
+    [class.active]="selected()"
+    [class.positive-feedback]="textBlockRef().feedback?.credits! > 0"
+    [class.negative-feedback]="textBlockRef().feedback?.credits! < 0"
+    [class.neutral-feedback]="textBlockRef().feedback?.credits === 0"
+    [class.clickable]="textBlockRef().selectable"
+    [class.highlighted]="textBlockRef().highlighted"
 ></span>
 <!-- Display Feedback Editor -->
-@if (textBlockRef.feedback || selected) {
+@if (textBlockRef().feedback || selected()) {
     <jhi-text-block-feedback-editor
-        [textBlock]="textBlockRef.block!"
-        [feedback]="textBlockRef.feedback!"
-        [class.active]="selected"
+        [textBlock]="textBlockRef().block!"
+        [feedback]="textBlockRef().feedback!"
+        [class.active]="selected()"
         (click)="select(false)"
         (onFocus)="select(false)"
         (onClose)="unselect()"
         (feedbackChange)="feedbackDidChange()"
-        [readOnly]="readOnly"
-        [highlightDifferences]="highlightDifferences"
-        [criteria]="criteria"
+        [readOnly]="readOnly()"
+        [highlightDifferences]="highlightDifferences()"
+        [criteria]="criteria()"
     />
 }
