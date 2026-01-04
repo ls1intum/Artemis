@@ -45,9 +45,10 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayload;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayload;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.dto.OnlineTeamStudentDTO;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
@@ -73,7 +74,7 @@ public class ParticipationTeamWebsocketService {
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
 
-    private final ModelingSubmissionService modelingSubmissionService;
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -93,14 +94,14 @@ public class ParticipationTeamWebsocketService {
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            ModelingSubmissionService modelingSubmissionService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionApi = textSubmissionApi;
-        this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionApi = modelingSubmissionApi;
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -253,8 +254,9 @@ public class ParticipationTeamWebsocketService {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
-            submission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, modelingExercise, user);
-            modelingSubmissionService.hideDetails(submission, user);
+            ModelingSubmissionApi api = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));
+            submission = api.handleModelingSubmission(modelingSubmission, modelingExercise, user);
+            api.hideDetails(submission, user);
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
             submission = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).handleTextSubmission(textSubmission, textExercise, user);

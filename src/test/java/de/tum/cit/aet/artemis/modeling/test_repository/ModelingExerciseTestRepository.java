@@ -4,8 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,7 +18,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 @Primary
 public interface ModelingExerciseTestRepository extends ModelingExerciseRepository {
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
     }

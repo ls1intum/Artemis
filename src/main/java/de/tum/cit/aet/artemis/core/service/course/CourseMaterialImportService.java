@@ -32,9 +32,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.api.LectureImportApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
+import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -62,9 +62,9 @@ public class CourseMaterialImportService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final LectureRepositoryApi lectureRepositoryApi;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final ExamRepositoryApi examRepositoryApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     // Exercise import services
     private final ProgrammingExerciseImportService programmingExerciseImportService;
@@ -79,16 +79,16 @@ public class CourseMaterialImportService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ModelingExerciseImportService modelingExerciseImportService;
+    private final Optional<ModelingExerciseImportApi> modelingExerciseImportApi;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
     private final Optional<TextExerciseImportApi> textExerciseImportApi;
 
     private final Optional<FileUploadImportApi> fileUploadImportApi;
 
     // Other import services
-    private final LectureImportApi lectureImportApi;
+    private final Optional<LectureImportApi> lectureImportApi;
 
     private final Optional<ExamImportApi> examImportApi;
 
@@ -98,13 +98,14 @@ public class CourseMaterialImportService {
 
     private final FaqImportService faqImportService;
 
-    public CourseMaterialImportService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepositoryApi lectureRepositoryApi,
-            ExamRepositoryApi examRepositoryApi, ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
-            QuizExerciseImportService quizExerciseImportService, QuizExerciseRepository quizExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
-            ModelingExerciseRepository modelingExerciseRepository, Optional<TextExerciseImportApi> textExerciseImportApi, Optional<FileUploadImportApi> fileUploadImportApi,
-            LectureImportApi lectureImportApi, Optional<ExamImportApi> examImportApi, Optional<CompetencyImportApi> competencyImportApi,
-            Optional<TutorialGroupImportApi> tutorialGroupImportApi, FaqImportService faqImportService) {
+    public CourseMaterialImportService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
+            Optional<ExamRepositoryApi> examRepositoryApi, ProgrammingExerciseImportService programmingExerciseImportService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            GradingCriterionRepository gradingCriterionRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseRepository quizExerciseRepository,
+            Optional<ModelingExerciseImportApi> modelingExerciseImportApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            Optional<TextExerciseImportApi> textExerciseImportApi, Optional<FileUploadImportApi> fileUploadImportApi, Optional<LectureImportApi> lectureImportApi,
+            Optional<ExamImportApi> examImportApi, Optional<CompetencyImportApi> competencyImportApi, Optional<TutorialGroupImportApi> tutorialGroupImportApi,
+            FaqImportService faqImportService) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
@@ -115,8 +116,8 @@ public class CourseMaterialImportService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.modelingExerciseImportService = modelingExerciseImportService;
-        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingExerciseImportApi = modelingExerciseImportApi;
+        this.modelingRepositoryApi = modelingRepositoryApi;
         this.textExerciseImportApi = textExerciseImportApi;
         this.fileUploadImportApi = fileUploadImportApi;
         this.lectureImportApi = lectureImportApi;
@@ -316,7 +317,10 @@ public class CourseMaterialImportService {
     }
 
     private Optional<ModelingExercise> importModelingExercise(ModelingExercise exercise, Course targetCourse) {
-        var optionalOriginal = modelingExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exercise.getId());
+        if (modelingRepositoryApi.isEmpty() || modelingExerciseImportApi.isEmpty()) {
+            return Optional.empty();
+        }
+        var optionalOriginal = modelingRepositoryApi.get().findByIdWithCompetenciesAndGradingCriteria(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
@@ -325,7 +329,7 @@ public class CourseMaterialImportService {
         newExercise.setCourse(targetCourse);
         newExercise.setTitle(optionalOriginal.get().getTitle());
 
-        return Optional.of(modelingExerciseImportService.importModelingExercise(optionalOriginal.get(), newExercise));
+        return modelingExerciseImportApi.get().importModelingExercise(exercise.getId(), newExercise);
     }
 
     private Optional<TextExercise> importTextExercise(TextExercise exercise, Course targetCourse) {
@@ -356,12 +360,17 @@ public class CourseMaterialImportService {
      * Import all lectures from the source course to the target course.
      */
     private int importLectures(long sourceCourseId, Course targetCourse, List<String> errors) {
-        Set<Lecture> sourceLectures = lectureRepositoryApi.findAllByCourseIdWithAttachmentsAndLectureUnits(sourceCourseId);
+        if (lectureRepositoryApi.isEmpty() || lectureImportApi.isEmpty()) {
+            errors.add("Lecture import service not available");
+            return 0;
+        }
+
+        Set<Lecture> sourceLectures = lectureRepositoryApi.get().findAllByCourseIdWithAttachmentsAndLectureUnits(sourceCourseId);
         int imported = 0;
 
         for (Lecture lecture : sourceLectures) {
             try {
-                lectureImportApi.importLecture(lecture, targetCourse, true);
+                lectureImportApi.get().importLecture(lecture, targetCourse, true);
                 imported++;
             }
             catch (Exception e) {
@@ -377,12 +386,12 @@ public class CourseMaterialImportService {
      * Import all exams from the source course to the target course.
      */
     private int importExams(long sourceCourseId, long targetCourseId, List<String> errors) {
-        if (examImportApi.isEmpty()) {
+        if (examImportApi.isEmpty() || examRepositoryApi.isEmpty()) {
             errors.add("Exam import service not available");
             return 0;
         }
 
-        List<Exam> sourceExams = examRepositoryApi.findByCourseIdWithExerciseGroupsAndExercises(sourceCourseId);
+        List<Exam> sourceExams = examRepositoryApi.get().findByCourseIdWithExerciseGroupsAndExercises(sourceCourseId);
         int imported = 0;
 
         for (Exam exam : sourceExams) {

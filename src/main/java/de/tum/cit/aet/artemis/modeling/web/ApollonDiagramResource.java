@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -11,8 +9,8 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonDiagramUpdateDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
@@ -39,7 +38,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 /**
  * REST controller for managing ApollonDiagram.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/modeling/")
