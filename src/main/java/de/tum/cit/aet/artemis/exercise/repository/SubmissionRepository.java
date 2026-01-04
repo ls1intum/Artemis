@@ -441,7 +441,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH submission.participation p
-                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH TREAT(p AS StudentParticipation).student
+                LEFT JOIN FETCH TREAT(p AS StudentParticipation).team t
                 LEFT JOIN FETCH t.students
             WHERE submission.id = :submissionId
             """)

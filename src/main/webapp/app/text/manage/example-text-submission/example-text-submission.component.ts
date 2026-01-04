@@ -110,7 +110,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         await super.ngOnInit();
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const exampleParticipationId = this.route.snapshot.paramMap.get('exampleSubmissionId');
+        const exampleParticipationId = this.route.snapshot.paramMap.get('exampleParticipationId');
         this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
         this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
 

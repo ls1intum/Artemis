@@ -85,7 +85,7 @@ export const textExerciseRoute: Routes = [
         loadChildren: () => import('../tutor-effort/tutor-effort-statistics.route').then((m) => m.tutorEffortStatisticsRoute),
     },
     {
-        path: 'text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        path: 'text-exercises/:exerciseId/example-submissions/:exampleParticipationId',
         loadChildren: () => import('../example-text-submission/example-text-submission.route').then((m) => m.exampleTextSubmissionRoute),
     },
 ];

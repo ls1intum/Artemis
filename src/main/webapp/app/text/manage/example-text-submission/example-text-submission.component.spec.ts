@@ -124,7 +124,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
         jest.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
@@ -145,7 +145,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
@@ -207,7 +207,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should only fetch exercise for new example submission and stay in new state', async () => {
         // GIVEN
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleParticipationId: 'new' };
         jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
         jest.spyOn(exampleParticipationService, 'get').mockImplementation();
         jest.spyOn(assessmentsService, 'getExampleResult').mockImplementation();
@@ -230,7 +230,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         await comp.ngOnInit();
 
@@ -251,7 +251,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         await comp.ngOnInit();
 
@@ -339,7 +339,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };

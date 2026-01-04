@@ -802,7 +802,7 @@ export const examManagementRoutes: Routes = [
         loadChildren: () => import('../../text/manage/assess/text-submission-assessment.route').then((m) => m.textSubmissionAssessmentRoutes),
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions/:exampleParticipationId',
         loadChildren: () => import('../../text/manage/example-text-submission/example-text-submission.route').then((m) => m.exampleTextSubmissionRoute),
     },
     {
@@ -818,7 +818,7 @@ export const examManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions/:exampleParticipationId',
         loadComponent: () => import('app/modeling/manage/example-modeling/example-modeling-submission.component').then((m) => m.ExampleModelingSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
