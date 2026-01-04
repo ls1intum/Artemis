@@ -83,7 +83,7 @@
                     [disabled]="isImport()"
                 />
                 @if (isImport()) {
-                    <span class="text-info" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
+                    <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
                 }
                 @if (fileUploadExercise().exampleSolutionPublicationDateError) {
                     <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
