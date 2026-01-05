@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
@@ -14,8 +15,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -30,8 +31,14 @@ describe('ExampleSubmissionImportComponent', () => {
     let exampleSubmissionService: ExampleSubmissionService;
     let getSubmissionSizeSpy: jest.SpyInstance;
     let exercise: Exercise;
+    let dialogRef: DynamicDialogRef;
 
     beforeEach(() => {
+        dialogRef = {
+            close: jest.fn(),
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
             imports: [MockComponent(NgbPagination)],
             declarations: [
@@ -43,7 +50,12 @@ describe('ExampleSubmissionImportComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbActiveModal), provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {
