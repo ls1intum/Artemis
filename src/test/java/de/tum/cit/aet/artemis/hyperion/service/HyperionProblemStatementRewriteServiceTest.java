@@ -49,9 +49,9 @@ class HyperionProblemStatementRewriteServiceTest {
     }
 
     @Test
-    void rewriteProblemStatement_returnsText() throws Exception {
+    void rewriteProblemStatement_returnsText() {
         String rewritten = "Rewritten statement";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(rewritten)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(rewritten)))));
 
         var course = new Course();
 

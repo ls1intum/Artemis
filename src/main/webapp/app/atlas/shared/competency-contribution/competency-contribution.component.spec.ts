@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyContributionComponent } from './competency-contribution.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
-import { input } from '@angular/core';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CarouselModule } from 'primeng/carousel';
@@ -14,7 +13,6 @@ import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/compete
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('CompetencyContributionComponent', () => {
-    let component: CompetencyContributionComponent;
     let fixture: ComponentFixture<CompetencyContributionComponent>;
     let courseCompetencyService: CourseCompetencyService;
     let getCompetencyContributionsForExerciseStub: jest.SpyInstance;
@@ -28,7 +26,6 @@ describe('CompetencyContributionComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CompetencyContributionComponent);
-        component = fixture.componentInstance;
 
         courseCompetencyService = TestBed.inject(CourseCompetencyService);
         getCompetencyContributionsForExerciseStub = jest
@@ -47,11 +44,9 @@ describe('CompetencyContributionComponent', () => {
     });
 
     it('should fetch for exercise', () => {
-        TestBed.runInInjectionContext(() => {
-            component.courseId = input<number>(1);
-            component.isExercise = input<boolean>(true);
-            component.learningObjectId = input<number>(2);
-        });
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('isExercise', true);
+        fixture.componentRef.setInput('learningObjectId', 2);
 
         fixture.detectChanges();
 
@@ -60,11 +55,9 @@ describe('CompetencyContributionComponent', () => {
     });
 
     it('should fetch for lecture unit', () => {
-        TestBed.runInInjectionContext(() => {
-            component.courseId = input<number>(1);
-            component.isExercise = input<boolean>(false);
-            component.learningObjectId = input<number>(2);
-        });
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('isExercise', false);
+        fixture.componentRef.setInput('learningObjectId', 2);
 
         fixture.detectChanges();
 

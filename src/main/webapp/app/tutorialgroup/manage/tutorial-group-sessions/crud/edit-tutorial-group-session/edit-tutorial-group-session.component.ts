@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -6,26 +6,28 @@ import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
 import { captureException } from '@sentry/angular';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupSessionFormComponent],
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupSessionFormComponent, DialogModule, ArtemisTranslatePipe],
 })
 export class EditTutorialGroupSessionComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();
+
+    readonly dialogVisible = signal<boolean>(false);
+    readonly sessionUpdated = output<void>();
 
     readonly tutorialGroup = input.required<TutorialGroup>();
 
@@ -36,22 +38,24 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     isLoading = false;
     formData?: TutorialGroupSessionFormData = undefined;
 
-    isInitialized = false;
-
-    initialize() {
+    open(): void {
         const tutorialGroupSession = this.tutorialGroupSession();
         const course = this.course();
         if (!tutorialGroupSession || !course || !this.tutorialGroup()) {
             captureException('Error: Component not fully configured');
-        } else {
-            this.formData = {
-                date: tutorialGroupSession.start?.tz(course.timeZone).toDate(),
-                startTime: tutorialGroupSession.start?.tz(course.timeZone).format('HH:mm:ss'),
-                endTime: tutorialGroupSession.end?.tz(course.timeZone).format('HH:mm:ss'),
-                location: tutorialGroupSession.location,
-            };
-            this.isInitialized = true;
+            return;
         }
+        this.formData = {
+            date: tutorialGroupSession.start?.tz(course.timeZone).toDate(),
+            startTime: tutorialGroupSession.start?.tz(course.timeZone).format('HH:mm:ss'),
+            endTime: tutorialGroupSession.end?.tz(course.timeZone).format('HH:mm:ss'),
+            location: tutorialGroupSession.location,
+        };
+        this.dialogVisible.set(true);
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
     }
 
     updateSession(formData: TutorialGroupSessionFormData) {
@@ -83,11 +87,12 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
             )
             .subscribe({
                 next: () => {
-                    this.activeModal.close();
+                    this.close();
+                    this.sessionUpdated.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     this.onError(res);
-                    this.clear();
+                    this.close();
                 },
             });
     }
@@ -101,10 +106,6 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
                 error: httpErrorResponse.message,
             });
         }
-    }
-
-    clear() {
-        this.activeModal.dismiss();
     }
 
     ngOnDestroy(): void {

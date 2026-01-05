@@ -1,13 +1,12 @@
+<div *titleBarTitle class="d-flex align-items-center">
+    <h4 id="jhi-lecture-heading" class="mb-0 me-2" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h4>
+    <jhi-documentation-button [type]="documentationType" />
+</div>
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="d-flex">
-            <div class="d-flex align-items-center">
-                <h2 id="jhi-lecture-heading" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h2>
-                <jhi-documentation-button [type]="documentationType" />
-            </div>
-            <div class="flex-grow-1"></div>
-            @let currentCourseId = courseId();
-            @if (!isEditMode() && currentCourseId) {
+        @let currentCourseId = courseId();
+        @if (!isEditMode() && currentCourseId) {
+            <div class="d-flex justify-content-end mb-3">
                 <p-selectbutton
                     [options]="createLectureOptions()"
                     [ngModel]="selectedCreateLectureOption()"
@@ -17,8 +16,8 @@
                     optionValue="mode"
                     size="small"
                 />
-            }
-        </div>
+            </div>
+        }
         @if (isLectureSeriesCreationMode() && currentCourseId) {
             <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
         } @else {
@@ -28,14 +27,6 @@
                     <div>
                         <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
                         <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
-                        @if (courseTitle()) {
-                            <div class="form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
-                                <div class="d-flex">
-                                    <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="courseTitle" />
-                                </div>
-                            </div>
-                        }
                         <jhi-lecture-title-channel-name [lecture]="lecture()" />
                         @if (lecture()) {
                             <div class="form-group" id="field_description">
@@ -45,6 +36,9 @@
                                     [domainActions]="domainActionsDescription"
                                     [(markdown)]="lecture().description"
                                     (markdownChange)="updateIsChangesMadeToTitleOrPeriodSection()"
+                                    [initialEditorHeight]="MarkdownEditorHeight.INLINE"
+                                    [resizableMinHeight]="MarkdownEditorHeight.INLINE"
+                                    [resizableMaxHeight]="MarkdownEditorHeight.SMALL"
                                 />
                             </div>
                         }

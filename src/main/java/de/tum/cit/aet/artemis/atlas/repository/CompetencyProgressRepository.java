@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.export.CompetencyProgressExportDTO;
+import de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Conditional(AtlasEnabled.class)
@@ -107,4 +109,47 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
                 AND c.studentGroupName MEMBER OF u.groups
             """)
     double findAverageOfAllNonZeroStudentProgressByCompetencyId(@Param("competencyId") long competencyId);
+
+    /**
+     * Find all competency progress records for a course for export.
+     *
+     * @param courseId the id of the course
+     * @return list of competency progress export DTOs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.export.CompetencyProgressExportDTO(
+                cp.competency.id, cp.competency.title, cp.user.login, cp.progress, cp.confidence, cp.lastModifiedDate)
+            FROM CompetencyProgress cp
+            WHERE cp.competency.course.id = :courseId
+            """)
+    List<CompetencyProgressExportDTO> findAllForExportByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Count the number of competency progress records for a course.
+     *
+     * @param courseId the id of the course
+     * @return the count of progress records
+     */
+    @Query("""
+            SELECT COUNT(cp)
+            FROM CompetencyProgress cp
+            WHERE cp.competency.course.id = :courseId
+            """)
+    long countByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Find all competency progress records for a user for GDPR data export.
+     *
+     * @param userId the id of the user
+     * @return list of user competency progress export DTOs with course information
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO(
+                cp.competency.course.id, cp.competency.course.title, cp.competency.id, cp.competency.title,
+                cp.progress, cp.confidence, cp.lastModifiedDate)
+            FROM CompetencyProgress cp
+            WHERE cp.user.id = :userId
+            ORDER BY cp.competency.course.title, cp.competency.title
+            """)
+    List<UserCompetencyProgressExportDTO> findAllForExportByUserId(@Param("userId") long userId);
 }

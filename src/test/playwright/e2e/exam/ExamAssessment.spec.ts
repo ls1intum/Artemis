@@ -13,7 +13,8 @@ import { StudentAssessmentPage } from '../../support/pageobjects/assessment/Stud
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { test } from '../../support/fixtures';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
-import { generateUUID, newBrowserPage, prepareExam, startAssessing } from '../../support/utils';
+import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamEnd } from '../../support/utils';
+import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
 
@@ -49,12 +50,21 @@ test.describe('Exam assessment', () => {
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
 
-        test('Assess a programming exercise submission (MANUAL)', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+        test('Assess a programming exercise submission (MANUAL)', async ({
+            page,
+            login,
+            examManagement,
+            examAssessment,
+            examParticipation,
+            courseAssessment,
+            exerciseAssessment,
+        }) => {
             test.slow();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            await waitForExamEnd(examEnd, page);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 155000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(2, 'Good job');
             await examAssessment.submit();
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
@@ -74,6 +84,7 @@ test.describe('Exam assessment', () => {
         });
 
         test('Assess a modeling exercise submission', async ({
+            page,
             login,
             examManagement,
             modelingExerciseAssessment,
@@ -84,8 +95,9 @@ test.describe('Exam assessment', () => {
         }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            await waitForExamEnd(examEnd, page);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await modelingExerciseAssessment.addNewFeedback(5, 'Good');
             await modelingExerciseAssessment.openAssessmentForComponent(0);
             await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
@@ -111,11 +123,12 @@ test.describe('Exam assessment', () => {
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page, 2);
         });
 
-        test('Assess a text exercise submission', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+        test('Assess a text exercise submission', async ({ page, login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            await waitForExamEnd(examEnd, page);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
@@ -125,7 +138,7 @@ test.describe('Exam assessment', () => {
 
         test('Instructor makes a second round of assessment', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment, true, true);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
             await examAssessment.fillFeedback(9, 'Great job');
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
@@ -168,7 +181,7 @@ test.describe('Exam assessment', () => {
     });
 });
 
-test.describe('Exam grading', { tag: '@fast' }, () => {
+test.describe('Exam grading', { tag: '@slow' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
 
@@ -192,11 +205,12 @@ test.describe('Exam grading', { tag: '@fast' }, () => {
             await page.locator('button[deletequestion="artemisApp.gradingSystem.deleteQuestion"]').waitFor({ state: 'visible' });
         });
 
-        test('Check student grade', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+        test('Check student grade', async ({ page, login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            await waitForExamEnd(examEnd, page);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);

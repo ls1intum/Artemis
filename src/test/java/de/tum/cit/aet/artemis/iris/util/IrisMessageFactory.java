@@ -15,7 +15,8 @@ public class IrisMessageFactory {
     public static IrisMessage createIrisMessage(IrisMessageSender irisMessageSender) {
         IrisMessage message = new IrisMessage();
         message.setSender(irisMessageSender);
-        message.setContent(IrisMessageContentFactory.createIrisMessageContents());
+        // Use addContent() which properly sets the back-reference from content to message
+        IrisMessageContentFactory.createIrisMessageContents().forEach(message::addContent);
         return message;
     }
 
@@ -27,7 +28,8 @@ public class IrisMessageFactory {
 
     public static IrisMessage createIrisMessageForSessionWithContent(IrisSession irisSession) {
         IrisMessage message = createIrisMessageForSession(irisSession);
-        message.setContent(IrisMessageContentFactory.createIrisMessageContents());
+        // Use addContent() which properly sets the back-reference from content to message
+        IrisMessageContentFactory.createIrisMessageContents().forEach(message::addContent);
         return message;
     }
 }

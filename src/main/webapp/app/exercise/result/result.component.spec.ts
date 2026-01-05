@@ -165,7 +165,7 @@ describe('ResultComponent', () => {
             comp.result = mockResult;
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
             expect(button).toBeTruthy();
@@ -184,7 +184,7 @@ describe('ResultComponent', () => {
             comp.resultIconClass = faTimesCircle;
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
             expect(button).toBeTruthy();
@@ -234,21 +234,21 @@ describe('ResultComponent', () => {
         comp.result = mockResult;
         comp.resultIconClass = faTimesCircle;
         comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const resultElement = fixture.debugElement.query(By.css('#result-score'));
         resultElement.triggerEventHandler('click', null);
         expect(detailsSpy).toHaveBeenCalledWith(mockResult);
 
         detailsSpy.mockClear();
         comp.isInSidebarCard = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         resultElement.triggerEventHandler('click', null);
         expect(detailsSpy).not.toHaveBeenCalled();
     });
 
     it('should display building message for IS_BUILDING status', () => {
         comp.templateStatus = ResultTemplateStatus.IS_BUILDING;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const compiled = fixture.debugElement.query(By.css('[jhiTranslate$=building]'));
         expect(compiled).toBeTruthy();
     });
@@ -258,7 +258,7 @@ describe('ResultComponent', () => {
         comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
         comp.result = mockResult;
         comp.resultIconClass = faTimesCircle;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const badge = fixture.nativeElement.querySelector('#result-score-badge');
         expect(badge).toBeTruthy();
     });
@@ -268,7 +268,7 @@ describe('ResultComponent', () => {
 
         // Test for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE
         comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         let compiled = fixture.nativeElement;
         let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
         expect(spanElement).not.toBeNull();
@@ -276,7 +276,7 @@ describe('ResultComponent', () => {
 
         // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
         comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         compiled = fixture.nativeElement;
         spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
         expect(spanElement).not.toBeNull();
@@ -285,28 +285,28 @@ describe('ResultComponent', () => {
 
     it('should display the submitted text for SUBMITTED template status', () => {
         comp.templateStatus = ResultTemplateStatus.SUBMITTED;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-submitted');
         expect(submittedSpan).toBeTruthy();
     });
 
     it('should display the submitted text for SUBMITTED_WAITING_FOR_GRADING template status', () => {
         comp.templateStatus = ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-submitted-waiting-grading');
         expect(submittedSpan).toBeTruthy();
     });
 
     it('should display the submitted text for LATE_NO_FEEDBACK template status', () => {
         comp.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late-no-feedback');
         expect(submittedSpan).toBeTruthy();
     });
     it('should display the submitted text for LATE template status', () => {
         comp.resultIconClass = faTimesCircle;
         comp.templateStatus = ResultTemplateStatus.LATE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late');
         expect(submittedSpan).toBeTruthy();
     });

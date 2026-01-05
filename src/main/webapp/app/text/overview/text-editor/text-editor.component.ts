@@ -32,7 +32,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -127,7 +127,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAfterAssessmentDueDate: boolean;
     examMode = false;
     isGeneratingFeedback = false;
-    irisSettings?: IrisSettings;
+    irisSettings?: IrisCourseSettingsWithRateLimitDTO;
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
@@ -207,11 +207,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     private loadIrisSettings(): void {
         // only load the settings if Iris is available and this is not an exam exercise
-        if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode) {
-            this.route.params.subscribe((params) => {
-                this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
-                    this.irisSettings = irisSettings;
-                });
+        if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode && this.course?.id) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.course.id).subscribe((response) => {
+                this.irisSettings = response;
             });
         }
     }
@@ -307,19 +305,25 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     ngOnDestroy() {
+        // Auto-save unsaved changes when navigating away from the component.
+        // This ensures students don't lose their work if they accidentally navigate away
+        // without explicitly saving their text submission.
         if (!this.canDeactivate() && this.textExercise.id) {
             let newSubmission = new TextSubmission();
             if (this.submission) {
                 newSubmission = this.submission;
             }
             newSubmission.text = this.answer;
-            if (this.submission.id) {
+            if (this.submission?.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
                     this.submission = response.body!;
                     setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-                    // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation!.submissions = [this.submission];
-                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    // Reconnect the submission to its participation so that the submission status
+                    // is displayed correctly in the result component after auto-save.
+                    if (this.submission.participation) {
+                        this.submission.participation.submissions = [this.submission];
+                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    }
                 });
             }
         }

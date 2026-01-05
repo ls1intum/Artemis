@@ -10,9 +10,9 @@
                     "showCompetenciesGraphButton": "Kompetenzgraph",
                     "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernobjekte!",
                     "nextLearningObjectOnPathLabel": "Nächste",
-                    "unreleasedLearningObjectLabel": "Unveröffentlichte Lerneinheit"
+                    "unreleasedLearningObjectLabel": "Unveröffentlichter Lerninhalt"
                 },
-                "recapLabel": "Lerneinheiten wiederholen",
+                "recapLabel": "Lerninhalte wiederholen",
                 "repeatedTest": "Wiederholung: {{name}}"
             },
             "competencyGraphModal": {
@@ -26,7 +26,7 @@
             },
             "completion": {
                 "title": "Herzlichen Glückwunsch!",
-                "description": "Herzlichen Glückwunsch zum Abschluss deines aktuellen Lernpfads! \uD83C\uDF89 Deine Mühe hat sich gelohnt. Neue Inhalte werden möglicherweise bald hinzugefügt, aber genieße diesen Moment des Erfolgs. Bleib dran für weitere Einheiten und mach weiter so!"
+                "description": "Herzlichen Glückwunsch zum Abschluss deines aktuellen Lernpfads! \uD83C\uDF89 Deine Mühe hat sich gelohnt. Neue Inhalte werden möglicherweise bald hinzugefügt, aber genieße diesen Moment des Erfolgs. Bleib dran für weitere Inhalte und mach weiter so!"
             }
         }
     }

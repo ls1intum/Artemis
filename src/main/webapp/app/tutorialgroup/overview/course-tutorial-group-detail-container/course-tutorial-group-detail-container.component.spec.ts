@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,14 +24,16 @@ import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
 
 describe('CourseTutorialGroupDetailContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseTutorialGroupDetailContainerComponent>;
     let component: CourseTutorialGroupDetailContainerComponent;
     let tutorialGroupService: TutorialGroupsService;
     let courseManagementService: CourseManagementService;
     let tutorialGroupOfResponse: TutorialGroupDetailGroupDTO;
     let courseOfResponse: Course;
-    let findStub: jest.SpyInstance;
-    let findByIdStub: jest.SpyInstance;
+    let findStub: ReturnType<typeof vi.spyOn>;
+    let findByIdStub: ReturnType<typeof vi.spyOn>;
 
     const parentParams = { courseId: 2 };
     const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
@@ -81,12 +85,12 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
 
         courseOfResponse = { id: 2 } as Course;
 
-        findStub = jest.spyOn(courseManagementService, 'find').mockReturnValue(of({ body: courseOfResponse } as any));
-        findByIdStub = jest.spyOn(tutorialGroupService, 'getTutorialGroupDetailGroupDTO').mockReturnValue(of(tutorialGroupOfResponse));
+        findStub = vi.spyOn(courseManagementService, 'find').mockReturnValue(of({ body: courseOfResponse } as any));
+        findByIdStub = vi.spyOn(tutorialGroupService, 'getTutorialGroupDetailGroupDTO').mockReturnValue(of(tutorialGroupOfResponse));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

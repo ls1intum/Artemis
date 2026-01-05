@@ -14,7 +14,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCheck, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChair, faCheck, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -26,6 +26,7 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
+import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -48,6 +49,7 @@ const cssClasses = {
         DataTableComponent,
         NgxDatatableModule,
         ArtemisTranslatePipe,
+        StudentsReseatingDialogComponent,
     ],
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
@@ -88,14 +90,15 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     isAdmin = false;
 
     // Icons
-    faPlus = faPlus;
-    faUserSlash = faUserSlash;
-    faUserTimes = faUserTimes;
-    faInfoCircle = faInfoCircle;
-    faUpload = faUpload;
-    faCheck = faCheck;
-    faTimes = faTimes;
-    faThLarge = faThLarge;
+    protected readonly faPlus = faPlus;
+    protected readonly faUserSlash = faUserSlash;
+    protected readonly faUserTimes = faUserTimes;
+    protected readonly faInfoCircle = faInfoCircle;
+    protected readonly faUpload = faUpload;
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
+    protected readonly faThLarge = faThLarge;
+    protected readonly faChair = faChair;
 
     ngOnInit() {
         this.isLoading = true;

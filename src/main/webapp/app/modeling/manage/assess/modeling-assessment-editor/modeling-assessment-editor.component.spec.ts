@@ -258,7 +258,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
             mockAuth.isAtLeastInstructorInCourse(course);
             component['checkPermissions']();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.modelingExercise.isAtLeastInstructor).toBeFalse();
             expect(component.canOverride).toBeFalse();
         }));

@@ -48,6 +48,21 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
+    void testModelingProperty() {
+        testProperty(artemisConfigHelper::isModelingEnabled, Constants.MODELING_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testFileUploadProperty() {
+        testProperty(artemisConfigHelper::isFileUploadEnabled, Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testLectureProperty() {
+        testProperty(artemisConfigHelper::isLectureEnabled, Constants.LECTURE_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
     void testTutorialgroupProperty() {
         testProperty(artemisConfigHelper::isTutorialGroupEnabled, Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME);
     }

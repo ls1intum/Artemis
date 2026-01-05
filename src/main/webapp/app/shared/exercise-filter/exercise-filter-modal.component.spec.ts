@@ -171,7 +171,7 @@ describe('ExerciseFilterModalComponent', () => {
                 preventDefault: jest.fn(),
             };
             component.onSelectItem(event);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(onSelectItemSpy).toHaveBeenCalledOnce();
             expect(component.categoryFilter?.options[0].searched).toBeTrue();
@@ -189,7 +189,7 @@ describe('ExerciseFilterModalComponent', () => {
                 stopPropagation: jest.fn(),
             };
             component.onSelectItem(event);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(onSelectItemSpy).toHaveBeenCalledOnce();
             expect(component.categoryFilter?.options[0].searched).toBeFalse();

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnChanges, OnInit, Output, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -41,7 +41,7 @@ export enum TimeFrame {
     providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
 })
-export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
+export class TutorialGroupFreePeriodFormComponent implements OnInit {
     private fb = inject(FormBuilder);
     protected readonly DateTimePickerType = DateTimePickerType;
 
@@ -57,7 +57,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     readonly timeZone = input<string>();
 
-    @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();
+    readonly formSubmitted = output<TutorialGroupFreePeriodFormData>();
 
     faCalendarAlt = faCalendarAlt;
 
@@ -67,6 +67,19 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     // Enum Object to be used for Comparing different TimeFrames in the template.
     protected readonly TimeFrame = TimeFrame;
+
+    constructor() {
+        // Effect to handle formData changes (replaces ngOnChanges)
+        effect(() => {
+            const formData = this.formData();
+            const editMode = this.isEditMode();
+            this.initializeForm();
+            if (editMode && formData) {
+                this.setFormValues(formData);
+                this.setFirstTimeFrameInEditMode(formData);
+            }
+        });
+    }
 
     /**
      * Sets the time frame for the form and resets the necessary date controls.
@@ -172,15 +185,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.initializeForm();
-    }
-
-    ngOnChanges() {
-        this.initializeForm();
-        const formData = this.formData();
-        if (this.isEditMode() && formData) {
-            this.setFormValues(formData);
-            this.setFirstTimeFrameInEditMode(formData);
-        }
     }
 
     submitForm() {

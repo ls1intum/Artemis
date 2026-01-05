@@ -51,7 +51,7 @@ describe('ExerciseImportWrapperComponent', () => {
 
     it('should show tabs component for programming-exercises', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const tabsComponent = fixture.debugElement.nativeElement.querySelector('#exercise-import-tabs');
         const exerciseImportComponent = fixture.debugElement.nativeElement.querySelector('#exercise-import');
         expect(tabsComponent).toBeTruthy();
@@ -62,7 +62,7 @@ describe('ExerciseImportWrapperComponent', () => {
         'should show exercise-import component for all other exercise types',
         (exerciseType) => {
             component.exerciseType = exerciseType;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const tabsComponent = fixture.debugElement.nativeElement.querySelector('#exercise-import-tabs');
             const exerciseImportComponent = fixture.debugElement.nativeElement.querySelector('#exercise-import');
             expect(tabsComponent).toBeNull();

@@ -95,7 +95,7 @@ describe('CourseRegistrationButtonComponent', () => {
     it('should alert error after unsuccessful unenrollment', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         unenrollFromCourseStub = jest.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(throwError(() => httpError));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.onUnenroll();
         expect(unenrollFromCourseStub).toHaveBeenCalledOnce();
         expect(errorAlertStub).toHaveBeenCalledOnce();
@@ -105,7 +105,7 @@ describe('CourseRegistrationButtonComponent', () => {
         component.course.unenrollmentEnabled = true;
         component.course.enrollmentEnabled = true;
         component.course.enrollmentEndDate = dayjs().add(1, 'day');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.canEnrollAgain).toBeTrue();
     });
 
@@ -113,7 +113,7 @@ describe('CourseRegistrationButtonComponent', () => {
         component.course.unenrollmentEnabled = true;
         component.course.enrollmentEnabled = true;
         component.course.enrollmentEndDate = dayjs().subtract(1, 'day');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.canEnrollAgain).toBeFalse();
     });
 });

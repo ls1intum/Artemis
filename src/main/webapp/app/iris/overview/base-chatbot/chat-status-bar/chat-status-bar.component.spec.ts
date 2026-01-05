@@ -52,14 +52,14 @@ describe('ChatStatusBarComponent', () => {
 
     it('should render progress bar when stages are present', () => {
         component.stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const progressBar = fixture.debugElement.query(By.css('.progress-bar'));
         expect(progressBar).toBeTruthy();
     });
 
     it('should not render progress bar when stages are not present', () => {
         component.stages = [];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const progressBarParts = fixture.debugElement.queryAll(By.css('.progress-bar .part'));
         expect(progressBarParts).toHaveLength(0);
     });
@@ -67,7 +67,7 @@ describe('ChatStatusBarComponent', () => {
     it('should render stage name when stages are present', () => {
         component.stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
         component.ngOnChanges();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const stageName = fixture.debugElement.query(By.css('.display')).nativeElement.textContent;
         expect(stageName).toContain('Test Stage');
     });
@@ -75,7 +75,7 @@ describe('ChatStatusBarComponent', () => {
     it('should not render stage name when stages are not present', () => {
         component.stages = [];
         component.ngOnChanges();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const stageName = fixture.debugElement.query(By.css('.display')).nativeElement.textContent;
         expect(stageName).not.toContain('Test Stage');
     });

@@ -405,7 +405,7 @@ describe('AgentChatModalComponent', () => {
             };
             component.messages = [userMessage, agentMessage];
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const messageElements = fixture.debugElement.nativeElement.querySelectorAll('.message-wrapper');
             expect(messageElements).toHaveLength(2);
@@ -420,7 +420,7 @@ describe('AgentChatModalComponent', () => {
         it('should show typing indicator when isAgentTyping is true', () => {
             component.isAgentTyping.set(true);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
             expect(typingIndicator).toBeTruthy();
@@ -429,7 +429,7 @@ describe('AgentChatModalComponent', () => {
         it('should hide typing indicator when isAgentTyping is false', () => {
             component.isAgentTyping.set(false);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
             expect(typingIndicator).toBeFalsy();
@@ -446,7 +446,7 @@ describe('AgentChatModalComponent', () => {
         it('should disable send button when canSendMessage is false', () => {
             component.currentMessage.set('');
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             expect(sendButton.disabled).toBeTrue();
@@ -456,7 +456,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Valid message');
             component.isAgentTyping.set(false);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             expect(sendButton.disabled).toBeFalse();
@@ -465,7 +465,7 @@ describe('AgentChatModalComponent', () => {
         it('should show character count in template', () => {
             component.currentMessage.set('Test message');
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-end');
             expect(charCountElement.textContent.trim()).toContain('12 / 8000');
@@ -474,7 +474,7 @@ describe('AgentChatModalComponent', () => {
         it('should show error styling when message is too long', () => {
             component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-danger');
             expect(charCountElement).toBeTruthy();

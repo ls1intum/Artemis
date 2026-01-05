@@ -46,7 +46,7 @@ describe('ConnectionWarning', () => {
         expect(warningDiv.classes).not.toContainEntry(['disconnected', true]);
 
         subject.next(new ConnectionState(false, true));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.disconnected).toBeTrue();
         expect(warningDiv.classes).toContainEntry(['disconnected', true]);
@@ -55,7 +55,7 @@ describe('ConnectionWarning', () => {
         expect(component.popover.isOpen()).toBeTrue();
 
         subject.next(new ConnectionState(true, true));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         tick(100);
         expect(component.disconnected).toBeFalse();
