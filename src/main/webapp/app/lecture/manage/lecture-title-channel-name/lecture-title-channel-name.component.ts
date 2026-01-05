@@ -18,15 +18,15 @@ export class LectureTitleChannelNameComponent {
     hideChannelNameInput = computed(() => !this.requiresChannelName(this.lecture()));
 
     onTitleChange(newTitle: string | undefined): void {
-        const lecture = this.lecture();
-        lecture.title = newTitle;
-        this.lectureChange.emit(lecture);
+        const newLecture = window.structuredClone(this.lecture());
+        newLecture.title = newTitle;
+        this.lectureChange.emit(newLecture);
     }
 
     onChannelNameChange(newChannelName: string | undefined): void {
-        const lecture = this.lecture();
-        lecture.channelName = newChannelName;
-        this.lectureChange.emit(lecture);
+        const newLecture = window.structuredClone(this.lecture());
+        newLecture.channelName = newChannelName;
+        this.lectureChange.emit(newLecture);
     }
 
     /**
