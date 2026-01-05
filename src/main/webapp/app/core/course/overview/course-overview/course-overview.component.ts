@@ -300,7 +300,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         );
         sidebarItems.push(...defaultItems);
 
-        if (currentCourse?.lectures) {
+        if (this.lectureEnabled && currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
             sidebarItems.splice(-2, 0, lecturesItem);
         }

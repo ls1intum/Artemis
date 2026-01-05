@@ -1,21 +1,20 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class SlideService {
