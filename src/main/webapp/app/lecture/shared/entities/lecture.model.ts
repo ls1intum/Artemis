@@ -31,3 +31,17 @@ export class LectureSeriesCreateLectureDTO {
         public endDate?: Dayjs,
     ) {}
 }
+
+/**
+ * DTO for creating and updating lectures. Matches the server-side SimpleLectureDTO.
+ */
+export interface SimpleLectureDTO {
+    id?: number;
+    title?: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    isTutorialLecture?: boolean;
+    channelName?: string;
+    course?: { id?: number };
+}

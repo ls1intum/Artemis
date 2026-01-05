@@ -1,4 +1,4 @@
-import { Component, computed, input, output, viewChild } from '@angular/core';
+import { Component, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -18,16 +18,32 @@ export class LectureTitleChannelNameComponent {
 
     hideChannelNameInput = computed(() => !this.requiresChannelName(this.lecture()));
 
+    /**
+     * Local copy of the lecture to handle synchronous title+channelName changes.
+     * When titleChange fires followed immediately by channelNameChange, the input
+     * binding hasn't updated yet. This local copy ensures both changes are applied.
+     */
+    private pendingLecture = signal<Lecture | undefined>(undefined);
+
+    constructor() {
+        // Sync the pending lecture with the input when the input changes
+        effect(() => {
+            this.pendingLecture.set(deepClone(this.lecture()));
+        });
+    }
+
     onTitleChange(newTitle: string | undefined): void {
-        const newLecture = deepClone(this.lecture());
+        const newLecture = this.pendingLecture() ?? deepClone(this.lecture());
         newLecture.title = newTitle;
-        this.lectureChange.emit(newLecture);
+        this.pendingLecture.set(newLecture);
+        this.lectureChange.emit(deepClone(newLecture));
     }
 
     onChannelNameChange(newChannelName: string | undefined): void {
-        const newLecture = deepClone(this.lecture());
+        const newLecture = this.pendingLecture() ?? deepClone(this.lecture());
         newLecture.channelName = newChannelName;
-        this.lectureChange.emit(newLecture);
+        this.pendingLecture.set(newLecture);
+        this.lectureChange.emit(deepClone(newLecture));
     }
 
     /**
