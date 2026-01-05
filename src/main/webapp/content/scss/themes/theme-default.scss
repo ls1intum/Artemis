@@ -51,3 +51,11 @@ html {
 .btn-outline-primary:not(.list-group-item):hover {
     color: $white;
 }
+
+// Feature toggle cards
+:root {
+    --feature-card-active-bg: #d1e7dd;
+    --feature-card-disabled-bg: #f8d7da;
+    --feature-card-inactive-bg: #e9ecef;
+    --feature-card-heading-color: #212529;
+}

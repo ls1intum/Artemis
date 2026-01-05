@@ -301,7 +301,8 @@ input:-webkit-autofill:active {
 
 // Feature toggle cards
 :root {
-    --feature-card-bg: #2e4a3a;
+    --feature-card-active-bg: #2e4a3a;
     --feature-card-disabled-bg: #4a2e2e;
+    --feature-card-inactive-bg: #3a3a3a;
     --feature-card-heading-color: #fff;
 }
