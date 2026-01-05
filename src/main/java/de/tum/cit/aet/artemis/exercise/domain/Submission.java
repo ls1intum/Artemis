@@ -20,6 +20,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -78,7 +79,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "example_submission")
     private Boolean exampleSubmission;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "participation_id", nullable = false)
     private Participation participation;
 
     @JsonIgnore

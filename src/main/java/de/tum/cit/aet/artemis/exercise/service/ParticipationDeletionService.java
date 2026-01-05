@@ -142,9 +142,20 @@ public class ParticipationDeletionService {
 
     /**
      * Delete the participation by participationId.
+     * <p>
+     * This method first deletes submissions and results explicitly, then reloads the participation
+     * with its (now empty) submissions collection before deleting the participation entity.
+     * <p>
+     * <b>Important:</b> The reload step is critical when using {@code CascadeType.REMOVE} and {@code orphanRemoval = true}
+     * on collections with Hibernate L2 cache enabled. After explicitly deleting child entities, the L2 cache may still
+     * contain stale references. When Hibernate's cascade mechanism tries to process the collection during parent deletion,
+     * it loads the collection from L2 cache, finds references to already-deleted entities, and throws
+     * {@code EntityNotFoundException}. Reloading the parent with its collection after deleting children refreshes
+     * the L2 cache with the current (empty) state from the database, preventing this issue.
      *
      * @param participationId         the participationId of the entity
      * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
+     * @see <a href="https://docs.artemis.cit.tum.de/dev/guidelines/database.html">Database Guidelines - Deleting Entities with Cascade</a>
      */
     public void delete(long participationId, boolean deleteParticipantScores) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
@@ -176,6 +187,10 @@ public class ParticipationDeletionService {
         localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(participationId));
 
         deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
+        // Reload the participation with submissions to get a fresh entity with empty submissions collection.
+        // This is necessary because cascade REMOVE would otherwise try to load the collection from L2 cache
+        // which still has references to the already-deleted submissions.
+        participation = studentParticipationRepository.findByIdWithSubmissionsElseThrow(participationId);
         studentParticipationRepository.delete(participation);
     }
 

@@ -160,9 +160,19 @@ public class ExampleParticipationService {
 
     /**
      * Deletes an ExampleParticipation with the given ID, cleans up the tutor participations.
-     * The submission and results are deleted via cascade.
+     * <p>
+     * This method first deletes submissions explicitly, then reloads the example participation
+     * with its (now empty) submissions collection before deleting the entity.
+     * <p>
+     * <b>Important:</b> The reload step is critical when using {@code CascadeType.REMOVE} and {@code orphanRemoval = true}
+     * on collections with Hibernate L2 cache enabled. After explicitly deleting child entities, the L2 cache may still
+     * contain stale references. When Hibernate's cascade mechanism tries to process the collection during parent deletion,
+     * it loads the collection from L2 cache, finds references to already-deleted entities, and throws
+     * {@code EntityNotFoundException}. Reloading the parent with its collection after deleting children refreshes
+     * the L2 cache with the current (empty) state from the database, preventing this issue.
      *
      * @param exampleParticipationId the ID of the ExampleParticipation which should be deleted
+     * @see <a href="https://docs.artemis.cit.tum.de/dev/guidelines/database.html">Database Guidelines - Deleting Entities with Cascade</a>
      */
     public void deleteById(long exampleParticipationId) {
         Optional<ExampleParticipation> optionalExampleParticipation = exampleParticipationRepository.findByIdWithResultsAndTutorParticipations(exampleParticipationId);
@@ -174,10 +184,8 @@ public class ExampleParticipationService {
             tutorParticipationRepository.deleteAll(exampleParticipation.getTutorParticipations());
             exampleParticipation.setTutorParticipations(null);
 
-            // Clear the submissions collection to prevent Hibernate from trying to merge entities
-            // Make a copy of IDs first since we're clearing the collection
+            // Make a copy of IDs first since we'll be iterating over the collection
             Set<Long> submissionIds = exampleParticipation.getSubmissions().stream().map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-            exampleParticipation.getSubmissions().clear();
 
             // Delete submissions that exist in the database
             for (Long submissionId : submissionIds) {
@@ -186,8 +194,11 @@ public class ExampleParticipationService {
                 }
             }
 
-            // Delete the example participation using its ID to avoid merge issues
-            exampleParticipationRepository.deleteById(exampleParticipation.getId());
+            // Reload the example participation with submissions to get a fresh entity with empty submissions collection.
+            // This is necessary because cascade REMOVE would otherwise try to load the collection from L2 cache
+            // which still has references to the already-deleted submissions.
+            exampleParticipation = exampleParticipationRepository.findByIdWithResultsAndTutorParticipations(exampleParticipation.getId()).orElseThrow();
+            exampleParticipationRepository.delete(exampleParticipation);
         }
     }
 

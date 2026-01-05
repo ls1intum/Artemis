@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -95,14 +96,18 @@ public abstract class Participation extends DomainObject implements Participatio
     protected Exercise exercise;
 
     /**
-     * Because a submission has a reference to the participation and the participation has a collection of submissions, setting the cascade type to PERSIST would result in
-     * exceptions, i.e., if you want to persist a submission, you have to follow these steps: 1. Set the participation of the submission: submission.setParticipation(participation)
-     * 2. Persist the submission: submissionRepository.save(submission) 3. Add the submission to the participation: participation.addSubmission(submission) 4. Persist the
-     * participation: participationRepository.save(participation) It is important that, if you want to persist the submission and the participation in the same transaction, you
-     * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
-     * participationId to all submissions.
+     * Submissions for this participation. The FK is on the submission side with a NOT NULL constraint.
+     * Uses cascade REMOVE and orphanRemoval to ensure submissions are deleted when the participation is deleted.
+     * <p>
+     * When creating new submissions:
+     * <ol>
+     * <li>Set submission.setParticipation(participation)</li>
+     * <li>Save the submission via submissionRepository.save(submission)</li>
+     * <li>Call participation.addSubmission(submission) for in-memory consistency (optional for DB persistence)</li>
+     * </ol>
+     * The FK is on the submission side, so participation does NOT need to be saved again after adding a submission.
      */
-    @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties({ "participation" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();

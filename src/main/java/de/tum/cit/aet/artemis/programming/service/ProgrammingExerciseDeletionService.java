@@ -64,6 +64,7 @@ public class ProgrammingExerciseDeletionService {
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
+        log.debug("Deleting programming exercise with id: {} with BaseReposBuildPlans {}", programmingExerciseId, deleteBaseReposBuildPlans);
         // Note: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
