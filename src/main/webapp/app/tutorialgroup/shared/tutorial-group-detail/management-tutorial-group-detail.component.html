@@ -1,8 +1,8 @@
 <div class="tutorial-group-detail">
     <h2>{{ tutorialGroup().title }}</h2>
     <hr />
-    @if (header) {
-        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup() }" />
+    @if (header()) {
+        <ng-template [ngTemplateOutlet]="header()" [ngTemplateOutletContext]="{ $implicit: tutorialGroup() }" />
         <hr />
     }
     <div class="row align-items-stretch">

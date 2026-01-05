@@ -57,14 +57,16 @@
                 (click)="addExercisePopover.showPopover($event)"
             />
 
-            <jhi-button
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [title]="'entity.action.addLecture'"
-                [icon]="faChalkboardUser"
-                [shouldToggle]="true"
-                (onClick)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)"
-            />
+            @if (lectureEnabled) {
+                <jhi-button
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.MEDIUM"
+                    [title]="'entity.action.addLecture'"
+                    [icon]="faChalkboardUser"
+                    [shouldToggle]="true"
+                    (onClick)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)"
+                />
+            }
         }
         @if (course()?.faqEnabled) {
             <jhi-button

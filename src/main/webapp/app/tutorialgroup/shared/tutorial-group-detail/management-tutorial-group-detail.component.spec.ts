@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -46,6 +48,8 @@ class MockWrapperComponent {
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
     let detailInstance: ManagementTutorialGroupDetailComponent;
@@ -54,8 +58,9 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), FaIconComponent],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([]),
+                FaIconComponent,
                 ManagementTutorialGroupDetailComponent,
                 MockWrapperComponent,
                 MockHeaderComponent,
@@ -88,7 +93,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should pass the tutorialGroup to the header', () => {
@@ -100,13 +105,16 @@ describe('TutorialGroupDetailWrapperTest', () => {
 });
 
 describe('TutorialGroupDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ManagementTutorialGroupDetailComponent>;
     let component: ManagementTutorialGroupDetailComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), FaIconComponent],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([]),
+                FaIconComponent,
                 ManagementTutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(IconCardComponent),
@@ -127,7 +135,7 @@ describe('TutorialGroupDetailComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

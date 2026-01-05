@@ -75,13 +75,7 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should delete quiz', () => {
-        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
@@ -268,13 +262,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         const quizExerciseService = TestBed.inject(QuizExerciseService);
         const router = TestBed.inject(Router);
 
-        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
