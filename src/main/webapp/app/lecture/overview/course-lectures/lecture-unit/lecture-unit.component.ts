@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, inject, input, output, signal } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -17,9 +17,11 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })
-export class LectureUnitComponent {
+export class LectureUnitComponent implements OnDestroy {
     private router = inject(Router);
     private elementRef = inject(ElementRef);
+
+    private scrollTimeout?: ReturnType<typeof setTimeout>;
 
     protected faDownload = faDownload;
     protected faCheckCircle = faCheckCircle;
@@ -47,6 +49,12 @@ export class LectureUnitComponent {
     readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
     readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
 
+    ngOnDestroy(): void {
+        if (this.scrollTimeout) {
+            clearTimeout(this.scrollTimeout);
+        }
+    }
+
     toggleCompletion(event: Event) {
         event.stopPropagation();
         this.onCompletion.emit(!this.lectureUnit().completed!);
@@ -58,7 +66,7 @@ export class LectureUnitComponent {
 
         // Scroll the element into view after a short delay upon expanding
         if (!this.isCollapsed()) {
-            setTimeout(() => {
+            this.scrollTimeout = setTimeout(() => {
                 this.elementRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 100);
         }
