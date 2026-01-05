@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -30,66 +31,66 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
     @Query("""
             DELETE
             FROM PlagiarismComparison pc
-            WHERE pc.id IN :ids
+            WHERE pc.id IN :plagiarismComparisonIds
             """)
-    int deleteByIdsIn(@Param("ids") List<Long> ids);
+    int deleteByIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE
             FROM PlagiarismSubmissionElement e
-            WHERE e.plagiarismSubmission.plagiarismComparison.id IN :ids
+            WHERE e.plagiarismSubmission.plagiarismComparison.id IN :plagiarismComparisonIds
             """)
-    int deletePlagiarismSubmissionElementsByComparisonIdsIn(@Param("ids") List<Long> ids);
+    int deletePlagiarismSubmissionElementsByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Query("""
             SELECT COUNT(e)
             FROM PlagiarismSubmissionElement e
-            WHERE e.plagiarismSubmission.plagiarismComparison.id IN :ids
+            WHERE e.plagiarismSubmission.plagiarismComparison.id IN :plagiarismComparisonIds
             """)
-    int countPlagiarismSubmissionElementsByComparisonIdsIn(@Param("ids") List<Long> ids);
+    int countPlagiarismSubmissionElementsByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Modifying
     @Transactional // ok because of delete
     @Query("""
             DELETE
             FROM PlagiarismSubmission s
-            WHERE s.plagiarismComparison.id IN :ids
+            WHERE s.plagiarismComparison.id IN :plagiarismComparisonIds
             """)
-    int deletePlagiarismSubmissionsByComparisonIdsIn(@Param("ids") List<Long> ids);
+    int deletePlagiarismSubmissionsByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Query("""
             SELECT COUNT(s)
             FROM PlagiarismSubmission s
-            WHERE s.plagiarismComparison.id IN :ids
+            WHERE s.plagiarismComparison.id IN :plagiarismComparisonIds
             """)
-    int countPlagiarismSubmissionsByComparisonIdsIn(@Param("ids") List<Long> ids);
+    int countPlagiarismSubmissionsByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE PlagiarismComparison pc
             SET pc.submissionA = NULL, pc.submissionB = NULL
-            WHERE pc.id IN :ids
+            WHERE pc.id IN :plagiarismComparisonIds
             """)
-    int setPlagiarismSubmissionsToNullInComparisonsWithIds(@Param("ids") List<Long> ids);
+    int setPlagiarismSubmissionsToNullInComparisonsWithIds(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Modifying
     @Transactional // ok because of delete
     @Query(nativeQuery = true, value = """
             DELETE
             FROM plagiarism_comparison_matches m
-            WHERE m.plagiarism_comparison_id IN :ids
+            WHERE m.plagiarism_comparison_id IN :plagiarismComparisonIds
             """)
-    int deletePlagiarismComparisonMatchesByComparisonIdsIn(@Param("ids") List<Long> ids);
+    int deletePlagiarismComparisonMatchesByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
             FROM plagiarism_comparison_matches m
-            WHERE m.plagiarism_comparison_id IN :ids
+            WHERE m.plagiarism_comparison_id IN :plagiarismComparisonIds
             """)
-    int countPlagiarismComparisonMatchesByComparisonIdsIn(@Param("ids") List<Long> ids);
+    int countPlagiarismComparisonMatchesByComparisonIdsIn(@Param("plagiarismComparisonIds") Collection<Long> plagiarismComparisonIds);
 
     /**
      * Retrieves a list of unnecessary plagiarism comparison IDs based on the associated course's date range.
@@ -110,5 +111,5 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
                 AND c.endDate < :deleteTo
                 AND c.startDate > :deleteFrom
             """)
-    List<Long> findPlagiarismComparisonIdWithStatusNoneThatBelongToCourseWithDates(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    Set<Long> findPlagiarismComparisonIdWithStatusNoneThatBelongToCourseWithDates(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

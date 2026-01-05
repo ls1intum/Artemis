@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -10,20 +13,29 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SafeHtml } from '@angular/platform-browser';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
+question.text = 'Sample question text';
 
 describe('ShortAnswerQuestionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ShortAnswerQuestionComponent>;
     let component: ShortAnswerQuestionComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [FontAwesomeModule],
-            declarations: [ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
-            providers: [],
-        }).compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [FontAwesomeModule, ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(ShortAnswerQuestionComponent, {
+                remove: { imports: [QuizScoringInfoStudentModalComponent] },
+                add: { imports: [MockComponent(QuizScoringInfoStudentModalComponent)] },
+            })
+            .compileComponents();
+
         fixture = TestBed.createComponent(ShortAnswerQuestionComponent);
         component = fixture.componentInstance;
 
@@ -36,7 +48,7 @@ describe('ShortAnswerQuestionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -51,7 +63,7 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.hint = hint;
         const explanation = 'This is a very good explanation!';
         alternativeQuestion.explanation = explanation;
-        jest.spyOn(component, 'hideSampleSolution');
+        const hideSampleSolutionSpy = vi.spyOn(component, 'hideSampleSolution');
 
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
@@ -61,7 +73,7 @@ describe('ShortAnswerQuestionComponent', () => {
         expect(extractSafeHtmlText(component.renderedQuestion.text)).toBe(`<p>${text}</p>`);
         expect(extractSafeHtmlText(component.renderedQuestion.hint)).toBe(`<p>${hint}</p>`);
         expect(extractSafeHtmlText(component.renderedQuestion.explanation)).toBe(`<p>${explanation}</p>`);
-        expect(component.hideSampleSolution).toHaveBeenCalledOnce();
+        expect(hideSampleSolutionSpy).toHaveBeenCalled();
         expect(component.showingSampleSolution()).toBeFalsy();
     });
 
@@ -79,7 +91,7 @@ describe('ShortAnswerQuestionComponent', () => {
             return true;
         });
         const returnValue = { value: text } as unknown as HTMLElement;
-        const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
+        const getNavigationStub = vi.spyOn(document, 'getElementById').mockReturnValue(returnValue);
 
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.componentRef.setInput('submittedTexts', []);
@@ -118,7 +130,7 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.sampleSolutions).toHaveLength(1);
         expect(component.sampleSolutions[0]).toStrictEqual(solution);
-        expect(component.showingSampleSolution()).toBeTrue();
+        expect(component.showingSampleSolution()).toBe(true);
     });
 
     it('should toggle show sample solution', () => {
@@ -140,28 +152,31 @@ describe('ShortAnswerQuestionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         component.hideSampleSolution();
 
-        expect(component.showingSampleSolution()).toBeFalse();
+        expect(component.showingSampleSolution()).toBe(false);
     });
 
     it('should get submitted text size for spot', () => {
         const submitted = new ShortAnswerSubmittedText();
-        question.text = 'Some text';
+        const testQuestion = new ShortAnswerQuestion();
+        testQuestion.id = 1;
+        testQuestion.text = 'Some text';
         submitted.text = 'expectedReturnText';
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         submitted.spot = spot;
         const tag = '[-spot 1]';
 
+        fixture.componentRef.setInput('question', testQuestion);
         fixture.componentRef.setInput('submittedTexts', [submitted]);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
         expect(component.getSubmittedTextSizeForSpot(tag)).toBe(submitted.text.length + 2);
     });
 
     it('should get sample solution size for spot', () => {
         const alternativeQuestion = new ShortAnswerQuestion();
-        alternativeQuestion.text = 'Some text';
         alternativeQuestion.id = 10;
+        alternativeQuestion.text = 'Some text';
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         alternativeQuestion.spots = [new ShortAnswerSpot(), spot];
@@ -185,12 +200,11 @@ describe('ShortAnswerQuestionComponent', () => {
         submittedText.spot = spot;
         submittedText.isCorrect = true;
         submittedText.text = text;
-        fixture.componentRef.setInput('submittedTexts', [submittedText]);
         const tag = '[-spot 1]';
 
         const alternativeQuestion = new ShortAnswerQuestion();
-        alternativeQuestion.text = 'Some text';
         alternativeQuestion.id = 10;
+        alternativeQuestion.text = 'Some text';
         alternativeQuestion.spots = [spot];
         const solution = new ShortAnswerSolution();
         solution.id = 1;
@@ -199,6 +213,7 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.correctMappings = [mapping];
 
         fixture.componentRef.setInput('question', alternativeQuestion);
+        fixture.componentRef.setInput('submittedTexts', [submittedText]);
         fixture.detectChanges();
         expect(component.classifyInputField(tag)).toBe('completely-correct');
         submittedText.text += '!';
@@ -206,7 +221,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.shortAnswerQuestion().correctMappings = [];
         expect(component.classifyInputField(tag)).toBe('correct');
         fixture.componentRef.setInput('submittedTexts', []);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         expect(component.classifyInputField(tag)).toBe('wrong');
         spot.invalid = true;
         expect(component.classifyInputField(tag)).toBe('invalid');

@@ -250,6 +250,16 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     @Nested
     class GetCompetencyCourseProgress {
 
+        @BeforeEach
+        void cleanupCompetencyExerciseLinks() {
+            // Remove any exercise links that might have been added by other nested classes running in parallel.
+            // This ensures test isolation by keeping only textExercise and teamTextExercise linked to the competency.
+            var allLinks = competencyExerciseLinkRepository.findAllByCompetencyId(courseCompetency.getId());
+            var linksToDelete = allLinks.stream()
+                    .filter(link -> !link.getExercise().getId().equals(textExercise.getId()) && !link.getExercise().getId().equals(teamTextExercise.getId())).toList();
+            competencyExerciseLinkRepository.deleteAll(linksToDelete);
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void shouldGetCompetencyCourseProgressWhenTeamExercise() throws Exception {

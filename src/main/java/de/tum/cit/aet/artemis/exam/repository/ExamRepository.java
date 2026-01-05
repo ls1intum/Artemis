@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -563,10 +564,109 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     Set<Long> findExerciseIdsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the total number of student exams for a given exam.
+     * Used for calculating weighted progress during course deletion/reset.
+     *
+     * @param examId the ID of the exam
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+            """)
+    long countStudentExamsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Counts the number of programming exercises in an exam.
+     * Used for calculating weighted progress during course deletion/reset,
+     * as programming exercises require repository deletion per student.
+     *
+     * @param examId the ID of the exam
+     * @return the number of programming exercises in the exam
+     */
+    @Query("""
+            SELECT COUNT(ex)
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE exam.id = :examId
+                AND TYPE(ex) = de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise
+            """)
+    long countProgrammingExercisesByExamId(@Param("examId") Long examId);
+
+    /**
+     * Counts student exams for all exams in a course, grouped by exam ID.
+     * Used for calculating total exam weight during course deletion/reset.
+     *
+     * @param courseId the ID of the course
+     * @return list of [examId, studentExamCount] pairs
+     */
+    @Query("""
+            SELECT exam.id, COUNT(se)
+            FROM Exam exam
+                LEFT JOIN StudentExam se ON se.exam.id = exam.id
+            WHERE exam.course.id = :courseId
+            GROUP BY exam.id
+            """)
+    List<long[]> countStudentExamsGroupedByExamForCourse(@Param("courseId") long courseId);
+
+    /**
+     * Counts programming exercises for all exams in a course, grouped by exam ID.
+     * Used for calculating total exam weight during course deletion/reset.
+     * Note: Exams with only non-programming exercises won't appear in results;
+     * use getOrDefault(examId, 0L) when looking up counts.
+     *
+     * @param courseId the ID of the course
+     * @return list of [examId, programmingExerciseCount] pairs
+     */
+    @Query("""
+            SELECT exam.id, COUNT(CASE WHEN TYPE(ex) = de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise THEN 1 END)
+            FROM Exam exam
+                LEFT JOIN exam.exerciseGroups eg
+                LEFT JOIN eg.exercises ex
+            WHERE exam.course.id = :courseId
+            GROUP BY exam.id
+            """)
+    List<long[]> countProgrammingExercisesGroupedByExamForCourse(@Param("courseId") long courseId);
+
+    /**
+     * Gets deletion info (student exam count, programming exercise count) for all exams in a course.
+     * This is used to calculate accurate total weight for course deletion/reset progress tracking.
+     *
+     * @param courseId the ID of the course
+     * @return list of ExamDeletionInfoDTO with counts for each exam
+     */
+    default List<ExamDeletionInfoDTO> findDeletionInfoByCourseId(long courseId) {
+        List<long[]> studentExamCounts = countStudentExamsGroupedByExamForCourse(courseId);
+        List<long[]> programmingExerciseCounts = countProgrammingExercisesGroupedByExamForCourse(courseId);
+
+        // Create a map of examId -> programmingExerciseCount for efficient lookup
+        Map<Long, Long> progExCountMap = programmingExerciseCounts.stream().collect(Collectors.toMap(arr -> arr[0], arr -> arr[1]));
+
+        return studentExamCounts.stream().map(arr -> {
+            long examId = arr[0];
+            long studentExamCount = arr[1];
+            long programmingExerciseCount = progExCountMap.getOrDefault(examId, 0L);
+            return new ExamDeletionInfoDTO(examId, studentExamCount, programmingExerciseCount);
+        }).toList();
+    }
+
     @Query("""
             SELECT ex.numberOfCorrectionRoundsInExam
             FROM Exam ex
             WHERE ex.id = :examId
             """)
     int findNumberOfCorrectionRoundsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Find the title of an exam by its ID.
+     * Used for audit logging where only the title is needed, avoiding expensive eager loading.
+     *
+     * @param examId the ID of the exam
+     * @return the title of the exam, or null if not found
+     */
+    @Query("SELECT e.title FROM Exam e WHERE e.id = :examId")
+    String findTitleById(@Param("examId") long examId);
 }

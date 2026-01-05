@@ -48,6 +48,20 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
+    /**
+     * Count the number of results for a course by its exercise IDs.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
+     *
+     * @param exerciseIds the ids of the exercises in the course
+     * @return the total number of results
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM Result r
+            WHERE r.exerciseId IN :exerciseIds
+            """)
+    long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
+
     @Query("""
             SELECT r
             FROM Result r
@@ -59,11 +73,37 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(long exerciseId);
+    /**
+     * Find all results for an exercise ordered by completion date.
+     * Uses the denormalized result.exerciseId for efficient filtering.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of results with submissions, ordered by completion date ascending
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+            WHERE r.exerciseId = :exerciseId
+            ORDER BY r.completionDate ASC
+            """)
+    List<Result> findByExerciseIdOrderByCompletionDateAsc(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    List<Result> findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(long exerciseId);
+    /**
+     * Find all results with submissions and feedbacks for an exercise.
+     * Uses the denormalized result.exerciseId for efficient filtering.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of results with submissions and feedbacks
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+                LEFT JOIN FETCH r.feedbacks
+            WHERE r.exerciseId = :exerciseId
+            """)
+    List<Result> findWithEagerSubmissionAndFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT r
@@ -144,28 +184,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultWithSubmissionAndFeedbacksTestCasesById(id);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "submission")
-    Optional<Result> findResultWithSubmissionsById(long resultId);
-
     Optional<Result> findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
-
-    /**
-     * Finds the first rated or unrated result by participation ID, including its submission, ordered by completion date in descending order.
-     * This method avoids in-memory paging by retrieving the first result directly from the database.
-     *
-     * @param participationId the ID of the participation to find the result for
-     * @param rated           a boolean indicating whether to find a rated or unrated result
-     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
-     *         or an empty {@code Optional} if no result is found
-     */
-    default Optional<Result> findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
-        var resultOptional = findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
-        if (resultOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var id = resultOptional.get().getId();
-        return findResultWithSubmissionsById(id);
-    }
 
     @Query("""
             SELECT r
@@ -469,11 +488,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Returns true if there is at least one result for the given exercise.
+     * Uses the denormalized result.exerciseId for efficient filtering.
      *
      * @param exerciseId id of an Exercise.
      * @return true if there is a result, false if not.
      */
-    boolean existsBySubmission_Participation_Exercise_Id(long exerciseId);
+    @Query("""
+            SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+            FROM Result r
+            WHERE r.exerciseId = :exerciseId
+            """)
+    boolean existsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Use this method only for exams!
@@ -592,6 +617,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
+    /**
+     * Get the number of assessments for all tutors of a course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
+     *
+     * @param exerciseIds - ids of the exercises in the course
+     * @return list of TutorLeaderboardAssessments
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
@@ -602,17 +634,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating ON rating.result = r
+                LEFT JOIN Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
-                AND e.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
+    /**
+     * Get the number of assessments for all tutors of an exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
+     *
+     * @param exerciseId - id of the exercise
+     * @return list of TutorLeaderboardAssessments
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
@@ -623,17 +660,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating ON rating.result = r
+                LEFT JOIN Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
-                AND e.id = :exerciseId
+                AND r.exerciseId = :exerciseId
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Get the number of assessments for all tutors of an exam.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
+     *
+     * @param exerciseIds - ids of the exercises to consider
+     * @return list of TutorLeaderboardAssessments
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
@@ -644,13 +686,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
                 JOIN r.assessor a
-                LEFT JOIN FETCH Rating rating ON rating.result = r
+                LEFT JOIN Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
-                AND e.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
@@ -762,7 +802,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 criterionId = null;
             }
 
-            pointsPerCriterion.compute(criterionId, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
+            pointsPerCriterion.compute(criterionId, (_, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
         }
 
         final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);

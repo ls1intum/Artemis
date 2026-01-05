@@ -28,6 +28,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
+import de.tum.cit.aet.artemis.core.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.core.service.export.DataExportService;
@@ -293,8 +294,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @ParameterizedTest
     @EnumSource(value = DataExportState.class, names = { "EMAIL_SENT", "DOWNLOADED" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectState(DataExportState state) {
+    void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectStateAndClearsFilePath(DataExportState state) {
         var dataExport = initDataExport(state);
+        var originalFilePath = dataExport.getFilePath();
         doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyInt());
         dataExportService.deleteDataExportAndSetDataExportState(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -304,7 +306,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         else {
             assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
         }
-        verify(fileService).schedulePathForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+        // Verify filePath is set to null after deletion
+        assertThat(dataExportFromDb.getFilePath()).isNull();
+        verify(fileService).schedulePathForDeletion(Path.of(originalFilePath), 2);
     }
 
     @Test
@@ -334,5 +338,138 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);
         return dataExport;
+    }
+
+    // ==================== Admin Data Export Tests ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetAllDataExportsAsAdmin_success() throws Exception {
+        dataExportRepository.deleteAll();
+        // Create exports for different users
+        initDataExport(DataExportState.REQUESTED);
+        var dataExport2 = new DataExport();
+        dataExport2.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        dataExport2.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport2.setFilePath("path2");
+        dataExport2.setCreationFinishedDate(ZonedDateTime.now());
+        dataExportRepository.save(dataExport2);
+
+        var response = request.getList("/api/core/admin/data-exports", HttpStatus.OK, DataExportAdminDTO.class);
+        assertThat(response).hasSize(2);
+        // Verify ordering (newest first)
+        assertThat(response.get(0).dataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
+        assertThat(response.get(1).dataExportState()).isEqualTo(DataExportState.REQUESTED);
+        // Verify user info is included
+        assertThat(response.get(0).userLogin()).isEqualTo(TEST_PREFIX + "student2");
+        assertThat(response.get(1).userLogin()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllDataExportsAsStudent_forbidden() throws Exception {
+        request.getList("/api/core/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllDataExportsAsInstructor_forbidden() throws Exception {
+        request.getList("/api/core/admin/data-exports", HttpStatus.FORBIDDEN, DataExportAdminDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testRequestDataExportWithSchedule_success() throws Exception {
+        dataExportRepository.deleteAll();
+        var usernameToRequest = TEST_PREFIX + "student1";
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("executeNow", "false");
+
+        var response = request.postWithResponseBody("/api/core/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, params, HttpStatus.OK);
+        assertThat(response.dataExportState()).isEqualTo(DataExportState.REQUESTED);
+
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());
+        assertThat(dataExportFromDb.getUser().getLogin()).isEqualTo(usernameToRequest);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDownloadDataExportAsAdmin_success() throws Exception {
+        var dataExport = prepareDataExportForDownload();
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport = dataExportRepository.save(dataExport);
+
+        var dataExportFile = request.getFile("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.OK, new LinkedMultiValueMap<>());
+        assertThat(dataExportFile).isNotNull();
+
+        var dataExportAfterDownload = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        assertThat(dataExportAfterDownload.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED);
+        restoreTestDataInitState(dataExport);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDownloadDataExportAsAdmin_notFound() throws Exception {
+        request.get("/api/core/admin/data-exports/999999/download", HttpStatus.NOT_FOUND, Resource.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDownloadDataExportAsAdmin_filePathNull_forbidden() throws Exception {
+        var dataExport = new DataExport();
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setFilePath(null); // File path is null (already deleted)
+        dataExport = dataExportRepository.save(dataExport);
+
+        request.get("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDownloadDataExportAsAdmin_notInDownloadableState_forbidden() throws Exception {
+        var dataExport = new DataExport();
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport.setDataExportState(DataExportState.REQUESTED);
+        dataExport.setFilePath("path");
+        dataExport = dataExportRepository.save(dataExport);
+
+        request.get("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDownloadDataExportAsStudent_forbidden() throws Exception {
+        var dataExport = initDataExport(DataExportState.EMAIL_SENT);
+        request.get("/api/core/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.FORBIDDEN, Resource.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdminDataExportDTO_downloadableField() throws Exception {
+        dataExportRepository.deleteAll();
+        // Create a downloadable export (has file path and correct state)
+        var downloadableExport = new DataExport();
+        downloadableExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        downloadableExport.setDataExportState(DataExportState.EMAIL_SENT);
+        downloadableExport.setFilePath("path");
+        downloadableExport.setCreationFinishedDate(ZonedDateTime.now());
+        dataExportRepository.save(downloadableExport);
+
+        // Create a non-downloadable export (file path is null)
+        var nonDownloadableExport = new DataExport();
+        nonDownloadableExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        nonDownloadableExport.setDataExportState(DataExportState.DELETED);
+        nonDownloadableExport.setFilePath(null);
+        dataExportRepository.save(nonDownloadableExport);
+
+        var response = request.getList("/api/core/admin/data-exports", HttpStatus.OK, DataExportAdminDTO.class);
+        assertThat(response).hasSize(2);
+
+        var downloadable = response.stream().filter(e -> e.userLogin().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();
+        var notDownloadable = response.stream().filter(e -> e.userLogin().equals(TEST_PREFIX + "student2")).findFirst().orElseThrow();
+
+        assertThat(downloadable.downloadable()).isTrue();
+        assertThat(notDownloadable.downloadable()).isFalse();
     }
 }

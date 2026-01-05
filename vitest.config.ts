@@ -9,6 +9,8 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
 export default defineConfig({
+    // Only show errors, suppress sourcemap warnings from node_modules packages
+    logLevel: 'error',
     resolve: {
         alias: {
             'monaco-editor': path.resolve(__dirname, 'src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts'),
@@ -22,7 +24,16 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
-        include: ['src/main/webapp/app/fileupload/**/*.spec.ts'],
+        include: [
+            'src/main/webapp/app/fileupload/**/*.spec.ts',      // include fileupload tests
+            'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
+            'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
+            'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
+            'src/main/webapp/app/text/**/*.spec.ts',            // include text module tests
+            'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
+            'src/main/webapp/app/tutorialgroup/**/*.spec.ts',   // include tutorial group tests
+            'src/main/webapp/app/quiz/**/*.spec.ts',            // include quiz tests
+        ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
         reporters: ['default', 'junit'],
@@ -36,13 +47,22 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
-            include: ['src/main/webapp/app/fileupload/**/*.ts'],
-            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
+            include: [
+                'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
+                'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
+                'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
+                'src/main/webapp/app/buildagent/**/*.ts',       // include buildagent for code coverage
+                'src/main/webapp/app/text/**/*.ts',             // include text module for code coverage
+                'src/main/webapp/app/assessment/**/*.ts',       // include assessment for code coverage
+                'src/main/webapp/app/tutorialgroup/**/*.ts',    // include tutorial group for code coverage
+                'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
+            ],
+            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
-                statements: 92.40,
-                branches: 77.00,
-                functions: 84.60,
-                lines: 93.00,
+                lines: 92.20,
+                statements: 92.20,
+                branches: 77.30,
+                functions: 89.50,
             },
         },
     },

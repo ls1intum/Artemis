@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { Dayjs } from 'dayjs';
+import { EXAM_DASHBOARD_TIMEOUT } from '../../timeouts';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam management page.
@@ -68,7 +69,7 @@ export class ExamManagementPage {
      * @param examID the id of the exam
      * @param timeout timeout of waiting for assessment dashboard button
      */
-    async openAssessmentDashboard(courseID: number, examID: number, timeout = 60000) {
+    async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
         await this.page.goto(`/course-management/${courseID}/exams`);
         const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
         await assessmentButton.waitFor({ state: 'attached', timeout: timeout });
@@ -114,7 +115,8 @@ export class ExamManagementPage {
     }
 
     async typeAnnouncementMessage(message: string) {
-        await this.page.locator('.monaco-editor textarea').fill(message);
+        await this.page.locator('.monaco-editor').click();
+        await this.page.keyboard.insertText(message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {

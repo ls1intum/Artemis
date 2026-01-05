@@ -1,33 +1,33 @@
-@if (autoTextBlockAssessment) {
-    @for (ref of textBlockRefs; track ref; let i = $index) {
+@if (autoTextBlockAssessment()) {
+    @for (ref of textBlockRefs(); track ref; let i = $index) {
         <jhi-text-block-assessment-card
             id="text-feedback-block-{{ i }}"
             [textBlockRef]="ref"
-            [selected]="selectedRef === ref"
-            [readOnly]="readOnly"
+            [selected]="selectedRef() === ref"
+            [readOnly]="readOnly()"
             (didSelect)="didSelectRef($event)"
             (didChange)="textBlockRefsChangeEmit()"
             (didDelete)="removeTextBlockRef($event)"
-            [highlightDifferences]="highlightDifferences"
-            [criteria]="criteria"
+            [highlightDifferences]="highlightDifferences()"
+            [criteria]="criteria()"
         />
     }
 } @else {
     <jhi-manual-textblock-selection
         [(textBlockRefs)]="textBlockRefs"
         [(selectedRef)]="selectedRef"
-        [readOnly]="readOnly"
+        [readOnly]="readOnly()"
         (textBlockRefAdded)="addTextBlockRef($event)"
-        [submission]="submission"
-        [criteria]="criteria"
+        [submission]="submission()"
+        [criteria]="criteria()"
     />
 }
 <div>
-    <span class="badge bg-primary mb-2" id="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+    <span class="badge bg-primary mb-2" id="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
     <span
         class="badge bg-primary mb-2"
         id="text-assessment-character-count"
         jhiTranslate="artemisApp.textExercise.characterCount"
-        [translateValues]="{ count: characterCount }"
+        [translateValues]="{ count: characterCount() }"
     ></span>
 </div>

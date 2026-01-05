@@ -1,11 +1,19 @@
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('Quiz Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ArtemisQuizService;
     const quiz = {
         mode: ExerciseMode.INDIVIDUAL,
@@ -142,6 +150,24 @@ describe('Quiz Service', () => {
             },
         ],
     };
+    const dragAndDrop: DragAndDropQuestion = {
+        type: QuizQuestionType.DRAG_AND_DROP,
+        randomizeOrder: true,
+        invalid: false,
+        exportQuiz: false,
+        title: 'Drag and Drop Quiz',
+        scoringType: ScoringType.PROPORTIONAL_WITHOUT_PENALTY,
+        points: 5,
+        dragItems: [
+            { id: 1, text: 'Item 1', invalid: false },
+            { id: 2, text: 'Item 2', invalid: false },
+            { id: 3, text: 'Item 3', invalid: false },
+        ],
+        dropLocations: [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ],
+    };
     const shuffledAnswers = [
         {
             explanation: 'Explanation for why this is correct',
@@ -174,11 +200,11 @@ describe('Quiz Service', () => {
     ];
     beforeEach(() => {
         service = TestBed.inject(ArtemisQuizService);
-        jest.spyOn(global.Math, 'random').mockReturnValue(0.2);
+        vi.spyOn(globalThis.Math, 'random').mockReturnValue(0.2);
     });
 
     afterEach(() => {
-        jest.spyOn(global.Math, 'random').mockRestore();
+        vi.restoreAllMocks();
     });
 
     it('shuffles order of Answer options', () => {
@@ -192,5 +218,165 @@ describe('Quiz Service', () => {
         const expected = Object.assign({}, quiz, { quizQuestions: [multipleChoice, shortAnswer] });
         service.randomizeOrder(quizExercise.quizQuestions, quizExercise.randomizeQuestionOrder);
         expect(quizExercise).toStrictEqual(expected);
+    });
+
+    it('should not randomize when randomizeQuestionOrder is false', () => {
+        const quizExercise: any = Object.assign({}, quiz, {
+            quizQuestions: [shortAnswer, multipleChoice],
+            randomizeQuestionOrder: false,
+        });
+        const originalOrder = [...quizExercise.quizQuestions];
+        service.randomizeOrder(quizExercise.quizQuestions, false);
+        expect(quizExercise.quizQuestions).toEqual(originalOrder);
+    });
+
+    it('should handle undefined quizQuestions', () => {
+        expect(() => service.randomizeOrder(undefined, true)).not.toThrow();
+    });
+
+    it('should shuffle drag items for drag and drop questions', () => {
+        const dndQuestion = { ...dragAndDrop };
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [dndQuestion] });
+        service.randomizeOrder(quizExercise.quizQuestions, true);
+        // Should have shuffled drag items
+        expect(quizExercise.quizQuestions[0].dragItems).toBeDefined();
+    });
+
+    it('should not shuffle answer options when randomizeOrder is false on question', () => {
+        const mcQuestionNoShuffle: MultipleChoiceQuestion = {
+            ...multipleChoice,
+            randomizeOrder: false,
+        };
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [mcQuestionNoShuffle] });
+        const originalAnswers = [...mcQuestionNoShuffle.answerOptions!];
+        service.randomizeOrder(quizExercise.quizQuestions, true);
+        expect(quizExercise.quizQuestions[0].answerOptions).toEqual(originalAnswers);
+    });
+
+    it('should handle short answer questions without shuffling', () => {
+        const saQuestion: ShortAnswerQuestion = {
+            ...shortAnswer,
+            randomizeOrder: true,
+        };
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [saQuestion] });
+        // Short answer questions should not throw during randomization
+        expect(() => service.randomizeOrder(quizExercise.quizQuestions, true)).not.toThrow();
+    });
+});
+
+describe('Quiz Service - Static Methods', () => {
+    setupTestBed({ zoneless: true });
+
+    describe('isUninitialized', () => {
+        it('should return true when quiz batch started but participation not initialized', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: true }],
+                studentParticipations: [{ initializationState: undefined }],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(true);
+        });
+
+        it('should return false when quiz has ended', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: true,
+                quizBatches: [{ started: true }],
+                studentParticipations: [{ initializationState: undefined }],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
+        });
+
+        it('should return false when participation is initialized', () => {
+            const participation: StudentParticipation = {
+                initializationState: InitializationState.INITIALIZED,
+            } as StudentParticipation;
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: true }],
+                studentParticipations: [participation],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
+        });
+
+        it('should return false when participation is finished', () => {
+            const participation: StudentParticipation = {
+                initializationState: InitializationState.FINISHED,
+            } as StudentParticipation;
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: true }],
+                studentParticipations: [participation],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
+        });
+
+        it('should return false when no quiz batch has started', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: false }],
+                studentParticipations: [{ initializationState: undefined }],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.isUninitialized(quizExercise)).toBe(false);
+        });
+    });
+
+    describe('notStarted', () => {
+        it('should return true when quiz batch not started and not ended', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: false }],
+                studentParticipations: [{ initializationState: undefined }],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(true);
+        });
+
+        it('should return true when no quiz batches exist', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: undefined,
+                studentParticipations: undefined,
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(true);
+        });
+
+        it('should return false when quiz batch has started', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: true }],
+                studentParticipations: [{ initializationState: undefined }],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(false);
+        });
+
+        it('should return false when quiz has ended', () => {
+            const quizExercise: QuizExercise = {
+                quizEnded: true,
+                quizBatches: [{ started: false }],
+                studentParticipations: [{ initializationState: undefined }],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(false);
+        });
+
+        it('should return false when participation is initialized', () => {
+            const participation: StudentParticipation = {
+                initializationState: InitializationState.INITIALIZED,
+            } as StudentParticipation;
+            const quizExercise: QuizExercise = {
+                quizEnded: false,
+                quizBatches: [{ started: false }],
+                studentParticipations: [participation],
+            } as QuizExercise;
+
+            expect(ArtemisQuizService.notStarted(quizExercise)).toBe(false);
+        });
     });
 });

@@ -1,47 +1,48 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { captureException } from '@sentry/angular';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
     templateUrl: './create-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupFreePeriodFormComponent],
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupFreePeriodFormComponent, DialogModule, ArtemisTranslatePipe],
 })
 export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();
 
+    readonly dialogVisible = signal<boolean>(false);
+    readonly freePeriodCreated = output<void>();
+
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
-    isLoading: boolean;
+    isLoading = false;
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
-    @Input() tutorialGroupConfigurationId: number;
-    @Input() course: Course;
+    readonly tutorialGroupConfigurationId = input.required<number>();
+    readonly course = input.required<Course>();
 
-    isInitialized = false;
-
-    initialize() {
-        if (!this.tutorialGroupConfigurationId || !this.course) {
-            captureException('Error: Component not fully configured');
-        } else {
-            this.isInitialized = true;
-        }
+    open(): void {
+        this.tutorialGroupFreePeriodToCreate = new TutorialGroupFreePeriodDTO();
+        this.dialogVisible.set(true);
     }
+
+    close(): void {
+        this.dialogVisible.set(false);
+    }
+
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { startDate, endDate, startTime, endTime, reason } = formData;
 
@@ -51,7 +52,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
-            .create(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
+            .create(this.course().id!, this.tutorialGroupConfigurationId(), this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -60,11 +61,12 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
             )
             .subscribe({
                 next: () => {
-                    this.activeModal.close();
+                    this.close();
+                    this.freePeriodCreated.emit();
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.clear();
+                    this.close();
                 },
             });
     }
@@ -93,10 +95,6 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
         }
         date.setHours(time?.getHours() ?? (alternativeDate ? 23 : 0), time?.getMinutes() ?? (alternativeDate ? 59 : 0));
         return date;
-    }
-
-    clear() {
-        this.activeModal.dismiss();
     }
 
     ngOnDestroy(): void {

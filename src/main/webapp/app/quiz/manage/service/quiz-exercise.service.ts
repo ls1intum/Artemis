@@ -231,8 +231,8 @@ export class QuizExerciseService {
      * Delete a quiz exercise
      * @param quizExerciseId the id of the quiz exercise that should be deleted
      */
-    delete(quizExerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
+    delete(quizExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
     }
 
     join(quizExerciseId: number, password: string): Observable<HttpResponse<QuizBatch>> {

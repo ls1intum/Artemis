@@ -1,18 +1,17 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.NonUniqueResultException;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
@@ -22,7 +21,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 /**
  * API for managing lecture units.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Controller
 @Lazy
 public class LectureUnitRepositoryApi extends AbstractLectureApi {

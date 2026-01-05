@@ -32,7 +32,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -90,6 +90,8 @@ export class ExerciseGroupsComponent implements OnInit {
 
     localCIEnabled = true;
     textExerciseEnabled = false;
+    modelingExerciseEnabled = false;
+    fileUploadExerciseEnabled = false;
     disabledExerciseTypes: string[] = [];
 
     // Icons
@@ -125,8 +127,16 @@ export class ExerciseGroupsComponent implements OnInit {
         });
         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        this.modelingExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
+        this.fileUploadExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
         if (!this.textExerciseEnabled) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
+        }
+        if (!this.modelingExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.MODELING);
+        }
+        if (!this.fileUploadExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
     }
 

@@ -18,6 +18,12 @@ artemis:
         enabled: false
     text:
         enabled: false
+    modeling:
+        enabled: false
+    fileupload:
+        enabled: false
+    lecture:
+        enabled: false
     tutorialgroup:
         enabled: false
     user-management:
