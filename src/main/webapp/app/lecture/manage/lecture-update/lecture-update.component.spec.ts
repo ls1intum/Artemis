@@ -236,7 +236,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.fileName = 'testFile';
         // Set processUnitMode after initialization to prevent ngOnInit from resetting it
         lectureUpdateComponent.processUnitMode = true;
-        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
+        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1', isTutorialLecture: false } as Lecture);
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(

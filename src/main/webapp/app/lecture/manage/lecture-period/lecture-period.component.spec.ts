@@ -34,6 +34,7 @@ describe('LectureWizardPeriodComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lecture', new Lecture());
+        fixture.componentRef.setInput('validateDatesFunction', vi.fn());
         await fixture.whenStable();
     });
 

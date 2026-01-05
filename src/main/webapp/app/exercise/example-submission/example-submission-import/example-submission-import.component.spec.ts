@@ -70,6 +70,9 @@ describe('ExampleSubmissionImportComponent', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        if (dialogRef?.onClose && typeof (dialogRef.onClose as Subject<any>).complete === 'function') {
+            (dialogRef.onClose as Subject<any>).complete();
+        }
     });
 
     beforeEach(() => {

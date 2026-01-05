@@ -531,7 +531,8 @@ describe('Lecture', () => {
         });
 
         it('should handle error when creating lecture fails', async () => {
-            vi.spyOn(lectureService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            // Use status 400 because onError explicitly skips 500 errors
+            vi.spyOn(lectureService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
             const dialogResult: PdfUploadTarget = {
                 targetType: 'new',

@@ -378,6 +378,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         }
     }
 
+    onLectureChange(updatedLecture: Lecture): void {
+        this.lecture.set(updatedLecture);
+    }
+
     private computeAreSectionsValid(): boolean {
         const titleSection = this.titleSection();
         const lecturePeriodSection = this.lecturePeriodSection();

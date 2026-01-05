@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -58,6 +58,10 @@ describe('CourseLecturesComponent', () => {
         ltiService = TestBed.inject(LtiService);
         courseOverviewService = TestBed.inject(CourseOverviewService);
         lectureService = TestBed.inject(LectureService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should handle multi-launch subscription', async () => {

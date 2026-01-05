@@ -86,4 +86,32 @@ describe('LectureTitleChannelNameComponent', () => {
 
         expect(component.hideChannelNameInput).toBe(true);
     });
+
+    it('should emit lectureChange with updated title when onTitleChange is called', () => {
+        const lecture = new Lecture();
+        lecture.title = 'Original Title';
+        lecture.channelName = 'original-channel';
+        fixture.componentRef.setInput('lecture', lecture);
+
+        const lectureChangeSpy = vi.fn();
+        component.lectureChange.subscribe(lectureChangeSpy);
+
+        component.onTitleChange('New Title');
+
+        expect(lectureChangeSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Title', channelName: 'original-channel' }));
+    });
+
+    it('should emit lectureChange with updated channelName when onChannelNameChange is called', () => {
+        const lecture = new Lecture();
+        lecture.title = 'Original Title';
+        lecture.channelName = 'original-channel';
+        fixture.componentRef.setInput('lecture', lecture);
+
+        const lectureChangeSpy = vi.fn();
+        component.lectureChange.subscribe(lectureChangeSpy);
+
+        component.onChannelNameChange('new-channel');
+
+        expect(lectureChangeSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Original Title', channelName: 'new-channel' }));
+    });
 });

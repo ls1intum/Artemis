@@ -504,23 +504,32 @@ describe('VideoPlayerComponent', () => {
 
     describe('Native HLS support', () => {
         it('uses native HLS when hls.js is not supported but browser supports it', async () => {
-            // Make hls.js not supported
             const MockHlsClass = getMockHlsClass();
-            MockHlsClass.isSupported = vi.fn(() => false);
+            const originalIsSupported = MockHlsClass.isSupported;
 
-            setInputs('https://cdn.example.com/m.m3u8', []);
-            await render();
+            try {
+                // Make hls.js not supported
+                MockHlsClass.isSupported = vi.fn(() => false);
 
-            // Check if native src was set (need to mock canPlayType)
-            const canPlayTypeSpy = vi.spyOn(videoElement, 'canPlayType').mockReturnValue('probably');
+                setInputs('https://cdn.example.com/m.m3u8', []);
+                fixture.detectChanges();
+                await fixture.whenStable();
+                await Promise.resolve();
 
-            // Reinitialize to trigger the native path
-            component.ngAfterViewInit();
+                const elRef = component.videoRef();
+                videoElement = elRef ? elRef.nativeElement : (document.createElement('video') as HTMLVideoElement);
 
-            expect(canPlayTypeSpy).toHaveBeenCalledWith('application/vnd.apple.mpegurl');
+                // Set up canPlayType spy before ngAfterViewInit is called
+                const canPlayTypeSpy = vi.spyOn(videoElement, 'canPlayType').mockReturnValue('probably');
 
-            // Restore isSupported for other tests
-            MockHlsClass.isSupported = vi.fn(() => true);
+                // Trigger the native HLS path
+                component.ngAfterViewInit();
+
+                expect(canPlayTypeSpy).toHaveBeenCalledWith('application/vnd.apple.mpegurl');
+            } finally {
+                // Restore isSupported for other tests
+                MockHlsClass.isSupported = originalIsSupported;
+            }
         });
     });
 
