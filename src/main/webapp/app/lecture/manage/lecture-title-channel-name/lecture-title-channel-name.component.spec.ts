@@ -31,9 +31,8 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.course = course;
 
         fixture.componentRef.setInput('lecture', lecture);
-        component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBe(true);
+        expect(component.hideChannelNameInput()).toBe(true);
     });
 
     it('should show channel name input when messaging is disabled but communication enabled', () => {
@@ -43,9 +42,8 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.course = course;
 
         fixture.componentRef.setInput('lecture', lecture);
-        component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBe(false);
+        expect(component.hideChannelNameInput()).toBe(false);
     });
 
     it('should not hide channel name input when lecture is created', () => {
@@ -55,9 +53,7 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.course = course;
         fixture.componentRef.setInput('lecture', lecture);
 
-        component.ngOnInit();
-
-        expect(component.hideChannelNameInput).toBe(false);
+        expect(component.hideChannelNameInput()).toBe(false);
     });
 
     it('should not hide channel name input when lecture is being edited and has a channel name', () => {
@@ -69,9 +65,8 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.course = course;
 
         fixture.componentRef.setInput('lecture', lecture);
-        component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBe(false);
+        expect(component.hideChannelNameInput()).toBe(false);
     });
 
     it('should hide channel name input when lecture is being edited and has no channel name', () => {
@@ -82,9 +77,8 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.course = course;
 
         fixture.componentRef.setInput('lecture', lecture);
-        component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBe(true);
+        expect(component.hideChannelNameInput()).toBe(true);
     });
 
     it('should emit lectureChange with updated title when onTitleChange is called', () => {

@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output, viewChild } from '@angular/core';
+import { Component, computed, input, output, viewChild } from '@angular/core';
 import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -8,27 +8,25 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
     templateUrl: './lecture-title-channel-name.component.html',
     imports: [TitleChannelNameComponent],
 })
-export class LectureTitleChannelNameComponent implements OnInit {
+export class LectureTitleChannelNameComponent {
     lecture = input.required<Lecture>();
 
     lectureChange = output<Lecture>();
 
     titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
 
-    hideChannelNameInput = false;
-
-    ngOnInit() {
-        this.hideChannelNameInput = !this.requiresChannelName(this.lecture());
-    }
+    hideChannelNameInput = computed(() => !this.requiresChannelName(this.lecture()));
 
     onTitleChange(newTitle: string | undefined): void {
-        const updatedLecture = { ...this.lecture(), title: newTitle };
-        this.lectureChange.emit(updatedLecture);
+        const lecture = this.lecture();
+        lecture.title = newTitle;
+        this.lectureChange.emit(lecture);
     }
 
     onChannelNameChange(newChannelName: string | undefined): void {
-        const updatedLecture = { ...this.lecture(), channelName: newChannelName };
-        this.lectureChange.emit(updatedLecture);
+        const lecture = this.lecture();
+        lecture.channelName = newChannelName;
+        this.lectureChange.emit(lecture);
     }
 
     /**

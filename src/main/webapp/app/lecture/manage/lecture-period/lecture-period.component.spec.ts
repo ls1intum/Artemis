@@ -55,6 +55,7 @@ describe('LectureWizardPeriodComponent', () => {
     });
 
     it('should compute isPeriodSectionValid correctly when all children valid', () => {
+        fixture.detectChanges();
         const pickers = component.periodSectionDatepickers();
         pickers[0].isValid = vi.fn(() => true) as any;
         pickers[1].isValid = vi.fn(() => true) as any;
@@ -63,6 +64,7 @@ describe('LectureWizardPeriodComponent', () => {
     });
 
     it('should compute isPeriodSectionValid correctly when any child invalid', () => {
+        fixture.detectChanges();
         const pickers = component.periodSectionDatepickers();
         pickers[0].isValid = vi.fn(() => true) as any;
         pickers[1].isValid = vi.fn(() => false) as any;
