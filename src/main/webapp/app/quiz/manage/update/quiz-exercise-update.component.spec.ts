@@ -1779,8 +1779,8 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('validateItemLimit', () => {
             let modalService: NgbModal;
-            let saveSpy: vi.SpyInstance;
-            let modalOpenSpy: vi.SpyInstance;
+            let saveSpy: any;
+            let modalOpenSpy: any;
 
             beforeEach(() => {
                 modalService = TestBed.inject(NgbModal);
@@ -2111,7 +2111,7 @@ describe('QuizExerciseUpdateComponent', () => {
         });
         describe('unloadNotification', () => {
             let event: BeforeUnloadEvent;
-            let translateSpy: vi.SpyInstance;
+            let translateSpy: any;
 
             beforeEach(() => {
                 event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
