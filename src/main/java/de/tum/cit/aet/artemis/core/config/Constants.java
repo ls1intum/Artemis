@@ -141,10 +141,16 @@ public final class Constants {
     public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
     /**
-     * Arbitrary limit that is unlikely to be reached by real feedback in practice.
-     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
+     * Upper bound for persisted long feedback text of a single test case / assertion.
+     * <p>
+     * In practice, feedback is short (typically < 1k chars). Very large feedback texts
+     * are almost always caused by runaway output (e.g. infinite loops, excessive logging,
+     * repeated stack traces) and do not provide additional value to students.
+     * <p>
+     * Build logs are stored separately; this limit protects the database from
+     * accidental storage explosions while keeping enough context for debugging.
      */
-    public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
+    public static final int LONG_FEEDBACK_MAX_LENGTH = 20_000;
 
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
@@ -366,11 +372,6 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
-     */
-    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
 
     /**
      * Profile combination for one primary node, where LTI AND scheduling is active
