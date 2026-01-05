@@ -150,7 +150,7 @@ public final class Constants {
      * Build logs are stored separately; this limit protects the database from
      * accidental storage explosions while keeping enough context for debugging.
      */
-    public static final int LONG_FEEDBACK_MAX_LENGTH = 20_000;
+    public static final int LONG_FEEDBACK_MAX_LENGTH = 50_000;
 
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
