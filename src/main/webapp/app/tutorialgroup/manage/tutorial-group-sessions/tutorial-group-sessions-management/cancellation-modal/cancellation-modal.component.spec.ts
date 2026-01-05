@@ -1,18 +1,21 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
-import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('CancellationModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CancellationModalComponent>;
     let component: CancellationModalComponent;
     const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
@@ -20,11 +23,10 @@ describe('CancellationModalComponent', () => {
     const tutorialGroupSessionId = 3;
     const tutorialGroupSession = generateExampleTutorialGroupSession({ id: tutorialGroupSessionId });
     let tutorialGroupSessionService: TutorialGroupSessionService;
-    let modal: NgbActiveModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {
@@ -35,53 +37,105 @@ describe('CancellationModalComponent', () => {
                 fixture.componentRef.setInput('tutorialGroupId', tutorialGroupId);
 
                 tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
-                modal = TestBed.inject(NgbActiveModal);
 
                 fixture.detectChanges();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should call cancel when the activate cancel button is clicked with a active session', fakeAsync(() => {
-        const cancelSessionSpy = jest.spyOn(tutorialGroupSessionService, 'cancel').mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: tutorialGroupSession })));
-        const closeModalSpy = jest.spyOn(modal, 'close');
+    it('should call cancel with active session', () => {
+        const cancelSessionSpy = vi.spyOn(tutorialGroupSessionService, 'cancel').mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: tutorialGroupSession })));
+        const confirmedSpy = vi.spyOn(component.confirmed, 'emit');
 
-        component!.reasonControl!.setValue('National Holiday');
-        runOnPushChangeDetection(fixture);
-        const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');
-        button.click();
+        // Set the reason directly
+        component.reasonControl!.setValue('National Holiday');
+        component.dialogVisible.set(true);
 
-        fixture.whenStable().then(() => {
-            expect(cancelSessionSpy).toHaveBeenCalledOnce();
-            expect(cancelSessionSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSessionId, 'National Holiday');
-            expect(closeModalSpy).toHaveBeenCalledOnce();
-            expect(closeModalSpy).toHaveBeenCalledWith('confirmed');
-        });
-    }));
+        // Call the method directly to avoid jsdom CSS parsing issues with PrimeNG dialog
+        component.cancelOrActivate();
 
-    it('should call activate when the activate cancel button is clicked with a cancelled session', fakeAsync(() => {
-        const activateSesssionSpy = jest.spyOn(tutorialGroupSessionService, 'activate').mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: tutorialGroupSession })));
-        const closeModalSpy = jest.spyOn(modal, 'close');
+        expect(cancelSessionSpy).toHaveBeenCalledOnce();
+        expect(cancelSessionSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSessionId, 'National Holiday');
+        expect(confirmedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('should call activate with cancelled session', () => {
+        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.detectChanges();
+
+        const activateSessionSpy = vi.spyOn(tutorialGroupSessionService, 'activate').mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: tutorialGroupSession })));
+        const confirmedSpy = vi.spyOn(component.confirmed, 'emit');
+
+        component.dialogVisible.set(true);
+
+        // Call the method directly
+        component.cancelOrActivate();
+
+        expect(activateSessionSpy).toHaveBeenCalledOnce();
+        expect(activateSessionSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSessionId);
+        expect(confirmedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('should open the dialog and initialize form', () => {
+        expect(component.dialogVisible()).toBe(false);
+        component.open();
+        expect(component.dialogVisible()).toBe(true);
+        expect(component.reasonControl).toBeDefined();
+    });
+
+    it('should return true for isSubmitPossible when form is valid', () => {
+        component.open();
+        expect(component.isSubmitPossible).toBe(true);
+    });
+
+    it('should return false for isSubmitPossible when form is invalid', () => {
+        component.open();
+        // Set reason to a string longer than 255 characters to make form invalid
+        component.reasonControl!.setValue('a'.repeat(256));
+        expect(component.isSubmitPossible).toBe(false);
+    });
+
+    it('should return empty string for generateSessionLabel when session has no start or end', () => {
+        const sessionWithoutDates = { ...tutorialGroupSession, start: undefined, end: undefined } as TutorialGroupSession;
+        expect(component.generateSessionLabel(sessionWithoutDates)).toBe('');
+    });
+
+    it('should handle error when canceling session fails', () => {
+        const errorResponse = new HttpErrorResponse({ status: 400 });
+        vi.spyOn(tutorialGroupSessionService, 'cancel').mockReturnValue(throwError(() => errorResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         component.reasonControl!.setValue('National Holiday');
-        runOnPushChangeDetection(fixture);
-        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
-        // click button with id cancel-activate-button
-        const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');
-        button.click();
+        component.dialogVisible.set(true);
+        component.cancelOrActivate();
 
-        fixture.whenStable().then(() => {
-            expect(activateSesssionSpy).toHaveBeenCalledOnce();
-            expect(activateSesssionSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSessionId);
-            expect(closeModalSpy).toHaveBeenCalledOnce();
-            expect(closeModalSpy).toHaveBeenCalledWith('confirmed');
-        });
-    }));
+        expect(alertErrorSpy).toHaveBeenCalledWith('error.http.400');
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('should handle error when activating session fails', () => {
+        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.detectChanges();
+
+        const errorResponse = new HttpErrorResponse({ status: 400 });
+        vi.spyOn(tutorialGroupSessionService, 'activate').mockReturnValue(throwError(() => errorResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+        component.dialogVisible.set(true);
+        component.cancelOrActivate();
+
+        expect(alertErrorSpy).toHaveBeenCalledWith('error.http.400');
+        expect(component.dialogVisible()).toBe(false);
+    });
 });

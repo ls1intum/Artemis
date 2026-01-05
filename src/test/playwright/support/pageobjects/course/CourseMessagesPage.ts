@@ -3,6 +3,7 @@ import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversat
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { UserCredentials } from '../../users';
+import { clearTextField } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -18,8 +19,8 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.click('.square-button > .ng-fa-icon');
-        await this.page.click('text=Create channel');
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Create channel' }).click();
     }
 
     /**
@@ -27,7 +28,7 @@ export class CourseMessagesPage {
      */
     async browseChannelsButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Browse Channels' }).click();
+        await this.page.locator('button', { hasText: 'Browse channels' }).click();
     }
 
     /**
@@ -272,8 +273,9 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .monaco-editor textarea');
-        await messageField.fill(message);
+        const editorContainer = this.page.locator('.markdown-editor .monaco-editor').first();
+        await editorContainer.click();
+        await this.page.keyboard.insertText(message);
     }
 
     /**
@@ -322,8 +324,11 @@ export class CourseMessagesPage {
         } else {
             await postLocator.locator('.reaction-button.edit').click();
         }
-        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor textarea');
-        await editorLocator.fill(message);
+
+        const textInputField = postLocator.locator('.monaco-editor').first();
+        await clearTextField(textInputField);
+        await this.page.keyboard.insertText(message);
+
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
@@ -374,7 +379,7 @@ export class CourseMessagesPage {
      */
     async createGroupChatButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Create Group Chat' }).click();
+        await this.page.locator('button', { hasText: 'Create group chat' }).click();
     }
 
     /**
@@ -402,7 +407,7 @@ export class CourseMessagesPage {
      * @param user - The username of the user to add to the group chat.
      */
     async addUserToGroupChat(user: string) {
-        await this.page.locator('#users-selector0-user-input').fill(user);
+        await this.page.locator('#users-selector0-search-input').fill(user);
         await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
     }
 
@@ -464,9 +469,17 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Accepts the code of conduct by clicking the respective button.
+     * Accepts the code of conduct by clicking the respective button if it's visible.
+     * If the user has already accepted the code of conduct, the button won't be present.
      */
     async acceptCodeOfConductButton() {
-        await this.page.locator('#acceptCodeOfConductButton').click();
+        const button = this.page.locator('#acceptCodeOfConductButton');
+        // Wait a short time for the page to load and determine if the button should be shown
+        await this.page.waitForLoadState('networkidle');
+        if (await button.isVisible()) {
+            await button.click();
+            // Wait for the acceptance to be processed
+            await this.page.waitForLoadState('networkidle');
+        }
     }
 }

@@ -1,5 +1,73 @@
 {
-    "featureToggles": {
-        "title": "Feature Toggles"
+    "artemisApp": {
+        "featureToggle": {
+            "title": "Feature Toggles",
+            "description": "Enable or disable features for all users. Changes take effect immediately.",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "viewDocumentation": "View documentation",
+            "features": {
+                "ProgrammingExercises": {
+                    "name": "Programming Exercises",
+                    "description": "Allows instructors to create programming exercises with automatic assessment through CI/CD pipelines.",
+                    "disableWarning": "Students will not be able to participate in programming exercises. Existing submissions remain accessible."
+                },
+                "PlagiarismChecks": {
+                    "name": "Plagiarism Detection",
+                    "description": "Enables plagiarism detection for text, modeling, and programming exercises using JPlag.",
+                    "disableWarning": "Instructors will not be able to run plagiarism checks on exercises."
+                },
+                "Exports": {
+                    "name": "Data Exports",
+                    "description": "Allows exporting course data, exam results, and student submissions.",
+                    "disableWarning": "Users will not be able to export course or exam data."
+                },
+                "LearningPaths": {
+                    "name": "Learning Paths",
+                    "description": "Enables personalized learning paths based on competencies and student progress.",
+                    "disableWarning": "Students will not see personalized learning path recommendations."
+                },
+                "Science": {
+                    "name": "Science Data Collection",
+                    "description": "Collects anonymized usage data for research purposes to improve learning outcomes.",
+                    "disableWarning": "No usage data will be collected for research analysis."
+                },
+                "StandardizedCompetencies": {
+                    "name": "Competency Import",
+                    "description": "Allows instructors to import competencies from standardized frameworks (e.g., curricula, qualification profiles) and link them to course competencies for better alignment with educational standards.",
+                    "disableWarning": "Instructors will not be able to import or link standardized competencies to their courses."
+                },
+                "StudentCourseAnalyticsDashboard": {
+                    "name": "Analytics Dashboard",
+                    "description": "Provides students with a personal dashboard showing learning progress, performance metrics, exercise statistics, and competency mastery - when enabled by course instructors.",
+                    "disableWarning": "Students will not have access to their personal analytics dashboard, even if instructors enable it for their course."
+                },
+                "TutorSuggestions": {
+                    "name": "AI Tutor Suggestions",
+                    "description": "Uses the Athena service to suggest feedback and grading for tutors during manual assessment of text and programming exercises.",
+                    "disableWarning": "Tutors will not receive AI-assisted suggestions from Athena during assessment."
+                },
+                "AtlasML": {
+                    "name": "Atlas Machine Learning",
+                    "description": "Uses machine learning to automatically generate competency recommendations based on course content, predict student performance, and provide intelligent suggestions for learning path optimization.",
+                    "disableWarning": "Automatic competency generation, performance predictions, and ML-based learning recommendations will not be available."
+                },
+                "AtlasAgent": {
+                    "name": "Atlas Agent",
+                    "description": "Enables an AI agent that helps students understand and master competencies by providing personalized explanations, answering questions about learning objectives, and guiding them through their competency-based learning journey.",
+                    "disableWarning": "Students will not have access to the AI-powered competency assistant."
+                },
+                "Memiris": {
+                    "name": "Iris Memory System",
+                    "description": "Enables long-term memory for Iris AI assistants, allowing them to remember context from previous conversations and provide more personalized, contextually aware responses over time.",
+                    "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
+                },
+                "LectureContentProcessing": {
+                    "name": "Lecture Video Processing",
+                    "description": "Uses Nebula to automatically generate transcriptions from lecture videos and sends them to Pyris/Iris, enabling AI assistants to answer questions about lecture content and provide more accurate, content-aware responses.",
+                    "disableWarning": "Lecture videos will not be transcribed by Nebula and Iris will not be able to reference lecture content in its responses."
+                }
+            }
+        }
     }
 }

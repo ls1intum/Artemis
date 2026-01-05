@@ -170,9 +170,10 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
             await row.locator('button[jhideletebutton]').click();
 
-            await expect(page.locator('#delete')).toBeDisabled();
+            const deleteButton = page.getByTestId('delete-dialog-confirm-button');
+            await expect(deleteButton).toBeDisabled();
             await page.locator('#confirm-entity-name').fill(competencyData.title);
-            await page.locator('#delete').click();
+            await deleteButton.click();
 
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) })).toHaveCount(0);
@@ -271,9 +272,10 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await row.locator('button[jhideletebutton]').click();
 
             // Confirm delete modal
-            await expect(page.locator('#delete')).toBeDisabled();
+            const deleteButton = page.getByTestId('delete-dialog-confirm-button');
+            await expect(deleteButton).toBeDisabled();
             await page.locator('#confirm-entity-name').fill(prerequisiteData.title);
-            await page.locator('#delete').click();
+            await deleteButton.click();
 
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: prerequisiteData.title }) })).toHaveCount(0);

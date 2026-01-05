@@ -158,4 +158,17 @@ public class CompetencyService extends CourseCompetencyService {
             exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
         });
     }
+
+    /**
+     * Loads and returns the competency with the given id.
+     * <p>
+     * Uses a regular repository lookup to ensure the competency is fully initialized
+     * and can be safely accessed outside the persistence context.
+     *
+     * @param competencyId the id of the competency
+     * @return the loaded competency entity
+     */
+    public Competency loadCompetency(Long competencyId) {
+        return competencyRepository.findByIdElseThrow(competencyId);
+    }
 }
