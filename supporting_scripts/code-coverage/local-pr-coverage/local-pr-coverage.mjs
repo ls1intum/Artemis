@@ -28,6 +28,7 @@ import { execSync, execFileSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getVitestModules } from '../utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,27 +41,7 @@ const CLIENT_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/cove
 const VITEST_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 const SERVER_COVERAGE_DIR = path.join(PROJECT_ROOT, 'build/reports/jacoco');
 
-/**
- * Parse vitest.config.ts to extract module names from include patterns.
- * The vitest.config.ts is the single source of truth for which modules use Vitest.
- */
-function getVitestModules() {
-    const vitestConfigPath = path.join(PROJECT_ROOT, 'vitest.config.ts');
-    if (!fs.existsSync(vitestConfigPath)) {
-        return new Set();
-    }
-    const content = fs.readFileSync(vitestConfigPath, 'utf-8');
-    // Match patterns like: 'src/main/webapp/app/fileupload/**/*.spec.ts'
-    const modulePattern = /src\/main\/webapp\/app\/([a-zA-Z0-9_-]+)\/\*\*/g;
-    const modules = new Set();
-    let match;
-    while ((match = modulePattern.exec(content)) !== null) {
-        modules.add(match[1]);
-    }
-    return modules;
-}
-
-const VITEST_MODULES = getVitestModules();
+const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
 
 // Module name validation pattern - only allow safe characters (alphanumeric, dash, underscore)
 const SAFE_MODULE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;

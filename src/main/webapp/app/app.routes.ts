@@ -187,8 +187,8 @@ const routes: Routes = [
     },
     // ===== GRADING SYSTEM =====
     {
-        path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        path: 'courses/:courseId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
         data: {
             usesModuleBackground: true,
         },
@@ -219,8 +219,8 @@ const routes: Routes = [
         loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
     },
     {
-        path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        path: 'courses/:courseId/exams/:examId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',

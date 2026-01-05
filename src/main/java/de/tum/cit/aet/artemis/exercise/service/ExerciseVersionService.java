@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
+import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -54,24 +54,24 @@ public class ExerciseVersionService {
 
     private final TextExerciseRepository textExerciseRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
-    private final FileUploadExerciseRepository fileUploadExerciseRepository;
+    private final Optional<FileUploadApi> fileUploadApi;
 
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
+            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.textExerciseRepository = textExerciseRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
-        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.modelingRepositoryApi = modelingRepositoryApi;
+        this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
         this.programmingExerciseEditorSyncService = programmingExerciseEditorSyncService;
     }
@@ -159,8 +159,8 @@ public class ExerciseVersionService {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case QUIZ -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
-            case MODELING -> modelingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
-            case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
+            case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
+            case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
     }
 
