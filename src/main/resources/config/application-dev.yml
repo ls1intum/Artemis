@@ -96,6 +96,9 @@ jhipster:
             ring-buffer-size: 512
     audit-events:
         retention-period: 365 # Number of days before audit events are deleted.
+    continuous-integration:
+        build-job:
+            retention-period: 365 # Number of days before build job entries are deleted
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -154,4 +157,3 @@ helios:
 atlas:
     atlasml:
         base-url: https://atlasml.aet.cit.tum.de
-
