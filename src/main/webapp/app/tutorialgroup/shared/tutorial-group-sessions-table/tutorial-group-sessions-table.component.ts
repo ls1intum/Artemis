@@ -1,16 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    ContentChild,
-    OnChanges,
-    SimpleChanges,
-    TemplateRef,
-    ViewEncapsulation,
-    inject,
-    input,
-    output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -28,11 +16,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, TutorialGroupSessionRowComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
-export class TutorialGroupSessionsTableComponent implements OnChanges {
+export class TutorialGroupSessionsTableComponent {
     private sortService = inject(SortService);
     private changeDetectorRef = inject(ChangeDetectorRef);
 
-    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
+    readonly extraColumn = contentChild(TemplateRef);
 
     readonly tutorialGroup = input.required<TutorialGroup>();
 
@@ -54,45 +42,42 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
     nextSession: TutorialGroupSession | undefined = undefined;
 
     isCollapsed = true;
+
+    constructor() {
+        // Effect to handle sessions changes
+        effect(() => {
+            const sessionsList = this.sessions();
+            if (sessionsList) {
+                this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty([...sessionsList], 'start', false));
+            }
+        });
+
+        // Effect to handle timeZone changes
+        effect(() => {
+            const tz = this.timeZone();
+            if (tz) {
+                this.timeZoneUsedForDisplay = tz;
+            }
+        });
+
+        // Effect to handle tutorialGroup changes
+        effect(() => {
+            const group = this.tutorialGroup();
+            if (group) {
+                this.nextSession = group.nextSession;
+            }
+        });
+    }
+
     get numberOfColumns(): number {
         let numberOfColumns = this.tutorialGroup().tutorialGroupSchedule ? 4 : 3;
-        if (this.extraColumn) {
+        if (this.extraColumn()) {
             numberOfColumns++;
         }
         if (this.showIdColumn()) {
             numberOfColumns++;
         }
         return numberOfColumns;
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        for (const propName in changes) {
-            if (changes.hasOwnProperty(propName)) {
-                const change = changes[propName];
-                switch (propName) {
-                    case 'sessions': {
-                        if (change.currentValue) {
-                            this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty(change.currentValue, 'start', false));
-                        }
-                        break;
-                    }
-                    case 'timeZone': {
-                        if (change.currentValue) {
-                            this.timeZoneUsedForDisplay = change.currentValue;
-                            this.changeDetectorRef.detectChanges();
-                        }
-                        break;
-                    }
-                    case 'tutorialGroup': {
-                        if (change.currentValue) {
-                            this.nextSession = change.currentValue.nextSession;
-                            this.changeDetectorRef.detectChanges();
-                        }
-                        break;
-                    }
-                }
-            }
-        }
     }
 
     public getCurrentDate(): dayjs.Dayjs {
@@ -117,7 +102,6 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
         }
         this.upcomingSessions = upcoming;
         this.pastSessions = past;
-        this.changeDetectorRef.detectChanges();
     }
 
     onAttendanceChanged(session: TutorialGroupSession) {
