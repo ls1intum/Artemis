@@ -110,6 +110,9 @@ jhipster:
             ring-buffer-size: 512
     audit-events:
         retention-period: 365 # Number of days before audit events and VCS access logs are deleted.
+    continuous-integration:
+        build-job:
+            retention-period: 365 # Number of days before build job entries are deleted.
 # Properties to be exposed on the /info management endpoint
 info:
     testServer: false  # false --> production, true --> test server, --> empty == local
