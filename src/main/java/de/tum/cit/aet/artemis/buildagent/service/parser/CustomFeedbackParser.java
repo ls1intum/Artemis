@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 public final class CustomFeedbackParser {
 
@@ -42,7 +44,19 @@ public final class CustomFeedbackParser {
             return;
         }
         List<LocalCITestJobDTO> toAddFeedbackTo = feedback.successful() ? successfulTests : failedTests;
-        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), List.of(feedback.getMessage())));
+        // Truncate feedback message if it exceeds maximum length to avoid polluting the network or database with too long messages
+        final var truncatedFeedbackMessage = truncateFeedbackMessage(feedback.getMessage());
+        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), List.of(truncatedFeedbackMessage)));
+    }
+
+    /**
+     * Truncates the feedback message to the maximum allowed length.
+     *
+     * @param message The feedback message to truncate.
+     * @return The truncated feedback message.
+     */
+    private static String truncateFeedbackMessage(String message) {
+        return StringUtils.truncate(message, Constants.LONG_FEEDBACK_MAX_LENGTH);
     }
 
     /**

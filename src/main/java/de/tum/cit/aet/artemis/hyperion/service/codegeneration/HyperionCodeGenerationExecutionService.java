@@ -64,12 +64,6 @@ public class HyperionCodeGenerationExecutionService {
     private record RepositorySetupResult(Repository repository, String originalCommitHash, boolean success) {
     }
 
-    /**
-     * Holds iteration execution results
-     */
-    private record IterationResult(Result result, String buildLogs, boolean successful) {
-    }
-
     private final String defaultBranch;
 
     private final GitService gitService;
@@ -159,7 +153,7 @@ public class HyperionCodeGenerationExecutionService {
                 return new RepositorySetupResult(null, null, false);
             }
 
-            String originalCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
+            String originalCommitHash = gitService.getLastCommitHash(repositoryUri);
             return new RepositorySetupResult(repository, originalCommitHash, true);
 
         }
@@ -216,7 +210,7 @@ public class HyperionCodeGenerationExecutionService {
     private String commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise, RepositoryType repositoryType)
             throws GitAPIException {
         repositoryService.commitChanges(repository, user);
-        String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
+        String newCommitHash = gitService.getLastCommitHash(repositoryUri);
         ProgrammingExerciseParticipation exerciseParticipation = switch (repositoryType) {
             case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
             case SOLUTION -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
@@ -368,7 +362,7 @@ public class HyperionCodeGenerationExecutionService {
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
-                String head = gitService.getLastCommitHash(repositoryUri).getName();
+                String head = gitService.getLastCommitHash(repositoryUri);
                 if (expectedHash != null && expectedHash.equals(head)) {
                     return;
                 }

@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
@@ -7,6 +9,8 @@ import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutoria
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorialGroupSessionService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: TutorialGroupSessionService;
     let httpMock: HttpTestingController;
     let elemDefault: TutorialGroupSession;
@@ -23,95 +27,103 @@ describe('TutorialGroupSessionService', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
-    it('getOneOfTutorialGroup', fakeAsync(() => {
+    it('getOneOfTutorialGroup', () => {
         const returnedFromService = { ...elemDefault };
+        let result: any;
         service
             .getOneOfTutorialGroup(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
+            .subscribe((resp) => (result = resp));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        expect(result).toMatchObject({ body: elemDefault });
+    });
 
-    it('create', fakeAsync(() => {
+    it('create', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
+        let result: any;
         service
             .create(1, 1, new TutorialGroupSessionDTO())
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => (result = resp));
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        expect(result).toMatchObject({ body: expected });
+    });
 
-    it('update', fakeAsync(() => {
+    it('update', () => {
         const returnedFromService = { ...elemDefault, location: 'Test' };
         const expected = { ...returnedFromService };
+        let result: any;
 
         service
             .update(1, 1, 1, new TutorialGroupSessionDTO())
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => (result = resp));
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        expect(result).toMatchObject({ body: expected });
+    });
 
-    it('updateAttendanceCount', fakeAsync(() => {
+    it('updateAttendanceCount', () => {
         const returnedFromService = { ...elemDefault, attendanceCount: 5 };
         const expected = { ...returnedFromService };
+        let result: any;
 
         service
             .updateAttendanceCount(1, 1, 1, 5)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => (result = resp));
 
         const req = httpMock.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        expect(result).toMatchObject({ body: expected });
+    });
 
-    it('cancel', fakeAsync(() => {
+    it('cancel', () => {
         const returnedFromService = { ...elemDefault };
         const expected = { ...returnedFromService };
+        let result: any;
         service
             .cancel(1, 1, 1, 'test')
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => (result = resp));
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        expect(result).toMatchObject({ body: expected });
+    });
 
-    it('activate', fakeAsync(() => {
+    it('activate', () => {
         const returnedFromService = { ...elemDefault };
         const expected = { ...returnedFromService };
+        let result: any;
         service
             .activate(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => (result = resp));
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        expect(result).toMatchObject({ body: expected });
+    });
 
-    it('delete', fakeAsync(() => {
+    it('delete', () => {
+        let result: any;
         service
             .delete(1, 1, 1)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
+            .subscribe((res) => (result = res));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({});
-        tick();
-    }));
+        expect(result.body).toEqual({});
+    });
 });

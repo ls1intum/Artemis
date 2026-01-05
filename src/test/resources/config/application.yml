@@ -254,7 +254,7 @@ zonky:
                         max_parallel_maintenance_workers: 4
             mysql:
                 docker:
-                    image: docker.io/library/mysql:9.4.0
+                    image: docker.io/library/mysql:9.5.0
                     tmpfs:
                         enabled: true
 

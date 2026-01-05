@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 public class TestResultXmlParser {
 
@@ -145,7 +148,9 @@ public class TestResultXmlParser {
             }
             Failure failure = testCase.extractFailure();
             if (failure != null) {
-                failedTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of(failure.extractMessage())));
+                // Truncate feedback message if it exceeds maximum length to avoid polluting the network or database with too long messages
+                final var truncatedFeedbackMessage = truncateFeedbackMessage(failure.extractMessage());
+                failedTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of(truncatedFeedbackMessage)));
             }
             else {
                 successfulTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of()));
@@ -155,6 +160,16 @@ public class TestResultXmlParser {
         for (TestSuite suite : testSuite.testSuites()) {
             processInnerTestSuite(suite, failedTests, successfulTests, namePrefix);
         }
+    }
+
+    /**
+     * Truncates the feedback message to the maximum allowed length.
+     *
+     * @param message The feedback message to truncate.
+     * @return The truncated feedback message.
+     */
+    private static String truncateFeedbackMessage(String message) {
+        return StringUtils.truncate(message, Constants.LONG_FEEDBACK_MAX_LENGTH);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

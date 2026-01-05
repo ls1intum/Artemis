@@ -530,7 +530,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
-        List<Result> results = resultRepository.findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
         for (Result result : results) {

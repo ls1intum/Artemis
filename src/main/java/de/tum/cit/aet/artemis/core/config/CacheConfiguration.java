@@ -7,12 +7,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -171,7 +172,7 @@ public class CacheConfiguration {
             networkConfig.getJoin().getEurekaConfig().setEnabled(false);
 
             // Ensure the instance is a local-only, lite member to prevent connections
-            networkConfig.setPort(15701 + new Random().nextInt(1000)); // Randomize port to prevent conflicts
+            networkConfig.setPort(findAvailablePort()); // Find an available port to prevent conflicts
             networkConfig.setPortAutoIncrement(false);
             testConfig.setProperty("hazelcast.local.localAddress", "127.0.0.1");
 
@@ -362,5 +363,21 @@ public class CacheConfiguration {
     // config for all domain object, i.e. entities such as Course, Exercise, etc.
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
         return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    }
+
+    /**
+     * Finds an available TCP port by opening a server socket on port 0 (which lets the OS assign an available port)
+     * and then closing it. This approach prevents port conflicts when multiple test contexts run in parallel.
+     *
+     * @return an available TCP port number
+     */
+    private static int findAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port for Hazelcast", e);
+        }
     }
 }
