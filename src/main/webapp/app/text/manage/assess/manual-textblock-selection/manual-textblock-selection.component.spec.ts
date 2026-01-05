@@ -1,16 +1,31 @@
+/**
+ * Tests for ManualTextblockSelectionComponent.
+ * This test suite verifies the manual text block selection functionality including:
+ * - Text block reference grouping
+ * - Display of assessment cards and selection components
+ * - Manual text selection handling
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
 import { SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { TextSelectDirective } from 'app/text/manage/assess/directive/text-select.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 
 describe('ManualTextblockSelectionComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ManualTextblockSelectionComponent;
     let fixture: ComponentFixture<ManualTextblockSelectionComponent>;
 
@@ -55,24 +70,35 @@ describe('ManualTextblockSelectionComponent', () => {
     ];
     const textBlockRefs = [new TextBlockRef(blocks[0]), new TextBlockRef(blocks[1]), new TextBlockRef(blocks[2]), new TextBlockRef(blocks[3]), new TextBlockRef(blocks[4])];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ManualTextblockSelectionComponent, MockComponent(TextBlockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
-            providers: [MockProvider(TextSelectDirective)], // Not mocking this will cause a leak through the mocked ManualTextSelectionComponent
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ManualTextblockSelectionComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(TextAssessmentAnalytics),
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ManualTextblockSelectionComponent);
                 component = fixture.componentInstance;
                 textBlockRefs[1].initFeedback();
-                component.textBlockRefs = textBlockRefs;
-                component.submission = submission;
+                // Use setInput for signal inputs
+                fixture.componentRef.setInput('textBlockRefs', textBlockRefs);
+                fixture.componentRef.setInput('submission', submission);
+                fixture.componentRef.setInput('readOnly', false);
                 fixture.detectChanges();
             });
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should add TextBlockRefGroup correctly', () => {
-        expect(component.textBlockRefGroups).toHaveLength(3);
+        expect(component.textBlockRefGroups()).toHaveLength(3);
     });
 
     it('should add a TextblockAssessmentCardComponent for each TextBlockRefGroup with a feedback', () => {
@@ -86,7 +112,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should handle manual text selection correctly', () => {
-        jest.spyOn(component.textBlockRefAdded, 'emit');
+        const emitSpy = vi.spyOn(component.textBlockRefAdded, 'emit');
         const firstWord: wordSelection = { word: 'Fifth', index: 50 };
         const lastWord: wordSelection = { word: 'sixth', index: 56 };
         const selectedWords = [firstWord, lastWord];
@@ -98,6 +124,6 @@ describe('ManualTextblockSelectionComponent', () => {
         textBlockRef.block!.endIndex = 61;
         textBlockRef.block!.setTextFromSubmission(submission);
         textBlockRef.initFeedback();
-        expect(component.textBlockRefAdded.emit).toHaveBeenCalledWith(textBlockRef);
+        expect(emitSpy).toHaveBeenCalledWith(textBlockRef);
     });
 });

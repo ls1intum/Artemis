@@ -36,7 +36,7 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
@@ -285,7 +285,7 @@ describe('CourseManagementContainerComponent', () => {
                 deleteSpy = jest.spyOn(courseAdminService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE],
                     activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
                 } as unknown as ProfileInfo);
 
