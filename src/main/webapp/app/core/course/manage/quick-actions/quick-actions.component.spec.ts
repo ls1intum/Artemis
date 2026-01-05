@@ -11,6 +11,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
 
 describe('QuickActionsComponent', () => {
     let component: QuickActionsComponent;
@@ -20,7 +23,12 @@ describe('QuickActionsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(UserManagementDropdownComponent), MockComponent(ButtonComponent), MockComponent(AddExercisePopoverComponent)],
-            providers: [{ provide: Router, useClass: MockRouter }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuickActionsComponent);
@@ -47,5 +55,19 @@ describe('QuickActionsComponent', () => {
         const routerSpy = jest.spyOn(router, 'navigate');
         component.navigateToCourseManagementSection(section);
         expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, expectedLink, 'new']);
+    });
+
+    it('should initialize lectureEnabled from ProfileService', () => {
+        const profileService = TestBed.inject(ProfileService);
+        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive');
+        isModuleFeatureActiveSpy.mockReturnValue(true);
+
+        // Create a new component to test initialization
+        const newFixture = TestBed.createComponent(QuickActionsComponent);
+        newFixture.componentRef.setInput('course', { id: 1, isAtLeastEditor: true });
+        const newComponent = newFixture.componentInstance;
+
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_LECTURE);
+        expect(newComponent.lectureEnabled).toBeTrue();
     });
 });
