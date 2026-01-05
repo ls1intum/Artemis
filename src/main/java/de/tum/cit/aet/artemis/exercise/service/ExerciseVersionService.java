@@ -208,8 +208,7 @@ public class ExerciseVersionService {
 
         if (target != null) {
             // For repository commits, send a new commit alert so clients can notify users to refresh
-            // For problem statement changes, send a general change notification, since there are only
-            // online editors making changes, content should be synced already
+            // For problem statement changes, changes are broadcasted via client-to-client messages.
             programmingExerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
         }
     }

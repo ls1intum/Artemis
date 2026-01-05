@@ -245,7 +245,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
             this.broadcastRepositoryUpdates(exercise.getId(), ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId, filePatch);
         }
         catch (Exception e) {
-            log.debug("Could not broadcast auxiliary repository change for {}: {}", auxiliaryRepositoryId, e.getMessage());
+            log.debug("Could not broadcast auxiliary repository change for {}", auxiliaryRepositoryId, e);
         }
     }
 }

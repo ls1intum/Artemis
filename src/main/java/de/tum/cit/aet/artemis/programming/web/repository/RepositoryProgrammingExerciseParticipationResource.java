@@ -177,7 +177,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             }
         }
         catch (Exception e) {
-            log.debug("Could not broadcast participation change for participation {}: {}", participationId, e.getMessage());
+            log.debug("Could not broadcast participation change for participation {}", participationId, e);
         }
     }
 
