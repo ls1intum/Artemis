@@ -107,14 +107,31 @@ window.addEventListener('error', (event) => {
     }
 });
 
-// Suppress console.error for jsdom CSS parsing errors (PrimeNG custom properties)
+// Suppress console.error for jsdom CSS parsing errors (PrimeNG custom properties) and navigation warnings
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
     const msg = args[0];
-    if (typeof msg === 'string' && msg.includes('Cannot create property') && msg.includes('border')) {
-        return; // Suppress CSS variable parsing errors from jsdom
+    if (typeof msg === 'string') {
+        // Suppress CSS variable parsing errors from jsdom
+        if (msg.includes('Cannot create property') && msg.includes('border')) {
+            return;
+        }
+        // Suppress jsdom "Not implemented" warnings for navigation
+        if (msg.includes('Not implemented')) {
+            return;
+        }
     }
     originalConsoleError.apply(console, args);
+};
+
+// Also suppress via process.stderr for jsdom messages that bypass console
+const originalStderrWrite = process.stderr.write.bind(process.stderr);
+process.stderr.write = (chunk: string | Uint8Array, ...args: unknown[]): boolean => {
+    const str = typeof chunk === 'string' ? chunk : chunk.toString();
+    if (str.includes('Not implemented')) {
+        return true;
+    }
+    return originalStderrWrite(chunk, ...(args as [BufferEncoding?, ((err?: Error) => void)?]));
 };
 
 // Patch CSSStyleDeclaration to handle CSS custom properties gracefully

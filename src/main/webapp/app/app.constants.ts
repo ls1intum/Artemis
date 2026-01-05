@@ -76,6 +76,8 @@ export type ModuleFeature =
 
 export const PROFILE_LOCALCI = 'localci';
 
+export const PROFILE_BUILDAGENT = 'buildagent';
+
 export const PROFILE_AEOLUS = 'aeolus';
 
 export const PROFILE_IRIS = 'iris';
@@ -98,8 +100,11 @@ export const PROFILE_THEIA = 'theia';
 
 export const PROFILE_LDAP = 'ldap';
 
+export const PROFILE_SAML2 = 'saml2';
+
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
+    | typeof PROFILE_BUILDAGENT
     | typeof PROFILE_AEOLUS
     | typeof PROFILE_IRIS
     | typeof PROFILE_LTI
@@ -110,4 +115,5 @@ export type ProfileFeature =
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
     | typeof PROFILE_THEIA
-    | typeof PROFILE_LDAP;
+    | typeof PROFILE_LDAP
+    | typeof PROFILE_SAML2;
