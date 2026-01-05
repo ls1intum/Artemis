@@ -470,7 +470,7 @@ describe('QuizExerciseUpdateComponent', () => {
 
             comp.ngOnInit();
 
-            expect(comp.isImport).toBeTrue();
+            expect(comp.isImport).toBeTruthy();
         });
 
         it('should assign exerciseGroup to existing quizExercise in exam mode', () => {
@@ -1126,7 +1126,6 @@ describe('QuizExerciseUpdateComponent', () => {
         describe('saving', () => {
             let quizExerciseServiceCreateStub: any;
             let quizExerciseServiceUpdateStub: any;
-            let quizExerciseServiceImportStub: any;
             let exerciseSanitizeSpy: any;
             let refreshSpy: any;
 
@@ -1290,7 +1289,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
 
                 expect(addErrorAlertSpy).toHaveBeenCalledExactlyOnceWith('Test Error Title', 'Test Error Message', { someParam: 'value' });
-                expect(comp.isSaving).toBeFalse();
+                expect(comp.isSaving).toBeFalsy();
             });
         });
 
@@ -1393,31 +1392,31 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 it('should return false if savedEntity is undefined', () => {
                     comp.savedEntity = undefined as any;
-                    expect(comp.hasSavedQuizStarted).toBeFalse();
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
                 });
 
                 it('should return false if quizBatches is undefined', () => {
                     comp.savedEntity.quizBatches = undefined;
-                    expect(comp.hasSavedQuizStarted).toBeFalse();
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
                 });
 
                 it('should return false if quizBatches is empty', () => {
                     comp.savedEntity.quizBatches = [];
-                    expect(comp.hasSavedQuizStarted).toBeFalse();
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
                 });
 
                 it('should return false if no batch has started (future date)', () => {
                     const batch = new QuizBatch();
                     batch.startTime = dayjs().add(1, 'hour');
                     comp.savedEntity.quizBatches = [batch];
-                    expect(comp.hasSavedQuizStarted).toBeFalse();
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
                 });
 
                 it('should return true if a batch has started (past date)', () => {
                     const batch = new QuizBatch();
                     batch.startTime = dayjs().subtract(1, 'hour');
                     comp.savedEntity.quizBatches = [batch];
-                    expect(comp.hasSavedQuizStarted).toBeTrue();
+                    expect(comp.hasSavedQuizStarted).toBeTruthy();
                 });
             });
 
@@ -1434,37 +1433,37 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should be enabled (return false) when all conditions are valid', () => {
-                    expect(comp.isSaveDisabled()).toBeFalse();
+                    expect(comp.isSaveDisabled()).toBeFalsy();
                 });
 
                 it('should be disabled if currently saving', () => {
                     comp.isSaving = true;
-                    expect(comp.isSaveDisabled()).toBeTrue();
+                    expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
                 it('should be disabled if there are no pending changes', () => {
                     comp.pendingChangesCache = false;
-                    expect(comp.isSaveDisabled()).toBeTrue();
+                    expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
                 it('should be disabled if quiz validation failed', () => {
                     comp.quizIsValid = false;
-                    expect(comp.isSaveDisabled()).toBeTrue();
+                    expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
                 it('should be disabled if the saved quiz has already started', () => {
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(true);
-                    expect(comp.isSaveDisabled()).toBeTrue();
+                    expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
                 it('should be disabled if there is a due date error', () => {
                     comp.quizExercise.dueDateError = true;
-                    expect(comp.isSaveDisabled()).toBeTrue();
+                    expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
                 it('should be disabled if there is an error in quiz batches', () => {
                     vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(true);
-                    expect(comp.isSaveDisabled()).toBeTrue();
+                    expect(comp.isSaveDisabled()).toBeTruthy();
                 });
             });
 
@@ -1700,11 +1699,11 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('checkItemCountDragAndDrop', () => {
             it('should return false if input is undefined', () => {
-                expect(comp.checkItemCountDragAndDrop(undefined as any)).toBeFalse();
+                expect(comp.checkItemCountDragAndDrop(undefined as any)).toBeFalsy();
             });
 
             it('should return false if input is empty', () => {
-                expect(comp.checkItemCountDragAndDrop([])).toBeFalse();
+                expect(comp.checkItemCountDragAndDrop([])).toBeFalsy();
             });
 
             it('should return false if complexity is below limit (13^3)', () => {
@@ -1714,7 +1713,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 question.dropLocations = new Array(10).fill(new DropLocation());
                 question.correctMappings = new Array(10).fill(new DragAndDropMapping(undefined, undefined));
 
-                expect(comp.checkItemCountDragAndDrop([question])).toBeFalse();
+                expect(comp.checkItemCountDragAndDrop([question])).toBeFalsy();
             });
 
             it('should return true if complexity exceeds limit (13^3)', () => {
@@ -1724,7 +1723,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 question.dropLocations = new Array(13).fill(new DropLocation());
                 question.correctMappings = new Array(13).fill(new DragAndDropMapping(undefined, undefined));
 
-                expect(comp.checkItemCountDragAndDrop([question])).toBeTrue();
+                expect(comp.checkItemCountDragAndDrop([question])).toBeTruthy();
             });
 
             it('should default undefined arrays to length 1 (cover nullish coalescing)', () => {
@@ -1734,17 +1733,17 @@ describe('QuizExerciseUpdateComponent', () => {
                 question.correctMappings = undefined;
 
                 // calculation becomes 1 * 1 * 1 = 1
-                expect(comp.checkItemCountDragAndDrop([question])).toBeFalse();
+                expect(comp.checkItemCountDragAndDrop([question])).toBeFalsy();
             });
         });
 
         describe('checkItemCountShortAnswer', () => {
             it('should return false if input is undefined', () => {
-                expect(comp.checkItemCountShortAnswer(undefined as any)).toBeFalse();
+                expect(comp.checkItemCountShortAnswer(undefined as any)).toBeFalsy();
             });
 
             it('should return false if input is empty', () => {
-                expect(comp.checkItemCountShortAnswer([])).toBeFalse();
+                expect(comp.checkItemCountShortAnswer([])).toBeFalsy();
             });
 
             it('should return false if complexity is below limit (13^3)', () => {
@@ -1754,7 +1753,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 question.spots = new Array(10).fill(new ShortAnswerSpot());
                 question.correctMappings = new Array(10).fill(new ShortAnswerMapping(undefined, undefined));
 
-                expect(comp.checkItemCountShortAnswer([question])).toBeFalse();
+                expect(comp.checkItemCountShortAnswer([question])).toBeFalsy();
             });
 
             it('should return true if complexity exceeds limit (13^3)', () => {
@@ -1764,7 +1763,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 question.spots = new Array(13).fill(new ShortAnswerSpot());
                 question.correctMappings = new Array(13).fill(new ShortAnswerMapping(undefined, undefined));
 
-                expect(comp.checkItemCountShortAnswer([question])).toBeTrue();
+                expect(comp.checkItemCountShortAnswer([question])).toBeTruthy();
             });
 
             it('should default undefined arrays to length 1 (cover nullish coalescing)', () => {
@@ -1774,7 +1773,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 question.correctMappings = undefined;
 
                 // calculation becomes 1 * 1 * 1 = 1
-                expect(comp.checkItemCountShortAnswer([question])).toBeFalse();
+                expect(comp.checkItemCountShortAnswer([question])).toBeFalsy();
             });
         });
 
@@ -1785,7 +1784,7 @@ describe('QuizExerciseUpdateComponent', () => {
 
             beforeEach(() => {
                 modalService = TestBed.inject(NgbModal);
-                saveSpy = vi.spyOn(comp, 'save').mockImplementation(); // Prevent actual save logic
+                saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
                 modalOpenSpy = vi.spyOn(modalService, 'open');
                 comp.quizExercise = quizExercise;
             });
@@ -1815,7 +1814,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(modalOpenSpy).toHaveBeenCalledExactlyOnceWith(GenericConfirmationDialogComponent, expect.anything());
 
                 expect(mockModalRef.componentInstance.translationKeys).toBeDefined();
-                expect(mockModalRef.componentInstance.canBeUndone).toBeTrue();
+                expect(mockModalRef.componentInstance.canBeUndone).toBeTruthy();
 
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
@@ -2136,7 +2135,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 const result = comp.unloadNotification(event);
 
                 expect(event.preventDefault).not.toHaveBeenCalled();
-                expect(result).toBeTrue();
+                expect(result).toBeTruthy();
             });
         });
     });
