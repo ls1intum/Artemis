@@ -14,8 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -102,6 +104,7 @@ public class LectureContentProcessingService {
      *
      * @param unit the attachment video unit to process
      */
+    @Async
     public void triggerProcessing(AttachmentVideoUnit unit) {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping processing");
@@ -136,6 +139,9 @@ public class LectureContentProcessingService {
             log.debug("No processing services available for unit {}", unit.getId());
             return;
         }
+
+        // Set auth context due to @Async
+        SecurityUtils.setAuthorizationObject();
 
         // Get existing state or create new (don't persist yet - IDLE should never be in DB)
         Optional<LectureUnitProcessingState> existingState = processingStateRepository.findByLectureUnit_Id(unit.getId());
@@ -177,10 +183,14 @@ public class LectureContentProcessingService {
      *
      * @param units the attachment video units being deleted
      */
+    @Async
     public void handleUnitsDeletion(List<AttachmentVideoUnit> units) {
         if (units == null || units.isEmpty()) {
             return;
         }
+
+        // Set auth context due to @Async
+        SecurityUtils.setAuthorizationObject();
 
         log.info("Handling deletion cleanup for {} units", units.size());
 
@@ -291,7 +301,10 @@ public class LectureContentProcessingService {
      *
      * @param lectureUnit the unit to retry
      */
+    @Async
     public void retryProcessing(AttachmentVideoUnit lectureUnit) {
+        // Set auth context due to @Async
+        SecurityUtils.setAuthorizationObject();
         processingStateRepository.findByLectureUnit_Id(lectureUnit.getId()).ifPresent(state -> {
             if (state.getPhase() == ProcessingPhase.FAILED) {
                 log.info("Retrying processing for unit {}", lectureUnit.getId());
