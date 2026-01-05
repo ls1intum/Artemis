@@ -2,6 +2,7 @@ import { Component, computed, input, output, viewChild } from '@angular/core';
 import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-lecture-title-channel-name',
@@ -18,13 +19,13 @@ export class LectureTitleChannelNameComponent {
     hideChannelNameInput = computed(() => !this.requiresChannelName(this.lecture()));
 
     onTitleChange(newTitle: string | undefined): void {
-        const newLecture = window.structuredClone(this.lecture());
+        const newLecture = deepClone(this.lecture());
         newLecture.title = newTitle;
         this.lectureChange.emit(newLecture);
     }
 
     onChannelNameChange(newChannelName: string | undefined): void {
-        const newLecture = window.structuredClone(this.lecture());
+        const newLecture = deepClone(this.lecture());
         newLecture.channelName = newChannelName;
         this.lectureChange.emit(newLecture);
     }
