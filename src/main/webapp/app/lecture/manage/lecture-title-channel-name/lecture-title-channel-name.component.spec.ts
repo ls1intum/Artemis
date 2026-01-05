@@ -1,19 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 
 describe('LectureTitleChannelNameComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LectureTitleChannelNameComponent;
     let fixture: ComponentFixture<LectureTitleChannelNameComponent>;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({}).compileComponents();
-    });
+        await TestBed.configureTestingModule({
+            imports: [LectureTitleChannelNameComponent],
+        }).compileComponents();
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(LectureTitleChannelNameComponent);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should hide channel name input when messaging and communication is disabled', () => {
@@ -22,10 +30,10 @@ describe('LectureTitleChannelNameComponent', () => {
         const lecture = new Lecture();
         lecture.course = course;
 
-        component.lecture = lecture;
+        fixture.componentRef.setInput('lecture', lecture);
         component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBeTrue();
+        expect(component.hideChannelNameInput).toBe(true);
     });
 
     it('should show channel name input when messaging is disabled but communication enabled', () => {
@@ -34,10 +42,10 @@ describe('LectureTitleChannelNameComponent', () => {
         const lecture = new Lecture();
         lecture.course = course;
 
-        component.lecture = lecture;
+        fixture.componentRef.setInput('lecture', lecture);
         component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBeFalse();
+        expect(component.hideChannelNameInput).toBe(false);
     });
 
     it('should not hide channel name input when lecture is created', () => {
@@ -45,11 +53,11 @@ describe('LectureTitleChannelNameComponent', () => {
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         const lecture = new Lecture();
         lecture.course = course;
-        component.lecture = lecture;
+        fixture.componentRef.setInput('lecture', lecture);
 
         component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBeFalse();
+        expect(component.hideChannelNameInput).toBe(false);
     });
 
     it('should not hide channel name input when lecture is being edited and has a channel name', () => {
@@ -60,10 +68,10 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.channelName = 'sample-channel';
         lecture.course = course;
 
-        component.lecture = lecture;
+        fixture.componentRef.setInput('lecture', lecture);
         component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBeFalse();
+        expect(component.hideChannelNameInput).toBe(false);
     });
 
     it('should hide channel name input when lecture is being edited and has no channel name', () => {
@@ -73,9 +81,9 @@ describe('LectureTitleChannelNameComponent', () => {
         lecture.id = 123;
         lecture.course = course;
 
-        component.lecture = lecture;
+        fixture.componentRef.setInput('lecture', lecture);
         component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBeTrue();
+        expect(component.hideChannelNameInput).toBe(true);
     });
 });

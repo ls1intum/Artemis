@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, viewChild } from '@angular/core';
+import { Component, OnInit, input, viewChild } from '@angular/core';
 import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -9,14 +9,14 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
     imports: [TitleChannelNameComponent],
 })
 export class LectureTitleChannelNameComponent implements OnInit {
-    @Input() lecture: Lecture;
+    lecture = input.required<Lecture>();
 
     titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
 
     hideChannelNameInput = false;
 
     ngOnInit() {
-        this.hideChannelNameInput = !this.requiresChannelName(this.lecture);
+        this.hideChannelNameInput = !this.requiresChannelName(this.lecture());
     }
 
     /**
@@ -28,16 +28,16 @@ export class LectureTitleChannelNameComponent implements OnInit {
      */
     private requiresChannelName(lecture: Lecture): boolean {
         // not required if messaging and communication is disabled
-        if (!isCommunicationEnabled(lecture.course)) {
+        if (!isCommunicationEnabled(lecture?.course)) {
             return false;
         }
 
         // required on create (messaging is enabled)
-        if (lecture.id === undefined) {
+        if (lecture?.id === undefined) {
             return true;
         }
 
         // when editing, it is required if the lecture has a channel
-        return lecture.channelName !== undefined;
+        return lecture?.channelName !== undefined;
     }
 }
