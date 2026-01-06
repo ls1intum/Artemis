@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
 // Coverage file paths
-const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
+const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
 const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 
 const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
