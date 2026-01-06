@@ -165,14 +165,17 @@ public record CourseCreateDTO(
         return course;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseEnrollmentConfigurationDTO(Boolean enrollmentEnabled, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate,
             @Size(max = 2000) String enrollmentConfirmationMessage, Boolean unenrollmentEnabled, ZonedDateTime unenrollmentEndDate) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseComplaintConfigurationDTO(Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays, Integer maxRequestMoreFeedbackTimeDays,
             Integer maxComplaintTextLimit, Integer maxComplaintResponseTextLimit) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseExtendedSettingsDTO(@Size(max = 2000) String description, String messagingCodeOfConduct, String courseArchivePath) {
     }
 }

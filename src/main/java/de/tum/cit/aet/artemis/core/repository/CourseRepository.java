@@ -112,7 +112,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "complaintConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "complaintConfiguration", "enrollmentConfiguration",
+            "extendedSettings" })
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "extendedSettings" })
@@ -122,7 +123,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
     // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "enrollmentConfiguration", "complaintConfiguration", "extendedSettings" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
     /**
@@ -170,13 +171,14 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "complaintConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "complaintConfiguration", "enrollmentConfiguration",
+            "extendedSettings" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration", "complaintConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration", "complaintConfiguration", "enrollmentConfiguration", "extendedSettings" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "enrollmentConfiguration" })
@@ -389,10 +391,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param now the current time
      * @return a list of courses that are not ended yet
      */
-    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
+                LEFT JOIN FETCH c.extendedSettings
             WHERE c.endDate IS NULL
                 OR c.endDate >= :now
             """)
@@ -404,10 +406,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param userGroups list of management group names
      * @return a list of courses that use one of the given management group names
      */
-    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
+                LEFT JOIN FETCH c.extendedSettings
             WHERE c.teachingAssistantGroupName IN :userGroups
                 OR c.editorGroupName IN :userGroups
                 OR c.instructorGroupName IN :userGroups
@@ -421,10 +423,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param userGroups list of management group names
      * @return a list of courses that use one of the given management group names and are not ended yet
      */
-    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
+                LEFT JOIN FETCH c.extendedSettings
             WHERE (
                 c.endDate IS NULL
                 OR c.endDate >= :now
@@ -436,10 +438,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     List<Course> findAllNotEndedCoursesByManagementGroupNames(@Param("now") ZonedDateTime now, @Param("userGroups") List<String> userGroups);
 
-    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
+                LEFT JOIN FETCH c.extendedSettings
             """)
     List<Course> findAllWithExtendedSettings();
 

@@ -1719,7 +1719,8 @@ public class CourseTestService {
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
             String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "filePathService", "entityFileService", "numberOfInstructorsTransient",
-                    "numberOfStudentsTransient", "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient", "complaintConfiguration.course" };
+                    "numberOfStudentsTransient", "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient", "complaintConfiguration.course",
+                    "enrollmentConfiguration.course", "extendedSettings.course" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
