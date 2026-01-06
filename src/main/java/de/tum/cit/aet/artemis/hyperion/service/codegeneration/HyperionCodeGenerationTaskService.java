@@ -35,7 +35,7 @@ public class HyperionCodeGenerationTaskService {
      * @param repositoryType target repository type
      */
     @Async
-    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
+    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, RepositoryType repositoryType, Runnable cleanup) {
         var topicSuffix = "code-generation/jobs/" + jobId;
         var publisher = new WebsocketEventPublisher(websocket, user.getLogin(), topicSuffix, exercise, repositoryType, jobId);
 
@@ -45,6 +45,11 @@ public class HyperionCodeGenerationTaskService {
         }
         catch (Exception ex) {
             publisher.error("Unhandled error: " + ex.getMessage());
+        }
+        finally {
+            if (cleanup != null) {
+                cleanup.run();
+            }
         }
     }
 

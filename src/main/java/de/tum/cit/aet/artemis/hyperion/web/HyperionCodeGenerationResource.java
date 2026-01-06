@@ -62,6 +62,7 @@ public class HyperionCodeGenerationResource {
      * Uses AI-powered iterative approach to generate, compile, and improve code based on build feedback.
      * Supports generation for SOLUTION, TEMPLATE, and TESTS repositories.
      * Uses websocket to stream progress and completion events.
+     * When {@code checkOnly} is true, returns the current job without starting a new one.
      *
      * @param exerciseId the ID of the programming exercise
      * @param request    the request containing repository type
@@ -75,6 +76,10 @@ public class HyperionCodeGenerationResource {
         validateGenerationRequest(exerciseId, request);
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (request.checkOnly()) {
+            return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId())))
+                    .orElseGet(() -> ResponseEntity.noContent().build());
+        }
         String jobId = codeGenerationJobService.startJob(user, exercise, request.repositoryType());
         log.info(ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId)).toString());
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
@@ -88,16 +93,22 @@ public class HyperionCodeGenerationResource {
      * @throws BadRequestAlertException if validation fails
      */
     private void validateGenerationRequest(long exerciseId, CodeGenerationRequestDTO request) {
+        validateExerciseId(exerciseId);
+        validateRepositoryType(request.repositoryType());
+    }
+
+    private void validateExerciseId(long exerciseId) {
         if (exerciseId <= 0) {
             throw new BadRequestAlertException("Exercise ID must be positive", ENTITY_NAME, "invalidExerciseId");
         }
+    }
 
-        if (request.repositoryType() == null) {
+    private void validateRepositoryType(RepositoryType repositoryType) {
+        if (repositoryType == null) {
             throw new BadRequestAlertException("Repository type is required", ENTITY_NAME, "missingRepositoryType");
         }
-
-        if (!isSupportedRepositoryType(request.repositoryType())) {
-            throw new BadRequestAlertException("Repository type not supported for code generation: " + request.repositoryType(), ENTITY_NAME, "unsupportedRepositoryType");
+        if (!isSupportedRepositoryType(repositoryType)) {
+            throw new BadRequestAlertException("Repository type not supported for code generation: " + repositoryType, ENTITY_NAME, "unsupportedRepositoryType");
         }
     }
 

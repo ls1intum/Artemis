@@ -92,6 +92,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
+    private activeJobId?: string;
+    private statusSubscription?: Subscription;
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -142,21 +144,60 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    protected override applyDomainChange(domainType: any, domainValue: any) {
+        super.applyDomainChange(domainType, domainValue);
+        this.restoreCodeGenerationState();
+    }
+
+    override ngOnDestroy() {
+        this.clearJobSubscription(true);
+        this.statusSubscription?.unsubscribe();
+        super.ngOnDestroy();
+    }
+
+    private restoreCodeGenerationState() {
+        if (!this.hyperionEnabled || !this.exercise?.id) {
+            return;
+        }
+        if (this.isGeneratingCode() && this.activeJobId) {
+            return;
+        }
+        if (this.statusSubscription) {
+            this.statusSubscription.unsubscribe();
+        }
+        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
+            return;
+        }
+        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
+            next: (res) => {
+                if (res?.jobId) {
+                    this.subscribeToJob(res.jobId);
+                } else {
+                    this.clearJobSubscription(true);
+                }
+            },
+            error: () => {
+                this.clearJobSubscription(true);
+            },
+        });
+    }
+
     /**
      * Subscribes to job updates, refreshes files on updates, and stops spinner on terminal events.
      * @param jobId job identifier
      */
     private subscribeToJob(jobId: string) {
+        if (this.activeJobId === jobId && this.jobSubscription) {
+            return;
+        }
+        this.clearJobSubscription(false);
+        this.activeJobId = jobId;
         const cleanup = () => {
-            this.isGeneratingCode.set(false);
-            this.hyperionWs.unsubscribeFromJob(jobId);
-            this.jobSubscription?.unsubscribe();
-            if (this.jobTimeoutHandle) {
-                clearTimeout(this.jobTimeoutHandle);
-                this.jobTimeoutHandle = undefined;
-            }
+            this.clearJobSubscription(true);
         };
 
+        this.isGeneratingCode.set(true);
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
                 switch (event.type) {
@@ -227,6 +268,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 });
             }
         }, 1_200_000);
+    }
+
+    private clearJobSubscription(stopSpinner: boolean) {
+        if (stopSpinner) {
+            this.isGeneratingCode.set(false);
+        }
+        if (this.activeJobId) {
+            this.hyperionWs.unsubscribeFromJob(this.activeJobId);
+            this.activeJobId = undefined;
+        }
+        this.jobSubscription?.unsubscribe();
+        this.jobSubscription = undefined;
+        if (this.jobTimeoutHandle) {
+            clearTimeout(this.jobTimeoutHandle);
+            this.jobTimeoutHandle = undefined;
+        }
     }
 
     /**
