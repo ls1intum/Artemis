@@ -207,7 +207,7 @@ public abstract class AbstractArtemisBuildAgentTest {
     }
 
     private static @NonNull BuildConfig getBuildConfig() {
-        DockerRunConfig dockerRunConfig = new DockerRunConfig(true, List.of("dummy-env", "dummy-env-value"), 0, 0, 0);
+        DockerRunConfig dockerRunConfig = new DockerRunConfig(List.of("dummy-env", "dummy-env-value"), "none", 0, 0, 0);
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", dockerRunConfig);
