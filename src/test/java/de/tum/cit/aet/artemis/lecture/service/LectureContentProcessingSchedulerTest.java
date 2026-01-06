@@ -42,8 +42,6 @@ class LectureContentProcessingSchedulerTest {
 
     private LectureContentProcessingService processingService;
 
-    private FeatureToggleService featureToggleService;
-
     private AttachmentVideoUnit testUnit;
 
     private LectureUnitProcessingState testState;
@@ -53,7 +51,7 @@ class LectureContentProcessingSchedulerTest {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         processingService = mock(LectureContentProcessingService.class);
-        featureToggleService = mock(FeatureToggleService.class);
+        FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
         // Enable the feature toggle by default
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);

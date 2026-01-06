@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
@@ -25,7 +25,7 @@ export type Column<T extends BaseEntity> = {
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected router = inject(Router);
     private sortService = inject(SortService);
-    protected activeModal = inject(NgbActiveModal);
+    protected dialogRef = inject(DynamicDialogRef);
 
     loading = false;
     content: SearchResult<T>;
@@ -122,14 +122,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * @param item The item which was selected by the user for the import.
      */
     selectImport(item: T) {
-        this.activeModal.close(item);
+        this.dialogRef.close(item);
     }
 
     /**
      * Closes the modal in which the import component is opened by dismissing it
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     /**

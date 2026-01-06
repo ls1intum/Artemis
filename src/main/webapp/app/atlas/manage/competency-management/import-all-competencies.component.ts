@@ -74,6 +74,6 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
      * @param item The item which was selected by the user for the import.
      */
     override selectImport(item: CourseForImportDTO) {
-        this.activeModal.close({ courseForImportDTO: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
+        this.dialogRef.close({ courseForImportDTO: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
     }
 }
