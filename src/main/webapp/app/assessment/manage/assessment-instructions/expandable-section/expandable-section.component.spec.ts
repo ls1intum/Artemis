@@ -1,17 +1,20 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockPipe } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 
 describe('ExpandableSectionComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExpandableSectionComponent;
     let fixture: ComponentFixture<ExpandableSectionComponent>;
     let localStorageService: LocalStorageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [LocalStorageService],
         })
             .compileComponents()
@@ -22,7 +25,7 @@ describe('ExpandableSectionComponent', () => {
             });
     });
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should get correct key', () => {
@@ -36,13 +39,13 @@ describe('ExpandableSectionComponent', () => {
 
     it('should load state from local storage on init', () => {
         fixture.componentRef.setInput('headerKey', 'test');
-        const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(true);
-        const storeSpy = jest.spyOn(localStorageService, 'store');
+        const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue(true);
+        const storeSpy = vi.spyOn(localStorageService, 'store');
 
         component.ngOnInit();
 
         expect(retrieveSpy).toHaveBeenCalledWith(component.storageKey);
-        expect(component.isCollapsed).toBeTrue();
+        expect(component.isCollapsed).toBe(true);
         expect(storeSpy).toHaveBeenCalledWith(component.storageKey, true);
     });
 
@@ -50,11 +53,11 @@ describe('ExpandableSectionComponent', () => {
         fixture.componentRef.setInput('headerKey', 'test');
         component.isCollapsed = true;
 
-        const storeSpy = jest.spyOn(localStorageService, 'store');
+        const storeSpy = vi.spyOn(localStorageService, 'store');
 
         component.toggleCollapsed();
 
-        expect(component.isCollapsed).toBeFalse();
+        expect(component.isCollapsed).toBe(false);
         expect(storeSpy).toHaveBeenCalledWith(component.storageKey, false);
     });
 });

@@ -286,7 +286,7 @@ describe('ParticipationComponent', () => {
         expectedMap.set(1, participation1);
         expect(component.participationsChangedDueDate).toEqual(expectedMap);
 
-        const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse()));
+        const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         component.deleteParticipation(1);
         tick();

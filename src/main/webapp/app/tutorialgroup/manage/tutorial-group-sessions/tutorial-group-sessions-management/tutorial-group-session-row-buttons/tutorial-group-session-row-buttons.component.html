@@ -1,7 +1,7 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Cancel/Activate -->
     @if (!tutorialGroupSession().tutorialGroupFreePeriod) {
-        <button [id]="'cancel-activate-' + tutorialGroupSession().id" type="button" class="btn btn-secondary" (click)="openCancellationDialog(tutorialGroupSession())">
+        <button [id]="'cancel-activate-' + tutorialGroupSession().id" type="button" class="btn btn-secondary" (click)="openCancellationDialog()">
             {{
                 (tutorialGroupSession().status === tutorialGroupSessionStatus.CANCELLED
                     ? 'artemisApp.pages.tutorialGroupSessionManagement.rowButtons.activate'
@@ -30,3 +30,18 @@
         <fa-icon [icon]="faTrash" />
     </button>
 </div>
+
+<jhi-cancellation-modal
+    #cancellationDialog
+    [course]="course()"
+    [tutorialGroupId]="tutorialGroup().id!"
+    [tutorialGroupSession]="tutorialGroupSession()"
+    (confirmed)="onCancellationConfirmed()"
+/>
+<jhi-edit-tutorial-group-session
+    #editSessionDialog
+    [course]="course()"
+    [tutorialGroup]="tutorialGroup()"
+    [tutorialGroupSession]="tutorialGroupSession()"
+    (sessionUpdated)="onSessionUpdated()"
+/>
