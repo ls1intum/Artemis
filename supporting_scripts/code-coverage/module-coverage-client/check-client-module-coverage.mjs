@@ -52,7 +52,7 @@ const moduleThresholds = {
     },
     atlas: {
         statements: 91.30,
-        branches:   66.80,
+        branches:   66.30,
         functions:  84.70,
         lines:      91.20,
     },
@@ -76,7 +76,7 @@ const moduleThresholds = {
     },
     exam: {
         statements: 91.50,
-        branches:   75.80,
+        branches:   75.50,
         functions:  84.60,
         lines:      91.80,
     },

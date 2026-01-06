@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -16,12 +16,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 
+export interface ExamImportDialogData {
+    subsequentExerciseGroupSelection?: boolean;
+    targetCourseId?: number;
+    targetExamId?: number;
+}
+
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
     imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExamExerciseImportComponent],
 })
-export class ExamImportComponent extends ImportComponent<Exam> {
+export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
 
@@ -40,6 +46,24 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     constructor() {
         const pagingService = inject(ExamImportPagingService);
         super(pagingService);
+    }
+
+    override ngOnInit(): void {
+        // Get data from DynamicDialogConfig if available (when opened via DialogService)
+        const dialogData = this.dialogConfig?.data as ExamImportDialogData | undefined;
+        if (dialogData) {
+            if (dialogData.subsequentExerciseGroupSelection !== undefined) {
+                this.subsequentExerciseGroupSelection.set(dialogData.subsequentExerciseGroupSelection);
+            }
+            if (dialogData.targetCourseId !== undefined) {
+                this.targetCourseId.set(dialogData.targetCourseId);
+            }
+            if (dialogData.targetExamId !== undefined) {
+                this.targetExamId.set(dialogData.targetExamId);
+            }
+        }
+
+        super.ngOnInit();
     }
 
     /**
@@ -75,7 +99,7 @@ export class ExamImportComponent extends ImportComponent<Exam> {
                 next: (httpResponse: HttpResponse<ExerciseGroup[]>) => {
                     this.isImportingExercises = false;
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
-                    this.dialogRef.close(httpResponse.body!);
+                    this.dialogRef?.close(httpResponse.body!);
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
                     // Case: Server-Site Validation of the Programming Exercises failed
