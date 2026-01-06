@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.CostsDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.hyperion.dto.TimingDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.TokensDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -77,10 +76,11 @@ public class HyperionConsistencyCheckService {
 
     private final ObservationRegistry observationRegistry;
 
-    private record AIResult(List<ConsistencyIssue> issues, Usage usage) {
-    }
-
     private String modelName;
+
+    private long totalPromptTokens;
+
+    private long totalCompletionTokens;
 
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
             HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, ObservationRegistry observationRegistry, LlmUsageHelper llmUsageHelper) {
@@ -113,22 +113,20 @@ public class HyperionConsistencyCheckService {
 
         // Collect usage from parallel checks without threading concerns
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
+        totalCompletionTokens = 0;
+        totalPromptTokens = 0;
 
         Observation parentObs = observationRegistry.getCurrentObservation();
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parentObs, usageCollector::add)).subscribeOn(Schedulers.boundedElastic())
-                .onErrorReturn(new AIResult(List.of(), null));
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parentObs, usageCollector::add)).subscribeOn(Schedulers.boundedElastic())
-                .onErrorReturn(new AIResult(List.of(), null));
+        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parentObs, usageCollector::add)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parentObs, usageCollector::add)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
         var results = Mono.zip(structuralMono, semanticMono).block();
-        var structuralIssues = results != null ? results.getT1().issues() : List.<ConsistencyIssue>of();
-        var structuralUsage = results != null ? results.getT1().usage() : null;
-        var semanticIssues = results != null ? results.getT2().issues() : List.<ConsistencyIssue>of();
-        var semanticUsage = results != null ? results.getT2().usage() : null;
+        var structuralIssues = results != null ? results.getT1() : List.<ConsistencyIssue>of();
+        var semanticIssues = results != null ? results.getT2() : List.<ConsistencyIssue>of();
 
         List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
         llmUsageHelper.storeTokenUsage(exerciseWithParticipations, usageCollector.toArray(LLMRequest[]::new));
-        List<Usage> combinedUsages = Stream.of(structuralUsage, semanticUsage).filter(Objects::nonNull).toList();
+
         List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
 
         // Timing calculations
@@ -136,15 +134,7 @@ public class HyperionConsistencyCheckService {
         double durationSeconds = Duration.between(startTime, endTime).toMillis() / 1000.0;
         var timingDTO = new TimingDTO(startTime.toString(), endTime.toString(), durationSeconds);
 
-        // Token usage calculations
-        long totalPromptTokens = 0;
-        long totalCompletionTokens = 0;
-        for (var usage : combinedUsages) {
-            totalPromptTokens += usage.getPromptTokens();
-            totalCompletionTokens += usage.getCompletionTokens();
-        }
-        long totalTokens = totalPromptTokens + totalCompletionTokens;
-        var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalTokens);
+        var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalCompletionTokens + totalPromptTokens);
 
         // Cost calculations
         var costs = llmUsageHelper.getCostsUsd();
@@ -171,7 +161,7 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return structural issues (never null) and LLM Usage
      */
-    private AIResult runStructuralCheck(Map<String, String> input, Observation parentObs, Consumer<LLMRequest> usageSink) {
+    private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input, Observation parentObs, Consumer<LLMRequest> usageSink) {
         var child = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).contextualName("structural check")
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "structural check")).parentObservation(parentObs).start();
@@ -193,7 +183,8 @@ public class HyperionConsistencyCheckService {
                 usage = chatResponse.getMetadata().getUsage();
                 var model = chatResponse.getMetadata().getModel();
                 modelName = llmUsageHelper.normalizeModelName(model);
-
+                totalCompletionTokens += usage.getCompletionTokens();
+                totalPromptTokens += usage.getPromptTokens();
                 log.info("Hyperion structural check token usage: prompt={}, completion={}, total={}", usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
             }
             else {
@@ -203,13 +194,12 @@ public class HyperionConsistencyCheckService {
             // @formatter:on
             usageSink.accept(llmUsageHelper.buildLlmRequest(structuralIssuesResponse.getResponse(), "structural", CONSISTENCY_PIPELINE_ID));
 
-            List<ConsistencyIssue> issues = toGenericConsistencyIssue(structuralIssuesResponse.entity());
-            return new AIResult(issues, usage);
+            return toGenericConsistencyIssue(structuralIssuesResponse.entity());
         }
         catch (RuntimeException e) {
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list null Usage", resourcePath, e);
-            return new AIResult(List.of(), null);
+            return new ArrayList<>();
         }
         finally {
             child.stop();
@@ -222,7 +212,7 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return semantic issues and LLM Usage
      */
-    private AIResult runSemanticCheck(Map<String, String> input, Observation parentObs, Consumer<LLMRequest> usageSink) {
+    private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input, Observation parentObs, Consumer<LLMRequest> usageSink) {
         var child = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).contextualName("semantic check")
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "semantic check")).parentObservation(parentObs).start();
@@ -243,6 +233,8 @@ public class HyperionConsistencyCheckService {
 
             if (chatResponse != null && chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null) {
                 usage = chatResponse.getMetadata().getUsage();
+                totalCompletionTokens += usage.getCompletionTokens();
+                totalPromptTokens += usage.getPromptTokens();
                 log.info("Hyperion semantic check token usage: prompt={}, completion={}, total={}", usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
             }
             else {
@@ -251,13 +243,12 @@ public class HyperionConsistencyCheckService {
 
             // @formatter:on
             usageSink.accept(llmUsageHelper.buildLlmRequest(semanticIssuesResponse.getResponse(), "semantic", CONSISTENCY_PIPELINE_ID));
-            List<ConsistencyIssue> issues = toGenericConsistencyIssue(semanticIssuesResponse.entity());
-            return new AIResult(issues, usage);
+            return toGenericConsistencyIssue(semanticIssuesResponse.entity());
         }
         catch (RuntimeException e) {
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
-            return new AIResult(List.of(), null);
+            return new ArrayList<>();
         }
         finally {
             child.stop();
