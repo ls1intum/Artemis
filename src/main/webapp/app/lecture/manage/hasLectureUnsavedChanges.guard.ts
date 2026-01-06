@@ -1,7 +1,9 @@
 import { inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, from, of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { CloseEditLectureModalComponent } from 'app/lecture/manage/close-edit-lecture-modal/close-edit-lecture-modal.component';
 
 /**
@@ -21,17 +23,23 @@ export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUnsavedChange
     }
 
     if (component.isChangeMadeToTitleOrPeriodSection) {
-        const modalService = inject(NgbModal);
+        const dialogService = inject(DialogService);
+        const translateService = inject(TranslateService);
 
-        const modalRef: NgbModalRef = modalService.open(CloseEditLectureModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            animation: true,
+        const dialogRef = dialogService.open(CloseEditLectureModalComponent, {
+            header: translateService.instant('artemisApp.lecture.dismissChangesModal.title'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: false,
+            dismissableMask: false,
+            data: {
+                hasUnsavedChangesInTitleSection: component.isChangeMadeToTitleSection(),
+                hasUnsavedChangesInPeriodSection: component.isChangeMadeToPeriodSection(),
+            },
         });
-        modalRef.componentInstance.hasUnsavedChangesInTitleSection = component.isChangeMadeToTitleSection();
-        modalRef.componentInstance.hasUnsavedChangesInPeriodSection = component.isChangeMadeToPeriodSection();
 
-        return from(modalRef.result);
+        return dialogRef!.onClose.pipe(map((result: boolean | undefined) => result === true));
     }
 
     return of(true);

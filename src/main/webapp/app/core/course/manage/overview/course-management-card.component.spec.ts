@@ -21,6 +21,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 
 describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
@@ -140,5 +141,41 @@ describe('CourseManagementCardComponent', () => {
         component.courseWithExercises = course;
         fixture.detectChanges();
         expect(fixture.debugElement.nativeElement.querySelector('.loading-spinner')).toBeTruthy();
+    });
+
+    describe('module feature toggles', () => {
+        let profileService: ProfileService;
+
+        beforeEach(() => {
+            profileService = TestBed.inject(ProfileService);
+        });
+
+        it('should initialize module feature toggles from ProfileService on ngOnInit', () => {
+            const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSpy.mockReturnValue({
+                activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP],
+            } as any);
+
+            component.ngOnInit();
+
+            expect(component.atlasEnabled).toBeTrue();
+            expect(component.examEnabled).toBeTrue();
+            expect(component.lectureEnabled).toBeTrue();
+            expect(component.tutorialGroupEnabled).toBeTrue();
+        });
+
+        it('should set module feature toggles to false when features are not active', () => {
+            const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSpy.mockReturnValue({
+                activeModuleFeatures: [],
+            } as any);
+
+            component.ngOnInit();
+
+            expect(component.atlasEnabled).toBeFalse();
+            expect(component.examEnabled).toBeFalse();
+            expect(component.lectureEnabled).toBeFalse();
+            expect(component.tutorialGroupEnabled).toBeFalse();
+        });
     });
 });

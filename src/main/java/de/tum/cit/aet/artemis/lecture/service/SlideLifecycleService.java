@@ -1,26 +1,25 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.lecture.api.SlideLifecycleServiceApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 
 /**
  * Service implementation for scheduling tasks at specific points in the lifecycle of a slide.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Service
 @Lazy
 public class SlideLifecycleService implements SlideLifecycleServiceApi {

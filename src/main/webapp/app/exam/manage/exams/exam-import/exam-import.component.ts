@@ -75,7 +75,7 @@ export class ExamImportComponent extends ImportComponent<Exam> {
                 next: (httpResponse: HttpResponse<ExerciseGroup[]>) => {
                     this.isImportingExercises = false;
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
-                    this.activeModal.close(httpResponse.body!);
+                    this.dialogRef.close(httpResponse.body!);
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
                     // Case: Server-Site Validation of the Programming Exercises failed
