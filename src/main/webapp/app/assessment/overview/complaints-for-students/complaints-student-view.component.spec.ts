@@ -32,18 +32,89 @@ import { provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
 
 describe('ComplaintsStudentViewComponent', () => {
     setupTestBed({ zoneless: true });
     const complaintTimeLimitDays = 7;
-    const course: Course = {
-        id: 1,
-        complaintsEnabled: true,
-        maxComplaintTimeDays: complaintTimeLimitDays,
-        requestMoreFeedbackEnabled: true,
-        maxRequestMoreFeedbackTimeDays: complaintTimeLimitDays,
+    const createComplaintConfiguration = (maxComplaintTimeDays: number, maxRequestMoreFeedbackTimeDays: number, maxComplaints?: number): CourseComplaintConfiguration => {
+        const configuration = new CourseComplaintConfiguration();
+        configuration.maxComplaintTimeDays = maxComplaintTimeDays;
+        configuration.maxRequestMoreFeedbackTimeDays = maxRequestMoreFeedbackTimeDays;
+        if (maxComplaints !== undefined) {
+            configuration.maxComplaints = maxComplaints;
+        }
+        return configuration;
     };
-    const courseWithoutFeedback: Course = { id: 1, complaintsEnabled: true, maxComplaintTimeDays: 7, requestMoreFeedbackEnabled: false };
+    const cloneExercise = (
+        base: Exercise,
+        overrides?: {
+            course?: Course;
+            dueDate?: dayjs.Dayjs;
+            assessmentDueDate?: dayjs.Dayjs;
+            assessmentType?: AssessmentType;
+        },
+    ): Exercise => {
+        const exercise: Exercise = {
+            id: base.id,
+            teamMode: base.teamMode,
+            course: base.course,
+            dueDate: base.dueDate,
+            assessmentDueDate: base.assessmentDueDate,
+            assessmentType: base.assessmentType,
+        } as Exercise;
+        if (!overrides) {
+            return exercise;
+        }
+        if (overrides.course !== undefined) {
+            exercise.course = overrides.course;
+        }
+        if (overrides.dueDate !== undefined) {
+            exercise.dueDate = overrides.dueDate;
+        }
+        if (overrides.assessmentDueDate !== undefined) {
+            exercise.assessmentDueDate = overrides.assessmentDueDate;
+        }
+        if (overrides.assessmentType !== undefined) {
+            exercise.assessmentType = overrides.assessmentType;
+        }
+        return exercise;
+    };
+    const cloneResult = (
+        base: Result,
+        overrides?: {
+            completionDate?: dayjs.Dayjs;
+            assessmentType?: AssessmentType;
+            rated?: boolean;
+        },
+    ): Result => {
+        const result = new Result();
+        result.id = base.id;
+        result.completionDate = base.completionDate;
+        result.assessmentType = base.assessmentType;
+        result.rated = base.rated;
+        result.submission = base.submission;
+        if (!overrides) {
+            return result;
+        }
+        if (overrides.completionDate !== undefined) {
+            result.completionDate = overrides.completionDate;
+        }
+        if (overrides.assessmentType !== undefined) {
+            result.assessmentType = overrides.assessmentType;
+        }
+        if (overrides.rated !== undefined) {
+            result.rated = overrides.rated;
+        }
+        return result;
+    };
+    const complaintConfiguration = createComplaintConfiguration(complaintTimeLimitDays, complaintTimeLimitDays);
+    const course = new Course();
+    course.id = 1;
+    course.complaintConfiguration = complaintConfiguration;
+    const courseWithoutFeedback = new Course();
+    courseWithoutFeedback.id = 1;
+    courseWithoutFeedback.complaintConfiguration = createComplaintConfiguration(7, 0);
     const examExercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
     const courseExercise: Exercise = {
         id: 1,
@@ -53,7 +124,11 @@ describe('ComplaintsStudentViewComponent', () => {
         assessmentDueDate: dayjs().subtract(1, 'day'),
         assessmentType: AssessmentType.MANUAL,
     } as Exercise;
-    const result: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays - 1, 'day'), assessmentType: AssessmentType.MANUAL, rated: true } as Result;
+    const result = new Result();
+    result.id = 1;
+    result.completionDate = dayjs().subtract(complaintTimeLimitDays - 1, 'day');
+    result.assessmentType = AssessmentType.MANUAL;
+    result.rated = true;
     const submission: Submission = { results: [result] } as Submission;
     result.submission = submission;
     const resultWithoutCompletionDate: Result = { id: 1 } as Result;
@@ -263,14 +338,14 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {
             await testInitWithResultStub(of());
-            const courseWithMaxComplaints: Course = {
-                ...course,
-                maxComplaints: 3,
-            };
-            const exerciseWithMaxComplaints: Exercise = {
-                ...courseExercise,
-                course: courseWithMaxComplaints,
-            };
+            const courseWithMaxComplaints = new Course();
+            courseWithMaxComplaints.id = course.id;
+            courseWithMaxComplaints.complaintConfiguration = createComplaintConfiguration(
+                course.complaintConfiguration?.maxComplaintTimeDays ?? complaintTimeLimitDays,
+                course.complaintConfiguration?.maxRequestMoreFeedbackTimeDays ?? complaintTimeLimitDays,
+                3,
+            );
+            const exerciseWithMaxComplaints = cloneExercise(courseExercise, { course: courseWithMaxComplaints });
             component.course = courseWithMaxComplaints;
             fixture.componentRef.setInput('exercise', exerciseWithMaxComplaints);
 
@@ -332,7 +407,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should not be available if assessment due date not set and completion date is out of period', () => {
             const exercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
-            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') } as Result;
+            const resultDateOutOfLimits = cloneResult(result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') });
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
@@ -349,7 +424,7 @@ describe('ComplaintsStudentViewComponent', () => {
                 course,
                 assessmentDueDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day'),
             } as Exercise;
-            const resultMatchingDate: Result = { ...result, completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') } as Result;
+            const resultMatchingDate = cloneResult(result, { completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') });
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultMatchingDate);
 
@@ -361,7 +436,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should be available if result was before due date', () => {
             const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(1, 'minute'), assessmentType: AssessmentType.MANUAL } as Exercise;
-            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
+            const resultDateOutOfLimits = cloneResult(result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') });
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
@@ -380,7 +455,7 @@ describe('ComplaintsStudentViewComponent', () => {
                 assessmentDueDate: dayjs().subtract(1, 'minute'),
                 assessmentType: AssessmentType.MANUAL,
             } as Exercise;
-            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') } as Result;
+            const resultDateOutOfLimits = cloneResult(result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') });
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
@@ -391,11 +466,7 @@ describe('ComplaintsStudentViewComponent', () => {
         });
 
         it('complaints should be available if feedback requests disabled', () => {
-            fixture.componentRef.setInput('exercise', {
-                ...courseExercise,
-                course: courseWithoutFeedback,
-                assessmentDueDate: dayjs().subtract(2),
-            } as Exercise);
+            fixture.componentRef.setInput('exercise', cloneExercise(courseExercise, { course: courseWithoutFeedback, assessmentDueDate: dayjs().subtract(2) }));
             component.course = courseWithoutFeedback;
 
             fixture.detectChanges();
@@ -406,18 +477,10 @@ describe('ComplaintsStudentViewComponent', () => {
         });
 
         it('feedback requests should be available if complaints are disabled', () => {
-            const courseWithoutComplaints = {
-                ...course,
-                complaintsEnabled: false,
-                maxComplaintTimeDays: undefined,
-                maxComplaints: undefined,
-                maxTeamComplaints: undefined,
-            } as Course;
-            fixture.componentRef.setInput('exercise', {
-                ...courseExercise,
-                course: courseWithoutComplaints,
-                assessmentDueDate: dayjs().subtract(2),
-            } as Exercise);
+            const courseWithoutComplaints = new Course();
+            courseWithoutComplaints.id = course.id;
+            courseWithoutComplaints.complaintConfiguration = createComplaintConfiguration(0, 7);
+            fixture.componentRef.setInput('exercise', cloneExercise(courseExercise, { course: courseWithoutComplaints, assessmentDueDate: dayjs().subtract(2) }));
             component.course = courseWithoutComplaints;
 
             fixture.detectChanges();
@@ -429,7 +492,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('no action should be allowed if the result is automatic for a non automatic exercise', () => {
             fixture.componentRef.setInput('exercise', courseExercise);
-            fixture.componentRef.setInput('result', { ...result, assessmentType: AssessmentType.AUTOMATIC, rated: false });
+            fixture.componentRef.setInput('result', cloneResult(result, { assessmentType: AssessmentType.AUTOMATIC, rated: false }));
 
             fixture.detectChanges();
 
@@ -483,8 +546,8 @@ describe('ComplaintsStudentViewComponent', () => {
     });
 
     it('complaint should be possible with long assessment periods', () => {
-        fixture.componentRef.setInput('exercise', { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') });
-        fixture.componentRef.setInput('result', { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') });
+        fixture.componentRef.setInput('exercise', cloneExercise(courseExercise, { assessmentDueDate: dayjs().subtract(3, 'day') }));
+        fixture.componentRef.setInput('result', cloneResult(result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') }));
 
         fixture.detectChanges();
 

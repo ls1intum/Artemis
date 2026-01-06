@@ -26,10 +26,11 @@ export class ExerciseInfoComponent implements OnInit {
 
     ngOnInit(): void {
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-        if (this.exercise.course?.maxComplaintTimeDays) {
+        const maxComplaintTimeDays = this.exercise.course?.complaintConfiguration?.maxComplaintTimeDays;
+        if (maxComplaintTimeDays) {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
-                this.exercise.course.maxComplaintTimeDays,
+                maxComplaintTimeDays,
                 getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                 this.studentParticipation,
             );

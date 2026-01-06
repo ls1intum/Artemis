@@ -58,4 +58,12 @@ public interface CourseTestRepository extends CourseRepository {
     default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "enrollmentConfiguration", "complaintConfiguration", "extendedSettings" })
+    Optional<Course> findWithEagerConfigurationsById(@Param("courseId") long courseId);
+
+    @NonNull
+    default Course findWithEagerConfigurationsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerConfigurationsById(courseId), courseId);
+    }
 }

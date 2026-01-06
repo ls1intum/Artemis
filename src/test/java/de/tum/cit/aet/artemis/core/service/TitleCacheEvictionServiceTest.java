@@ -87,7 +87,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    course.setDescription("testEvictsTitleOnUpdateTitleOrDeleteCourse"); // Change some other values
+                    course.getExtendedSettings().setDescription("testEvictsTitleOnUpdateTitleOrDeleteCourse"); // Change some other values
                     courseRepository.save(course);
                     return false;
                 },

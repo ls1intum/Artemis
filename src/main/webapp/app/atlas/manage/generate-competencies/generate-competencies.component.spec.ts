@@ -29,6 +29,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 
 describe('GenerateCompetenciesComponent', () => {
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -105,7 +107,10 @@ describe('GenerateCompetenciesComponent', () => {
         const setCourseDescriptionSpy = jest.spyOn(courseDescriptionComponent, 'setCourseDescription');
 
         // mock the course returned by CourseManagementService
-        const course = { description: courseDescription };
+        const courseExtendedSettings = new CourseExtendedSettings();
+        courseExtendedSettings.description = courseDescription;
+        const course = new Course();
+        course.extendedSettings = courseExtendedSettings;
         const courseManagementService = TestBed.inject(CourseManagementService);
         const getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 

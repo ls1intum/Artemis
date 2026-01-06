@@ -39,7 +39,8 @@ export class CourseUnenrollmentModalComponent implements OnInit {
      * Returns true if the student will be able to enroll again, otherwise false.
      */
     get canEnrollAgain() {
-        return this.course.enrollmentEnabled && dayjs().isBefore(this.course.enrollmentEndDate);
+        const enrollmentConfig = this.course?.enrollmentConfiguration;
+        return enrollmentConfig?.enrollmentEnabled && dayjs().isBefore(enrollmentConfig?.enrollmentEndDate);
     }
 
     /**

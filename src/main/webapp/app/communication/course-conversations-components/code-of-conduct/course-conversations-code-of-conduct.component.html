@@ -1,5 +1,5 @@
 <h3 jhiTranslate="artemisApp.codeOfConduct.title"></h3>
-<div [innerHTML]="course().courseInformationSharingMessagingCodeOfConduct || '' | htmlForMarkdown"></div>
+<div [innerHTML]="course().extendedSettings?.messagingCodeOfConduct || '' | htmlForMarkdown"></div>
 <ul>
     @for (user of responsibleContacts; track user) {
         <li>

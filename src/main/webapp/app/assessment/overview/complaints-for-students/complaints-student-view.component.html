@@ -1,11 +1,11 @@
 @if (complaint || showSection) {
     <div>
-        @if (course?.complaintsEnabled ?? false) {
+        @if (course?.complaintConfiguration?.complaintsEnabled ?? false) {
             <p>
                 @if (!isExamMode && remainingNumberOfComplaints >= 0) {
                     <span
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise().teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
-                        [translateValues]="{ maxComplaintNumber: course?.maxComplaints ?? 0, allowedComplaints: remainingNumberOfComplaints }"
+                        [translateValues]="{ maxComplaintNumber: course?.complaintConfiguration?.maxComplaints ?? 0, allowedComplaints: remainingNumberOfComplaints }"
                     ></span>
                 }
                 @if (isExamMode) {
@@ -19,7 +19,7 @@
 
         @if (isCorrectUserToFileAction && !complaint) {
             <div class="mt-4">
-                @if (isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)) {
+                @if (isExamMode || (course?.complaintConfiguration?.maxComplaints && course!.complaintConfiguration!.maxComplaints! > 0)) {
                     <button
                         id="complain"
                         class="btn btn-primary"
@@ -34,7 +34,7 @@
                         jhiTranslate="artemisApp.complaint.moreInfo"
                     ></button>
                 }
-                @if (!isExamMode && course?.requestMoreFeedbackEnabled) {
+                @if (!isExamMode && course?.complaintConfiguration?.requestMoreFeedbackEnabled) {
                     <button
                         id="more-feedback"
                         class="btn btn-primary ms-1"
@@ -63,8 +63,12 @@
         <div id="complaintScrollpoint"></div>
         @if (complaint) {
             <div class="row">
-                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />
-                <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint" [maxComplaintResponseTextLimit]="course?.maxComplaintResponseTextLimit!" />
+                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.complaintConfiguration?.maxComplaintTextLimit!" />
+                <jhi-complaint-response
+                    class="col-12 col-md-6"
+                    [complaint]="complaint"
+                    [maxComplaintResponseTextLimit]="course?.complaintConfiguration?.maxComplaintResponseTextLimit!"
+                />
             </div>
         }
     </div>

@@ -288,10 +288,11 @@ public class AuthorizationCheckService {
         if (allowedCourseEnrollmentUsernamePattern != null && !allowedCourseEnrollmentUsernamePattern.matcher(user.getLogin()).matches()) {
             return EnrollmentAuthorization.USERNAME_PATTERN;
         }
-        if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
+        var enrollmentConfig = course.getEnrollmentConfiguration();
+        if (enrollmentConfig == null || !Boolean.TRUE.equals(enrollmentConfig.isEnrollmentEnabled())) {
             return EnrollmentAuthorization.ENROLLMENT_STATUS;
         }
-        if (!course.enrollmentIsActive()) {
+        if (!enrollmentConfig.enrollmentIsActive()) {
             return EnrollmentAuthorization.ENROLLMENT_PERIOD;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
@@ -356,10 +357,11 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public UnenrollmentAuthorization getUserUnenrollmentAuthorizationForCourse(Course course) {
-        if (!course.isUnenrollmentEnabled()) {
+        var enrollmentConfig = course.getEnrollmentConfiguration();
+        if (enrollmentConfig == null || !enrollmentConfig.isUnenrollmentEnabled()) {
             return UnenrollmentAuthorization.UNENROLLMENT_STATUS;
         }
-        if (!course.unenrollmentIsActive()) {
+        if (!enrollmentConfig.unenrollmentIsActive(course.getEndDate())) {
             return UnenrollmentAuthorization.UNENROLLMENT_PERIOD;
         }
         if (course.isOnlineCourse()) {

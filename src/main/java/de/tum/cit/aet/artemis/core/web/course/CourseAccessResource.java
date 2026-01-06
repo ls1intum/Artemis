@@ -131,7 +131,7 @@ public class CourseAccessResource {
         log.debug("REST request to get a currently active course for enrollment");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
-        Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        Course course = courseRepository.findSingleWithOrganizationsPrerequisitesAndEnrollmentConfigurationElseThrow(courseId);
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);

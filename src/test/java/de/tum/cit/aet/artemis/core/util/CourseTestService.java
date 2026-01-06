@@ -96,6 +96,9 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
@@ -441,35 +444,35 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setMaxComplaints(-1);
+        course.getComplaintConfiguration().setMaxComplaints(-1);
         testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setMaxComplaintTimeDays(-1);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(-1);
         testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxTeamComplainNumber() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setMaxTeamComplaints(-1);
+        course.getComplaintConfiguration().setMaxTeamComplaints(-1);
         testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplaintTextLimit() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setMaxComplaintTextLimit(-1);
+        course.getComplaintConfiguration().setMaxComplaintTextLimit(-1);
         testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplaintResponseTextLimit() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setMaxComplaintResponseTextLimit(-1);
+        course.getComplaintConfiguration().setMaxComplaintResponseTextLimit(-1);
         testCreateCourseWithNegativeValue(course);
     }
 
@@ -477,24 +480,24 @@ public class CourseTestService {
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
 
-        course.setMaxComplaintTimeDays(0);
-        course.setMaxComplaints(1);
-        course.setMaxTeamComplaints(0);
-        course.setMaxRequestMoreFeedbackTimeDays(0);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(0);
+        course.getComplaintConfiguration().setMaxComplaints(1);
+        course.getComplaintConfiguration().setMaxTeamComplaints(0);
+        course.getComplaintConfiguration().setMaxRequestMoreFeedbackTimeDays(0);
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
         List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration
-        course.setMaxComplaintTimeDays(1);
-        course.setMaxComplaints(0);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(1);
+        course.getComplaintConfiguration().setMaxComplaints(0);
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
         repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration again
-        course.setMaxComplaintTimeDays(0);
-        course.setMaxRequestMoreFeedbackTimeDays(-1);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(0);
+        course.getComplaintConfiguration().setMaxRequestMoreFeedbackTimeDays(-1);
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
         repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
@@ -523,25 +526,28 @@ public class CourseTestService {
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findByIdElseThrow(course.getId());
-        assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
-        assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
+        Course getFromRepoWithConfigs = courseRepo.findWithEagerConfigurationsByIdElseThrow(course.getId());
+        assertThat(getFromRepoWithConfigs.getComplaintConfiguration().getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
+        assertThat(getFromRepoWithConfigs.getComplaintConfiguration().getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
         assertThat(getFromRepo.getCourseInformationSharingConfiguration()).as("Course has right information sharing config value")
                 .isEqualTo(CourseInformationSharingConfiguration.DISABLED);
-        assertThat(getFromRepo.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled value").isFalse();
+        assertThat(getFromRepoWithConfigs.getComplaintConfiguration().getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled value").isFalse();
 
         // Test edit course
         course.setId(getFromRepo.getId());
-        course.setMaxComplaints(1);
-        course.setMaxComplaintTimeDays(7);
+        course.getComplaintConfiguration().setMaxComplaints(1);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(7);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-        course.setMaxRequestMoreFeedbackTimeDays(7);
+        course.getComplaintConfiguration().setMaxRequestMoreFeedbackTimeDays(7);
         result = request.performMvcRequest(buildUpdateCourse(getFromRepo.getId(), course)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
-        assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
+        assertThat(updatedCourse.getComplaintConfiguration().getMaxComplaints()).as("maxComplaints Value updated successfully")
+                .isEqualTo(course.getComplaintConfiguration().getMaxComplaints());
+        assertThat(updatedCourse.getComplaintConfiguration().getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully")
+                .isEqualTo(course.getComplaintConfiguration().getMaxComplaintTimeDays());
         assertThat(updatedCourse.getCourseInformationSharingConfiguration()).as("information sharing config value updated successfully")
                 .isEqualTo(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-        assertThat(updatedCourse.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isTrue();
+        assertThat(updatedCourse.getComplaintConfiguration().getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isTrue();
     }
 
     // Test
@@ -789,7 +795,7 @@ public class CourseTestService {
 
         Course course1 = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course1.setShortName("testdefaultchannels");
-        course1.setEnrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(true);
 
         var result = request.performMvcRequest(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
         Course course2 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -885,14 +891,17 @@ public class CourseTestService {
     public void testCreateAndUpdateCourseWithCourseImage() throws Exception {
         var createdCourse = createCourseWithCourseImageAndReturn();
         var courseIcon = createdCourse.getCourseIcon();
-        createdCourse.setDescription("new description"); // do additional update
+        if (createdCourse.getExtendedSettings() == null) {
+            createdCourse.setExtendedSettings(new CourseExtendedSettings());
+        }
+        createdCourse.getExtendedSettings().setDescription("new description"); // do additional update
 
         // Update course
         request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse, "newTestIcon")).andExpect(status().isOk());
 
-        var updatedCourse = courseRepo.findByIdElseThrow(createdCourse.getId());
+        var updatedCourse = courseRepo.findWithEagerConfigurationsByIdElseThrow(createdCourse.getId());
         assertThat(updatedCourse.getCourseIcon()).isNotEqualTo(courseIcon).isNotNull();
-        assertThat(updatedCourse.getDescription()).isEqualTo("new description");
+        assertThat(updatedCourse.getExtendedSettings().getDescription()).isEqualTo("new description");
     }
 
     // Test
@@ -1026,7 +1035,7 @@ public class CourseTestService {
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
-        course.setEnrollmentEnabled(enrollmentEnabled);
+        course.getEnrollmentConfiguration().setEnrollmentEnabled(enrollmentEnabled);
         courseRepo.save(course);
         return course;
     }
@@ -1353,27 +1362,27 @@ public class CourseTestService {
     public void testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseEnrollmentActiveEnrollmentEnabled = CourseFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
                 new HashSet<>(), "testuser", "tutor", "editor", "instructor");
-        courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEnabled(true);
-        courseEnrollmentActiveEnrollmentEnabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
-        courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
+        courseEnrollmentActiveEnrollmentEnabled.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        courseEnrollmentActiveEnrollmentEnabled.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
+        courseEnrollmentActiveEnrollmentEnabled.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
 
         Course courseEnrollmentActiveEnrollmentDisabled = CourseFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
                 new HashSet<>(), "testuser", "tutor", "editor", "instructor");
-        courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEnabled(false);
-        courseEnrollmentActiveEnrollmentDisabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
-        courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
+        courseEnrollmentActiveEnrollmentDisabled.getEnrollmentConfiguration().setEnrollmentEnabled(false);
+        courseEnrollmentActiveEnrollmentDisabled.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
+        courseEnrollmentActiveEnrollmentDisabled.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
 
         Course courseEnrollmentNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser",
                 "tutor", "editor", "instructor");
-        courseEnrollmentNotActivePast.setEnrollmentEnabled(true);
-        courseEnrollmentNotActivePast.setEnrollmentStartDate(ZonedDateTime.now().minusDays(5));
-        courseEnrollmentNotActivePast.setEnrollmentEndDate(ZonedDateTime.now().minusMinutes(25));
+        courseEnrollmentNotActivePast.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        courseEnrollmentNotActivePast.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().minusDays(5));
+        courseEnrollmentNotActivePast.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().minusMinutes(25));
 
         Course courseEnrollmentNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser",
                 "tutor", "editor", "instructor");
-        courseEnrollmentNotActiveFuture.setEnrollmentEnabled(true);
-        courseEnrollmentNotActiveFuture.setEnrollmentStartDate(ZonedDateTime.now().plusMinutes(25));
-        courseEnrollmentNotActiveFuture.setEnrollmentEndDate(ZonedDateTime.now().plusDays(5));
+        courseEnrollmentNotActiveFuture.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        courseEnrollmentNotActiveFuture.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().plusMinutes(25));
+        courseEnrollmentNotActiveFuture.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().plusDays(5));
 
         courseRepo.save(courseEnrollmentActiveEnrollmentEnabled);
         courseRepo.save(courseEnrollmentActiveEnrollmentDisabled);
@@ -1700,7 +1709,7 @@ public class CourseTestService {
             assertThat(courseOnly.getEditorGroupName()).as("Editor group name is correct").isEqualTo(userPrefix + "editor");
             assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo(userPrefix + "instructor");
             assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
-            assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
+            assertThat(courseOnly.getComplaintConfiguration().getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
             assertThat(courseOnly.getExercises()).as("Course without exercises contains no exercises").isEmpty();
             assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(8);
@@ -1710,7 +1719,7 @@ public class CourseTestService {
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
             String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "filePathService", "entityFileService", "numberOfInstructorsTransient",
-                    "numberOfStudentsTransient", "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
+                    "numberOfStudentsTransient", "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient", "complaintConfiguration.course" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
@@ -1745,9 +1754,9 @@ public class CourseTestService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        course1.setEnrollmentEnabled(true);
-        course1.setEnrollmentStartDate(pastTimestamp);
-        course2.setEnrollmentEndDate(futureTimestamp);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setEnrollmentStartDate(pastTimestamp);
+        course2.getEnrollmentConfiguration().setEnrollmentEndDate(futureTimestamp);
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
@@ -1769,9 +1778,9 @@ public class CourseTestService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course notYetStartedCourse = CourseFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course finishedCourse = CourseFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        notYetStartedCourse.setEnrollmentEnabled(true);
-        notYetStartedCourse.setEnrollmentStartDate(futureTimestamp);
-        notYetStartedCourse.setEnrollmentEndDate(futureTimestamp);
+        notYetStartedCourse.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        notYetStartedCourse.getEnrollmentConfiguration().setEnrollmentStartDate(futureTimestamp);
+        notYetStartedCourse.getEnrollmentConfiguration().setEnrollmentEndDate(futureTimestamp);
 
         notYetStartedCourse = courseRepo.save(notYetStartedCourse);
         finishedCourse = courseRepo.save(finishedCourse);
@@ -1812,11 +1821,11 @@ public class CourseTestService {
         courses[0] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
         courses[1] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
         courses[2] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
-        courses[0].setUnenrollmentEnabled(true);
-        courses[0].setUnenrollmentEndDate(futureTimestamp);
-        courses[1].setUnenrollmentEnabled(false);
-        courses[2].setUnenrollmentEnabled(true);
-        courses[2].setUnenrollmentEndDate(pastTimestamp);
+        courses[0].getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+        courses[0].getEnrollmentConfiguration().setUnenrollmentEndDate(futureTimestamp);
+        courses[1].getEnrollmentConfiguration().setUnenrollmentEnabled(false);
+        courses[2].getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+        courses[2].getEnrollmentConfiguration().setUnenrollmentEndDate(pastTimestamp);
 
         return courses;
     }
@@ -2072,9 +2081,9 @@ public class CourseTestService {
     public Course testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         var course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
-        await().until(() -> courseRepo.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
-        var updatedCourse = courseRepo.findById(course.getId()).orElseThrow();
-        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+        await().until(() -> courseRepo.findWithEagerConfigurationsByIdElseThrow(course.getId()).getExtendedSettings().getCourseArchivePath() != null);
+        var updatedCourse = courseRepo.findWithEagerConfigurationsByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getExtendedSettings().getCourseArchivePath()).isNotEmpty();
         return updatedCourse;
     }
 
@@ -2503,7 +2512,7 @@ public class CourseTestService {
         // Archive the course and wait until it's complete
         Course updatedCourse = testArchiveCourseWithTestModelingAndFileUploadExercises();
         Map<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put("Content-Disposition", "attachment; filename=\"" + updatedCourse.getCourseArchivePath() + "\"");
+        expectedHeaders.put("Content-Disposition", "attachment; filename=\"" + updatedCourse.getExtendedSettings().getCourseArchivePath() + "\"");
 
         // Download the archive
         var archive = request.getFile("/api/core/courses/" + updatedCourse.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>(), expectedHeaders);
@@ -2565,7 +2574,9 @@ public class CourseTestService {
     public void testCleanupCourseAsInstructor() throws Exception {
         // Generate a course that has an archive
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
-        course.setCourseArchivePath("some-archive-path");
+        var courseWithSettings = courseRepo.findWithEagerExtendedSettingsById(course.getId()).orElseThrow();
+        course.setExtendedSettings(courseWithSettings.getExtendedSettings());
+        course.getExtendedSettings().setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 
         final ProgrammingExercise courseExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -3125,7 +3136,7 @@ public class CourseTestService {
 
         // with EnrollmentEnabled
         course.setOnlineCourse(true);
-        course.setEnrollmentEnabled(true);
+        course.getEnrollmentConfiguration().setEnrollmentEnabled(true);
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
@@ -3346,14 +3357,25 @@ public class CourseTestService {
      * @return the corresponding CourseCreateDTO
      */
     private CourseCreateDTO toCourseCreateDTO(@NonNull Course course) {
-        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStudentGroupName(),
-                course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
-                course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.isOnlineCourse(),
-                course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
-                course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.isFaqEnabled(), course.getLearningPathsEnabled(),
+        CourseExtendedSettings extendedSettings = course.getExtendedSettings() != null ? course.getExtendedSettings() : new CourseExtendedSettings();
+        CourseEnrollmentConfiguration enrollmentConfiguration = course.getEnrollmentConfiguration() != null ? course.getEnrollmentConfiguration()
+                : new CourseEnrollmentConfiguration();
+        CourseComplaintConfiguration complaintConfiguration = course.getComplaintConfiguration() != null ? course.getComplaintConfiguration() : new CourseComplaintConfiguration();
+        var enrollmentConfigurationDTO = new CourseCreateDTO.CourseEnrollmentConfigurationDTO(enrollmentConfiguration.isEnrollmentEnabled(),
+                enrollmentConfiguration.getEnrollmentStartDate(), enrollmentConfiguration.getEnrollmentEndDate(), enrollmentConfiguration.getEnrollmentConfirmationMessage(),
+                enrollmentConfiguration.isUnenrollmentEnabled(), enrollmentConfiguration.getUnenrollmentEndDate());
+        var complaintConfigurationDTO = new CourseCreateDTO.CourseComplaintConfigurationDTO(complaintConfiguration.getMaxComplaints(),
+                complaintConfiguration.getMaxTeamComplaints(), complaintConfiguration.getMaxComplaintTimeDays(), complaintConfiguration.getMaxRequestMoreFeedbackTimeDays(),
+                complaintConfiguration.getMaxComplaintTextLimit(), complaintConfiguration.getMaxComplaintResponseTextLimit());
+        var extendedSettingsDTO = new CourseCreateDTO.CourseExtendedSettingsDTO(extendedSettings.getDescription(), extendedSettings.getMessagingCodeOfConduct(),
+                extendedSettings.getCourseArchivePath());
+
+        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getSemester(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+                course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(), course.isTestCourse(), course.isOnlineCourse(),
+                course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getColor(), course.isFaqEnabled(), course.getLearningPathsEnabled(),
                 course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
-                course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
+                course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(), enrollmentConfigurationDTO,
+                complaintConfigurationDTO, extendedSettingsDTO);
     }
 
     public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {

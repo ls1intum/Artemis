@@ -34,7 +34,7 @@ class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testFindEnrollableForStudent() {
         var enrollmentDisabled = courseUtilService.createCourse();
         enrollmentDisabled.setStudentGroupName("test-enrollable-students");
-        enrollmentDisabled.setEnrollmentEnabled(false);
+        enrollmentDisabled.getEnrollmentConfiguration().setEnrollmentEnabled(false);
         courseRepository.save(enrollmentDisabled);
 
         var enrollmentEnabledNotActivePast = courseUtilService.createCourse();
@@ -62,8 +62,8 @@ class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void setEnrollmentConfiguration(Course course, ZonedDateTime start, ZonedDateTime end) {
-        course.setEnrollmentEnabled(true);
-        course.setEnrollmentStartDate(start);
-        course.setEnrollmentEndDate(end);
+        course.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course.getEnrollmentConfiguration().setEnrollmentStartDate(start);
+        course.getEnrollmentConfiguration().setEnrollmentEndDate(end);
     }
 }

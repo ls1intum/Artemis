@@ -2,6 +2,7 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseCreateDTO } from 'app/core/course/shared/entities/course-create-dto.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
@@ -66,21 +67,35 @@ export class CourseManagementAPIRequests {
         course.startDate = start;
         course.endDate = end;
 
+        let courseInformationSharingConfiguration: CourseInformationSharingConfiguration;
+        let messagingCodeOfConduct: string | undefined;
         if (allowCommunication && allowMessaging) {
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            course.courseInformationSharingMessagingCodeOfConduct = 'Code of Conduct';
+            courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            messagingCodeOfConduct = 'Code of Conduct';
         } else if (allowCommunication) {
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+            courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         }
 
         const allowGroupCustomization: boolean = process.env.ALLOW_GROUP_CUSTOMIZATION === 'true';
+        const courseCreateDTO: CourseCreateDTO = {
+            title: course.title,
+            shortName: course.shortName,
+            startDate: course.startDate?.toJSON(),
+            endDate: course.endDate?.toJSON(),
+            testCourse: course.testCourse,
+            courseInformationSharingConfiguration,
+            extendedSettings: {
+                messagingCodeOfConduct,
+            },
+        };
+
         if (customizeGroups && allowGroupCustomization) {
-            course.studentGroupName = process.env.STUDENT_GROUP_NAME;
-            course.teachingAssistantGroupName = process.env.TUTOR_GROUP_NAME;
-            course.editorGroupName = process.env.EDITOR_GROUP_NAME;
-            course.instructorGroupName = process.env.INSTRUCTOR_GROUP_NAME;
+            courseCreateDTO.studentGroupName = process.env.STUDENT_GROUP_NAME;
+            courseCreateDTO.teachingAssistantGroupName = process.env.TUTOR_GROUP_NAME;
+            courseCreateDTO.editorGroupName = process.env.EDITOR_GROUP_NAME;
+            courseCreateDTO.instructorGroupName = process.env.INSTRUCTOR_GROUP_NAME;
         }
 
         const iconBuffer = await new Response(iconFile).arrayBuffer();
@@ -89,7 +104,7 @@ export class CourseManagementAPIRequests {
             course: {
                 name: 'course',
                 mimeType: 'application/json',
-                buffer: Buffer.from(JSON.stringify(course)),
+                buffer: Buffer.from(JSON.stringify(courseCreateDTO)),
             },
         };
 

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -59,6 +60,8 @@ public class ComplaintService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final TeamRepository teamRepository;
@@ -66,12 +69,14 @@ public class ComplaintService {
     private final ExerciseRepository exerciseRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, TeamRepository teamRepository, ExerciseRepository exerciseRepository) {
+            Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, CourseRepository courseRepository, TeamRepository teamRepository,
+            ExerciseRepository exerciseRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.examRepositoryApi = examRepositoryApi;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.teamRepository = teamRepository;
         this.exerciseRepository = exerciseRepository;
     }
@@ -93,12 +98,15 @@ public class ComplaintService {
         Participant participant = studentParticipation.getParticipant(); // Team or Student
 
         // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        final Course courseFromParticipation = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Long courseId = courseFromParticipation.getId();
 
-        Long courseId = course.getId();
+        // Load the course with its complaint configuration eagerly to ensure proper limit checking
+        final Course course = courseRepository.findWithEagerComplaintConfigurationById(courseId).orElse(courseFromParticipation);
 
         // Check whether the complaint text limit is exceeded
-        int maxLength = course.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise());
+        var complaintConfig = course.getComplaintConfiguration();
+        int maxLength = complaintConfig != null ? complaintConfig.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise()) : 2000;
         if (maxLength < complaintRequest.complaintText().length()) {
             throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                     "exceededComplaintTextLimit");
@@ -125,7 +133,7 @@ public class ComplaintService {
                     }
                 }
                 case MORE_FEEDBACK -> {
-                    if (!course.getRequestMoreFeedbackEnabled()) {
+                    if (complaintConfig == null || !complaintConfig.getRequestMoreFeedbackEnabled()) {
                         throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.",
                                 ENTITY_NAME, "moreFeedbackRequestsDisabled");
                     }
@@ -352,7 +360,11 @@ public class ComplaintService {
      * @return max complaints
      */
     public Integer getMaxComplaintsPerParticipant(Course course, Participant participant) {
-        return participant instanceof Team ? course.getMaxTeamComplaints() : course.getMaxComplaints();
+        var complaintConfig = course.getComplaintConfiguration();
+        if (complaintConfig == null) {
+            return 3; // default value
+        }
+        return complaintConfig.getMaxComplaintsPerParticipant(participant);
     }
 
     /**
@@ -380,9 +392,10 @@ public class ComplaintService {
      */
     private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course,
             ComplaintType type) {
+        var complaintConfig = course.getComplaintConfiguration();
         int maxDays = switch (type) {
-            case COMPLAINT -> course.getMaxComplaintTimeDays();
-            case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
+            case COMPLAINT -> complaintConfig != null ? complaintConfig.getMaxComplaintTimeDays() : 7;
+            case MORE_FEEDBACK -> complaintConfig != null ? complaintConfig.getMaxRequestMoreFeedbackTimeDays() : 7;
         };
 
         if (result.getCompletionDate() == null) {

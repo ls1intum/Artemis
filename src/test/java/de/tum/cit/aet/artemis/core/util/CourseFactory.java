@@ -5,6 +5,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -134,15 +137,32 @@ public class CourseFactory {
 
         String randomName = ShortNameGenerator.generateRandomShortName(8);
 
+        var enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        enrollmentConfiguration.setEnrollmentEnabled(false);
+        course.setEnrollmentConfiguration(enrollmentConfiguration);
+
+        var complaintConfiguration = new CourseComplaintConfiguration();
+        if (maxComplaints != null) {
+            complaintConfiguration.setMaxComplaints(maxComplaints);
+        }
+        if (maxTeamComplaints != null) {
+            complaintConfiguration.setMaxTeamComplaints(maxTeamComplaints);
+        }
+        if (maxComplaintTimeDays != null) {
+            complaintConfiguration.setMaxComplaintTimeDays(maxComplaintTimeDays);
+        }
+        complaintConfiguration.setMaxComplaintTextLimit(maxComplaintTextLimit);
+        complaintConfiguration.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
+        complaintConfiguration.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
+        course.setComplaintConfiguration(complaintConfiguration);
+
+        var extendedSettings = new CourseExtendedSettings();
+        course.setExtendedSettings(extendedSettings);
+
         course.setTitle("Course title " + randomName);
 
         // must start with a letter
         course.setShortName(shortName + randomName);
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
         if (communicationEnabled && messagingEnabled) {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         }
@@ -152,7 +172,6 @@ public class CourseFactory {
         else {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         }
-        course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
         course.setEditorGroupName(editorGroupName);
@@ -161,7 +180,6 @@ public class CourseFactory {
         course.setEndDate(endDate);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
-        course.setEnrollmentEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;

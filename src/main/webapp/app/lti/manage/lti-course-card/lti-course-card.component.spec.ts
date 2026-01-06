@@ -69,7 +69,9 @@ describe('LtiCourseCardComponent', () => {
             numberOfStudents: 25,
             startDate: dayjs('2023-01-01'),
             endDate: dayjs('2023-12-31'),
-            description: 'Test description',
+            extendedSettings: {
+                description: 'Test description',
+            },
         };
 
         fixture.componentRef.setInput('course', testCourse);
@@ -100,7 +102,9 @@ describe('LtiCourseCardComponent', () => {
             id: 1,
             shortName: 'test',
             title: 'Test',
-            description: testDescription,
+            extendedSettings: {
+                description: testDescription,
+            },
         };
 
         fixture.componentRef.setInput('course', testCourse);

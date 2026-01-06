@@ -132,8 +132,8 @@ public class CourseOverviewResource {
         log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course
-            // We need the course with organizations so that we can check if the user is allowed to enroll
-            course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
+            // We need the course with organizations and enrollment config so that we can check if the user is allowed to enroll
+            course = courseRepository.findSingleWithOrganizationsPrerequisitesAndEnrollmentConfigurationElseThrow(courseId);
             if (authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the enrollment page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
@@ -272,6 +272,13 @@ public class CourseOverviewResource {
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
 
+        if (course.getEnrollmentConfiguration() == null || course.getComplaintConfiguration() == null || course.getExtendedSettings() == null) {
+            var courseWithConfigurations = courseRepository.findWithEagerAllConfigurationsElseThrow(courseId);
+            course.setEnrollmentConfiguration(courseWithConfigurations.getEnrollmentConfiguration());
+            course.setComplaintConfiguration(courseWithConfigurations.getComplaintConfiguration());
+            course.setExtendedSettings(courseWithConfigurations.getExtendedSettings());
+        }
+
         return ResponseEntity.ok(course);
     }
 
@@ -299,8 +306,9 @@ public class CourseOverviewResource {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
         User user = userRepository.getUser();
         Participant participant = user;
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!course.getComplaintsEnabled()) {
+        Course course = courseRepository.findWithEagerComplaintConfigurationElseThrow(courseId);
+        var complaintConfig = course.getComplaintConfiguration();
+        if (complaintConfig == null || !complaintConfig.getComplaintsEnabled()) {
             throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
         }
         if (teamMode) {

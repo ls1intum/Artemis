@@ -104,7 +104,7 @@ public class HyperionProblemStatementResource {
     public ResponseEntity<ProblemStatementGenerationResponseDTO> generateProblemStatement(@PathVariable long courseId,
             @Valid @RequestBody ProblemStatementGenerationRequestDTO request) {
         log.debug("REST request to Hyperion generate draft problem statement for course [{}]", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerExtendedSettingsElseThrow(courseId);
         var result = problemStatementGenerationService.generateProblemStatement(course, request.userPrompt());
         return ResponseEntity.ok(result);
     }

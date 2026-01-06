@@ -7,6 +7,8 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { ParticipationResultDTO } from 'app/core/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -322,15 +324,19 @@ describe('CourseStatisticsComponent', () => {
     const course = new Course();
     course.id = 64;
     course.title = 'Checking statistics';
-    course.description = 'Testing the statistics view';
     course.shortName = 'CHS';
     course.studentGroupName = 'eist2019students';
     course.teachingAssistantGroupName = 'artemis-dev';
     course.instructorGroupName = 'artemis-dev';
     course.onlineCourse = false;
-    course.enrollmentEnabled = false;
     course.exercises = [];
     course.presentationScore = 1;
+
+    course.extendedSettings = new CourseExtendedSettings();
+    course.extendedSettings.description = 'Testing the statistics view';
+
+    course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+    course.enrollmentConfiguration.enrollmentEnabled = false;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({

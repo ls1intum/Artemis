@@ -104,14 +104,19 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             FROM Course c
                 LEFT JOIN FETCH c.organizations organizations
                 LEFT JOIN FETCH c.prerequisites prerequisites
-            WHERE c.enrollmentEnabled = TRUE
-                AND c.enrollmentStartDate <= :now
-                AND c.enrollmentEndDate >= :now
+                LEFT JOIN FETCH c.enrollmentConfiguration ec
+                LEFT JOIN FETCH c.extendedSettings extendedSettings
+            WHERE ec.enrollmentEnabled = TRUE
+                AND ec.enrollmentStartDate <= :now
+                AND ec.enrollmentEndDate >= :now
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "complaintConfiguration" })
     Course findWithEagerExercisesById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "extendedSettings" })
+    Optional<Course> findWithEagerExercisesAndExtendedSettingsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
@@ -129,7 +134,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration",
+            "enrollmentConfiguration", "complaintConfiguration", "extendedSettings" })
     Optional<Course> findForUpdateById(long courseId);
 
     @Query("""
@@ -137,14 +143,17 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             FROM Course course
                 LEFT JOIN FETCH course.organizations organizations
                 LEFT JOIN FETCH course.prerequisites prerequisites
+                LEFT JOIN FETCH course.enrollmentConfiguration enrollmentConfiguration
+                LEFT JOIN FETCH course.extendedSettings extendedSettings
             WHERE course.id = :courseId
             """)
-    Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
+    Optional<Course> findSingleWithOrganizationsPrerequisitesAndEnrollmentConfiguration(@Param("courseId") long courseId);
 
     @Query("""
             SELECT course
             FROM Course course
                 LEFT JOIN FETCH course.organizations
+                LEFT JOIN FETCH course.enrollmentConfiguration
             WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
@@ -156,18 +165,31 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 LEFT JOIN FETCH course.competencies
                 LEFT JOIN FETCH course.prerequisites
                 LEFT JOIN FETCH course.learningPaths
+                LEFT JOIN FETCH course.enrollmentConfiguration
             WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "complaintConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration", "complaintConfiguration" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "enrollmentConfiguration" })
+    Optional<Course> findWithEagerEnrollmentConfigurationById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "complaintConfiguration" })
+    Optional<Course> findWithEagerComplaintConfigurationById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
+    Optional<Course> findWithEagerExtendedSettingsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "enrollmentConfiguration", "complaintConfiguration", "extendedSettings" })
+    Optional<Course> findWithEagerAllConfigurationsById(long courseId);
 
     /**
      * Fetches online courses with a specific LTI registration ID.
@@ -181,6 +203,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             FROM Course c
                 LEFT JOIN FETCH c.onlineCourseConfiguration onlineCourseConfiguration
                 LEFT JOIN FETCH onlineCourseConfiguration.ltiPlatformConfiguration ltiPlatformConfiguration
+                LEFT JOIN FETCH c.extendedSettings extendedSettings
             WHERE c.onlineCourse = TRUE
                 AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId
             """)
@@ -366,6 +389,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param now the current time
      * @return a list of courses that are not ended yet
      */
+    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
@@ -380,6 +404,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param userGroups list of management group names
      * @return a list of courses that use one of the given management group names
      */
+    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
@@ -396,6 +421,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param userGroups list of management group names
      * @return a list of courses that use one of the given management group names and are not ended yet
      */
+    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
     @Query("""
             SELECT c
             FROM Course c
@@ -409,6 +435,13 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             )
             """)
     List<Course> findAllNotEndedCoursesByManagementGroupNames(@Param("now") ZonedDateTime now, @Param("userGroups") List<String> userGroups);
+
+    @EntityGraph(type = LOAD, attributePaths = { "extendedSettings" })
+    @Query("""
+            SELECT c
+            FROM Course c
+            """)
+    List<Course> findAllWithExtendedSettings();
 
     /**
      * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
@@ -449,6 +482,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
     }
 
+    default Course findByIdWithEagerExercisesAndExtendedSettingsElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerExercisesAndExtendedSettingsById(courseId), courseId);
+    }
+
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)), courseId);
     }
@@ -459,6 +496,26 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     default Course findByIdWithEagerTutorialGroupConfigurationElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerTutorialGroupConfigurationsById(courseId)), courseId);
+    }
+
+    @NonNull
+    default Course findWithEagerEnrollmentConfigurationElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerEnrollmentConfigurationById(courseId), courseId);
+    }
+
+    @NonNull
+    default Course findWithEagerComplaintConfigurationElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerComplaintConfigurationById(courseId), courseId);
+    }
+
+    @NonNull
+    default Course findWithEagerExtendedSettingsElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerExtendedSettingsById(courseId), courseId);
+    }
+
+    @NonNull
+    default Course findWithEagerAllConfigurationsElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerAllConfigurationsById(courseId), courseId);
     }
 
     @NonNull
@@ -493,14 +550,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
         return findAllActive(ZonedDateTime.now());
     }
 
-    /**
-     * Get a single course to enroll with eagerly loaded organizations and prerequisites.
-     *
-     * @param courseId the id of the course
-     * @return the course entity
-     */
-    default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
-        return getValueElseThrow(findSingleWithOrganizationsAndPrerequisites(courseId), courseId);
+    default Course findSingleWithOrganizationsPrerequisitesAndEnrollmentConfigurationElseThrow(long courseId) {
+        return getValueElseThrow(findSingleWithOrganizationsPrerequisitesAndEnrollmentConfiguration(courseId), courseId);
     }
 
     /**

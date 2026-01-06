@@ -209,7 +209,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             hasArchive = (this.exam.examArchivePath?.length ?? 0) > 0;
         } else {
-            hasArchive = (this.course.courseArchivePath?.length ?? 0) > 0;
+            hasArchive = (this.course.extendedSettings?.courseArchivePath?.length ?? 0) > 0;
         }
         // You can only download one if the path to the archive is present
         return this.accountService.isAtLeastInstructorInCourse(this.course) && hasArchive;
@@ -228,7 +228,8 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             hasBeenArchived = !!this.exam.examArchivePath && this.exam.examArchivePath.length > 0;
         } else {
-            hasBeenArchived = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
+            const archivePath = this.course.extendedSettings?.courseArchivePath;
+            hasBeenArchived = !!archivePath && archivePath.length > 0;
         }
         // A course / exam can only be cleaned up if the course / exam has been archived.
         return this.accountService.isAtLeastInstructorInCourse(this.course) && hasBeenArchived;

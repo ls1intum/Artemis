@@ -237,9 +237,9 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
     void testGenerateLearningPathOnEnrollment() throws Exception {
-        course.setEnrollmentEnabled(true);
-        course.setEnrollmentStartDate(past(1));
-        course.setEnrollmentEndDate(future(1));
+        course.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course.getEnrollmentConfiguration().setEnrollmentStartDate(past(1));
+        course.getEnrollmentConfiguration().setEnrollmentEndDate(future(1));
         course = courseRepository.save(course);
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 

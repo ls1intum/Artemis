@@ -7,6 +7,9 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, map, merge } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
@@ -141,9 +144,15 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
+        this.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        this.course.complaintConfiguration = new CourseComplaintConfiguration();
+        this.course.extendedSettings = new CourseExtendedSettings();
         this.activatedRoute.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                this.course.enrollmentConfiguration ??= new CourseEnrollmentConfiguration();
+                this.course.complaintConfiguration ??= new CourseComplaintConfiguration();
+                this.course.extendedSettings ??= new CourseExtendedSettings();
                 this.croppedImage = course.courseIconPath;
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
@@ -151,17 +160,22 @@ export class CourseUpdateComponent implements OnInit {
                 this.originalTimeZone = this.course.timeZone;
                 this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-                this.complaintsEnabled =
-                    (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
-                    this.course.maxComplaintTimeDays! > 0 &&
-                    this.course.maxComplaintTextLimit! > 0 &&
-                    this.course.maxComplaintResponseTextLimit! > 0;
-                this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+                const complaintConfig = this.course.complaintConfiguration;
+                this.complaintsEnabled = complaintConfig
+                    ? (complaintConfig.maxComplaints! > 0 || complaintConfig.maxTeamComplaints! > 0) &&
+                      complaintConfig.maxComplaintTimeDays! > 0 &&
+                      complaintConfig.maxComplaintTextLimit! > 0 &&
+                      complaintConfig.maxComplaintResponseTextLimit! > 0
+                    : false;
+                this.requestMoreFeedbackEnabled = complaintConfig ? complaintConfig.maxRequestMoreFeedbackTimeDays! > 0 : false;
             } else {
                 this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
                         if (res.body) {
-                            this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                            if (!this.course.extendedSettings) {
+                                this.course.extendedSettings = new CourseExtendedSettings();
+                            }
+                            this.course.extendedSettings.messagingCodeOfConduct = res.body;
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -212,8 +226,8 @@ export class CourseUpdateComponent implements OnInit {
                 teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
                 editorGroupName: new FormControl(this.course.editorGroupName),
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
-                description: new FormControl(this.course.description),
-                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
+                description: new FormControl(this.course.extendedSettings?.description),
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.extendedSettings?.messagingCodeOfConduct),
                 organizations: new FormControl(this.courseOrganizations),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
@@ -232,33 +246,33 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.min(1)],
                 }),
                 defaultProgrammingLanguage: new FormControl(this.course.defaultProgrammingLanguage),
-                maxComplaints: new FormControl(this.course.maxComplaints, {
+                maxComplaints: new FormControl(this.course.complaintConfiguration?.maxComplaints ?? 3, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                maxTeamComplaints: new FormControl(this.course.maxTeamComplaints, {
+                maxTeamComplaints: new FormControl(this.course.complaintConfiguration?.maxTeamComplaints ?? 3, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
+                maxComplaintTimeDays: new FormControl(this.course.complaintConfiguration?.maxComplaintTimeDays ?? 7, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                maxComplaintTextLimit: new FormControl(this.course.maxComplaintTextLimit, {
+                maxComplaintTextLimit: new FormControl(this.course.complaintConfiguration?.maxComplaintTextLimit ?? 2000, {
                     validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_TEXT_LIMIT)],
                 }),
-                maxComplaintResponseTextLimit: new FormControl(this.course.maxComplaintResponseTextLimit, {
+                maxComplaintResponseTextLimit: new FormControl(this.course.complaintConfiguration?.maxComplaintResponseTextLimit ?? 2000, {
                     validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_RESPONSE_TEXT_LIMIT)],
                 }),
-                maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
+                maxRequestMoreFeedbackTimeDays: new FormControl(this.course.complaintConfiguration?.maxRequestMoreFeedbackTimeDays ?? 7, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
-                enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
-                enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
-                enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
-                enrollmentConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
+                enrollmentEnabled: new FormControl(this.course.enrollmentConfiguration?.enrollmentEnabled ?? false),
+                enrollmentStartDate: new FormControl(this.course.enrollmentConfiguration?.enrollmentStartDate),
+                enrollmentEndDate: new FormControl(this.course.enrollmentConfiguration?.enrollmentEndDate),
+                enrollmentConfirmationMessage: new FormControl(this.course.enrollmentConfiguration?.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
-                unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
-                unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
+                unenrollmentEnabled: new FormControl(this.course.enrollmentConfiguration?.unenrollmentEnabled ?? false),
+                unenrollmentEndDate: new FormControl(this.course.enrollmentConfiguration?.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
                 timeZone: new FormControl(this.course.timeZone),
@@ -309,10 +323,61 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue() as Course;
+        const formValues = this.courseForm.getRawValue();
+        const course = new Course();
+
+        // Copy basic course properties
+        course.id = formValues.id;
+        course.title = formValues.title;
+        course.shortName = formValues.shortName;
+        course.studentGroupName = formValues.studentGroupName;
+        course.teachingAssistantGroupName = formValues.teachingAssistantGroupName;
+        course.editorGroupName = formValues.editorGroupName;
+        course.instructorGroupName = formValues.instructorGroupName;
+        course.startDate = formValues.startDate;
+        course.endDate = formValues.endDate;
+        course.semester = formValues.semester;
+        course.testCourse = formValues.testCourse;
+        course.learningPathsEnabled = formValues.learningPathsEnabled;
+        course.studentCourseAnalyticsDashboardEnabled = formValues.studentCourseAnalyticsDashboardEnabled;
+        course.onlineCourse = formValues.onlineCourse;
+        course.faqEnabled = formValues.faqEnabled;
+        course.maxPoints = formValues.maxPoints;
+        course.accuracyOfScores = formValues.accuracyOfScores;
+        course.defaultProgrammingLanguage = formValues.defaultProgrammingLanguage;
+        course.restrictedAthenaModulesAccess = formValues.restrictedAthenaModulesAccess;
+        course.color = formValues.color;
+        course.courseIcon = formValues.courseIcon;
+        course.timeZone = formValues.timeZone;
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
+
+        // Build extended settings
+        course.extendedSettings = this.course.extendedSettings ?? new CourseExtendedSettings();
+        course.extendedSettings.id = this.course.extendedSettings?.id;
+        course.extendedSettings.description = formValues.description;
+        course.extendedSettings.messagingCodeOfConduct = formValues.courseInformationSharingMessagingCodeOfConduct;
+
+        // Build enrollment configuration
+        course.enrollmentConfiguration = this.course.enrollmentConfiguration ?? new CourseEnrollmentConfiguration();
+        course.enrollmentConfiguration.id = this.course.enrollmentConfiguration?.id;
+        course.enrollmentConfiguration.enrollmentEnabled = formValues.enrollmentEnabled;
+        course.enrollmentConfiguration.enrollmentStartDate = formValues.enrollmentStartDate;
+        course.enrollmentConfiguration.enrollmentEndDate = formValues.enrollmentEndDate;
+        course.enrollmentConfiguration.enrollmentConfirmationMessage = formValues.enrollmentEnabled ? formValues.enrollmentConfirmationMessage : undefined;
+        course.enrollmentConfiguration.unenrollmentEnabled = formValues.unenrollmentEnabled;
+        course.enrollmentConfiguration.unenrollmentEndDate = formValues.unenrollmentEndDate;
+
+        // Build complaint configuration
+        course.complaintConfiguration = this.course.complaintConfiguration ?? new CourseComplaintConfiguration();
+        course.complaintConfiguration.id = this.course.complaintConfiguration?.id;
+        course.complaintConfiguration.maxComplaints = formValues.maxComplaints;
+        course.complaintConfiguration.maxTeamComplaints = formValues.maxTeamComplaints;
+        course.complaintConfiguration.maxComplaintTimeDays = formValues.maxComplaintTimeDays;
+        course.complaintConfiguration.maxComplaintTextLimit = formValues.maxComplaintTextLimit;
+        course.complaintConfiguration.maxComplaintResponseTextLimit = formValues.maxComplaintResponseTextLimit;
+        course.complaintConfiguration.maxRequestMoreFeedbackTimeDays = formValues.maxRequestMoreFeedbackTimeDays;
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -321,10 +386,6 @@ export class CourseUpdateComponent implements OnInit {
         } else {
             this.communicationEnabled = false;
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-        }
-
-        if (!course.enrollmentEnabled) {
-            course.enrollmentConfirmationMessage = undefined;
         }
 
         if (this.course.id !== undefined) {
@@ -421,48 +482,56 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable student course enrollment
      */
     changeEnrollmentEnabled() {
-        this.course.enrollmentEnabled = !this.course.enrollmentEnabled;
-        if (this.course.enrollmentEnabled) {
+        // Ensure enrollmentConfiguration exists
+        if (!this.course.enrollmentConfiguration) {
+            this.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        }
+        this.course.enrollmentConfiguration.enrollmentEnabled = !this.course.enrollmentConfiguration.enrollmentEnabled;
+        if (this.course.enrollmentConfiguration.enrollmentEnabled) {
             // online course cannot be activated if enrollment enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
-            if (!this.course.enrollmentStartDate) {
-                this.course.enrollmentStartDate = this.course.startDate;
+            if (!this.course.enrollmentConfiguration.enrollmentStartDate) {
+                this.course.enrollmentConfiguration.enrollmentStartDate = this.course.startDate;
                 this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
             }
-            if (!this.course.enrollmentEndDate) {
+            if (!this.course.enrollmentConfiguration.enrollmentEndDate) {
                 // default unenrollment end date would be set as course end date (when enabled)
                 // therefore default enrollment end date should be before unenrollment end date to be valid
                 const defaultEnrollmentEndDate = this.course.endDate?.subtract(1, 'minute');
-                this.course.enrollmentEndDate = defaultEnrollmentEndDate;
+                this.course.enrollmentConfiguration.enrollmentEndDate = defaultEnrollmentEndDate;
                 this.courseForm.controls['enrollmentEndDate'].setValue(defaultEnrollmentEndDate);
             }
         } else {
-            if (this.course.enrollmentStartDate) {
-                this.course.enrollmentStartDate = undefined;
+            if (this.course.enrollmentConfiguration.enrollmentStartDate) {
+                this.course.enrollmentConfiguration.enrollmentStartDate = undefined;
                 this.courseForm.controls['enrollmentStartDate'].setValue(undefined);
             }
-            if (this.course.enrollmentEndDate) {
-                this.course.enrollmentEndDate = undefined;
+            if (this.course.enrollmentConfiguration.enrollmentEndDate) {
+                this.course.enrollmentConfiguration.enrollmentEndDate = undefined;
                 this.courseForm.controls['enrollmentEndDate'].setValue(undefined);
             }
-            if (this.course.unenrollmentEnabled) {
+            if (this.course.enrollmentConfiguration.unenrollmentEnabled) {
                 this.changeUnenrollmentEnabled();
             }
         }
-        this.courseForm.controls['enrollmentEnabled'].setValue(this.course.enrollmentEnabled);
+        this.courseForm.controls['enrollmentEnabled'].setValue(this.course.enrollmentConfiguration.enrollmentEnabled);
     }
 
     /**
      * Enable or disable student course unenrollment
      */
     changeUnenrollmentEnabled() {
-        this.course.unenrollmentEnabled = !this.course.unenrollmentEnabled;
-        this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.unenrollmentEnabled);
-        if (this.course.unenrollmentEnabled && !this.course.unenrollmentEndDate) {
-            this.course.unenrollmentEndDate = this.course.endDate;
-            this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
-        } else if (!this.course.unenrollmentEnabled && this.course.unenrollmentEndDate) {
-            this.course.unenrollmentEndDate = undefined;
+        // Ensure enrollmentConfiguration exists
+        if (!this.course.enrollmentConfiguration) {
+            this.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        }
+        this.course.enrollmentConfiguration.unenrollmentEnabled = !this.course.enrollmentConfiguration.unenrollmentEnabled;
+        this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.enrollmentConfiguration.unenrollmentEnabled);
+        if (this.course.enrollmentConfiguration.unenrollmentEnabled && !this.course.enrollmentConfiguration.unenrollmentEndDate) {
+            this.course.enrollmentConfiguration.unenrollmentEndDate = this.course.endDate;
+            this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.enrollmentConfiguration.unenrollmentEndDate);
+        } else if (!this.course.enrollmentConfiguration.unenrollmentEnabled && this.course.enrollmentConfiguration.unenrollmentEndDate) {
+            this.course.enrollmentConfiguration.unenrollmentEndDate = undefined;
             this.courseForm.controls['unenrollmentEndDate'].setValue(undefined);
         }
     }
@@ -610,8 +679,9 @@ export class CourseUpdateComponent implements OnInit {
      * @return true if the dates are valid
      */
     get isValidEnrollmentPeriod(): boolean {
+        const enrollmentConfig = this.course.enrollmentConfiguration;
         // allow instructors to set enrollment dates later
-        if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+        if (!enrollmentConfig?.enrollmentStartDate || !enrollmentConfig?.enrollmentEndDate) {
             return true;
         }
 
@@ -620,7 +690,7 @@ export class CourseUpdateComponent implements OnInit {
             return false;
         }
 
-        return dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) && !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate);
+        return dayjs(enrollmentConfig.enrollmentStartDate).isBefore(enrollmentConfig.enrollmentEndDate) && !dayjs(enrollmentConfig.enrollmentEndDate).isAfter(this.course.endDate);
     }
 
     /**
@@ -628,17 +698,20 @@ export class CourseUpdateComponent implements OnInit {
      * @return true if the date is valid
      */
     get isValidUnenrollmentEndDate(): boolean {
+        const enrollmentConfig = this.course.enrollmentConfiguration;
         // allow instructors to set unenrollment end date later
-        if (!this.course.unenrollmentEndDate) {
+        if (!enrollmentConfig?.unenrollmentEndDate) {
             return true;
         }
 
         // course enrollment period is required to configure unenrollment end date
-        if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate || !this.isValidEnrollmentPeriod) {
+        if (!enrollmentConfig?.enrollmentStartDate || !enrollmentConfig?.enrollmentEndDate || !this.isValidEnrollmentPeriod) {
             return false;
         }
 
-        return !dayjs(this.course.unenrollmentEndDate).isBefore(this.course.enrollmentEndDate) && !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.endDate);
+        return (
+            !dayjs(enrollmentConfig.unenrollmentEndDate).isBefore(enrollmentConfig.enrollmentEndDate) && !dayjs(enrollmentConfig.unenrollmentEndDate).isAfter(this.course.endDate)
+        );
     }
 
     /**
@@ -683,11 +756,14 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable communication
      */
     async changeCommunicationEnabled() {
-        if (this.communicationEnabled && !this.course.courseInformationSharingMessagingCodeOfConduct) {
+        if (this.communicationEnabled && !this.course.extendedSettings?.messagingCodeOfConduct) {
             try {
                 const res = await firstValueFrom(this.fileService.getTemplateCodeOfConduct());
                 if (res.body) {
-                    this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                    if (!this.course.extendedSettings) {
+                        this.course.extendedSettings = new CourseExtendedSettings();
+                    }
+                    this.course.extendedSettings.messagingCodeOfConduct = res.body;
                     this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                 }
             } catch (err) {

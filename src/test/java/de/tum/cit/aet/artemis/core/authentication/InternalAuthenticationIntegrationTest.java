@@ -100,7 +100,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
         var course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1.setEnrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(true);
         course1 = courseRepository.save(course1);
         Set<String> updatedGroups = request.postSetWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());

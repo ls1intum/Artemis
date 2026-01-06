@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_OPERATION_PROG
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.CourseOperationStatus;
 import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;
 
@@ -131,40 +129,6 @@ public class CourseOperationProgressService {
             String errorMessage, double weightedProgressPercent) {
         var status = CourseOperationProgressDTO.failed(operationType, currentStep, stepsCompleted, totalSteps, failed, startedAt, errorMessage, weightedProgressPercent);
         sendAndCacheProgress(courseId, status);
-    }
-
-    /**
-     * Gets the current progress status for a course operation.
-     *
-     * @param courseId the ID of the course
-     * @return the current progress status, or empty if no operation is in progress
-     */
-    public Optional<CourseOperationProgressDTO> getOperationProgress(long courseId) {
-        return Optional.ofNullable(cacheManager.getCache(COURSE_OPERATION_PROGRESS_STATUS)).map(cache -> cache.get(courseId))
-                .map(wrapper -> (CourseOperationProgressDTO) wrapper.get());
-    }
-
-    /**
-     * Clears the progress status for a course. Should be called after the operation is complete
-     * and the client has acknowledged or after a timeout.
-     *
-     * @param courseId the ID of the course
-     */
-    public void clearProgress(long courseId) {
-        var cache = cacheManager.getCache(COURSE_OPERATION_PROGRESS_STATUS);
-        if (cache != null) {
-            cache.evict(courseId);
-        }
-    }
-
-    /**
-     * Checks if an operation is currently in progress for a course.
-     *
-     * @param courseId the ID of the course
-     * @return true if an operation is in progress
-     */
-    public boolean isOperationInProgress(long courseId) {
-        return getOperationProgress(courseId).map(status -> status.status() == CourseOperationStatus.IN_PROGRESS).orElse(false);
     }
 
     private void sendAndCacheProgress(long courseId, CourseOperationProgressDTO status) {

@@ -35,9 +35,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseExtendedSettingsRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
@@ -339,6 +341,9 @@ class AtlasAgentServiceTest {
         private CourseTestRepository courseRepository;
 
         @Mock
+        private CourseExtendedSettingsRepository courseExtendedSettingsRepository;
+
+        @Mock
         private ExerciseTestRepository exerciseRepository;
 
         private AtlasAgentToolsService toolsService;
@@ -346,16 +351,13 @@ class AtlasAgentServiceTest {
         @BeforeEach
         void setUp() {
             ObjectMapper objectMapper = new ObjectMapper();
-            toolsService = new AtlasAgentToolsService(objectMapper, competencyRepository, courseRepository, exerciseRepository);
+            toolsService = new AtlasAgentToolsService(objectMapper, competencyRepository, courseRepository, courseExtendedSettingsRepository, exerciseRepository);
         }
 
         @Test
         void testGetCourseDescription_Success() {
             Long courseId = 123L;
-            Course course = new Course();
-            course.setDescription("Software Engineering Course");
-
-            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(courseExtendedSettingsRepository.findDescriptionByCourseId(courseId)).thenReturn("Software Engineering Course");
 
             String result = toolsService.getCourseDescription(courseId);
 
@@ -366,7 +368,7 @@ class AtlasAgentServiceTest {
         void testGetCourseDescription_NotFound() {
             Long courseId = 999L;
 
-            when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
+            when(courseExtendedSettingsRepository.findDescriptionByCourseId(courseId)).thenReturn(null);
 
             String result = toolsService.getCourseDescription(courseId);
 
@@ -386,7 +388,8 @@ class AtlasAgentServiceTest {
             competency.setTaxonomy(CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
-            when(competencyRepository.findAllByCourseId(courseId)).thenReturn(Set.of(competency));
+            when(competencyRepository.findCompetenciesByCourseId(courseId))
+                    .thenReturn(Set.of(new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), courseId)));
 
             String result = toolsService.getCourseCompetencies(courseId);
 
@@ -481,7 +484,8 @@ class AtlasAgentServiceTest {
             competency.setTaxonomy(null);
 
             when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
-            when(competencyRepository.findAllByCourseId(courseId)).thenReturn(Set.of(competency));
+            when(competencyRepository.findCompetenciesByCourseId(courseId))
+                    .thenReturn(Set.of(new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), courseId)));
 
             String result = toolsService.getCourseCompetencies(courseId);
 

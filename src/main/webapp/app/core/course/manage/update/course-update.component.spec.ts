@@ -10,6 +10,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseUpdateComponent } from 'app/core/course/manage/update/course-update.component';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -77,24 +80,13 @@ describe('Course Management Update Component', () => {
         course.id = 123;
         course.title = 'testCourseTitle';
         course.shortName = 'testShortName';
-        course.description = 'description';
         course.startDate = dayjs();
         course.endDate = dayjs();
         course.semester = 'testSemester';
         course.defaultProgrammingLanguage = ProgrammingLanguage.PYTHON;
         course.testCourse = true;
         course.onlineCourse = true;
-        course.complaintsEnabled = true;
-        course.requestMoreFeedbackEnabled = true;
-        course.maxComplaints = 12;
-        course.maxTeamComplaints = 13;
-        course.maxComplaintTimeDays = 14;
-        course.maxComplaintTextLimit = 500;
-        course.maxComplaintResponseTextLimit = 1000;
-        course.maxRequestMoreFeedbackTimeDays = 15;
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-        course.enrollmentEnabled = true;
-        course.enrollmentConfirmationMessage = 'testEnrollmentConfirmationMessage';
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
@@ -102,6 +94,22 @@ describe('Course Management Update Component', () => {
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
         course.studentCourseAnalyticsDashboardEnabled = false;
+
+        // Initialize nested configuration objects
+        course.complaintConfiguration = new CourseComplaintConfiguration();
+        course.complaintConfiguration.maxComplaints = 12;
+        course.complaintConfiguration.maxTeamComplaints = 13;
+        course.complaintConfiguration.maxComplaintTimeDays = 14;
+        course.complaintConfiguration.maxComplaintTextLimit = 500;
+        course.complaintConfiguration.maxComplaintResponseTextLimit = 1000;
+        course.complaintConfiguration.maxRequestMoreFeedbackTimeDays = 15;
+
+        course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        course.enrollmentConfiguration.enrollmentEnabled = true;
+        course.enrollmentConfiguration.enrollmentConfirmationMessage = 'testEnrollmentConfirmationMessage';
+
+        course.extendedSettings = new CourseExtendedSettings();
+        course.extendedSettings.description = 'description';
 
         const route = {
             data: of({ course }),
@@ -193,18 +201,18 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['defaultProgrammingLanguage'])?.value).toBe(course.defaultProgrammingLanguage);
             expect(comp.courseForm.get(['testCourse'])?.value).toBe(course.testCourse);
             expect(comp.courseForm.get(['onlineCourse'])?.value).toBe(course.onlineCourse);
-            expect(comp.courseForm.get(['complaintsEnabled'])?.value).toBe(course.complaintsEnabled);
-            expect(comp.courseForm.get(['requestMoreFeedbackEnabled'])?.value).toBe(course.requestMoreFeedbackEnabled);
-            expect(comp.courseForm.get(['maxComplaints'])?.value).toBe(course.maxComplaints);
-            expect(comp.courseForm.get(['maxTeamComplaints'])?.value).toBe(course.maxTeamComplaints);
-            expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).toBe(course.maxComplaintTimeDays);
-            expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
-            expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
-            expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
+            expect(comp.courseForm.get(['complaintsEnabled'])?.value).toBe(course.complaintConfiguration?.complaintsEnabled);
+            expect(comp.courseForm.get(['requestMoreFeedbackEnabled'])?.value).toBe(course.complaintConfiguration?.requestMoreFeedbackEnabled);
+            expect(comp.courseForm.get(['maxComplaints'])?.value).toBe(course.complaintConfiguration?.maxComplaints);
+            expect(comp.courseForm.get(['maxTeamComplaints'])?.value).toBe(course.complaintConfiguration?.maxTeamComplaints);
+            expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).toBe(course.complaintConfiguration?.maxComplaintTimeDays);
+            expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.complaintConfiguration?.maxComplaintTextLimit);
+            expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.complaintConfiguration?.maxComplaintResponseTextLimit);
+            expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.complaintConfiguration?.maxRequestMoreFeedbackTimeDays);
             expect(comp.messagingEnabled).toBe(isMessagingEnabled(course));
             expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
-            expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentEnabled);
-            expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
+            expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentConfiguration?.enrollmentEnabled);
+            expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfiguration?.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
@@ -219,23 +227,25 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
+            entity.complaintConfiguration = new CourseComplaintConfiguration();
+            entity.enrollmentConfiguration = new CourseEnrollmentConfiguration();
             const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
-                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(entity.enrollmentConfiguration?.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
-                maxComplaints: new FormControl(entity.maxComplaints),
+                maxComplaints: new FormControl(entity.complaintConfiguration?.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
-                maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
-                maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
-                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
-                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
-                complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
-                maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
+                maxTeamComplaints: new FormControl(entity.complaintConfiguration?.maxTeamComplaints),
+                maxComplaintTimeDays: new FormControl(entity.complaintConfiguration?.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.complaintConfiguration?.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.complaintConfiguration?.maxComplaintResponseTextLimit),
+                complaintsEnabled: new FormControl(entity.complaintConfiguration?.complaintsEnabled),
+                requestMoreFeedbackEnabled: new FormControl(entity.complaintConfiguration?.requestMoreFeedbackEnabled),
+                maxRequestMoreFeedbackTimeDays: new FormControl(entity.complaintConfiguration?.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
                 isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
@@ -246,7 +256,17 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
+            const [calledId, calledCourse, calledFile] = updateStub.mock.calls[0];
+            expect(calledId).toBe(entity.id);
+            expect(calledFile).toBeUndefined();
+            expect(calledCourse).toEqual(
+                expect.objectContaining({
+                    id: entity.id,
+                    complaintConfiguration: expect.any(CourseComplaintConfiguration),
+                    enrollmentConfiguration: expect.any(CourseEnrollmentConfiguration),
+                    extendedSettings: expect.any(CourseExtendedSettings),
+                }),
+            );
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -254,22 +274,24 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            entity.complaintConfiguration = new CourseComplaintConfiguration();
+            entity.enrollmentConfiguration = new CourseEnrollmentConfiguration();
             const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
-                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(entity.enrollmentConfiguration?.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
-                maxComplaints: new FormControl(entity.maxComplaints),
+                maxComplaints: new FormControl(entity.complaintConfiguration?.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
-                maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
-                maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
-                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
-                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
-                complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
-                maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
+                maxTeamComplaints: new FormControl(entity.complaintConfiguration?.maxTeamComplaints),
+                maxComplaintTimeDays: new FormControl(entity.complaintConfiguration?.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.complaintConfiguration?.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.complaintConfiguration?.maxComplaintResponseTextLimit),
+                complaintsEnabled: new FormControl(entity.complaintConfiguration?.complaintsEnabled),
+                requestMoreFeedbackEnabled: new FormControl(entity.complaintConfiguration?.requestMoreFeedbackEnabled),
+                maxRequestMoreFeedbackTimeDays: new FormControl(entity.complaintConfiguration?.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
                 isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
@@ -280,7 +302,15 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith(entity, undefined);
+            const [calledCourse, calledFile] = createStub.mock.calls[0];
+            expect(calledFile).toBeUndefined();
+            expect(calledCourse).toEqual(
+                expect.objectContaining({
+                    complaintConfiguration: expect.any(CourseComplaintConfiguration),
+                    enrollmentConfiguration: expect.any(CourseEnrollmentConfiguration),
+                    extendedSettings: expect.any(CourseExtendedSettings),
+                }),
+            );
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -375,7 +405,8 @@ describe('Course Management Update Component', () => {
     describe('changeEnrollmentEnabled', () => {
         it('should disable online course if enrollment becomes enabled', () => {
             comp.course = new Course();
-            comp.course.enrollmentEnabled = false;
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentEnabled = false;
             comp.courseForm = new FormGroup({
                 enrollmentEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
@@ -387,14 +418,15 @@ describe('Course Management Update Component', () => {
             comp.changeEnrollmentEnabled();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
-            expect(comp.course.enrollmentEnabled).toBeTrue();
+            expect(comp.course.enrollmentConfiguration?.enrollmentEnabled).toBeTrue();
         });
 
         it('should call unenrollmentEnabled', () => {
             const enabelunrollSpy = jest.spyOn(comp, 'changeUnenrollmentEnabled').mockReturnValue();
             comp.course = new Course();
-            comp.course.enrollmentEnabled = true;
-            comp.course.unenrollmentEnabled = true;
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentEnabled = true;
+            comp.course.enrollmentConfiguration.unenrollmentEnabled = true;
             comp.courseForm = new FormGroup({
                 enrollmentEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
@@ -407,19 +439,20 @@ describe('Course Management Update Component', () => {
 
         it('should set enrollment start and end date to undefined when enrollment is disabled', () => {
             comp.course = new Course();
-            comp.course.enrollmentEnabled = true;
-            comp.course.enrollmentStartDate = dayjs();
-            comp.course.enrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentEnabled = true;
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs();
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs().add(1, 'day');
             comp.courseForm = new FormGroup({
                 enrollmentEnabled: new FormControl(true),
-                enrollmentStartDate: new FormControl(comp.course.enrollmentStartDate),
-                enrollmentEndDate: new FormControl(comp.course.enrollmentEndDate),
+                enrollmentStartDate: new FormControl(comp.course.enrollmentConfiguration.enrollmentStartDate),
+                enrollmentEndDate: new FormControl(comp.course.enrollmentConfiguration.enrollmentEndDate),
             });
             comp.changeEnrollmentEnabled();
             expect(comp.courseForm.controls['enrollmentStartDate'].value).toBeUndefined();
             expect(comp.courseForm.controls['enrollmentEndDate'].value).toBeUndefined();
-            expect(comp.course.enrollmentStartDate).toBeUndefined();
-            expect(comp.course.enrollmentEndDate).toBeUndefined();
+            expect(comp.course.enrollmentConfiguration?.enrollmentStartDate).toBeUndefined();
+            expect(comp.course.enrollmentConfiguration?.enrollmentEndDate).toBeUndefined();
             expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
         });
 
@@ -427,9 +460,10 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs();
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = undefined;
-            comp.course.enrollmentEndDate = undefined;
-            comp.course.enrollmentEnabled = false;
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = undefined;
+            comp.course.enrollmentConfiguration.enrollmentEndDate = undefined;
+            comp.course.enrollmentConfiguration.enrollmentEnabled = false;
             const expectedEnrollmentEndDate = comp.course.endDate.subtract(1, 'minute');
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(false),
@@ -438,8 +472,8 @@ describe('Course Management Update Component', () => {
                 enrollmentEndDate: new FormControl(),
             });
             comp.changeEnrollmentEnabled();
-            expect(comp.course.enrollmentStartDate).toBe(comp.course.startDate);
-            expect(comp.course.enrollmentEndDate).toStrictEqual(expectedEnrollmentEndDate);
+            expect(comp.course.enrollmentConfiguration?.enrollmentStartDate).toBe(comp.course.startDate);
+            expect(comp.course.enrollmentConfiguration?.enrollmentEndDate).toStrictEqual(expectedEnrollmentEndDate);
             expect(comp.courseForm.controls['enrollmentStartDate'].value).toBe(comp.course.startDate);
             expect(comp.courseForm.controls['enrollmentEndDate'].value).toStrictEqual(expectedEnrollmentEndDate);
             expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
@@ -516,26 +550,28 @@ describe('Course Management Update Component', () => {
         it('should toggle unenrollment enabled', () => {
             comp.course = new Course();
             comp.course.endDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
             comp.courseForm = new FormGroup({
                 unenrollmentEnabled: new FormControl(false),
                 unenrollmentEndDate: new FormControl(undefined),
             });
             comp.changeUnenrollmentEnabled();
             expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeTruthy();
-            expect(comp.course.unenrollmentEndDate).toBe(comp.course.endDate);
+            expect(comp.course.enrollmentConfiguration?.unenrollmentEndDate).toBe(comp.course.endDate);
         });
         it('should toggle unenrollment disabled', () => {
             comp.course = new Course();
             comp.course.endDate = dayjs();
-            comp.course.unenrollmentEnabled = true;
-            comp.course.unenrollmentEndDate = comp.course.endDate;
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.unenrollmentEnabled = true;
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = comp.course.endDate;
             comp.courseForm = new FormGroup({
                 unenrollmentEnabled: new FormControl(true),
                 unenrollmentEndDate: new FormControl(comp.course.endDate),
             });
             comp.changeUnenrollmentEnabled();
             expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeFalsy();
-            expect(comp.course.unenrollmentEndDate).toBeUndefined();
+            expect(comp.course.enrollmentConfiguration?.unenrollmentEndDate).toBeUndefined();
         });
     });
 
@@ -614,31 +650,35 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
             expect(comp.isValidEnrollmentPeriod).toBeTrue();
         });
 
         it('should not be valid if course start and end date are not set', () => {
             comp.course = new Course();
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
         it('should not be valid if course start date is not set', () => {
             comp.course = new Course();
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
         it('should not be valid if course end date is not set', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
@@ -646,8 +686,9 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
@@ -655,8 +696,9 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs().subtract(3, 'day');
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
@@ -664,8 +706,9 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(2, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(1, 'day');
-            comp.course.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
             expect(comp.isValidEnrollmentPeriod).toBeTrue();
         });
 
@@ -673,8 +716,9 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs().add(2, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs().add(2, 'day');
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
     });
@@ -684,9 +728,10 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
-            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs().add(1, 'day');
             expect(comp.isValidUnenrollmentEndDate).toBeTrue();
         });
 
@@ -695,7 +740,8 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
-            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs().add(1, 'day');
             expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
 
@@ -703,8 +749,9 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
-            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs().add(1, 'day');
             expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
 
@@ -712,8 +759,9 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs().add(1, 'day');
             expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
 
@@ -721,9 +769,10 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
-            comp.course.enrollmentStartDate = dayjs();
-            comp.course.enrollmentEndDate = dayjs().subtract(2, 'day');
-            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs();
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs().add(1, 'day');
             expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
 
@@ -731,9 +780,10 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs().add(1, 'day');
-            comp.course.unenrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs();
             expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
 
@@ -741,9 +791,10 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
-            comp.course.enrollmentEndDate = dayjs();
-            comp.course.unenrollmentEndDate = dayjs().add(2, 'day');
+            comp.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+            comp.course.enrollmentConfiguration.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentConfiguration.enrollmentEndDate = dayjs();
+            comp.course.enrollmentConfiguration.unenrollmentEndDate = dayjs().add(2, 'day');
             expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
     });
@@ -914,14 +965,15 @@ describe('Course Management Update Component', () => {
 
             comp.communicationEnabled = true;
             comp.course = new Course();
-            comp.course.courseInformationSharingMessagingCodeOfConduct = undefined;
+            comp.course.extendedSettings = new CourseExtendedSettings();
+            comp.course.extendedSettings.messagingCodeOfConduct = undefined;
             comp.courseForm = new FormGroup({
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(),
             });
 
             await comp.changeCommunicationEnabled();
 
-            expect(comp.course.courseInformationSharingMessagingCodeOfConduct).toBe(codeOfConduct);
+            expect(comp.course.extendedSettings?.messagingCodeOfConduct).toBe(codeOfConduct);
             expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe(codeOfConduct);
         });
 
@@ -931,7 +983,8 @@ describe('Course Management Update Component', () => {
 
             comp.communicationEnabled = true;
             comp.course = new Course();
-            comp.course.courseInformationSharingMessagingCodeOfConduct = existingCodeOfConduct;
+            comp.course.extendedSettings = new CourseExtendedSettings();
+            comp.course.extendedSettings.messagingCodeOfConduct = existingCodeOfConduct;
             comp.courseForm = new FormGroup({
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(existingCodeOfConduct),
             });
@@ -939,7 +992,7 @@ describe('Course Management Update Component', () => {
             await comp.changeCommunicationEnabled();
 
             expect(getTemplateSpy).not.toHaveBeenCalled();
-            expect(comp.course.courseInformationSharingMessagingCodeOfConduct).toBe(existingCodeOfConduct);
+            expect(comp.course.extendedSettings?.messagingCodeOfConduct).toBe(existingCodeOfConduct);
         });
 
         it('should disable messaging when communication is enabled', async () => {
@@ -948,7 +1001,8 @@ describe('Course Management Update Component', () => {
             comp.communicationEnabled = true;
             comp.messagingEnabled = true;
             comp.course = new Course();
-            comp.course.courseInformationSharingMessagingCodeOfConduct = '# Code of Conduct';
+            comp.course.extendedSettings = new CourseExtendedSettings();
+            comp.course.extendedSettings.messagingCodeOfConduct = '# Code of Conduct';
 
             await comp.changeCommunicationEnabled();
 
@@ -1151,6 +1205,6 @@ describe('Course Management Update Component Create', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         const codeOfConduct = 'Code of Conduct';
         req.flush(codeOfConduct);
-        expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
+        expect(component.course.extendedSettings?.messagingCodeOfConduct).toEqual(codeOfConduct);
     });
 });

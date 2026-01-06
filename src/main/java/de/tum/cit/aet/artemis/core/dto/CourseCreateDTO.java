@@ -10,6 +10,9 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -34,28 +37,27 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseCreateDTO(
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, String semester,
 
         // Group names (optional - will use defaults if not set)
         String studentGroupName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName,
 
         // Dates
-        ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
+        ZonedDateTime startDate, ZonedDateTime endDate,
 
         // Configuration flags
         boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
 
-        // Complaint settings
-        Integer maxComplaints, Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
-        int maxComplaintResponseTextLimit,
-
         // UI settings
-        String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
+        String color,
 
         // Course features
         boolean faqEnabled, boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints,
         @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess, String timeZone,
-        CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+
+        // Nested settings
+        CourseEnrollmentConfigurationDTO enrollmentConfiguration, CourseComplaintConfigurationDTO complaintConfiguration, CourseExtendedSettingsDTO extendedSettings) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -75,7 +77,6 @@ public record CourseCreateDTO(
         // Basic info
         course.setTitle(title);
         course.setShortName(shortName);
-        course.setDescription(description);
         course.setSemester(semester);
 
         // Group names
@@ -87,9 +88,6 @@ public record CourseCreateDTO(
         // Dates
         course.setStartDate(startDate);
         course.setEndDate(endDate);
-        course.setEnrollmentStartDate(enrollmentStartDate);
-        course.setEnrollmentEndDate(enrollmentEndDate);
-        course.setUnenrollmentEndDate(unenrollmentEndDate);
 
         // Configuration flags
         course.setTestCourse(testCourse);
@@ -97,19 +95,8 @@ public record CourseCreateDTO(
         course.setLanguage(language);
         course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
 
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-
         // UI settings
         course.setColor(color);
-        course.setEnrollmentEnabled(enrollmentEnabled);
-        course.setEnrollmentConfirmationMessage(enrollmentConfirmationMessage);
-        course.setUnenrollmentEnabled(unenrollmentEnabled);
 
         // Course features
         course.setFaqEnabled(faqEnabled);
@@ -117,11 +104,75 @@ public record CourseCreateDTO(
         course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
-        course.setAccuracyOfScores(accuracyOfScores);
+        if (accuracyOfScores != null) {
+            course.setAccuracyOfScores(accuracyOfScores);
+        }
         course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
         course.setTimeZone(timeZone);
-        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        if (courseInformationSharingConfiguration != null) {
+            course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        }
+
+        // Extended settings
+        var extendedSettingsEntity = new CourseExtendedSettings();
+        if (extendedSettings != null) {
+            extendedSettingsEntity.setDescription(extendedSettings.description());
+            extendedSettingsEntity.setMessagingCodeOfConduct(extendedSettings.messagingCodeOfConduct());
+            extendedSettingsEntity.setCourseArchivePath(extendedSettings.courseArchivePath());
+        }
+        course.setExtendedSettings(extendedSettingsEntity);
+
+        // Enrollment configuration
+        var enrollmentConfigEntity = new CourseEnrollmentConfiguration();
+        if (enrollmentConfiguration != null) {
+            if (enrollmentConfiguration.enrollmentEnabled() != null) {
+                enrollmentConfigEntity.setEnrollmentEnabled(enrollmentConfiguration.enrollmentEnabled());
+            }
+            enrollmentConfigEntity.setEnrollmentStartDate(enrollmentConfiguration.enrollmentStartDate());
+            enrollmentConfigEntity.setEnrollmentEndDate(enrollmentConfiguration.enrollmentEndDate());
+            enrollmentConfigEntity.setUnenrollmentEndDate(enrollmentConfiguration.unenrollmentEndDate());
+            enrollmentConfigEntity.setEnrollmentConfirmationMessage(enrollmentConfiguration.enrollmentConfirmationMessage());
+            if (enrollmentConfiguration.unenrollmentEnabled() != null) {
+                enrollmentConfigEntity.setUnenrollmentEnabled(enrollmentConfiguration.unenrollmentEnabled());
+            }
+        }
+        course.setEnrollmentConfiguration(enrollmentConfigEntity);
+
+        // Complaint configuration
+        var complaintConfigEntity = new CourseComplaintConfiguration();
+        if (complaintConfiguration != null) {
+            if (complaintConfiguration.maxComplaints() != null) {
+                complaintConfigEntity.setMaxComplaints(complaintConfiguration.maxComplaints());
+            }
+            if (complaintConfiguration.maxTeamComplaints() != null) {
+                complaintConfigEntity.setMaxTeamComplaints(complaintConfiguration.maxTeamComplaints());
+            }
+            if (complaintConfiguration.maxComplaintTimeDays() != null) {
+                complaintConfigEntity.setMaxComplaintTimeDays(complaintConfiguration.maxComplaintTimeDays());
+            }
+            if (complaintConfiguration.maxRequestMoreFeedbackTimeDays() != null) {
+                complaintConfigEntity.setMaxRequestMoreFeedbackTimeDays(complaintConfiguration.maxRequestMoreFeedbackTimeDays());
+            }
+            if (complaintConfiguration.maxComplaintTextLimit() != null) {
+                complaintConfigEntity.setMaxComplaintTextLimit(complaintConfiguration.maxComplaintTextLimit());
+            }
+            if (complaintConfiguration.maxComplaintResponseTextLimit() != null) {
+                complaintConfigEntity.setMaxComplaintResponseTextLimit(complaintConfiguration.maxComplaintResponseTextLimit());
+            }
+        }
+        course.setComplaintConfiguration(complaintConfigEntity);
 
         return course;
+    }
+
+    public record CourseEnrollmentConfigurationDTO(Boolean enrollmentEnabled, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate,
+            @Size(max = 2000) String enrollmentConfirmationMessage, Boolean unenrollmentEnabled, ZonedDateTime unenrollmentEndDate) {
+    }
+
+    public record CourseComplaintConfigurationDTO(Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays, Integer maxRequestMoreFeedbackTimeDays,
+            Integer maxComplaintTextLimit, Integer maxComplaintResponseTextLimit) {
+    }
+
+    public record CourseExtendedSettingsDTO(@Size(max = 2000) String description, String messagingCodeOfConduct, String courseArchivePath) {
     }
 }

@@ -158,19 +158,34 @@ public class CourseUpdateResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+        if (courseUpdate.getEnrollmentConfiguration() == null) {
+            courseUpdate.setEnrollmentConfiguration(existingCourse.getEnrollmentConfiguration());
+        }
+        if (courseUpdate.getComplaintConfiguration() == null) {
+            courseUpdate.setComplaintConfiguration(existingCourse.getComplaintConfiguration());
+        }
+        if (courseUpdate.getExtendedSettings() == null) {
+            courseUpdate.setExtendedSettings(existingCourse.getExtendedSettings());
+        }
 
         if (courseUpdate.getTitle().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
 
-        courseUpdate.validateEnrollmentConfirmationMessage();
-        courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
+        if (courseUpdate.getEnrollmentConfiguration() != null) {
+            courseUpdate.getEnrollmentConfiguration().validateEnrollmentConfirmationMessage();
+        }
+        if (courseUpdate.getComplaintConfiguration() != null) {
+            courseUpdate.getComplaintConfiguration().validateComplaintsAndRequestMoreFeedbackConfig();
+        }
         courseUpdate.validateOnlineCourseAndEnrollmentEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         courseUpdate.validateStartAndEndDate();
-        courseUpdate.validateEnrollmentStartAndEndDate();
-        courseUpdate.validateUnenrollmentEndDate();
+        if (courseUpdate.getEnrollmentConfiguration() != null) {
+            courseUpdate.getEnrollmentConfiguration().validateEnrollmentStartAndEndDate(courseUpdate.getStartDate(), courseUpdate.getEndDate());
+            courseUpdate.getEnrollmentConfiguration().validateUnenrollmentEndDate(courseUpdate.getEndDate());
+        }
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
@@ -195,7 +210,11 @@ public class CourseUpdateResource {
             }
         }
 
-        if (!Objects.equals(courseUpdate.getCourseInformationSharingMessagingCodeOfConduct(), existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
+        var updateExtendedSettings = courseUpdate.getExtendedSettings();
+        var existingExtendedSettings = existingCourse.getExtendedSettings();
+        String updateCodeOfConduct = updateExtendedSettings != null ? updateExtendedSettings.getMessagingCodeOfConduct() : null;
+        String existingCodeOfConduct = existingExtendedSettings != null ? existingExtendedSettings.getMessagingCodeOfConduct() : null;
+        if (!Objects.equals(updateCodeOfConduct, existingCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 

@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
@@ -117,6 +118,8 @@ public class ExerciseService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final ComplaintRepository complaintRepository;
 
     private final TutorLeaderboardService tutorLeaderboardService;
@@ -146,7 +149,7 @@ public class ExerciseService {
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
-            UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
+            UserRepository userRepository, CourseRepository courseRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
@@ -161,6 +164,7 @@ public class ExerciseService {
         this.ltiApi = ltiApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.complaintRepository = complaintRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -234,7 +238,9 @@ public class ExerciseService {
         final long exerciseId = exercise.getId();
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course courseFromExercise = exercise.getCourseViaExerciseGroupOrCourseMember();
+        // Load course with complaint configuration to ensure proper settings are available
+        Course course = courseRepository.findWithEagerComplaintConfigurationById(courseFromExercise.getId()).orElse(courseFromExercise);
 
         DueDateStat numberOfSubmissions;
         long numberOfAssessments;
@@ -304,8 +310,9 @@ public class ExerciseService {
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseId(exerciseId);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        stats.setFeedbackRequestEnabled(course.getComplaintsEnabled());
-        stats.setFeedbackRequestEnabled(course.getRequestMoreFeedbackEnabled());
+        var complaintConfig = course.getComplaintConfiguration();
+        stats.setFeedbackRequestEnabled(complaintConfig != null && complaintConfig.getComplaintsEnabled());
+        stats.setFeedbackRequestEnabled(complaintConfig != null && complaintConfig.getRequestMoreFeedbackEnabled());
 
         return stats;
     }

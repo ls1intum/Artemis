@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -120,7 +121,12 @@ public class CourseArchiveService {
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
-                course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
+                var extendedSettings = course.getExtendedSettings();
+                if (extendedSettings == null) {
+                    extendedSettings = new CourseExtendedSettings();
+                    course.setExtendedSettings(extendedSettings);
+                }
+                extendedSettings.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.saveAndFlush(course);
             }
         }
@@ -143,9 +149,10 @@ public class CourseArchiveService {
     public void cleanupCourse(Long courseId, Principal principal) {
         final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_COURSE, "course=" + courseId);
         auditEventRepository.add(auditEvent);
-        // Get the course with all exercises
-        var course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        if (!course.hasCourseArchive()) {
+        // Get the course with all exercises and extendedSettings
+        var course = courseRepository.findByIdWithEagerExercisesAndExtendedSettingsElseThrow(courseId);
+        var extendedSettings = course.getExtendedSettings();
+        if (extendedSettings == null || !extendedSettings.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;
         }

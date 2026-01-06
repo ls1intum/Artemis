@@ -8,6 +8,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 public record PyrisCourseDTO(long id, String name, String description) {
 
     public PyrisCourseDTO(Course course) {
-        this(course.getId(), course.getTitle(), course.getDescription());
+        this(course.getId(), course.getTitle(), course.getExtendedSettings() != null ? course.getExtendedSettings().getDescription() : null);
     }
 }

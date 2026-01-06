@@ -10,6 +10,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -33,6 +36,9 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
     void getKeysetHasKey() throws Exception {
         Course course = new Course();
         course.setId(1L);
+        course.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course.setComplaintConfiguration(new CourseComplaintConfiguration());
+        course.setExtendedSettings(new CourseExtendedSettings());
         courseRepository.save(course);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();

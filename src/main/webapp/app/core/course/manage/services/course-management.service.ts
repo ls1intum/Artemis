@@ -606,13 +606,19 @@ export class CourseManagementService {
 
     static convertCourseDatesFromClient(course: Course): Course {
         // copy of the object
-        return Object.assign({}, course, {
+        const converted = Object.assign({}, course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
-            enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
-            enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
-            unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
         });
+        // Also convert enrollment configuration dates if present
+        if (converted.enrollmentConfiguration) {
+            converted.enrollmentConfiguration = Object.assign({}, converted.enrollmentConfiguration, {
+                enrollmentStartDate: convertDateFromClient(course.enrollmentConfiguration?.enrollmentStartDate),
+                enrollmentEndDate: convertDateFromClient(course.enrollmentConfiguration?.enrollmentEndDate),
+                unenrollmentEndDate: convertDateFromClient(course.enrollmentConfiguration?.unenrollmentEndDate),
+            });
+        }
+        return converted;
     }
 
     private convertTutorialGroupDatesFromServer(courseRes: EntityResponseType): EntityResponseType {

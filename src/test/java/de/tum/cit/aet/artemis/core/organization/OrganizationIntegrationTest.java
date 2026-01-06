@@ -53,12 +53,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        course1.setEnrollmentEnabled(true);
-        course1.setEnrollmentStartDate(pastTimestamp);
-        course1.setEnrollmentEndDate(futureTimestamp);
-        course2.setEnrollmentEnabled(true);
-        course2.setEnrollmentStartDate(pastTimestamp);
-        course2.setEnrollmentEndDate(futureTimestamp);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setEnrollmentStartDate(pastTimestamp);
+        course1.getEnrollmentConfiguration().setEnrollmentEndDate(futureTimestamp);
+        course2.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course2.getEnrollmentConfiguration().setEnrollmentStartDate(pastTimestamp);
+        course2.getEnrollmentConfiguration().setEnrollmentEndDate(futureTimestamp);
         course1.setOrganizations(organizations);
 
         course1 = courseRepository.save(course1);
@@ -90,12 +90,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         Course course3 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
 
-        course1.setEnrollmentEnabled(true);
-        course1.setEnrollmentStartDate(pastTimestamp);
-        course1.setEnrollmentEndDate(futureTimestamp);
-        course2.setEnrollmentEnabled(true);
-        course2.setEnrollmentStartDate(pastTimestamp);
-        course2.setEnrollmentEndDate(futureTimestamp);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setEnrollmentStartDate(pastTimestamp);
+        course1.getEnrollmentConfiguration().setEnrollmentEndDate(futureTimestamp);
+        course2.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course2.getEnrollmentConfiguration().setEnrollmentStartDate(pastTimestamp);
+        course2.getEnrollmentConfiguration().setEnrollmentEndDate(futureTimestamp);
         course1.setOrganizations(organizations);
         course3.setOrganizations(otherOrganizations);
 

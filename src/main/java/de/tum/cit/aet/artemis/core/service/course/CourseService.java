@@ -186,6 +186,12 @@ public class CourseService {
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
+        if (course.getEnrollmentConfiguration() == null || course.getComplaintConfiguration() == null || course.getExtendedSettings() == null) {
+            var courseWithConfigurations = courseRepository.findWithEagerAllConfigurationsElseThrow(courseId);
+            course.setEnrollmentConfiguration(courseWithConfigurations.getEnrollmentConfiguration());
+            course.setComplaintConfiguration(courseWithConfigurations.getComplaintConfiguration());
+            course.setExtendedSettings(courseWithConfigurations.getExtendedSettings());
+        }
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));

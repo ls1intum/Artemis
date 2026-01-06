@@ -9,6 +9,7 @@ import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/ent
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -105,8 +106,10 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(difficultyLevelComponent).toBeTruthy();
     });
 
-    it('should set individualComplaintDueDate if course.maxComplaintTimeDays is defined', () => {
-        const course: Course = { id: 1, maxComplaintTimeDays: 7 } as Course;
+    it('should set individualComplaintDueDate if course.complaintConfiguration.maxComplaintTimeDays is defined', () => {
+        const complaintConfig = new CourseComplaintConfiguration();
+        complaintConfig.maxComplaintTimeDays = 7;
+        const course: Course = { id: 1, complaintConfiguration: complaintConfig } as Course;
         const result: Result = { id: 1, completionDate: dayjs().subtract(2, 'day') } as Result;
         const studentParticipation: StudentParticipation = {
             id: 1,
@@ -119,10 +122,10 @@ describe('ExerciseHeadersInformationComponent', () => {
         const expectedDueDate = dayjs().add(7, 'days');
         jest.spyOn(ComplaintService, 'getIndividualComplaintDueDate').mockReturnValue(expectedDueDate);
 
-        if (component.course?.maxComplaintTimeDays) {
+        if (component.course?.complaintConfiguration?.maxComplaintTimeDays) {
             component.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 component.exercise,
-                component.course.maxComplaintTimeDays,
+                component.course.complaintConfiguration.maxComplaintTimeDays,
                 getAllResultsOfAllSubmissions(component.studentParticipation.submissions).last(),
                 component.studentParticipation,
             );

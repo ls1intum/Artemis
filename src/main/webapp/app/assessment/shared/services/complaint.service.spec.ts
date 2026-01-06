@@ -12,7 +12,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -55,9 +55,8 @@ describe('ComplaintService', () => {
 
     let exercise: Exercise;
     let emptyResult: Result;
-    const course: Course = {
-        maxComplaintTimeDays: 7,
-    };
+    const complaintConfig = new CourseComplaintConfiguration();
+    complaintConfig.maxComplaintTimeDays = 7;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -263,7 +262,7 @@ describe('ComplaintService', () => {
 
     describe('getIndividualComplaintDueDate', () => {
         it('should return undefined for no results', () => {
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, undefined);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, undefined);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
@@ -272,7 +271,7 @@ describe('ComplaintService', () => {
             emptyResult.completionDate = dayjsTime3;
             exercise.dueDate = undefined;
             exercise.type = ExerciseType.QUIZ;
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
@@ -280,7 +279,7 @@ describe('ComplaintService', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3;
             exercise.dueDate = undefined;
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
@@ -288,7 +287,7 @@ describe('ComplaintService', () => {
             emptyResult.rated = true;
             exercise.dueDate = dayjsTime3;
             exercise.assessmentType = AssessmentType.AUTOMATIC;
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
@@ -298,7 +297,7 @@ describe('ComplaintService', () => {
             exercise.assessmentType = AssessmentType.AUTOMATIC;
             exercise.dueDate = dayjsTime3;
 
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
@@ -307,7 +306,7 @@ describe('ComplaintService', () => {
             exercise.allowComplaintsForAutomaticAssessments = true;
             exercise.assessmentType = AssessmentType.AUTOMATIC;
             exercise.dueDate = dayjsTime3.subtract(1, 'day');
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
         });
 
@@ -317,7 +316,7 @@ describe('ComplaintService', () => {
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.dueDate = dayjsTime3.subtract(2, 'days');
             exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
         });
 
@@ -327,14 +326,14 @@ describe('ComplaintService', () => {
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.dueDate = dayjsTime3.subtract(2, 'days');
             exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
         it('should return undefined for complaint due date before assessment dueDate', () => {
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.assessmentDueDate = dayjsTime3.add(1, 'days');
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
@@ -342,7 +341,7 @@ describe('ComplaintService', () => {
             emptyResult.rated = false;
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
-            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, complaintConfig.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
     });

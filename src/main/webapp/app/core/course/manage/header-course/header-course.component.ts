@@ -55,12 +55,13 @@ export class HeaderCourseComponent implements OnChanges {
      */
     adjustCourseDescription() {
         const shortDescriptionLength = window.innerWidth / (this.course.courseIconPath ? 3.6 : 3.4);
-        if (this.course && this.course.description) {
-            this.enableShowMore = this.course.description.length > shortDescriptionLength;
+        const description = this.course?.extendedSettings?.description;
+        if (this.course && description) {
+            this.enableShowMore = description.length > shortDescriptionLength;
             if (this.enableShowMore && !this.longDescriptionShown) {
-                this.courseDescription = this.course.description.slice(0, shortDescriptionLength) + '…';
+                this.courseDescription = description.slice(0, shortDescriptionLength) + '…';
             } else {
-                this.courseDescription = this.course.description;
+                this.courseDescription = description;
             }
         }
     }

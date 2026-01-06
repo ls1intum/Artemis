@@ -17,6 +17,7 @@ import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
@@ -60,7 +61,8 @@ describe('ComplaintsForTutorComponent', () => {
                 injectedAlertService = TestBed.inject(AlertService);
 
                 course = new Course();
-                course.maxComplaintResponseTextLimit = 26;
+                course.complaintConfiguration = new CourseComplaintConfiguration();
+                course.complaintConfiguration.maxComplaintResponseTextLimit = 26;
 
                 exercise = { id: 11, isAtLeastInstructor: true, course: course } as Exercise;
                 fixture.componentRef.setInput('exercise', exercise);

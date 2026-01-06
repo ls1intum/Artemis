@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ComplaintResponseLockedException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -45,13 +46,16 @@ public class ComplaintResponseService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -260,8 +264,13 @@ public class ComplaintResponseService {
 
     private void validateResponseTextLimit(String responseText, Complaint originalComplaint) {
         if (responseText != null) {
-            Course course = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
-            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getSubmission().getParticipation().getExercise());
+            Course courseFromExercise = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+            // Load course with complaint configuration eagerly to ensure proper limit checking
+            Course course = courseRepository.findWithEagerComplaintConfigurationById(courseFromExercise.getId()).orElse(courseFromExercise);
+            var complaintConfig = course.getComplaintConfiguration();
+            int maxLength = complaintConfig != null
+                    ? complaintConfig.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getSubmission().getParticipation().getExercise())
+                    : 2000;
             if (responseText.length() > maxLength) {
                 throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                         "exceededComplaintResponseTextLimit");

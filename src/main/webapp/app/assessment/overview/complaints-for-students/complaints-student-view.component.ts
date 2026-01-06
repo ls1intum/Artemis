@@ -70,7 +70,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 this.submission = participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
             // for course exercises we track the number of allowed complaints
-            if (this.course?.complaintsEnabled) {
+            if (this.course?.complaintConfiguration?.complaintsEnabled) {
                 this.courseService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
                     this.remainingNumberOfComplaints = allowedComplaints;
                 });
@@ -112,7 +112,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (this.isExamMode) {
             return this.isWithinExamReviewPeriod();
         } else {
-            return !!(this.course?.complaintsEnabled || this.course?.requestMoreFeedbackEnabled);
+            const complaintConfig = this.course?.complaintConfiguration;
+            return !!(complaintConfig?.complaintsEnabled || complaintConfig?.requestMoreFeedbackEnabled);
         }
     }
 
@@ -121,8 +122,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode) {
-            if (this.course?.maxComplaintTimeDays) {
-                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), this.course.maxComplaintTimeDays, this.result(), this.participation());
+            const maxComplaintTimeDays = this.course?.complaintConfiguration?.maxComplaintTimeDays;
+            if (maxComplaintTimeDays) {
+                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), maxComplaintTimeDays, this.result(), this.participation());
                 return !!dueDate && dayjs().isBefore(dueDate);
             }
             return false;
@@ -134,8 +136,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
      */
     private isTimeOfFeedbackRequestValid(): boolean {
-        if (!this.isExamMode && this.course?.maxRequestMoreFeedbackTimeDays) {
-            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), this.course.maxRequestMoreFeedbackTimeDays, this.result(), this.participation());
+        const maxRequestMoreFeedbackTimeDays = this.course?.complaintConfiguration?.maxRequestMoreFeedbackTimeDays;
+        if (!this.isExamMode && maxRequestMoreFeedbackTimeDays) {
+            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), maxRequestMoreFeedbackTimeDays, this.result(), this.participation());
             return !!dueDate && dayjs().isBefore(dueDate);
         }
         return false;

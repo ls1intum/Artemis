@@ -112,9 +112,9 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         private Course getCourseForEnrollmentAllowedTest() {
             var course = courseUtilService.createCourse();
-            course.setEnrollmentEnabled(true);
-            course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
-            course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
+            course.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+            course.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
+            course.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
             course.setStudentGroupName("test-students");
             return course;
         }
@@ -147,7 +147,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToEnrollInCourseForWrongEnrollmentStartDate() {
             Course course = getCourseForEnrollmentAllowedTest();
-            course.setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
+            course.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course))
                     .withMessage("The course does currently not allow enrollment.");
@@ -157,7 +157,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToEnrollInCourseForWrongEndDate() {
             Course course = getCourseForEnrollmentAllowedTest();
-            course.setEnrollmentEndDate(ZonedDateTime.now().minusDays(1));
+            course.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course))
                     .withMessage("The course does currently not allow enrollment.");
@@ -167,7 +167,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToEnrollInCourseForRegistrationDisabled() {
             Course course = getCourseForEnrollmentAllowedTest();
-            course.setEnrollmentEnabled(false);
+            course.getEnrollmentConfiguration().setEnrollmentEnabled(false);
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course))
                     .withMessage("The course does not allow enrollment.");
@@ -189,7 +189,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToEnrollInOnlineCourse() {
             Course course = getCourseForEnrollmentAllowedTest();
-            course.setEnrollmentEnabled(false);
+            course.getEnrollmentConfiguration().setEnrollmentEnabled(false);
             course.setOnlineCourse(true);
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course));
@@ -201,10 +201,10 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         private Course getCourseForUnenrollmentAllowedTest() {
             var course = courseUtilService.createCourse();
-            course.setUnenrollmentEnabled(true);
-            course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
-            course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
-            course.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
+            course.getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+            course.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
+            course.getEnrollmentConfiguration().setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
+            course.getEnrollmentConfiguration().setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
             course.setEndDate(ZonedDateTime.now().plusDays(6));
             course.setStudentGroupName("test-students");
             return course;
@@ -222,7 +222,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToUnenrollFromCourseForUnenrollmentEndNotSetAndAllowed() {
             Course course = getCourseForUnenrollmentAllowedTest();
-            course.setUnenrollmentEndDate(null);
+            course.getEnrollmentConfiguration().setUnenrollmentEndDate(null);
             courseRepository.save(course);
             assertThatCode(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course)).doesNotThrowAnyException();
         }
@@ -231,7 +231,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToUnenrollFromCourseForUnenrollmentDisabled() {
             Course course = getCourseForUnenrollmentAllowedTest();
-            course.setUnenrollmentEnabled(false);
+            course.getEnrollmentConfiguration().setUnenrollmentEnabled(false);
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
@@ -241,7 +241,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         void testIsUserAllowedToUnenrollFromCourseForWrongUnenrollmentStartDate() {
             Course course = getCourseForUnenrollmentAllowedTest();
             // unenrollment period starts with enrollment period
-            course.setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
+            course.getEnrollmentConfiguration().setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
@@ -250,7 +250,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToUnenrollFromCourseForWrongUnenrollmentEndDate() {
             Course course = getCourseForUnenrollmentAllowedTest();
-            course.setUnenrollmentEndDate(ZonedDateTime.now().minusDays(1));
+            course.getEnrollmentConfiguration().setUnenrollmentEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
@@ -259,7 +259,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToUnenrollFromCourseForWrongEndDate() {
             Course course = getCourseForUnenrollmentAllowedTest();
-            course.setUnenrollmentEndDate(null);
+            course.getEnrollmentConfiguration().setUnenrollmentEndDate(null);
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));

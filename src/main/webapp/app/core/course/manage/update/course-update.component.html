@@ -433,7 +433,7 @@
                             <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
                             <jhi-markdown-editor-monaco
                                 class="markdown-editor"
-                                [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
+                                [(markdown)]="course.extendedSettings!.messagingCodeOfConduct"
                                 (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
                             />
                         </div>
@@ -442,7 +442,7 @@
                 <!-- Section: Enrollment -->
                 <hr />
                 <h4 jhiTranslate="artemisApp.course.form.sections.enrollment"></h4>
-                @if (ltiEnabled && !course.enrollmentEnabled) {
+                @if (ltiEnabled && !(course.enrollmentConfiguration?.enrollmentEnabled ?? false)) {
                     <div class="form-check">
                         <input
                             type="checkbox"
@@ -465,14 +465,14 @@
                             class="form-check-input"
                             name="enrollmentEnabled"
                             id="field_enrollmentEnabled"
-                            [checked]="course.enrollmentEnabled"
+                            [checked]="course.enrollmentConfiguration?.enrollmentEnabled"
                             (change)="changeEnrollmentEnabled()"
                         />
                         <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.enrollmentEnabled.description' | artemisTranslate }}" />
                     </div>
                 }
-                @if (course.enrollmentEnabled) {
+                @if (course.enrollmentConfiguration?.enrollmentEnabled) {
                     <div>
                         <div class="nested-form-group row g-2">
                             <div class="col-md">
@@ -502,7 +502,7 @@
                             <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage" for="field_enrollmentConfirmationMessage"></label>
                             <jhi-markdown-editor-monaco
                                 class="markdown-editor"
-                                [(markdown)]="course.enrollmentConfirmationMessage"
+                                [(markdown)]="course.enrollmentConfiguration!.enrollmentConfirmationMessage"
                                 (markdownChange)="updateEnrollmentConfirmationMessage($event)"
                             />
                         </div>
@@ -514,7 +514,7 @@
                                         class="form-check-input"
                                         name="unenrollmentEnabled"
                                         id="field_unenrollmentEnabled"
-                                        [checked]="course.unenrollmentEnabled"
+                                        [checked]="course.enrollmentConfiguration?.unenrollmentEnabled"
                                         (change)="changeUnenrollmentEnabled()"
                                     />
                                     <label class="form-control-label" jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
@@ -524,7 +524,7 @@
                                         ngbTooltip="{{ 'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate }}"
                                     />
                                 </div>
-                                @if (course.unenrollmentEnabled) {
+                                @if (course.enrollmentConfiguration?.unenrollmentEnabled) {
                                     <div class="nested-form-group last">
                                         <jhi-date-time-picker
                                             id="field_unenrollmentEndDate"

@@ -8,6 +8,7 @@ import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from 'test/helpers/utils/general-test.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -299,7 +300,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.isExamMode = examMode;
         if (!examMode) {
             exercise.course = new Course();
-            exercise.course.complaintsEnabled = true;
+            exercise.course.complaintConfiguration = new CourseComplaintConfiguration();
         }
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
@@ -312,7 +313,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.isExamMode = false;
         exercise.dueDate = undefined;
         exercise.course = new Course();
-        exercise.course.complaintsEnabled = true;
+        exercise.course.complaintConfiguration = new CourseComplaintConfiguration();
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
         expectElementToBeDisabled(checkbox);
@@ -323,7 +324,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.isExamMode = examMode;
         if (!examMode) {
             exercise.course = new Course();
-            exercise.course.complaintsEnabled = true;
+            exercise.course.complaintConfiguration = new CourseComplaintConfiguration();
         } else {
             comp.exercise.exampleSolutionPublicationDate = undefined;
             comp.exercise.exerciseGroup = { exam: { exampleSolutionPublicationDate } };

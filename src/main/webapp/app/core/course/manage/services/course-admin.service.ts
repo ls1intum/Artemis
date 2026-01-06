@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseCreateDTO } from 'app/core/course/shared/entities/course-create-dto.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseSummaryDTO } from 'app/core/course/shared/entities/course-summary.model';
-import { CourseOperationProgressDTO } from 'app/core/course/shared/entities/course-operation-progress.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -32,9 +32,9 @@ export class CourseAdminService {
      * @param courseImage - the course icon file
      */
     create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
-        const copy = CourseManagementService.convertCourseDatesFromClient(course);
+        const courseCreateDTO = this.convertCourseToCourseCreateDTO(course);
         const formData = new FormData();
-        formData.append('course', objectToJsonBlob(copy));
+        formData.append('course', objectToJsonBlob(courseCreateDTO));
         if (courseImage) {
             // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
             formData.append('file', courseImage, 'placeholderName.png');
@@ -43,6 +43,67 @@ export class CourseAdminService {
         return this.http
             .post<Course>(this.resourceUrl, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.courseManagementService.processCourseEntityResponseType(res)));
+    }
+
+    private convertCourseToCourseCreateDTO(course: Course): CourseCreateDTO {
+        const enrollmentConfig = course.enrollmentConfiguration;
+        const complaintConfig = course.complaintConfiguration;
+        const extendedSettings = course.extendedSettings;
+        const enrollmentConfiguration = enrollmentConfig
+            ? {
+                  enrollmentEnabled: enrollmentConfig.enrollmentEnabled,
+                  enrollmentStartDate: convertDateFromClient(enrollmentConfig.enrollmentStartDate),
+                  enrollmentEndDate: convertDateFromClient(enrollmentConfig.enrollmentEndDate),
+                  enrollmentConfirmationMessage: enrollmentConfig.enrollmentConfirmationMessage,
+                  unenrollmentEnabled: enrollmentConfig.unenrollmentEnabled,
+                  unenrollmentEndDate: convertDateFromClient(enrollmentConfig.unenrollmentEndDate),
+              }
+            : undefined;
+        const complaintConfiguration = complaintConfig
+            ? {
+                  maxComplaints: complaintConfig.maxComplaints,
+                  maxTeamComplaints: complaintConfig.maxTeamComplaints,
+                  maxComplaintTimeDays: complaintConfig.maxComplaintTimeDays,
+                  maxRequestMoreFeedbackTimeDays: complaintConfig.maxRequestMoreFeedbackTimeDays,
+                  maxComplaintTextLimit: complaintConfig.maxComplaintTextLimit,
+                  maxComplaintResponseTextLimit: complaintConfig.maxComplaintResponseTextLimit,
+              }
+            : undefined;
+        const extendedSettingsDTO = extendedSettings
+            ? {
+                  description: extendedSettings.description,
+                  messagingCodeOfConduct: extendedSettings.messagingCodeOfConduct,
+                  courseArchivePath: extendedSettings.courseArchivePath,
+              }
+            : undefined;
+        return {
+            title: course.title,
+            shortName: course.shortName,
+            semester: course.semester,
+            studentGroupName: course.studentGroupName,
+            teachingAssistantGroupName: course.teachingAssistantGroupName,
+            editorGroupName: course.editorGroupName,
+            instructorGroupName: course.instructorGroupName,
+            startDate: convertDateFromClient(course.startDate),
+            endDate: convertDateFromClient(course.endDate),
+            testCourse: course.testCourse,
+            onlineCourse: course.onlineCourse,
+            language: course.language,
+            defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+            color: course.color,
+            faqEnabled: course.faqEnabled,
+            learningPathsEnabled: course.learningPathsEnabled,
+            studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled,
+            presentationScore: course.presentationScore,
+            maxPoints: course.maxPoints,
+            accuracyOfScores: course.accuracyOfScores,
+            restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess,
+            timeZone: course.timeZone,
+            courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+            enrollmentConfiguration,
+            complaintConfiguration,
+            extendedSettings: extendedSettingsDTO,
+        };
     }
 
     /**
@@ -68,16 +129,5 @@ export class CourseAdminService {
      */
     reset(courseId: number): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/${courseId}/reset`, null, { observe: 'response' });
-    }
-
-    /**
-     * Returns the current progress of a delete/reset/archive operation on the course.
-     * This is used for polling when WebSocket is not available.
-     * @param courseId - the id of the course to get the operation progress for
-     */
-    getOperationProgress(courseId: number): Observable<HttpResponse<CourseOperationProgressDTO | null>> {
-        return this.http
-            .get<CourseOperationProgressDTO>(`${this.resourceUrl}/${courseId}/operation-progress`, { observe: 'response' })
-            .pipe(tap((res) => res.body && (res.body.startedAt = convertDateFromServer(res.body.startedAt))));
     }
 }

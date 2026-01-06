@@ -113,9 +113,12 @@ public class CourseManagementResource {
 
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
 
-        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(),
-                c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId(), c.getStartDate(), c.getEndDate(), c.getDescription(), c.getNumberOfStudents()))
-                .toList();
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> {
+            var extendedSettings = c.getExtendedSettings();
+            String description = extendedSettings != null ? extendedSettings.getDescription() : null;
+            return new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId(),
+                    c.getStartDate(), c.getEndDate(), description, c.getNumberOfStudents());
+        }).toList();
 
         return ResponseEntity.ok(onlineCourseDTOS);
     }

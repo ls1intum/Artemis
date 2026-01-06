@@ -18,6 +18,7 @@ import { SimpleChange, signal } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { BehaviorSubject } from 'rxjs';
@@ -31,7 +32,7 @@ describe('CourseSidebarComponent', () => {
     const course1: Course = {
         id: 1,
         title: 'Course1',
-        description: 'Description of course 1',
+        extendedSettings: { description: 'Description of course 1' } as CourseExtendedSettings,
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         courseIconPath: 'path/to/icon.png',
         studentCourseAnalyticsDashboardEnabled: true,
@@ -40,7 +41,7 @@ describe('CourseSidebarComponent', () => {
     const course2: Course = {
         id: 2,
         title: 'Course2',
-        description: 'Description of course 2',
+        extendedSettings: { description: 'Description of course 2' } as CourseExtendedSettings,
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     };
 

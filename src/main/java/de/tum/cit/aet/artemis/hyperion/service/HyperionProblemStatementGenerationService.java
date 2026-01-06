@@ -58,9 +58,10 @@ public class HyperionProblemStatementGenerationService {
 
         try {
 
+            var extendedSettings = course.getExtendedSettings();
+            String description = extendedSettings != null ? extendedSettings.getDescription() : null;
             Map<String, String> templateVariables = Map.of("userPrompt", userPrompt != null ? userPrompt : "Generate a programming exercise problem statement", "courseTitle",
-                    course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription",
-                    course.getDescription() != null ? course.getDescription() : "A programming course");
+                    course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription", description != null ? description : "A programming course");
 
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();

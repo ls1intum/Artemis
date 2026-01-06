@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseExtendedSettingsRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -53,12 +55,16 @@ public class AtlasAgentToolsService {
 
     private final CourseRepository courseRepository;
 
+    private final CourseExtendedSettingsRepository courseExtendedSettingsRepository;
+
     private final ExerciseRepository exerciseRepository;
 
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+    public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository,
+            CourseExtendedSettingsRepository courseExtendedSettingsRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
+        this.courseExtendedSettingsRepository = courseExtendedSettingsRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -77,12 +83,11 @@ public class AtlasAgentToolsService {
             return toJson(Map.of("error", "Course not found with ID: " + courseId));
         }
 
-        Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-        List<AtlasAgentCompetencyDTO> competencyList = competencies.stream().map(AtlasAgentCompetencyDTO::of).toList();
+        Set<AtlasAgentCompetencyDTO> competencies = competencyRepository.findCompetenciesByCourseId(courseId);
 
-        record Response(Long courseId, List<AtlasAgentCompetencyDTO> competencies) {
+        record Response(Long courseId, Set<AtlasAgentCompetencyDTO> competencies) {
         }
-        return toJson(new Response(courseId, competencyList));
+        return toJson(new Response(courseId, competencies));
     }
 
     /**
@@ -135,8 +140,10 @@ public class AtlasAgentToolsService {
      * @return course description or empty string if not found
      */
     @Tool(description = "Get the description of a course")
+    @NonNull
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
-        return courseRepository.findById(courseId).map(Course::getDescription).orElse("");
+        var description = courseExtendedSettingsRepository.findDescriptionByCourseId(courseId);
+        return description != null ? description : "";
     }
 
     /**
@@ -153,6 +160,7 @@ public class AtlasAgentToolsService {
             return toJson(Map.of("error", "Course not found with ID: " + courseId));
         }
 
+        // TODO: only load necessary fields to reduce response size
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
         List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(AtlasAgentExerciseDTO::of).toList();
 

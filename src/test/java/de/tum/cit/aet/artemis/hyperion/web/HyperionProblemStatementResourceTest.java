@@ -20,6 +20,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -44,6 +47,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         Course course = new Course();
+        course.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course.setComplaintConfiguration(new CourseComplaintConfiguration());
+        course.setExtendedSettings(new CourseExtendedSettings());
         course.setTitle("Hyperion Test Course");
         course.setStudentGroupName(TEST_PREFIX + "student");
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");

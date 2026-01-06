@@ -31,9 +31,17 @@ public record PyrisExtendedCourseDTO(long id, String name, String description, I
         List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::of).toList();
         List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::of).toList();
 
-        return new PyrisExtendedCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
-                course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies,
-                course.getStudentCourseAnalyticsDashboardEnabled());
+        var extendedSettings = course.getExtendedSettings();
+        String description = extendedSettings != null ? extendedSettings.getDescription() : null;
+
+        var complaintConfig = course.getComplaintConfiguration();
+        int maxComplaints = complaintConfig != null ? complaintConfig.getMaxComplaints() : 3;
+        int maxTeamComplaints = complaintConfig != null ? complaintConfig.getMaxTeamComplaints() : 3;
+        int maxComplaintTimeDays = complaintConfig != null ? complaintConfig.getMaxComplaintTimeDays() : 7;
+        int maxRequestMoreFeedbackTimeDays = complaintConfig != null ? complaintConfig.getMaxRequestMoreFeedbackTimeDays() : 7;
+
+        return new PyrisExtendedCourseDTO(course.getId(), course.getTitle(), description, toInstant(course.getStartDate()), toInstant(course.getEndDate()),
+                course.getDefaultProgrammingLanguage(), maxComplaints, maxTeamComplaints, maxComplaintTimeDays, maxRequestMoreFeedbackTimeDays, course.getMaxPoints(),
+                course.getPresentationScore(), exercises, exams, competencies, course.getStudentCourseAnalyticsDashboardEnabled());
     }
 }

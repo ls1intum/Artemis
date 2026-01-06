@@ -22,6 +22,9 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
@@ -297,7 +300,6 @@ public class CourseRequestService {
         course.setEndDate(request.getEndDate());
         course.setTestCourse(request.isTestCourse());
         course.setOnlineCourse(Boolean.FALSE);
-        course.setEnrollmentEnabled(Boolean.FALSE);
         course.setLearningPathsEnabled(false);
         course.setStudentCourseAnalyticsDashboardEnabled(false);
         course.setRestrictedAthenaModulesAccess(false);
@@ -305,28 +307,39 @@ public class CourseRequestService {
         course.setFaqEnabled(true);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
-        var templatePath = Path.of("templates", "codeofconduct", "README.md");
+        // Create enrollment configuration with enrollment disabled by default
+        var enrollmentConfig = new CourseEnrollmentConfiguration();
+        enrollmentConfig.setEnrollmentEnabled(Boolean.FALSE);
+        course.setEnrollmentConfiguration(enrollmentConfig);
 
+        // Create complaint configuration with defaults
+        var complaintConfig = new CourseComplaintConfiguration();
+        course.setComplaintConfiguration(complaintConfig);
+
+        // Create extended settings with code of conduct
+        var extendedSettings = new CourseExtendedSettings();
+        var templatePath = Path.of("templates", "codeofconduct", "README.md");
         try {
             log.debug("Loading template: {}", templatePath);
             var resource = resourceLoaderService.getResource(templatePath);
             try (var inputStream = resource.getInputStream()) {
                 var informationSharingMessageCodeOfConduct = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                course.setCourseInformationSharingMessagingCodeOfConduct(informationSharingMessageCodeOfConduct);
+                extendedSettings.setMessagingCodeOfConduct(informationSharingMessageCodeOfConduct);
             }
         }
         catch (IOException e) {
             log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
+        course.setExtendedSettings(extendedSettings);
 
         courseAccessService.setDefaultGroupsIfNotSet(course);
 
         course.validateShortName();
         course.validateStartAndEndDate();
-        course.validateEnrollmentStartAndEndDate();
-        course.validateUnenrollmentEndDate();
-        course.validateEnrollmentConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
+        enrollmentConfig.validateEnrollmentStartAndEndDate(course.getStartDate(), course.getEndDate());
+        enrollmentConfig.validateUnenrollmentEndDate(course.getEndDate());
+        enrollmentConfig.validateEnrollmentConfirmationMessage();
+        complaintConfig.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndEnrollmentEnabled();
         course.validateAccuracyOfScores();
 

@@ -34,6 +34,8 @@ import { CourseRegistrationComponent } from 'app/core/course/overview/course-reg
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
 import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -93,9 +95,11 @@ const course1: Course = {
     title: 'Course1',
     exams,
     exercises: [exercise1],
-    description:
-        'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
-        'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+    extendedSettings: {
+        description:
+            'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
+            'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+    } as CourseExtendedSettings,
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     courseIconPath: 'api/core/files/path/to/icon.png',
 };
@@ -104,7 +108,7 @@ const course2: Course = {
     title: 'Course2',
     exercises: [exercise2],
     exams: [exam2],
-    description: 'Short description of course 2',
+    extendedSettings: { description: 'Short description of course 2' } as CourseExtendedSettings,
     shortName: 'shortName2',
     competencies: [{}],
     tutorialGroups: [new TutorialGroup()],
@@ -549,7 +553,12 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should contain unenrollment as course action when allowed', () => {
-        component.course.set({ unenrollmentEnabled: true, unenrollmentEndDate: dayjs().add(1, 'days') });
+        component.course.set({
+            enrollmentConfiguration: {
+                unenrollmentEnabled: true,
+                unenrollmentEndDate: dayjs().add(1, 'days'),
+            } as CourseEnrollmentConfiguration,
+        });
         const courseActionItems = component.getCourseActionItems();
         expect(courseActionItems.length).toBeGreaterThan(0);
         expect(courseActionItems[0].title).toContain('Unenroll');

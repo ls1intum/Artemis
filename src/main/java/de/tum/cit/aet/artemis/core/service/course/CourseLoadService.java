@@ -80,7 +80,8 @@ public class CourseLoadService {
      */
     public Course loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(long courseId) {
         ZonedDateTime now = ZonedDateTime.now();
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        // Load all configurations (enrollment, complaint, extended settings) eagerly for AI context
+        Course course = courseRepository.findWithEagerAllConfigurationsElseThrow(courseId);
         Set<Exercise> releasedExercises = exerciseRepository.findAllReleasedExercisesByCourseId(courseId, now);
         Set<Lecture> visibleLectures = new HashSet<>();
         if (lectureRepositoryApi.isPresent()) {

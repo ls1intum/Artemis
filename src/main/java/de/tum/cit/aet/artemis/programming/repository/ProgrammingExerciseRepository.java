@@ -63,11 +63,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "buildConfig" })
+            "auxiliaryRepositories", "submissionPolicy", "buildConfig", "course.complaintConfiguration" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig" })
+            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig", "course.complaintConfiguration" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
             long exerciseId);
 

@@ -354,7 +354,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     canStudentUnenroll(): boolean {
         const currentCourse = this.course();
-        return !!currentCourse?.unenrollmentEnabled && dayjs().isBefore(currentCourse?.unenrollmentEndDate);
+        const enrollmentConfig = currentCourse?.enrollmentConfiguration;
+        return !!enrollmentConfig?.unenrollmentEnabled && dayjs().isBefore(enrollmentConfig?.unenrollmentEndDate);
     }
 
     courseActionItemClick(item?: CourseActionItem) {

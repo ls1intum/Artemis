@@ -97,7 +97,8 @@ public class PyrisWebhookService {
         String lectureTitle = lecture.getTitle();
         Long courseId = course.getId();
         String courseTitle = course.getTitle();
-        String courseDescription = course.getDescription() == null ? "" : course.getDescription();
+        var extendedSettings = course.getExtendedSettings();
+        String courseDescription = extendedSettings != null && extendedSettings.getDescription() != null ? extendedSettings.getDescription() : "";
         String base64EncodedPdf;
         String lectureUnitLink;
         if (attachmentVideoUnit.getAttachment() != null) {
@@ -235,8 +236,11 @@ public class PyrisWebhookService {
      */
     public String addFaq(Faq faq) {
         if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
-            return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
-                    faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
+            var extendedSettings = faq.getCourse().getExtendedSettings();
+            String description = extendedSettings != null ? extendedSettings.getDescription() : null;
+            return executeFaqAdditionWebhook(
+                    new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(), description),
+                    faq.getCourse());
         }
         return null;
     }
@@ -266,8 +270,10 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     public String deleteFaq(Faq faq) {
-        return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
-                faq.getCourse().getDescription()));
+        var extendedSettings = faq.getCourse().getExtendedSettings();
+        String description = extendedSettings != null ? extendedSettings.getDescription() : null;
+        return executeFaqDeletionWebhook(
+                new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(), description));
 
     }
 

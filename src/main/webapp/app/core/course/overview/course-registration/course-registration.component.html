@@ -31,7 +31,7 @@
                                 <span>{{ course.semester }}</span>
                             </td>
                             <td>
-                                <span>{{ course.description }}</span>
+                                <span>{{ course.extendedSettings?.description }}</span>
                             </td>
                             <td class="text-end">
                                 <jhi-course-prerequisites-button [course]="course" />

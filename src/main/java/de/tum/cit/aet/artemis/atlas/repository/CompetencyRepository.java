@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -108,4 +109,11 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCourseId(long courseId);
+
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO(c.id, c.title, c.description, c.taxonomy, c.course.id)
+            FROM Competency c
+            WHERE c.course.id = :courseId
+            """)
+    Set<AtlasAgentCompetencyDTO> findCompetenciesByCourseId(@Param("courseId") Long courseId);
 }

@@ -203,7 +203,7 @@ public class CourseStatsResource {
     @GetMapping("courses/{courseId}/management-detail")
     @EnforceAtLeastTutor
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerComplaintConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
         var startTime = System.currentTimeMillis();

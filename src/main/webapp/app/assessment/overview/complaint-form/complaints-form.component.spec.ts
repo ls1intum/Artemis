@@ -6,6 +6,7 @@ import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -18,7 +19,13 @@ describe('ComplaintsFormComponent', () => {
     setupTestBed({ zoneless: true });
     const teamComplaints = 42;
     const studentComplaints = 69;
-    const course: Course = { maxTeamComplaints: teamComplaints, maxComplaints: studentComplaints, maxComplaintTextLimit: 20 };
+    const course: Course = {
+        complaintConfiguration: {
+            maxTeamComplaints: teamComplaints,
+            maxComplaints: studentComplaints,
+            maxComplaintTextLimit: 20,
+        } as CourseComplaintConfiguration,
+    };
     const exercise: Exercise = { id: 1, teamMode: false } as Exercise;
     const courseExercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
     const courseTeamExercise: Exercise = { id: 1, teamMode: true, course } as Exercise;

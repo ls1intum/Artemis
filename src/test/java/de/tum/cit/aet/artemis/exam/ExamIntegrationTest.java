@@ -1142,10 +1142,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
-        await().until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
+        await().until(() -> courseRepository.findWithEagerConfigurationsByIdElseThrow(courseId).getExtendedSettings().getCourseArchivePath() != null);
 
-        var updatedCourse = courseRepository.findById(courseId).orElseThrow();
-        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+        var updatedCourse = courseRepository.findWithEagerConfigurationsByIdElseThrow(courseId);
+        assertThat(updatedCourse.getExtendedSettings().getCourseArchivePath()).isNotEmpty();
     }
 
     @Test

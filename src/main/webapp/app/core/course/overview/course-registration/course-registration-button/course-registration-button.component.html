@@ -1,8 +1,8 @@
-@if (course.enrollmentConfirmationMessage!) {
+@if (course.enrollmentConfiguration?.enrollmentConfirmationMessage) {
     <jhi-confirm-button
         (onConfirm)="registerForCourse(course.id!)"
         title="artemisApp.studentDashboard.enroll.enrollInCourse"
-        confirmationText="{{ course.enrollmentConfirmationMessage! }}"
+        confirmationText="{{ course.enrollmentConfiguration!.enrollmentConfirmationMessage! }}"
         confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
         [confirmationTitleTranslationParams]="{ courseName: course.title! }"
         [disabled]="loading"
@@ -10,6 +10,6 @@
         [textIsMarkdown]="true"
     />
 }
-@if (!course.enrollmentConfirmationMessage!) {
+@if (!course.enrollmentConfiguration?.enrollmentConfirmationMessage) {
     <button class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading" jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></button>
 }

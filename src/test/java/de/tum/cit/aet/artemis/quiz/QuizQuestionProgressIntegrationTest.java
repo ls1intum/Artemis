@@ -27,6 +27,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -95,8 +98,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
         TimeUtil.setClock(fixedClock);
 
-        Course course = new Course();
-        courseTestRepository.save(course);
+        Course course = createCourse();
         User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         userId = user.getId();
 
@@ -138,8 +140,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSession() {
-        Course course = new Course();
-        courseTestRepository.save(course);
+        Course course = createCourse();
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
@@ -179,8 +180,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSessionNoDueDate() {
-        Course course = new Course();
-        courseTestRepository.save(course);
+        Course course = createCourse();
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
@@ -428,8 +428,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testQuestionsAvailableForPracticeFalse() {
-        Course course = new Course();
-        courseTestRepository.save(course);
+        Course course = createCourse();
 
         boolean questionsAvailable = quizQuestionProgressService.questionsAvailableForTraining(course.getId());
         assertThat(questionsAvailable).isFalse();
@@ -437,8 +436,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testQuestionsAvailableForPracticeTrue() {
-        Course course = new Course();
-        courseTestRepository.save(course);
+        Course course = createCourse();
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
@@ -467,5 +465,13 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         progress.setProgressJson(data);
         progress.setDueDate(dueDate);
         return progress;
+    }
+
+    private Course createCourse() {
+        Course course = new Course();
+        course.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course.setComplaintConfiguration(new CourseComplaintConfiguration());
+        course.setExtendedSettings(new CourseExtendedSettings());
+        return courseTestRepository.save(course);
     }
 }

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -13,13 +13,21 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseGroupComponent, GroupUserInformationRow } from 'app/core/course/shared/course-group/course-group.component';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 
 describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let userService: UserService;
     const courseGroup = CourseGroup.STUDENTS;
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const courseExtendedSettings = new CourseExtendedSettings();
+    courseExtendedSettings.courseArchivePath = 'some-path';
+    const course = new Course();
+    course.id = 123;
+    course.title = 'Course Title';
+    course.isAtLeastInstructor = true;
+    course.endDate = dayjs().subtract(5, 'minutes');
+    course.extendedSettings = courseExtendedSettings;
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;

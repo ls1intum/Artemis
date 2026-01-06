@@ -135,32 +135,33 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     getComplaintsDetails(): Detail[] {
-        if (this.course.complaintsEnabled) {
+        const complaintConfig = this.course.complaintConfiguration;
+        if (complaintConfig?.complaintsEnabled) {
             return [
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaints.title',
-                    data: { text: this.course.maxComplaints },
+                    data: { text: complaintConfig.maxComplaints },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxTeamComplaints.title',
-                    data: { text: this.course.maxTeamComplaints },
+                    data: { text: complaintConfig.maxTeamComplaints },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaintTimeDays.title',
-                    data: { text: this.course.maxComplaintTimeDays },
+                    data: { text: complaintConfig.maxComplaintTimeDays },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaintTextLimit.title',
-                    data: { text: this.course.maxComplaintTextLimit },
+                    data: { text: complaintConfig.maxComplaintTextLimit },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaintResponseTextLimit.title',
-                    data: { text: this.course.maxComplaintResponseTextLimit },
+                    data: { text: complaintConfig.maxComplaintResponseTextLimit },
                 },
             ];
         }
@@ -211,12 +212,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed
-        if (this.course.requestMoreFeedbackEnabled) {
+        const complaintConfig = this.course.complaintConfiguration;
+        if (complaintConfig?.requestMoreFeedbackEnabled) {
             // insert detail after the complaintDetails
             details.splice(4 + complaintsDetails.length, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
-                data: { text: this.course.maxRequestMoreFeedbackTimeDays },
+                data: { text: complaintConfig.maxRequestMoreFeedbackTimeDays },
             });
         }
 
@@ -242,29 +244,30 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     getEnrollmentDetailSection(): DetailOverviewSection {
+        const enrollmentConfig = this.course.enrollmentConfiguration;
         const enrollmentDetails: Detail[] = [
-            { type: DetailType.Boolean, title: 'artemisApp.course.enrollmentEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
-            { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.enrollmentEnabled.title', data: { boolean: enrollmentConfig?.enrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: enrollmentConfig?.unenrollmentEnabled } },
         ];
 
-        if (this.course.enrollmentEnabled) {
+        if (enrollmentConfig?.enrollmentEnabled) {
             // insert enrollment details after enrollmentEnabled detail
             enrollmentDetails.splice(
                 1,
                 0,
-                { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: this.course.enrollmentStartDate } },
-                { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: this.course.enrollmentEndDate } },
+                { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: enrollmentConfig.enrollmentStartDate } },
+                { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: enrollmentConfig.enrollmentEndDate } },
                 {
                     type: DetailType.Markdown,
                     title: 'artemisApp.course.enrollmentConfirmationMessage',
-                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(enrollmentConfig.enrollmentConfirmationMessage) },
                 },
             );
         }
 
-        if (this.course.unenrollmentEnabled) {
+        if (enrollmentConfig?.unenrollmentEnabled) {
             // insert unenrollment detail after unenrollmentEnabled detail
-            enrollmentDetails.push({ type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: this.course.unenrollmentEndDate } });
+            enrollmentDetails.push({ type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: enrollmentConfig.unenrollmentEndDate } });
         }
         return {
             headline: 'artemisApp.course.detail.sections.enrollment',
@@ -281,7 +284,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Markdown,
                     title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct',
-                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.courseInformationSharingMessagingCodeOfConduct) },
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.extendedSettings?.messagingCodeOfConduct) },
                 },
             ],
         };

@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -48,8 +47,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
-import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
-import de.tum.cit.aet.artemis.core.service.course.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.core.service.course.CourseResetService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -90,8 +87,6 @@ public class AdminCourseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseLoadService courseLoadService;
-
     private final UserRepository userRepository;
 
     private final CourseAdminService courseAdminService;
@@ -110,11 +105,9 @@ public class AdminCourseResource {
 
     private final CourseResetService courseResetService;
 
-    private final CourseOperationProgressService progressService;
-
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseLoadService courseLoadService, CourseResetService courseResetService, CourseOperationProgressService progressService) {
+            CourseResetService courseResetService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -124,9 +117,7 @@ public class AdminCourseResource {
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseAccessService = courseAccessService;
-        this.courseLoadService = courseLoadService;
         this.courseResetService = courseResetService;
-        this.progressService = progressService;
     }
 
     /**
@@ -192,8 +183,12 @@ public class AdminCourseResource {
                     .body(null);
         }
 
-        course.validateEnrollmentConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
+        if (course.getEnrollmentConfiguration() != null) {
+            course.getEnrollmentConfiguration().validateEnrollmentConfirmationMessage();
+        }
+        if (course.getComplaintConfiguration() != null) {
+            course.getComplaintConfiguration().validateComplaintsAndRequestMoreFeedbackConfig();
+        }
         course.validateOnlineCourseAndEnrollmentEnabled();
         course.validateAccuracyOfScores();
         course.validateStartAndEndDate();
@@ -338,22 +333,5 @@ public class AdminCourseResource {
         courseResetService.resetStudentData(courseId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.course.reset.success", courseTitle)).build();
-    }
-
-    /**
-     * GET /courses/:courseId/operation-progress : Get the progress of an ongoing operation.
-     * <p>
-     * Returns the current progress status of a delete, reset, or archive operation on the course.
-     * This endpoint is used for polling when WebSocket connection is not available.
-     * Real-time updates are available via WebSocket at /topic/courses/{courseId}/operation-progress
-     *
-     * @param courseId the ID of the course to get the operation progress for
-     * @return the ResponseEntity with status 200 (OK) and the progress in the body,
-     *         or status 204 (No Content) if no operation is in progress
-     */
-    @GetMapping("courses/{courseId}/operation-progress")
-    public ResponseEntity<CourseOperationProgressDTO> getOperationProgress(@PathVariable long courseId) {
-        log.debug("REST request to get operation progress for course: {}", courseId);
-        return progressService.getOperationProgress(courseId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 }

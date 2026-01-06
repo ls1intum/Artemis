@@ -14,6 +14,9 @@ import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/t
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -58,7 +61,6 @@ export const enum Language {
 export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
-    public description?: string;
     public studentCourseAnalyticsDashboardEnabled?: boolean;
     public shortName?: string;
     public studentGroupName?: string;
@@ -67,9 +69,6 @@ export class Course implements BaseEntity {
     public instructorGroupName?: string;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
-    public enrollmentStartDate?: dayjs.Dayjs;
-    public enrollmentEndDate?: dayjs.Dayjs;
-    public unenrollmentEndDate?: dayjs.Dayjs;
     public semester?: string;
     public testCourse?: boolean;
     public language?: Language;
@@ -80,19 +79,8 @@ export class Course implements BaseEntity {
     public onlineCourse?: boolean;
     public faqEnabled?: boolean;
     public trainingEnabled?: boolean;
-    public enrollmentEnabled?: boolean;
-    public enrollmentConfirmationMessage?: string;
-    public unenrollmentEnabled?: boolean;
     public presentationScore?: number;
-    public maxComplaints?: number;
-    public maxTeamComplaints?: number;
-    public maxComplaintTimeDays?: number;
-    public maxComplaintTextLimit?: number;
-    public maxComplaintResponseTextLimit?: number;
-    public complaintsEnabled?: boolean;
     public posts?: Post[];
-    public requestMoreFeedbackEnabled?: boolean;
-    public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
     public accuracyOfScores?: number;
     public restrictedAthenaModulesAccess?: boolean;
@@ -124,7 +112,11 @@ export class Course implements BaseEntity {
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
-    public courseInformationSharingMessagingCodeOfConduct?: string;
+
+    // Lazy-loaded configuration entities
+    public enrollmentConfiguration?: CourseEnrollmentConfiguration;
+    public complaintConfiguration?: CourseComplaintConfiguration;
+    public extendedSettings?: CourseExtendedSettings;
 
     // helper attributes
     public isAtLeastTutor?: boolean;
@@ -135,24 +127,13 @@ export class Course implements BaseEntity {
     public maxScore?: number;
     public irisEnabledInCourse?: boolean;
 
-    public courseArchivePath?: string;
-
     constructor() {
         this.onlineCourse = false; // default value
         this.isAtLeastTutor = false; // default value
         this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
 
-        this.enrollmentEnabled = false; // default value
         this.presentationScore = 0; // default value
-        this.maxComplaints = 3; // default value
-        this.maxTeamComplaints = 3; // default value
-        this.maxComplaintTimeDays = 7; // default value
-        this.maxComplaintTextLimit = 2000; // default value
-        this.maxComplaintResponseTextLimit = 2000; // default value
-        this.complaintsEnabled = true; // default value
-        this.requestMoreFeedbackEnabled = true; // default value
-        this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
         this.restrictedAthenaModulesAccess = false; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value

@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -235,7 +236,10 @@ public class CourseUtilService {
      */
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
-        course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
+        if (course.getExtendedSettings() == null) {
+            course.setExtendedSettings(new CourseExtendedSettings());
+        }
+        course.getExtendedSettings().setMessagingCodeOfConduct("Code of Conduct");
         return courseRepo.save(course);
     }
 
@@ -293,7 +297,7 @@ public class CourseUtilService {
         Organization organization = organizationTestService.createOrganization(name, shortName, url, description, logoUrl, emailPattern);
         organizations.add(organization);
         course.setOrganizations(organizations);
-        course.setEnrollmentEnabled(true);
+        course.getEnrollmentConfiguration().setEnrollmentEnabled(true);
         return courseRepo.save(course);
     }
 
@@ -1316,8 +1320,8 @@ public class CourseUtilService {
      * @return The updated course.
      */
     public Course updateCourseComplaintTextLimit(Course course, int complaintTextLimit) {
-        course.setMaxComplaintTextLimit(complaintTextLimit);
-        assertThat(course.getMaxComplaintTextLimit()).as("course contains the correct complaint text limit").isEqualTo(complaintTextLimit);
+        course.getComplaintConfiguration().setMaxComplaintTextLimit(complaintTextLimit);
+        assertThat(course.getComplaintConfiguration().getMaxComplaintTextLimit()).as("course contains the correct complaint text limit").isEqualTo(complaintTextLimit);
         return courseRepo.save(course);
     }
 
@@ -1329,8 +1333,9 @@ public class CourseUtilService {
      * @return The updated course.
      */
     public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
-        course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
-        assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
+        course.getComplaintConfiguration().setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
+        assertThat(course.getComplaintConfiguration().getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit")
+                .isEqualTo(complaintResponseTextLimit);
         return courseRepo.save(course);
     }
 

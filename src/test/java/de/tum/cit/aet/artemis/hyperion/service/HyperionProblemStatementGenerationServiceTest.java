@@ -19,6 +19,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
@@ -44,7 +45,9 @@ class HyperionProblemStatementGenerationServiceTest {
 
         var course = new Course();
         course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        CourseExtendedSettings extendedSettings = new CourseExtendedSettings();
+        extendedSettings.setDescription("Test Description");
+        course.setExtendedSettings(extendedSettings);
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
@@ -58,7 +61,9 @@ class HyperionProblemStatementGenerationServiceTest {
         var course = new Course();
         course.setId(123L);
         course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        CourseExtendedSettings extendedSettings = new CourseExtendedSettings();
+        extendedSettings.setDescription("Test Description");
+        course.setExtendedSettings(extendedSettings);
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
                 .hasMessageContaining("Failed to generate problem statement").hasMessageContaining("AI service unavailable");
@@ -73,7 +78,9 @@ class HyperionProblemStatementGenerationServiceTest {
         var course = new Course();
         course.setId(456L);
         course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        CourseExtendedSettings extendedSettings = new CourseExtendedSettings();
+        extendedSettings.setDescription("Test Description");
+        course.setExtendedSettings(extendedSettings);
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
                 .hasMessageContaining("too long").hasMessageContaining("50001 characters").hasMessageContaining("Maximum allowed: 50000");
@@ -86,7 +93,9 @@ class HyperionProblemStatementGenerationServiceTest {
 
         var course = new Course();
         course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        CourseExtendedSettings extendedSettings = new CourseExtendedSettings();
+        extendedSettings.setDescription("Test Description");
+        course.setExtendedSettings(extendedSettings);
 
         // Should use default prompt when userPrompt is null
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, null);
@@ -118,7 +127,9 @@ class HyperionProblemStatementGenerationServiceTest {
 
         var course = new Course();
         course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        CourseExtendedSettings extendedSettings = new CourseExtendedSettings();
+        extendedSettings.setDescription("Test Description");
+        course.setExtendedSettings(extendedSettings);
 
         // Should succeed with exactly 50,000 characters
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");

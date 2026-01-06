@@ -12,6 +12,7 @@ import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entiti
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
@@ -28,7 +29,7 @@ describe('TeamParticipationTableComponent', () => {
         isAtLeastInstructor: true,
         isAtLeastEditor: true,
         endDate: dayjs().subtract(5, 'minutes'),
-        courseArchivePath: 'some-path',
+        extendedSettings: { courseArchivePath: 'some-path' } as CourseExtendedSettings,
     } as Course;
     const exercise1 = {
         id: 1,

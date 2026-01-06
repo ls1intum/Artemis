@@ -53,10 +53,11 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     ngOnInit() {
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
         this.now = this.serverDateService.now();
-        if (this.course?.maxComplaintTimeDays) {
+        const maxComplaintTimeDays = this.course?.complaintConfiguration?.maxComplaintTimeDays;
+        if (maxComplaintTimeDays) {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
-                this.course.maxComplaintTimeDays,
+                maxComplaintTimeDays,
                 getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                 this.studentParticipation,
             );

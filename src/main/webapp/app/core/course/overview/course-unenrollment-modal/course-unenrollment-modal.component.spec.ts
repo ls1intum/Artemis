@@ -7,6 +7,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -102,17 +103,19 @@ describe('CourseRegistrationButtonComponent', () => {
     });
 
     it('should report student can enroll again for valid', () => {
-        component.course.unenrollmentEnabled = true;
-        component.course.enrollmentEnabled = true;
-        component.course.enrollmentEndDate = dayjs().add(1, 'day');
+        component.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        component.course.enrollmentConfiguration.unenrollmentEnabled = true;
+        component.course.enrollmentConfiguration.enrollmentEnabled = true;
+        component.course.enrollmentConfiguration.enrollmentEndDate = dayjs().add(1, 'day');
         fixture.changeDetectorRef.detectChanges();
         expect(component.canEnrollAgain).toBeTrue();
     });
 
     it('should not report student can enroll again for invalid', () => {
-        component.course.unenrollmentEnabled = true;
-        component.course.enrollmentEnabled = true;
-        component.course.enrollmentEndDate = dayjs().subtract(1, 'day');
+        component.course.enrollmentConfiguration = new CourseEnrollmentConfiguration();
+        component.course.enrollmentConfiguration.unenrollmentEnabled = true;
+        component.course.enrollmentConfiguration.enrollmentEnabled = true;
+        component.course.enrollmentConfiguration.enrollmentEndDate = dayjs().subtract(1, 'day');
         fixture.changeDetectorRef.detectChanges();
         expect(component.canEnrollAgain).toBeFalse();
     });

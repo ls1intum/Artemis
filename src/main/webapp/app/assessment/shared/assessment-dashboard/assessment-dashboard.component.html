@@ -68,8 +68,8 @@
             <div class="container-fluid">
                 <jhi-assessment-dashboard-information
                     [isExamMode]="isExamMode"
-                    [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled!"
-                    [complaintsEnabled]="course.complaintsEnabled!"
+                    [feedbackRequestEnabled]="course.complaintConfiguration?.requestMoreFeedbackEnabled ?? false"
+                    [complaintsEnabled]="course.complaintConfiguration?.complaintsEnabled ?? false"
                     [numberOfTutorAssessments]="numberOfTutorAssessments"
                     [course]="course"
                     [tutorId]="tutor.id!"

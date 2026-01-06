@@ -15,6 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -137,7 +140,11 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_notInstructorInACourse() throws Exception {
-        var course = courseRepository.save(new Course());
+        Course course = new Course();
+        course.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course.setComplaintConfiguration(new CourseComplaintConfiguration());
+        course.setExtendedSettings(new CourseExtendedSettings());
+        course = courseRepository.save(course);
         attachment = attachmentRepository.save(attachment);
         lecture.setCourse(course);
         lectureRepository.save(lecture);

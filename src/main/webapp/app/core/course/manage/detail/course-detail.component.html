@@ -17,7 +17,7 @@
                             [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
                             [currentMax]="courseDTO?.currentMaxAssessments"
                         />
-                        @if (course.complaintsEnabled) {
+                        @if (course.complaintConfiguration?.complaintsEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
                                 [course]="course"
@@ -27,7 +27,7 @@
                                 [currentMax]="courseDTO?.currentMaxComplaints"
                             />
                         }
-                        @if (course.requestMoreFeedbackEnabled) {
+                        @if (course.complaintConfiguration?.requestMoreFeedbackEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
                                 [course]="course"

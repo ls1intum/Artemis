@@ -52,6 +52,7 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { CourseOperationStatus, CourseOperationType } from 'app/core/course/shared/entities/course-operation-progress.model';
@@ -90,9 +91,11 @@ const course1: Course = {
     isAtLeastInstructor: true,
     isAtLeastEditor: true,
     isAtLeastTutor: true,
-    description:
-        'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
-        'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+    extendedSettings: {
+        description:
+            'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
+            'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+    } as CourseExtendedSettings,
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     courseIconPath: 'api/core/files/path/to/icon.png',
     onlineCourse: true,
@@ -105,7 +108,7 @@ const course2: Course = {
     exercises: [exercise2],
     isAtLeastInstructor: true,
     exams: [exam2],
-    description: 'Short description of course 2',
+    extendedSettings: { description: 'Short description of course 2' } as CourseExtendedSettings,
     shortName: 'shortName2',
     isAtLeastEditor: true,
     tutorialGroupsConfiguration: {},

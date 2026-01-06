@@ -269,7 +269,8 @@ public class CourseStatsService {
         long currentMaxComplaints = 0;
         double currentPercentageComplaints = 0.0;
 
-        if (course.getComplaintsEnabled()) {
+        var complaintConfig = course.getComplaintConfiguration();
+        if (complaintConfig != null && complaintConfig.getComplaintsEnabled()) {
             start = System.currentTimeMillis();
             currentAbsoluteComplaints = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, COMPLAINT);
             log.debug("complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType took {} ms for course with id {}", System.currentTimeMillis() - start,
@@ -284,7 +285,7 @@ public class CourseStatsService {
         long currentMaxMoreFeedbacks = 0;
         double currentPercentageMoreFeedbacks = 0;
 
-        if (course.getRequestMoreFeedbackEnabled()) {
+        if (complaintConfig != null && complaintConfig.getRequestMoreFeedbackEnabled()) {
             start = System.currentTimeMillis();
             currentAbsoluteMoreFeedbacks = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, MORE_FEEDBACK);
             log.debug("complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType took {} ms for course with id {}", System.currentTimeMillis() - start,

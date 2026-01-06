@@ -33,7 +33,8 @@ public class ConductAgreementService {
      * @return if the user agreed to the course's code of conduct
      */
     public boolean fetchUserAgreesToCodeOfConductInCourse(User user, Course course) {
-        var codeOfConduct = course.getCourseInformationSharingMessagingCodeOfConduct();
+        var extendedSettings = course.getExtendedSettings();
+        var codeOfConduct = extendedSettings != null ? extendedSettings.getMessagingCodeOfConduct() : null;
         if (codeOfConduct == null || codeOfConduct.isEmpty()) {
             return true;
         }

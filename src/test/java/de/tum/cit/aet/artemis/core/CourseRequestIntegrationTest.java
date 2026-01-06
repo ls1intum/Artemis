@@ -20,6 +20,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseComplaintConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseExtendedSettings;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -218,6 +221,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void createCourseRequest_withExistingCourseShortName_shouldReturnBadRequestWithSuggestion() throws Exception {
         // Create an existing course with the same short name
         Course existingCourse = new Course();
+        initializeCourseConfigurations(existingCourse);
         existingCourse.setShortName("EXISTCRS");
         existingCourse.setTitle("Existing Course");
         courseRepository.save(existingCourse);
@@ -263,12 +267,14 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void createCourseRequest_withConflict_shouldSuggestIncrementedShortName() throws Exception {
         // Create existing course that takes the first suggested name
         Course existingCourse = new Course();
+        initializeCourseConfigurations(existingCourse);
         existingCourse.setShortName("TC2025");
         existingCourse.setTitle("Some Course");
         courseRepository.save(existingCourse);
 
         // Create another existing course that takes the same requested short name
         Course conflictingCourse = new Course();
+        initializeCourseConfigurations(conflictingCourse);
         conflictingCourse.setShortName("CONFLICT");
         conflictingCourse.setTitle("Conflict Course");
         courseRepository.save(conflictingCourse);
@@ -378,6 +384,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // Create a course with the same short name after the request was created
         Course existingCourse = new Course();
+        initializeCourseConfigurations(existingCourse);
         existingCourse.setShortName("CNFLCT");
         existingCourse.setTitle("Conflicting Course");
         courseRepository.save(existingCourse);
@@ -484,6 +491,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // Create a course with the same short name we want to update to
         Course existingCourse = new Course();
+        initializeCourseConfigurations(existingCourse);
         existingCourse.setShortName("UPDEXST");
         existingCourse.setTitle("Existing Course for Update Test");
         courseRepository.save(existingCourse);
@@ -550,5 +558,11 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         courseRequest.setCreatedDate(createdDate);
         courseRequest.setRequester(student);
         return courseRequestRepository.save(courseRequest);
+    }
+
+    private void initializeCourseConfigurations(Course course) {
+        course.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course.setComplaintConfiguration(new CourseComplaintConfiguration());
+        course.setExtendedSettings(new CourseExtendedSettings());
     }
 }

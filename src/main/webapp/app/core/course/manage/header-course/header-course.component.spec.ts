@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HeaderCourseComponent } from 'app/core/course/manage/header-course/header-course.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -14,14 +15,14 @@ describe('Header Course Component', () => {
         id: 123,
         title: 'Course Title1',
         shortName: 'ShortName1',
-        description: 'a'.repeat(1000),
+        extendedSettings: { description: 'a'.repeat(1000) } as CourseExtendedSettings,
     };
 
     const courseWithShortDescription: Course = {
         id: 234,
         title: 'Course Title2',
         shortName: 'ShortName2',
-        description: 'a'.repeat(100),
+        extendedSettings: { description: 'a'.repeat(100) } as CourseExtendedSettings,
     };
 
     beforeEach(async () => {
@@ -50,7 +51,7 @@ describe('Header Course Component', () => {
         component.toggleCourseDescription();
 
         expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(courseWithLongDescription.description);
+        expect(component.courseDescription).toBe(courseWithLongDescription.extendedSettings?.description);
 
         component.toggleCourseDescription();
 
@@ -64,7 +65,7 @@ describe('Header Course Component', () => {
         component.ngOnChanges();
         expect(component.enableShowMore).toBeFalse();
         expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe(courseWithShortDescription.description);
+        expect(component.courseDescription).toBe(courseWithShortDescription.extendedSettings?.description);
 
         window['innerWidth'] = 100;
         component.onResize();
@@ -74,12 +75,12 @@ describe('Header Course Component', () => {
         component.toggleCourseDescription();
         expect(component.enableShowMore).toBeTrue();
         expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(courseWithShortDescription.description);
+        expect(component.courseDescription).toBe(courseWithShortDescription.extendedSettings?.description);
 
         window['innerWidth'] = 1920;
         component.onResize();
         expect(component.enableShowMore).toBeFalse();
-        expect(component.courseDescription).toBe(courseWithShortDescription.description);
+        expect(component.courseDescription).toBe(courseWithShortDescription.extendedSettings?.description);
     });
 
     it('should not display manage button but go to student view button in course management', () => {

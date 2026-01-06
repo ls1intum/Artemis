@@ -107,7 +107,7 @@ public class ModelingExerciseUtilService {
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(releaseDate, startDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle("Modeling Exercise");
         course.addExercises(modelingExercise);
-        course.setMaxComplaintTimeDays(14);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(14);
         return exerciseRepository.save(modelingExercise);
     }
 
@@ -123,7 +123,7 @@ public class ModelingExerciseUtilService {
                 course);
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
-        course.setMaxComplaintTimeDays(14);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(14);
         course = courseRepo.save(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);

@@ -132,19 +132,20 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
             expect(courseBody.title).toBe(courseData.title);
             expect(courseBody.shortName).toBe(courseData.shortName);
-            expect(courseBody.description).toBe(courseData.description);
+            expect(courseBody.extendedSettings?.description).toBe(courseData.description);
             expect(courseBody.testCourse).toBe(courseData.testCourse);
             expect(trimDate(courseBody.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
             expect(trimDate(courseBody.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
             expect(courseBody.semester).toBe(courseData.semester);
             expect(courseBody.maxPoints).toBe(courseData.maxPoints);
             expect(courseBody.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
-            expect(courseBody.complaintsEnabled).toBe(courseData.enableComplaints);
+            expect(courseBody.complaintConfiguration?.complaintsEnabled).toBe(courseData.enableComplaints);
             expect(courseBody.faqEnabled).toBe(courseData.enableFaqs);
-            expect(courseBody.maxComplaints).toBe(courseData.maxComplaints);
-            expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
-            expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
-            expect(courseBody.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+            expect(courseBody.complaintConfiguration?.maxComplaints).toBe(courseData.maxComplaints);
+            expect(courseBody.complaintConfiguration?.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
+            expect(courseBody.complaintConfiguration?.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
+            expect(courseBody.complaintConfiguration?.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+            expect(courseBody.complaintConfiguration?.maxRequestMoreFeedbackTimeDays).toBe(courseData.maxRequestMoreFeedbackTimeDays);
             expect(courseBody.studentGroupName).toBe(`artemis-${courseData.shortName}-students`);
             expect(courseBody.editorGroupName).toBe(`artemis-${courseData.shortName}-editors`);
             expect(courseBody.instructorGroupName).toBe(`artemis-${courseData.shortName}-instructors`);

@@ -91,10 +91,11 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
             this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
-            if (this.course?.maxComplaintTimeDays) {
+            const maxComplaintTimeDays = this.course?.complaintConfiguration?.maxComplaintTimeDays;
+            if (maxComplaintTimeDays) {
                 this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                     this.exercise,
-                    this.course.maxComplaintTimeDays,
+                    maxComplaintTimeDays,
                     getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                     this.studentParticipation,
                 );

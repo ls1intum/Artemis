@@ -125,7 +125,10 @@
             isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution)
     ) {
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
-        @if ((isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment || !isEditFieldDisplayedRecord()) && (isExamMode || exercise.course?.complaintsEnabled)) {
+        @if (
+            (isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment || !isEditFieldDisplayedRecord()) &&
+            (isExamMode || exercise.course?.complaintConfiguration?.complaintsEnabled)
+        ) {
             <div class="form-check">
                 <input
                     type="checkbox"

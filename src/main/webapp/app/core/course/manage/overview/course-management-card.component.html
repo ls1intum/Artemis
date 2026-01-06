@@ -19,9 +19,9 @@
         </div>
         <div class="container container-padding title-container" [routerLink]="['/course-management', course.id]">
             <h3 class="card-title text-center fw-medium course-title">{{ course.title }} ({{ course.shortName }})</h3>
-            @if (course.description && course.description !== '') {
+            @if (course.extendedSettings?.description && course.extendedSettings?.description !== '') {
                 <div class="text-center course-description">
-                    {{ course.description }}
+                    {{ course.extendedSettings?.description }}
                 </div>
             }
         </div>

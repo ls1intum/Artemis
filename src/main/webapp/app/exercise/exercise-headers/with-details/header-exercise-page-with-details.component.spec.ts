@@ -107,7 +107,7 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
-        component.course = { maxComplaintTimeDays: 7 } as Course;
+        component.course = { complaintConfiguration: { maxComplaintTimeDays: 7 } } as Course;
         const submission = { results: [{ rated: true, completionDate: dayjs() }] } as ProgrammingSubmission;
         participation.submissions = [submission];
         component.ngOnInit();

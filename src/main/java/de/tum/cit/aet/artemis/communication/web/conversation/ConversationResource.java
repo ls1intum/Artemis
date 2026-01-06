@@ -196,7 +196,7 @@ public class ConversationResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
         checkCommunicationEnabledElseThrow(courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerExtendedSettingsElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         return ResponseEntity.ok(conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));

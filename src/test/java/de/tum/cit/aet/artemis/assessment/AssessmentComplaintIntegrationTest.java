@@ -216,7 +216,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_validDueDate() throws Exception {
         // Set due date for mock course to 2 weeks. Complaint created one week after result date is fine.
-        course.setMaxComplaintTimeDays(14);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(14);
         courseRepository.save(course);
 
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
@@ -775,7 +775,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getNumberOfAllowedComplaintsInCourseComplaintsDisabled() throws Exception {
         // complaints enabled will return zero
-        course.setMaxComplaintTimeDays(-1);
+        course.getComplaintConfiguration().setMaxComplaintTimeDays(-1);
         courseRepository.save(course);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
@@ -927,7 +927,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
         examCourse = courseUtilService.updateCourseComplaintTextLimit(examCourse, 25);
         // enable course complaints
-        examCourse.setMaxComplaintTimeDays(3);
+        examCourse.getComplaintConfiguration().setMaxComplaintTimeDays(3);
         courseRepository.save(examCourse);
         // 26 characters, exceeds course limit but lower than 2000 --> allowed for exam exercise
         String complaintText = "abcdefghijklmnopqrstuvwxyz";
@@ -943,7 +943,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
         // disable course complaints
-        examCourse.setMaxComplaintTimeDays(0);
+        examCourse.getComplaintConfiguration().setMaxComplaintTimeDays(0);
         courseRepository.save(examCourse);
         // less than 2000 characters
         var examSubmission = createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.CREATED);
@@ -957,7 +957,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
         // disable course complaints
-        examCourse.setMaxComplaintTimeDays(0);
+        examCourse.getComplaintConfiguration().setMaxComplaintTimeDays(0);
         courseRepository.save(examCourse);
         // 2004 characters (4 over the limit of 2000)
         createComplaintForExamExercise(examExercise, "abcd".repeat(501), HttpStatus.BAD_REQUEST);

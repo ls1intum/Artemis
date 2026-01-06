@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- CLEANUP MIGRATION: Remove old columns from course table after Course entity refactoring.
+         Prerequisites before enabling this migration:
+         1. Main migration (creating new tables) has been deployed and verified
+         2. Application code has been updated to use new entities (CourseEnrollmentConfiguration,
+            CourseComplaintConfiguration, CourseExtendedSettings)
+         3. All data has been successfully migrated to new tables
+         4. Production has been running stable with new code for sufficient time
+
+         This migration drops the following columns that were moved to separate entities:
+         - Enrollment columns -> course_enrollment_configuration
+         - Complaint columns -> course_complaint_configuration
+         - Extended settings columns -> course_extended_settings
+    -->
+
+    <!-- Step 1: Drop enrollment-related columns (moved to course_enrollment_configuration) -->
+    <changeSet id="20260201120000-drop-enrollment-columns" author="artemis">
+        <dropColumn tableName="course" columnName="registration_enabled"/>
+        <dropColumn tableName="course" columnName="enrollment_start_date"/>
+        <dropColumn tableName="course" columnName="enrollment_end_date"/>
+        <dropColumn tableName="course" columnName="registration_confirmation_message"/>
+        <dropColumn tableName="course" columnName="unenrollment_enabled"/>
+        <dropColumn tableName="course" columnName="unenrollment_end_date"/>
+    </changeSet>
+
+    <!-- Step 2: Drop complaint-related columns (moved to course_complaint_configuration) -->
+    <changeSet id="20260201120000-drop-complaint-columns" author="artemis">
+        <dropColumn tableName="course" columnName="max_complaints"/>
+        <dropColumn tableName="course" columnName="max_team_complaints"/>
+        <dropColumn tableName="course" columnName="max_complaint_time_days"/>
+        <dropColumn tableName="course" columnName="max_request_more_feedback_time_days"/>
+        <dropColumn tableName="course" columnName="max_complaint_text_limit"/>
+        <dropColumn tableName="course" columnName="max_complaint_response_text_limit"/>
+    </changeSet>
+
+    <!-- Step 3: Drop extended settings columns (moved to course_extended_settings) -->
+    <changeSet id="20260201120000-drop-extended-settings-columns" author="artemis">
+        <dropColumn tableName="course" columnName="description"/>
+        <dropColumn tableName="course" columnName="info_sharing_messaging_code_of_conduct"/>
+        <dropColumn tableName="course" columnName="course_archive_path"/>
+    </changeSet>
+
+</databaseChangeLog>

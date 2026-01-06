@@ -13,7 +13,7 @@
         @if (canEnrollAgain) {
             <div>
                 {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentPossible' | artemisTranslate }}
-                <b>{{ course?.enrollmentEndDate | artemisDate }}</b>
+                <b>{{ course?.enrollmentConfiguration?.enrollmentEndDate | artemisDate }}</b>
             </div>
         }
     </div>

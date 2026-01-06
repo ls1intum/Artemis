@@ -27,6 +27,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 
 describe('Course Exam Archive Button Component', () => {
     let comp: CourseExamArchiveButtonComponent;
@@ -34,6 +36,18 @@ describe('Course Exam Archive Button Component', () => {
     let courseManagementService: CourseManagementService;
     let examManagementService: ExamManagementService;
     let accountService: AccountService;
+    const createCourse = (archivePath?: string): Course => {
+        const course = new Course();
+        course.id = 123;
+        course.isAtLeastInstructor = true;
+        course.endDate = dayjs().subtract(5, 'minutes');
+        if (archivePath !== undefined) {
+            const extendedSettings = new CourseExtendedSettings();
+            extendedSettings.courseArchivePath = archivePath;
+            course.extendedSettings = extendedSettings;
+        }
+        return course;
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -74,7 +88,9 @@ describe('Course Exam Archive Button Component', () => {
 
         afterEach(() => {
             // Otherwise ngOnDestroy crashes
-            comp.course = { id: 123 };
+            const course = new Course();
+            course.id = 123;
+            comp.course = course;
         });
 
         it('should just return', fakeAsync(() => {
@@ -123,7 +139,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('onInit for course that has no archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
+        const course = createCourse();
 
         beforeEach(() => {
             comp.archiveMode = 'Course';
@@ -141,7 +157,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('onInit for course that has an archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+        const course = createCourse('some-path');
 
         beforeEach(fakeAsync(() => {
             comp.archiveMode = 'Course';
@@ -224,7 +240,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('onInit for exam that has an archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
+        const course = createCourse();
         const exam: Exam = { id: 123, endDate: dayjs().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
 
         beforeEach(fakeAsync(() => {

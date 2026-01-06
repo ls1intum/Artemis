@@ -64,6 +64,18 @@
     <include file="classpath:config/liquibase/changelog/20251202184601_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20251201120000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260106120000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20260107120000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20260107121000_changelog.xml" relativeToChangelogFile="false"/>
+
+    <!-- CLEANUP MIGRATION (DO NOT ENABLE YET): Drops old columns from course table after Course entity refactoring.
+         Enable this migration ONLY after:
+         1. The main course refactoring migration has been deployed and verified in production
+         2. All application code uses the new entities (CourseEnrollmentConfiguration, CourseComplaintConfiguration, CourseExtendedSettings)
+         3. Production has been stable for at least one release cycle
+         See the migration file for detailed prerequisites.
+    -->
+    <!-- <include file="classpath:config/liquibase/changelog/20260201120000_changelog.xml" relativeToChangelogFile="false"/> -->
+
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
     <!-- you can use the command 'date '+%Y%m%d%H%M%S' to get the current date and time in the correct format -->

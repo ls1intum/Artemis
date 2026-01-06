@@ -11,26 +11,31 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseEnrollmentConfiguration;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class CourseTest {
 
     private static Stream<Arguments> validateOnlineCourseAndEnrollmentEnabledProvider() {
         Course course1 = new Course();
+        course1.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
         course1.setOnlineCourse(true);
-        course1.setEnrollmentEnabled(false);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(false);
 
         Course course2 = new Course();
+        course2.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
         course2.setOnlineCourse(false);
-        course2.setEnrollmentEnabled(true);
+        course2.getEnrollmentConfiguration().setEnrollmentEnabled(true);
 
         Course course3 = new Course();
+        course3.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
         course3.setOnlineCourse(false);
-        course3.setEnrollmentEnabled(false);
+        course3.getEnrollmentConfiguration().setEnrollmentEnabled(false);
 
         Course course4 = new Course();
+        course4.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
         course4.setOnlineCourse(true);
-        course4.setEnrollmentEnabled(true);
+        course4.getEnrollmentConfiguration().setEnrollmentEnabled(true);
 
         return Stream.of(Arguments.of(course1, false), Arguments.of(course2, false), Arguments.of(course3, false), Arguments.of(course4, true));
     }
@@ -48,10 +53,12 @@ class CourseTest {
 
     private static Stream<Arguments> validateEnrollmentConfirmationMessageProvider() {
         Course course1 = new Course();
-        course1.setEnrollmentConfirmationMessage("some valid message");
+        course1.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course1.getEnrollmentConfiguration().setEnrollmentConfirmationMessage("some valid message");
 
         Course course2 = new Course();
-        course2.setEnrollmentConfirmationMessage("some invalid message" + "x".repeat(2000));
+        course2.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        course2.getEnrollmentConfiguration().setEnrollmentConfirmationMessage("some invalid message" + "x".repeat(2000));
 
         return Stream.of(Arguments.of(course1, false), Arguments.of(course2, true));
     }
@@ -60,10 +67,10 @@ class CourseTest {
     @MethodSource("validateEnrollmentConfirmationMessageProvider")
     void testValidateEnrollmentConfirmationMessage(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateEnrollmentConfirmationMessage());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.getEnrollmentConfiguration().validateEnrollmentConfirmationMessage());
         }
         else {
-            assertThatCode(() -> course.validateEnrollmentConfirmationMessage()).doesNotThrowAnyException();
+            assertThatCode(() -> course.getEnrollmentConfiguration().validateEnrollmentConfirmationMessage()).doesNotThrowAnyException();
         }
     }
 
@@ -95,11 +102,12 @@ class CourseTest {
 
     private static Course createCourse(ZonedDateTime start, ZonedDateTime end, ZonedDateTime enrollmentStart, ZonedDateTime enrollmentEnd) {
         Course course = new Course();
+        course.setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
         course.setStartDate(start);
         course.setEndDate(end);
-        course.setEnrollmentEnabled(true);
-        course.setEnrollmentStartDate(enrollmentStart);
-        course.setEnrollmentEndDate(enrollmentEnd);
+        course.getEnrollmentConfiguration().setEnrollmentEnabled(true);
+        course.getEnrollmentConfiguration().setEnrollmentStartDate(enrollmentStart);
+        course.getEnrollmentConfiguration().setEnrollmentEndDate(enrollmentEnd);
         return course;
     }
 
@@ -121,10 +129,11 @@ class CourseTest {
     @MethodSource("validateEnrollmentStartAndEndDateProvider")
     void testValidateEnrollmentStartAndEndDate(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateEnrollmentStartAndEndDate());
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> course.getEnrollmentConfiguration().validateEnrollmentStartAndEndDate(course.getStartDate(), course.getEndDate()));
         }
         else {
-            assertThatCode(() -> course.validateEnrollmentStartAndEndDate()).doesNotThrowAnyException();
+            assertThatCode(() -> course.getEnrollmentConfiguration().validateEnrollmentStartAndEndDate(course.getStartDate(), course.getEndDate())).doesNotThrowAnyException();
         }
     }
 
@@ -135,20 +144,20 @@ class CourseTest {
         ZonedDateTime futureTimeStamp2 = ZonedDateTime.now().plusDays(3);
 
         Course course1 = createCourse(pastTimeStamp1, futureTimeStamp2, pastTimeStamp2, futureTimeStamp1);
-        course1.setUnenrollmentEnabled(true);
-        course1.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(2));
+        course1.getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setUnenrollmentEndDate(ZonedDateTime.now().plusDays(2));
 
         Course course2 = createCourse(pastTimeStamp1, futureTimeStamp2, null, null);
-        course2.setUnenrollmentEnabled(true);
-        course2.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(2));
+        course2.getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+        course2.getEnrollmentConfiguration().setUnenrollmentEndDate(ZonedDateTime.now().plusDays(2));
 
         Course course3 = createCourse(pastTimeStamp1, futureTimeStamp2, pastTimeStamp2, futureTimeStamp1);
-        course3.setUnenrollmentEnabled(true);
-        course3.setUnenrollmentEndDate(ZonedDateTime.now());
+        course3.getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+        course3.getEnrollmentConfiguration().setUnenrollmentEndDate(ZonedDateTime.now());
 
         Course course4 = createCourse(pastTimeStamp1, futureTimeStamp2, pastTimeStamp2, futureTimeStamp1);
-        course4.setUnenrollmentEnabled(true);
-        course4.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
+        course4.getEnrollmentConfiguration().setUnenrollmentEnabled(true);
+        course4.getEnrollmentConfiguration().setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
 
         return Stream.of(Arguments.of(course1, false), Arguments.of(course2, true));
     }
@@ -157,10 +166,10 @@ class CourseTest {
     @MethodSource("validateUnenrollmentEndDateProvider")
     void testValidateUnenrollmentEndDate(Course course, boolean expectException) {
         if (expectException) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateUnenrollmentEndDate());
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.getEnrollmentConfiguration().validateUnenrollmentEndDate(course.getEndDate()));
         }
         else {
-            assertThatCode(() -> course.validateUnenrollmentEndDate()).doesNotThrowAnyException();
+            assertThatCode(() -> course.getEnrollmentConfiguration().validateUnenrollmentEndDate(course.getEndDate())).doesNotThrowAnyException();
         }
     }
 }

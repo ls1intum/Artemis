@@ -81,7 +81,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course1.setEnrollmentEnabled(true);
+        course1.getEnrollmentConfiguration().setEnrollmentEnabled(true);
         courseRepository.save(course1);
     }
 

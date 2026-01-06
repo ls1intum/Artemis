@@ -116,14 +116,15 @@ public class CourseArchiveResource {
     @GetMapping("courses/{courseId}/download-archive")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws IOException {
         log.info("REST request to download archive of Course : {}", courseId);
-        final Course course = courseRepository.findByIdElseThrow(courseId);
+        final Course course = courseRepository.findWithEagerExtendedSettingsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (!course.hasCourseArchive()) {
+        var extendedSettings = course.getExtendedSettings();
+        if (extendedSettings == null || !extendedSettings.hasCourseArchive()) {
             throw new EntityNotFoundException("Archived course", courseId);
         }
 
-        // The path is stored in the course table
-        Path archive = Path.of(courseArchivesDirPath, course.getCourseArchivePath());
+        // The path is stored in the extended settings
+        Path archive = Path.of(courseArchivesDirPath, extendedSettings.getCourseArchivePath());
         InputStreamResource resource = new InputStreamResource(Files.newInputStream(archive));
         File zipFile = archive.toFile();
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
@@ -144,10 +145,11 @@ public class CourseArchiveResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, Principal principal) {
         log.info("REST request to cleanup the Course : {}", courseId);
-        final Course course = courseRepository.findByIdElseThrow(courseId);
+        final Course course = courseRepository.findWithEagerExtendedSettingsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Forbid cleaning the course if no archive has been created
-        if (!course.hasCourseArchive()) {
+        var extendedSettings = course.getExtendedSettings();
+        if (extendedSettings == null || !extendedSettings.hasCourseArchive()) {
             throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistent");
         }
         courseArchiveService.cleanupCourse(courseId, principal);

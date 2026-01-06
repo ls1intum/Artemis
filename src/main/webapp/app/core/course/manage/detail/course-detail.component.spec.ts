@@ -18,6 +18,9 @@ import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/c
 import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseComplaintConfiguration } from 'app/core/course/shared/entities/course-complaint-configuration.model';
+import { CourseEnrollmentConfiguration } from 'app/core/course/shared/entities/course-enrollment-configuration.model';
+import { CourseExtendedSettings } from 'app/core/course/shared/entities/course-extended-settings.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,9 +44,11 @@ describe('Course Management Detail Component', () => {
     const course: Course = {
         id: 123,
         title: 'Course Title',
-        description: 'Cras mattis iudicium purus sit amet fermentum. Gallia est omnis divisa in partes tres, quarum.',
+        extendedSettings: {
+            description: 'Cras mattis iudicium purus sit amet fermentum. Gallia est omnis divisa in partes tres, quarum.',
+            courseArchivePath: 'some-path',
+        } as CourseExtendedSettings,
         endDate: dayjs().subtract(5, 'minutes'),
-        courseArchivePath: 'some-path',
     };
     const dtoMock: CourseManagementDetailViewDto = {
         // assessments
@@ -157,10 +162,14 @@ describe('Course Management Detail Component', () => {
         component.course = course;
         if (allSettingsEnabled) {
             component.ltiEnabled = true;
-            component.course.complaintsEnabled = true;
-            component.course.requestMoreFeedbackEnabled = true;
-            component.course.enrollmentEnabled = true;
-            component.course.unenrollmentEnabled = true;
+            component.course.complaintConfiguration = {
+                maxComplaintTimeDays: 7,
+                maxRequestMoreFeedbackTimeDays: 7,
+            } as CourseComplaintConfiguration;
+            component.course.enrollmentConfiguration = {
+                enrollmentEnabled: true,
+                unenrollmentEnabled: true,
+            } as CourseEnrollmentConfiguration;
             component.course.organizations = [{ id: 32, name: 'TUM' }];
         }
         component.getCourseDetailSections();

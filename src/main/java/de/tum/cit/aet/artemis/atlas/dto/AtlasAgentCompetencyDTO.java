@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 
 /**
  * DTO for Atlas Agent tool responses representing competency information.
@@ -14,6 +15,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @NotNull String description, @Nullable String taxonomy, @Nullable Long courseId) {
+
+    public AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @NotNull String description, @Nullable CompetencyTaxonomy taxonomy, @Nullable Long courseId) {
+        this(id, title, description, taxonomy != null ? taxonomy.toString() : null, courseId);
+    }
 
     /**
      * Creates an AtlasAgentCompetencyDTO from a Competency entity without courseId.

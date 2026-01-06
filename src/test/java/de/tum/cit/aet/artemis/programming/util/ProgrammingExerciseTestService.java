@@ -1872,7 +1872,7 @@ public class ProgrammingExerciseTestService {
     // Test
     public void testArchiveCourseWithProgrammingExercise() throws Exception {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
-        course.setCourseArchivePath(null);
+        course.getExtendedSettings().setCourseArchivePath(null);
         course.setExercises(Set.of(exercise));
         courseRepository.save(course);
 
@@ -1894,12 +1894,12 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
 
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
-        await().until(() -> courseRepository.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
+        await().until(() -> courseRepository.findWithEagerConfigurationsByIdElseThrow(course.getId()).getExtendedSettings().getCourseArchivePath() != null);
 
-        var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
-        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+        var updatedCourse = courseRepository.findWithEagerConfigurationsByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getExtendedSettings().getCourseArchivePath()).isNotEmpty();
         // extract archive content and check that all expected files exist.
-        Path courseArchivePath = courseArchivesDirPath.resolve(updatedCourse.getCourseArchivePath());
+        Path courseArchivePath = courseArchivesDirPath.resolve(updatedCourse.getExtendedSettings().getCourseArchivePath());
         Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         try (var files = Files.walk(extractedArchiveDir)) {
             assertThat(files).map(Path::getFileName).anyMatch((filename) -> filename.toString().matches(".*-exercise"))
@@ -1944,7 +1944,7 @@ public class ProgrammingExerciseTestService {
 
     private void createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
-        course.setCourseArchivePath(null);
+        course.getExtendedSettings().setCourseArchivePath(null);
         course.setExercises(Set.of(exercise));
         course = courseRepository.save(course);
 

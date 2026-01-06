@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.core.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
-import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -22,6 +20,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -56,13 +55,8 @@ public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
-    private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
-
     @Column(name = "title")
     private String title;
-
-    @Column(name = "description")
-    private String description;
 
     @Column(name = "short_name", unique = true)
     private String shortName;
@@ -85,15 +79,6 @@ public class Course extends DomainObject {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
-    @Column(name = "enrollment_start_date")
-    private ZonedDateTime enrollmentStartDate;
-
-    @Column(name = "enrollment_end_date")
-    private ZonedDateTime enrollmentEndDate;
-
-    @Column(name = "unenrollment_end_date")
-    private ZonedDateTime unenrollmentEndDate;
-
     @Column(name = "semester")
     private String semester;
 
@@ -112,34 +97,24 @@ public class Course extends DomainObject {
     private Boolean onlineCourse = false;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "online_course_configuration_id")
+    @JoinColumn(name = "online_course_configuration_id", unique = true)
     private OnlineCourseConfiguration onlineCourseConfiguration;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "enrollment_configuration_id", nullable = false, unique = true)
+    private CourseEnrollmentConfiguration enrollmentConfiguration;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "complaint_configuration_id", nullable = false, unique = true)
+    private CourseComplaintConfiguration complaintConfiguration;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "extended_settings_id", nullable = false, unique = true)
+    private CourseExtendedSettings extendedSettings;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
-
-    // TODO: move this into a separate entity to avoid it is loaded whenever the course is loaded
-    @Column(name = "info_sharing_messaging_code_of_conduct")
-    private String courseInformationSharingMessagingCodeOfConduct;
-
-    @Column(name = "max_complaints", nullable = false)
-    private Integer maxComplaints = 3;  // default value
-
-    @Column(name = "max_team_complaints", nullable = false)
-    private Integer maxTeamComplaints = 3;  // default value
-
-    @Column(name = "max_complaint_time_days", nullable = false)
-    private int maxComplaintTimeDays = 7;   // default value
-
-    @Column(name = "max_request_more_feedback_time_days", nullable = false)
-    private int maxRequestMoreFeedbackTimeDays = 7;   // default value
-
-    @Column(name = "max_complaint_text_limit")
-    private int maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
-
-    @Column(name = "max_complaint_response_text_limit")
-    private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @Column(name = "color")
     private String color;
@@ -147,23 +122,11 @@ public class Course extends DomainObject {
     @Column(name = "course_icon")
     private String courseIcon;
 
-    @Column(name = "registration_enabled") // TODO: rename column in database
-    private Boolean enrollmentEnabled;
-
-    @Column(name = "registration_confirmation_message") // TODO: rename column in database
-    private String enrollmentConfirmationMessage;
-
-    @Column(name = "unenrollment_enabled")
-    private boolean unenrollmentEnabled = false;
-
     @Column(name = "faq_enabled")
     private boolean faqEnabled = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
-
-    @Column(name = "course_archive_path")
-    private String courseArchivePath;
 
     @Column(name = "max_points")
     private Integer maxPoints;
@@ -292,14 +255,6 @@ public class Course extends DomainObject {
         return title;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }
@@ -380,58 +335,6 @@ public class Course extends DomainObject {
         this.endDate = endDate;
     }
 
-    public ZonedDateTime getEnrollmentStartDate() {
-        return enrollmentStartDate;
-    }
-
-    public void setEnrollmentStartDate(ZonedDateTime enrollmentStartDate) {
-        this.enrollmentStartDate = enrollmentStartDate;
-    }
-
-    public ZonedDateTime getEnrollmentEndDate() {
-        return enrollmentEndDate;
-    }
-
-    public void setEnrollmentEndDate(ZonedDateTime enrollmentEndDate) {
-        this.enrollmentEndDate = enrollmentEndDate;
-    }
-
-    /**
-     * Determine whether the current date is within the enrollment period (after start, before end).
-     *
-     * @return true if the current date is within the enrollment period, false otherwise
-     */
-    @JsonIgnore
-    public boolean enrollmentIsActive() {
-        ZonedDateTime now = ZonedDateTime.now();
-        return (getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now)) && (getEnrollmentEndDate() == null || getEnrollmentEndDate().isAfter(now));
-    }
-
-    public ZonedDateTime getUnenrollmentEndDate() {
-        return unenrollmentEndDate;
-    }
-
-    public void setUnenrollmentEndDate(ZonedDateTime unenrollmentEndDate) {
-        this.unenrollmentEndDate = unenrollmentEndDate;
-    }
-
-    /**
-     * Determine whether the current date is within the unenrollment period (after start, before end).
-     * <p>
-     * The unenrollment period starts with the enrollment start date and ends with the unenrollment end date if present,
-     * otherwise the course end date will be used as the end of the period.
-     *
-     * @return true if the current date is within the unenrollment period, false otherwise
-     */
-    @JsonIgnore
-    public boolean unenrollmentIsActive() {
-        ZonedDateTime now = ZonedDateTime.now();
-        final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
-        return startCondition && endCondition;
-    }
-
     public String getSemester() {
         return semester;
     }
@@ -480,79 +383,54 @@ public class Course extends DomainObject {
         this.onlineCourseConfiguration = onlineCourseConfiguration;
     }
 
-    public Integer getMaxComplaints() {
-        return maxComplaints;
+    public CourseEnrollmentConfiguration getEnrollmentConfiguration() {
+        return Hibernate.isInitialized(enrollmentConfiguration) ? enrollmentConfiguration : null;
     }
 
-    public void setMaxComplaints(Integer maxComplaints) {
-        this.maxComplaints = maxComplaints;
-    }
-
-    public Integer getMaxTeamComplaints() {
-        return maxTeamComplaints;
-    }
-
-    public void setMaxTeamComplaints(Integer maxTeamComplaints) {
-        this.maxTeamComplaints = maxTeamComplaints;
-    }
-
-    public int getMaxComplaintTimeDays() {
-        return maxComplaintTimeDays;
-    }
-
-    public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
-        this.maxComplaintTimeDays = maxComplaintTimeDays;
-    }
-
-    public int getMaxComplaintTextLimit() {
-        return maxComplaintTextLimit;
-    }
-
-    public void setMaxComplaintTextLimit(int maxComplaintTextLimit) {
-        this.maxComplaintTextLimit = maxComplaintTextLimit;
-    }
-
-    @JsonIgnore
-    public int getMaxComplaintTextLimitForExercise(Exercise exercise) {
-        if (exercise.isExamExercise()) {
-            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintTextLimit());
+    public void setEnrollmentConfiguration(CourseEnrollmentConfiguration enrollmentConfiguration) {
+        this.enrollmentConfiguration = enrollmentConfiguration;
+        if (enrollmentConfiguration != null) {
+            enrollmentConfiguration.setCourse(this);
         }
-        return getMaxComplaintTextLimit();
     }
 
-    public int getMaxComplaintResponseTextLimit() {
-        return maxComplaintResponseTextLimit;
+    public CourseComplaintConfiguration getComplaintConfiguration() {
+        return Hibernate.isInitialized(complaintConfiguration) ? complaintConfiguration : null;
     }
 
-    public void setMaxComplaintResponseTextLimit(int maxComplaintResponseTextLimit) {
-        this.maxComplaintResponseTextLimit = maxComplaintResponseTextLimit;
-    }
-
-    @JsonIgnore
-    public int getMaxComplaintResponseTextLimitForExercise(Exercise exercise) {
-        if (exercise.isExamExercise()) {
-            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintResponseTextLimit());
+    public void setComplaintConfiguration(CourseComplaintConfiguration complaintConfiguration) {
+        this.complaintConfiguration = complaintConfiguration;
+        if (complaintConfiguration != null) {
+            complaintConfiguration.setCourse(this);
         }
-        return getMaxComplaintResponseTextLimit();
     }
 
-    public boolean getComplaintsEnabled() {
-        // maxComplaintTimeDays must be larger than zero,
-        // and then either maxComplaints, maxTeamComplaints is larger than zero
-        // See CourseResource for more details on the validation
-        return this.maxComplaintTimeDays > 0;
+    public CourseExtendedSettings getExtendedSettings() {
+        return Hibernate.isInitialized(extendedSettings) ? extendedSettings : null;
     }
 
-    public boolean getRequestMoreFeedbackEnabled() {
-        return maxRequestMoreFeedbackTimeDays > 0;
+    public void setExtendedSettings(CourseExtendedSettings extendedSettings) {
+        this.extendedSettings = extendedSettings;
+        if (extendedSettings != null) {
+            extendedSettings.setCourse(this);
+        }
     }
 
-    public int getMaxRequestMoreFeedbackTimeDays() {
-        return maxRequestMoreFeedbackTimeDays;
-    }
-
-    public void setMaxRequestMoreFeedbackTimeDays(int maxRequestMoreFeedbackTimeDays) {
-        this.maxRequestMoreFeedbackTimeDays = maxRequestMoreFeedbackTimeDays;
+    /**
+     * Initialize required configurations with default values before persisting a course so the non-null
+     * constraints on the foreign keys are satisfied.
+     */
+    @PrePersist
+    private void initializeConfigurations() {
+        if (enrollmentConfiguration == null) {
+            setEnrollmentConfiguration(new CourseEnrollmentConfiguration());
+        }
+        if (complaintConfiguration == null) {
+            setComplaintConfiguration(new CourseComplaintConfiguration());
+        }
+        if (extendedSettings == null) {
+            setExtendedSettings(new CourseExtendedSettings());
+        }
     }
 
     public String getColor() {
@@ -571,36 +449,12 @@ public class Course extends DomainObject {
         this.courseIcon = courseIcon;
     }
 
-    public Boolean isEnrollmentEnabled() {
-        return enrollmentEnabled;
-    }
-
-    public void setEnrollmentEnabled(Boolean enrollmentEnabled) {
-        this.enrollmentEnabled = enrollmentEnabled;
-    }
-
     public boolean isFaqEnabled() {
         return faqEnabled;
     }
 
     public void setFaqEnabled(boolean faqEnabled) {
         this.faqEnabled = faqEnabled;
-    }
-
-    public String getEnrollmentConfirmationMessage() {
-        return enrollmentConfirmationMessage;
-    }
-
-    public void setEnrollmentConfirmationMessage(String enrollmentConfirmationMessage) {
-        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage;
-    }
-
-    public boolean isUnenrollmentEnabled() {
-        return unenrollmentEnabled;
-    }
-
-    public void setUnenrollmentEnabled(boolean unenrollmentEnabled) {
-        this.unenrollmentEnabled = unenrollmentEnabled;
     }
 
     public Integer getPresentationScore() {
@@ -671,13 +525,11 @@ public class Course extends DomainObject {
 
     @Override
     public String toString() {
-        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
-                + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
-                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
-                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + ", faqEnabled='" + isFaqEnabled() + "'" + "}";
+        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", studentGroupName='" + getStudentGroupName() + "'"
+                + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='" + getEditorGroupName() + "'" + ", instructorGroupName='"
+                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'"
+                + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", presentationScore='"
+                + getPresentationScore() + "'" + ", faqEnabled='" + isFaqEnabled() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -744,18 +596,6 @@ public class Course extends DomainObject {
         this.learningPaths = learningPaths;
     }
 
-    public boolean hasCourseArchive() {
-        return courseArchivePath != null && !courseArchivePath.isEmpty();
-    }
-
-    public String getCourseArchivePath() {
-        return courseArchivePath;
-    }
-
-    public void setCourseArchivePath(String courseArchiveUrl) {
-        this.courseArchivePath = courseArchiveUrl;
-    }
-
     public Integer getMaxPoints() {
         return maxPoints;
     }
@@ -800,7 +640,8 @@ public class Course extends DomainObject {
      * Validates that only one of onlineCourse and enrollmentEnabled is selected
      */
     public void validateOnlineCourseAndEnrollmentEnabled() {
-        if (isOnlineCourse() && isEnrollmentEnabled()) {
+        boolean enrollmentEnabled = getEnrollmentConfiguration() != null && Boolean.TRUE.equals(getEnrollmentConfiguration().isEnrollmentEnabled());
+        if (isOnlineCourse() && enrollmentEnabled) {
             throw new BadRequestAlertException("Online course and enrollment enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseEnrollmentEnabledInvalid", true);
         }
     }
@@ -830,131 +671,11 @@ public class Course extends DomainObject {
     }
 
     /**
-     * validates that the configuration for complaints and more feedback requests is correct
-     */
-    public void validateComplaintsAndRequestMoreFeedbackConfig() {
-        if (getMaxComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxComplaints(3);
-        }
-        if (getMaxTeamComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxTeamComplaints(3);
-        }
-        if (getMaxComplaints() < 0) {
-            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
-        }
-        if (getMaxTeamComplaints() < 0) {
-            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
-        }
-        if (getMaxComplaintTextLimit() < 0) {
-            throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
-        }
-        if (getMaxComplaintTextLimit() > COMPLAINT_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintTextLimitInvalid", true);
-        }
-        if (getMaxComplaintResponseTextLimit() < 0) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
-        }
-        if (getMaxComplaintResponseTextLimit() > COMPLAINT_RESPONSE_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintResponseTextLimitInvalid", true);
-        }
-        if (getMaxRequestMoreFeedbackTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() == 0 && (getMaxComplaints() != 0 || getMaxTeamComplaints() != 0)) {
-            throw new BadRequestAlertException("If complaints or more feedback requests are allowed, the complaint time in days must be positive.", ENTITY_NAME,
-                    "complaintsConfigInvalid", true);
-        }
-        if (getMaxComplaintTimeDays() != 0 && getMaxComplaints() == 0 && getMaxTeamComplaints() == 0) {
-            throw new BadRequestAlertException("If no complaints or more feedback requests are allowed, the complaint time in days should be set to zero.", ENTITY_NAME,
-                    "complaintsConfigInvalid", true);
-        }
-    }
-
-    public void validateEnrollmentConfirmationMessage() {
-        if (getEnrollmentConfirmationMessage() != null && getEnrollmentConfirmationMessage().length() > 2000) {
-            throw new BadRequestAlertException("Confirmation enrollment message must be shorter than 2000 characters", ENTITY_NAME, "confirmationEnrollmentMessageInvalid", true);
-        }
-    }
-
-    /**
      * Validates if the start and end dates of the course fulfill all requirements.
      */
     public void validateStartAndEndDate() {
         if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
-        }
-    }
-
-    /**
-     * Validates if the start and end date to enroll in the course fulfill all requirements.
-     * <p>
-     * The enrollment period is considered valid if
-     * <ul>
-     * <li>start and end date of the course are set and valid ({@link #validateStartAndEndDate()})</li>
-     * <li>start and end date of the enrollment period are in the correct order,</li>
-     * <li>and the start and end date of the enrollment is before the end date of the course.</li>
-     * </ul>
-     *
-     * @throws BadRequestAlertException if the enrollment period is invalid
-     */
-    public void validateEnrollmentStartAndEndDate() {
-        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            return;
-        }
-        final String errorKey = "enrollmentPeriodInvalid";
-        if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
-            throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getStartDate() == null || getEndDate() == null) {
-            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
-        }
-
-        validateStartAndEndDate();
-
-        if (getEnrollmentEndDate().isAfter(getEndDate())) {
-            throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
-        }
-    }
-
-    /**
-     * Validates if the end date to unenroll from the course fulfills all requirements.
-     * <p>
-     * The unenrollment end date is considered valid if
-     * <ul>
-     * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
-     * <li>the enrollment period ends before the unenrollment end date,</li>
-     * <li>and the end date for unenrollment is not after the end date of the course.</li>
-     * </ul>
-     *
-     * @throws BadRequestAlertException if the unenrollment end date is invalid
-     */
-    public void validateUnenrollmentEndDate() {
-        if (getUnenrollmentEndDate() == null) {
-            return;
-        }
-
-        validateEnrollmentStartAndEndDate();
-
-        final String errorKey = "unenrollmentEndDateInvalid";
-
-        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
-        }
-
-        if (getUnenrollmentEndDate().isAfter(getEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }
     }
 
@@ -989,13 +710,5 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
         this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
-    }
-
-    public String getCourseInformationSharingMessagingCodeOfConduct() {
-        return this.courseInformationSharingMessagingCodeOfConduct;
-    }
-
-    public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
-        this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
     }
 }

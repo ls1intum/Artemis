@@ -92,7 +92,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             firstValueFrom(this.courseManagementService.find(this.courseId))
-                .then((course) => this.courseDescriptionForm().setCourseDescription(course.body?.description ?? ''))
+                .then((course) => this.courseDescriptionForm().setCourseDescription(course.body?.extendedSettings?.description ?? ''))
                 .catch((res: HttpErrorResponse) => onError(this.alertService, res));
         });
     }

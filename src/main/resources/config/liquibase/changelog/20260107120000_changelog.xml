@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Course Entity Refactoring: Extract 15 columns into 3 new lazy-loaded OneToOne entities.
+         This reduces database load when courses are LEFT JOIN fetched from child objects.
+
+         New entities:
+         - CourseEnrollmentConfiguration: enrollment settings (6 columns)
+         - CourseComplaintConfiguration: complaint/feedback settings (6 columns)
+         - CourseExtendedSettings: description, code of conduct, archive path (3 columns)
+
+         Old columns are preserved for now and will be dropped in a separate cleanup migration
+         after the application code has been verified in production.
+    -->
+
+    <!-- Step 1: Create course_enrollment_configuration table -->
+    <changeSet id="20260107120000-create-enrollment-config-table" author="artemis">
+        <createTable tableName="course_enrollment_configuration">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="enrollment_enabled" type="BOOLEAN">
+                <constraints nullable="true"/>
+            </column>
+            <column name="enrollment_start_date" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+            <column name="enrollment_end_date" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+            <column name="enrollment_confirmation_message" type="VARCHAR(2000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="unenrollment_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unenrollment_end_date" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Step 2: Create course_complaint_configuration table -->
+    <changeSet id="20260107120000-create-complaint-config-table" author="artemis">
+        <createTable tableName="course_complaint_configuration">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="max_complaints" type="INT" defaultValueNumeric="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_team_complaints" type="INT" defaultValueNumeric="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_complaint_time_days" type="INT" defaultValueNumeric="7">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_request_more_feedback_time_days" type="INT" defaultValueNumeric="7">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_complaint_text_limit" type="INT" defaultValueNumeric="2000">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_complaint_response_text_limit" type="INT" defaultValueNumeric="2000">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Step 3: Create course_extended_settings table -->
+    <changeSet id="20260107120000-create-extended-settings-table" author="artemis">
+        <createTable tableName="course_extended_settings">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="description" type="LONGTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="messaging_code_of_conduct" type="LONGTEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="course_archive_path" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Step 4: Add foreign key columns to course table -->
+    <changeSet id="20260107120000-add-fk-columns-to-course" author="artemis">
+        <addColumn tableName="course">
+            <column name="enrollment_configuration_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="course">
+            <column name="complaint_configuration_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="course">
+            <column name="extended_settings_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 5: Migrate data - Create enrollment configurations for each course -->
+    <changeSet id="20260107120000-migrate-enrollment-data" author="artemis">
+        <!-- MySQL version -->
+        <sql dbms="mysql">
+            INSERT INTO course_enrollment_configuration
+                (enrollment_enabled, enrollment_start_date, enrollment_end_date,
+                 enrollment_confirmation_message, unenrollment_enabled, unenrollment_end_date)
+            SELECT
+                registration_enabled,
+                enrollment_start_date,
+                enrollment_end_date,
+                registration_confirmation_message,
+                COALESCE(unenrollment_enabled, FALSE),
+                unenrollment_end_date
+            FROM course
+            ORDER BY id;
+
+            DROP TEMPORARY TABLE IF EXISTS course_enrollment_mapping;
+            CREATE TEMPORARY TABLE course_enrollment_mapping (
+                course_id BIGINT NOT NULL,
+                config_id BIGINT NOT NULL,
+                PRIMARY KEY (course_id)
+            );
+
+            INSERT INTO course_enrollment_mapping (course_id, config_id)
+            SELECT
+                course_order.course_id,
+                config_order.config_id
+            FROM (
+                SELECT id as course_id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course
+            ) course_order
+            INNER JOIN (
+                SELECT id as config_id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course_enrollment_configuration
+            ) config_order ON course_order.rn = config_order.rn;
+
+            UPDATE course c
+            INNER JOIN course_enrollment_mapping mapping ON c.id = mapping.course_id
+            SET c.enrollment_configuration_id = mapping.config_id;
+
+            DROP TEMPORARY TABLE course_enrollment_mapping;
+        </sql>
+
+        <!-- PostgreSQL version -->
+        <sql dbms="postgresql">
+            INSERT INTO course_enrollment_configuration
+                (enrollment_enabled, enrollment_start_date, enrollment_end_date,
+                 enrollment_confirmation_message, unenrollment_enabled, unenrollment_end_date)
+            SELECT
+                registration_enabled,
+                enrollment_start_date,
+                enrollment_end_date,
+                registration_confirmation_message,
+                COALESCE(unenrollment_enabled, FALSE),
+                unenrollment_end_date
+            FROM course
+            ORDER BY id;
+
+            UPDATE course c
+            SET enrollment_configuration_id = ec.id
+            FROM (
+                SELECT
+                    c2.id as course_id,
+                    ROW_NUMBER() OVER (ORDER BY c2.id) as rn
+                FROM course c2
+            ) course_order
+            INNER JOIN (
+                SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course_enrollment_configuration
+            ) ec ON course_order.rn = ec.rn
+            WHERE c.id = course_order.course_id;
+        </sql>
+    </changeSet>
+
+    <!-- Step 6: Migrate data - Create complaint configurations for each course -->
+    <changeSet id="20260107120000-migrate-complaint-data" author="artemis">
+        <!-- MySQL version -->
+        <sql dbms="mysql">
+            INSERT INTO course_complaint_configuration
+                (max_complaints, max_team_complaints, max_complaint_time_days,
+                 max_request_more_feedback_time_days, max_complaint_text_limit, max_complaint_response_text_limit)
+            SELECT
+                COALESCE(max_complaints, 3),
+                COALESCE(max_team_complaints, 3),
+                COALESCE(max_complaint_time_days, 7),
+                COALESCE(max_request_more_feedback_time_days, 7),
+                COALESCE(max_complaint_text_limit, 2000),
+                COALESCE(max_complaint_response_text_limit, 2000)
+            FROM course
+            ORDER BY id;
+
+            DROP TEMPORARY TABLE IF EXISTS course_complaint_mapping;
+            CREATE TEMPORARY TABLE course_complaint_mapping (
+                course_id BIGINT NOT NULL,
+                config_id BIGINT NOT NULL,
+                PRIMARY KEY (course_id)
+            );
+
+            INSERT INTO course_complaint_mapping (course_id, config_id)
+            SELECT
+                course_order.course_id,
+                config_order.config_id
+            FROM (
+                SELECT id as course_id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course
+            ) course_order
+            INNER JOIN (
+                SELECT id as config_id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course_complaint_configuration
+            ) config_order ON course_order.rn = config_order.rn;
+
+            UPDATE course c
+            INNER JOIN course_complaint_mapping mapping ON c.id = mapping.course_id
+            SET c.complaint_configuration_id = mapping.config_id;
+
+            DROP TEMPORARY TABLE course_complaint_mapping;
+        </sql>
+
+        <!-- PostgreSQL version -->
+        <sql dbms="postgresql">
+            INSERT INTO course_complaint_configuration
+                (max_complaints, max_team_complaints, max_complaint_time_days,
+                 max_request_more_feedback_time_days, max_complaint_text_limit, max_complaint_response_text_limit)
+            SELECT
+                COALESCE(max_complaints, 3),
+                COALESCE(max_team_complaints, 3),
+                COALESCE(max_complaint_time_days, 7),
+                COALESCE(max_request_more_feedback_time_days, 7),
+                COALESCE(max_complaint_text_limit, 2000),
+                COALESCE(max_complaint_response_text_limit, 2000)
+            FROM course
+            ORDER BY id;
+
+            UPDATE course c
+            SET complaint_configuration_id = cc.id
+            FROM (
+                SELECT
+                    c2.id as course_id,
+                    ROW_NUMBER() OVER (ORDER BY c2.id) as rn
+                FROM course c2
+            ) course_order
+            INNER JOIN (
+                SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course_complaint_configuration
+            ) cc ON course_order.rn = cc.rn
+            WHERE c.id = course_order.course_id;
+        </sql>
+    </changeSet>
+
+    <!-- Step 7: Migrate data - Create extended settings for each course -->
+    <changeSet id="20260107120000-migrate-extended-settings-data" author="artemis">
+        <!-- MySQL version -->
+        <sql dbms="mysql">
+            INSERT INTO course_extended_settings
+                (description, messaging_code_of_conduct, course_archive_path)
+            SELECT
+                description,
+                info_sharing_messaging_code_of_conduct,
+                course_archive_path
+            FROM course
+            ORDER BY id;
+
+            DROP TEMPORARY TABLE IF EXISTS course_extended_settings_mapping;
+            CREATE TEMPORARY TABLE course_extended_settings_mapping (
+                course_id BIGINT NOT NULL,
+                config_id BIGINT NOT NULL,
+                PRIMARY KEY (course_id)
+            );
+
+            INSERT INTO course_extended_settings_mapping (course_id, config_id)
+            SELECT
+                course_order.course_id,
+                config_order.config_id
+            FROM (
+                SELECT id as course_id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course
+            ) course_order
+            INNER JOIN (
+                SELECT id as config_id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course_extended_settings
+            ) config_order ON course_order.rn = config_order.rn;
+
+            UPDATE course c
+            INNER JOIN course_extended_settings_mapping mapping ON c.id = mapping.course_id
+            SET c.extended_settings_id = mapping.config_id;
+
+            DROP TEMPORARY TABLE course_extended_settings_mapping;
+        </sql>
+
+        <!-- PostgreSQL version -->
+        <sql dbms="postgresql">
+            INSERT INTO course_extended_settings
+                (description, messaging_code_of_conduct, course_archive_path)
+            SELECT
+                description,
+                info_sharing_messaging_code_of_conduct,
+                course_archive_path
+            FROM course
+            ORDER BY id;
+
+            UPDATE course c
+            SET extended_settings_id = es.id
+            FROM (
+                SELECT
+                    c2.id as course_id,
+                    ROW_NUMBER() OVER (ORDER BY c2.id) as rn
+                FROM course c2
+            ) course_order
+            INNER JOIN (
+                SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                FROM course_extended_settings
+            ) es ON course_order.rn = es.rn
+            WHERE c.id = course_order.course_id;
+        </sql>
+    </changeSet>
+
+    <!-- Step 8: Add foreign key constraints -->
+    <changeSet id="20260107120000-add-fk-constraints" author="artemis">
+        <addForeignKeyConstraint
+                baseTableName="course"
+                baseColumnNames="enrollment_configuration_id"
+                referencedTableName="course_enrollment_configuration"
+                referencedColumnNames="id"
+                constraintName="fk_course_enrollment_configuration"
+                onDelete="RESTRICT"/>
+
+        <addForeignKeyConstraint
+                baseTableName="course"
+                baseColumnNames="complaint_configuration_id"
+                referencedTableName="course_complaint_configuration"
+                referencedColumnNames="id"
+                constraintName="fk_course_complaint_configuration"
+                onDelete="RESTRICT"/>
+
+        <addForeignKeyConstraint
+                baseTableName="course"
+                baseColumnNames="extended_settings_id"
+                referencedTableName="course_extended_settings"
+                referencedColumnNames="id"
+                constraintName="fk_course_extended_settings"
+                onDelete="RESTRICT"/>
+    </changeSet>
+
+    <!-- Step 9: Create indexes for the foreign key columns -->
+    <changeSet id="20260107120000-create-indexes" author="artemis">
+        <createIndex indexName="idx_course_enrollment_config" tableName="course">
+            <column name="enrollment_configuration_id"/>
+        </createIndex>
+        <createIndex indexName="idx_course_complaint_config" tableName="course">
+            <column name="complaint_configuration_id"/>
+        </createIndex>
+        <createIndex indexName="idx_course_extended_settings" tableName="course">
+            <column name="extended_settings_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
