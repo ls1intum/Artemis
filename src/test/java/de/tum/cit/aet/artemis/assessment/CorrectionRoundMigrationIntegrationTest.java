@@ -262,10 +262,20 @@ class CorrectionRoundMigrationIntegrationTest extends AbstractSpringIntegrationI
         submission.setText("Test submission text");
         submission = textSubmissionRepository.save(submission);
 
-        // Add result with NULL completion date (incomplete assessment)
-        submission = (TextSubmission) participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, tutor1, 0.0, false, null);
-
-        Result result = submission.getLatestResult();
+        // Create result manually to simulate incomplete assessment (no completion date)
+        // The migration logic only sets correction_round for completed assessments
+        Result result = new Result();
+        result.setSubmission(submission);
+        result.setScore(0.0);
+        result.setRated(false);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setCompletionDate(null); // Incomplete - no completion date
+        result.setAssessor(tutor1);
+        result.setExerciseId(textExercise.getId());
+        result.setCorrectionRound(null); // Should be NULL for incomplete assessments per migration logic
+        result = resultRepository.save(result);
+        submission.addResult(result);
+        textSubmissionRepository.save(submission);
 
         assertThat(result).isNotNull();
 
