@@ -33,6 +33,7 @@ export default defineConfig({
             'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
             'src/main/webapp/app/tutorialgroup/**/*.spec.ts',   // include tutorial group tests
             'src/main/webapp/app/quiz/**/*.spec.ts',            // include quiz tests
+            'src/main/webapp/app/lti/**/*.spec.ts',             // include lti tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -56,6 +57,7 @@ export default defineConfig({
                 'src/main/webapp/app/assessment/**/*.ts',       // include assessment for code coverage
                 'src/main/webapp/app/tutorialgroup/**/*.ts',    // include tutorial group for code coverage
                 'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
+                'src/main/webapp/app/lti/**/*.ts',              // include lti for code coverage
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
