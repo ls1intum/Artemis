@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,13 +86,6 @@ class CorrectionRoundMigrationIntegrationTest extends AbstractSpringIntegrationI
         tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
         course = courseUtilService.addEmptyCourse();
-    }
-
-    @AfterEach
-    void tearDown() {
-        // Clean up in reverse order of dependencies
-        resultRepository.deleteAll();
-        submissionRepository.deleteAll();
     }
 
     // ==================== Test: Single Manual Assessment ====================

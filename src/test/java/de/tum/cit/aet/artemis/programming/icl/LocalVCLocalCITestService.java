@@ -256,8 +256,12 @@ public class LocalVCLocalCITestService {
                 userInfo += ":" + password;
             }
         }
-        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
-                .toString();
+        var builder = UriComponentsBuilder.fromUri(localVCBaseUri);
+        // Only override the port if it was explicitly set via setPort(). Otherwise, use the port from localVCBaseUri.
+        if (port > 0) {
+            builder.port(port);
+        }
+        return builder.userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri().toString();
     }
 
     /**
