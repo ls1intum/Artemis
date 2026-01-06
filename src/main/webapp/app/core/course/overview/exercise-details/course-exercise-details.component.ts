@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subscription, combineLatest } from 'rxjs';
-import { filter, skip } from 'rxjs/operators';
+import { Subject, Subscription, combineLatest } from 'rxjs';
+import { exhaustMap, filter, skip, take } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -110,6 +110,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
+    private readonly reloadExercise$ = new Subject<void>();
+    private reloadExerciseSubscription?: Subscription;
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -171,6 +173,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
+        this.reloadExerciseSubscription = this.reloadExercise$.pipe(exhaustMap(() => this.exerciseService.getExerciseDetails(this.exerciseId).pipe(take(1)))).subscribe((res) => {
+            this.handleNewExercise(res.body!);
+            this.loadComplaintAndLatestRatedResult();
+        });
+
         if (courseIdParams$) {
             this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
                 const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
@@ -350,6 +357,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                     this.updateStudentParticipations();
                     this.mergeResultsAndSubmissionsForParticipations();
+                    // Reload exercise details once a result is completed (WS payload does not contain mapped results)
+                    const lastResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
+                    const hasCompletedResult = !!lastResult?.completionDate;
+                    if (hasCompletedResult) {
+                        this.reloadExercise$.next();
+                    }
                 }
             });
     }
@@ -552,6 +565,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.reloadExerciseSubscription?.unsubscribe();
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
