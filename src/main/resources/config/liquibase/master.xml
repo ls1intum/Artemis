@@ -65,6 +65,22 @@
     <include file="classpath:config/liquibase/changelog/20251201120000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20251231100000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260103100000_changelog.xml" relativeToChangelogFile="false"/>
+
+    <!--
+        TODO: Uncomment the following cleanup migration AFTER:
+        1. All production environments have successfully migrated with 20251231100000 and 20260103100000
+        2. You have verified that no code references the old columns (results_order, feedback_order)
+        3. You have verified that no code references the old tables (example_submission, tutor_participation_trained_example_submissions)
+        4. The migrations have been stable for at least one release cycle
+
+        This cleanup drops:
+        - result.results_order column (from List to Set migration)
+        - feedback.feedback_order column (from List to Set migration)
+        - tutor_participation_trained_example_submissions table (migrated to tutor_participation_trained_example_participations)
+        - example_submission table (migrated to ExampleParticipation)
+    -->
+    <!-- <include file="classpath:config/liquibase/changelog/20260201000000_cleanup.xml" relativeToChangelogFile="false"/> -->
+
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
     <!-- you can use the command 'date '+%Y%m%d%H%M%S' to get the current date and time in the correct format -->

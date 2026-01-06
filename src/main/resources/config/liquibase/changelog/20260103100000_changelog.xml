@@ -275,48 +275,58 @@
         </sql>
     </changeSet>
 
-    <!-- ==================== PHASE 9: Drop old junction table ==================== -->
+    <!--
+        PHASE 9: Drop foreign key constraints on old tables to prevent blocking operations.
+        The tables are kept as backup but their FK constraints would block deletions of
+        exercises, submissions, and tutor_participations. By dropping the FKs, we allow
+        normal operations while keeping the data for manual recovery if needed.
+
+        NOTE: The actual DROP TABLE operations are in 20260201000000_cleanup.xml for later.
+    -->
     <changeSet id="20260103100000-9" author="krusche">
-        <dropTable tableName="tutor_participation_trained_example_submissions"/>
-
-        <rollback>
-            <createTable tableName="tutor_participation_trained_example_submissions">
-                <column name="tutor_participation_id" type="bigint">
-                    <constraints nullable="false"/>
-                </column>
-                <column name="trained_example_submissions_id" type="bigint">
-                    <constraints nullable="false"/>
-                </column>
-            </createTable>
-            <addPrimaryKey tableName="tutor_participation_trained_example_submissions"
-                           columnNames="tutor_participation_id, trained_example_submissions_id"/>
-        </rollback>
+        <!-- Drop FK from tutor_participation_trained_example_submissions to example_submission -->
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKadxqkurtxseqg3esqrajuanb2"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="tutor_participation_trained_example_submissions"
+                                  constraintName="FKadxqkurtxseqg3esqrajuanb2"/>
     </changeSet>
 
-    <!-- ==================== PHASE 10: Drop example_submission table ==================== -->
     <changeSet id="20260103100000-10" author="krusche">
-        <dropTable tableName="example_submission"/>
-
-        <rollback>
-            <createTable tableName="example_submission">
-                <column name="id" type="bigint" autoIncrement="true">
-                    <constraints primaryKey="true" nullable="false"/>
-                </column>
-                <column name="used_for_tutorial" type="boolean"/>
-                <column name="exercise_id" type="bigint"/>
-                <column name="submission_id" type="bigint"/>
-                <column name="assessment_explanation" type="varchar(2000)"/>
-            </createTable>
-        </rollback>
+        <!-- Drop FK from tutor_participation_trained_example_submissions to tutor_participation -->
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKmjdonimu07r4di2f49qpuajhs"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="tutor_participation_trained_example_submissions"
+                                  constraintName="FKmjdonimu07r4di2f49qpuajhs"/>
     </changeSet>
 
-    <!-- ==================== PHASE 11: Drop temporary mapping table ==================== -->
     <changeSet id="20260103100000-11" author="krusche">
+        <!-- Drop FK from example_submission to exercise -->
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKannvxhl5djc6qrwntuip91egx"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="example_submission"
+                                  constraintName="FKannvxhl5djc6qrwntuip91egx"/>
+    </changeSet>
+
+    <changeSet id="20260103100000-12" author="krusche">
+        <!-- Drop FK from example_submission to submission -->
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKbkom4atu3covr3trrbldf6bvn"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="example_submission"
+                                  constraintName="FKbkom4atu3covr3trrbldf6bvn"/>
+    </changeSet>
+
+    <!-- ==================== PHASE 13: Drop temporary mapping table ==================== -->
+    <!-- This is a temporary migration table that should be dropped immediately -->
+    <changeSet id="20260103100000-13" author="krusche">
         <dropTable tableName="example_submission_migration_map"/>
     </changeSet>
 
-    <!-- ==================== PHASE 12: Add NOT NULL constraint on submission.participation_id ==================== -->
-    <changeSet id="20260103100000-12" author="krusche">
+    <!-- ==================== PHASE 14: Add NOT NULL constraint on submission.participation_id ==================== -->
+    <changeSet id="20260103100000-14" author="krusche">
         <!-- First delete any remaining orphan submissions (should not exist after migration) -->
         <sql>
             DELETE FROM submission WHERE participation_id IS NULL;

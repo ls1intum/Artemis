@@ -34,15 +34,16 @@
         =====================================================================================
     -->
 
-    <changeSet id="20251231100000" author="krusche">
-
-        <!-- ==================== PHASE 1: Delete orphan complaint_responses ==================== -->
+    <!-- ==================== PHASE 1: Delete orphan complaint_responses ==================== -->
+    <changeSet id="20251231100000-1" author="krusche">
         <!-- complaint_responses where complaint_id IS NULL -->
         <sql>
             DELETE FROM complaint_response WHERE complaint_id IS NULL;
         </sql>
+    </changeSet>
 
-        <!-- ==================== PHASE 2: Delete orphan complaints ==================== -->
+    <!-- ==================== PHASE 2: Delete orphan complaints ==================== -->
+    <changeSet id="20251231100000-2" author="krusche">
         <!-- First delete dependent complaint_responses, then the orphan complaints -->
 
         <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
@@ -62,8 +63,10 @@
         <sql>
             DELETE FROM complaint WHERE result_id IS NULL;
         </sql>
+    </changeSet>
 
-        <!-- ==================== PHASE 3: Delete orphan feedback ==================== -->
+    <!-- ==================== PHASE 3: Delete orphan feedback ==================== -->
+    <changeSet id="20251231100000-3" author="krusche">
         <!-- First delete long_feedback_text, then orphan feedback -->
         <!-- Note: text_block.feedback_id has SET NULL, so it's handled automatically -->
 
@@ -84,8 +87,10 @@
         <sql>
             DELETE FROM feedback WHERE result_id IS NULL;
         </sql>
+    </changeSet>
 
-        <!-- ==================== PHASE 4: Delete orphan results ==================== -->
+    <!-- ==================== PHASE 4: Delete orphan results ==================== -->
+    <changeSet id="20251231100000-4" author="krusche">
         <!-- Results where submission_id IS NULL -->
         <!-- Must delete all dependent records first -->
 
@@ -197,8 +202,10 @@
         <sql>
             DELETE FROM result WHERE submission_id IS NULL;
         </sql>
+    </changeSet>
 
-        <!-- ==================== PHASE 5: Delete orphan submissions ==================== -->
+    <!-- ==================== PHASE 5: Delete orphan submissions ==================== -->
+    <changeSet id="20251231100000-5" author="krusche">
         <!-- Submissions where participation_id IS NULL AND not referenced by example_submission -->
         <!-- NOTE: ExampleSubmissions legitimately use Submissions without participations (for tutor training) -->
         <!-- Must delete all result dependencies first, then submission dependencies -->
@@ -501,8 +508,10 @@
             DELETE FROM submission WHERE participation_id IS NULL
               AND NOT EXISTS (SELECT 1 FROM example_submission es WHERE es.submission_id = submission.id);
         </sql>
+    </changeSet>
 
-        <!-- ==================== PHASE 6: Delete orphan participations ==================== -->
+    <!-- ==================== PHASE 6: Delete orphan participations ==================== -->
+    <changeSet id="20251231100000-6" author="krusche">
         <!-- Participations where exercise_id IS NULL -->
         <!-- Must delete all submission dependencies first -->
 
@@ -861,9 +870,10 @@
         <sql>
             DELETE FROM participation WHERE exercise_id IS NULL;
         </sql>
+    </changeSet>
 
-        <!-- ==================== PHASE 7: Add NOT NULL constraints ==================== -->
-
+    <!-- ==================== PHASE 7: Add NOT NULL constraints ==================== -->
+    <changeSet id="20251231100000-7" author="krusche">
         <addNotNullConstraint tableName="complaint"
                               columnName="result_id"
                               columnDataType="BIGINT"/>
@@ -1010,31 +1020,14 @@
         </rollback>
     </changeSet>
 
-    <!-- Drop the results_order column from the result table (used by @OrderColumn) -->
-    <!-- Separate changeSet with preCondition to handle fresh databases without this column -->
-    <changeSet id="20251231100002" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <columnExists tableName="result" columnName="results_order"/>
-        </preConditions>
-        <dropColumn tableName="result" columnName="results_order"/>
-        <rollback>
-            <addColumn tableName="result">
-                <column name="results_order" type="INT"/>
-            </addColumn>
-        </rollback>
-    </changeSet>
+    <!--
+        NOTE: The drop column operations for results_order and feedback_order have been moved to
+        20260201000000_cleanup.xml for deferred execution. This allows:
+        1. Rolling back the main migration without losing data
+        2. Keeping old columns available as backup during transition
+        3. Gradual verification that the new schema works correctly
 
-    <!-- Drop the feedback_order column from the feedback table -->
-    <!-- Separate changeSet with preCondition to handle fresh databases without this column -->
-    <changeSet id="20251231100003" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <columnExists tableName="feedback" columnName="feedback_order"/>
-        </preConditions>
-        <dropColumn tableName="feedback" columnName="feedback_order"/>
-        <rollback>
-            <addColumn tableName="feedback">
-                <column name="feedback_order" type="INT"/>
-            </addColumn>
-        </rollback>
-    </changeSet>
+        See 20260201000000_cleanup.xml for the actual drop operations.
+    -->
+
 </databaseChangeLog>

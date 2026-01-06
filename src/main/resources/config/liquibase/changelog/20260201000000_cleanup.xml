@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        =====================================================================================
+        DEFERRED CLEANUP OPERATIONS
+        =====================================================================================
+        This file contains drop column and drop table operations that should be run AFTER
+        the main migrations have been successfully applied and verified on all environments.
+
+        These operations are intentionally separated to:
+        1. Allow rolling back the main migration without losing data
+        2. Keep the old columns/tables available as backup during transition
+        3. Enable gradual verification that the new schema works correctly
+
+        WHEN TO APPLY:
+        - Only after all production environments have successfully migrated
+        - After verifying that no code references the old columns/tables
+        - As part of a future release cleanup cycle
+
+        RELATED MIGRATIONS:
+        - 20251231100000_changelog.xml: Adds NOT NULL constraints, correction_round column
+        - 20260103100000_changelog.xml: Migrates ExampleSubmission to ExampleParticipation
+        =====================================================================================
+    -->
+
+    <!-- ==================== From 20251231100000_changelog.xml ==================== -->
+
+    <!-- Drop the results_order column from the result table (used by @OrderColumn) -->
+    <!-- This column was used for maintaining order in the List<Result> which is now a Set -->
+    <changeSet id="20260201000000-1" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="result" columnName="results_order"/>
+        </preConditions>
+        <dropColumn tableName="result" columnName="results_order"/>
+        <rollback>
+            <addColumn tableName="result">
+                <column name="results_order" type="INT"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+    <!-- Drop the feedback_order column from the feedback table -->
+    <!-- This column was used for maintaining order in the List<Feedback> which is now a Set -->
+    <changeSet id="20260201000000-2" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="feedback" columnName="feedback_order"/>
+        </preConditions>
+        <dropColumn tableName="feedback" columnName="feedback_order"/>
+        <rollback>
+            <addColumn tableName="feedback">
+                <column name="feedback_order" type="INT"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+    <!-- ==================== From 20260103100000_changelog.xml ==================== -->
+
+    <!-- Drop old TutorParticipation junction table (migrated to tutor_participation_trained_example_participations) -->
+    <!-- NOTE: FK constraints were already dropped in 20260103100000 to allow normal operations -->
+    <changeSet id="20260201000000-3" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="tutor_participation_trained_example_submissions"/>
+        </preConditions>
+        <dropTable tableName="tutor_participation_trained_example_submissions"/>
+        <rollback>
+            <createTable tableName="tutor_participation_trained_example_submissions">
+                <column name="tutor_participation_id" type="bigint">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="trained_example_submissions_id" type="bigint">
+                    <constraints nullable="false"/>
+                </column>
+            </createTable>
+            <addPrimaryKey tableName="tutor_participation_trained_example_submissions"
+                           columnNames="tutor_participation_id, trained_example_submissions_id"/>
+            <!-- Note: FK constraints are NOT restored as they would block operations -->
+        </rollback>
+    </changeSet>
+
+    <!-- Drop example_submission table (migrated to ExampleParticipation) -->
+    <!-- NOTE: FK constraints were already dropped in 20260103100000 to allow normal operations -->
+    <changeSet id="20260201000000-4" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="example_submission"/>
+        </preConditions>
+        <dropTable tableName="example_submission"/>
+        <rollback>
+            <createTable tableName="example_submission">
+                <column name="id" type="bigint" autoIncrement="true">
+                    <constraints primaryKey="true" nullable="false"/>
+                </column>
+                <column name="used_for_tutorial" type="boolean"/>
+                <column name="exercise_id" type="bigint"/>
+                <column name="submission_id" type="bigint"/>
+                <column name="assessment_explanation" type="varchar(2000)"/>
+            </createTable>
+            <!-- Note: FK constraints are NOT restored as they would block operations -->
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
