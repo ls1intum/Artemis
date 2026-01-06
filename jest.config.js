@@ -71,7 +71,7 @@ module.exports = {
     modulePaths: [`<rootDir>/${baseUrl}`],
     setupFiles: ['jest-date-mock'],
     cacheDirectory: '<rootDir>/build/jest-cache',
-    coverageDirectory: '<rootDir>/build/test-results/',
+    coverageDirectory: '<rootDir>/build/test-results/jest',
     reporters: [
         'default',
         [

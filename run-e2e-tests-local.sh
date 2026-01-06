@@ -11,12 +11,14 @@ set -e
 #   --skip-build        Skip building the WAR file (use existing one)
 #   --skip-cleanup      Skip Docker cleanup before running
 #   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
+#   --db <mysql|postgres> Select database for E2E tests (default: mysql)
 #   --help              Show this help message
 # =============================================================================
 
 SKIP_BUILD=false
 SKIP_CLEANUP=false
 TEST_FILTER=""
+DB_TYPE="mysql"
 
 # Colors
 RED='\033[0;31m'
@@ -39,6 +41,26 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
+        --db)
+            if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
+                echo -e "${RED}ERROR: --db requires a database value (mysql or postgres)${NC}"
+                exit 1
+            fi
+            if [[ "$2" != "mysql" && "$2" != "postgres" ]]; then
+                echo -e "${RED}ERROR: invalid --db value: $2 (use mysql or postgres)${NC}"
+                exit 1
+            fi
+            DB_TYPE="$2"
+            shift 2
+            ;;
+        --db=*)
+            DB_TYPE="${1#*=}"
+            if [[ "$DB_TYPE" != "mysql" && "$DB_TYPE" != "postgres" ]]; then
+                echo -e "${RED}ERROR: invalid --db value: $DB_TYPE (use mysql or postgres)${NC}"
+                exit 1
+            fi
+            shift
+            ;;
         --help) head -15 "$0" | tail -10; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
@@ -47,6 +69,7 @@ done
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  Artemis E2E Test Runner${NC}"
 echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}  Database: ${DB_TYPE}${NC}"
 echo ""
 
 # Environment variables
@@ -86,10 +109,17 @@ fi
 # Step 2: Cleanup
 if [ "$SKIP_CLEANUP" = false ]; then
     echo -e "${BLUE}Step 2: Cleaning Docker environment...${NC}"
+    if [ "$DB_TYPE" = "postgres" ]; then
+        COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
+        DB_VOLUME="artemis-postgres-data"
+    else
+        COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
+        DB_VOLUME="artemis-mysql-data"
+    fi
     cd docker
-    docker compose -f playwright-E2E-tests-mysql-localci.yml down -v 2>/dev/null || true
+    docker compose -f "$COMPOSE_FILE" down -v 2>/dev/null || true
     cd ..
-    docker volume rm artemis-mysql-data artemis-data 2>/dev/null || true
+    docker volume rm "$DB_VOLUME" artemis-data 2>/dev/null || true
     echo -e "${GREEN}Done${NC}"
 else
     echo -e "${YELLOW}Step 2: Skipping cleanup${NC}"
@@ -99,6 +129,12 @@ fi
 echo -e "${BLUE}Step 3: Running E2E tests...${NC}"
 echo ""
 
-.ci/E2E-tests/execute-locally.sh mysql-localci "$TEST_FILTER"
+if [ "$DB_TYPE" = "postgres" ]; then
+    CONFIGURATION="postgres-localci"
+else
+    CONFIGURATION="mysql-localci"
+fi
+
+.ci/E2E-tests/execute-locally.sh "$CONFIGURATION" "$TEST_FILTER"
 
 exit $?

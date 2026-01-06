@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
@@ -25,7 +25,9 @@ export type Column<T extends BaseEntity> = {
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected router = inject(Router);
     private sortService = inject(SortService);
-    protected dialogRef = inject(DynamicDialogRef);
+    // Optional injections for PrimeNG dialog support - components may be opened via DialogService or embedded in other components
+    protected dialogRef = inject(DynamicDialogRef, { optional: true });
+    protected dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     loading = false;
     content: SearchResult<T>;
@@ -43,6 +45,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     columns: Column<T>[];
 
     @Input() public disabledIds: number[] = [];
+
+    /**
+     * Returns true if the component is opened via PrimeNG DialogService.
+     * Used to conditionally hide the built-in modal header when PrimeNG provides its own.
+     */
+    get isOpenedAsDialog(): boolean {
+        return this.dialogRef !== null;
+    }
 
     // Icons
     readonly faSort = faSort;
@@ -122,14 +132,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * @param item The item which was selected by the user for the import.
      */
     selectImport(item: T) {
-        this.dialogRef.close(item);
+        this.dialogRef?.close(item);
     }
 
     /**
      * Closes the modal in which the import component is opened by dismissing it
      */
     clear() {
-        this.dialogRef.close();
+        this.dialogRef?.close();
     }
 
     /**
