@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -106,8 +106,7 @@ export class AttachmentVideoUnitFormComponent {
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     // have to handle the file input as a special case at is not part of the reactive form
-    @ViewChild('fileInput', { static: false })
-    fileInput: ElementRef;
+    fileInput = viewChild<ElementRef>('fileInput');
     file: File;
     fileInputTouched = false;
 

@@ -176,13 +176,14 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'] as Lecture;
-            this.lecture.set(lecture ?? new Lecture());
-            if (lecture) {
-                this.isTutorialLecture.set(lecture.isTutorialLecture ?? false);
-            }
+            const newLecture = lecture ?? new Lecture();
             const course = data['course'];
             if (course) {
-                this.lecture().course = course;
+                newLecture.course = course;
+            }
+            this.lecture.set(newLecture);
+            if (lecture) {
+                this.isTutorialLecture.set(lecture.isTutorialLecture ?? false);
             }
         });
 
@@ -362,7 +363,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         }
     }
 
-    onDatesValuesChanged() {
+    onDatesValuesChanged = () => {
         const startDate = this.lecture().startDate;
         const endDate = this.lecture().endDate;
         const visibleDate = this.lecture().visibleDate;
@@ -376,6 +377,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         if (visibleDate && startDate?.isBefore(visibleDate)) {
             this.lecture().visibleDate = startDate.clone();
         }
+    };
+
+    onLectureChange(updatedLecture: Lecture): void {
+        this.lecture.set(updatedLecture);
     }
 
     private computeAreSectionsValid(): boolean {
