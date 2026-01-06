@@ -253,7 +253,7 @@
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
-        "vitest:ci": "vitest run --coverage --maxWorkers=4 --reporter=default --reporter=junit --outputFile=build/test-results/vitest/junit.xml",
+        "vitest:ci": "vitest run --config ./vitest.config.ts --coverage --maxWorkers=4 --reporter=default --reporter=junit --outputFile=build/test-results/vitest/junit.xml",
         "vitest:coverage": "vitest run --coverage",
         "vitest:diff": "vitest run --changed origin/develop --passWithNoTests",
         "vitest:ui": "vitest --ui",
