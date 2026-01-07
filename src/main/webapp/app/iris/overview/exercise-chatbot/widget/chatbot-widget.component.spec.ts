@@ -1,31 +1,46 @@
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { MockProvider } from 'ng-mocks';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import interact from 'interactjs';
 
 jest.mock('interactjs', () => {
-    const interact = jest.fn(() => {
+    const interactFn = jest.fn(() => {
         return {
             resizable: jest.fn().mockReturnThis(),
             draggable: jest.fn().mockReturnThis(),
         };
     });
 
-    (interact as unknown as { modifiers: unknown }).modifiers = {
+    (interactFn as unknown as { modifiers: unknown }).modifiers = {
         restrictEdges: jest.fn((opts: unknown) => ({ type: 'restrictEdges', opts })),
         restrictSize: jest.fn((opts: unknown) => ({ type: 'restrictSize', opts })),
         restrictRect: jest.fn((opts: unknown) => ({ type: 'restrictRect', opts })),
     };
 
-    return { __esModule: true, default: interact };
+    return { __esModule: true, default: interactFn };
 });
+
+// Stub component to replace MockComponent which doesn't handle viewChild signals
+@Component({
+    selector: 'jhi-iris-base-chatbot',
+    template: '',
+})
+class IrisBaseChatbotStubComponent {
+    @Input() fullSize?: boolean;
+    @Input() showCloseButton = false;
+    @Input() isChatGptWrapper = false;
+    @Input() isChatHistoryAvailable = false;
+    @Output() fullSizeToggle = new EventEmitter<void>();
+    @Output() closeClicked = new EventEmitter<void>();
+}
 
 type InteractResizeMoveEvent = {
     target: HTMLElement;
@@ -53,7 +68,7 @@ describe('IrisChatbotWidgetComponent', () => {
             breakpoints: { [Breakpoints.Handset]: false },
         });
         await TestBed.configureTestingModule({
-            declarations: [IrisChatbotWidgetComponent, MockComponent(IrisBaseChatbotComponent)],
+            imports: [IrisChatbotWidgetComponent],
             providers: [
                 MockProvider(IrisChatService),
                 { provide: MatDialog, useValue: { closeAll: jest.fn() } },
@@ -67,7 +82,12 @@ describe('IrisChatbotWidgetComponent', () => {
                     },
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(IrisChatbotWidgetComponent, {
+                remove: { imports: [IrisBaseChatbotComponent] },
+                add: { imports: [IrisBaseChatbotStubComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
         component = fixture.componentInstance;

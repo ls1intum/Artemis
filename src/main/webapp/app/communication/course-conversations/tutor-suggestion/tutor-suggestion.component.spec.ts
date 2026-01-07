@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ComponentRef } from '@angular/core';
+import { Component, ComponentRef, EventEmitter, Input, Output } from '@angular/core';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { concat, of, throwError } from 'rxjs';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
@@ -16,12 +16,28 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
-import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+
+// Stub component to replace MockComponent which doesn't handle viewChild signals
+@Component({
+    selector: 'jhi-iris-base-chatbot',
+    template: '',
+})
+class IrisBaseChatbotStubComponent {
+    @Input() showDeclineButton = true;
+    @Input() isChatHistoryAvailable = false;
+    @Input() isEmbeddedChat = false;
+    @Input() fullSize?: boolean;
+    @Input() showCloseButton = false;
+    @Input() isChatGptWrapper = false;
+    @Output() fullSizeToggle = new EventEmitter<void>();
+    @Output() closeClicked = new EventEmitter<void>();
+}
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
@@ -47,7 +63,7 @@ describe('TutorSuggestionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TutorSuggestionComponent, MockComponent(IrisBaseChatbotComponent)],
+            imports: [TutorSuggestionComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -61,6 +77,10 @@ describe('TutorSuggestionComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
+            .overrideComponent(TutorSuggestionComponent, {
+                remove: { imports: [IrisBaseChatbotComponent] },
+                add: { imports: [IrisBaseChatbotStubComponent] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorSuggestionComponent);
