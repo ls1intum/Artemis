@@ -59,13 +59,21 @@
             <div class="posting-summary-saved-post-options">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Saved options">
                     <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        ngbTooltip="{{ 'artemisApp.metis.post.removeBookmarkPost' | artemisTranslate }}"
+                        (click)="onRemoveBookmarkClick()"
+                    >
+                        <fa-icon [icon]="faBookmark" />
+                    </button>
+                    <button
                         [disabled]="post()!.savedPostStatus === SavedPostStatus.IN_PROGRESS"
                         type="button"
                         class="btn btn-outline-secondary"
                         ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostProgress' | artemisTranslate }}"
                         (click)="onStatusChangeClick(SavedPostStatus.IN_PROGRESS)"
                     >
-                        <fa-icon [icon]="faBookmark" />
+                        <fa-icon [icon]="faBarsProgress" />
                     </button>
                     <button
                         [disabled]="post()!.savedPostStatus === SavedPostStatus.COMPLETED"

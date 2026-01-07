@@ -119,6 +119,24 @@ describe('PostingSummaryComponent', () => {
             expect(emitSpy).toHaveBeenCalledWith(newStatus);
         });
 
+        it('should emit remove bookmark event', () => {
+            const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
+            fixture.componentRef.setInput('post', mockPost);
+
+            component['onRemoveBookmarkClick']();
+
+            expect(emitSpy).toHaveBeenCalledWith(mockPost);
+        });
+
+        it('should not emit remove bookmark event when post is undefined', () => {
+            const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
+            fixture.componentRef.setInput('post', undefined);
+
+            component['onRemoveBookmarkClick']();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
         it('should emit navigation event with post', () => {
             const emitSpy = jest.spyOn(component.onNavigateToPost, 'emit');
             fixture.componentRef.setInput('post', mockPost);

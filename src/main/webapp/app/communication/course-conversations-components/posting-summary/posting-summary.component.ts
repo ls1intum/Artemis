@@ -1,6 +1,6 @@
 import { Component, effect, input, output } from '@angular/core';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faBarsProgress, faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +24,7 @@ export class PostingSummaryComponent {
     isShowSavedPostOptions = input<boolean>(false);
 
     readonly onChangeSavedPostStatus = output<SavedPostStatus>();
+    readonly onRemoveBookmark = output<Posting>();
     readonly onNavigateToPost = output<Posting>();
 
     protected readonly ConversationType = ConversationType;
@@ -42,6 +43,7 @@ export class PostingSummaryComponent {
     readonly faBookmark = faBookmark;
     readonly faBoxArchive = faBoxArchive;
     readonly faEllipsis = faEllipsis;
+    readonly faBarsProgress = faBarsProgress;
 
     constructor() {
         effect(() => {
@@ -58,6 +60,13 @@ export class PostingSummaryComponent {
 
     protected onStatusChangeClick(status: SavedPostStatus) {
         this.onChangeSavedPostStatus.emit(status);
+    }
+
+    protected onRemoveBookmarkClick() {
+        if (this.post() === undefined) {
+            return;
+        }
+        this.onRemoveBookmark.emit(this.post()!);
     }
 
     protected onTriggerNavigateToPost() {

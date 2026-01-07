@@ -59,6 +59,13 @@ export class SavedPostsComponent {
         this.hiddenPosts.push(post.id!);
     }
 
+    protected removeSavedPost(post: Posting) {
+        this.savedPostService.removeSavedPost(post).subscribe({
+            next: () => {},
+        });
+        this.hiddenPosts.push(post.id!);
+    }
+
     protected onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
     }

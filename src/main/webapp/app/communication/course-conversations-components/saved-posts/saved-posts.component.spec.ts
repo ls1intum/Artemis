@@ -95,6 +95,15 @@ describe('SavedPostsComponent', () => {
         }));
     });
 
+    describe('Remove saved post', () => {
+        it('should remove saved post and add to hidden posts', fakeAsync(() => {
+            component['removeSavedPost'](mockPosting);
+
+            expect(savedPostService.removeSavedPost).toHaveBeenCalledWith(mockPosting);
+            expect(component['hiddenPosts']).toContain(mockPosting.id);
+        }));
+    });
+
     describe('Navigation', () => {
         it('should emit post when navigating', () => {
             const emitSpy = jest.spyOn(component.onNavigateToPost, 'emit');
