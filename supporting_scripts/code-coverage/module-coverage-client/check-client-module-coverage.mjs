@@ -76,10 +76,10 @@ const moduleThresholds = {
         lines:      91.20,
     },
     buildagent: {
-        statements: 89.80,
-        branches:   73.60,
+        statements: 90.00,
+        branches:   89.80,
         functions:  84.80,
-        lines:      90.08,
+        lines:      90.00,
     },
     communication: {
         statements: 92.40,

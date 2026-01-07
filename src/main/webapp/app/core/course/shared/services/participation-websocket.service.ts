@@ -322,7 +322,20 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         }
     }
 
-    private updateCachedParticipationWithResult = (result: Result): void => {
+    /**
+     * Updates the cached participation for the given result.
+     *
+     * - Looks up the participation in the local cache by result.submission.participation.id.
+     * - If a matching submission exists, its `results` array is updated by replacing/adding this result.
+     * - If no matching submission exists, a submission is created from the result and appended.
+     * - Finally, writes the updated participation back into cachedParticipations.
+     *
+     * If the result does not contain a participation ID or the participation is not cached,
+     * the method returns without modifying anything.
+     *
+     * @param result The new result that should be reflected in the cached participation state.
+     */
+    private updateCachedParticipationWithResult(result: Result): void {
         const participationId = result.submission?.participation?.id;
         if (!participationId) {
             return;
@@ -335,9 +348,32 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
         const submissions = cachedParticipation.submissions ?? [];
 
+        const { submissionsWithMatch, matchedExistingSubmission } = this.updateExistingSubmissionResult(submissions, result);
+        const finalSubmissions = matchedExistingSubmission ? submissionsWithMatch : this.appendNewSubmission(submissionsWithMatch, cachedParticipation, result);
+
+        this.cachedParticipations.set(participationId, {
+            ...cachedParticipation,
+            submissions: finalSubmissions,
+        });
+    }
+
+    /**
+     * Appends a synthetic submission for a result whose submission is not yet
+     * present in the cached participation.
+     *
+     * Uses `result.submission` as a base, fixes the participation reference, and
+     * ensures the new result appears exactly once in the submission's `results` array.
+     *
+     * @param submissions Current list of submissions for the participation
+     * @param result The new result to apply
+     * @returns An object containing:
+     *          - submissionsWithMatch: the updated submissions array
+     *          - matchedExistingSubmission: whether a submission was updated
+     */
+    private updateExistingSubmissionResult(submissions: Submission[], result: Result): { submissionsWithMatch: Submission[]; matchedExistingSubmission: boolean } {
         let matchedExistingSubmission = false;
 
-        const updatedSubmissions: Submission[] = submissions.map((submission) => {
+        const submissionsWithMatch: Submission[] = submissions.map((submission) => {
             if (submission.id !== result.submission!.id) {
                 return submission;
             }
@@ -354,28 +390,29 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             };
         });
 
-        let finalSubmissions = updatedSubmissions;
+        return { submissionsWithMatch, matchedExistingSubmission };
+    }
 
-        // If we did not find a submission with this id, create one from the result
-        if (!matchedExistingSubmission) {
-            const newSubmission: Submission = {
-                ...(result.submission as Submission),
-                // Make sure we have a proper participation reference
-                participation: cachedParticipation,
-                // Ensure we have a results array containing at least this result
-                results: [...(result.submission?.results ?? []), result].filter((r, index, arr) => r.id == null || arr.findIndex((other) => other.id === r.id) === index),
-            };
+    private appendNewSubmission(submissions: Submission[], participation: StudentParticipation, result: Result): Submission[] {
+        const baseResults = result.submission?.results ?? [];
+        const resultsWithNew = [...baseResults, result];
 
-            finalSubmissions = [...updatedSubmissions, newSubmission];
-        }
+        const deduplicatedResults = resultsWithNew.filter((r, index, arr) => {
+            if (r.id == null) {
+                // For results without an ID, we keep all of them
+                return true;
+            }
+            return arr.findIndex((other) => other.id === r.id) === index;
+        });
 
-        const updatedParticipation: StudentParticipation = {
-            ...cachedParticipation,
-            submissions: finalSubmissions,
+        const newSubmission: Submission = {
+            ...(result.submission as Submission),
+            participation,
+            results: deduplicatedResults,
         };
 
-        this.cachedParticipations.set(participationId, updatedParticipation);
-    };
+        return [...submissions, newSubmission];
+    }
 
     /**
      * Notifies the result and participation subscribers with the newest result.

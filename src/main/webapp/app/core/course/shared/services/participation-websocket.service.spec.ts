@@ -140,21 +140,16 @@ describe('ParticipationWebsocketService', () => {
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
 
-        // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);
 
-        // 1) Latest result gets pushed to the result subject
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
 
-        // 2) A participation update is emitted
         expect(participationSpy).toHaveBeenCalledOnce();
         const updatedParticipation = participationSpy.mock.calls[0][0] as StudentParticipation;
 
-        // 3) Basic sanity: same participation id
         expect(updatedParticipation.id).toBe(participation.id);
 
-        // 4) Cache and emitted value are in sync
         const cached = participationWebsocketService.cachedParticipations.get(participation.id!);
         expect(cached).toEqual(updatedParticipation);
     });
@@ -172,7 +167,6 @@ describe('ParticipationWebsocketService', () => {
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
 
-        // Emit new result from websocket
         receiveResultForParticipationSubject.next(newUnratedResult);
 
         expect(resultSpy).toHaveBeenCalledOnce();
