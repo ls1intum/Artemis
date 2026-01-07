@@ -60,9 +60,7 @@ export class SavedPostsComponent {
     }
 
     protected removeSavedPost(post: Posting) {
-        this.savedPostService.removeSavedPost(post).subscribe({
-            next: () => {},
-        });
+        this.savedPostService.removeSavedPost(post).subscribe();
         this.hiddenPosts.push(post.id!);
     }
 

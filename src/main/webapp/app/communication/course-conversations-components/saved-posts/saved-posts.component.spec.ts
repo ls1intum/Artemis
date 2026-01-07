@@ -26,6 +26,7 @@ describe('SavedPostsComponent', () => {
             fetchSavedPosts: jest.fn(),
             convertPostingToCorrespondingType: jest.fn((post) => post),
             changeSavedPostStatus: jest.fn(),
+            removeSavedPost: jest.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -97,6 +98,7 @@ describe('SavedPostsComponent', () => {
 
     describe('Remove saved post', () => {
         it('should remove saved post and add to hidden posts', fakeAsync(() => {
+            savedPostService.removeSavedPost.mockReturnValue(of({}));
             component['removeSavedPost'](mockPosting);
 
             expect(savedPostService.removeSavedPost).toHaveBeenCalledWith(mockPosting);
