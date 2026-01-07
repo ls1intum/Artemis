@@ -117,6 +117,10 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
         });
     }
 
+    hasMarkedAsUnreadConversations(groupKey: string): boolean {
+        return this.groupedData[groupKey].entityData.some((item: SidebarCardElement) => item.conversation?.isMarkedAsUnread);
+    }
+
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
         this.localStorageService.store<CollapseState>('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, this.collapseState);

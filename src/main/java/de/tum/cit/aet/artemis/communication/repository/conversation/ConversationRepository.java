@@ -50,6 +50,7 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 cp.isFavorite,
                 cp.isHidden,
                 cp.isMuted,
+                cp.isMarkedAsUnread,
                 cp.lastRead,
                 (CASE WHEN cp.unreadMessagesCount IS NULL THEN COUNT(p.id) ELSE cp.unreadMessagesCount END)
             )
@@ -59,7 +60,7 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 LEFT JOIN Post p ON conv.id = p.conversation.id AND p.author.id <> :userId AND (channel.isCourseWide = TRUE AND cp.lastRead IS NULL)
             WHERE conv.id IN :conversationIds
                 AND (channel.isCourseWide = TRUE OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
-            GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead, cp.unreadMessagesCount
+            GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.isMarkedAsUnread, cp.lastRead, cp.unreadMessagesCount
             """)
     List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
 

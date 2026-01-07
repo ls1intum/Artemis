@@ -70,7 +70,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     @Modifying
     @Query("""
             UPDATE ConversationParticipant p
-            SET p.lastRead = :now, p.unreadMessagesCount = 0
+            SET p.lastRead = :now, p.unreadMessagesCount = 0, p.isMarkedAsUnread = FALSE
             WHERE p.user.id = :userId
                 AND p.conversation.id IN :conversationIds
             """)

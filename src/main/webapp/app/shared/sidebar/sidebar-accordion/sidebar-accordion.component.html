@@ -16,8 +16,12 @@
                     }
                 </div>
                 <div class="icon-container pe-3">
-                    @if (totalUnreadMessagesPerGroup[groupKey] > 0 && collapseState[groupKey]) {
-                        <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup[groupKey] }}</span>
+                    @if (collapseState[groupKey]) {
+                        @if (totalUnreadMessagesPerGroup[groupKey] > 0) {
+                            <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup[groupKey] }}</span>
+                        } @else if (hasMarkedAsUnreadConversations(groupKey)) {
+                            <span class="unread-count me-2"></span>
+                        }
                     }
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
                 </div>

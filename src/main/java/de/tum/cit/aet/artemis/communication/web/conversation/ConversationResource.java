@@ -151,6 +151,24 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
+     * POST courses/:courseId/conversations/:conversationId/marked-as-unread : Updates a conversation's marked-as-unread status for the requesting user
+     *
+     * @param courseId         the id of the course
+     * @param conversationId   the id of the conversation
+     * @param isMarkedAsUnread the new marked-as-unread status
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PostMapping("{courseId}/conversations/{conversationId}/marked-as-unread")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateIsMarkedAsUnread(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isMarkedAsUnread) {
+        checkCommunicationEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        conversationService.setIsMarkedAsUnread(conversationId, requestingUser, isMarkedAsUnread);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * GET courses/:courseId/unread-messages : Checks for unread messages of the current user
      *
      * @param courseId the id of the course

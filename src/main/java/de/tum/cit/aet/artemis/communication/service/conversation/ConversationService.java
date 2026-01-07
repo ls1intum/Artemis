@@ -214,7 +214,7 @@ public class ConversationService {
 
         Stream<ConversationSummary> conversationSummaries = conversationsOfUser.stream()
                 .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
-
+        //
         return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
     }
 
@@ -433,6 +433,24 @@ public class ConversationService {
     public void setIsMuted(Long conversationId, User requestingUser, boolean isMuted) {
         var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsMuted(isMuted);
+        conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    /**
+     * Set the markedAsUnread status of a conversation for a user
+     *
+     * @param conversationId   the id of the conversation
+     * @param requestingUser   the user that wants to switch the muted status
+     * @param isMarkedAsUnread the new marked-as-unread status
+     */
+    public void setIsMarkedAsUnread(Long conversationId, User requestingUser, boolean isMarkedAsUnread) {
+        var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsMarkedAsUnread(isMarkedAsUnread);
+        if (!isMarkedAsUnread) {
+            ZonedDateTime now = ZonedDateTime.now();
+            var userId = requestingUser.getId();
+            conversationParticipantRepository.updateLastReadAsync(userId, conversationId, now);
+        }
         conversationParticipantRepository.save(conversationParticipant);
     }
 

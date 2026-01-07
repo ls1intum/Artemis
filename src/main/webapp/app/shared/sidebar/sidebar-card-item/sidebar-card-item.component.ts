@@ -65,6 +65,10 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
         return this.unreadCount().toString() || '';
     }
 
+    protected hasMarkedAsUnread(): boolean {
+        return this.sidebarItem.conversation?.isMarkedAsUnread ?? false;
+    }
+
     protected updateShouldDisplayUnreadCount(): void {
         this.shouldDisplayUnreadCount.set(!this.sidebarItem.conversation?.isMuted);
     }

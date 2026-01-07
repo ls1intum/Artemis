@@ -318,6 +318,7 @@ public class ConversationDTOService {
         conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipantSettingsView::isFavorite).orElse(false));
         conversationDTO.setIsHidden(participantOptional.map(ConversationParticipantSettingsView::isHidden).orElse(false));
         conversationDTO.setIsMuted(participantOptional.map(ConversationParticipantSettingsView::isMuted).orElse(false));
+        conversationDTO.setIsMarkedAsUnread(participantOptional.map(ConversationParticipantSettingsView::isMarkedAsUnread).orElse(false));
 
         participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.lastRead()));
 

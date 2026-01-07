@@ -119,6 +119,12 @@ export class ConversationService {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/muted`, null, { observe: 'response', params });
     }
 
+    updateIsMarkedAsUnread(courseId: number, conversationId: number, isMarkedAsUnread: boolean): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.append('isMarkedAsUnread', isMarkedAsUnread.toString());
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/marked-as-unread`, null, { observe: 'response', params });
+    }
+
     markAsRead(courseId: number, conversationId: number): Observable<HttpResponse<void>> {
         return this.http.patch<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/mark-as-read`, null, { observe: 'response' });
     }
