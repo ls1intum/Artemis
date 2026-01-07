@@ -10,6 +10,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { AddExercisePopoverComponent } from 'app/core/course/manage/quick-actions/add-exercise-popover/add-exercise-popover.component';
 import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.component';
 import { CourseMaterialImportDialogComponent } from 'app/core/course/manage/course-material-import/course-material-import-dialog.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
 
 export enum CourseManagementSection {
     LECTURE = 'lectures',
@@ -44,6 +46,9 @@ export class QuickActionsComponent {
     protected readonly CourseManagementSection = CourseManagementSection;
     course = input.required<Course>();
     private router = inject(Router);
+    private profileService = inject(ProfileService);
+
+    lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
 
     readonly importDialog = viewChild<CourseMaterialImportDialogComponent>('importDialog');
 

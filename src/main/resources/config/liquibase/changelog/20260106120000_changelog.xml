@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Cleanup: Remove deprecated iris_settings and iris_sub_settings tables.
+         Data has been migrated to the new course_iris_settings table in changelog 20251030120000. -->
+
+    <!-- Step 1: Drop all foreign key constraints from iris_settings -->
+    <changeSet id="20260106120000-drop-iris-settings-fks" author="krusche">
+        <!-- FKs referencing iris_sub_settings -->
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_CHAT_SETTINGS"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_FAQ_INGESTION_SETTINGS"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_LECTURE_CHAT_SETTINGS"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="fk_iris_settings_iris_course_chat_settings_id"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_TUTOR_SUGGESTION_SETTINGS"/>
+
+        <!-- FKs referencing course and exercise -->
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_COURSE"/>
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_EXERCISE"/>
+    </changeSet>
+
+    <!-- Step 2: Drop the iris_settings table -->
+    <changeSet id="20260106120000-drop-iris-settings-table" author="krusche">
+        <dropTable tableName="iris_settings"/>
+    </changeSet>
+
+    <!-- Step 3: Drop the iris_sub_settings table -->
+    <changeSet id="20260106120000-drop-iris-sub-settings-table" author="krusche">
+        <dropTable tableName="iris_sub_settings"/>
+    </changeSet>
+
+</databaseChangeLog>
