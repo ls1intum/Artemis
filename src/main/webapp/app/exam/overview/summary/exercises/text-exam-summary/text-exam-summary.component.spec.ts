@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('TextExamSummaryComponent', () => {
     let fixture: ComponentFixture<TextExamSummaryComponent>;
@@ -34,6 +35,10 @@ describe('TextExamSummaryComponent', () => {
                     provide: ProfileService,
                     useClass: MockProfileService,
                 },
+                {
+                    provide: AccountService,
+                    useValue: { isOwnerOfParticipation: jest.fn().mockReturnValue(true) },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -53,8 +58,10 @@ describe('TextExamSummaryComponent', () => {
 
     it('should display the submission text', () => {
         const submissionText = 'A test submission text';
+        const exercise = { studentParticipations: [{ id: 1 }] } as Exercise;
+        exercise.studentParticipations![0].exercise = exercise;
         component.submission = { text: submissionText } as TextSubmission;
-        component.exercise = { studentParticipations: [{ id: 1 }] } as Exercise;
+        component.exercise = exercise;
         fixture.detectChanges();
 
         const textEditorComponent = fixture.debugElement.query(By.directive(TextEditorComponent)).componentInstance;

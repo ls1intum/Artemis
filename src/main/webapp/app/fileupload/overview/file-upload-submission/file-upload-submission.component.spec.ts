@@ -185,6 +185,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         fixture = TestBed.createComponent(FileUploadSubmissionComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('participationId', 111);
 
         fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
         alertService = TestBed.inject(AlertService);
@@ -311,6 +312,7 @@ describe('FileUploadSubmissionComponent', () => {
 
             fixture = TestBed.createComponent(FileUploadSubmissionComponent);
             component = fixture.componentInstance;
+            fixture.componentRef.setInput('participationId', 111);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -325,6 +327,7 @@ describe('FileUploadSubmissionComponent', () => {
 
             fixture = TestBed.createComponent(FileUploadSubmissionComponent);
             component = fixture.componentInstance;
+            fixture.componentRef.setInput('participationId', 111);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -413,6 +416,7 @@ describe('FileUploadSubmissionComponent', () => {
 
             fixture = TestBed.createComponent(FileUploadSubmissionComponent);
             component = fixture.componentInstance;
+            fixture.componentRef.setInput('participationId', 111);
             fixture.detectChanges();
             await fixture.whenStable();
 

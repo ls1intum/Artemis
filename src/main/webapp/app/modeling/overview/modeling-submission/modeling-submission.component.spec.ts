@@ -74,6 +74,15 @@ describe('ModelingSubmissionComponent', () => {
         comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
     }
 
+    function setInputs({ participationId, submissionId }: { participationId?: number; submissionId?: number }) {
+        if (participationId !== undefined) {
+            fixture.componentRef.setInput('participationId', participationId);
+        }
+        if (submissionId !== undefined) {
+            fixture.componentRef.setInput('submissionId', submissionId);
+        }
+    }
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([routes[0]])],
@@ -127,6 +136,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should initialize without submissionId (Standard Mode)', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         // Mock data
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
@@ -144,7 +154,7 @@ describe('ModelingSubmissionComponent', () => {
         const getSubmissionsWithResultsSpy = jest.spyOn(service, 'getSubmissionsWithResultsForParticipation');
 
         // Initialize component
-        comp.ngOnInit();
+        fixture.detectChanges();
 
         // Assertions
         expect(comp.isFeedbackView).toBeFalse();
@@ -162,6 +172,7 @@ describe('ModelingSubmissionComponent', () => {
         } as any as ActivatedRoute;
 
         createModelingSubmissionComponent(route);
+        setInputs({ participationId: 1, submissionId: 20 });
 
         // Mock data
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
@@ -190,11 +201,11 @@ describe('ModelingSubmissionComponent', () => {
         const getLatestSubmissionSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize component
-        comp.ngOnInit();
+        fixture.detectChanges();
 
         // Assertions
         expect(comp.isFeedbackView).toBeTrue();
-        expect(comp.submissionId).toBe(20);
+        expect(comp.submissionId()).toBe(20);
         expect(getSubmissionsWithResultsSpy).toHaveBeenCalledOnce();
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
         expect(comp.sortedSubmissionHistory).toEqual([submission]);
@@ -204,6 +215,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should allow to submit when exercise due date not set', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         // GIVEN
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -222,6 +234,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should not allow to submit after the due date if the initialization date is before the due date', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
@@ -236,6 +249,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should allow to submit after the due date if the initialization date is after the due date and not submitted', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
@@ -253,6 +267,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should not allow to submit if there is a result and no due date', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         comp.result = result;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -266,6 +281,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should get inactive as soon as the due date passes the current date', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -283,6 +299,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should catch error on 403 error status', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -293,6 +310,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should set correct properties on modeling exercise update when saving', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         fixture.detectChanges();
@@ -358,6 +376,7 @@ describe('ModelingSubmissionComponent', () => {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
         } as any as ActivatedRoute;
         createModelingSubmissionComponent(route); // Pass the route
+        setInputs({ participationId: 123 });
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -401,6 +420,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should handle Athena assessment results separately from manual assessments', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -446,6 +466,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should set result when new result comes in from websocket', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -473,6 +494,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should update submission when new submission comes in from websocket', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -492,6 +514,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should not process results without completionDate except for failed Athena results', () => {
         createModelingSubmissionComponent();
+        setInputs({ participationId: 1 });
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -746,9 +769,9 @@ describe('ModelingSubmissionComponent', () => {
                 },
             ],
         });
-        comp.inputExercise = participation.exercise;
-        comp.inputSubmission = modelingSubmission;
-        comp.inputParticipation = participation;
+        fixture.componentRef.setInput('inputExercise', participation.exercise);
+        fixture.componentRef.setInput('inputSubmission', modelingSubmission);
+        fixture.componentRef.setInput('inputParticipation', participation);
 
         fixture.detectChanges();
 
@@ -769,6 +792,7 @@ describe('ModelingSubmissionComponent', () => {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123, submissionId: 20 }),
         } as any as ActivatedRoute;
         createModelingSubmissionComponent(route);
+        setInputs({ participationId: 123, submissionId: 20 });
 
         // Helper function to create a Result
         const createResult = (id: number, dateStr: string): Result => {
@@ -819,7 +843,7 @@ describe('ModelingSubmissionComponent', () => {
         const submissionsWithResultsSpy = jest.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submissions[2], submissions[1], submissions[0]]));
 
         // Initialize the component
-        comp.ngOnInit();
+        fixture.detectChanges();
 
         // Verify service call
         expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123);

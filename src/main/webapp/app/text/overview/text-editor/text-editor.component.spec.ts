@@ -105,6 +105,15 @@ describe('TextEditorComponent', () => {
     const participation = new StudentParticipation();
     const result = new Result();
 
+    function setInputs({ participationId, submissionId }: { participationId?: number; submissionId?: number }) {
+        if (participationId !== undefined) {
+            fixture.componentRef.setInput('participationId', participationId);
+        }
+        if (submissionId !== undefined) {
+            fixture.componentRef.setInput('submissionId', submissionId);
+        }
+    }
+
     beforeAll(() => {
         participation.id = 42;
         participation.exercise = textExercise;
@@ -187,7 +196,7 @@ describe('TextEditorComponent', () => {
         fixture.detectChanges();
 
         expect(getTextForParticipationStub).not.toHaveBeenCalled();
-        expect(updateParticipationSpy).not.toHaveBeenCalled();
+        expect(updateParticipationSpy).toHaveBeenCalledOnce();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
         expect(comp.answer).toBeDefined();
     });
@@ -197,6 +206,7 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
+        setInputs({ participationId: 42 });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -213,6 +223,7 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
+        setInputs({ participationId: 42 });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -228,6 +239,7 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
+        setInputs({ participationId: 42 });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -237,11 +249,17 @@ describe('TextEditorComponent', () => {
     });
 
     it('should not be always active if there is a result and no due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationWithResult = new StudentParticipation();
+        const submissionWithResult = new TextSubmission();
+        submissionWithResult.results = [result];
+        participationWithResult.id = participation.id;
+        participationWithResult.exercise = textExercise;
+        participationWithResult.submissions = [submissionWithResult];
+        const participationSubject = new BehaviorSubject<StudentParticipation>(participationWithResult);
         getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.result = result;
         comp.textExercise = textExercise;
 
+        setInputs({ participationId: 42 });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -257,6 +275,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise.dueDate = dayjs();
         participation.initializationDate = dayjs().add(1, 'days');
 
+        setInputs({ participationId: 42 });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -271,6 +290,7 @@ describe('TextEditorComponent', () => {
         textExercise.dueDate = dayjs().add(1, 'days');
         participation.initializationDate = dayjs();
 
+        setInputs({ participationId: 42 });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 

@@ -1,5 +1,5 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, HostListener, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
@@ -81,7 +81,6 @@ import { TranslateService } from '@ngx-translate/core';
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private route = inject(ActivatedRoute);
     private textSubmissionService = inject(TextSubmissionService);
     private textService = inject(TextEditorService);
     private alertService = inject(AlertService);
@@ -99,6 +98,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly ChatServiceMode = ChatServiceMode;
     protected readonly isAthenaAIResult = isAthenaAIResult;
 
+    // participationId will be automatically populated from route parameter when using withComponentInputBinding()
     participationId = input<number>();
     displayHeader = input<boolean>(true);
     expandProblemStatement = input<boolean>(true);
@@ -147,31 +147,37 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     sortedHistoryResults: Result[];
     hasAthenaResultForLatestSubmission = false;
     showHistory = false;
-    submissionId: number | undefined;
+    readonly submissionId = input<number | undefined>();
+
+    constructor() {
+        // React to participationId changes from route or parent component
+        effect(() => {
+            if (this.inputValuesArePresent()) {
+                this.setupComponentWithInputValues();
+            } else {
+                const pId = this.participationId();
+                if (pId && !Number.isNaN(pId)) {
+                    this.textService.get(pId).subscribe({
+                        next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId()),
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                    this.isReadOnlyWithShowResult = !!this.submissionId();
+                } else if (pId && Number.isNaN(pId)) {
+                    this.alertService.error('artemisApp.textExercise.error');
+                }
+            }
+        });
+
+        effect(() => {
+            // Extract submissionId from route params ( handled by withComponentInputBinding)
+            if (this.participation) {
+                this.updateParticipation(this.participation, this.submissionId());
+            }
+            this.isReadOnlyWithShowResult = !!this.submissionId();
+        });
+    }
 
     ngOnInit() {
-        if (this.inputValuesArePresent()) {
-            this.setupComponentWithInputValues();
-        } else {
-            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId'));
-            this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-
-            if (Number.isNaN(participationId)) {
-                return this.alertService.error('artemisApp.textExercise.error');
-            }
-
-            this.route.params?.subscribe(() => {
-                this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-                this.updateParticipation(this.participation, this.submissionId);
-            });
-
-            this.textService.get(participationId!).subscribe({
-                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-
-            this.isReadOnlyWithShowResult = !!this.submissionId;
-        }
         this.participationUpdateListener?.unsubscribe();
         // Triggers on new result received
         this.participationUpdateListener = this.participationWebsocketService

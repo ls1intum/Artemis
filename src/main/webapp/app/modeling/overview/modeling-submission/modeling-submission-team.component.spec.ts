@@ -65,6 +65,15 @@ describe('ModelingSubmissionComponent', () => {
 
     const originalConsoleError = console.error;
 
+    function setInputs({ participationId, submissionId }: { participationId?: number; submissionId?: number }) {
+        if (participationId !== undefined) {
+            fixture.componentRef.setInput('participationId', participationId);
+        }
+        if (submissionId !== undefined) {
+            fixture.componentRef.setInput('submissionId', submissionId);
+        }
+    }
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([routes[0]])],
@@ -123,7 +132,8 @@ describe('ModelingSubmissionComponent', () => {
         const getLatestSubmissionForModelingEditorStub = jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // WHEN
-        comp.ngOnInit();
+        setInputs({ participationId: 1 });
+        fixture.detectChanges();
 
         // THEN
         expect(getLatestSubmissionForModelingEditorStub).toHaveBeenCalledOnce();
@@ -135,7 +145,7 @@ describe('ModelingSubmissionComponent', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize the component
-        comp.ngOnInit();
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
 
         // Subscribe to patches
@@ -158,7 +168,8 @@ describe('ModelingSubmissionComponent', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize the component
-        comp.ngOnInit();
+        setInputs({ participationId: 1 });
+        fixture.detectChanges();
 
         const editorImportSpy = jest.spyOn(comp.modelingEditor, 'importPatch');
         const submissionPatch = new SubmissionPatch([
@@ -185,6 +196,7 @@ describe('ModelingSubmissionComponent', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // WHEN
+        setInputs({ participationId: 1 });
         comp.isLoading = false;
         fixture.changeDetectorRef.detectChanges();
 
@@ -201,6 +213,7 @@ describe('ModelingSubmissionComponent', () => {
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
@@ -214,6 +227,7 @@ describe('ModelingSubmissionComponent', () => {
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
 
         expect(comp.isLate).toBeTrue();
@@ -227,6 +241,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.result = result;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
@@ -238,6 +253,7 @@ describe('ModelingSubmissionComponent', () => {
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
         comp.participation.initializationDate = dayjs();
 
@@ -252,6 +268,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should catch error on 403 error status', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -259,6 +276,7 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should set correct properties on modeling exercise update when saving', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
 
         const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
@@ -322,6 +340,7 @@ describe('ModelingSubmissionComponent', () => {
         const subscribeForLatestResultOfParticipationStub = jest
             .spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.assessmentResult).toEqual(newResult);
@@ -339,6 +358,7 @@ describe('ModelingSubmissionComponent', () => {
             submitted: true,
             participation,
         });
+        setInputs({ participationId: 1 });
         fixture.detectChanges();
         websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission).toEqual(modelSubmission);
@@ -549,9 +569,9 @@ describe('ModelingSubmissionComponent', () => {
                 },
             ],
         });
-        comp.inputExercise = participation.exercise;
-        comp.inputSubmission = modelingSubmission;
-        comp.inputParticipation = participation;
+        fixture.componentRef.setInput('inputExercise', participation.exercise);
+        fixture.componentRef.setInput('inputSubmission', modelingSubmission);
+        fixture.componentRef.setInput('inputParticipation', participation);
 
         fixture.changeDetectorRef.detectChanges();
 

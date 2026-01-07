@@ -1,6 +1,5 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -15,25 +14,23 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     templateUrl: './example-solution.component.html',
     imports: [HeaderExercisePageWithDetailsComponent, TranslateDirective, ModelingEditorComponent, ArtemisTranslatePipe, HtmlForMarkdownPipe],
 })
-export class ExampleSolutionComponent implements OnInit {
+export class ExampleSolutionComponent {
     private exerciseService = inject(ExerciseService);
-    private route = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    private displayedExerciseId: number;
+    private displayedExerciseId?: number;
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
-    @Input() exerciseId?: number;
-    @Input() displayHeader = true;
+    // exerciseId will be automatically populated from route parameter when using withComponentInputBinding()
+    readonly exerciseId = input<number>();
+    readonly displayHeader = input(true);
 
-    ngOnInit() {
-        this.route.params.subscribe((params) => {
-            const exerciseId = this.exerciseId || parseInt(params['exerciseId'], 10);
-
-            const didExerciseChange = this.displayedExerciseId !== exerciseId;
-            this.displayedExerciseId = exerciseId;
-            if (didExerciseChange) {
+    constructor() {
+        effect(() => {
+            const exerciseId = this.exerciseId();
+            if (exerciseId && this.displayedExerciseId !== exerciseId) {
+                this.displayedExerciseId = exerciseId;
                 this.loadExercise();
             }
         });
@@ -41,10 +38,12 @@ export class ExampleSolutionComponent implements OnInit {
 
     loadExercise() {
         this.exercise = undefined;
-        this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-            const newExercise = exerciseResponse.body!;
-            this.exercise = newExercise;
-            this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
-        });
+        if (this.displayedExerciseId) {
+            this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+                const newExercise = exerciseResponse.body!;
+                this.exercise = newExercise;
+                this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
+            });
+        }
     }
 }

@@ -62,6 +62,7 @@ describe('Example Solution Component', () => {
         const exampleSolutionInfo = { programmingExercise: { id: 1, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') } } as ExampleSolutionInfo;
 
         const extractExampleSolutionInfoSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
+        fixture.componentRef.setInput('exerciseId', 10);
         fixture.detectChanges();
         expect(exerciseServiceSpy).toHaveBeenCalledOnce();
         expect(exerciseServiceSpy).toHaveBeenCalledWith(exercise.id);

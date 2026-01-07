@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, HostListener, OnDestroy, ViewChild, effect, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
@@ -82,12 +82,11 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
         HtmlForMarkdownPipe,
     ],
 })
-export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnDestroy, ComponentCanDeactivate {
     private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
-    private route = inject(ActivatedRoute);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
@@ -97,15 +96,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
-    @Input() participationId?: number;
-    @Input() inputExercise?: ModelingExercise;
-    @Input() inputSubmission?: ModelingSubmission;
-    @Input() inputParticipation?: StudentParticipation;
+    // participationId will be automatically populated from route parameter when using withComponentInputBinding()
+    readonly participationId = input<number | undefined>(undefined);
+    readonly inputExercise = input<ModelingExercise>();
+    readonly inputSubmission = input<ModelingSubmission>();
+    readonly inputParticipation = input<StudentParticipation>();
 
-    @Input() isExamSummary = false;
-    @Input() displayHeader = true;
-    @Input() isPrinting = false;
-    @Input() expandProblemStatement = false;
+    readonly isExamSummary = input(false);
+    readonly displayHeader = input(true);
+    readonly isPrinting = input(false);
+    readonly expandProblemStatement = input(false);
 
     private subscription: Subscription;
     private manualResultUpdateListener?: Subscription;
@@ -125,7 +125,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
-    submissionId: number | undefined;
+
+    readonly submissionId = input<number | undefined>(undefined);
+
     sortedSubmissionHistory: ModelingSubmission[];
     sortedResultHistory: Result[];
 
@@ -171,40 +173,52 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isFeedbackView = false;
     showResultHistory = false;
 
-    ngOnInit(): void {
+    constructor() {
+        effect(() => {
+            this.isFeedbackView = !!this.submissionId();
+
+            if (this.participationId()) {
+                this.loadParticipationData();
+            }
+        });
+
+        effect(() => {
+            const isDisplayedOnExamSummaryPage = !this.displayHeader() && this.participationId() !== undefined;
+            if (!isDisplayedOnExamSummaryPage) {
+                window.scroll(0, 0);
+            }
+        });
+
+        effect(() => {
+            if (this.inputValuesArePresent()) {
+                this.setupComponentWithInputValues();
+            }
+        });
+    }
+
+    private loadParticipationData(): void {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
-        } else {
-            this.route.params
-                .pipe(
-                    switchMap((params) => {
-                        this.participationId = params['participationId'] ?? this.participationId;
-                        this.submissionId = Number(params['submissionId']) || undefined;
-                        this.isFeedbackView = !!this.submissionId;
-
-                        // If participationId exists and feedback view is needed, fetch history results first
-                        if (this.participationId && this.isFeedbackView) {
-                            return this.fetchSubmissionHistory().pipe(switchMap(() => this.fetchLatestSubmission()));
-                        }
-                        // Otherwise, directly fetch the latest submission
-                        return this.fetchLatestSubmission();
-                    }),
-                )
-                .subscribe({
-                    next: (modelingSubmission) => {
-                        if (modelingSubmission) {
-                            this.updateModelingSubmission(modelingSubmission);
-                            this.setupMode();
-                        }
-                    },
-                    error: (error) => onError(this.alertService, error),
-                });
+            return;
         }
 
-        const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
-        if (!isDisplayedOnExamSummaryPage) {
-            window.scroll(0, 0);
+        const participationId = this.participationId();
+        const submissionId = this.submissionId();
+        if (!participationId) {
+            return;
         }
+
+        const loadData$ = participationId && submissionId ? this.fetchSubmissionHistory().pipe(switchMap(() => this.fetchLatestSubmission())) : this.fetchLatestSubmission();
+
+        loadData$.subscribe({
+            next: (modelingSubmission) => {
+                if (modelingSubmission) {
+                    this.updateModelingSubmission(modelingSubmission);
+                    this.setupMode();
+                }
+            },
+            error: (error) => onError(this.alertService, error),
+        });
     }
 
     private setupMode(): void {
@@ -216,7 +230,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private fetchLatestSubmission() {
-        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.participationId!).pipe(
+        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.participationId()!).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of(null); // Return null on error
@@ -227,7 +241,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // Fetch the results and sort them
     // Fetch the submissions and sort them by the latest result's completionDate in descending order
     private fetchSubmissionHistory() {
-        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.participationId!).pipe(
+        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.participationId()!).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of([]);
@@ -276,7 +290,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -287,14 +301,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.modelingExercise = this.inputExercise;
+        const inputExercise = this.inputExercise();
+        if (inputExercise) {
+            this.modelingExercise = inputExercise;
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        const inputSubmission = this.inputSubmission();
+        if (inputSubmission) {
+            this.submission = inputSubmission;
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        const inputParticipation = this.inputParticipation();
+        if (inputParticipation) {
+            this.participation = inputParticipation;
         }
 
         this.updateModelAndExplanation();
@@ -315,13 +332,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.modelingExerciseHeader.studentParticipations = [this.participation];
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
-        if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
-            const matchingSubmission = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId);
+        const submissionId = this.submissionId();
+        if (this.isFeedbackView && submissionId && this.sortedSubmissionHistory) {
+            const matchingSubmission = this.sortedSubmissionHistory.find((submission) => submission.id === submissionId);
 
             if (matchingSubmission) {
                 modelingSubmission = matchingSubmission;
             } else {
-                captureException(`Submission with ID ${this.submissionId} not found in sorted history results.`);
+                captureException(`Submission with ID ${submissionId} not found in sorted history results.`);
             }
         }
 
@@ -358,8 +376,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.subscribeToWebsockets();
         if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
             this.result = getLatestSubmissionResult(this.submission);
-            if (this.isFeedbackView && this.submissionId) {
-                this.result = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId)?.latestResult;
+            if (this.isFeedbackView && submissionId) {
+                this.result = this.sortedSubmissionHistory.find((submission) => submission.id === submissionId)?.latestResult;
             }
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
