@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -36,7 +36,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
 
-    @Input() mode: ChatServiceMode;
+    readonly mode = input.required<ChatServiceMode>();
 
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
     chatOpen = false;
@@ -49,14 +49,14 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     private latestIrisMessageSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
-    @ViewChild('chatBubble') chatBubble: ElementRef;
+    readonly chatBubble = viewChild<ElementRef>('chatBubble');
 
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
-            const rawId = this.mode == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
+            const rawId = this.mode() == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
             const id = parseInt(rawId, 10);
-            this.chatService.switchTo(this.mode, id);
+            this.chatService.switchTo(this.mode(), id);
         });
 
         this.queryParamsSubscription = this.route.queryParams?.subscribe((params: any) => {
@@ -121,7 +121,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
      * Checks if the chat bubble is overflowing and sets isOverflowing to true if it is.
      */
     public checkOverflow() {
-        const element = this.chatBubble?.nativeElement;
+        const element = this.chatBubble()?.nativeElement;
         this.isOverflowing = !!element && element.scrollHeight > element.clientHeight;
     }
 

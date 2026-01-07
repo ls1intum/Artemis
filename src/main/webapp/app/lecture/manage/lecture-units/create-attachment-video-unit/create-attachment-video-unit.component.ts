@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, inject, viewChild } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,8 +24,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
-    @ViewChild('attachmentVideoUnitForm')
-    attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
+    readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
     attachmentVideoUnitToCreate: AttachmentVideoUnit = new AttachmentVideoUnit();
     attachmentToCreate: Attachment = new Attachment();
 

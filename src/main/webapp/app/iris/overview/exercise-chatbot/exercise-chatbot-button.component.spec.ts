@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -113,7 +113,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
         const spy = jest.spyOn(chatService, 'switchTo');
 
-        component.mode = ChatServiceMode.PROGRAMMING_EXERCISE;
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         fixture.changeDetectorRef.detectChanges();
 
         mockParamsSubject.next({
@@ -131,7 +131,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
         const spy = jest.spyOn(chatService, 'switchTo');
 
-        component.mode = ChatServiceMode.TEXT_EXERCISE;
+        fixture.componentRef.setInput('mode', ChatServiceMode.TEXT_EXERCISE);
         fixture.changeDetectorRef.detectChanges();
 
         mockParamsSubject.next({
@@ -159,19 +159,20 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
-        // when
-        tick();
-        fixture.changeDetectorRef.detectChanges();
+        // when - tick a small amount (not enough to trigger the 10s message clear timeout), then detect changes
+        tick(100);
+        fixture.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).not.toBeNull();
-        flush();
+        discardPeriodicTasks();
     }));
 
     it('should not show new message indicator when chatbot is open', fakeAsync(() => {
@@ -179,20 +180,22 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
         component.openChat();
 
-        // when
+        // when - flush all timers and microtasks, then detect changes
+        flush();
         tick();
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
-        flush();
+        discardPeriodicTasks();
     }));
 
     it('should open chatbot if irisQuestion is provided in the queryParams', () => {

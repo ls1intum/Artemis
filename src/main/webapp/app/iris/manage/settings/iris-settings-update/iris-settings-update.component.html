@@ -1,8 +1,8 @@
 <div *titleBarTitle class="d-flex align-items-center">
     <jhi-course-title-bar-title title="artemisApp.iris.settings.title" />
-    @if (settings) {
+    @if (settings()) {
         <span class="ms-3">
-            @if (isDirty) {
+            @if (isDirty()) {
                 <span class="badge bg-warning">
                     <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                     <span jhiTranslate="artemisApp.iris.settings.unsaved"></span>
@@ -17,17 +17,17 @@
     }
 </div>
 
-@if (settings) {
+@if (settings(); as settingsValue) {
     <div>
         <!-- Enable/Disable Toggle -->
         <div class="mb-4">
             <h4 jhiTranslate="artemisApp.iris.settings.enableLabel"></h4>
             <p jhiTranslate="artemisApp.iris.settings.enableHelp"></p>
             <div class="btn-group" role="group">
-                <button type="button" class="btn" [class.btn-success]="settings.enabled" [class.btn-outline-success]="!settings.enabled" (click)="setEnabled(true)">
+                <button type="button" class="btn" [class.btn-success]="settingsValue.enabled" [class.btn-outline-success]="!settingsValue.enabled" (click)="setEnabled(true)">
                     <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                 </button>
-                <button type="button" class="btn" [class.btn-danger]="!settings.enabled" [class.btn-outline-danger]="settings.enabled" (click)="setEnabled(false)">
+                <button type="button" class="btn" [class.btn-danger]="!settingsValue.enabled" [class.btn-outline-danger]="settingsValue.enabled" (click)="setEnabled(false)">
                     <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                 </button>
             </div>
@@ -41,7 +41,8 @@
                 id="customInstructions"
                 class="form-control"
                 rows="6"
-                [(ngModel)]="settings.customInstructions"
+                [ngModel]="settingsValue.customInstructions"
+                (ngModelChange)="updateCustomInstructions($event)"
                 [maxlength]="CUSTOM_INSTRUCTIONS_MAX_LENGTH"
                 placeholder="{{ 'artemisApp.iris.settings.customInstructionsPlaceholder' | artemisTranslate }}"
             ></textarea>
@@ -61,7 +62,7 @@
                     <label for="variant" class="form-label">
                         <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
                     </label>
-                    <select id="variant" class="form-select" [(ngModel)]="settings.variant">
+                    <select id="variant" class="form-select" [ngModel]="settingsValue.variant" (ngModelChange)="updateVariant($event)">
                         @for (variant of availableVariants; track variant) {
                             <option [value]="variant">{{ variant }}</option>
                         }
@@ -81,16 +82,17 @@
                                 id="rateLimitRequests"
                                 type="number"
                                 class="form-control"
-                                [class.is-invalid]="rateLimitRequestsError"
-                                [(ngModel)]="rateLimitRequests"
+                                [class.is-invalid]="rateLimitRequestsError()"
+                                [ngModel]="rateLimitRequests()"
+                                (ngModelChange)="rateLimitRequests.set($event)"
                                 min="0"
                                 placeholder="{{
                                     'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults?.requests || 'unlimited' }
                                 }}"
                             />
-                            @if (rateLimitRequestsError) {
+                            @if (rateLimitRequestsError()) {
                                 <div class="text-danger small mt-1">
-                                    <span [jhiTranslate]="rateLimitRequestsError"></span>
+                                    <span [jhiTranslate]="rateLimitRequestsError()"></span>
                                 </div>
                             }
                         </div>
@@ -100,16 +102,17 @@
                                 id="rateLimitTimeframe"
                                 type="number"
                                 class="form-control"
-                                [class.is-invalid]="rateLimitTimeframeError"
-                                [(ngModel)]="rateLimitTimeframeHours"
+                                [class.is-invalid]="rateLimitTimeframeError()"
+                                [ngModel]="rateLimitTimeframeHours()"
+                                (ngModelChange)="rateLimitTimeframeHours.set($event)"
                                 min="1"
                                 placeholder="{{
                                     'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults?.timeframeHours || 'unlimited' }
                                 }}"
                             />
-                            @if (rateLimitTimeframeError) {
+                            @if (rateLimitTimeframeError()) {
                                 <div class="text-danger small mt-1">
-                                    <span [jhiTranslate]="rateLimitTimeframeError"></span>
+                                    <span [jhiTranslate]="rateLimitTimeframeError()"></span>
                                 </div>
                             }
                         </div>
@@ -144,7 +147,7 @@
         }
 
         <!-- Save Button (only shown when there are pending changes) -->
-        @if (isDirty) {
+        @if (isDirty()) {
             <div class="mt-4">
                 <jhi-button
                     id="save"

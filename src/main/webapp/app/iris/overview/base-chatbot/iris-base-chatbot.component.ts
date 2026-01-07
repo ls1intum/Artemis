@@ -16,7 +16,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -149,17 +149,17 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
-    @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton = false;
-    @Input() isChatGptWrapper = false;
-    @Output() fullSizeToggle = new EventEmitter<void>();
-    @Output() closeClicked = new EventEmitter<void>();
+    readonly fullSize = input<boolean>();
+    readonly showCloseButton = input<boolean>(false);
+    readonly isChatGptWrapper = input<boolean>(false);
+    readonly fullSizeToggle = output<void>();
+    readonly closeClicked = output<void>();
 
     // ViewChilds
-    @ViewChild('messagesElement') messagesElement!: ElementRef;
-    @ViewChild('scrollArrow') scrollArrow!: ElementRef;
-    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
-    @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+    readonly messagesElement = viewChild<ElementRef>('messagesElement');
+    readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
+    readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
+    readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
     ngOnInit() {
         this.routeSubscription = this.route.queryParams?.subscribe((params: any) => {
@@ -185,7 +185,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
-                setTimeout(() => this.messageTextarea?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
             }
             // Track new messages for animation (only if shouldAnimate is enabled)
             if (this.shouldAnimate) {
@@ -243,10 +243,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
         // Focus on message textarea
         setTimeout(() => {
-            if (this.messageTextarea) {
-                this.messageTextarea.nativeElement.focus();
-            } else {
-                this.acceptButton.nativeElement.focus();
+            const textarea = this.messageTextarea();
+            const acceptBtn = this.acceptButton();
+            if (textarea) {
+                textarea.nativeElement.focus();
+            } else if (acceptBtn) {
+                acceptBtn.nativeElement.focus();
             }
         }, 150);
     }
@@ -338,7 +340,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
-            const messagesElement: HTMLElement = this.messagesElement?.nativeElement;
+            const messagesElement: HTMLElement = this.messagesElement()?.nativeElement;
             messagesElement?.scrollTo({
                 top: 0,
                 behavior: behavior,
@@ -418,7 +420,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Adjusts the height of the message textarea based on its content.
      */
     adjustTextareaRows() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const textareaRef = this.messageTextarea();
+        if (!textareaRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
         const bufferForSpaceBetweenLines = 4;
         const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
@@ -434,7 +438,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Handles the row change event in the message textarea.
      */
     onModelChange() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const textareaRef = this.messageTextarea();
+        if (!textareaRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         const newRows = textarea.value.split('\n').length;
         if (newRows != this.rows) {
             if (newRows <= 3) {
@@ -450,8 +456,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * @param newRows - The new number of rows.
      */
     adjustScrollButtonPosition(newRows: number) {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
+        const textareaRef = this.messageTextarea();
+        const scrollArrowRef = this.scrollArrow();
+        if (!textareaRef || !scrollArrowRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
+        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows - lineHeight;
         setTimeout(() => {
@@ -463,15 +472,18 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Resets the height of the chat body.
      */
     resetChatBodyHeight() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
+        const textareaRef = this.messageTextarea();
+        const scrollArrowRef = this.scrollArrow();
+        if (!textareaRef || !scrollArrowRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
+        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         textarea.rows = 1;
         textarea.style.height = '';
         scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
-        const messagesElement = this.messagesElement.nativeElement;
+        const messagesElement = this.messagesElement().nativeElement;
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
     }

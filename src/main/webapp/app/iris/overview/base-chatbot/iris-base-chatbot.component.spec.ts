@@ -891,6 +891,9 @@ describe('IrisBaseChatbotComponent', () => {
             });
 
             fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
 
             chatService.switchToSession(session);
             fixture.changeDetectorRef.detectChanges();

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, inject, viewChild } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -23,7 +23,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
-    @ViewChild('attachmentVideoUnitForm') attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
+    readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
 
     isLoading = false;
     attachmentVideoUnit: AttachmentVideoUnit;

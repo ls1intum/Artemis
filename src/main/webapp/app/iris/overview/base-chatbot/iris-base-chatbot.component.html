@@ -24,8 +24,8 @@
 
             <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
 
-            <div class="word-iris">{{ isChatGptWrapper ? 'ChatGPT' : 'Iris' }}</div>
-            @if (!isChatGptWrapper) {
+            <div class="word-iris">{{ isChatGptWrapper() ? 'ChatGPT' : 'Iris' }}</div>
+            @if (!isChatGptWrapper()) {
                 <a [routerLink]="'/about-iris'" target="_blank">
                     <fa-icon [icon]="faCircleInfo" class="info-button" />
                 </a>
@@ -56,9 +56,9 @@
                     </button>
                 }
 
-                @if (fullSize !== undefined) {
-                    <button (click)="fullSizeToggle.next()" class="header-control">
-                        @if (!fullSize) {
+                @if (fullSize() !== undefined) {
+                    <button (click)="fullSizeToggle.emit()" class="header-control">
+                        @if (!fullSize()) {
                             <fa-icon [icon]="faExpand" />
                         } @else {
                             <fa-icon [icon]="faCompress" />
@@ -66,7 +66,7 @@
                     </button>
                 }
 
-                @if (showCloseButton) {
+                @if (showCloseButton()) {
                     <button (click)="closeChat()" class="header-control">
                         <fa-icon [icon]="faXmark" />
                     </button>
@@ -300,7 +300,7 @@
                         this.hasActiveStage
                     "
                 />
-                @if (!isChatGptWrapper) {
+                @if (!isChatGptWrapper()) {
                     <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
                 } @else {
                     <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimerGPT"></span>
