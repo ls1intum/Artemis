@@ -17,6 +17,45 @@ IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() 
 COURSE_NAME: str = config.get('CourseSettings', 'course_name')
 SPECIAL_CHARACTERS_REGEX: str = config.get('CourseSettings', 'special_character_regex')
 
+# =======================from utils.py =======================
+CLIENT_URL: str = config.get('Settings', 'client_url')
+SERVER_URL: str = config.get('Settings', 'server_url')
+ADMIN_USER: str = config.get('Settings', 'admin_user')
+ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
+
+# POST /core/public/authenticate
+def login_as_admin(session: requests.Session) -> None:
+    """Authenticate as an admin using the provided session.
+
+    POST /core/public/authenticate
+    """
+    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
+
+def authenticate_user(username: str, password: str, session: requests.Session = requests.Session()) -> requests.Response:
+    """Authenticate a user and return the session response."""
+    url: str = f"{SERVER_URL}/core/public/authenticate"
+    headers: Dict[str, str] = {
+        "Content-Type": "application/json"
+    }
+
+    payload: Dict[str, Any] = {
+        "username": username,
+        "password": password,
+        "rememberMe": True
+    }
+
+    response: requests.Response = session.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
+        logging.info(f"Authentication successful for user {username}")
+    else:
+        raise Exception(
+            f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")
+
+    return response
+# ========================================================
+
+# SUPPORTING FUNCTIONS FOR COURSE AND EXERCISE MANAGEMENT
 def parse_course_name_to_short_name() -> str:
     """Parse course name to create a short name, removing special characters."""
     short_name = COURSE_NAME.strip()
@@ -27,8 +66,12 @@ def parse_course_name_to_short_name() -> str:
 
     return short_name
 
+# POST /core/admin/courses
 def create_pecv_bench_course(session: Session) -> requests.Response:
-    """Create a course using the given session."""
+    """Create a course using the given session.
+
+    POST /core/admin/courses
+    """
     url = f"{SERVER_URL}/core/admin/courses"
     course_short_name = parse_course_name_to_short_name()
 
@@ -108,9 +151,11 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
                 f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
                 f"Response content: {response.text}")
 
-
+# DELETE /core/admin/courses/{courseId}
 def delete_pecv_bench_course(session: Session, course_short_name: str, max_retries: int = 3) -> bool:
     """Delete a course with retry logic using the given session and course ID.
+
+    DELETE /core/admin/courses/{courseId}
 
     Sometimes it takes multiple scripts reruns to successfully delete a course.
     This approach fixes this.
@@ -152,3 +197,88 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
             time.sleep(wait_time)
     logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
     return False
+
+
+# GET /core/courses
+def get_pecv_bench_course_id(session: Session) -> int:
+    """Get the course ID for the given course name using the provided session.
+
+    GET /core/courses
+    """
+    course_short_name = parse_course_name_to_short_name()
+    courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
+    courses = courseResponse.json()
+    for course in courses:
+        if course["shortName"] == course_short_name:
+            logging.info(f"Found course ID {course['id']} for course shortName {course_short_name}")
+            return course["id"]
+    raise Exception(f"Course with shortName {course_short_name} not found")
+
+#TODO
+# GET /core/courses/{courseId}/exercises
+def get_exercise_ids_from_pecv_bench(session: Session, course_id: int) -> int:
+    """Get the exercise ID for the given exercise title in the specified course using the provided session."""
+    """
+    Retrieves programming exercises for a specific course and extracts IDs and Titles.
+
+    :return: A list of dictionaries containing 'title' as key and 'id' as value.
+    """
+    url = f"{SERVER_URL}/programming/courses/{course_id}/programming-exercises"
+
+    try:
+        response = session.get(url)
+
+        exercises_data = response.json()
+
+        # dictionary: Key = Title, Value = ID
+        exercises_map = {}
+
+        for exercise in exercises_data:
+            title = exercise.get("title")
+            ex_id = exercise.get("id")
+
+            if title is not None and ex_id is not None:
+                exercises_map[title] = ex_id
+        return transform_exercise_keys(exercises_map)
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return {}
+    except ValueError as e:
+        print(f"Error parsing JSON: {e}")
+        return {}
+
+
+def transform_exercise_keys(input_dict):
+    transformed_dict = {}
+
+    # Regex to capture: (Number) - (ShortCode) (Optional Hyphen) (Description)
+    # Group 1: Number (e.g. 002)
+    # Group 2: ShortCode (e.g. H05E01)
+    # Group 3: Description (e.g. REST Architectural Style)
+    pattern = re.compile(r"^(\d+)\s*-\s*([^\s]+)\s*(?:-\s*)?(.*)$")
+
+    for original_key, value in input_dict.items():
+        match = pattern.match(original_key)
+
+        if match:
+            seq_num = match.group(1)
+            short_code = match.group(2)
+            raw_description = match.group(3)
+
+            # Replace spaces in description with underscores
+            clean_description = raw_description.replace(" ", "_")
+
+            # Construct new key: Code-Description:Number
+            new_key = f"{short_code}-{clean_description}:{seq_num}"
+
+            transformed_dict[new_key] = value
+        else:
+            # Fallback if pattern doesn't match (keep original or log error)
+            print(f"Warning: Could not parse key '{original_key}'")
+            transformed_dict[original_key] = value
+
+    return transformed_dict
+
+
+
