@@ -117,10 +117,8 @@
 
     @if (withExplanation) {
         @if (readOnly) {
-            <p class="form-label mb-2" jhiTranslate="artemisApp.modelingSubmission.explanationText"></p>
-            <div class="p-3 border markdown-preview">
-                <div [innerHTML]="explanation | htmlForMarkdown"></div>
-            </div>
+            <h4 jhiTranslate="artemisApp.modelingSubmission.explanationText"></h4>
+            <p class="markdown-preview" [innerHTML]="explanation | htmlForMarkdown"></p>
         } @else {
             <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly" />
         }
