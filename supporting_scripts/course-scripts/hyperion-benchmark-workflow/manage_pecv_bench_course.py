@@ -55,7 +55,6 @@ def authenticate_user(username: str, password: str, session: requests.Session = 
     return response
 # ========================================================
 
-# SUPPORTING FUNCTIONS FOR COURSE AND EXERCISE MANAGEMENT
 def parse_course_name_to_short_name() -> str:
     """Parse course name to create a short name, removing special characters."""
     short_name = COURSE_NAME.strip()
@@ -66,7 +65,6 @@ def parse_course_name_to_short_name() -> str:
 
     return short_name
 
-# POST /core/admin/courses
 def create_pecv_bench_course(session: Session) -> requests.Response:
     """Create a course using the given session.
 
@@ -151,7 +149,6 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
                 f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
                 f"Response content: {response.text}")
 
-# DELETE /core/admin/courses/{courseId}
 def delete_pecv_bench_course(session: Session, course_short_name: str, max_retries: int = 3) -> bool:
     """Delete a course with retry logic using the given session and course ID.
 
@@ -198,7 +195,6 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
     logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
     return False
 
-# GET /core/courses
 def get_pecv_bench_course_id(session: Session) -> int:
     """Get the course ID for the given course name using the provided session.
 
@@ -213,7 +209,6 @@ def get_pecv_bench_course_id(session: Session) -> int:
             return course["id"]
     raise Exception(f"Course with shortName {course_short_name} not found")
 
-# GET /core/courses/{courseId}/exercises
 def get_exercise_ids_from_pecv_bench(session: Session, course_id: int) -> int:
     """Get the exercise ID for the given exercise title in the specified course using the provided session."""
     """
