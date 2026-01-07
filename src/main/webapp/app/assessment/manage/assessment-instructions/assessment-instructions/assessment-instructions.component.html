@@ -1,50 +1,55 @@
-@let gradingCriteria = this.gradingCriteria();
-@if (showAssessmentInstructions() && (gradingInstructions || (gradingCriteria && gradingCriteria.length > 0))) {
+@let gradingCriteriaValue = this.gradingCriteria();
+@let gradingInstructionsValue = this.gradingInstructions();
+@if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
     <div class="border p-2">
-        @if (gradingInstructions) {
+        @if (gradingInstructionsValue) {
             <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
-                <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
+                <p class="markdown-preview" [innerHTML]="gradingInstructionsValue"></p>
             </jhi-expandable-section>
         }
-        @if (gradingCriteria && gradingCriteria.length > 0) {
+        @if (gradingCriteriaValue && gradingCriteriaValue.length > 0) {
             <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
-                <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly()" [criteria]="gradingCriteria" />
+                <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly()" [criteria]="gradingCriteriaValue" />
             </jhi-expandable-section>
         }
     </div>
 }
 
-<h3>{{ exercise.title }}</h3>
+<h3>{{ exercise().title }}</h3>
 <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement">
-    @switch (exercise.type) {
+    @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
-            @let programmingParticipation = this.programmingParticipation();
+            @let programmingParticipationValue = this.programmingParticipation();
+            @let programmingExerciseValue = this.programmingExercise();
             <jhi-programming-exercise-instructions
-                [exercise]="programmingExercise!"
-                [participation]="programmingParticipation ? programmingParticipation : programmingExercise!.templateParticipation!"
+                [exercise]="programmingExerciseValue!"
+                [participation]="programmingParticipationValue ? programmingParticipationValue : programmingExerciseValue!.templateParticipation!"
                 [personalParticipation]="false"
             />
         }
         @default {
-            <p class="markdown-preview" [innerHTML]="problemStatement"></p>
+            <p class="markdown-preview" [innerHTML]="problemStatement()"></p>
         }
     }
 </jhi-expandable-section>
 <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.sampleSolution">
-    @switch (exercise.type) {
+    @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
+            @let programmingExerciseValue = this.programmingExercise();
             <div class="mb-3">
-                <a jhiSecureLink [href]="programmingExercise?.solutionParticipation?.repositoryUri">
+                <a jhiSecureLink [href]="programmingExerciseValue?.solutionParticipation?.repositoryUri">
                     <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                 </a>
             </div>
         }
         @default {
-            @if (sampleSolutionModel) {
-                <jhi-modeling-editor [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!" />
+            @let sampleSolutionModelValue = this.sampleSolutionModel();
+            @let sampleSolutionExplanationValue = this.sampleSolutionExplanation();
+            @if (sampleSolutionModelValue) {
+                <jhi-modeling-editor [readOnly]="true" [diagramType]="sampleSolutionDiagramType()!" [umlModel]="sampleSolutionModelValue!" />
             }
-            @if (sampleSolutionExplanation) {
-                <p class="markdown-preview" [innerHTML]="sampleSolutionExplanation!"></p>
+            @if (sampleSolutionExplanationValue) {
+                <p class="markdown-preview" [innerHTML]="sampleSolutionExplanationValue!"></p>
             }
         }
     }

@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, input } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
@@ -8,15 +8,10 @@ import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exer
     encapsulation: ViewEncapsulation.None,
     styleUrls: ['./exercise-unit.component.scss'],
     imports: [CourseExerciseRowComponent],
+    host: { class: 'exercise-unit' },
 })
 export class ExerciseUnitComponent {
-    @HostBinding('className') componentClass: string;
-
-    constructor() {
-        this.componentClass = 'exercise-unit';
-    }
-
-    @Input() exerciseUnit: ExerciseUnit;
-    @Input() course: Course;
-    @Input() isPresentationMode = false;
+    exerciseUnit = input.required<ExerciseUnit>();
+    course = input.required<Course>();
+    isPresentationMode = input<boolean>(false);
 }
