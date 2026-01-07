@@ -18,6 +18,7 @@ import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { provideHttpClient } from '@angular/common/http';
 import { BuildLogEntry } from 'app/buildagent/shared/entities/build-log.model';
+import { firstValueFrom } from 'rxjs';
 
 describe('BuildOverviewService', () => {
     setupTestBed({ zoneless: true });
@@ -452,29 +453,31 @@ describe('BuildOverviewService', () => {
         expect(errorOccurred).toBeTruthy();
     });
 
-    it('should return all finished build jobs', () => {
+    it('should return all finished build jobs', async () => {
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobs().subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobs());
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
-    it('should return filtered finished build jobs', () => {
+    it('should return filtered finished build jobs', async () => {
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobs(undefined, filterOptions).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobs(undefined, filterOptions));
 
         const req = httpMock.expectOne((r) => r.url === `${service.adminResourceUrl}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         expectFilterParams(req, filterOptions);
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
     it('should handle errors when getting all finished build jobs', () => {
@@ -497,31 +500,33 @@ describe('BuildOverviewService', () => {
         expect(errorOccurred).toBeTruthy();
     });
 
-    it('should return all finished build jobs for a specific course', () => {
+    it('should return all finished build jobs for a specific course', async () => {
         const courseId = 1;
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobsByCourseId(courseId).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobsByCourseId(courseId));
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
-    it('should return filtered finished build jobs for a specific course', () => {
+    it('should return filtered finished build jobs for a specific course', async () => {
         const courseId = 1;
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobsByCourseId(courseId, undefined, filterOptions).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobsByCourseId(courseId, undefined, filterOptions));
 
         const req = httpMock.expectOne((r) => r.url === `${service.resourceUrl}/courses/${courseId}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         expectFilterParams(req, filterOptions);
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
     it('should return build job statistics', () => {
@@ -584,17 +589,19 @@ describe('BuildOverviewService', () => {
         expect(errorOccurred).toBeTruthy();
     });
 
-    it('should return build log entries for a specific build job', () => {
+    it('should return build log entries for a specific build job', async () => {
         const buildJobId = '1';
-        const expectedResponse = buildLogEntries;
+        // The service returns a text response (JSON string)
+        const expectedResponseText = JSON.stringify(buildLogEntries);
 
-        service.getBuildJobLogs(buildJobId).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getBuildJobLogs(buildJobId));
 
         const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
         expect(req.request.method).toBe('GET');
-        req.flush(expectedResponse);
+        req.flush(expectedResponseText);
+
+        const result = await resultPromise;
+        expect(result).toEqual(expectedResponseText);
     });
 
     it('should handle errors when getting build log entries for a specific build job', () => {

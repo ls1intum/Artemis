@@ -18,7 +18,6 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -39,11 +38,10 @@ class HyperionProblemStatementRewriteServiceTest {
     }
 
     @Test
-    void rewriteProblemStatement_returnsText() throws Exception {
+    void rewriteProblemStatement_returnsText() {
         String rewritten = "Rewritten statement";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(rewritten)))));
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(rewritten)))));
 
-        var user = new User();
         var course = new Course();
 
         ProblemStatementRewriteResponseDTO resp = hyperionProblemStatementRewriteService.rewriteProblemStatement(course, "Original");

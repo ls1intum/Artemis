@@ -17,6 +17,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.SystemReader;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -198,18 +199,26 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected CourseTestRepository courseRepository;
 
-    private static final Path rootPath = Path.of("local", "upload");
+    @Value("${artemis.file-upload-path}")
+    private Path fileUploadPath;
+
+    private static volatile boolean fileUploadPathInitialized = false;
 
     @BeforeAll
     static void setup() {
-        // Set the static file upload path for all tests
-        // This makes it a simple unit test that doesn't require a server start.
-        FilePathConverter.setFileUploadPath(rootPath);
-
         // Configure JGit to skip reading system-level git config files.
         // This prevents "File is too large" errors when system gitconfig files (e.g., /opt/homebrew/etc/gitconfig)
         // exceed JGit's default 5MB file size limit.
         configureJGitSystemReader();
+    }
+
+    @BeforeEach
+    void initFileUploadPath() {
+        // Set the file upload path from configuration (only once across all tests)
+        if (!fileUploadPathInitialized) {
+            FilePathConverter.setFileUploadPath(fileUploadPath);
+            fileUploadPathInitialized = true;
+        }
     }
 
     /**
@@ -218,15 +227,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      * causing test failures on some machines.
      */
     private static void configureJGitSystemReader() {
-        SystemReader defaultReader = SystemReader.getInstance();
-
-        // Force initialization of static platform detection fields before calling setInstance().
-        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
-        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
-        // during parallel test execution, causing NullPointerException.
-        defaultReader.isMacOS();
-        defaultReader.isWindows();
-        defaultReader.isLinux();
+        final var defaultReader = getSystemReader();
 
         SystemReader.setInstance(new SystemReader() {
 
@@ -294,6 +295,19 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
                 return defaultReader.getTimezone(when);
             }
         });
+    }
+
+    private static @NonNull SystemReader getSystemReader() {
+        SystemReader defaultReader = SystemReader.getInstance();
+
+        // Force initialization of static platform detection fields before calling setInstance().
+        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
+        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
+        // during parallel test execution, causing NullPointerException.
+        defaultReader.isMacOS();
+        defaultReader.isWindows();
+        defaultReader.isLinux();
+        return defaultReader;
     }
 
     @BeforeEach

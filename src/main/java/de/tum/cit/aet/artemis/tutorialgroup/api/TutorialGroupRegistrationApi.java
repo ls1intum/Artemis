@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.api;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -27,4 +28,13 @@ public class TutorialGroupRegistrationApi extends AbstractTutorialGroupApi {
         return tutorialGroupRegistrationRepository.findAllByTutorialGroupAndType(tutorialGroup, type);
     }
 
+    /**
+     * Finds all tutorial group registrations for a user for GDPR data export.
+     *
+     * @param userId the ID of the user
+     * @return list of all registrations for the user with tutorial group information
+     */
+    public List<TutorialGroupRegistration> findAllByStudentIdForExport(long userId) {
+        return tutorialGroupRegistrationRepository.findAllByStudentIdWithTutorialGroupAndCourse(userId);
+    }
 }

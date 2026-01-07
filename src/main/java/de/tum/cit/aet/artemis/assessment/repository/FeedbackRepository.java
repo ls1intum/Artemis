@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Spring Data JPA repository for the Feedback entity.
@@ -29,8 +28,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long> {
 
     List<Feedback> findByResult(Result result);
-
-    List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
     @Query("""
             SELECT feedback

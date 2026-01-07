@@ -573,26 +573,45 @@ public class UserService {
     }
 
     /**
-     * delete the group with the given name
-     *
-     * @param groupName the name of the group which should be deleted
-     */
-    public void deleteGroup(String groupName) {
-        removeGroupFromUsers(groupName);
-    }
-
-    /**
-     * removes the passed group from all users in the Artemis database, e.g. when the group was deleted
+     * Removes the passed group from all users in the Artemis database using a single bulk delete query.
+     * This is more efficient than loading, modifying, and saving each user individually.
+     * <p>
+     * The method first retrieves the logins of affected users for cache eviction,
+     * then performs the bulk delete, and finally evicts all affected users from the cache.
      *
      * @param groupName the group that should be removed from all existing users
      */
-    public void removeGroupFromUsers(String groupName) {
-        log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupName);
-        log.info("Found {} users with group {}", users.size(), groupName);
-        for (User user : users) {
-            user.getGroups().remove(groupName);
-            saveUser(user);
+    public void removeGroupFromAllUsers(String groupName) {
+        log.info("Remove group {} from all users", groupName);
+
+        // First, get the logins of users who have this group (for cache eviction)
+        Set<String> affectedLogins = userRepository.findLoginsByGroupName(groupName);
+        log.debug("Found {} users with group {}", affectedLogins.size(), groupName);
+
+        if (affectedLogins.isEmpty()) {
+            return;
+        }
+
+        // Perform bulk delete directly in the database
+        int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
+        log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
+
+        // Evict all affected users from the cache
+        evictUsersFromCache(affectedLogins);
+    }
+
+    /**
+     * Evicts multiple users from the cache by their logins.
+     *
+     * @param logins the set of user logins to evict from cache
+     */
+    private void evictUsersFromCache(Set<String> logins) {
+        var userCache = cacheManager.getCache(User.class.getName());
+        if (userCache != null) {
+            for (String login : logins) {
+                userCache.evict(login);
+            }
+            log.debug("Evicted {} users from cache", logins.size());
         }
     }
 

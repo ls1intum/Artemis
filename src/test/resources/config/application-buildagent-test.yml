@@ -1,0 +1,9 @@
+# ===================================================================
+# Build Agent test specific properties
+# This overrides paths from application-buildagent.yml to use test directories
+# ===================================================================
+
+artemis:
+    checked-out-repos-path: ./local/server-integration-test/checked-out-repos
+    repo-clone-path: ./local/server-integration-test/repos
+    repo-download-clone-path: ./local/server-integration-test/repos-download
