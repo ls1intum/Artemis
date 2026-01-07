@@ -21,7 +21,7 @@ services:
             service: postgres
         restart: on-failure:3
         volumes:
-            - ./.docker-data/artemis-postgres-data:/var/lib/postgresql/data
+            - ./.docker-data/artemis-postgres-data:/var/lib/postgresql
     nginx:
         extends:
             file: ./nginx.yml

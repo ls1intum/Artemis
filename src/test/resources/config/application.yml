@@ -231,7 +231,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: docker.io/library/postgres:17.5-alpine
+                    image: docker.io/library/postgres:18.1-alpine
                     tmpfs:
                         enabled: true
                 server:
