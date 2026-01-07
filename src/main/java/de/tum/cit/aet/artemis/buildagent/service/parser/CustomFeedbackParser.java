@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
-import de.tum.cit.aet.artemis.core.config.Constants;
 
 public final class CustomFeedbackParser {
 
@@ -20,8 +19,21 @@ public final class CustomFeedbackParser {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    // Default value, will be overridden when customized below in setMaxFeedbackLength
+    private static int maxFeedbackLength = 20_000;
+
     private CustomFeedbackParser() {
 
+    }
+
+    /**
+     * Sets the maximum length for feedback messages before truncation.
+     * This should be called before processing any test result files.
+     *
+     * @param maxLength the maximum length for feedback messages
+     */
+    public static void setMaxFeedbackLength(int maxLength) {
+        maxFeedbackLength = maxLength;
     }
 
     /**
@@ -56,7 +68,7 @@ public final class CustomFeedbackParser {
      * @return The truncated feedback message.
      */
     private static String truncateFeedbackMessage(String message) {
-        return StringUtils.truncate(message, Constants.LONG_FEEDBACK_MAX_LENGTH);
+        return StringUtils.truncate(message, maxFeedbackLength);
     }
 
     /**
