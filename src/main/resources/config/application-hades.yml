@@ -1,0 +1,15 @@
+# ===================================================================
+# Hades specific properties: this file will only be loaded during startup if the profile hades is active
+#
+# This configuration overrides the application.yml file.
+# ===================================================================
+artemis:
+  continuous-integration:
+    url: http://localhost:8082
+    artemis-authentication-token-value: ""
+    hades:
+      username: testuser
+      password: testpassword
+      images:
+        clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
+        result-image: ghcr.io/mtze/hades-junit-result-parser:latest

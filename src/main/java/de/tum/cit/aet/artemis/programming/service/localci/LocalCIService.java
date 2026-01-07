@@ -101,8 +101,7 @@ public class LocalCIService implements StatelessCIService {
 
     @Override
     public UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
-        // Not necessary for LocalCI as the tirgger is handled by the trigger service
-        // directly
+        // Not necessary for LocalCI as the trigger is handled by the trigger service directly
         throw new UnsupportedOperationException("Unimplemented method 'build'");
     }
 }

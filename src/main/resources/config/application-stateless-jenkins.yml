@@ -1,0 +1,43 @@
+# ===================================================================
+# Stateless Jenkins specific properties: this file will be loaded during startup if the profile stateless-jenkins is active
+#
+# This configuration overrides the application.yml file.
+# This profile uses a jenkins-connector microservice instead of direct Jenkins connection
+# ===================================================================
+
+# Add this to verify file is loaded:
+logging:
+  level:
+    root: DEBUG
+
+artemis:
+  # Atlas feature flag - required by the application startup
+  atlas:
+    enabled: false
+  hyperion:
+    enabled: false
+
+  # Jenkins connector microservice configuration
+  jenkins-connector:
+    # URL where the jenkins-connector microservice is running
+    url: http://localhost:8081
+
+    # Optional: timeout settings for API calls to the connector
+    # timeout: 30000  # milliseconds
+
+# Optional: Jenkins settings that might still be needed for compatibility
+jenkins:
+  # The following (optional) parameter allows to customize if Jenkins CSRF protection should be used (activated) within Artemis:
+  # see https://wiki.jenkins.io/display/JENKINS/Remote+access+API --> CSRF Protection
+  # The default value for this parameter is true, so if it is not specified, crumb protection will be active.
+  # If you experience problems using crumb, you can deactivate it here.
+  use-crumb: true
+
+  # The following (optional) parameter allows to enable the use of pseudonyms.
+  # If activated, the user's first and last name are not transferred to jenkins.
+  # Instead the user will be called "user <loginname>".
+  use-pseudonyms: false
+
+  # Internal URLs - these might not be needed anymore since we're using the connector
+  # internal-urls:
+  #     ci-url: http://localhost:8081  # Points to connector instead of Jenkins directly
