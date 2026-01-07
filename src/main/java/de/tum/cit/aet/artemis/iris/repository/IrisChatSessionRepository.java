@@ -55,4 +55,21 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                 ORDER BY s.creationDate DESC
             """)
     List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
+
+    /**
+     * Finds all chat sessions for a user with their messages loaded, ordered by creation date.
+     * Used for GDPR data export to retrieve all AI tutor interactions for a user.
+     *
+     * @param userId the ID of the user
+     * @return a list of all chat sessions with messages for the user
+     */
+    @Query("""
+            SELECT DISTINCT s
+            FROM IrisChatSession s
+                LEFT JOIN FETCH s.messages m
+                LEFT JOIN FETCH m.content
+            WHERE s.userId = :userId
+            ORDER BY s.creationDate ASC
+            """)
+    List<IrisChatSession> findAllWithMessagesByUserId(@Param("userId") long userId);
 }

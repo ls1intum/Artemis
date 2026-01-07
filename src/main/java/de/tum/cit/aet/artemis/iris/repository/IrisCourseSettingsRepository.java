@@ -21,6 +21,6 @@ public interface IrisCourseSettingsRepository extends ArtemisJpaRepository<IrisC
     Optional<IrisCourseSettingsEntity> findByCourseId(Long courseId);
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteByCourseId(Long courseId);
 }

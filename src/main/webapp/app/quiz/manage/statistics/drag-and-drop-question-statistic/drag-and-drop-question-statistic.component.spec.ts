@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -32,12 +34,14 @@ const course = { id: 2 } as Course;
 let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
 
 describe('QuizExercise Drag And Drop Question Statistic Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: DragAndDropQuestionStatisticComponent;
     let fixture: ComponentFixture<DragAndDropQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jest.SpyInstance;
-    let quizServiceFindSpy: jest.SpyInstance;
+    let accountSpy: any;
+    let quizServiceFindSpy: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -60,7 +64,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -70,8 +74,8 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     describe('onInit', () => {
         it('should call functions on Init', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
             comp.websocketChannelForData = '';
 
             comp.ngOnInit();
@@ -83,8 +87,8 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         });
 
         it('should not load Quiz if not authorised', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
 
             comp.ngOnInit();
 
@@ -96,11 +100,11 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const orderDropLocationSpy = jest.spyOn(comp, 'orderDropLocationByPos');
-            const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
-            const addLastBarSpy = jest.spyOn(comp, 'addLastBarLayout');
-            const loadInvalidLayoutSpy = jest.spyOn(comp, 'loadInvalidLayout');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const orderDropLocationSpy = vi.spyOn(comp, 'orderDropLocationByPos');
+            const resetLabelsSpy = vi.spyOn(comp, 'resetLabelsColors');
+            const addLastBarSpy = vi.spyOn(comp, 'addLastBarLayout');
+            const loadInvalidLayoutSpy = vi.spyOn(comp, 'loadInvalidLayout');
 
             comp.ngOnInit();
             comp.loadLayout();
@@ -114,9 +118,9 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     describe('loadData', () => {
         it('should call functions from loadData', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const resetDataSpy = jest.spyOn(comp, 'resetData');
-            const updateDataSpy = jest.spyOn(comp, 'updateData');
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const resetDataSpy = vi.spyOn(comp, 'resetData');
+            const updateDataSpy = vi.spyOn(comp, 'updateData');
 
             comp.ngOnInit();
             comp.loadData();

@@ -22,6 +22,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -50,6 +52,7 @@ describe('Test Run Management Component', () => {
                 MockDirective(TranslateDirective),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         })
             .compileComponents()

@@ -8,6 +8,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Component for managing organizations.
@@ -16,7 +18,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationManagementComponent implements OnInit {

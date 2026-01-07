@@ -1,6 +1,6 @@
 @if (beans()) {
+    <h5 *adminTitleBarTitle id="configuration-page-heading" class="mb-0" jhiTranslate="configuration.title" data-cy="configurationPageHeading"></h5>
     <div>
-        <h2 id="configuration-page-heading" jhiTranslate="configuration.title" data-cy="configurationPageHeading"></h2>
         <span jhiTranslate="configuration.filter"></span>
         <input type="text" [ngModel]="beansFilter()" (ngModelChange)="updateBeansFilter($event)" class="form-control" />
         <h3 id="spring-configuration">Spring configuration</h3>

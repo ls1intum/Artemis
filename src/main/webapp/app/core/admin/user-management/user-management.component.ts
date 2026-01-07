@@ -31,6 +31,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PROFILE_LDAP, addPublicFilePrefix } from 'app/app.constants';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -123,6 +125,8 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -209,6 +213,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Button constants */
     protected readonly medium = ButtonSize.MEDIUM;
     protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     /**
      * Initializes the component, sets up search subscription, and loads user data.

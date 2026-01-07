@@ -105,6 +105,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
      * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
      * This query removes old long feedback text that is not part of the latest rated results, for courses whose
      * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -120,8 +121,8 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
@@ -140,6 +141,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     /**
      * Counts {@link LongFeedbackText} entries associated with rated {@link Result} (accessed via its submission)
      * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -154,8 +156,8 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
@@ -177,6 +179,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
      * are between the specified date range.
      * This query deletes long feedback text for feedback associated with non-rated results, within courses whose
      * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -192,8 +195,8 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
@@ -213,6 +216,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
      * Counts {@link LongFeedbackText} entries linked to non-rated {@link Feedback} (accessed via its result's submission)
      * that are not the latest non-rated result for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -227,8 +231,8 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2

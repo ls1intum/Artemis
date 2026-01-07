@@ -53,9 +53,10 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -112,7 +113,7 @@ public class StudentExamService {
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -126,7 +127,7 @@ public class StudentExamService {
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
             @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService) {
@@ -136,7 +137,7 @@ public class StudentExamService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionApi = textSubmissionApi;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingSubmissionApi = modelingSubmissionApi;
         this.submissionVersionService = submissionVersionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
@@ -284,7 +285,7 @@ public class StudentExamService {
         ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
         if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
-            modelingSubmissionRepository.save(modelingSubmissionFromClient);
+            modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class)).save(modelingSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
     }

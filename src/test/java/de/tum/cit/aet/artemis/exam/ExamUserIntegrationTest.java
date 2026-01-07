@@ -20,7 +20,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -31,8 +30,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.ResourceUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -41,31 +38,12 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
-import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 
 class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "examuser";
-
-    @Autowired
-    private ExamTestRepository examRepository;
-
-    @Autowired
-    private ObjectMapper mapper;
-
-    @Autowired
-    private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     private Course course1;
 
@@ -123,7 +101,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     void testUpdateExamUser_DidCheckFields() throws Exception {
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, false, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
-        ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
         assertThat(examUser.getDidCheckImage()).isTrue();
         assertThat(examUser.getDidCheckName()).isTrue();
@@ -170,7 +148,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
         // upload exam user images
         var imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
-        ExamUsersNotFoundDTO examUsersNotFoundDTO = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+        ExamUsersNotFoundDTO examUsersNotFoundDTO = objectMapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
 
         assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
 
@@ -188,7 +166,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
         // upload exam user images
         imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
-        examUsersNotFoundDTO = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+        examUsersNotFoundDTO = objectMapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
 
         assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
 
@@ -222,7 +200,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     void testUpdateExamUserDidCheckFieldsAndSigningImage() throws Exception {
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
-        ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
         assertThat(examUser.getDidCheckImage()).isTrue();
         assertThat(examUser.getDidCheckName()).isTrue();
@@ -260,7 +238,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         // update exam user attendance
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
-        ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
         assertThat(examUser.getDidCheckImage()).isTrue();
         assertThat(examUser.getDidCheckName()).isTrue();
@@ -284,7 +262,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         // update exam user attendance to override signature
         ExamUserDTO examUserUpdateDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserUpdateResponse = request.performMvcRequest(buildUpdateExamUser(examUserUpdateDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
-        ExamUser updatedExamUser = mapper.readValue(examUserUpdateResponse.getResponse().getContentAsString(), ExamUser.class);
+        ExamUser updatedExamUser = objectMapper.readValue(examUserUpdateResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(updatedExamUser.getDidCheckRegistrationNumber()).isTrue();
         assertThat(updatedExamUser.getDidCheckImage()).isTrue();
         assertThat(updatedExamUser.getDidCheckName()).isTrue();
@@ -304,7 +282,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
-        ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
         assertThat(examUser.getDidCheckImage()).isTrue();
         assertThat(examUser.getDidCheckName()).isTrue();
@@ -332,7 +310,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     private MockHttpServletRequestBuilder buildUpdateExamUser(@NonNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
-        var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(examUserDTO).getBytes());
+        var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(examUserDTO).getBytes());
         if (hasSigned) {
             var signingImage = loadFile("classpath:test-data/exam-users", "examUserSigningImage.png");
             return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart).file(signingImage)

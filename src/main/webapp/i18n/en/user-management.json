@@ -62,7 +62,7 @@
                 "none": "None"
             },
             "home": {
-                "title": "Users",
+                "title": "User Management",
                 "createLabel": "Create a new user",
                 "editLabel": "Edit user"
             },
