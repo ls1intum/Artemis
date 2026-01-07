@@ -63,7 +63,7 @@
                         <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
                     </label>
                     <select id="variant" class="form-select" [ngModel]="settingsValue.variant" (ngModelChange)="updateVariant($event)">
-                        @for (variant of availableVariants; track variant) {
+                        @for (variant of IRIS_PIPELINE_VARIANTS; track variant) {
                             <option [value]="variant">{{ variant }}</option>
                         }
                     </select>

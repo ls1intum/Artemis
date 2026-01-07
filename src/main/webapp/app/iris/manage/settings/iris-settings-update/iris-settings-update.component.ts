@@ -50,8 +50,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     // Original settings for dirty checking
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
 
-    // Available variants
-    public availableVariants: ReadonlyArray<IrisPipelineVariant> = IRIS_PIPELINE_VARIANTS;
+    // Available variants (expose constant for template)
+    protected readonly IRIS_PIPELINE_VARIANTS = IRIS_PIPELINE_VARIANTS;
 
     // Local form fields for rate limit (separate from settings to preserve null semantics)
     // These are always safe to bind in the template, and we reconstruct rateLimit on save
@@ -70,8 +70,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
     // Validation state for rate limit (field-specific errors) - computed
     readonly rateLimitRequestsError = computed(() => {
-        const hasRequests = this.hasNumericValue(this.rateLimitRequests());
-        const hasTimeframe = this.hasNumericValue(this.rateLimitTimeframeHours());
+        const hasRequests = this.hasValue(this.rateLimitRequests());
+        const hasTimeframe = this.hasValue(this.rateLimitTimeframeHours());
 
         // Both empty = valid (use defaults)
         if (!hasRequests && !hasTimeframe) {
@@ -92,8 +92,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     });
 
     readonly rateLimitTimeframeError = computed(() => {
-        const hasRequests = this.hasNumericValue(this.rateLimitRequests());
-        const hasTimeframe = this.hasNumericValue(this.rateLimitTimeframeHours());
+        const hasRequests = this.hasValue(this.rateLimitRequests());
+        const hasTimeframe = this.hasValue(this.rateLimitTimeframeHours());
 
         // Both empty = valid (use defaults)
         if (!hasRequests && !hasTimeframe) {
@@ -167,10 +167,10 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
-     * Checks if a number field has a value (not null, undefined, or empty string from Angular forms).
-     * Note: Angular's ngModel can set empty string on number inputs when cleared, hence the string check.
+     * Checks if a form field has a value (not null, undefined, or empty string).
+     * Note: Angular's ngModel can set empty string on number inputs when cleared.
      */
-    private hasNumericValue(value: number | string | undefined): boolean {
+    private hasValue(value: number | string | undefined): boolean {
         return value != null && value !== '';
     }
 
@@ -403,8 +403,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     get effectiveRateLimitPreview(): IrisRateLimitConfiguration | undefined {
         const requests = this.rateLimitRequests();
         const timeframe = this.rateLimitTimeframeHours();
-        const hasRequests = this.hasNumericValue(requests);
-        const hasTimeframe = this.hasNumericValue(timeframe);
+        const hasRequests = this.hasValue(requests);
+        const hasTimeframe = this.hasValue(timeframe);
 
         // If both fields are empty, show application defaults
         if (!hasRequests && !hasTimeframe) {
