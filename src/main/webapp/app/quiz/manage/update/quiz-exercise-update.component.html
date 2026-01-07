@@ -220,29 +220,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col">
-                        <div class="form-group" [hidden]="quizExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
-                            <input
-                                type="number"
-                                class="form-control"
-                                [required]="quizExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
-                                min="0"
-                                max="9999"
-                                name="bonusPoints"
-                                id="field_bonusPoints"
-                                [(ngModel)]="quizExercise.bonusPoints"
-                                #bonusPoints="ngModel"
-                            />
-                            @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                                <div
-                                    class="alert alert-danger"
-                                    [hidden]="quizExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                                    jhiTranslate="artemisApp.exercise.bonusPointsError"
-                                ></div>
-                            }
-                        </div>
-                    </div>
                 </div>
                 <div class="row">
                     @if (!isExamMode) {
