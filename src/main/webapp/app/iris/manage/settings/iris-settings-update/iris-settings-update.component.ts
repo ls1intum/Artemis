@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -34,6 +35,7 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
 })
 export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
@@ -141,7 +143,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             this.courseId = Number(params['courseId']);
             this.loadSettings();
         });
