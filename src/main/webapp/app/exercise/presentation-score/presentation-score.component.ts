@@ -2,7 +2,7 @@ import { Component, DoCheck, Input, OnDestroy, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { Subscription } from 'rxjs';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -47,7 +47,7 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     protected readonly IS_AT_LEAST_EDITOR = IS_AT_LEAST_EDITOR;
 
-    private readonly gradingSystemService = inject(GradingSystemService);
+    private readonly gradingService = inject(GradingService);
 
     @Input() exercise: Exercise;
 
@@ -56,7 +56,7 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     ngDoCheck(): void {
         if (!this.gradeStepsDTOSub && this.exercise.course?.id) {
-            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(this.exercise.course.id).subscribe((gradeStepsDTO) => {
+            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(this.exercise.course.id).subscribe((gradeStepsDTO) => {
                 if (gradeStepsDTO.body) {
                     this.gradeStepsDTO = gradeStepsDTO.body;
                 }

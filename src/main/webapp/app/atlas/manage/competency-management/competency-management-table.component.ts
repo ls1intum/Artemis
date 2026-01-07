@@ -7,8 +7,14 @@ import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/atlas/manage/competency-management/import-all-competencies.component';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import {
+    ImportAllCompetenciesComponent,
+    ImportAllCompetenciesDialogData,
+    ImportAllFromCourseResult,
+} from 'app/atlas/manage/competency-management/import-all-competencies.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -51,7 +57,8 @@ export class CompetencyManagementTableComponent {
     private readonly competencyService: CompetencyService = inject(CompetencyService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     private readonly alertService: AlertService = inject(AlertService);
-    private readonly modalService: NgbModal = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     readonly faFileImport = faFileImport;
     readonly faPlus = faPlus;
@@ -76,30 +83,45 @@ export class CompetencyManagementTableComponent {
      * Opens a modal for selecting a course to import all competencies from.
      */
     openImportAllModal() {
-        const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
-        //unary operator is necessary as otherwise courseId is seen as a string and will not match.
-        modalRef.componentInstance.disabledIds = [this.courseId()!];
-        modalRef.componentInstance.competencyType.set(this.competencyType()!);
-        modalRef.result.then((result: ImportAllFromCourseResult) => {
-            const courseTitle = result.courseForImportDTO.title ?? '';
+        const dialogData: ImportAllCompetenciesDialogData = {
+            //unary operator is necessary as otherwise courseId is seen as a string and will not match.
+            disabledIds: [this.courseId()!],
+            competencyType: this.competencyType()!,
+        };
+        const dialogRef = this.dialogService.open(ImportAllCompetenciesComponent, {
+            header: this.translateService.instant(`artemisApp.${this.competencyType()}.importAll.title`),
+            style: { width: '60rem', height: '85vh' },
+            contentStyle: { height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: dialogData,
+        });
 
-            this.service
-                .importAll(this.courseId()!, result.courseForImportDTO.id!, result.importRelations)
-                .pipe(
-                    filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
-                    map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body ?? []),
-                )
-                .subscribe({
-                    next: (res: Array<CompetencyWithTailRelationDTO>) => {
-                        if (res.length > 0) {
-                            this.alertService.success(`artemisApp.${this.competencyType()}.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
-                            this.updateDataAfterImportAll(res);
-                        } else {
-                            this.alertService.warning(`artemisApp.${this.competencyType()}.importAll.warning`, { courseTitle: courseTitle });
-                        }
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
+        dialogRef?.onClose.subscribe((result: ImportAllFromCourseResult | undefined) => {
+            if (result) {
+                const courseTitle = result.courseForImportDTO.title ?? '';
+
+                this.service
+                    .importAll(this.courseId()!, result.courseForImportDTO.id!, result.importRelations)
+                    .pipe(
+                        filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
+                        map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body ?? []),
+                    )
+                    .subscribe({
+                        next: (res: Array<CompetencyWithTailRelationDTO>) => {
+                            if (res.length > 0) {
+                                this.alertService.success(`artemisApp.${this.competencyType()}.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
+                                this.updateDataAfterImportAll(res);
+                            } else {
+                                this.alertService.warning(`artemisApp.${this.competencyType()}.importAll.warning`, { courseTitle: courseTitle });
+                            }
+                        },
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
+            }
         });
     }
 

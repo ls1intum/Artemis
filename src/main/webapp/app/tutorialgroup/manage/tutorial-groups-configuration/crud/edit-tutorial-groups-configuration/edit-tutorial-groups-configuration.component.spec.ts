@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -21,11 +23,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
     let component: EditTutorialGroupsConfigurationComponent;
     let configurationService: TutorialGroupsConfigurationService;
     let courseStorageService: CourseStorageService;
-    let findConfigurationSpy: jest.SpyInstance;
+    let findConfigurationSpy: ReturnType<typeof vi.spyOn>;
     let exampleConfiguration: TutorialGroupsConfiguration;
     const course = { id: 1, title: 'Example' } as Course;
     const router = new MockRouter();
@@ -56,12 +60,12 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         exampleConfiguration = generateExampleTutorialGroupsConfiguration({ id: 2 });
         course.tutorialGroupsConfiguration = exampleConfiguration;
         courseStorageService = TestBed.inject(CourseStorageService);
-        findConfigurationSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: exampleConfiguration })));
+        findConfigurationSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: exampleConfiguration })));
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -91,9 +95,9 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
             status: 200,
         });
 
-        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
-        const updatedStub = jest.spyOn(configurationService, 'update').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
+        const updatedStub = vi.spyOn(configurationService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         const sessionForm: TutorialGroupsConfigurationFormComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
 

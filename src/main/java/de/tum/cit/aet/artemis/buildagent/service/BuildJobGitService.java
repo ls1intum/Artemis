@@ -49,6 +49,32 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.AbstractGitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
+/**
+ * Git service specifically for build agents to clone and manage repositories during build job execution.
+ * <p>
+ * This service extends {@link AbstractGitService} and provides build-agent-specific Git operations,
+ * including repository cloning and commit checkout. It supports two authentication mechanisms:
+ * <ol>
+ * <li><b>SSH authentication</b>: Uses SSH keys for secure access (preferred when available)</li>
+ * <li><b>Username/password authentication</b>: Falls back to HTTP(S) with credentials</li>
+ * </ol>
+ * <p>
+ * <b>Usage in Build Jobs:</b>
+ * <ul>
+ * <li>{@link #cloneRepository} - Clones assignment, test, solution, and auxiliary repositories</li>
+ * <li>{@link #checkoutRepositoryAtCommit} - Checks out specific commits (e.g., student submissions)</li>
+ * <li>{@link #getExistingCheckedOutRepositoryByLocalPath} - Retrieves already-cloned repositories</li>
+ * <li>{@link #deleteLocalRepository} - Cleans up cloned repositories after build completion</li>
+ * </ul>
+ * <p>
+ * <b>Authentication Priority:</b>
+ * The service uses SSH if {@code artemis.version-control.build-agent-use-ssh=true} and required
+ * SSH configuration (private key path, URL template) is provided. Otherwise, it uses the configured
+ * username and password from application properties.
+ *
+ * @see BuildJobExecutionService
+ * @see AbstractGitService
+ */
 @Profile(PROFILE_BUILDAGENT)
 @Lazy(false)
 @Service
@@ -134,6 +160,10 @@ public class BuildJobGitService extends AbstractGitService {
         // @formatter:on
     }
 
+    /**
+     * Cleanup SSH resources when the service is destroyed.
+     * Closes the JGit key cache and SSH session factory to release resources.
+     */
     @PreDestroy
     public void cleanup() {
         if (useSsh()) {
@@ -142,6 +172,16 @@ public class BuildJobGitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Custom credentials provider for SSH authentication.
+     * <p>
+     * This provider automatically accepts host key verification prompts (YesNoType credentials),
+     * which allows connecting to new hosts without manual confirmation. This is necessary for
+     * automated build agents that may connect to various Git servers.
+     * <p>
+     * <b>Security Note:</b> This trusts all host keys, which is acceptable in controlled
+     * environments but should be used with caution in untrusted networks.
+     */
     static class CustomCredentialsProvider extends CredentialsProvider {
 
         @Override
@@ -154,7 +194,10 @@ public class BuildJobGitService extends AbstractGitService {
             return true;
         }
 
-        // Note: the following method allows us to store known hosts
+        /**
+         * Handles credential requests, automatically accepting host key verification prompts.
+         * This allows SSH connections to proceed without manual host key confirmation.
+         */
         @Override
         public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
             for (CredentialItem item : items) {
@@ -166,6 +209,12 @@ public class BuildJobGitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Custom SSH configuration store that disables strict host key checking for the configured Git server.
+     * <p>
+     * This is used to allow SSH connections without requiring the host to be in the known_hosts file,
+     * which simplifies deployment in containerized environments where known_hosts may not persist.
+     */
     record CustomSshConfigStore(URI gitUri) implements SshConfigStore {
 
         @Override
@@ -279,6 +328,15 @@ public class BuildJobGitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Configures authentication for a Git transport command.
+     * <p>
+     * Uses SSH callback if SSH is enabled, otherwise uses cached username/password credentials.
+     *
+     * @param command the transport command to authenticate
+     * @param <C>     the type of Git command
+     * @return the authenticated command
+     */
     protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
         if (useSsh()) {
             return command.setTransportConfigCallback(sshCallback);
@@ -288,6 +346,12 @@ public class BuildJobGitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Returns a cached credentials provider for username/password authentication.
+     * The provider is created once and reused for all subsequent requests.
+     *
+     * @return the cached credentials provider
+     */
     private CredentialsProvider getCachedCredentialsProvider() {
         if (credentialsProvider == null) {
             credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
@@ -300,6 +364,11 @@ public class BuildJobGitService extends AbstractGitService {
         return authenticate(Git.lsRemoteRepository());
     }
 
+    /**
+     * Creates an authenticated clone command for cloning repositories.
+     *
+     * @return an authenticated CloneCommand ready to be configured and executed
+     */
     private CloneCommand cloneCommand() {
         return authenticate(Git.cloneRepository());
     }

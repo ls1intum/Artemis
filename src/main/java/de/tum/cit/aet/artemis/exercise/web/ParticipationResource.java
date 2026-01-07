@@ -55,8 +55,9 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingFeedbackApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseFeedbackService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -93,7 +94,7 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
-    private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
+    private final Optional<ModelingFeedbackApi> modelingFeedbackApi;
 
     private final ParticipationAuthorizationService participationAuthorizationService;
 
@@ -120,8 +121,8 @@ public class ParticipationResource {
             UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ExerciseDateService exerciseDateService, ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService,
-            Optional<TextFeedbackApi> textFeedbackApi, ModelingExerciseFeedbackService modelingExerciseFeedbackService,
-            ParticipationAuthorizationService participationAuthorizationService, Optional<StudentExamApi> studentExamApi) {
+            Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi, ParticipationAuthorizationService participationAuthorizationService,
+            Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.exerciseRepository = exerciseRepository;
@@ -136,7 +137,7 @@ public class ParticipationResource {
         this.exerciseDateService = exerciseDateService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
-        this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
+        this.modelingFeedbackApi = modelingFeedbackApi;
         this.participationAuthorizationService = participationAuthorizationService;
         this.studentExamApi = studentExamApi;
     }
@@ -345,7 +346,10 @@ public class ParticipationResource {
                 TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new TextApiNotPresentException(TextFeedbackApi.class));
                 updatedParticipation = api.handleNonGradedFeedbackRequest(participation, textExercise);
             }
-            case ModelingExercise modelingExercise -> updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, modelingExercise);
+            case ModelingExercise modelingExercise -> {
+                ModelingFeedbackApi api = modelingFeedbackApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingFeedbackApi.class));
+                updatedParticipation = api.handleNonGradedFeedbackRequest(participation, modelingExercise);
+            }
             case ProgrammingExercise programmingExercise -> updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
                     (ProgrammingExerciseStudentParticipation) participation, programmingExercise);
             default -> {

@@ -9,7 +9,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
@@ -51,7 +50,7 @@ describe('CategorySelectorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MatAutocompleteModule, MatFormFieldModule, MatChipsModule, MatSelectModule, ReactiveFormsModule, FormsModule, NoopAnimationsModule],
+            imports: [MatAutocompleteModule, MatFormFieldModule, MatChipsModule, MatSelectModule, ReactiveFormsModule, FormsModule],
             declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent), MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 

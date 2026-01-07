@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 
@@ -28,6 +29,7 @@ import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -132,6 +134,7 @@ public class ArtemisApp {
         catch (UnknownHostException e) {
             log.warn("The host name could not be determined, using `localhost` as fallback");
         }
+        List<String> activeFeatures = getActiveFeatures(env);
         log.info("""
 
                 ----------------------------------------------------------
@@ -139,6 +142,7 @@ public class ArtemisApp {
                 \tLocal:        {}://localhost:{}{}
                 \tExternal:     {}://{}:{}{}
                 \tProfiles:     {}
+                \tFeatures:     {}
                 \tVersion:      {}
                 \tGit Commit:   {}
                 \tGit Branch:   {}
@@ -146,7 +150,17 @@ public class ArtemisApp {
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch,
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), activeFeatures, version, gitCommitId, gitBranch,
                 TimeLogUtil.formatDurationFrom(appStart));
+    }
+
+    /**
+     * Gets the list of active module features based on configuration.
+     *
+     * @param env the Spring environment
+     * @return list of active feature names
+     */
+    private static List<String> getActiveFeatures(Environment env) {
+        return new ArtemisConfigHelper().getEnabledFeatures(env);
     }
 }

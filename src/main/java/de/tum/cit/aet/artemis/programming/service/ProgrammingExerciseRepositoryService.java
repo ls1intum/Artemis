@@ -164,7 +164,11 @@ public class ProgrammingExerciseRepositoryService {
         Resource[] staticCodeAnalysisResources = null;
         Path staticCodeAnalysisPrefix = null;
 
-        if (programmingExercise.isStaticCodeAnalysisEnabled()) {
+        // SCA template resources only exist for the test repository and only for certain languages.
+        // Java/Kotlin have their SCA config in test/staticCodeAnalysisConfig which is already included in the regular test templates.
+        // Other languages (Python, TypeScript, etc.) have separate staticCodeAnalysis/test directories.
+        if (programmingExercise.isStaticCodeAnalysisEnabled() && RepositoryType.TESTS.equals(repositoryType)
+                && hasSeparateStaticCodeAnalysisTemplateFiles(programmingExercise.getProgrammingLanguage())) {
             Path programmingLanguageStaticCodeAnalysisPath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
                     .resolve(STATIC_CODE_ANALYSIS_DIR);
             final Path staticCodeAnalysisTemplatePath = programmingLanguageStaticCodeAnalysisPath.resolve(repositoryTypeTemplateDir);
@@ -183,6 +187,22 @@ public class ProgrammingExerciseRepositoryService {
         else {
             return Path.of(repositoryType.getName());
         }
+    }
+
+    /**
+     * Checks if the given programming language has separate static code analysis template files.
+     * Languages like Python, TypeScript, JavaScript, etc. have a separate staticCodeAnalysis/test directory.
+     * Java and Kotlin have their SCA config in test/staticCodeAnalysisConfig which is included in the regular test templates.
+     *
+     * @param programmingLanguage The programming language to check.
+     * @return true if the language has separate SCA template files, false otherwise.
+     */
+    private boolean hasSeparateStaticCodeAnalysisTemplateFiles(ProgrammingLanguage programmingLanguage) {
+        return switch (programmingLanguage) {
+            // Languages that have a separate staticCodeAnalysis directory with template files
+            case PYTHON, TYPESCRIPT, JAVASCRIPT, C_PLUS_PLUS, DART, R, RUBY -> true;
+            default -> false;
+        };
     }
 
     /**

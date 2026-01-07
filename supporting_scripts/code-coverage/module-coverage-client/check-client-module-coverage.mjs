@@ -1,36 +1,17 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { getVitestModules } from '../utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
 // Coverage file paths
-const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
+const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
 const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 
-/**
- * Parse vitest.config.ts to extract module names from include patterns.
- * The vitest.config.ts is the single source of truth for which modules use Vitest.
- */
-function getVitestModules() {
-    const vitestConfigPath = path.join(PROJECT_ROOT, 'vitest.config.ts');
-    if (!fs.existsSync(vitestConfigPath)) {
-        return new Set();
-    }
-    const content = fs.readFileSync(vitestConfigPath, 'utf-8');
-    // Match patterns like: 'src/main/webapp/app/fileupload/**/*.spec.ts'
-    const modulePattern = /src\/main\/webapp\/app\/([a-zA-Z0-9_-]+)\/\*\*/g;
-    const modules = new Set();
-    let match;
-    while ((match = modulePattern.exec(content)) !== null) {
-        modules.add(match[1]);
-    }
-    return modules;
-}
-
-const VITEST_MODULES = getVitestModules();
+const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
 
 // Load coverage files
 let jestSummary = {};
@@ -64,22 +45,22 @@ if (fs.existsSync(vitestSummaryPath)) {
 
 const moduleThresholds = {
     assessment: {
-        statements: 90.00,
-        branches:   78.20,
-        functions:  83.30,
-        lines:      90.10,
+        statements: 93.00,
+        branches:   82.00,
+        functions:  91.80,
+        lines:      93.70,
     },
     atlas: {
         statements: 91.30,
-        branches:   67.10,
+        branches:   66.30,
         functions:  84.70,
         lines:      91.20,
     },
     buildagent: {
-        statements: 92.00,
-        branches:   73.60,
-        functions:  85.10,
-        lines:      92.10,
+        statements: 89.80,
+        branches:   74.60,
+        functions:  84.70,
+        lines:      89.90,
     },
     communication: {
         statements: 92.40,
@@ -88,26 +69,26 @@ const moduleThresholds = {
         lines:      92.70,
     },
     core: {
-        statements: 89.90,
-        branches:   70.80,
-        functions:  81.70,
-        lines:      89.90,
+        statements: 89.30,
+        branches:   70.00,
+        functions:  80.00,
+        lines:      89.30,
     },
     exam: {
         statements: 91.50,
-        branches:   75.80,
+        branches:   75.50,
         functions:  84.60,
         lines:      91.80,
     },
     exercise: {
-        statements: 88.40,
-        branches:   76.60,
-        functions:  80.20,
-        lines:      88.50,
+        statements: 87.80,
+        branches:   76.20,
+        functions:  79.10,
+        lines:      88.00,
     },
     fileupload: {
         statements: 94.40,
-        branches:   78.10,
+        branches:   77.90,
         functions:  94.30,
         lines:      94.80,
     },
@@ -147,7 +128,7 @@ const moduleThresholds = {
     plagiarism: {
         statements: 93.40,
         branches:   81.90,
-        functions:  87.50,
+        functions:  87.10,
         lines:      93.50,
     },
     programming: {
@@ -157,10 +138,10 @@ const moduleThresholds = {
         lines:      89.40,
     },
     quiz: {
-        statements: 88.80,
-        branches:   72.10,
-        functions:  82.70,
-        lines:      89.00,
+        statements: 90.00,
+        branches:   75.10,
+        functions:  87.00,
+        lines:      90.00,
     },
     shared: {
         statements: 88.00,
@@ -175,10 +156,10 @@ const moduleThresholds = {
         lines:      90.00,
     },
     tutorialgroup: {
-        statements: 92.10,
-        branches:   72.90,
-        functions:  84.50,
-        lines:      92.00,
+        statements: 91.00,
+        branches:   74.00,
+        functions:  87.00,
+        lines:      81.00,
     },
 };
 

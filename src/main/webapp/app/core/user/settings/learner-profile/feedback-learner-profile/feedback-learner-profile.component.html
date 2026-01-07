@@ -10,10 +10,14 @@
 </div>
 
 @if (!isProfileSetup()) {
-    <button class="btn btn-primary mt-3" (click)="openOnboardingModal()" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.setPreferencesButton"></button>
+    <button class="btn btn-primary btn-sm mt-3" (click)="openOnboardingModal()" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.setPreferencesButton"></button>
 } @else {
     <!-- Profile settings section -->
-    <button class="btn btn-outline-secondary mt-3" (click)="openOnboardingModal()" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.replayOnboardingButton"></button>
+    <button
+        class="btn btn-outline-secondary btn-sm mt-3"
+        (click)="openOnboardingModal()"
+        jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.replayOnboardingButton"
+    ></button>
     <div [ngClass]="{ 'd-none': disabled }">
         <div class="row row-cols-1 row-cols-xl-2 gx-5">
             <!-- Brief vs. Detailed setting -->
