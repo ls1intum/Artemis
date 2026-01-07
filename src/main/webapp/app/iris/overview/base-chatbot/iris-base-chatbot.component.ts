@@ -24,7 +24,6 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -113,7 +112,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
     readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
-    readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { initialValue: undefined as IrisRateLimitInformation | undefined });
+    readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
 
     // Messages with processing
