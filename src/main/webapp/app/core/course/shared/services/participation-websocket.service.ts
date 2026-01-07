@@ -335,7 +335,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *
      * @param result The new result that should be reflected in the cached participation state.
      */
-    private updateCachedParticipationWithResult(result: Result): void {
+    private updateCachedParticipationWithResult = (result: Result): void => {
         const participationId = result.submission?.participation?.id;
         if (!participationId) {
             return;
@@ -355,7 +355,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             ...cachedParticipation,
             submissions: finalSubmissions,
         });
-    }
+    };
 
     /**
      * Appends a synthetic submission for a result whose submission is not yet
