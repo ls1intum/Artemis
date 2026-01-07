@@ -642,6 +642,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise.includedInOverallScore = includedInOverallScore;
+        if (includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            this.quizExercise.bonusPoints = 0;
+        }
         this.cacheValidation();
     }
 
@@ -700,4 +703,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         return description;
     }
+
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
 }

@@ -111,6 +111,7 @@
             "dateNotSet": "No date set",
             "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "points": "Points",
+            "maxPoints": "Max Points",
             "pointsError": "Must be a number between 1 and 9999.",
             "bonusPoints": "Bonus Points",
             "bonusPointsError": "Must be a number between 0 and 9999.",
