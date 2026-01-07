@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -7,7 +9,6 @@ import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/manage/lecture-detail/lecture-detail.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -30,17 +31,19 @@ const mockLecture = {
 } as Lecture;
 
 describe('LectureDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LectureDetailComponent;
     let fixture: ComponentFixture<LectureDetailComponent>;
     let mockActivatedRoute: any;
 
     beforeEach(async () => {
         mockActivatedRoute = {
-            data: of({ lecture: new Lecture() }), // Mock the ActivatedRoute data observable
+            data: of({ lecture: new Lecture() }),
         };
 
         await TestBed.configureTestingModule({
-            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent],
+            imports: [LectureDetailComponent, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -52,16 +55,18 @@ describe('LectureDetailComponent', () => {
         })
             .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(LectureDetailComponent);
         component = fixture.componentInstance;
-        fixture.detectChanges();
+        await fixture.whenStable();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize lecture when ngOnInit is called', () => {
-        mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
+        mockActivatedRoute.data = of({ lecture: mockLecture });
 
         component.ngOnInit();
 

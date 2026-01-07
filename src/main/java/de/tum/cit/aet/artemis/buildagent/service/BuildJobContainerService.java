@@ -45,6 +45,7 @@ import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.RepositoryCheckoutPath;
@@ -135,17 +136,20 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName   the name of the container to be created
-     * @param image           the Docker image to use for the container
-     * @param buildScript     the build script to be executed in the container
-     * @param exerciseEnvVars the environment variables provided by the instructor
-     * @param cpuCount        the number of CPUs to allocate to the container
-     * @param memory          the memory limit in MB to allocate to the container
-     * @param memorySwap      the memory swap limit in MB to allocate to the container
+     * @param containerName the name of the container to be created
+     * @param image         the Docker image to use for the container
+     * @param buildScript   the build script to be executed in the container
+     * @param runConfig     the run config container the docker flags
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars, int cpuCount, int memory,
-            int memorySwap) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig runConfig) {
+        // get all record fields here because we need them more than once
+        List<String> exerciseEnvVars = runConfig.env();
+        String network = runConfig.network();
+        int cpuCount = runConfig.cpuCount();
+        int memory = runConfig.memory();
+        int memorySwap = runConfig.memorySwap();
+
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -156,9 +160,10 @@ public class BuildJobContainerService {
         if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
             envVars.addAll(exerciseEnvVars);
         }
+
         HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
-        HostConfig customHostConfig;
-        if (cpuCount > 0 || memory > 0 || memorySwap > 0) {
+        HostConfig customHostConfig = defaultHostConfig;
+        if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
             long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
                     : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
@@ -171,11 +176,11 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
-        else {
-            customHostConfig = defaultHostConfig;
-        }
+
+        log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
+
         try (final var createCommand = buildAgentConfiguration.getDockerClient().createContainerCmd(image)) {
             return createCommand.withName(containerName).withHostConfig(customHostConfig).withEnv(envVars)
                     // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks
@@ -191,10 +196,14 @@ public class BuildJobContainerService {
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, long cpuCount, long memory, long memorySwap) {
+    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
-        return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
+        HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
+        if (network != null && !network.trim().isBlank()) {
+            host.withNetworkMode(network);
+        }
+        return host;
     }
 
     private long convertMemoryFromMBToBytes(long memory) {
@@ -215,23 +224,10 @@ public class BuildJobContainerService {
     /**
      * Run the script in the container and wait for it to finish before returning.
      *
-     * @param containerId       the id of the container in which the script should be run
-     * @param buildJobId        the id of the build job that is currently being executed
-     * @param isNetworkDisabled whether the network should be disabled for the container
+     * @param containerId the id of the container in which the script should be run
+     * @param buildJobId  the id of the build job that is currently being executed
      */
-    public void runScriptInContainer(String containerId, String buildJobId, boolean isNetworkDisabled) {
-        if (isNetworkDisabled) {
-            log.info("disconnecting container with id {} from network", containerId);
-            try (final var disconnectCommand = buildAgentConfiguration.getDockerClient().disconnectFromNetworkCmd()) {
-                disconnectCommand.withContainerId(containerId).withNetworkId("bridge").exec();
-            }
-            catch (Exception e) {
-                log.error("Failed to disconnect container with id {} from network: {}", containerId, e.getMessage());
-                buildLogsMap.appendBuildLogEntry(buildJobId, "Failed to disconnect container from default network 'bridge': " + e.getMessage());
-                throw new LocalCIException("Failed to disconnect container from default network 'bridge': " + e.getMessage());
-            }
-        }
-
+    public void runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's

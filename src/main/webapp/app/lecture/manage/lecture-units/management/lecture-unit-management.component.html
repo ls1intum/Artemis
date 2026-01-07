@@ -1,20 +1,20 @@
-@if (isLoading) {
+@if (isLoading()) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
             <span class="visually-hidden" jhiTranslate="loading"></span>
         </div>
     </div>
 }
-@if (!isLoading && lecture) {
+@if (!isLoading() && lecture()) {
     <div>
         <!-- Lecture Unit Rows-->
-        @if (showCreationCard) {
-            <div class="w-100 d-flex justify-content-end mb-5" [class.justify-content-center]="!lectureUnits?.length">
+        @if (showCreationCard()) {
+            <div class="w-100 d-flex justify-content-end mb-5" [class.justify-content-center]="!lectureUnits()?.length">
                 <jhi-unit-creation-card />
             </div>
         }
         <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
-            @for (lectureUnit of lectureUnits; track identify(i, lectureUnit); let i = $index) {
+            @for (lectureUnit of lectureUnits(); track identify(i, lectureUnit); let i = $index) {
                 <div
                     class="lecture-unit-container"
                     [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO"
@@ -103,16 +103,16 @@
                         <div class="mt-2">
                             @switch (lectureUnit.type) {
                                 @case (LectureUnitType.ATTACHMENT_VIDEO) {
-                                    <jhi-attachment-video-unit [courseId]="lecture.course!.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                    <jhi-attachment-video-unit [courseId]="lecture()!.course!.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
                                 @case (LectureUnitType.EXERCISE) {
-                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
+                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture()!.course!" />
                                 }
                                 @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [courseId]="lecture.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                    <jhi-text-unit [courseId]="lecture()!.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
                                 @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [courseId]="lecture.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                    <jhi-online-unit [courseId]="lecture()!.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
                             }
                         </div>
@@ -120,16 +120,16 @@
 
                     <div class="d-flex gap-1 flex-column justify-content-center action-buttons" role="group">
                         <!-- Row 1: Retry Processing (only for failed attachment/video units, editors+) -->
-                        @if (lecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
+                        @if (lecture()!.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                             <div class="d-flex gap-1 w-100">
                                 <button
                                     type="button"
                                     class="btn btn-warning btn-sm flex-fill"
-                                    [disabled]="isRetryingProcessing[lectureUnit.id!]"
+                                    [disabled]="isRetryingProcessing()[lectureUnit.id!]"
                                     (click)="retryProcessing(lectureUnit)"
                                     [ngbTooltip]="'artemisApp.lectureUnit.retryProcessing' | artemisTranslate"
                                 >
-                                    @if (isRetryingProcessing[lectureUnit.id!]) {
+                                    @if (isRetryingProcessing()[lectureUnit.id!]) {
                                         <fa-icon [icon]="faSpinner" animation="spin" />
                                     } @else {
                                         <fa-icon [icon]="faRepeat" />
@@ -139,16 +139,16 @@
                         }
                         <!-- Row 2: View + Linked Competencies -->
                         <div class="d-flex gap-1 w-100">
-                            @if (viewButtonAvailable[lectureUnit.id!]) {
+                            @if (viewButtonAvailable()[lectureUnit.id!]) {
                                 <div class="flex-fill">
                                     <a
                                         type="button"
                                         class="btn btn-primary btn-sm w-100"
                                         [routerLink]="[
                                             '/course-management',
-                                            lecture.course?.id,
+                                            lecture()!.course?.id,
                                             'lectures',
-                                            lecture.id,
+                                            lecture()!.id,
                                             'unit-management',
                                             'attachment-video-units',
                                             lectureUnit.id,
@@ -160,10 +160,10 @@
                                     </a>
                                 </div>
                             }
-                            @if (lecture.course?.id && showCompetencies) {
+                            @if (lecture()!.course?.id && showCompetencies()) {
                                 <div class="flex-fill">
                                     <jhi-competencies-popover
-                                        [courseId]="lecture.course!.id!"
+                                        [courseId]="lecture()!.course!.id!"
                                         [competencyLinks]="lectureUnit.competencyLinks || []"
                                         [navigateTo]="'competencyManagement'"
                                         [ngbTooltip]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate"
@@ -173,7 +173,7 @@
                         </div>
                         <!-- Row 3: Edit + Delete -->
                         <div class="d-flex gap-1 w-100">
-                            @if (this.emitEditEvents) {
+                            @if (emitEditEvents()) {
                                 @if (editButtonAvailable(lectureUnit)) {
                                     <button
                                         type="button"
@@ -196,7 +196,7 @@
                                     </a>
                                 }
                             }
-                            @if (lecture.isAtLeastInstructor) {
+                            @if (lecture()!.isAtLeastInstructor) {
                                 <button
                                     type="button"
                                     class="btn btn-danger btn-sm flex-fill"
@@ -220,7 +220,7 @@
             }
         </div>
 
-        @if (showDropZone) {
+        @if (showDropZone()) {
             <div class="mt-4">
                 <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
             </div>

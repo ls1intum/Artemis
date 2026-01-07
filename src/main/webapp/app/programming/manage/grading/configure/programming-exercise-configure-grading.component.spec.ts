@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -56,6 +56,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -65,7 +67,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let route: ActivatedRoute;
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     let updateCategoriesStub: jest.SpyInstance;
     let resetCategoriesStub: jest.SpyInstance;
@@ -218,6 +220,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -233,7 +236,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const router = fixture.debugElement.injector.get(Router);
         programmingExerciseWebsocketService = fixture.debugElement.injector.get(ProgrammingExerciseWebsocketService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        dialogService = fixture.debugElement.injector.get(DialogService);
 
         updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
         resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
@@ -382,11 +385,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     });
 
     it('should import a configuration from a different exercise', () => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id: 456 } as ProgrammingExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const onCloseSubject = new Subject<ProgrammingExercise | undefined>();
+        const mockDialogRef = {
+            onClose: onCloseSubject.asObservable(),
+            close: jest.fn(),
+        };
+        const dialogOpenSpy = jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
 
         initGradingComponent({ tab: 'code-analysis' });
         // Reset default sorts to avoid ngx-datatable compareFn issues in tests
@@ -397,8 +401,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         button.nativeElement.click();
 
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
-        expect(mockReturnValue.componentInstance.programmingLanguage).toEqual(ProgrammingLanguage.JAVA);
+        // Verify dialog was opened with correct data
+        expect(dialogOpenSpy).toHaveBeenCalledOnce();
+        const dialogConfig = dialogOpenSpy.mock.calls[0][1] as { data?: { exerciseType?: string; programmingLanguage?: string } };
+        expect(dialogConfig?.data?.exerciseType).toEqual(ExerciseType.PROGRAMMING);
+        expect(dialogConfig?.data?.programmingLanguage).toEqual(ProgrammingLanguage.JAVA);
+
+        // Simulate dialog closing with a selected exercise
+        onCloseSubject.next({ id: 456 } as ProgrammingExercise);
 
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledOnce();
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);

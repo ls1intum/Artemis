@@ -16,7 +16,9 @@
                     <jhi-attachment-video-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
                 @case (LectureUnitType.EXERCISE) {
-                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" />
+                    @if (lecture()?.course; as course) {
+                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="course" />
+                    }
                 }
                 @case (LectureUnitType.ONLINE) {
                     <jhi-online-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
