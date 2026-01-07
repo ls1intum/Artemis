@@ -1,11 +1,14 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
@@ -14,12 +17,18 @@ import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
+
 describe('TutorialGroupsManagementComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
     const configuration = generateExampleTutorialGroupsConfiguration({});
@@ -30,14 +39,14 @@ describe('TutorialGroupsManagementComponent', () => {
 
     let tutorialGroupsService: TutorialGroupsService;
     let configurationService: TutorialGroupsConfigurationService;
-    let getAllOfCourseSpy: jest.SpyInstance;
-    let getOneOfCourseSpy: jest.SpyInstance;
+    let getAllOfCourseSpy: ReturnType<typeof vi.spyOn>;
+    let getOneOfCourseSpy: ReturnType<typeof vi.spyOn>;
 
     const router = new MockRouter();
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [NgbDropdownModule, MockDirective(NgbTooltip)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TutorialGroupsManagementComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(TutorialGroupsService),
@@ -52,6 +61,9 @@ describe('TutorialGroupsManagementComponent', () => {
                     {},
                 ),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
@@ -61,7 +73,7 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 
         tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
+        getAllOfCourseSpy = vi.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [tutorialGroupOne, tutorialGroupTwo],
@@ -70,13 +82,13 @@ describe('TutorialGroupsManagementComponent', () => {
             ),
         );
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        getOneOfCourseSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
         fixture.detectChanges();
     });
 
     afterEach(() => {
         fixture.destroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +19,21 @@ public final class CustomFeedbackParser {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    // Default value, will be overridden when customized below in setMaxFeedbackLength
+    private static int maxFeedbackLength = 20_000;
+
     private CustomFeedbackParser() {
 
+    }
+
+    /**
+     * Sets the maximum length for feedback messages before truncation.
+     * This should be called before processing any test result files.
+     *
+     * @param maxLength the maximum length for feedback messages
+     */
+    public static void setMaxFeedbackLength(int maxLength) {
+        maxFeedbackLength = maxLength;
     }
 
     /**
@@ -42,7 +56,19 @@ public final class CustomFeedbackParser {
             return;
         }
         List<LocalCITestJobDTO> toAddFeedbackTo = feedback.successful() ? successfulTests : failedTests;
-        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), List.of(feedback.getMessage())));
+        // Truncate feedback message if it exceeds maximum length to avoid polluting the network or database with too long messages
+        final var truncatedFeedbackMessage = truncateFeedbackMessage(feedback.getMessage());
+        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), List.of(truncatedFeedbackMessage)));
+    }
+
+    /**
+     * Truncates the feedback message to the maximum allowed length.
+     *
+     * @param message The feedback message to truncate.
+     * @return The truncated feedback message.
+     */
+    private static String truncateFeedbackMessage(String message) {
+        return StringUtils.truncate(message, maxFeedbackLength);
     }
 
     /**

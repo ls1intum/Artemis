@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -14,8 +16,12 @@ import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupsConfigurationFormComponent>;
     let component: TutorialGroupsConfigurationFormComponent;
 
@@ -28,8 +34,19 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
-            declarations: [TutorialGroupsConfigurationFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDateRangePipe), MockDirective(TranslateDirective)],
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                NgbTypeaheadModule,
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
+                FaIconComponent,
+                TutorialGroupsConfigurationFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDateRangePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -48,7 +65,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
     });
 
@@ -87,27 +104,27 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         component.form.get('useTutorialGroupChannels')!.setValue(false);
         runOnPushChangeDetection(fixture);
         fixture.detectChanges();
-        expect(component.showChannelDeletionWarning).toBeTrue();
+        expect(component.showChannelDeletionWarning).toBe(true);
         const channelDeletionWarning = fixture.nativeElement.querySelector('#channelDeletionWarning');
         expect(channelDeletionWarning).not.toBeNull();
     });
 
-    it('should submit valid form', fakeAsync(() => {
+    it('should submit valid form', async () => {
         setValidFormValues();
-        runOnPushChangeDetection(fixture);
+        await runOnPushChangeDetection(fixture);
         fixture.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
 
         clickSubmit(true);
-    }));
+    });
 
-    it('should block submit when required property is missing', fakeAsync(() => {
+    it('should block submit when required property is missing', () => {
         const requiredControlNames = ['period'];
         for (const controlName of requiredControlNames) {
             testFormIsInvalidOnMissingRequiredProperty(controlName);
         }
-    }));
+    });
 
     // === helper functions ===
     const setValidFormValues = () => {

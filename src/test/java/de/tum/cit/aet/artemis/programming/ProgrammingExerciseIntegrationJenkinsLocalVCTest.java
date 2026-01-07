@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
 // Run tests sequentially to avoid interference with shared LocalVC repositories and temp directories
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "progexjenklocalvc";
 
@@ -770,14 +770,14 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound();
+    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_exerciseDoesNotExist_notFound();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutoralt1", roles = "TA")
-    void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden();
+    void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_isNotTeachingAssistant_forbidden();
     }
 
     @Test

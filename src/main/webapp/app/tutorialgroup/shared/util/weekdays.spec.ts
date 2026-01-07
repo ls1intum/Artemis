@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
 
 describe('WeekDays', () => {

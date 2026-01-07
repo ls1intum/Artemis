@@ -10,6 +10,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { provideHttpClient } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExerciseCreateButtonComponent', () => {
     let component: ExerciseCreateButtonComponent;
@@ -24,6 +26,7 @@ describe('ExerciseCreateButtonComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
             ],
         }).compileComponents();

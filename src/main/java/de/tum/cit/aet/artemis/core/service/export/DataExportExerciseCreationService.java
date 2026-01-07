@@ -44,8 +44,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.modeling.api.ModelingApollonApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -85,7 +85,7 @@ public class DataExportExerciseCreationService {
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     // we define the field as optional to allow the application to start even if the apollon profile is not active
-    private final Optional<ApollonConversionService> apollonConversionService;
+    private final Optional<ModelingApollonApi> modelingApollonApi;
 
     private final ComplaintRepository complaintRepository;
 
@@ -97,13 +97,13 @@ public class DataExportExerciseCreationService {
 
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<ModelingApollonApi> modelingApollonApi, ComplaintRepository complaintRepository,
             ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
         this.plagiarismCaseApi = plagiarismCaseApi;
-        this.apollonConversionService = apollonConversionService;
+        this.modelingApollonApi = modelingApollonApi;
         this.complaintRepository = complaintRepository;
         this.exerciseRepository = exerciseRepository;
         this.repoClonePath = repoClonePath;
@@ -245,13 +245,13 @@ public class DataExportExerciseCreationService {
             return;
         }
         var fileName = "submission_" + modelingSubmission.getId();
-        if (apollonConversionService.isEmpty()) {
+        if (modelingApollonApi.isEmpty()) {
             log.warn("Cannot include modeling submission content in data export as pdf because apollon profile is not active. Going to include the json file");
             addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
             return;
         }
 
-        try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
+        try (var modelAsPdf = modelingApollonApi.get().convertModel(modelingSubmission.getModel())) {
             FileUtils.writeByteArrayToFile(outputDir.resolve(fileName + PDF_FILE_EXTENSION).toFile(), modelAsPdf.readAllBytes());
         }
         catch (Exception e) {

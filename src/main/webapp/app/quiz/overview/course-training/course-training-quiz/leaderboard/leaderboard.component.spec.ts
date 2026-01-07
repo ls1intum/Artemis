@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LeaderboardComponent } from './leaderboard.component';
 import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
@@ -8,6 +10,7 @@ import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Leaderboard', () => {
+    setupTestBed({ zoneless: true });
     let component: LeaderboardComponent;
     let fixture: ComponentFixture<LeaderboardComponent>;
     let mockLeaderboardEntries: LeaderboardEntry[];
@@ -60,19 +63,19 @@ describe('Leaderboard', () => {
 
     describe('isUserInLeaderboard', () => {
         it('should return true when current user is in leaderboard', () => {
-            expect(component.isUserInLeaderboard()).toBeTrue();
+            expect(component.isUserInLeaderboard()).toBe(true);
         });
 
         it('should return false when current user is not in leaderboard', () => {
             fixture.componentRef.setInput('currentUserId', 999);
             fixture.detectChanges();
-            expect(component.isUserInLeaderboard()).toBeFalse();
+            expect(component.isUserInLeaderboard()).toBe(false);
         });
 
         it('should return false when leaderboard is empty', () => {
             fixture.componentRef.setInput('leaderboard', []);
             fixture.detectChanges();
-            expect(component.isUserInLeaderboard()).toBeFalse();
+            expect(component.isUserInLeaderboard()).toBe(false);
         });
     });
 

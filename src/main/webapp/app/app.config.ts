@@ -30,11 +30,13 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AuraArtemis } from './primeng-artemis-theme';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
+        DialogService,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
             BrowserModule,
