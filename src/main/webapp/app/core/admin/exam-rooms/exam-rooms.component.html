@@ -1,6 +1,6 @@
 <div>
     <div class="upload-container">
-        <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
+        <h5 *adminTitleBarTitle id="exam-rooms-heading" class="mb-0" jhiTranslate="artemisApp.examRooms.adminOverview.title"></h5>
         <div class="mt-2">
             <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
             <label for="roomDataFileSelect" class="btn btn-outline-primary">

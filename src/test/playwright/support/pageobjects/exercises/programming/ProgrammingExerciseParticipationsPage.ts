@@ -49,12 +49,34 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
+        console.log(`[openRepositoryOnNewPage] Opening repository for participation ${participationId}`);
         const participation = this.getParticipation(participationId);
         await participation.locator('.code-button').click();
-        // The link opens the repository in a new tab, so we need to wait for the new page to be created.
-        const pagePromise = this.page.context().waitForEvent('page');
-        await this.page.locator('.open-repository-button').click();
-        return new RepositoryPage(await pagePromise);
+        console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
+
+        // Wait for the popover to appear and the button to be visible
+        const openRepoButton = this.page.locator('.open-repository-button');
+        await openRepoButton.waitFor({ state: 'visible' });
+        console.log('[openRepositoryOnNewPage] Popover visible, getting href...');
+
+        // Get the href from the link and open it in a new page directly
+        // This is more reliable than clicking when using Angular's routerLink with target="_blank"
+        const href = await openRepoButton.getAttribute('href');
+        if (!href) {
+            throw new Error('Could not find href on open-repository-button');
+        }
+        console.log(`[openRepositoryOnNewPage] Found href: ${href}`);
+
+        // Construct absolute URL from the relative href using the page's origin
+        const baseUrl = new URL(this.page.url()).origin;
+        const absoluteUrl = new URL(href, baseUrl).toString();
+        console.log(`[openRepositoryOnNewPage] Navigating to: ${absoluteUrl}`);
+
+        const newPage = await this.page.context().newPage();
+        await newPage.goto(absoluteUrl, { waitUntil: 'networkidle' });
+        console.log(`[openRepositoryOnNewPage] Navigation complete. New page URL: ${newPage.url()}`);
+
+        return new RepositoryPage(newPage);
     }
 
     async checkParticipationBuildPlan(participation: any) {

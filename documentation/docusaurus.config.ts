@@ -73,7 +73,7 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Staff',
+                        label: 'Development',
                         path: 'staff'
                     },
                     {

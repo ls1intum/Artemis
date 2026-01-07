@@ -1,19 +1,17 @@
 <div class="container">
-    <div class="d-flex flex-wrap">
-        <div class="d-flex align-items-center">
-            <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h2>
-            <jhi-documentation-button [type]="documentationType" />
-        </div>
-        <div class="ms-auto justify-content-end">
-            <a class="btn btn-primary" [routerLink]="['/admin', 'standardized-competencies', 'import']">
-                <fa-icon [icon]="faFileImport" />
-                <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
-            </a>
-            <a class="btn btn-primary" (click)="exportStandardizedCompetencyCatalog()">
-                <fa-icon [icon]="faFileExport" />
-                <span jhiTranslate="artemisApp.standardizedCompetency.manage.exportButton"></span>
-            </a>
-        </div>
+    <div class="d-flex align-items-center">
+        <h5 *adminTitleBarTitle id="standardized-competency-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h5>
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
+    <div *adminTitleBarActions>
+        <a class="btn btn-primary btn-sm" [routerLink]="['/admin', 'standardized-competencies', 'import']">
+            <fa-icon [icon]="faFileImport" />
+            <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
+        </a>
+        <a class="btn btn-primary btn-sm" (click)="exportStandardizedCompetencyCatalog()">
+            <fa-icon [icon]="faFileExport" />
+            <span jhiTranslate="artemisApp.standardizedCompetency.manage.exportButton"></span>
+        </a>
     </div>
     <jhi-standardized-competency-filter
         [knowledgeAreasForSelect]="knowledgeAreasForSelect"

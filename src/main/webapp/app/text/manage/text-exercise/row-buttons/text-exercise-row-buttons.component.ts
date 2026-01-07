@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -20,8 +20,8 @@ export class TextExerciseRowButtonsComponent {
     private eventManager = inject(EventManager);
     private textExerciseService = inject(TextExerciseService);
 
-    @Input() courseId: number;
-    @Input() exercise: TextExercise;
+    courseId = input.required<number>();
+    exercise = input.required<TextExercise>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -34,7 +34,7 @@ export class TextExerciseRowButtonsComponent {
     farListAlt = faListAlt;
 
     deleteExercise() {
-        this.textExerciseService.delete(this.exercise.id!).subscribe({
+        this.textExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',

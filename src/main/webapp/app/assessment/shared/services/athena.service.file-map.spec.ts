@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -12,6 +14,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('AthenaService file map behaviour', () => {
+    setupTestBed({ zoneless: true });
     let service: AthenaService;
     let httpMock: HttpTestingController;
     let profileService: ProfileService;
@@ -45,12 +48,12 @@ describe('AthenaService file map behaviour', () => {
         service = TestBed.inject(AthenaService);
         httpMock = TestBed.inject(HttpTestingController);
         profileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
     });
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should rehydrate grading instructions for text suggestions', async () => {
@@ -102,7 +105,7 @@ describe('AthenaService file map behaviour', () => {
         expect(feedback.reference).toBe('element:123');
         expect(feedback.referenceType).toBe('element');
         expect(feedback.referenceId).toBe('123');
-        expect(feedback.positive).toBeTrue();
+        expect(feedback.positive).toBe(true);
         expect(feedback.gradingInstruction?.id).toBe(99);
     });
 

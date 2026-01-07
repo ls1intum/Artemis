@@ -25,6 +25,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -40,14 +41,15 @@ interface ImportCount {
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
         FontAwesomeModule,
+        NgbCollapse,
+        NgbTooltipModule,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        HtmlForMarkdownPipe,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        NgbCollapse,
-        HtmlForMarkdownPipe,
-        ArtemisTranslatePipe,
-        NgbTooltipModule,
-        TranslateDirective,
         ButtonComponent,
+        AdminTitleBarTitleDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
