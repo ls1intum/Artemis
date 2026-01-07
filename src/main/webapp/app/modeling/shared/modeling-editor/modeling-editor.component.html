@@ -120,7 +120,7 @@
             <h4 jhiTranslate="artemisApp.modelingSubmission.explanationText"></h4>
             <p class="markdown-preview" [innerHTML]="explanation() | htmlForMarkdown"></p>
         } @else {
-            <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly" />
+            <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
         }
     }
 </div>
