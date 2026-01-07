@@ -348,13 +348,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
         const submissions = cachedParticipation.submissions ?? [];
 
-        const { submissionsWithMatch, matchedExistingSubmission } = this.updateExistingSubmissionResult(submissions, result);
-        const finalSubmissions = matchedExistingSubmission ? submissionsWithMatch : this.appendNewSubmission(submissionsWithMatch, cachedParticipation, result);
+        const { submissionsAfterUpdate, matchedExistingSubmission } = this.updateExistingSubmissionResult(submissions, result);
+        const updatedSubmissions = matchedExistingSubmission ? submissionsAfterUpdate : this.appendNewSubmission(submissionsAfterUpdate, cachedParticipation, result);
 
-        this.cachedParticipations.set(participationId, {
-            ...cachedParticipation,
-            submissions: finalSubmissions,
-        });
+        const updatedParticipation = Object.assign({}, cachedParticipation, { submissions: updatedSubmissions });
+        this.cachedParticipations.set(participationId, updatedParticipation);
     };
 
     /**
@@ -370,10 +368,16 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *          - submissionsWithMatch: the updated submissions array
      *          - matchedExistingSubmission: whether a submission was updated
      */
-    private updateExistingSubmissionResult(submissions: Submission[], result: Result): { submissionsWithMatch: Submission[]; matchedExistingSubmission: boolean } {
+    private updateExistingSubmissionResult(
+        submissions: Submission[],
+        result: Result,
+    ): {
+        submissionsAfterUpdate: Submission[];
+        matchedExistingSubmission: boolean;
+    } {
         let matchedExistingSubmission = false;
 
-        const submissionsWithMatch: Submission[] = submissions.map((submission) => {
+        const submissionsAfterUpdate: Submission[] = submissions.map((submission) => {
             if (submission.id !== result.submission!.id) {
                 return submission;
             }
@@ -390,7 +394,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             };
         });
 
-        return { submissionsWithMatch, matchedExistingSubmission };
+        return { submissionsAfterUpdate, matchedExistingSubmission };
     }
 
     private appendNewSubmission(submissions: Submission[], participation: StudentParticipation, result: Result): Submission[] {
@@ -406,9 +410,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         });
 
         const newSubmission: Submission = {
-            ...(result.submission as Submission),
-            participation,
-            results: deduplicatedResults,
+            ...Object.assign({}, result.submission as Submission, {
+                participation,
+                results: deduplicatedResults,
+            }),
         };
 
         return [...submissions, newSubmission];
