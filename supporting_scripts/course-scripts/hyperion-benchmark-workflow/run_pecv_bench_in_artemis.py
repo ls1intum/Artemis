@@ -7,7 +7,7 @@ import sys
 import requests
 from typing import Dict, List, Tuple
 from logging_config import logging
-from server_requests import create_pecv_bench_course, get_exercise_ids_from_pecv_bench, get_pecv_bench_course_id, login_as_admin, SERVER_URL
+from manage_pecv_bench_course import create_pecv_bench_course, get_exercise_ids_from_pecv_bench, get_pecv_bench_course_id, login_as_admin, SERVER_URL
 from manage_programming_exercise import convert_variant_to_zip, import_programming_exercise, process_variant_consistency_check
 
 # Load configuration
@@ -166,13 +166,13 @@ def process_single_variant_import(session: requests.Session,
     # H05E01:001 etc
     dict_key = f"{exercise_name}:{variant_id}"
 
-    # Step 1: Convert variant to zip
+    # Convert variant to zip
     zip_created = convert_variant_to_zip(variant_id_path, course_id)
     if not zip_created:
         logging.error(f"Failed to create zip for {dict_key}. Skipping import.")
         return (dict_key, None)
 
-    # Step 2: Import programming exercise
+    # Import programming exercise
     try:
         response_data = import_programming_exercise(session = session,
                                     course_id = course_id,
@@ -255,14 +255,14 @@ def create_session() -> requests.Session:
     return session
 
 def pecv_bench_setup(session: requests.Session) -> Dict[str, int]:
-    # Step 1: Clone pecv-bench repository
+    # Clone pecv-bench repository
     pecv_bench_dir = get_pecv_bench_dir()
     clone_pecv_bench(PECV_BENCH_URL, pecv_bench_dir)
 
-    # Step 2: Install pecv-bench dependencies
+    # Install pecv-bench dependencies
     install_pecv_bench_dependencies(pecv_bench_dir)
 
-    # Step 3: Import necessary modules from pecv-bench and create variants
+    # Import necessary modules from pecv-bench and create variants
     if pecv_bench_dir not in sys.path:
         sys.path.insert(0, pecv_bench_dir)
     try:
@@ -274,11 +274,11 @@ def pecv_bench_setup(session: requests.Session) -> Dict[str, int]:
         logging.error(f"Failed to import dependencies from pecv-bench. Error: {e}")
         sys.exit(1)
 
-    # Step 5: Create PECV Bench Course
+    # Create PECV Bench Course
     response_data = create_pecv_bench_course(session)
     course_id = response_data.get("id")
 
-    # Step 6: Store variant_id to exercise_id mapping, create zip files and import programming exercises
+    # Store variant_id to exercise_id mapping, create zip files and import programming exercises
     programming_exercises: Dict[str, int] = {} # {'<NAME>:001': 92, <VARIANT_ID>: <exercise_id>, ...}
     logging.info(f"Preparing to import variants for {sum(len(ex) for ex in COURSE_EXERCISES.values())} exercises across {len(COURSE_EXERCISES)} courses using {MAX_THREADS} threads")
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
@@ -326,7 +326,6 @@ def pecv_bench_setup(session: requests.Session) -> Dict[str, int]:
     logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
     return programming_exercises
 
-#TODO fix course
 def run_consistency_checks(session: requests.Session, pecv_bench_dir: str, programming_exercises: Dict[str, int]) -> None:
     """Run consistency checks for all programming exercises and store results.
 
@@ -418,21 +417,25 @@ def generate_response_file(pecv_bench_dir: str) -> None:
 
 def main():
     logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
-
+    # Step 1: Clone pecv-bench repository
     pecv_bench_dir = get_pecv_bench_dir()
 
+    # Step 2: Create session and login as admin
     session = create_session()
 
-    # programming_exercises = pecv_bench_setup(session)
+    # Step 3: Setup PECV Bench and import programming exercises
+    #programming_exercises = pecv_bench_setup(session)
 
+    # Step 4: Get course ID
     pecv_bench_course_id = get_pecv_bench_course_id(session)
-    programming_exercises = get_exercise_ids_from_pecv_bench(session, pecv_bench_course_id)
-    print(programming_exercises)
 
-    # Step 7: Run consistency checks for all programming exercises and store results
+    # Step 5: Verify imported programming exercises
+    programming_exercises = get_exercise_ids_from_pecv_bench(session, pecv_bench_course_id)
+
+    # Step 6: Run consistency checks for all programming exercises and store results
     run_consistency_checks(session, pecv_bench_dir, programming_exercises)
 
-    # Step 8: Generate report and statistics
+    # Step 7: Generate report and statistics
     generate_response_file(pecv_bench_dir)
 
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")

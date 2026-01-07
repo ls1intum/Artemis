@@ -198,7 +198,6 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
     logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
     return False
 
-
 # GET /core/courses
 def get_pecv_bench_course_id(session: Session) -> int:
     """Get the course ID for the given course name using the provided session.
@@ -214,7 +213,6 @@ def get_pecv_bench_course_id(session: Session) -> int:
             return course["id"]
     raise Exception(f"Course with shortName {course_short_name} not found")
 
-#TODO
 # GET /core/courses/{courseId}/exercises
 def get_exercise_ids_from_pecv_bench(session: Session, course_id: int) -> int:
     """Get the exercise ID for the given exercise title in the specified course using the provided session."""
