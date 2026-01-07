@@ -1,8 +1,13 @@
-import { Component, inject, model } from '@angular/core';
+import { Component, OnInit, inject, model } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/core/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+
+export interface ImportAllCompetenciesDialogData {
+    disabledIds?: number[];
+    competencyType?: CourseCompetencyType | 'courseCompetency';
+}
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -56,7 +61,7 @@ export type ImportAllFromCourseResult = {
         NgbTypeaheadModule,
     ],
 })
-export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {
+export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {
     //import relations by default
     protected importRelations = true;
 
@@ -68,12 +73,25 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
         this.columns = tableColumns;
     }
 
+    override ngOnInit(): void {
+        const dialogData = this.dialogConfig?.data as ImportAllCompetenciesDialogData | undefined;
+        if (dialogData) {
+            if (dialogData.disabledIds) {
+                this.disabledIds = dialogData.disabledIds;
+            }
+            if (dialogData.competencyType) {
+                this.competencyType.set(dialogData.competencyType);
+            }
+        }
+        super.ngOnInit();
+    }
+
     /**
      * Closes the modal in which the import component is opened. Returns the selected item **and if relations should be imported**
      *
      * @param item The item which was selected by the user for the import.
      */
     override selectImport(item: CourseForImportDTO) {
-        this.dialogRef.close({ courseForImportDTO: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
+        this.dialogRef?.close({ courseForImportDTO: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
     }
 }

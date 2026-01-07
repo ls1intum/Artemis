@@ -115,12 +115,13 @@ export class LectureComponent implements OnInit, OnDestroy {
      */
     openImportModal() {
         const dialogRef = this.dialogService.open(LectureImportComponent, {
-            header: this.translateService.instant('artemisApp.lecture.importLecture'),
+            header: this.translateService.instant('artemisApp.lecture.import.label'),
             width: '50rem',
             modal: true,
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            draggable: false,
         });
 
         dialogRef?.onClose.subscribe((result: Lecture | undefined) => {
@@ -250,6 +251,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            draggable: false,
             data: {
                 lectures: this.lectures,
                 uploadedFiles: files,
