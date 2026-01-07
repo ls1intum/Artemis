@@ -16,8 +16,6 @@ config.read(['config.ini'])
 
 PECV_BENCH_PATH: str = config.get('PECVBenchSettings', 'pecv_bench_path', fallback="pecv-bench")
 PECV_BENCH_URL: str = config.get('PECVBenchSettings', 'pecv_bench_repo', fallback="https://github.com/ls1intum/PECV-bench.git")
-# COURSE: str = config.get('PECVBenchSettings', 'course', fallback="ISE22")
-# EXERCISES: List[str] = [exercise.strip() for exercise in config.get('PECVBenchSettings', 'exercises', fallback="H01E01-Lectures").split(',')]
 
 course_exercises_raw = config.get('PECVBenchSettings', 'course_exercises', fallback='{}')
 COURSE_EXERCISES: Dict[str, List[str]] = json.loads(course_exercises_raw)
@@ -163,16 +161,13 @@ def process_single_variant_import(session: requests.Session,
     Returns: (exercise_variant_local_id, exercise_server_id) or (exercise_variant_local_id, None) on failure.
     """
 
-    # H05E01:001 etc
     dict_key = f"{exercise_name}:{variant_id}"
 
-    # Convert variant to zip
     zip_created = convert_variant_to_zip(variant_id_path, course_id)
     if not zip_created:
         logging.error(f"Failed to create zip for {dict_key}. Skipping import.")
         return (dict_key, None)
 
-    # Import programming exercise
     try:
         response_data = import_programming_exercise(session = session,
                                     course_id = course_id,
