@@ -579,8 +579,8 @@ An alternative way of adding a build agent that will use docker (similar to the 
    - ID: leave blank
    - Description: Up to you
    - Username: jenkins
-   - Private Key: <content of the previously generated private key> (e.g /root/.ssh/id_rsa)
-   - Passphrase: <the previously entered passphrase> (you can leave it blank if none has been specified)
+   - Private Key: `<content of the previously generated private key>` (e.g /root/.ssh/id_rsa)
+   - Passphrase: `<the previously entered passphrase>` (you can leave it blank if none has been specified)
 
 <Image
     src={alternativeNodeCredentials}
@@ -609,7 +609,7 @@ An alternative way of adding a build agent that will use docker (similar to the 
    - Usage: Only build jobs with label expressions matching this node
    - Launch method: Launch agents via SSH
    - Host: output of command `docker inspect --format '{{ .Config.Hostname }}' jenkins_agent`
-   - Credentials: <the previously created SSH credential>
+   - Credentials: `<the previously created SSH credential>`
    - Host Key Verification Strategy: Non verifying Verification Strategy
    - Availability: Keep this agent online as much as possible
 
