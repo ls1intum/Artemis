@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -35,6 +37,10 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
@@ -49,6 +55,8 @@ class PdfDropZoneStubComponent {
 }
 
 describe('LectureUnitManagementComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
     let lectureService: LectureService;
@@ -56,9 +64,9 @@ describe('LectureUnitManagementComponent', () => {
     let lectureTranscriptionService: LectureTranscriptionService;
     let alertService: AlertService;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
-    let findLectureWithDetailsSpy: jest.SpyInstance;
-    let deleteLectureUnitSpy: jest.SpyInstance;
-    let updateOrderSpy: jest.SpyInstance;
+    let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
+    let deleteLectureUnitSpy: ReturnType<typeof vi.spyOn>;
+    let updateOrderSpy: ReturnType<typeof vi.spyOn>;
 
     let attachmentVideoUnit: AttachmentVideoUnit;
     let exerciseUnit: ExerciseUnit;
@@ -71,8 +79,10 @@ describe('LectureUnitManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent, LectureUnitManagementComponent],
-            declarations: [
+            imports: [
+                MockDirective(NgbTooltip),
+                FaIconComponent,
+                LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
                 CompetenciesPopoverStubComponent,
                 PdfDropZoneStubComponent,
@@ -93,6 +103,8 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(AttachmentVideoUnitService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideComponent(LectureUnitManagementComponent, {
@@ -107,9 +119,9 @@ describe('LectureUnitManagementComponent', () => {
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
         alertService = TestBed.inject(AlertService);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
-        deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
-        updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
+        findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findWithDetails');
+        deleteLectureUnitSpy = vi.spyOn(lectureUnitService, 'delete');
+        updateOrderSpy = vi.spyOn(lectureUnitService, 'updateOrder');
         textUnit = new TextUnit();
         textUnit.id = 0;
         exerciseUnit = new ExerciseUnit();
@@ -126,23 +138,27 @@ describe('LectureUnitManagementComponent', () => {
         findLectureWithDetailsSpy.mockReturnValue(returnValue);
         updateOrderSpy.mockReturnValue(returnValue);
         deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
-        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
-        jest.spyOn(lectureUnitService, 'getProcessingStatus').mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
+        vi.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
+        vi.spyOn(lectureUnitService, 'getProcessingStatus').mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
         lectureUnitManagementComponentFixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should reorder', () => {
         const originalOrder = [...lecture.lectureUnits!];
         lectureUnitManagementComponentFixture.detectChanges();
-        expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[0].id);
+        expect(lectureUnitManagementComponent.lectureUnits()[0].id).toEqual(originalOrder[0].id);
         lectureUnitManagementComponent.drop({ previousIndex: 0, currentIndex: 1 } as CdkDragDrop<LectureUnit[]>);
-        expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
-        expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
+        expect(lectureUnitManagementComponent.lectureUnits()[0].id).toEqual(originalOrder[1].id);
+        expect(lectureUnitManagementComponent.lectureUnits()[1].id).toEqual(originalOrder[0].id);
     });
 
     it('should emit edit button event', () => {
-        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
-        lectureUnitManagementComponent.emitEditEvents = true;
+        const editButtonClickedSpy = vi.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
+        lectureUnitManagementComponentFixture.componentRef.setInput('emitEditEvents', true);
         lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
@@ -153,9 +169,9 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should show loadData on delete', () => {
-        const loadDataSpy = jest.spyOn(lectureUnitManagementComponent, 'loadData');
+        const loadDataSpy = vi.spyOn(lectureUnitManagementComponent, 'loadData');
         lectureUnitManagementComponent.deleteLectureUnit(1);
-        expect(loadDataSpy).toHaveBeenCalledOnce();
+        expect(loadDataSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should give the correct delete question translation key', () => {
@@ -201,7 +217,7 @@ describe('LectureUnitManagementComponent', () => {
                 type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.pdf' },
             } as LectureUnit;
-            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(true);
         });
 
         it('should return false for file extension different than .pdf', () => {
@@ -209,212 +225,246 @@ describe('LectureUnitManagementComponent', () => {
                 type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.txt' },
             };
-            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(false);
         });
 
         it('should return false for a text unit', () => {
             const lectureUnit = {
                 type: LectureUnitType.TEXT,
             };
-            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(false);
         });
     });
 
     describe('Transcription', () => {
         it('should load transcription status for attachment video units', () => {
-            const statusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
+            const statusSpy = vi.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
 
             lectureUnitManagementComponent.loadData();
 
             expect(statusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.COMPLETED);
+            expect(lectureUnitManagementComponent.transcriptionStatus()[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.COMPLETED);
         });
 
         it('should correctly identify transcription states', () => {
-            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.COMPLETED;
-            expect(lectureUnitManagementComponent.hasTranscription(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.COMPLETED });
+            expect(lectureUnitManagementComponent.hasTranscription(attachmentVideoUnit)).toBe(true);
 
-            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
-            expect(lectureUnitManagementComponent.isTranscriptionPending(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.PENDING });
+            expect(lectureUnitManagementComponent.isTranscriptionPending(attachmentVideoUnit)).toBe(true);
 
-            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.FAILED;
-            expect(lectureUnitManagementComponent.isTranscriptionFailed(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
+            expect(lectureUnitManagementComponent.isTranscriptionFailed(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasTranscriptionBadge when transcription is pending', () => {
-            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.PENDING });
+            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasTranscriptionBadge when transcription is completed', () => {
-            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.COMPLETED;
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.COMPLETED });
+            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasTranscriptionBadge when transcription failed', () => {
-            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.FAILED;
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
+            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
         });
     });
 
     describe('Processing Status', () => {
         it('should load processing status for attachment video units', () => {
-            const statusSpy = jest
+            const statusSpy = vi
                 .spyOn(lectureUnitService, 'getProcessingStatus')
                 .mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
 
             lectureUnitManagementComponent.loadData();
 
             expect(statusSpy).toHaveBeenCalledWith(lectureId, attachmentVideoUnit.id);
-            expect(lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+            expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
         });
 
         it('should correctly identify processing states', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.IDLE,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isProcessingIdle(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.IDLE,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isProcessingIdle(attachmentVideoUnit)).toBe(true);
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.TRANSCRIBING,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBeTrue();
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.TRANSCRIBING,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(true);
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.INGESTING,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBeTrue();
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(true);
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.DONE,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.DONE,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(true);
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.FAILED,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.FAILED,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasProcessingBadge when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.TRANSCRIBING,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.TRANSCRIBING,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasProcessingBadge when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.DONE,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.DONE,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasProcessingBadge when processing failed', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.FAILED,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.FAILED,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return error key from processing status', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.FAILED,
-                retryCount: 3,
-                errorKey: 'artemisApp.lectureUnit.processing.error.transcriptionFailed',
-            };
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.FAILED,
+                    retryCount: 3,
+                    errorKey: 'artemisApp.lectureUnit.processing.error.transcriptionFailed',
+                },
+            });
             expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.lectureUnit.processing.error.transcriptionFailed');
         });
     });
 
     describe('isAwaitingProcessing', () => {
         it('should return true when status is IDLE and course is active', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 };
-            lectureUnitManagementComponent.lecture.course!.startDate = undefined;
-            lectureUnitManagementComponent.lecture.course!.endDate = undefined;
-            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 },
+            });
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course!.startDate = undefined;
+            currentLecture.course!.endDate = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true when status is undefined and course is active', () => {
-            delete lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!];
-            lectureUnitManagementComponent.lecture.course!.startDate = undefined;
-            lectureUnitManagementComponent.lecture.course!.endDate = undefined;
-            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeTrue();
+            lectureUnitManagementComponent.processingStatus.set({});
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course!.startDate = undefined;
+            currentLecture.course!.endDate = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return false when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.TRANSCRIBING,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeFalse();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.TRANSCRIBING,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
         });
 
         it('should return false when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
-                lectureUnitId: attachmentVideoUnit.id!,
-                phase: ProcessingPhase.DONE,
-                retryCount: 0,
-            };
-            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeFalse();
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.DONE,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
         });
     });
 
     describe('isCourseActive', () => {
         it('should return true when course has no date restrictions', () => {
-            lectureUnitManagementComponent.lecture.course!.startDate = undefined;
-            lectureUnitManagementComponent.lecture.course!.endDate = undefined;
-            expect(lectureUnitManagementComponent.isCourseActive()).toBeTrue();
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course!.startDate = undefined;
+            currentLecture.course!.endDate = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isCourseActive()).toBe(true);
         });
 
         it('should return false when no lecture is set', () => {
-            lectureUnitManagementComponent.lecture = undefined as any;
-            expect(lectureUnitManagementComponent.isCourseActive()).toBeFalse();
+            lectureUnitManagementComponent.lecture.set(undefined);
+            expect(lectureUnitManagementComponent.isCourseActive()).toBe(false);
         });
 
         it('should return false when no course is set', () => {
-            lectureUnitManagementComponent.lecture.course = undefined;
-            expect(lectureUnitManagementComponent.isCourseActive()).toBeFalse();
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isCourseActive()).toBe(false);
         });
     });
 
     describe('retryProcessing', () => {
         it('should call retryProcessing on lectureUnitService and show success message', () => {
-            const retryProcessingSpy = jest.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
-            const alertSpy = jest.spyOn(alertService, 'success');
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = 5; // non-zero value
+            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            const alertSpy = vi.spyOn(alertService, 'success');
+            lectureUnitManagementComponent.lecture.set(lecture);
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
+            lectureUnitManagementComponent.ngOnInit(); // Re-run to update resolvedLectureId
 
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
             expect(retryProcessingSpy).toHaveBeenCalledWith(5, attachmentVideoUnit.id);
-            expect(lectureUnitManagementComponent.isRetryingProcessing[attachmentVideoUnit.id!]).toBeTrue();
+            expect(lectureUnitManagementComponent.isRetryingProcessing()[attachmentVideoUnit.id!]).toBe(true);
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.processingRetryStarted');
         });
 
         it('should not call retryProcessing if lectureId is missing', () => {
-            const retryProcessingSpy = jest.spyOn(lectureUnitService, 'retryProcessing');
-            lectureUnitManagementComponent.lectureId = undefined;
+            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing');
+            // Set resolvedLectureId to undefined via private property access
+            (lectureUnitManagementComponent as any).resolvedLectureId = undefined;
 
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
@@ -422,8 +472,9 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should not call retryProcessing if lectureUnit.id is missing', () => {
-            const retryProcessingSpy = jest.spyOn(lectureUnitService, 'retryProcessing');
-            lectureUnitManagementComponent.lectureId = 5;
+            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing');
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
+            lectureUnitManagementComponent.ngOnInit();
             const unitWithoutId = new AttachmentVideoUnit();
 
             lectureUnitManagementComponent.retryProcessing(unitWithoutId);
@@ -433,14 +484,15 @@ describe('LectureUnitManagementComponent', () => {
 
         it('should handle error when retryProcessing fails', () => {
             const error = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
-            jest.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(throwError(() => error));
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = 5;
-            lectureUnitManagementComponent.isRetryingProcessing[attachmentVideoUnit.id!] = true;
+            vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(throwError(() => error));
+            lectureUnitManagementComponent.lecture.set(lecture);
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
+            lectureUnitManagementComponent.ngOnInit();
+            lectureUnitManagementComponent.isRetryingProcessing.set({ [attachmentVideoUnit.id!]: true });
 
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
-            expect(lectureUnitManagementComponent.isRetryingProcessing[attachmentVideoUnit.id!]).toBeFalse();
+            expect(lectureUnitManagementComponent.isRetryingProcessing()[attachmentVideoUnit.id!]).toBe(false);
         });
     });
 
@@ -452,30 +504,30 @@ describe('LectureUnitManagementComponent', () => {
             createdUnit.id = 42;
             createdUnit.name = 'Test File';
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
-            const successSpy = jest.spyOn(alertService, 'success');
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const successSpy = vi.spyOn(alertService, 'success');
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
             const pdfFile = new File(['content'], 'Test_File.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
 
-            expect(createSpy).toHaveBeenCalledOnce();
+            expect(createSpy).toHaveBeenCalledTimes(1);
             expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
         });
 
         it('should navigate to edit page after upload', () => {
             const router = TestBed.inject(Router);
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
 
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -496,16 +548,16 @@ describe('LectureUnitManagementComponent', () => {
             const alertService = TestBed.inject(AlertService);
 
             let callCount = 0;
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount;
                 return of(new HttpResponse({ body: unit, status: 201 }));
             });
-            const successSpy = jest.spyOn(alertService, 'success');
+            const successSpy = vi.spyOn(alertService, 'success');
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
             const pdfFiles = [
                 new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
@@ -516,31 +568,31 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.onPdfFilesDropped(pdfFiles);
 
             expect(createSpy).toHaveBeenCalledTimes(3);
-            expect(successSpy).toHaveBeenCalledOnce();
+            expect(successSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should show error alert on upload failure', () => {
             const alertService = TestBed.inject(AlertService);
 
             // Use status 400 as status 500 intentionally doesn't show an alert (see onError in global.utils.ts)
-            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => ({ status: 400 })));
-            const errorSpy = jest.spyOn(alertService, 'error');
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => ({ status: 400 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
 
             expect(errorSpy).toHaveBeenCalled();
-            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBeFalse();
+            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBe(false);
         });
 
         it('should not process if no files are provided', () => {
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
             lectureUnitManagementComponent.onPdfFilesDropped([]);
 
@@ -548,10 +600,11 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should not process if lectureId is undefined', () => {
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = undefined;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // Set resolvedLectureId to undefined via private property access
+            (lectureUnitManagementComponent as any).resolvedLectureId = undefined;
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -560,18 +613,18 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should load data if navigation fails due to missing course', () => {
-            const loadDataSpy = jest.spyOn(lectureUnitManagementComponent, 'loadData');
+            const loadDataSpy = vi.spyOn(lectureUnitManagementComponent, 'loadData');
 
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             // Lecture without course
             const lectureWithoutCourse = new Lecture();
             lectureWithoutCourse.id = 1;
-            lectureUnitManagementComponent.lecture = lectureWithoutCourse;
-            lectureUnitManagementComponent.lectureId = lectureWithoutCourse.id;
+            lectureUnitManagementComponent.lecture.set(lectureWithoutCourse);
+            // resolvedLectureId is already set from route in ngOnInit
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -583,34 +636,34 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
-            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBeFalse();
+            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBe(false);
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
 
             // After completion (synchronous in this test due to of())
-            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBeFalse();
+            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBe(false);
         });
 
         it('should navigate to last created unit when uploading multiple files', () => {
             const router = TestBed.inject(Router);
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
 
             let callCount = 0;
-            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount * 10; // 10, 20, 30
                 return of(new HttpResponse({ body: unit, status: 201 }));
             });
 
-            lectureUnitManagementComponent.lecture = lecture;
-            lectureUnitManagementComponent.lectureId = lecture.id;
+            lectureUnitManagementComponent.lecture.set(lecture);
+            // resolvedLectureId is already set from route in ngOnInit
 
             const pdfFiles = [
                 new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),

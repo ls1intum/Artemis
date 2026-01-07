@@ -268,6 +268,8 @@ public final class Constants {
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
+    public static final String DOCKER_FLAG_ALLOWED_CUSTOM_NETWORKS = "allowedCustomDockerNetworks";
+
     public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
 
     public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";

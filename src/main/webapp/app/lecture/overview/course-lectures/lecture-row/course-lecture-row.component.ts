@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -17,11 +17,11 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
     templateUrl: './course-lecture-row.component.html',
     styleUrls: ['../../../../core/course/overview/course-exercises/course-exercise-row/course-exercise-row.scss'],
     imports: [RouterLink, FaIconComponent, NgbTooltip, NgClass, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
+    host: { class: 'exercise-row' },
 })
 export class CourseLectureRowComponent {
-    @HostBinding('class') classes = 'exercise-row';
-    @Input() lecture: Lecture;
-    @Input() course: Course;
+    lecture = input.required<Lecture>();
+    course = input.required<Course>();
 
     // Icons
     faChalkboardTeacher = faChalkboardTeacher;

@@ -37,7 +37,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 // Configuration
 const CLIENT_SRC_PREFIX = 'src/main/webapp/app/';
 const SERVER_SRC_PREFIX = 'src/main/java/de/tum/cit/aet/artemis/';
-const CLIENT_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
+const CLIENT_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
 const VITEST_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 const SERVER_COVERAGE_DIR = path.join(PROJECT_ROOT, 'build/reports/jacoco');
 
