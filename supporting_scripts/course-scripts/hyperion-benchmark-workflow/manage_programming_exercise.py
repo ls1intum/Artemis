@@ -91,13 +91,22 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             exercise_details['id'] = None
             if problem_statement_content is not None:
                 exercise_details['problemStatement'] = problem_statement_content
-            exercise_details['course']['id'] = course_id
+
+            course_name = ""
+            if 'course' in exercise_details:
+                exercise_details['course']['id'] = course_id
+                course_name = exercise_details['course'].get('shortName', '')
+            elif 'exerciseGroup' in exercise_details:
+                # For exam exercises, course is nested under exerciseGroup.exam.course
+                if 'exam' in exercise_details['exerciseGroup'] and 'course' in exercise_details['exerciseGroup']['exam']:
+                    exercise_details['exerciseGroup']['exam']['course']['id'] = course_id
+                    course_name = exercise_details['exerciseGroup']['exam']['course'].get('shortName', '')
 
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{VARIANT_ID} - {exercise_details.get('title', 'Untitled')}"
 
             exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(VARIANT_ID))
-            exercise_details["projectKey"] = f"{VARIANT_ID}ITP2425{exercise_details['shortName']}"
+            exercise_details["projectKey"] = f"{VARIANT_ID}{course_name}{exercise_details['shortName']}"
 
 
         with open(config_file_path, 'w') as cf:
@@ -204,7 +213,6 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
         return None
 
-
 def check_exercise_consistency(session: Session, exercise_server_id: int, server_url: str, exercise_variant_local_id: str):
     """Check the consistency of the programming exercise with Hyperion System.
 
@@ -223,11 +231,10 @@ def check_exercise_consistency(session: Session, exercise_server_id: int, server
         logging.error(f"Failed to check consistency for programming exercise ID {exercise_server_id}; Status code: {response.status_code}\nResponse content: {response.text}")
         return None
 
-
 def process_variant_consistency_check(session: Session, server_url: str, exercise_variant_local_id: str, exercise_server_id: int, results_dir: str, course: str, run_id: str) -> str:
     """
     Worker function to check consistency and save result for a single variant.
-    exercise_variant_id: 'H01E01-Lectures:001'
+    exercise_variant_local_id: 'H01E01-Lectures:001'
     """
     if exercise_server_id is None:
         logging.error(f"Skipping consistency check for variant {exercise_variant_local_id} due to missing exercise ID.")

@@ -1,13 +1,13 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import configparser
+import json
 import subprocess
 import os
 import sys
 import requests
 from typing import Dict, List, Tuple
 from logging_config import logging
-from utils import login_as_admin, SERVER_URL
-from create_pecv_bench_course import create_pecv_bench_course
+from server_requests import create_pecv_bench_course, get_exercise_ids_from_pecv_bench, get_pecv_bench_course_id, login_as_admin, SERVER_URL
 from manage_programming_exercise import convert_variant_to_zip, import_programming_exercise, process_variant_consistency_check
 
 # Load configuration
@@ -16,8 +16,12 @@ config.read(['config.ini'])
 
 PECV_BENCH_PATH: str = config.get('PECVBenchSettings', 'pecv_bench_path', fallback="pecv-bench")
 PECV_BENCH_URL: str = config.get('PECVBenchSettings', 'pecv_bench_repo', fallback="https://github.com/ls1intum/PECV-bench.git")
-COURSE: str = config.get('PECVBenchSettings', 'course', fallback="ITP2425")
-EXERCISES: List[str] = [exercise.strip() for exercise in config.get('PECVBenchSettings', 'exercises', fallback="H01E01-Lectures").split(',')]
+# COURSE: str = config.get('PECVBenchSettings', 'course', fallback="ISE22")
+# EXERCISES: List[str] = [exercise.strip() for exercise in config.get('PECVBenchSettings', 'exercises', fallback="H01E01-Lectures").split(',')]
+
+course_exercises_raw = config.get('PECVBenchSettings', 'course_exercises', fallback='{}')
+COURSE_EXERCISES: Dict[str, List[str]] = json.loads(course_exercises_raw)
+
 MAX_THREADS: int = int(config.get('Settings', 'max_threads', fallback="5"))
 REFERENCE: str = config.get('PECVBenchSettings', 'reference', fallback="No Data Available")
 
@@ -35,6 +39,12 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
                 ["git", "clean", "-fd"],
                 cwd=pecv_bench_dir,
                 check=True)
+            subprocess.run(
+                ["git", "checkout", "dataset-extension"],
+                cwd=pecv_bench_dir,
+                check=True,
+            )
+            logging.info("Successfully checkout to latest dataset.")
             subprocess.run(
                 ["git", "pull"],
                 cwd=pecv_bench_dir,
@@ -54,6 +64,13 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
                 check=True,
             )
             logging.info("Successfully cloned the repository.")
+
+            subprocess.run(
+                ["git", "checkout", "dataset-extension"],
+                cwd=pecv_bench_dir,
+                check=True,
+            )
+            logging.info("Successfully checkout to latest dataset.")
 
         except subprocess.CalledProcessError as e:
             logging.error(f"ERROR: Failed to clone repository from {pecv_bench_url}.")
@@ -145,6 +162,8 @@ def process_single_variant_import(session: requests.Session,
     Worker function to zip and import a single variant.
     Returns: (exercise_variant_local_id, exercise_server_id) or (exercise_variant_local_id, None) on failure.
     """
+
+    # H05E01:001 etc
     dict_key = f"{exercise_name}:{variant_id}"
 
     # Step 1: Convert variant to zip
@@ -223,12 +242,21 @@ def summarize_report(report_md_path: str, summary_md_path: str) -> None:
     except Exception as e:
         logging.exception(f"Error while injecting summary into report: {e}")
 
-def main():
-    logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
+# MAIN WORKFLOW
 
-    # Step 1: Clone pecv-bench repository
+def get_pecv_bench_dir() -> str:
     hyperion_benchmark_workflow_dir = os.path.dirname(os.path.abspath(__file__))
     pecv_bench_dir = os.path.join(hyperion_benchmark_workflow_dir, PECV_BENCH_PATH)
+    return pecv_bench_dir
+
+def create_session() -> requests.Session:
+    session = requests.Session()
+    login_as_admin(session)
+    return session
+
+def pecv_bench_setup(session: requests.Session) -> Dict[str, int]:
+    # Step 1: Clone pecv-bench repository
+    pecv_bench_dir = get_pecv_bench_dir()
     clone_pecv_bench(PECV_BENCH_URL, pecv_bench_dir)
 
     # Step 2: Install pecv-bench dependencies
@@ -238,46 +266,49 @@ def main():
     if pecv_bench_dir not in sys.path:
         sys.path.insert(0, pecv_bench_dir)
     try:
-        for EXERCISE in EXERCISES:
-            create_all_variants(COURSE, EXERCISE)
+        for COURSE, EXERCISES in COURSE_EXERCISES.items():
+            for EXERCISE in EXERCISES:
+                create_all_variants(COURSE, EXERCISE)
 
     except ImportError as e:
         logging.error(f"Failed to import dependencies from pecv-bench. Error: {e}")
         sys.exit(1)
-
-    # Step 4: Create session and authenticate
-    session = requests.Session()
-    login_as_admin(session)
 
     # Step 5: Create PECV Bench Course
     response_data = create_pecv_bench_course(session)
     course_id = response_data.get("id")
 
     # Step 6: Store variant_id to exercise_id mapping, create zip files and import programming exercises
-    programming_exercises: Dict[str, int] = {} # {'<NAME>-001': 92, <VARIANT_ID>: <exercise_id>, ...}
-    logging.info(f"Preparing to import variants for {len(EXERCISES)} exercises using {MAX_THREADS} threads")
+    programming_exercises: Dict[str, int] = {} # {'<NAME>:001': 92, <VARIANT_ID>: <exercise_id>, ...}
+    logging.info(f"Preparing to import variants for {sum(len(ex) for ex in COURSE_EXERCISES.values())} exercises across {len(COURSE_EXERCISES)} courses using {MAX_THREADS} threads")
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         futures = []
 
         # submit all tasks
-        for EXERCISE in EXERCISES:
-            variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
-            list_of_variants = sorted(os.listdir(variants_folder_path))
+        for COURSE, EXERCISES in COURSE_EXERCISES.items():
+            for EXERCISE in EXERCISES:
+                variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
 
-            for variant_id in list_of_variants:
-                if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
+                if not os.path.exists(variants_folder_path):
+                    logging.warning(f"Variants folder not found: {variants_folder_path}")
                     continue
-                variant_id_path = os.path.join(variants_folder_path, variant_id)
 
-                futures.append(executor.submit(
-                    process_single_variant_import,
-                    session,
-                    SERVER_URL,
-                    course_id,
-                    EXERCISE,
-                    variant_id,
-                    variant_id_path
-                ))
+                list_of_variants = sorted(os.listdir(variants_folder_path))
+
+                for variant_id in list_of_variants:
+                    if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
+                        continue
+                    variant_id_path = os.path.join(variants_folder_path, variant_id)
+                    #exercise_name = EXERCISE.split('-')[0].strip()
+                    futures.append(executor.submit(
+                        process_single_variant_import,
+                        session,
+                        SERVER_URL,
+                        course_id,
+                        EXERCISE,
+                        variant_id,
+                        variant_id_path
+                    ))
 
         # collect results as they finish and thread-safe dictionary update
         for future in as_completed(futures):
@@ -290,18 +321,27 @@ def main():
                     logging.error(f"Failed to import variant {key}.")
             except Exception as e:
                 logging.exception(f"Thread failed with error: {e}")
+                return {}
 
     logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
+    return programming_exercises
 
-    # Step 7: Run consistency checks for all programming exercises and store results
+#TODO fix course
+def run_consistency_checks(session: requests.Session, pecv_bench_dir: str, programming_exercises: Dict[str, int]) -> None:
+    """Run consistency checks for all programming exercises and store results.
+
+    programming_exercises: Dict[str, int] = {'H05E01-REST_Architectural_Style:003': 1404, ...},
+    """
     model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
                                             # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
                                             # NOTE sprint.ai.mode.chat + spring.ai.azure.openai.chat.options.deployment-name
 
     logging.info(f"Starting consistency checks for {len(programming_exercises)} variants using up to {MAX_THREADS} threads")
-    course_dir = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", model_name, "cases", COURSE)
-    for EXERCISE in EXERCISES:
-        os.makedirs(os.path.join(course_dir, EXERCISE), exist_ok=True)
+
+    for course, exercises in COURSE_EXERCISES.items():
+        course_dir = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", model_name, "cases", course)
+        for exercise in exercises:
+            os.makedirs(os.path.join(course_dir, exercise), exist_ok=True)
 
     run_id = f"{model_name}-default"
 
@@ -310,6 +350,21 @@ def main():
 
         # variant_id: EXERCISE:variant_id
         for exercise_variant_local_id, exercise_server_id in programming_exercises.items():
+            # parse exercise name from variant key (format: "EXERCISE:variant_id")
+            exercise_name = exercise_variant_local_id.split(':')[0]
+
+            # Find course for this exercise
+            course = next(
+                (c for c, exs in COURSE_EXERCISES.items() if exercise_name in exs),
+                None
+            )
+
+            if course is None:
+                logging.warning(f"Could not find course for exercise {exercise_name}, skipping")
+                continue
+
+            course_dir = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", model_name, "cases", course)
+
             futures.append(executor.submit(
                 process_variant_consistency_check,
                 session,
@@ -317,7 +372,7 @@ def main():
                 exercise_variant_local_id,
                 exercise_server_id,
                 course_dir,
-                COURSE,
+                course,
                 run_id
             ))
 
@@ -330,7 +385,9 @@ def main():
 
     logging.info("All consistency checks completed.")
 
-    # Step 8: Generate report and statistics
+def generate_response_file(pecv_bench_dir: str) -> None:
+    """Generate report and statistics for the benchmark results."""
+
     logging.info("Generating analysis and reports...")
 
     commands = [
@@ -358,6 +415,25 @@ def main():
     report_md_path = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", "report.md")
     summary_md_path = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", "summary.md")
     summarize_report(report_md_path, summary_md_path)
+
+def main():
+    logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
+
+    pecv_bench_dir = get_pecv_bench_dir()
+
+    session = create_session()
+
+    # programming_exercises = pecv_bench_setup(session)
+
+    pecv_bench_course_id = get_pecv_bench_course_id(session)
+    programming_exercises = get_exercise_ids_from_pecv_bench(session, pecv_bench_course_id)
+    print(programming_exercises)
+
+    # Step 7: Run consistency checks for all programming exercises and store results
+    run_consistency_checks(session, pecv_bench_dir, programming_exercises)
+
+    # Step 8: Generate report and statistics
+    generate_response_file(pecv_bench_dir)
 
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")
 
