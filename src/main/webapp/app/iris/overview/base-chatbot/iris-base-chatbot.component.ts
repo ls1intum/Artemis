@@ -304,7 +304,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         message.helpful = !!helpful;
-        this.chatService.rateMessage(message, helpful).subscribe();
+        this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
 
     /**

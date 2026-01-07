@@ -26,18 +26,18 @@ describe('ChatStatusBarComponent', () => {
         const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
         fixture.componentRef.setInput('stages', stages);
         await fixture.whenStable();
-        expect(component.open).toBeTrue();
-        expect(component.activeStage).toEqual(stages[0]);
-        expect(component.displayedText).toBe('Test Stage');
+        expect(component.open()).toBeTrue();
+        expect(component.activeStage()).toEqual(stages[0]);
+        expect(component.displayedText()).toBe('Test Stage');
     });
 
     it('should handle all stages finished via effect', async () => {
         const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.DONE, weight: 1, message: 'Test', internal: false }];
         fixture.componentRef.setInput('stages', stages);
         await fixture.whenStable();
-        expect(component.open).toBeFalse();
-        expect(component.activeStage).toBeUndefined();
-        expect(component.displayedText).toBeUndefined();
+        expect(component.open()).toBeFalse();
+        expect(component.activeStage()).toBeUndefined();
+        expect(component.displayedText()).toBeUndefined();
     });
 
     it('should return true for finished stages in isStageFinished', () => {

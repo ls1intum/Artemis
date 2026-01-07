@@ -204,30 +204,33 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
 
         this.isLoading.set(true);
-        this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe({
-            next: (response) => {
-                this.isLoading.set(false);
-                if (!response) {
-                    this.alertService.error('artemisApp.iris.settings.error.noSettings');
-                    return;
-                }
-                this.settings.set(response.settings);
-                // Extract rate limit fields for form binding
-                this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
-                this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
-                // Store original values for dirty checking
-                this.originalRateLimitRequests.set(this.rateLimitRequests());
-                this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
-                this.effectiveRateLimit.set(response.effectiveRateLimit);
-                this.applicationDefaults.set(response.applicationRateLimitDefaults);
-                this.originalSettings.set(cloneDeep(this.settings()));
-            },
-            error: (error) => {
-                this.isLoading.set(false);
-                captureException('Error loading Iris settings', error);
-                this.alertService.error('artemisApp.iris.settings.error.load');
-            },
-        });
+        this.irisSettingsService
+            .getCourseSettingsWithRateLimit(this.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    this.isLoading.set(false);
+                    if (!response) {
+                        this.alertService.error('artemisApp.iris.settings.error.noSettings');
+                        return;
+                    }
+                    this.settings.set(response.settings);
+                    // Extract rate limit fields for form binding
+                    this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
+                    this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
+                    // Store original values for dirty checking
+                    this.originalRateLimitRequests.set(this.rateLimitRequests());
+                    this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
+                    this.effectiveRateLimit.set(response.effectiveRateLimit);
+                    this.applicationDefaults.set(response.applicationRateLimitDefaults);
+                    this.originalSettings.set(cloneDeep(this.settings()));
+                },
+                error: (error) => {
+                    this.isLoading.set(false);
+                    captureException('Error loading Iris settings', error);
+                    this.alertService.error('artemisApp.iris.settings.error.load');
+                },
+            });
     }
 
     /**
@@ -259,33 +262,36 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
 
         this.isSaving.set(true);
-        this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
-            next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
-                this.isSaving.set(false);
-                if (response.body) {
-                    this.settings.set(response.body.settings);
-                    // Update local form fields from saved response
-                    this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
-                    this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
-                    // Reset original values for dirty checking
-                    this.originalRateLimitRequests.set(this.rateLimitRequests());
-                    this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
-                    this.effectiveRateLimit.set(response.body.effectiveRateLimit);
-                    this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
-                    this.originalSettings.set(cloneDeep(this.settings()));
-                }
-                this.alertService.success('artemisApp.iris.settings.success');
-            },
-            error: (error) => {
-                this.isSaving.set(false);
-                captureException('Error saving Iris settings', error);
-                if (error.status === 400 && error.error && error.error.message) {
-                    this.alertService.error(error.error.message);
-                } else {
-                    this.alertService.error('artemisApp.iris.settings.error.save');
-                }
-            },
-        });
+        this.irisSettingsService
+            .updateCourseSettings(this.courseId, settingsToSave)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
+                    this.isSaving.set(false);
+                    if (response.body) {
+                        this.settings.set(response.body.settings);
+                        // Update local form fields from saved response
+                        this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
+                        this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
+                        // Reset original values for dirty checking
+                        this.originalRateLimitRequests.set(this.rateLimitRequests());
+                        this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
+                        this.effectiveRateLimit.set(response.body.effectiveRateLimit);
+                        this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
+                        this.originalSettings.set(cloneDeep(this.settings()));
+                    }
+                    this.alertService.success('artemisApp.iris.settings.success');
+                },
+                error: (error) => {
+                    this.isSaving.set(false);
+                    captureException('Error saving Iris settings', error);
+                    if (error.status === 400 && error.error && error.error.message) {
+                        this.alertService.error(error.error.message);
+                    } else {
+                        this.alertService.error('artemisApp.iris.settings.error.save');
+                    }
+                },
+            });
     }
 
     /**
@@ -318,32 +324,35 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             enabled,
         };
 
-        this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
-            next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
-                if (response.body) {
-                    // Update original settings to reflect the new enabled state
-                    this.originalSettings.set(cloneDeep(response.body.settings));
-                    this.settings.set(cloneDeep(response.body.settings));
-                    // Reset rate limit tracking
-                    this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
-                    this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
-                    this.originalRateLimitRequests.set(this.rateLimitRequests());
-                    this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
-                    this.effectiveRateLimit.set(response.body.effectiveRateLimit);
-                    this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
-                }
-                this.isAutoSaving.set(false);
-            },
-            error: (error) => {
-                this.isAutoSaving.set(false);
-                captureException('Error saving Iris enabled state', error);
-                // Revert on error
-                const currentSettings = this.settings();
-                if (currentSettings) {
-                    this.settings.set({ ...currentSettings, enabled: !enabled });
-                }
-            },
-        });
+        this.irisSettingsService
+            .updateCourseSettings(this.courseId, settingsToSave)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
+                    if (response.body) {
+                        // Update original settings to reflect the new enabled state
+                        this.originalSettings.set(cloneDeep(response.body.settings));
+                        this.settings.set(cloneDeep(response.body.settings));
+                        // Reset rate limit tracking
+                        this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
+                        this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
+                        this.originalRateLimitRequests.set(this.rateLimitRequests());
+                        this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
+                        this.effectiveRateLimit.set(response.body.effectiveRateLimit);
+                        this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
+                    }
+                    this.isAutoSaving.set(false);
+                },
+                error: (error) => {
+                    this.isAutoSaving.set(false);
+                    captureException('Error saving Iris enabled state', error);
+                    // Revert on error
+                    const currentSettings = this.settings();
+                    if (currentSettings) {
+                        this.settings.set({ ...currentSettings, enabled: !enabled });
+                    }
+                },
+            });
     }
 
     /**

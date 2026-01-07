@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,13 +19,16 @@ interface ProcessedStage extends IrisStageDTO {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatStatusBarComponent {
-    open = false;
-    openTimeout: ReturnType<typeof setTimeout>;
-    styleTimeout: ReturnType<typeof setTimeout>;
-    activeStage?: IrisStageDTO;
-    displayedText?: string;
-    displayedSubText?: string;
-    style?: string;
+    // UI state as signals for OnPush change detection
+    readonly open = signal(false);
+    readonly activeStage = signal<IrisStageDTO | undefined>(undefined);
+    readonly displayedText = signal<string | undefined>(undefined);
+    readonly displayedSubText = signal<string | undefined>(undefined);
+    readonly style = signal<string | undefined>(undefined);
+
+    // Timeouts are not signals since they're not used in the template
+    private openTimeout: ReturnType<typeof setTimeout> | undefined;
+    private styleTimeout: ReturnType<typeof setTimeout> | undefined;
 
     readonly stages = input<IrisStageDTO[]>([]);
 
@@ -50,26 +53,26 @@ export class ChatStatusBarComponent {
             if (firstUnfinished) {
                 clearTimeout(this.openTimeout);
                 clearTimeout(this.styleTimeout);
-                this.open = true;
+                this.open.set(true);
                 // Only update style tag if the active stage changed; otherwise the animations are reset on each change
-                if (firstUnfinished.name !== this.activeStage?.name) {
-                    this.style = undefined;
+                if (firstUnfinished.name !== this.activeStage()?.name) {
+                    this.style.set(undefined);
                     // Use a timeout to let the bar of this stage autofill until 5% in 500ms (using scss)
                     // This makes it more clear that the stage has started
                     // After that, change it to 90% to let it slowly fill up using css transition
                     // Stopping at 90% makes it more clear that the stage is not yet finished
-                    this.styleTimeout = setTimeout(() => (this.style = 'transform: scaleX(0.9)'), 500);
+                    this.styleTimeout = setTimeout(() => this.style.set('transform: scaleX(0.9)'), 500);
                 }
-                this.activeStage = firstUnfinished;
-                this.displayedText = firstUnfinished.name;
-                this.displayedSubText = firstUnfinished.message || undefined;
+                this.activeStage.set(firstUnfinished);
+                this.displayedText.set(firstUnfinished.name);
+                this.displayedSubText.set(firstUnfinished.message || undefined);
             } else {
-                this.activeStage = undefined;
-                if (this.open) {
+                this.activeStage.set(undefined);
+                if (this.open()) {
                     this.openTimeout = setTimeout(() => {
-                        this.open = false;
-                        this.displayedText = undefined;
-                        this.displayedSubText = undefined;
+                        this.open.set(false);
+                        this.displayedText.set(undefined);
+                        this.displayedSubText.set(undefined);
                     }, 5000);
                 }
             }
