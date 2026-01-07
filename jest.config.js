@@ -71,7 +71,7 @@ module.exports = {
     modulePaths: [`<rootDir>/${baseUrl}`],
     setupFiles: ['jest-date-mock'],
     cacheDirectory: '<rootDir>/build/jest-cache',
-    coverageDirectory: '<rootDir>/build/test-results/',
+    coverageDirectory: '<rootDir>/build/test-results/jest',
     reporters: [
         'default',
         [
@@ -89,37 +89,39 @@ module.exports = {
         '!<rootDir>/src/main/webapp/**/*.route.ts',         // ignore route files because they cannot be properly tested
         '!<rootDir>/**/node_modules/**',
         '!<rootDir>/src/main/webapp/app/openapi/**',        // ignore openapi files because they are generated
-        '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/account/**',   // core account module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/assessment/**',     // assessment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/account/**',   // core account module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/quiz/**',           // quiz module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/text/**',           // text module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
         '<rootDir>/src/main/webapp/app/openapi/',
-        '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
+        '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
+        '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/core/account/',      // core account module uses Vitest
         '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
-        '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
-        '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
+        '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
+        '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
         '<rootDir>/src/main/webapp/app/quiz/',              // quiz module uses Vitest
-        '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
+        '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 90.0,
-            branches: 73.9,
-            functions: 84.1,
-            lines: 90.1,
+            statements: 89.5,
+            branches: 73.6,
+            functions: 83.4,
+            lines: 89.6,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -142,15 +144,15 @@ module.exports = {
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     // Exclude modules migrated to Vitest (see vitest.config.ts)
     testPathIgnorePatterns: [
-        '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
+        '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
+        '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
         '<rootDir>/src/main/webapp/app/core/account/',  // core account module
         '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
-        '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
-        '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
-        '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
+        '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
+        '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
         '<rootDir>/src/main/webapp/app/quiz/',          // quiz module
-        '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/text/',          // text module
+        '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/lti/',           // lti module
     ],
     testTimeout: 3000,
