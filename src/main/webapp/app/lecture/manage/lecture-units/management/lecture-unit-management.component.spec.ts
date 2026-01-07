@@ -12,7 +12,7 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -75,8 +75,6 @@ describe('LectureUnitManagementComponent', () => {
     let course: Course;
 
     const lectureId = 1;
-    const route = { parent: { snapshot: { paramMap: convertToParamMap({ lectureId }) } } } as any as ActivatedRoute;
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -102,7 +100,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureTranscriptionService),
                 MockProvider(AttachmentVideoUnitService),
                 { provide: Router, useClass: MockRouter },
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: {} },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
@@ -114,6 +112,7 @@ describe('LectureUnitManagementComponent', () => {
             .compileComponents();
         lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
         lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
+        lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
         lectureService = TestBed.inject(LectureService);
         lectureUnitService = TestBed.inject(LectureUnitService);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
@@ -452,7 +451,6 @@ describe('LectureUnitManagementComponent', () => {
             const alertSpy = vi.spyOn(alertService, 'success');
             lectureUnitManagementComponent.lecture.set(lecture);
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
-            lectureUnitManagementComponent.ngOnInit(); // Re-run to update resolvedLectureId
 
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
@@ -463,8 +461,7 @@ describe('LectureUnitManagementComponent', () => {
 
         it('should not call retryProcessing if lectureId is missing', () => {
             const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing');
-            // Set resolvedLectureId to undefined via private property access
-            (lectureUnitManagementComponent as any).resolvedLectureId = undefined;
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', undefined);
 
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
@@ -474,7 +471,6 @@ describe('LectureUnitManagementComponent', () => {
         it('should not call retryProcessing if lectureUnit.id is missing', () => {
             const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing');
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
-            lectureUnitManagementComponent.ngOnInit();
             const unitWithoutId = new AttachmentVideoUnit();
 
             lectureUnitManagementComponent.retryProcessing(unitWithoutId);
@@ -487,7 +483,6 @@ describe('LectureUnitManagementComponent', () => {
             vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(throwError(() => error));
             lectureUnitManagementComponent.lecture.set(lecture);
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
-            lectureUnitManagementComponent.ngOnInit();
             lectureUnitManagementComponent.isRetryingProcessing.set({ [attachmentVideoUnit.id!]: true });
 
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
@@ -508,7 +503,7 @@ describe('LectureUnitManagementComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             const pdfFile = new File(['content'], 'Test_File.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -527,7 +522,7 @@ describe('LectureUnitManagementComponent', () => {
             vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -557,7 +552,7 @@ describe('LectureUnitManagementComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             const pdfFiles = [
                 new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
@@ -579,7 +574,7 @@ describe('LectureUnitManagementComponent', () => {
             const errorSpy = vi.spyOn(alertService, 'error');
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -592,7 +587,7 @@ describe('LectureUnitManagementComponent', () => {
             const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             lectureUnitManagementComponent.onPdfFilesDropped([]);
 
@@ -603,8 +598,7 @@ describe('LectureUnitManagementComponent', () => {
             const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // Set resolvedLectureId to undefined via private property access
-            (lectureUnitManagementComponent as any).resolvedLectureId = undefined;
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', undefined);
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -624,7 +618,7 @@ describe('LectureUnitManagementComponent', () => {
             const lectureWithoutCourse = new Lecture();
             lectureWithoutCourse.id = 1;
             lectureUnitManagementComponent.lecture.set(lectureWithoutCourse);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
@@ -639,7 +633,7 @@ describe('LectureUnitManagementComponent', () => {
             vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             expect(lectureUnitManagementComponent.isUploadingPdfs()).toBe(false);
 
@@ -663,7 +657,7 @@ describe('LectureUnitManagementComponent', () => {
             });
 
             lectureUnitManagementComponent.lecture.set(lecture);
-            // resolvedLectureId is already set from route in ngOnInit
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', lectureId);
 
             const pdfFiles = [
                 new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),

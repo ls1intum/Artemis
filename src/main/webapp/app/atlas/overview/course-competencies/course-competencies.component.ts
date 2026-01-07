@@ -1,5 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, effect, inject, input } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,17 +22,14 @@ import { ScienceService } from 'app/shared/science/science.service';
     styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
     imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
-export class CourseCompetenciesComponent implements OnInit, OnDestroy {
+export class CourseCompetenciesComponent implements OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
-    private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private readonly scienceService = inject(ScienceService);
 
     courseId = input<number>();
-    private _resolvedCourseId?: number;
-    resolvedCourseId = computed(() => this.courseId() ?? this._resolvedCourseId!);
 
     isLoading = false;
     course?: Course;
@@ -50,25 +46,19 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private dashboardFeatureToggleActiveSubscription: Subscription;
     dashboardFeatureActive = false;
 
-    ngOnInit(): void {
-        const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
-        if (courseIdParams$) {
-            this.parentParamSubscription = courseIdParams$.subscribe((params) => {
-                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, Number(params.courseId));
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            if (!courseId || isNaN(courseId)) {
+                this.alertService.error('artemisApp.error.invalidCourseId');
+                return;
+            }
+            this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, courseId);
+            this.course = this.courseStorageService.getCourse(courseId);
+            this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
+                this.dashboardFeatureActive = active;
+                this.loadData();
             });
-        }
-
-        // Resolve courseId from input or route params
-        this._resolvedCourseId = this.courseId() ?? Number(this.activatedRoute.parent?.parent?.snapshot.paramMap.get('courseId'));
-        if (!this._resolvedCourseId || isNaN(this._resolvedCourseId)) {
-            this.alertService.error('artemisApp.error.invalidCourseId');
-            return;
-        }
-        this.course = this.courseStorageService.getCourse(this.resolvedCourseId());
-
-        this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
-            this.dashboardFeatureActive = active;
-            this.loadData();
         });
     }
 
@@ -99,8 +89,8 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
 
-        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.resolvedCourseId(), false);
-        const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.resolvedCourseId()) : of(undefined);
+        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.courseId()!, false);
+        const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.courseId()!) : of(undefined);
 
         forkJoin([courseCompetencyObservable, competencyJolObservable]).subscribe({
             next: ([courseCompetencies, judgementOfLearningMap]) => {

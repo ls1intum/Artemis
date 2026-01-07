@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormControl, FormGroup } from '@angular/forms';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { EditLtiConfigurationComponent } from 'app/core/admin/lti-configuration/edit/edit-lti-configuration.component';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
@@ -34,14 +34,6 @@ describe('Edit LTI Configuration Component', () => {
     } as LtiPlatformConfiguration;
 
     beforeEach(async () => {
-        const route = {
-            snapshot: { paramMap: convertToParamMap({ platformId: '1' }) },
-        } as ActivatedRoute;
-
-        const httpClientMock = {
-            get: vi.fn().mockReturnValue(of(platformConfiguration)),
-        };
-
         const mockRouter = {
             navigate: vi.fn(),
         };
@@ -49,6 +41,7 @@ describe('Edit LTI Configuration Component', () => {
         const mockLtiConfigurationService = {
             getLtiPlatformById: vi.fn().mockReturnValue(of(platformConfiguration)),
             updateLtiPlatformConfiguration: vi.fn(),
+            addLtiPlatformConfiguration: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -56,8 +49,6 @@ describe('Edit LTI Configuration Component', () => {
             providers: [
                 { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
                 { provide: Router, useValue: mockRouter },
-                { provide: ActivatedRoute, useValue: route },
-                { provide: HttpClient, useValue: httpClientMock },
                 { provide: AlertService, useValue: { error: vi.fn() } },
             ],
         })
@@ -75,6 +66,7 @@ describe('Edit LTI Configuration Component', () => {
     });
 
     it('should initialize', () => {
+        comp.platformId.set(1);
         fixture.detectChanges();
         expect(comp).toBeTruthy();
         expect(comp.platform).toEqual(platformConfiguration);
@@ -89,6 +81,7 @@ describe('Edit LTI Configuration Component', () => {
     });
 
     it('should save and navigate', async () => {
+        comp.platform = platformConfiguration;
         fixture.detectChanges();
 
         const changedConfiguration = updateConfiguration();
@@ -112,6 +105,7 @@ describe('Edit LTI Configuration Component', () => {
     });
 
     it('should handle save failure and display error', async () => {
+        comp.platform = platformConfiguration;
         fixture.detectChanges();
 
         const changedConfiguration = updateConfiguration();
@@ -199,38 +193,17 @@ describe('Edit LTI Configuration Component', () => {
         const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
         vi.spyOn(ltiConfigurationService, 'getLtiPlatformById').mockReturnValue(throwError(() => errorResponse));
 
-        comp.ngOnInit();
+        comp.platformId.set(1);
+        fixture.detectChanges();
 
         expect(alertService.error).toHaveBeenCalled();
     });
 
-    it('should initialize form without platform when no platformId in route', async () => {
-        // Reset the route to have no platformId
-        const routeWithoutId = {
-            snapshot: { paramMap: convertToParamMap({}) },
-        } as ActivatedRoute;
+    it('should initialize form without platform when no platformId is set', async () => {
+        fixture.detectChanges();
 
-        await TestBed.resetTestingModule();
-        await TestBed.configureTestingModule({
-            imports: [EditLtiConfigurationComponent],
-            providers: [
-                { provide: LtiConfigurationService, useValue: { getLtiPlatformById: vi.fn() } },
-                { provide: Router, useValue: { navigate: vi.fn() } },
-                { provide: ActivatedRoute, useValue: routeWithoutId },
-                { provide: HttpClient, useValue: { get: vi.fn() } },
-                { provide: AlertService, useValue: { error: vi.fn() } },
-            ],
-        })
-            .overrideTemplate(EditLtiConfigurationComponent, '')
-            .compileComponents();
-
-        const newFixture = TestBed.createComponent(EditLtiConfigurationComponent);
-        const newComp = newFixture.componentInstance;
-
-        newComp.ngOnInit();
-
-        expect(newComp.platformConfigurationForm).toBeDefined();
-        expect(newComp.platform).toBeUndefined();
+        expect(comp.platformConfigurationForm).toBeDefined();
+        expect(comp.platform).toBeUndefined();
     });
 
     it('should navigate to lti configuration page', () => {

@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { concatMap, finalize, map } from 'rxjs/operators';
@@ -54,7 +54,7 @@ import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.componen
         PdfDropZoneComponent,
     ],
 })
-export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+export class LectureUnitManagementComponent implements OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faEye = faEye;
@@ -68,7 +68,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly ActionType = ActionType;
     protected readonly ProcessingPhase = ProcessingPhase;
 
-    private readonly activatedRoute = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly lectureService = inject(LectureService);
     private readonly alertService = inject(AlertService);
@@ -101,15 +100,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         [LectureUnitType.ONLINE]: 'online-units',
     };
 
-    private resolvedLectureId: number | undefined;
-
-    ngOnInit(): void {
-        this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
-        if (this.resolvedLectureId) {
+    constructor() {
+        effect(() => {
+            const lectureId = this.getLectureId();
+            if (!lectureId) {
+                return;
+            }
             // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
             // ideally the router could load the details directly
             this.loadData();
-        }
+        });
     }
 
     ngOnDestroy(): void {
@@ -117,11 +117,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
+        const lectureId = this.getLectureId();
+        if (!lectureId) {
+            return;
+        }
         this.isLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .findWithDetails(this.resolvedLectureId!)
+            .findWithDetails(lectureId)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
@@ -151,12 +155,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     updateOrder() {
-        if (this.resolvedLectureId === undefined || isNaN(this.resolvedLectureId)) {
+        const lectureId = this.getLectureId();
+        if (!lectureId) {
             return;
         }
 
         this.lectureUnitService
-            .updateOrder(this.resolvedLectureId, this.lectureUnits())
+            .updateOrder(lectureId, this.lectureUnits())
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -213,7 +218,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!).subscribe({
+        const lectureId = this.getLectureId();
+        if (!lectureId) {
+            return;
+        }
+        this.lectureUnitService.delete(lectureUnitId, lectureId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -289,10 +298,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     private loadProcessingStatus(lectureUnitId: number) {
-        if (!this.resolvedLectureId) {
+        const lectureId = this.getLectureId();
+        if (!lectureId) {
             return;
         }
-        this.lectureUnitService.getProcessingStatus(this.resolvedLectureId, lectureUnitId).subscribe({
+        this.lectureUnitService.getProcessingStatus(lectureId, lectureUnitId).subscribe({
             next: (status) => {
                 if (status) {
                     this.processingStatus.update((current) => ({ ...current, [lectureUnitId]: status }));
@@ -410,12 +420,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * @param lectureUnit the lecture unit to retry processing for
      */
     retryProcessing(lectureUnit: AttachmentVideoUnit) {
-        if (!this.resolvedLectureId || !lectureUnit.id) {
+        const lectureId = this.getLectureId();
+        if (!lectureId || !lectureUnit.id) {
             return;
         }
 
         this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: true }));
-        this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
+        this.lectureUnitService.retryProcessing(lectureId, lectureUnit.id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
                 // Reload both statuses after a short delay to show updated state
@@ -438,7 +449,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Navigates to edit page for the last created unit
      */
     onPdfFilesDropped(files: File[]): void {
-        if (files.length === 0 || !this.resolvedLectureId) {
+        const lectureId = this.getLectureId();
+        if (files.length === 0 || !lectureId) {
             return;
         }
 
@@ -468,7 +480,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                             '/course-management',
                             lectureValue.course.id,
                             'lectures',
-                            this.resolvedLectureId,
+                            lectureId,
                             'unit-management',
                             'attachment-video-units',
                             lastCreatedUnit.id,
@@ -485,6 +497,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Creates a single attachment unit from a file
      */
     private createAttachmentUnitFromFile(file: File) {
-        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.resolvedLectureId!, file);
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.getLectureId()!, file);
+    }
+
+    private getLectureId(): number | undefined {
+        const lectureId = this.lectureId();
+        if (lectureId === undefined || Number.isNaN(lectureId)) {
+            return undefined;
+        }
+        return lectureId;
     }
 }

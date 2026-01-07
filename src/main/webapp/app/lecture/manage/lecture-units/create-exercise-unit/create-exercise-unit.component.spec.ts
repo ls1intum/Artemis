@@ -49,33 +49,7 @@ describe('CreateExerciseUnitComponent', () => {
                 MockProvider(SortService),
                 MockProvider(ExerciseUnitService),
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            parent: {
-                                paramMap: of({
-                                    get: (key: string) => {
-                                        switch (key) {
-                                            case 'lectureId':
-                                                return 1;
-                                        }
-                                    },
-                                }),
-                                parent: {
-                                    paramMap: of({
-                                        get: (key: string) => {
-                                            switch (key) {
-                                                case 'courseId':
-                                                    return 1;
-                                            }
-                                        },
-                                    }),
-                                },
-                            },
-                        },
-                    },
-                },
+                { provide: ActivatedRoute, useValue: {} },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -139,6 +113,8 @@ describe('CreateExerciseUnitComponent', () => {
             ),
         );
 
+        createExerciseUnitComponentFixture.componentRef.setInput('lectureId', 1);
+        createExerciseUnitComponentFixture.componentRef.setInput('courseId', 1);
         createExerciseUnitComponentFixture.detectChanges();
         expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()).toHaveLength(5);
 
