@@ -267,6 +267,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     ngOnDestroy() {
+        this.sessionIdSubscription?.unsubscribe();
+        this.relatedEntityIdSubscription?.unsubscribe();
+        this.chatModeSubscription?.unsubscribe();
         this.messagesSubscription.unsubscribe();
         this.stagesSubscription.unsubscribe();
         this.errorSubscription.unsubscribe();
@@ -483,7 +486,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     checkChatScroll() {
-        const messagesElement = this.messagesElement().nativeElement;
+        const messagesElement = this.messagesElement()?.nativeElement;
+        if (!messagesElement) return;
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
     }

@@ -165,10 +165,11 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
-     * Checks if a number field has a value (not null, undefined, or empty string from Angular forms)
+     * Checks if a number field has a value (not null, undefined, or empty string from Angular forms).
+     * Note: Angular's ngModel can set empty string on number inputs when cleared, hence the string check.
      */
-    private hasNumericValue(value: number | undefined): boolean {
-        return value != null && (value as unknown) !== '';
+    private hasNumericValue(value: number | string | undefined): boolean {
+        return value != null && value !== '';
     }
 
     /**

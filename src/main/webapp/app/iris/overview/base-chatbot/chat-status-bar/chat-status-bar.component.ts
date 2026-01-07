@@ -1,8 +1,15 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, effect, input } from '@angular/core';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
+
+/**
+ * Extended stage type with computed lowercase state for CSS class binding
+ */
+interface ProcessedStage extends IrisStageDTO {
+    lowerCaseState?: string;
+}
 
 @Component({
     selector: 'jhi-chat-status-bar',
@@ -21,6 +28,14 @@ export class ChatStatusBarComponent {
 
     readonly stages = input<IrisStageDTO[]>([]);
 
+    // Computed signal that creates copies with lowerCaseState added (avoids mutating input)
+    readonly processedStages = computed<ProcessedStage[]>(() => {
+        return this.stages().map((stage) => ({
+            ...stage,
+            lowerCaseState: stage.state?.toLowerCase(),
+        }));
+    });
+
     faArrowsRotate = faArrowsRotate;
     faCircleXmark = faCircleXmark;
 
@@ -28,10 +43,8 @@ export class ChatStatusBarComponent {
     protected readonly IrisStageStateDTO = IrisStageStateDTO;
 
     constructor() {
-        effect(() => {
+        effect((onCleanup) => {
             const stages = this.stages();
-            // Lower case state for scss classes, avoid function calling in template
-            stages.forEach((stage) => (stage.lowerCaseState = stage.state?.toLowerCase()));
             const firstUnfinished = stages.find((stage) => !this.isStageFinished(stage));
             if (firstUnfinished) {
                 clearTimeout(this.openTimeout);
@@ -59,6 +72,12 @@ export class ChatStatusBarComponent {
                     }, 5000);
                 }
             }
+
+            // Cleanup timeouts when effect re-runs or component destroys
+            onCleanup(() => {
+                clearTimeout(this.openTimeout);
+                clearTimeout(this.styleTimeout);
+            });
         });
     }
 
