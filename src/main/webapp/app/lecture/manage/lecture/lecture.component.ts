@@ -6,7 +6,9 @@ import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -66,7 +68,8 @@ export class LectureComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private sortService = inject(SortService);
 
     lectures: Lecture[];
@@ -111,9 +114,18 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Opens the import modal and imports the selected lecture
      */
     openImportModal() {
-        const modalRef = this.modalService.open(LectureImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: Lecture) => {
+        const dialogRef = this.dialogService.open(LectureImportComponent, {
+            header: this.translateService.instant('artemisApp.lecture.import.label'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+        });
+
+        dialogRef?.onClose.subscribe((result: Lecture | undefined) => {
+            if (result) {
                 this.lectureService
                     .import(this.courseId, result.id!)
                     .pipe(
@@ -127,9 +139,8 @@ export class LectureComponent implements OnInit, OnDestroy {
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
-            },
-            () => {},
-        );
+            }
+        });
     }
 
     private deleteLectureFromDisplayedLectures(lectureId: number) {
@@ -233,25 +244,29 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Opens a dialog to select target lecture (new or existing)
      */
     onPdfFilesDropped(files: File[]): void {
-        const modalRef = this.modalService.open(PdfUploadTargetDialogComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        const dialogRef = this.dialogService.open(PdfUploadTargetDialogComponent, {
+            header: this.translateService.instant('artemisApp.lecture.pdfUpload.dialogTitle'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: {
+                lectures: this.lectures,
+                uploadedFiles: files,
+            },
         });
-        modalRef.componentInstance.lectures = this.lectures;
-        modalRef.componentInstance.initializeWithFiles(files);
 
-        modalRef.result.then(
-            (result: PdfUploadTarget) => {
+        dialogRef?.onClose.subscribe((result: PdfUploadTarget | undefined) => {
+            if (result) {
                 if (result.targetType === 'new' && result.newLectureTitle) {
                     this.createLectureWithUnits(result.newLectureTitle, files);
                 } else if (result.targetType === 'existing' && result.lectureId) {
                     this.createUnitsForExistingLecture(result.lectureId, files);
                 }
-            },
-            () => {
-                // Dialog dismissed, do nothing
-            },
-        );
+            }
+        });
     }
 
     /**

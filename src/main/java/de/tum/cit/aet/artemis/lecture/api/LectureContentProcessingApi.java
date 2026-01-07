@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
@@ -17,7 +16,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
  * This class allows other modules (e.g., nebula, iris) to interact with the lecture
  * content processing pipeline without creating direct dependencies.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Controller
 @Lazy
 public class LectureContentProcessingApi extends AbstractLectureApi {
