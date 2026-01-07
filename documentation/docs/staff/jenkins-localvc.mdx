@@ -14,12 +14,15 @@ import authorizationPermissions from './assets/jenkins/jenkins_authorization_per
 
 # Jenkins and LocalVC Setup
 
-This section describes how to set up a programming exercise environment based on Jenkins and LocalVC, which is integrated in Artemis. Optional commands are in curly brackets `{}`.
+This section describes how to set up a programming exercise environment based on Jenkins and LocalVC, which is integrated in Artemis.
+Optional commands are in curly brackets `{}`.
 
-The following assumes that all instances run on separate servers. If you have one single server, or your own NGINX instance, just skip all NGINX related steps and use the configurations provided under *Separate NGINX Configurations*.
+The following assumes that all instances run on separate servers.
+If you have one single server, or your own NGINX instance, just skip all NGINX related steps and use the configurations provided under *Separate NGINX Configurations*.
 
 <Callout variant={CalloutVariant.info}>
-    If you want to setup everything on your local development computer, ignore all NGINX related steps. Just make sure that you use unique port mappings for your Docker containers (e.g. `8081` for Jenkins, `8080` for Artemis).
+    If you want to setup everything on your local development computer, ignore all NGINX related steps.
+    Just make sure that you use unique port mappings for your Docker containers (e.g. `8081` for Jenkins, `8080` for Artemis).
 </Callout>
 
 ---
@@ -38,7 +41,8 @@ The following assumes that all instances run on separate servers. If you have on
 
 In order to use Artemis with Jenkins as **Continuous Integration** Server and LocalVC as integrated **Version Control** Server, you have to configure the file `application-prod.yml` (Production Server) or `application-artemis.yml` (Local Development) accordingly.
 
-Please note that all values in `<..>` have to be configured properly. These values will be explained below in the corresponding sections. If you want to set up a local environment, copy the values below into your `application-artemis.yml` or `application-local.yml` file (the latter is recommended).
+Please note that all values in `<..>` have to be configured properly. These values will be explained below in the corresponding sections.
+If you want to set up a local environment, copy the values below into your `application-artemis.yml` or `application-local.yml` file (the latter is recommended).
 
 ```yaml
 artemis:
@@ -93,7 +97,10 @@ In addition, you have to start Artemis with the profiles `localvc` and `jenkins`
 Please read the [Server Setup](/staff/setup#server-setup) guide for more details.
 
 <Callout variant={CalloutVariant.info}>
-    For a local setup on Windows you can use `http://host.docker.internal` appended by the chosen ports as the continuous-integration url and the internal vcs url. Make sure to change the `server.url` and `artemis.version-control.url` value in `application-dev.yml` or `application-prod.yml` accordingly. The `server.url` value will be used for the communication hooks from Jenkins to Artemis. In case you use a different port than 80 (http) or 443 (https) for the communication, you have to append it to the both urls value, e.g. `127.0.0.1:8080`.
+    For a local setup on Windows you can use `http://host.docker.internal` appended by the chosen ports as the continuous-integration url and the internal vcs url.
+  Make sure to change the `server.url` and `artemis.version-control.url` value in `application-dev.yml` or `application-prod.yml` accordingly.
+  The `server.url` value will be used for the communication hooks from Jenkins to Artemis.
+  In case you use a different port than 80 (http) or 443 (https) for the communication, you have to append it to the both urls value, e.g. `127.0.0.1:8080`.
 </Callout>
 
 When you start Artemis for the first time, it will automatically create an admin user.
@@ -101,7 +108,8 @@ When you start Artemis for the first time, it will automatically create an admin
 <details>
 <summary>Manual Admin User Creation (if automatic creation fails)</summary>
 
-Sometimes Artemis does not generate the admin user which may lead to a startup error. You will have to create the user manually in the MySQL database. Make sure both are set up correctly and follow these steps:
+Sometimes Artemis does not generate the admin user which may lead to a startup error.
+You will have to create the user manually in the MySQL database. Make sure both are set up correctly and follow these steps:
 
 1. Use the tool mentioned above to generate a password hash.
 2. Connect to the database via a client like [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) and execute the following query to create the user. Replace `artemis_admin` and `HASHED_PASSWORD` with your chosen username and password:
@@ -144,7 +152,7 @@ The following steps describe how to deploy a pre-configured version of the Jenki
    docker compose -f docker/<Jenkins setup to be launched>.yml up -d
    ```
 
-   Jenkins is then reachable under `http://localhost:8082/` and you can login using the credentials specified in `jenkins-casc-config-localvc.yml` (defaults to `artemis_admin` as both username and password).
+   Jenkins is then reachable under http://localhost:8082/, and you can log in using the credentials specified in `jenkins-casc-config-localvc.yml` (defaults to `artemis_admin` as both username and password).
 
 2. The `application-local.yml` must be adapted with the values configured in `jenkins-casc-config-localvc.yml`:
 
@@ -197,11 +205,8 @@ The following steps describe how to deploy a pre-configured version of the Jenki
 #### Nginx Proxy Setup
 
 <Callout variant={CalloutVariant.info}>
-    If you run your own NGINX or if you install Jenkins on a local development computer, you can skip this section.
+    If you run your own NGINX or if you install Jenkins on a local development computer, you can skip this section and continue to [start Jenkins](#start-jenkins).
 </Callout>
-
-<details>
-<summary>NGINX Configuration Steps</summary>
 
 2. Create a file increasing the maximum file size for the Nginx proxy. The nginx-proxy uses a default file limit that is too small for the plugin that will be uploaded later. **Skip this step if you have your own NGINX instance.**
 
@@ -275,8 +280,6 @@ The following steps describe how to deploy a pre-configured version of the Jenki
        jrcs/letsencrypt-nginx-proxy-companion
    ```
 
-</details>
-
 #### Start Jenkins
 
 6. Run Jenkins by executing the following command (change the hostname and choose which port alternative you need)
@@ -298,7 +301,7 @@ The following steps describe how to deploy a pre-configured version of the Jenki
        Note that you can omit the `-u root`, `-v /var/run/docker.sock:/var/run/docker.sock` and `-v /usr/bin/docker:/usr/bin/docker:ro` parameters, if you do not want to run Docker builds on the Jenkins controller (but e.g. use remote agents).
    </Callout>
 
-7. Open Jenkins in your browser (e.g. `localhost:8082`) and setup the admin user account (install all suggested plugins). You can get the initial admin password using the following command.
+7. Open Jenkins in your browser (e.g. http://localhost:8082) and setup the admin user account (install all suggested plugins). You can get the initial admin password using the following command.
 
    ```bash
    # Jenkins highlights the password in the logs, you can't miss it
@@ -378,14 +381,16 @@ Go to *Manage Jenkins → System Configuration → Configure*. There you will fi
 
 ### Server Notification Plugin
 
-Artemis needs to receive a notification after every build, which contains the test results and additional commit information. For that purpose, we developed a Jenkins plugin, that can aggregate and *POST* JUnit formatted results to any URL.
+Artemis needs to receive a notification after every build, which contains the test results and additional commit information.
+For that purpose, we developed a Jenkins plugin, that can aggregate and *POST* JUnit formatted results to any URL.
 
-You can download the current release of the plugin [here](https://github.com/ls1intum/jenkins-server-notification-plugin/releases) (Download the **.hpi** file). Go to the Jenkins plugin page (*Manage Jenkins → System Configuration → Plugins*) and install the downloaded file under the *Advanced settings* tab under *Deploy Plugin*
+You can download the current release of the plugin [here](https://github.com/ls1intum/jenkins-server-notification-plugin/releases) (Download the **.hpi** file).
+Go to the Jenkins plugin page (*Manage Jenkins → System Configuration → Plugins*) and install the downloaded file under the *Advanced settings* tab under *Deploy Plugin*
 
 <Image
     src={customPlugin}
     alt="Jenkins custom plugin upload"
-    size={ImageSize.medium}
+    size={ImageSize.large}
     caption="Upload custom plugin in Jenkins"
 />
 
@@ -508,7 +513,7 @@ Configure your master node like this (adjust the number of executors, if needed)
 <Image
     src={localNode}
     alt="Jenkins local node configuration"
-    size={ImageSize.medium}
+    size={ImageSize.large}
     caption="Jenkins local node configuration"
 />
 
@@ -523,9 +528,6 @@ An alternative way of adding a build agent that will use docker (similar to the 
 1. Make sure to have Docker [installed](https://docs.docker.com/engine/install/)
 
 **Agent setup:**
-
-<details>
-<summary>Detailed Setup Steps</summary>
 
 1. Create a new SSH key using `ssh-keygen` (if a passphrase is added, store it for later)
 
@@ -556,11 +558,9 @@ An alternative way of adding a build agent that will use docker (similar to the 
 
     1. Log in as 'jenkins' with `su jenkins`
     2. Try if `docker inspect <agent_container_name>` works or if a permission error occurs
-    3. If an permission error occurs, try to restart the docker container
+    3. If a permission error occurs, try to restart the docker container
 
 12. Now you can exit the container executing `exit` twice (the first will exit the jenkins user and the second the container)
-
-</details>
 
 **Add agent in Jenkins:**
 
@@ -579,7 +579,7 @@ An alternative way of adding a build agent that will use docker (similar to the 
 <Image
     src={alternativeNodeCredentials}
     alt="Alternative Jenkins node credentials"
-    size={ImageSize.medium}
+    size={ImageSize.large}
     caption="SSH credentials for alternative Jenkins node"
 />
 
@@ -591,13 +591,13 @@ An alternative way of adding a build agent that will use docker (similar to the 
 <Image
     src={alternativeNodeSetup}
     alt="Alternative Jenkins node setup"
-    size={ImageSize.small}
+    size={ImageSize.large}
     caption="Create new permanent agent"
 />
 
 4. Node settings:
 
-   - # of executors: Up to you (e.g. 4)
+   - \# of executors: Up to you (e.g. 4)
    - Remote root directory: /home/jenkins/agent
    - Labels: docker
    - Usage: Only build jobs with label expressions matching this node
@@ -622,7 +622,8 @@ An alternative way of adding a build agent that will use docker (similar to the 
 
 ### Installing Remote Build Agents
 
-You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time. Jenkins supports remote build agents: The actual compilation of the students submissions happens on these other machines but the whole process is transparent to Artemis.
+You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
+Jenkins supports remote build agents: The actual compilation of the students submissions happens on these other machines but the whole process is transparent to Artemis.
 
 This guide explains setting up a remote agent on an Ubuntu virtual machine that supports docker builds.
 
@@ -645,7 +646,7 @@ This guide explains setting up a remote agent on an Ubuntu virtual machine that 
 <Image
     src={sshCredentials}
     alt="Jenkins SSH credentials"
-    size={ImageSize.medium}
+    size={ImageSize.large}
     caption="Jenkins SSH credentials configuration"
 />
 
