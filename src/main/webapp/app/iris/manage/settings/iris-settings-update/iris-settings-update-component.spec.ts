@@ -96,8 +96,8 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.settings()).toEqual(mockSettings);
             expect(component.rateLimitRequests()).toBe(100);
             expect(component.rateLimitTimeframeHours()).toBe(24);
-            expect(component.effectiveRateLimit).toEqual({ requests: 100, timeframeHours: 24 });
-            expect(component.applicationDefaults).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.effectiveRateLimit()).toEqual({ requests: 100, timeframeHours: 24 });
+            expect(component.applicationDefaults()).toEqual({ requests: 50, timeframeHours: 12 });
             expect(component.isDirty()).toBeFalse();
         }));
 
@@ -152,14 +152,14 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.load');
-            expect(component.isLoading).toBeFalse();
+            expect(component.isLoading()).toBeFalse();
         }));
 
         it('should set loading states correctly', fakeAsync(() => {
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
-            expect(component.isLoading).toBeFalse();
+            expect(component.isLoading()).toBeFalse();
         }));
     });
 
@@ -192,7 +192,7 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(savedSettings.rateLimit).toEqual({ requests: 200, timeframeHours: 48 });
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.success');
             expect(component.isDirty()).toBeFalse();
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving()).toBeFalse();
         }));
 
         it('should send undefined rateLimit when both fields are cleared (revert to defaults)', fakeAsync(() => {
@@ -280,7 +280,7 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('Custom error message');
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving()).toBeFalse();
         }));
 
         it('should handle save error without message', fakeAsync(() => {
@@ -292,7 +292,7 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.save');
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving()).toBeFalse();
         }));
 
         it('should do nothing if no courseId', () => {
@@ -599,42 +599,42 @@ describe('IrisSettingsUpdateComponent', () => {
             component.rateLimitRequests.set(undefined);
             component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 50, timeframeHours: 12 });
         }));
 
         it('should return entered values when both fields are filled', fakeAsync(() => {
             component.rateLimitRequests.set(200);
             component.rateLimitTimeframeHours.set(48);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 200, timeframeHours: 48 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 200, timeframeHours: 48 });
         }));
 
         it('should merge entered values with defaults when only requests is filled', fakeAsync(() => {
             component.rateLimitRequests.set(200);
             component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 200, timeframeHours: 12 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 200, timeframeHours: 12 });
         }));
 
         it('should merge entered values with defaults when only timeframe is filled', fakeAsync(() => {
             component.rateLimitRequests.set(undefined);
             component.rateLimitTimeframeHours.set(48);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 48 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 50, timeframeHours: 48 });
         }));
 
         it('should handle zero requests as a valid value', fakeAsync(() => {
             component.rateLimitRequests.set(0);
             component.rateLimitTimeframeHours.set(24);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 0, timeframeHours: 24 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 0, timeframeHours: 24 });
         }));
 
         it('should treat empty string as empty value', fakeAsync(() => {
             component.rateLimitRequests.set('' as unknown as number);
             component.rateLimitTimeframeHours.set('' as unknown as number);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 50, timeframeHours: 12 });
         }));
     });
 
@@ -650,23 +650,23 @@ describe('IrisSettingsUpdateComponent', () => {
             component.rateLimitTimeframeHours.set(undefined);
             // applicationDefaults is { requests: 50, timeframeHours: 12 }
 
-            expect(component.isEffectiveRateLimitUnlimited).toBeFalse();
+            expect(component.isEffectiveRateLimitUnlimited()).toBeFalse();
         }));
 
         it('should return false when explicit values are set', fakeAsync(() => {
             component.rateLimitRequests.set(100);
             component.rateLimitTimeframeHours.set(24);
 
-            expect(component.isEffectiveRateLimitUnlimited).toBeFalse();
+            expect(component.isEffectiveRateLimitUnlimited()).toBeFalse();
         }));
 
         it('should return true when defaults are null', fakeAsync(() => {
             // Simulate unlimited defaults
-            component.applicationDefaults = { requests: undefined, timeframeHours: undefined };
+            component.applicationDefaults.set({ requests: undefined, timeframeHours: undefined });
             component.rateLimitRequests.set(undefined);
             component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.isEffectiveRateLimitUnlimited).toBeTrue();
+            expect(component.isEffectiveRateLimitUnlimited()).toBeTrue();
         }));
     });
 
@@ -681,32 +681,32 @@ describe('IrisSettingsUpdateComponent', () => {
             component.rateLimitRequests.set(undefined);
             component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.hasEffectiveRequestsLimit).toBeTrue();
-            expect(component.hasEffectiveTimeframeLimit).toBeTrue();
+            expect(component.hasEffectiveRequestsLimit()).toBeTrue();
+            expect(component.hasEffectiveTimeframeLimit()).toBeTrue();
         }));
 
         it('should return true when explicit values are set', fakeAsync(() => {
             component.rateLimitRequests.set(100);
             component.rateLimitTimeframeHours.set(24);
 
-            expect(component.hasEffectiveRequestsLimit).toBeTrue();
-            expect(component.hasEffectiveTimeframeLimit).toBeTrue();
+            expect(component.hasEffectiveRequestsLimit()).toBeTrue();
+            expect(component.hasEffectiveTimeframeLimit()).toBeTrue();
         }));
 
         it('should return true for requests when requests is 0', fakeAsync(() => {
             component.rateLimitRequests.set(0);
             component.rateLimitTimeframeHours.set(24);
 
-            expect(component.hasEffectiveRequestsLimit).toBeTrue();
+            expect(component.hasEffectiveRequestsLimit()).toBeTrue();
         }));
 
         it('should return false when defaults are null and fields are empty', fakeAsync(() => {
-            component.applicationDefaults = { requests: undefined, timeframeHours: undefined };
+            component.applicationDefaults.set({ requests: undefined, timeframeHours: undefined });
             component.rateLimitRequests.set(undefined);
             component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.hasEffectiveRequestsLimit).toBeFalse();
-            expect(component.hasEffectiveTimeframeLimit).toBeFalse();
+            expect(component.hasEffectiveRequestsLimit()).toBeFalse();
+            expect(component.hasEffectiveTimeframeLimit()).toBeFalse();
         }));
     });
 });

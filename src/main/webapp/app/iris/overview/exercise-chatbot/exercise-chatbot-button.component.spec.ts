@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -32,6 +32,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
     let mockParamsSubject: any;
+    let mockDialogAfterClosed: Subject<void>;
     let accountService: AccountService;
 
     const statusMock = {
@@ -49,6 +50,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
     beforeEach(async () => {
         mockParamsSubject = new Subject();
+        mockDialogAfterClosed = new Subject<void>();
         mockActivatedRoute = {
             params: mockParamsSubject,
         } as unknown as ActivatedRoute;
@@ -57,9 +59,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         mockDialog = {
             open: jest.fn().mockReturnValue({
-                afterClosed: jest.fn().mockReturnValue({
-                    subscribe: jest.fn(),
-                }),
+                afterClosed: jest.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
                 close: mockDialogClose,
             }),
             closeAll: jest.fn(),
@@ -147,8 +147,8 @@ describe('ExerciseChatbotButtonComponent', () => {
         // given
         component.openChat();
 
-        // when
-        component.ngOnDestroy();
+        // when - destroy the fixture (triggers destroyRef.onDestroy)
+        fixture.destroy();
 
         // then
         expect(mockDialogClose).toHaveBeenCalled();
@@ -185,38 +185,57 @@ describe('ExerciseChatbotButtonComponent', () => {
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
-        component.openChat();
 
-        // when - flush all timers and microtasks, then detect changes
-        flush();
+        // Wait for message to be received, then open chat
+        tick(100);
+        fixture.detectChanges();
+
+        // Verify indicator shows when chat is closed
+        expect(component.chatOpen()).toBeFalse();
+        let unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        expect(unreadIndicatorElement).not.toBeNull();
+
+        // Now open chat
+        component.openChat();
         tick();
         fixture.detectChanges();
 
-        // then
-        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        // then - when chat is open, the entire button section (including unread indicator) should not be rendered
+        expect(component.chatOpen()).toBeTrue();
+        unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
         discardPeriodicTasks();
     }));
 
-    it('should open chatbot if irisQuestion is provided in the queryParams', () => {
-        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+    it('should open chatbot if irisQuestion is provided in the queryParams', fakeAsync(() => {
+        // given - set up queryParams BEFORE creating component
         const activatedRoute = TestBed.inject(ActivatedRoute);
+        (activatedRoute.queryParams as any) = of({ irisQuestion: 'Can you explain me the error I got?' });
 
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
+        // Recreate component with queryParams already set
+        fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
+        fixture.detectChanges();
+        tick();
 
-        component.ngOnInit();
+        // then
+        expect(component.chatOpen()).toBeTrue();
+        discardPeriodicTasks();
+    }));
 
-        expect(component.chatOpen).toBeTrue();
-    });
+    it('should not open the chatbot if no irisQuestion is provided in the queryParams', fakeAsync(() => {
+        // given - chatOpen starts as false
+        expect(component.chatOpen()).toBeFalse();
 
-    it('should not open the chatbot if no irisQuestion is provided in the queryParams', () => {
-        const mockQueryParams = {};
+        // when - emit empty query params
+        const mockQueryParamsSubject = new Subject();
         const activatedRoute = TestBed.inject(ActivatedRoute);
+        (activatedRoute.queryParams as any) = mockQueryParamsSubject;
+        mockQueryParamsSubject.next({});
+        tick();
 
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
-
-        component.ngOnInit();
-
-        expect(component.chatOpen).toBeFalse();
-    });
+        // then - chatOpen should still be false
+        expect(component.chatOpen()).toBeFalse();
+    }));
 });

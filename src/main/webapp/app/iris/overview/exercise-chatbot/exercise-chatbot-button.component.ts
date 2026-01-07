@@ -1,9 +1,10 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
-import { EMPTY, Subscription, filter, of, switchMap } from 'rxjs';
+import { EMPTY, filter, of, switchMap } from 'rxjs';
 import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -19,8 +20,9 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
     imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
+export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faAngleDoubleDown = faAngleDoubleDown;
@@ -29,6 +31,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     private readonly overlay = inject(Overlay);
     private readonly chatService = inject(IrisChatService);
     private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -39,67 +42,78 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     readonly mode = input.required<ChatServiceMode>();
 
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
-    chatOpen = false;
-    isOverflowing = false;
-    hasNewMessages = false;
-    newIrisMessage: string | undefined;
 
-    private numNewMessagesSubscription: Subscription;
-    private paramsSubscription: Subscription;
-    private latestIrisMessageSubscription: Subscription;
-    private queryParamsSubscription: Subscription;
+    // UI state as signals for OnPush change detection
+    readonly chatOpen = signal(false);
+    readonly isOverflowing = signal(false);
+    readonly newIrisMessage = signal<string | undefined>(undefined);
+
+    // Convert numNewMessages observable to signal
+    private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
+    readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
+
+    // Convert newIrisMessage observable to signal for tracking incoming messages
+    private readonly latestIrisMessageContent = toSignal(
+        this.chatService.newIrisMessage.pipe(
+            filter((msg) => !!msg),
+            switchMap((msg) => {
+                if (msg!.content && msg!.content.length > 0) {
+                    return of((msg!.content[0] as IrisTextMessageContent).textContent);
+                }
+                return EMPTY;
+            }),
+        ),
+        { initialValue: undefined },
+    );
+
+    private bubbleTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     readonly chatBubble = viewChild<ElementRef>('chatBubble');
 
-    ngOnInit() {
-        // Subscribes to route params and gets the exerciseId from the route
-        this.paramsSubscription = this.route.params.subscribe((params) => {
+    constructor() {
+        // Register cleanup for dialog
+        this.destroyRef.onDestroy(() => {
+            if (this.dialogRef) {
+                this.dialogRef.close();
+            }
+            if (this.bubbleTimeoutId) {
+                clearTimeout(this.bubbleTimeoutId);
+            }
+        });
+
+        // Subscribe to route params and switch chat context
+        this.route.params.pipe(takeUntilDestroyed()).subscribe((params) => {
             const rawId = this.mode() == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
             const id = parseInt(rawId, 10);
             this.chatService.switchTo(this.mode(), id);
         });
 
-        this.queryParamsSubscription = this.route.queryParams?.subscribe((params: any) => {
+        // Subscribe to query params to auto-open chat
+        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
             if (params.irisQuestion) {
                 this.openChat();
             }
         });
 
-        // Subscribes to check for new messages
-        this.numNewMessagesSubscription = this.chatService.numNewMessages.subscribe((num) => {
-            this.hasNewMessages = num > 0;
-        });
-        this.latestIrisMessageSubscription = this.chatService.newIrisMessage
-            .pipe(
-                filter((msg) => !!msg),
-                switchMap((msg) => {
-                    if (msg!.content && msg!.content.length > 0) {
-                        return of((msg!.content[0] as IrisTextMessageContent).textContent);
-                    }
-                    return EMPTY;
-                }),
-            )
-            .subscribe((message) => {
-                this.newIrisMessage = message;
+        // Handle new iris messages with bubble display and timeout
+        effect(() => {
+            const message = this.latestIrisMessageContent();
+            if (message && !this.chatOpen()) {
+                this.newIrisMessage.set(message);
                 setTimeout(() => this.checkOverflow(), 0);
-                setTimeout(() => {
-                    this.newIrisMessage = undefined;
-                    this.isOverflowing = false;
-                }, this.CHAT_BUBBLE_TIMEOUT);
-            });
-    }
 
-    ngOnDestroy() {
-        // Closes the dialog if it is open
-        if (this.dialogRef) {
-            this.dialogRef.close();
-        }
-        this.numNewMessagesSubscription?.unsubscribe();
-        this.paramsSubscription.unsubscribe();
-        this.latestIrisMessageSubscription.unsubscribe();
-        this.queryParamsSubscription?.unsubscribe();
-        this.newIrisMessage = undefined;
-        this.isOverflowing = false;
+                // Clear any existing timeout
+                if (this.bubbleTimeoutId) {
+                    clearTimeout(this.bubbleTimeoutId);
+                }
+
+                // Auto-hide the bubble after timeout
+                this.bubbleTimeoutId = setTimeout(() => {
+                    this.newIrisMessage.set(undefined);
+                    this.isOverflowing.set(false);
+                }, this.CHAT_BUBBLE_TIMEOUT);
+            }
+        });
     }
 
     /**
@@ -108,12 +122,12 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
      * If the chat is closed, it opens the chat dialog and sets chatOpen to true.
      */
     public handleButtonClick() {
-        if (this.chatOpen && this.dialogRef) {
+        if (this.chatOpen() && this.dialogRef) {
             this.dialog.closeAll();
-            this.chatOpen = false;
+            this.chatOpen.set(false);
         } else {
             this.openChat();
-            this.chatOpen = true;
+            this.chatOpen.set(true);
         }
     }
 
@@ -122,7 +136,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
      */
     public checkOverflow() {
         const element = this.chatBubble()?.nativeElement;
-        this.isOverflowing = !!element && element.scrollHeight > element.clientHeight;
+        this.isOverflowing.set(!!element && element.scrollHeight > element.clientHeight);
     }
 
     /**
@@ -130,20 +144,23 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
      * Sets the configuration options for the dialog, including position, size, and data.
      */
     public openChat() {
-        this.chatOpen = true;
-        this.newIrisMessage = undefined;
-        this.isOverflowing = false;
+        this.chatOpen.set(true);
+        this.newIrisMessage.set(undefined);
+        this.isOverflowing.set(false);
         this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
             hasBackdrop: false,
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
         });
-        this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
+        this.dialogRef
+            .afterClosed()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.handleDialogClose());
     }
 
     private handleDialogClose() {
-        this.chatOpen = false;
-        this.newIrisMessage = undefined;
+        this.chatOpen.set(false);
+        this.newIrisMessage.set(undefined);
     }
 }

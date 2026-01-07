@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -32,6 +32,7 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
     imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, CourseTitleBarTitleComponent, CourseTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
@@ -44,8 +45,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
     // Current settings being edited (signals)
     readonly settings = signal<IrisCourseSettingsDTO | undefined>(undefined);
-    public effectiveRateLimit?: IrisRateLimitConfiguration;
-    public applicationDefaults?: IrisRateLimitConfiguration;
+    readonly effectiveRateLimit = signal<IrisRateLimitConfiguration | undefined>(undefined);
+    readonly applicationDefaults = signal<IrisRateLimitConfiguration | undefined>(undefined);
 
     // Original settings for dirty checking
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
@@ -62,9 +63,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private readonly originalRateLimitRequests = signal<number | undefined>(undefined);
     private readonly originalRateLimitTimeframeHours = signal<number | undefined>(undefined);
 
-    // Status flags
-    isLoading = false;
-    isSaving = false;
+    // Status flags (signals for OnPush change detection)
+    readonly isLoading = signal(false);
+    readonly isSaving = signal(false);
     isAdmin: boolean;
     private readonly isAutoSaving = signal(false);
 
@@ -202,10 +203,10 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             return;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe({
             next: (response) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 if (!response) {
                     this.alertService.error('artemisApp.iris.settings.error.noSettings');
                     return;
@@ -217,12 +218,12 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 // Store original values for dirty checking
                 this.originalRateLimitRequests.set(this.rateLimitRequests());
                 this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
-                this.effectiveRateLimit = response.effectiveRateLimit;
-                this.applicationDefaults = response.applicationRateLimitDefaults;
+                this.effectiveRateLimit.set(response.effectiveRateLimit);
+                this.applicationDefaults.set(response.applicationRateLimitDefaults);
                 this.originalSettings.set(cloneDeep(this.settings()));
             },
             error: (error) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 captureException('Error loading Iris settings', error);
                 this.alertService.error('artemisApp.iris.settings.error.load');
             },
@@ -257,10 +258,10 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             settingsToSave.rateLimit = this.buildRateLimitForSave();
         }
 
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
             next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
-                this.isSaving = false;
+                this.isSaving.set(false);
                 if (response.body) {
                     this.settings.set(response.body.settings);
                     // Update local form fields from saved response
@@ -269,14 +270,14 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     // Reset original values for dirty checking
                     this.originalRateLimitRequests.set(this.rateLimitRequests());
                     this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
-                    this.effectiveRateLimit = response.body.effectiveRateLimit;
-                    this.applicationDefaults = response.body.applicationRateLimitDefaults;
+                    this.effectiveRateLimit.set(response.body.effectiveRateLimit);
+                    this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
                     this.originalSettings.set(cloneDeep(this.settings()));
                 }
                 this.alertService.success('artemisApp.iris.settings.success');
             },
             error: (error) => {
-                this.isSaving = false;
+                this.isSaving.set(false);
                 captureException('Error saving Iris settings', error);
                 if (error.status === 400 && error.error && error.error.message) {
                     this.alertService.error(error.error.message);
@@ -328,8 +329,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
                     this.originalRateLimitRequests.set(this.rateLimitRequests());
                     this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
-                    this.effectiveRateLimit = response.body.effectiveRateLimit;
-                    this.applicationDefaults = response.body.applicationRateLimitDefaults;
+                    this.effectiveRateLimit.set(response.body.effectiveRateLimit);
+                    this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
                 }
                 this.isAutoSaving.set(false);
             },
@@ -400,44 +401,45 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      * Returns the effective rate limit configuration based on current form state.
      * Updates live as the user types to provide immediate feedback.
      */
-    get effectiveRateLimitPreview(): IrisRateLimitConfiguration | undefined {
+    readonly effectiveRateLimitPreview = computed<IrisRateLimitConfiguration | undefined>(() => {
         const requests = this.rateLimitRequests();
         const timeframe = this.rateLimitTimeframeHours();
         const hasRequests = this.hasValue(requests);
         const hasTimeframe = this.hasValue(timeframe);
+        const defaults = this.applicationDefaults();
 
         // If both fields are empty, show application defaults
         if (!hasRequests && !hasTimeframe) {
-            return this.applicationDefaults;
+            return defaults;
         }
 
         // If form is incomplete/invalid, show what's entered so far merged with defaults
         // This gives visual feedback while typing
         return {
-            requests: hasRequests ? requests : this.applicationDefaults?.requests,
-            timeframeHours: hasTimeframe ? timeframe : this.applicationDefaults?.timeframeHours,
+            requests: hasRequests ? requests : defaults?.requests,
+            timeframeHours: hasTimeframe ? timeframe : defaults?.timeframeHours,
         };
-    }
+    });
 
     /**
      * Checks if the effective rate limit is unlimited (both null/undefined)
      */
-    get isEffectiveRateLimitUnlimited(): boolean {
-        const preview = this.effectiveRateLimitPreview;
+    readonly isEffectiveRateLimitUnlimited = computed(() => {
+        const preview = this.effectiveRateLimitPreview();
         return !preview || (preview.requests == null && preview.timeframeHours == null);
-    }
+    });
 
     /**
      * Checks if the effective requests limit is set (not null/undefined)
      */
-    get hasEffectiveRequestsLimit(): boolean {
-        return this.effectiveRateLimitPreview?.requests != null;
-    }
+    readonly hasEffectiveRequestsLimit = computed(() => {
+        return this.effectiveRateLimitPreview()?.requests != null;
+    });
 
     /**
      * Checks if the effective timeframe is set (not null/undefined)
      */
-    get hasEffectiveTimeframeLimit(): boolean {
-        return this.effectiveRateLimitPreview?.timeframeHours != null;
-    }
+    readonly hasEffectiveTimeframeLimit = computed(() => {
+        return this.effectiveRateLimitPreview()?.timeframeHours != null;
+    });
 }

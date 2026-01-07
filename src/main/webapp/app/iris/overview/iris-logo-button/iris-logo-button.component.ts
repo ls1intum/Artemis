@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +15,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-iris-logo-button',
     templateUrl: './iris-logo-button.component.html',
     imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, IrisLogoComponent, TranslateDirective, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisLogoButtonComponent {
     readonly btnType = input<ButtonType>(ButtonType.PRIMARY);

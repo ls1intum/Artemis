@@ -1,4 +1,4 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
@@ -7,6 +7,7 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     templateUrl: './course-chatbot.component.html',
     styleUrl: './course-chatbot.component.scss',
     imports: [IrisBaseChatbotComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseChatbotComponent {
     private readonly chatService = inject(IrisChatService);

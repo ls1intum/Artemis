@@ -1,4 +1,4 @@
-import { Component, computed, effect, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input } from '@angular/core';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,6 +16,7 @@ interface ProcessedStage extends IrisStageDTO {
     templateUrl: './chat-status-bar.component.html',
     styleUrl: './chat-status-bar.component.scss',
     imports: [FaIconComponent, NgClass],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatStatusBarComponent {
     open = false;

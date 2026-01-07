@@ -87,7 +87,7 @@
                                 (ngModelChange)="rateLimitRequests.set($event)"
                                 min="0"
                                 placeholder="{{
-                                    'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults?.requests || 'unlimited' }
+                                    'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults()?.requests || 'unlimited' }
                                 }}"
                             />
                             @if (rateLimitRequestsError()) {
@@ -107,7 +107,7 @@
                                 (ngModelChange)="rateLimitTimeframeHours.set($event)"
                                 min="1"
                                 placeholder="{{
-                                    'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults?.timeframeHours || 'unlimited' }
+                                    'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults()?.timeframeHours || 'unlimited' }
                                 }}"
                             />
                             @if (rateLimitTimeframeError()) {
@@ -124,18 +124,18 @@
                 <div class="alert alert-info">
                     <strong jhiTranslate="artemisApp.iris.settings.effectiveRateLimit"></strong>:
                     <span>
-                        @if (isEffectiveRateLimitUnlimited) {
+                        @if (isEffectiveRateLimitUnlimited()) {
                             <span jhiTranslate="artemisApp.iris.settings.unlimited"></span>
                         } @else {
-                            @if (hasEffectiveRequestsLimit) {
-                                {{ effectiveRateLimitPreview?.requests }}
+                            @if (hasEffectiveRequestsLimit()) {
+                                {{ effectiveRateLimitPreview()?.requests }}
                                 <span jhiTranslate="artemisApp.iris.settings.requests"></span>
                             } @else {
                                 <span jhiTranslate="artemisApp.iris.settings.unlimited"></span>
                             }
                             <span jhiTranslate="artemisApp.iris.settings.per"></span>
-                            @if (hasEffectiveTimeframeLimit) {
-                                {{ effectiveRateLimitPreview?.timeframeHours }}
+                            @if (hasEffectiveTimeframeLimit()) {
+                                {{ effectiveRateLimitPreview()?.timeframeHours }}
                                 <span jhiTranslate="artemisApp.iris.settings.hours"></span>
                             } @else {
                                 <span jhiTranslate="artemisApp.iris.settings.unlimitedTime"></span>
@@ -152,7 +152,7 @@
                 <jhi-button
                     id="save"
                     [btnType]="PRIMARY"
-                    [isLoading]="isSaving"
+                    [isLoading]="isSaving()"
                     [disabled]="!isFormValid()"
                     [icon]="faSave"
                     [title]="'artemisApp.iris.settings.button.save'"
@@ -164,7 +164,7 @@
     </div>
 }
 
-@if (isLoading) {
+@if (isLoading()) {
     <div class="d-flex justify-content-center my-5">
         <div class="spinner-border" role="status">
             <span class="visually-hidden" jhiTranslate="artemisApp.iris.settings.loading"></span>

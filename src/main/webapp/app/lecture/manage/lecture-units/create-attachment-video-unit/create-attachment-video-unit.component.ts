@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,6 +17,7 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
     selector: 'jhi-create-attachment-video-unit',
     templateUrl: './create-attachment-video-unit.component.html',
     imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateAttachmentVideoUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

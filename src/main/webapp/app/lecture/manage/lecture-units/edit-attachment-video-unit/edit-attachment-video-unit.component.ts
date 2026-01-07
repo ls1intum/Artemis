@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
     selector: 'jhi-edit-attachment-video-unit',
     templateUrl: './edit-attachment-video-unit.component.html',
     imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditAttachmentVideoUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
