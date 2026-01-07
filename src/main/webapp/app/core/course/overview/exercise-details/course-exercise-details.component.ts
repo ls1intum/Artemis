@@ -168,24 +168,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
-    private readonly debugInstanceId = Math.random().toString(36).slice(2);
-    private logDebug(event: string, payload: Record<string, unknown> = {}) {
-        if (typeof window === 'undefined') {
-            return;
-        }
-        const w = window as any;
-        w.__artemisDebug = w.__artemisDebug || {};
-        w.__artemisDebug.courseExerciseDetails = w.__artemisDebug.courseExerciseDetails || [];
-        w.__artemisDebug.courseExerciseDetails.push({
-            ts: new Date().toISOString(),
-            instanceId: this.debugInstanceId,
-            event,
-            exerciseId: this.exerciseId,
-            courseId: this.courseId,
-            ...payload,
-        });
-    }
-
     ngOnInit() {
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
@@ -324,10 +306,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     subscribeForNewResults() {
-        this.logDebug('[CourseExerciseDetails] subscribeForNewResults called', {
-            exerciseId: this.exercise?.id,
-            studentParticipationIds: this.studentParticipations?.map((p) => p.id),
-        });
         if (this.exercise && this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
@@ -340,14 +318,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             // Skip the first event, as it is the initial state. All data should already be loaded.
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
-                this.logDebug('[CourseExerciseDetails] participation changed event', {
-                    participationId: changedParticipation?.id,
-                    exerciseId: changedParticipation?.exercise?.id,
-                    otherStuff: changedParticipation?.submissions![changedParticipation?.submissions?.length! - 1],
-                });
-                this.logDebug('[Course ExerciseDetails] willTrigger update participations', {
-                    changedParticipation,
-                });
                 if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                     // Notify student about late submission result
                     if (
