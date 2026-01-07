@@ -5,11 +5,18 @@
             <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
         </a>
     </h2>
-    @if (notifications) {
+    @if (notifications(); as notificationList) {
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="transition()">
+                    <tr
+                        jhiSort
+                        [predicate]="predicate()"
+                        (predicateChange)="predicate.set($event)"
+                        [ascending]="reverse()"
+                        (ascendingChange)="reverse.set($event)"
+                        (sortChange)="transition()"
+                    >
                         <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span> <fa-icon [icon]="faSort" /></th>
                         <th jhiSortBy="title"><span jhiTranslate="artemisApp.systemNotification.title"></span> <fa-icon [icon]="faSort" /></th>
                         <th jhiSortBy="text"><span jhiTranslate="artemisApp.systemNotification.text"></span> <fa-icon [icon]="faSort" /></th>
@@ -21,7 +28,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (notification of notifications; track trackIdentity($index, notification)) {
+                    @for (notification of notificationList; track trackIdentity($index, notification)) {
                         <tr>
                             <td>{{ notification.id }}</td>
                             <td>{{ notification.title }}</td>
@@ -70,18 +77,18 @@
         </div>
         <div>
             <div class="row justify-content-center">
-                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
                 <ngb-pagination
                     id="pagination"
-                    [collectionSize]="totalItems"
-                    [(page)]="page"
+                    [collectionSize]="totalItems()"
+                    [page]="page()"
                     [pageSize]="itemsPerPage"
                     [maxSize]="5"
                     [rotate]="true"
                     [boundaryLinks]="true"
-                    (pageChange)="loadPage(page)"
+                    (pageChange)="loadPage($event)"
                 />
             </div>
         </div>
