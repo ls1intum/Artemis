@@ -3,7 +3,7 @@
     [type]="shouldSubmit() ? 'submit' : 'button'"
     ngbTooltip="{{ tooltip() | artemisTranslate }}"
     (click)="onClick.emit($event)"
-    [jhiFeatureToggle]="featureToggle()"
+    [jhiFeatureToggle]="$any(featureToggle())"
     [overwriteDisabled]="disabled() || isLoading()"
 >
     @if (isLoading()) {
@@ -11,7 +11,7 @@
     } @else {
         <jhi-iris-logo [size]="SMALL" />
     }
-    @if (title()) {
-        <span class="jhi-btn__title ms-1" [jhiTranslate]="title()"></span>
+    @if (title(); as titleValue) {
+        <span class="jhi-btn__title ms-1" [jhiTranslate]="titleValue"></span>
     }
 </button>

@@ -90,9 +90,9 @@
                                     'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults()?.requests || 'unlimited' }
                                 }}"
                             />
-                            @if (rateLimitRequestsError()) {
+                            @if (rateLimitRequestsError(); as error) {
                                 <div class="text-danger small mt-1">
-                                    <span [jhiTranslate]="rateLimitRequestsError()"></span>
+                                    <span [jhiTranslate]="error"></span>
                                 </div>
                             }
                         </div>
@@ -110,9 +110,9 @@
                                     'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults()?.timeframeHours || 'unlimited' }
                                 }}"
                             />
-                            @if (rateLimitTimeframeError()) {
+                            @if (rateLimitTimeframeError(); as error) {
                                 <div class="text-danger small mt-1">
-                                    <span [jhiTranslate]="rateLimitTimeframeError()"></span>
+                                    <span [jhiTranslate]="error"></span>
                                 </div>
                             }
                         </div>
