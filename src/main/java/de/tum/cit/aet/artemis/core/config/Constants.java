@@ -140,12 +140,6 @@ public final class Constants {
      */
     public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
-    /**
-     * Arbitrary limit that is unlikely to be reached by real feedback in practice.
-     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
-     */
-    public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
-
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
@@ -262,6 +256,8 @@ public final class Constants {
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
+    public static final String DOCKER_FLAG_ALLOWED_CUSTOM_NETWORKS = "allowedCustomDockerNetworks";
+
     public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
 
     public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
@@ -368,11 +364,6 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
-     */
-    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
-
-    /**
      * Profile combination for one primary node, where LTI AND scheduling is active
      */
     public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
@@ -405,7 +396,7 @@ public final class Constants {
     /**
      * The name of the module feature indicating passkey is required for administrator features.
      */
-    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkeyRequiredForAdministratorFeatures";
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkey-admin";
 
     /**
      * The name of the module feature used for Atlas functionality.
@@ -431,6 +422,21 @@ public final class Constants {
      * The name of the module feature used for Text Exercise functionality.
      */
     public static final String MODULE_FEATURE_TEXT = "text";
+
+    /**
+     * The name of the module feature used for Modeling Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_MODELING = "modeling";
+
+    /**
+     * The name of the module feature used for File Upload Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_FILEUPLOAD = "fileupload";
+
+    /**
+     * The name of the module feature used for Lecture functionality.
+     */
+    public static final String MODULE_FEATURE_LECTURE = "lecture";
 
     /**
      * The name of the module feature used for Atlas functionality.
@@ -471,6 +477,21 @@ public final class Constants {
      * The name of the property used to enable or disable text exercise functionality.
      */
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
+     * The name of the property used to enable or disable modeling exercise functionality.
+     */
+    public static final String MODELING_ENABLED_PROPERTY_NAME = "artemis.modeling.enabled";
+
+    /**
+     * The name of the property used to enable or disable file upload exercise functionality.
+     */
+    public static final String FILEUPLOAD_ENABLED_PROPERTY_NAME = "artemis.fileupload.enabled";
+
+    /**
+     * The name of the property used to enable or disable lecture functionality.
+     */
+    public static final String LECTURE_ENABLED_PROPERTY_NAME = "artemis.lecture.enabled";
 
     /**
      * The name of the property used to enable or disable tutorial group functionality.

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -18,10 +20,13 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     template: '',
+    standalone: true,
 })
 class DummyComponent {}
 
 describe('CourseLectureRow', () => {
+    setupTestBed({ zoneless: true });
+
     let courseLectureRowComponentFixture: ComponentFixture<CourseLectureRowComponent>;
     let courseLectureRowComponent: CourseLectureRowComponent;
     let location: Location;
@@ -36,10 +41,15 @@ describe('CourseLectureRow', () => {
                     { path: 'courses/:courseId/lectures/:lectureId', component: DummyComponent },
                 ]),
                 FaIconComponent,
+                CourseLectureRowComponent,
+                DummyComponent,
             ],
-            declarations: [DummyComponent, CourseLectureRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideComponent(CourseLectureRowComponent, {
+                remove: { imports: [ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTimeAgoPipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)] },
+            })
             .compileComponents()
             .then(() => {
                 courseLectureRowComponentFixture = TestBed.createComponent(CourseLectureRowComponent);
@@ -51,10 +61,18 @@ describe('CourseLectureRow', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
+        const lecture = new Lecture();
+        lecture.id = 1;
+        lecture.title = 'exampleLecture';
+        const course = new Course();
+        course.id = 1;
+
+        courseLectureRowComponentFixture.componentRef.setInput('lecture', lecture);
+        courseLectureRowComponentFixture.componentRef.setInput('course', course);
         courseLectureRowComponentFixture.detectChanges();
         expect(courseLectureRowComponent).not.toBeNull();
     });
@@ -67,8 +85,8 @@ describe('CourseLectureRow', () => {
         const course = new Course();
         course.id = 1;
 
-        courseLectureRowComponent.lecture = lecture;
-        courseLectureRowComponent.course = course;
+        courseLectureRowComponentFixture.componentRef.setInput('lecture', lecture);
+        courseLectureRowComponentFixture.componentRef.setInput('course', course);
         courseLectureRowComponentFixture.changeDetectorRef.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
@@ -83,30 +101,30 @@ describe('CourseLectureRow', () => {
         const course = new Course();
         course.id = 1;
 
-        courseLectureRowComponent.lecture = lecture;
-        courseLectureRowComponent.course = course;
+        courseLectureRowComponentFixture.componentRef.setInput('lecture', lecture);
+        courseLectureRowComponentFixture.componentRef.setInput('course', course);
         courseLectureRowComponentFixture.changeDetectorRef.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
         expect(dateContainer).toBeNull();
     });
 
-    it('navigate to details page if row is clicked', fakeAsync(() => {
+    it('navigate to details page if row is clicked', async () => {
         const lecture = new Lecture();
         lecture.id = 1;
         lecture.title = 'exampleLecture';
         const course = new Course();
         course.id = 1;
 
-        courseLectureRowComponent.lecture = lecture;
-        courseLectureRowComponent.course = course;
+        courseLectureRowComponentFixture.componentRef.setInput('lecture', lecture);
+        courseLectureRowComponentFixture.componentRef.setInput('course', course);
 
         courseLectureRowComponentFixture.detectChanges();
 
         const link = courseLectureRowComponentFixture.debugElement.nativeElement.querySelector('.stretched-link');
         link.click();
-        tick();
+        await courseLectureRowComponentFixture.whenStable();
 
         expect(location.path()).toBe('/courses/1/lectures/1');
-    }));
+    });
 });

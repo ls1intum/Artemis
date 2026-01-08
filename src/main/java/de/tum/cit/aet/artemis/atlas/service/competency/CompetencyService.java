@@ -160,15 +160,15 @@ public class CompetencyService extends CourseCompetencyService {
     }
 
     /**
-     * Returns a managed reference to the competency with the given id.
+     * Loads and returns the competency with the given id.
      * <p>
-     * Uses {@code getReferenceById} to avoid creating detached entities when
-     * creating or updating competency links.
+     * Uses a regular repository lookup to ensure the competency is fully initialized
+     * and can be safely accessed outside the persistence context.
      *
      * @param competencyId the id of the competency
-     * @return a managed competency reference
+     * @return the loaded competency entity
      */
-    public Competency getReference(Long competencyId) {
-        return competencyRepository.getReferenceById(competencyId);
+    public Competency loadCompetency(Long competencyId) {
+        return competencyRepository.findByIdElseThrow(competencyId);
     }
 }

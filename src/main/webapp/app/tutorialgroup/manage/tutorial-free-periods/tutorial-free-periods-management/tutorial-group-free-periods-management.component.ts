@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
+import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -10,9 +10,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
-import { catchError, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,15 +23,16 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
     templateUrl: './tutorial-group-free-periods-management.component.html',
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, FaIconComponent, TutorialGroupFreePeriodsTableComponent],
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, FaIconComponent, TutorialGroupFreePeriodsTableComponent, CreateTutorialGroupFreePeriodComponent],
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
-    private modalService = inject(NgbModal);
     private cdr = inject(ChangeDetectorRef);
+
+    readonly createFreePeriodDialog = viewChild<CreateTutorialGroupFreePeriodComponent>('createFreePeriodDialog');
 
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
@@ -116,17 +116,10 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
 
     openCreateFreePeriodDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.loadAll();
-            });
+        this.createFreePeriodDialog()?.open();
+    }
+
+    onFreePeriodCreated(): void {
+        this.loadAll();
     }
 }

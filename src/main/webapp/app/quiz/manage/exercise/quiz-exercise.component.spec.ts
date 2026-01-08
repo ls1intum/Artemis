@@ -87,15 +87,7 @@ describe('QuizExercise Management Component', () => {
     });
 
     it('should delete multiple quizzes', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                    headers,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         comp.ngOnInit();
         // @ts-ignore

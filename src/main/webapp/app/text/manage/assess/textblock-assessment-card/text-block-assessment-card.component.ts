@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
+import { Component, inject, input, output, viewChild } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -22,17 +22,16 @@ export class TextBlockAssessmentCardComponent {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    @Input() textBlockRef: TextBlockRef;
-    @Input() selected = false;
-    @Input() readOnly: boolean;
-    @Input() isMissedFeedback: boolean;
-    @Input() highlightDifferences: boolean;
-    @Input() criteria?: GradingCriterion[];
+    textBlockRef = input.required<TextBlockRef>();
+    selected = input<boolean>(false);
+    readOnly = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    criteria = input<GradingCriterion[]>();
 
-    @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
-    @Output() didChange = new EventEmitter<TextBlockRef>();
-    @Output() didDelete = new EventEmitter<TextBlockRef>();
-    @ViewChild(TextBlockFeedbackEditorComponent) feedbackEditor: TextBlockFeedbackEditorComponent;
+    didSelect = output<OptionalTextBlockRef>();
+    didChange = output<TextBlockRef>();
+    didDelete = output<TextBlockRef>();
+    feedbackEditor = viewChild.required(TextBlockFeedbackEditorComponent);
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
@@ -43,19 +42,20 @@ export class TextBlockAssessmentCardComponent {
      * @param {boolean} autofocus - Enable autofocus (defaults to true)
      */
     select(autofocus = true): void {
-        if (this.readOnly) {
+        if (this.readOnly()) {
             return;
         }
-        if (this.textBlockRef && !this.textBlockRef.selectable) {
+        const textBlockRef = this.textBlockRef();
+        if (textBlockRef && !textBlockRef.selectable) {
             return;
         }
 
-        this.didSelect.emit(this.textBlockRef);
-        this.textBlockRef.initFeedback();
+        this.didSelect.emit(textBlockRef);
+        textBlockRef.initFeedback();
 
         if (autofocus) {
-            setTimeout(() => this.feedbackEditor.focus());
-            if (!this.selected && this.textBlockRef.feedback?.type === FeedbackType.MANUAL) {
+            setTimeout(() => this.feedbackEditor().focus());
+            if (!this.selected() && textBlockRef.feedback?.type === FeedbackType.MANUAL) {
                 this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
             }
         }
@@ -66,9 +66,10 @@ export class TextBlockAssessmentCardComponent {
      */
     unselect(): void {
         this.didSelect.emit(undefined);
-        delete this.textBlockRef.feedback;
-        if (this.textBlockRef.block!.type === TextBlockType.MANUAL && this.textBlockRef.deletable) {
-            this.didDelete.emit(this.textBlockRef);
+        const textBlockRef = this.textBlockRef();
+        delete textBlockRef.feedback;
+        if (textBlockRef.block!.type === TextBlockType.MANUAL && textBlockRef.deletable) {
+            this.didDelete.emit(textBlockRef);
         }
         this.feedbackDidChange();
     }
@@ -77,7 +78,7 @@ export class TextBlockAssessmentCardComponent {
      * Hook to indicate that feedback did change
      */
     feedbackDidChange(): void {
-        this.didChange.emit(this.textBlockRef);
+        this.didChange.emit(this.textBlockRef());
     }
 
     /**
@@ -85,12 +86,13 @@ export class TextBlockAssessmentCardComponent {
      * @param {Event} event - The drop event
      */
     connectStructuredGradingInstructionsWithTextBlock(event: Event) {
-        if (!this.textBlockRef.selectable) {
+        const textBlockRef = this.textBlockRef();
+        if (!textBlockRef.selectable) {
             return;
         }
         this.select();
-        if (this.textBlockRef.feedback) {
-            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.textBlockRef.feedback, event);
+        if (textBlockRef.feedback) {
+            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(textBlockRef.feedback, event);
         }
         this.feedbackDidChange();
     }
