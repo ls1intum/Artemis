@@ -72,6 +72,8 @@ artemis:
     build-log:
       file-expiry-days: 30 # The amount of days until build log files can be deleted
       cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build log files
+    build-job:
+      retention-period: 365 # Number of days before build job entries are deleted
   git:
     name: Artemis
     email: artemis@xcit.tum.de

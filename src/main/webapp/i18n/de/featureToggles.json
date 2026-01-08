@@ -1,12 +1,128 @@
 {
+    "features": {
+        "title": "Funktionen"
+    },
     "artemisApp": {
-        "featureToggle": {
-            "title": "Feature-Schalter",
-            "description": "Aktiviere oder deaktiviere Funktionen für alle Nutzer:innen. Änderungen werden sofort wirksam.",
+        "features": {
+            "title": "Funktionen",
+            "active": "Aktiv",
+            "inactive": "Inaktiv",
             "enabled": "Aktiviert",
             "disabled": "Deaktiviert",
             "viewDocumentation": "Dokumentation anzeigen",
-            "features": {
+            "jumpTo": "Springe zu:",
+            "profileFeatures": {
+                "title": "Profilbasierte Funktionen",
+                "shortTitle": "Profile",
+                "description": "Diese Funktionen werden über Spring-Profile gesteuert und müssen in der Service-Konfiguration aktiviert werden. Änderungen erfordern einen Server-Neustart."
+            },
+            "moduleFeatures": {
+                "title": "Modul-Funktionen",
+                "shortTitle": "Module",
+                "description": "Diese Funktionen werden über die Modul-Konfiguration in application-prod.yml gesteuert. Änderungen erfordern einen Server-Neustart."
+            },
+            "dynamicToggles": {
+                "title": "Laufzeit-Feature-Schalter",
+                "shortTitle": "Schalter",
+                "description": "Aktiviere oder deaktiviere Funktionen für alle Nutzer:innen. Änderungen werden sofort wirksam ohne Server-Neustart."
+            },
+            "profiles": {
+                "iris": {
+                    "name": "Iris (KI-Assistent)",
+                    "description": "Aktiviert den Iris-KI-Tutor, der von LLMs angetrieben wird, für personalisierte Studierendenunterstützung und Code-Hilfe."
+                },
+                "athena": {
+                    "name": "Athena (KI-Bewertung)",
+                    "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
+                },
+                "lti": {
+                    "name": "LTI-Integration",
+                    "description": "Aktiviert Learning Tools Interoperability (LTI) für die Integration mit externen Lernmanagementsystemen."
+                },
+                "apollon": {
+                    "name": "Apollon (Modellierung)",
+                    "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
+                },
+                "theia": {
+                    "name": "Theia (Online-IDE)",
+                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
+                },
+                "ldap": {
+                    "name": "LDAP-Authentifizierung",
+                    "description": "Aktiviert LDAP-basierte Authentifizierung für die Benutzeranmeldung über institutionelle Verzeichnisdienste."
+                },
+                "saml2": {
+                    "name": "SAML2-Authentifizierung",
+                    "description": "Aktiviert SAML2-basiertes Single Sign-On (SSO) über Identitätsanbieter."
+                },
+                "localci": {
+                    "name": "Lokale CI",
+                    "description": "Aktiviert das lokale Continuous-Integration-System zum Bauen und Testen von Programmierabgaben."
+                },
+                "buildagent": {
+                    "name": "Integrierter Build-Agent",
+                    "description": "Aktiviert den integrierten Build-Agent auf dem Server-Knoten für Local CI, wodurch keine separaten Build-Agent-Knoten benötigt werden."
+                },
+                "aeolus": {
+                    "name": "Aeolus (Build-Pläne)",
+                    "description": "Aktiviert Aeolus für die dynamische Build-Plan-Generierung und -Anpassung für Programmieraufgaben."
+                },
+                "jenkins": {
+                    "name": "Jenkins CI",
+                    "description": "Aktiviert Jenkins als Continuous-Integration-System für Programmieraufgaben-Builds."
+                }
+            },
+            "modules": {
+                "atlas": {
+                    "name": "Atlas (Adaptives Lernen)",
+                    "description": "Aktiviert kompetenzbasierte Lernfunktionen einschließlich Lernpfade, Kompetenz-Tracking und Analysen."
+                },
+                "hyperion": {
+                    "name": "Hyperion (Aufgabenerstellung)",
+                    "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."
+                },
+                "exam": {
+                    "name": "Prüfungsmodus",
+                    "description": "Aktiviert den Prüfungsmodus für die Durchführung sicherer Online-Prüfungen mit Beaufsichtigungsfunktionen."
+                },
+                "plagiarism": {
+                    "name": "Plagiatserkennung",
+                    "description": "Aktiviert die Plagiatserkennung mit JPlag für Text-, Modellierungs- und Programmieraufgaben."
+                },
+                "text": {
+                    "name": "Textaufgaben",
+                    "description": "Aktiviert Textaufgaben mit manuellen und automatisierten Bewertungsfunktionen."
+                },
+                "modeling": {
+                    "name": "Modellierungsaufgaben",
+                    "description": "Aktiviert UML-Diagramm-Aufgaben mit dem Apollon-Editor und automatischem Ähnlichkeitsvergleich."
+                },
+                "fileupload": {
+                    "name": "Dateiupload-Aufgaben",
+                    "description": "Aktiviert Dateiupload-Aufgaben zum Einreichen von Dokumenten, Bildern und anderen Dateien."
+                },
+                "lecture": {
+                    "name": "Vorlesungen",
+                    "description": "Aktiviert die Vorlesungsverwaltung mit Einheiten, Folien, Videos und Anhängen."
+                },
+                "tutorialgroup": {
+                    "name": "Übungsgruppen",
+                    "description": "Aktiviert die Übungsgruppenverwaltung zur Organisation von Studierenden und Tutor:innen."
+                },
+                "nebula": {
+                    "name": "Nebula (Videoverarbeitung)",
+                    "description": "Aktiviert die Verarbeitung und Transkription von Vorlesungsvideos für KI-gestütztes Inhaltsverständnis."
+                },
+                "sharing": {
+                    "name": "Aufgaben-Sharing",
+                    "description": "Aktiviert das Teilen und Importieren von Programmieraufgaben zwischen Kursen und Institutionen."
+                },
+                "passkey": {
+                    "name": "Passkey-Authentifizierung",
+                    "description": "Aktiviert passwortlose Authentifizierung mit FIDO2/WebAuthn-Passkeys für erhöhte Sicherheit."
+                }
+            },
+            "toggles": {
                 "ProgrammingExercises": {
                     "name": "Programmieraufgaben",
                     "description": "Ermöglicht Lehrenden das Erstellen von Programmieraufgaben mit automatischer Bewertung über CI/CD-Pipelines.",
