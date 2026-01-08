@@ -1,6 +1,7 @@
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
 import courseManagement from './assets/general/course-management.png';
 import courseDashboard from './assets/general/course-management-course-dashboard-exercises.png';
@@ -232,18 +233,10 @@ Click on **Generate new programming exercise**.
   <p>The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.</p>
 </Callout>
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0"
+<TumLiveVideo
+    src="45966"
     title="Video tutorial for creating a new programming exercise on TUM-Live"
-    width="600"
-    height="350"
-    allowFullScreen
-    loading="lazy"
-    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-    referrerPolicy="no-referrer-when-downgrade"
-    style={{border: 0}}>
-    Video tutorial for creating a new programming exercise on TUM-Live.
-</iframe>
+/>
 
 Artemis provides various options to customize programming exercises:
 
@@ -788,18 +781,10 @@ The grading configuration determines how test cases contribute to the overall sc
 
 Adapt test case contribution to the overall score or set grading based on tasks.
 
-<iframe
-    src="https://tum.live/w/artemisintro/40748/PRES?video_only=1&"
+<TumLiveVideo
+    src="40748"
     title="Video tutorial for configuring test case grading on TUM-Live"
-    width="600"
-    height="350"
-    allowFullScreen
-    loading="lazy"
-    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-    referrerPolicy="no-referrer-when-downgrade"
-    style={{border: 0}}>
-    Video tutorial for configuring test case grading on TUM-Live.
-</iframe>
+/>
 
 <Image src={configureGradingTestCases} alt="Configure Grading Test Cases" size={ImageSize.large} caption="Test Case Grading Configuration" />
 
