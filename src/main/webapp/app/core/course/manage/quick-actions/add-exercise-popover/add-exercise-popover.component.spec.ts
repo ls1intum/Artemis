@@ -7,6 +7,8 @@ import { MockComponent } from 'ng-mocks';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('AddExercisePopoverComponent', () => {
     let component: AddExercisePopoverComponent;
@@ -15,7 +17,10 @@ describe('AddExercisePopoverComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(ExerciseCreateButtonComponent), MockComponent(ExerciseImportButtonComponent), AddExercisePopoverComponent, FaIconComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AddExercisePopoverComponent);

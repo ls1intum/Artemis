@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -17,7 +18,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.Distri
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedissonDistributedDataProviderService;
 
 @SpringBootTest
-@ActiveProfiles({ PROFILE_BUILDAGENT })
+@ActiveProfiles({ PROFILE_BUILDAGENT, PROFILE_TEST_BUILDAGENT })
 @TestPropertySource(properties = { "artemis.continuous-integration.data-store=Redis", "spring.data.redis.client-name=artemis-node-1" })
 // requires docker for testContainers to start test redis instance
 @EnabledIf("isDockerAvailable")

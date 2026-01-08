@@ -207,8 +207,9 @@ test.describe('Import exercises', () => {
                 await courseOverview.startExercise(exercise.id!);
                 await courseOverview.openRunningExercise(exercise.id!);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, async () => {
-                    const resultScore = await programmingExerciseEditor.getResultScore();
-                    await expect(resultScore.getByText(javaPartiallySuccessfulSubmission.expectedResult)).toBeVisible();
+                    // Use exercise-scoped locator and check for text content
+                    const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
+                    await expect(resultScore).toContainText(javaPartiallySuccessfulSubmission.expectedResult, { timeout: 30000 });
                 });
             },
         );

@@ -47,6 +47,7 @@ export default tseslint.config(
             'rules/**/*.js',
             'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/main/webapp/app/openapi/**',
+            'src/test/playwright/monocart-report/**',
         ],
     },
     eslint.configs.recommended,

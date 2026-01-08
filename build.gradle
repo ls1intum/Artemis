@@ -27,12 +27,12 @@ plugins {
     id "org.owasp.dependencycheck" version "12.1.9"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.17.0"
+    id "org.openapi.generator" version "7.18.0"
     id "com.google.osdetector" version "1.7.3"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.7.1"
+version = "8.7.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -176,6 +176,7 @@ dependencies {
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud
+    // Cannot org.apache.httpcomponents to later version due to compatibility issues
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
@@ -279,8 +280,8 @@ dependencies {
     // required for exposing LLM traces to Langfuse
     implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometer_tracing_version}"
     // no need to specify version for opentelemetry as above micrometer tracing already brings in a compatible OpenTelemetry version
-    // Gradle will align the exporter to that version automatically
-    implementation "io.opentelemetry:opentelemetry-exporter-otlp:1.57.0"
+    // Gradle will align the exporter to that version automatically, we should stick to 1.49.0 and not use a newer version because of compatibility issues
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.33.2"
@@ -447,7 +448,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
-    implementation "org.mnode.ical4j:ical4j:4.2.1"
+    implementation "org.mnode.ical4j:ical4j:4.2.3"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -486,7 +487,7 @@ dependencies {
     runtimeOnly "com.h2database:h2:2.4.240"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20250517"
+    testImplementation "org.json:json:20251224"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"

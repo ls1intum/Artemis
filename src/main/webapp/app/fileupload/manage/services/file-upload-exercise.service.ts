@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
@@ -42,12 +43,10 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
             throw new Error('Cannot update exercise without an ID');
         }
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
-        copy = FileUploadExerciseService.formatFilePattern(copy);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
+        const dto = toUpdateFileUploadExerciseDTO(copy);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}`, copy, { params: options, observe: 'response' })
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -76,8 +75,8 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * Sends request to delete file upload exercise by its id
      * @param exerciseId id of the exercise
      */
-    delete(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
+    delete(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
     /**
@@ -92,11 +91,10 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
             throw new Error('Cannot re-evaluate exercise without an ID');
         }
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
+        const dto = toUpdateFileUploadExerciseDTO(copy);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

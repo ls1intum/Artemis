@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -22,6 +24,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
     let component: CreateTutorialGroupsConfigurationComponent;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
@@ -29,7 +33,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     let courseStorageService: CourseStorageService;
     const course = { id: 1, title: 'Example' };
     const router = new MockRouter();
-    let getCourseSpy: jest.SpyInstance;
+    let getCourseSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -53,12 +57,12 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
             body: course,
             status: 201,
         });
-        getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
+        getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -76,9 +80,9 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
             status: 201,
         });
 
-        const createStub = jest.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(createResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
+        const createStub = vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(createResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
 
         const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
 

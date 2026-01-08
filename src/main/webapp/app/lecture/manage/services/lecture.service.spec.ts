@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -12,6 +14,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 
 describe('Lecture Service', () => {
+    setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: LectureService;
     const resourceUrl = 'api/lecture/lectures';
@@ -29,6 +33,7 @@ describe('Lecture Service', () => {
         elemDefault = new Lecture();
         elemDefault.startDate = dayjs();
         elemDefault.course = new Course();
+        elemDefault.course.id = 42;
         elemDefault.description = 'new service test Lecture';
         elemDefault.endDate = dayjs();
         elemDefault.id = 1;
@@ -54,6 +59,26 @@ describe('Lecture Service', () => {
                 url: resourceUrl,
                 method: 'POST',
             });
+
+            // Verify the request body contains the correct SimpleLectureDTO format
+            const requestBody = req.request.body;
+            expect(requestBody.title).toBe('Test Lecture');
+            expect(requestBody.description).toBe('new service test Lecture');
+            expect(requestBody.channelName).toBe('lecture-default');
+            expect(requestBody.isTutorialLecture).toBe(false);
+            // Verify course only contains id (not full course object)
+            expect(requestBody.course).toEqual({ id: 42 });
+            // Verify dates are converted to ISO strings
+            expect(typeof requestBody.startDate).toBe('string');
+            expect(typeof requestBody.endDate).toBe('string');
+            // Verify unnecessary fields are NOT sent (SimpleLectureDTO format)
+            expect(requestBody.attachments).toBeUndefined();
+            expect(requestBody.lectureUnits).toBeUndefined();
+            expect(requestBody.posts).toBeUndefined();
+            expect(requestBody.isAtLeastEditor).toBeUndefined();
+            expect(requestBody.isAtLeastInstructor).toBeUndefined();
+            expect(requestBody.visibleDate).toBeUndefined();
+
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
         });
@@ -69,6 +94,27 @@ describe('Lecture Service', () => {
                 url: resourceUrl,
                 method: 'PUT',
             });
+
+            // Verify the request body contains the correct SimpleLectureDTO format
+            const requestBody = req.request.body;
+            expect(requestBody.id).toBe(1);
+            expect(requestBody.title).toBe('Test Lecture');
+            expect(requestBody.description).toBe('new service test Lecture');
+            expect(requestBody.channelName).toBe('lecture-default');
+            expect(requestBody.isTutorialLecture).toBe(false);
+            // Verify course only contains id (not full course object)
+            expect(requestBody.course).toEqual({ id: 42 });
+            // Verify dates are converted to ISO strings
+            expect(typeof requestBody.startDate).toBe('string');
+            expect(typeof requestBody.endDate).toBe('string');
+            // Verify unnecessary fields are NOT sent (SimpleLectureDTO format)
+            expect(requestBody.attachments).toBeUndefined();
+            expect(requestBody.lectureUnits).toBeUndefined();
+            expect(requestBody.posts).toBeUndefined();
+            expect(requestBody.isAtLeastEditor).toBeUndefined();
+            expect(requestBody.isAtLeastInstructor).toBeUndefined();
+            expect(requestBody.visibleDate).toBeUndefined();
+
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
         });

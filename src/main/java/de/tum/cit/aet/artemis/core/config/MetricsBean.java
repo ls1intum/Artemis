@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseMetricsService;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import io.micrometer.core.instrument.Gauge;
@@ -94,6 +96,8 @@ public class MetricsBean {
     private final WebSocketHandler webSocketHandler;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseMetricsService exerciseMetricsService;
 
     private final Optional<ExamMetricsApi> examMetricsApi;
 
@@ -180,8 +184,9 @@ public class MetricsBean {
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository, StatisticsRepository statisticsRepository,
-            ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService, BuildJobRepository buildJobRepository) {
+            ExerciseMetricsService exerciseMetricsService, Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository,
+            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService,
+            BuildJobRepository buildJobRepository) {
         this.meterRegistry = meterRegistry;
         this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
@@ -190,6 +195,7 @@ public class MetricsBean {
         this.healthContributors = healthContributors;
         this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
+        this.exerciseMetricsService = exerciseMetricsService;
         this.examMetricsApi = examMetricsApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -470,14 +476,14 @@ public class MetricsBean {
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, activeSince,
-                exerciseRepository::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
+                exerciseMetricsService::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
 
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, activeSince,
-                exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
+                exerciseMetricsService::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
         // Exam metrics
         if (examMetricsApi.isPresent()) {
@@ -530,14 +536,14 @@ public class MetricsBean {
          * - a timestamp that defines when a user is considered active.
          * <p>
          * The implementing method may decide to ignore certain arguments.
-         * The method returns a list of ExerciseTypeMetricsEntries, that each correspond to an exercise type and a value.
+         * The method returns a set of ExerciseTypeMetricsEntries, that each correspond to an exercise type and a value.
          *
          * @param now         the current time
          * @param endDate     the end date that should be taken into consideration
          * @param activeSince a timestamp that represents the start of the active window
-         * @return a list of ExerciseTypeMetricsEntry (one for each exercise type) - if for one exercise type no value is returned, 0 will be assumed
+         * @return a set of ExerciseTypeMetricsEntry (one for each exercise type) - if for one exercise type no value is returned, 0 will be assumed
          */
-        List<ExerciseTypeMetricsEntry> apply(ZonedDateTime now, ZonedDateTime endDate, ZonedDateTime activeSince);
+        Set<ExerciseTypeMetricsEntry> apply(ZonedDateTime now, ZonedDateTime endDate, ZonedDateTime activeSince);
     }
 
     @FunctionalInterface
@@ -567,7 +573,7 @@ public class MetricsBean {
      */
     private void updateMultiGaugeMetricsEntryForMinuteRanges(MultiGauge multiGauge, ZonedDateTime activeSince, NowEndDateActiveSinceMetricsEntryFunction databaseRetrieveFunction) {
         var now = ZonedDateTime.now();
-        var results = new ArrayList<MultiGauge.Row<?>>();
+        var results = new HashSet<MultiGauge.Row<?>>();
 
         for (var minutes : MINUTE_RANGES_LOOKAHEAD) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
@@ -728,7 +734,7 @@ public class MetricsBean {
     }
 
     private void updateActiveExerciseMultiGauge() {
-        var results = new ArrayList<MultiGauge.Row<?>>();
+        var results = new HashSet<MultiGauge.Row<?>>();
         var result = exerciseRepository.countActiveExercisesGroupByExerciseType(ZonedDateTime.now());
         extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.empty());
 
@@ -736,14 +742,14 @@ public class MetricsBean {
     }
 
     private void updateExerciseMultiGauge() {
-        var results = new ArrayList<MultiGauge.Row<?>>();
+        var results = new HashSet<MultiGauge.Row<?>>();
         var result = exerciseRepository.countExercisesGroupByExerciseType();
         extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.empty());
 
         exerciseGauge.register(results, true);
     }
 
-    private void extractExerciseTypeMetricsAndAddToMetricsResults(List<ExerciseTypeMetricsEntry> resultFromDatabase, List<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
+    private void extractExerciseTypeMetricsAndAddToMetricsResults(Set<ExerciseTypeMetricsEntry> resultFromDatabase, Set<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
         for (var exerciseType : ExerciseType.values()) {
             var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType.getExerciseClass()).findAny();
             var value = 0L;

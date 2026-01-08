@@ -279,5 +279,5 @@ jobs:
     - name: Install Dependencies
       run: npm install
     - name: Compile TypeScript Files With Typechecking
-      run: npm run compile:ts
+      run: npm run compile
 
