@@ -16,7 +16,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -187,7 +187,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             // Track new messages for animation
             if (this.shouldAnimate) {
                 const existingIds = new Set(this.messages().map((m) => m.id));
-                const newAnimatingIds = new Set(this.animatingMessageIds());
+                // Use untracked to read current value without creating a dependency
+                // (otherwise updating animatingMessageIds would retrigger this effect infinitely)
+                const newAnimatingIds = new Set(untracked(() => this.animatingMessageIds()));
                 rawMessages.forEach((m) => {
                     if (m.id && !existingIds.has(m.id)) {
                         newAnimatingIds.add(m.id);
