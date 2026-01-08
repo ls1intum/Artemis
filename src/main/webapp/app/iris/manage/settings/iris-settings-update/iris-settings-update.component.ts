@@ -66,7 +66,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     // Status flags (signals for OnPush change detection)
     readonly isLoading = signal(false);
     readonly isSaving = signal(false);
-    isAdmin: boolean;
+    readonly isAdmin = signal(false);
     private readonly isAutoSaving = signal(false);
 
     // Validation state for rate limit (field-specific errors) - computed
@@ -140,7 +140,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
     constructor() {
-        this.isAdmin = this.accountService.isAdmin();
+        this.isAdmin.set(this.accountService.isAdmin());
     }
 
     ngOnInit(): void {
@@ -249,7 +249,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         };
 
         const originalSettingsValue = this.originalSettings();
-        if (!this.isAdmin) {
+        if (!this.isAdmin()) {
             // Non-admins can only change enabled and customInstructions
             // Restore original variant and rate limits to prevent unauthorized changes
             if (originalSettingsValue) {

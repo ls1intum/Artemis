@@ -102,9 +102,9 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should toggle fullSize and call setPositionAndScale when toggleFullSize is called', () => {
         const setPositionAndScaleSpy = jest.spyOn(component, 'setPositionAndScale');
-        const initialFullSize = component.fullSize;
+        const initialFullSize = component.fullSize();
         component.toggleFullSize();
-        expect(component.fullSize).toBe(!initialFullSize);
+        expect(component.fullSize()).toBe(!initialFullSize);
         expect(setPositionAndScaleSpy).toHaveBeenCalled();
     });
 
@@ -235,7 +235,7 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(widget.style.transform).toBe('translate(15px,30px)');
         expect(widget.getAttribute('data-x')).toBe('15');
         expect(widget.getAttribute('data-y')).toBe('30');
-        expect(component.fullSize).toBeTrue();
+        expect(component.fullSize()).toBeTrue();
 
         // Shrink -> should flip fullSize back
         resizableConfig.listeners.move({
@@ -243,7 +243,7 @@ describe('IrisChatbotWidgetComponent', () => {
             rect: { width: 500, height: 500 },
             deltaRect: { left: -2, top: -3 },
         });
-        expect(component.fullSize).toBeFalse();
+        expect(component.fullSize()).toBeFalse();
 
         // Drag move -> should update transform and data-x/y
         draggableConfig.listeners.move({ target: widget, dx: 7, dy: -3 });

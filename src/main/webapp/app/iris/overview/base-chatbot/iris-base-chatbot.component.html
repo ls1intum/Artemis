@@ -190,7 +190,7 @@
                 @for (message of messages(); track message.id; let i = $index) {
                     <div
                         animate.enter="message-entering"
-                        [class.animate-enabled]="animatingMessageIds.has(message.id!)"
+                        [class.animate-enabled]="animatingMessageIds().has(message.id!)"
                         [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                     >
                         @for (content of message.content; track content.id) {

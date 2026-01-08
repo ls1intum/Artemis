@@ -132,12 +132,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
 
-    // Animation state (not signal - internal tracking)
+    // Animation state (internal tracking)
     private shouldAnimate = false;
-    animatingMessageIds = new Set<number>();
+    readonly animatingMessageIds = signal(new Set<number>());
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
-    rows = 1;
+    readonly rows = signal(1);
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
@@ -170,7 +170,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect(() => {
             const sessionId = this.currentSessionId();
             if (this.previousSessionId !== sessionId) {
-                this.animatingMessageIds.clear();
+                this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
                 setTimeout(() => (this.shouldAnimate = true));
             }
@@ -187,11 +187,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             // Track new messages for animation
             if (this.shouldAnimate) {
                 const existingIds = new Set(this.messages().map((m) => m.id));
+                const newAnimatingIds = new Set(this.animatingMessageIds());
                 rawMessages.forEach((m) => {
                     if (m.id && !existingIds.has(m.id)) {
-                        this.animatingMessageIds.add(m.id);
+                        newAnimatingIds.add(m.id);
                     }
                 });
+                this.animatingMessageIds.set(newAnimatingIds);
             }
             this.previousMessageCount = rawMessages.length;
         });
@@ -415,11 +417,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!textareaRef) return;
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         const newRows = textarea.value.split('\n').length;
-        if (newRows != this.rows) {
+        if (newRows != this.rows()) {
             if (newRows <= 3) {
                 textarea.rows = newRows;
                 this.adjustScrollButtonPosition(newRows);
-                this.rows = newRows;
+                this.rows.set(newRows);
             }
         }
     }

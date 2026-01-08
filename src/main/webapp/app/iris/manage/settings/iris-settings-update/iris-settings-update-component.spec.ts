@@ -119,7 +119,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should set isAdmin based on account service', () => {
-            expect(component.isAdmin).toBeTrue(); // Default mock returns true
+            expect(component.isAdmin()).toBeTrue(); // Default mock returns true
         });
     });
 
@@ -173,7 +173,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should save settings as admin with rate limit from form fields', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            component.isAdmin = true;
+            component.isAdmin.set(true);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             const alertSpy = jest.spyOn(alertService, 'success');
             tick();
@@ -198,7 +198,7 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should send undefined rateLimit when both fields are cleared (revert to defaults)', fakeAsync(() => {
             // Course already has explicit rate limits from mockSettings
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            component.isAdmin = true;
+            component.isAdmin.set(true);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
@@ -216,7 +216,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should send rateLimit object when admin enters values', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            component.isAdmin = true;
+            component.isAdmin.set(true);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
@@ -234,7 +234,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should not allow non-admins to change variant', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-            component.isAdmin = false;
+            component.isAdmin.set(false);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
@@ -251,7 +251,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should not allow non-admins to change rate limits', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-            component.isAdmin = false;
+            component.isAdmin.set(false);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
