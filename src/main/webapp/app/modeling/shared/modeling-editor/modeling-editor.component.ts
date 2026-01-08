@@ -51,7 +51,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         effect(() => {
             const diagramType = this.diagramType();
 
-            if (!diagramType || !this.editorContainer) {
+            if (!diagramType || !this.editorContainer()) {
                 return;
             }
 
@@ -108,8 +108,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             ModelingEditorComponent.removeAssessments(umlModel);
         }
 
-        if (this.editorContainer) {
-            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
+        const editorContainer = this.editorContainer();
+        if (editorContainer) {
+            this.apollonEditor = new ApollonEditor(editorContainer.nativeElement, {
                 model: umlModel,
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly(),

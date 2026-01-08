@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -14,6 +16,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ModelingAssessmentComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
@@ -113,8 +117,7 @@ describe('ModelingAssessmentComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule)],
-            declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(FormsModule), ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisTranslatePipe),
                 {
@@ -122,17 +125,15 @@ describe('ModelingAssessmentComponent', () => {
                     useClass: MockTranslateService,
                 },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingAssessmentComponent);
-                comp = fixture.componentInstance;
-                translatePipe = TestBed.inject(ArtemisTranslatePipe);
-            });
+        });
+
+        fixture = TestBed.createComponent(ModelingAssessmentComponent);
+        comp = fixture.componentInstance;
+        translatePipe = TestBed.inject(ArtemisTranslatePipe);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should show title if any', () => {
@@ -176,7 +177,7 @@ describe('ModelingAssessmentComponent', () => {
         const explanationEditor = fixture.debugElement.query(By.directive(ModelingExplanationEditorComponent));
         expect(explanationEditor).not.toBeNull();
         expect(explanationEditor.componentInstance.explanation()).toEqual(explanation);
-        expect(explanationEditor.componentInstance.readOnly()).toBeTrue();
+        expect(explanationEditor.componentInstance.readOnly()).toBe(true);
     });
 
     it('should initialize apollon editor', () => {
@@ -199,7 +200,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should filter references by result feedbacks', () => {
-        expect(comp.referencedFeedbacks).toBeEmpty();
+        expect(comp.referencedFeedbacks).toHaveLength(0);
         expect(comp.resultFeedbacks()).toBeUndefined();
 
         fixture.componentRef.setInput('umlModel', makeMockModel());
@@ -211,7 +212,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should calculate drop info', () => {
-        const spy = jest.spyOn(translatePipe, 'transform');
+        const spy = vi.spyOn(translatePipe, 'transform');
         const mockModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', mockModel);
         fixture.detectChanges();
@@ -227,7 +228,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update element counts', async () => {
-        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
+        vi.spyOn(console, 'error').mockImplementation(() => {}); // prevent: findDOMNode is deprecated and will be removed in the next major release
         function getElementCounts(model: UMLModel): ModelElementCount[] {
             // Not sure whether this is the correct logic to build OtherModelElementCounts.
             return Object.values(model.elements).map((el) => ({
@@ -241,7 +242,7 @@ describe('ModelingAssessmentComponent', () => {
         const elementCounts = getElementCounts(mockModel);
         fixture.componentRef.setInput('elementCounts', elementCounts);
 
-        const spy = jest.spyOn(translatePipe, 'transform');
+        const spy = vi.spyOn(translatePipe, 'transform');
         fixture.detectChanges();
         await fixture.whenStable();
         await comp.ngAfterViewInit();
@@ -345,7 +346,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReference]);
         comp.referencedFeedbacks = [mockFeedbackWithReference];
-        jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
+        vi.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
         fixture.detectChanges();
         await comp.ngAfterViewInit();
@@ -365,7 +366,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReferenceCopied]);
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
-        jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
+        vi.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
 
         fixture.componentRef.setInput('highlightDifferences', true);
         fixture.detectChanges();

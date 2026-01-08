@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, input } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -96,7 +96,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly ButtonType = ButtonType;
 
-    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
+    readonly modelingEditor = viewChild(ModelingEditorComponent);
 
     participationId = input<number>();
     inputExercise = input<ModelingExercise>();
@@ -685,7 +685,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * @param submissionPatch
      */
     onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
-        this.modelingEditor.importPatch(submissionPatch.patch);
+        this.modelingEditor()?.importPatch(submissionPatch.patch);
     }
 
     private isModelEmpty(model?: string): boolean {
@@ -741,10 +741,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.submission = new ModelingSubmission();
         }
         this.submission.explanationText = this.explanation;
-        if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
+        const modelingEditor = this.modelingEditor();
+        if (!modelingEditor || !modelingEditor.getCurrentModel()) {
             return;
         }
-        const umlModel = this.modelingEditor.getCurrentModel();
+        const umlModel = modelingEditor.getCurrentModel();
         this.hasElements = umlModel.elements && Object.values(umlModel.elements).length !== 0;
         const diagramJson = JSON.stringify(umlModel);
         if (this.submission && diagramJson) {
@@ -819,10 +820,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     canDeactivate(): boolean {
-        if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
+        const modelingEditor = this.modelingEditor();
+        if (!modelingEditor || !modelingEditor.isApollonEditorMounted) {
             return true;
         }
-        const model: UMLModel = this.modelingEditor.getCurrentModel();
+        const model: UMLModel = modelingEditor.getCurrentModel();
         const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }

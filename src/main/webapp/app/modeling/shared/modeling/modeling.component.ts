@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, input, model } from '@angular/core';
+import { Component, ElementRef, input, model, viewChild } from '@angular/core';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
@@ -11,8 +11,8 @@ export abstract class ModelingComponent {
     protected readonly faGripLines = faGripLines;
     protected readonly faGripLinesVertical = faGripLinesVertical;
 
-    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
-    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
+    readonly editorContainer = viewChild<ElementRef<HTMLElement>>('editorContainer');
+    readonly resizeContainer = viewChild<ElementRef<HTMLElement>>('resizeContainer');
     resizeOptions = input<{
         horizontalResize?: boolean;
         verticalResize?: boolean;

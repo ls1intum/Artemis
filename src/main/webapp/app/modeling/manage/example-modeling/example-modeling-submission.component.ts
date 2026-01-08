@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -62,10 +62,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor: ModelingEditorComponent;
-    @ViewChild(ModelingAssessmentComponent, { static: false })
-    assessmentEditor: ModelingAssessmentComponent;
+    readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly assessmentEditor = viewChild(ModelingAssessmentComponent);
 
     private readonly themeService = inject(ThemeService);
 
@@ -229,7 +227,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     private createNewExampleModelingSubmission(): void {
         const modelingSubmission: ModelingSubmission = new ModelingSubmission();
-        modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
+        modelingSubmission.model = JSON.stringify(this.modelingEditor()?.getCurrentModel());
         modelingSubmission.explanationText = this.explanationText;
         modelingSubmission.exampleSubmission = true;
 
@@ -267,7 +265,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (!this.modelingSubmission) {
             this.createNewExampleModelingSubmission();
         }
-        const currentModel = this.modelingEditor.getCurrentModel();
+        const currentModel = this.modelingEditor()?.getCurrentModel();
         this.modelingSubmission.model = JSON.stringify(currentModel);
 
         this.modelingSubmission.explanationText = this.explanationText;
@@ -328,7 +326,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private modelChanged(): boolean {
-        return this.modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(this.modelingEditor.getCurrentModel());
+        const modelingEditor = this.modelingEditor();
+        return !!modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(modelingEditor.getCurrentModel());
     }
 
     explanationChanged(explanation: string) {

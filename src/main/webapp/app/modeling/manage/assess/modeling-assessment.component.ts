@@ -134,7 +134,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         this.handleFeedback();
 
-        this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
+        this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly(),
             model: this.umlModel(),
