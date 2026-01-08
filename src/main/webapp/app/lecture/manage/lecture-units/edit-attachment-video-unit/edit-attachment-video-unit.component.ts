@@ -58,7 +58,10 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             )
             .subscribe({
                 next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    const unit = attachmentVideoUnitResponse.body!;
+                    const unit = attachmentVideoUnitResponse.body;
+                    if (!unit) {
+                        return;
+                    }
                     const attach = unit.attachment || ({} as Attachment);
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     unit.attachment = undefined;
@@ -101,18 +104,20 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             return;
         }
 
-        // === Setting attachment ===
-        currentAttachment.name = name;
-        currentAttachment.releaseDate = releaseDate;
-        currentAttachment.attachmentType = AttachmentType.FILE;
-        // === Setting attachmentVideoUnit ===
+        // Create new objects to avoid mutating signal-stored objects
+        const updatedAttachment = Object.assign(new Attachment(), currentAttachment, {
+            name,
+            releaseDate,
+            attachmentType: AttachmentType.FILE,
+        });
 
-        currentUnit.name = name;
-        currentUnit.description = description;
-        currentUnit.releaseDate = releaseDate;
-        currentUnit.competencyLinks = competencyLinks;
-
-        currentUnit.videoSource = videoSource;
+        const updatedUnit = Object.assign(new AttachmentVideoUnit(), currentUnit, {
+            name,
+            description,
+            releaseDate,
+            competencyLinks,
+            videoSource,
+        });
 
         this.isLoading.set(true);
 
@@ -120,8 +125,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         if (file) {
             formData.append('file', file, fileName);
         }
-        formData.append('attachment', objectToJsonBlob(currentAttachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(currentUnit));
+        formData.append('attachment', objectToJsonBlob(updatedAttachment));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
 
         this.attachmentVideoUnitService
             .update(lectureId, currentUnit.id, formData, this.notificationText())
