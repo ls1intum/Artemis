@@ -51,7 +51,15 @@ class StubModelingEditorComponent {
     withExplanation = input<boolean>(false);
 
     getCurrentModel(): UMLModel {
-        return { elements: {}, relationships: {}, version: '3.0.0' } as UMLModel;
+        return {
+            elements: {},
+            relationships: {},
+            version: '3.0.0',
+            type: 'ClassDiagram',
+            size: { width: 0, height: 0 },
+            interactive: { elements: {}, relationships: {} },
+            assessments: {},
+        } as UMLModel;
     }
 }
 

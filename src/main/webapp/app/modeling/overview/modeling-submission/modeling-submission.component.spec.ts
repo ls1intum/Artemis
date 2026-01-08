@@ -126,9 +126,14 @@ describe('ModelingSubmissionComponent', () => {
             getCurrentModel: vi.fn().mockReturnValue({
                 elements: { element1: { id: 'element1', type: 'Class' } },
                 relationships: {},
-            } as UMLModel),
+                version: '3.0.0',
+                type: 'ClassDiagram',
+                size: { width: 0, height: 0 },
+                interactive: { elements: {}, relationships: {} },
+                assessments: {},
+            } as unknown as UMLModel),
             isApollonEditorMounted: false,
-            onModelPatch: new EventEmitter(),
+            onModelPatch: new EventEmitter() as any,
             importPatch: vi.fn(),
         };
 
@@ -755,7 +760,7 @@ describe('ModelingSubmissionComponent', () => {
         });
 
         (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue(currentModel as UMLModel);
-        mockModelingEditor.isApollonEditorMounted = true;
+        (mockModelingEditor as any).isApollonEditorMounted = true;
         comp.submission = submission;
         comp.submission.model = JSON.stringify(unsavedModel);
 

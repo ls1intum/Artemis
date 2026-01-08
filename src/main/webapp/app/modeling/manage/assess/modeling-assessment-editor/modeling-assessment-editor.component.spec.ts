@@ -500,7 +500,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
-            const routerSpy = vi.spyOn(router, 'navigate').mockImplementation();
+            const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             const modelingSubmission: ModelingSubmission = { id: 1 };
             const serviceSpy = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(modelingSubmission));
 
@@ -528,7 +528,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
-            const routerSpy = vi.spyOn(router, 'navigate').mockImplementation();
+            const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
             component.ngOnInit();
 
