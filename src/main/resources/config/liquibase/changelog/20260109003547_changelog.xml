@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet id="20251221161427-add-role-super-admin" author="florian-glombik">
+    <changeSet id="20260109003547-add-role-super-admin" author="florian-glombik">
         <preConditions onFail="MARK_RAN">
             <not>
                 <sqlCheck expectedResult="1">SELECT COUNT(*) FROM jhi_authority WHERE name = 'ROLE_SUPER_ADMIN'</sqlCheck>
