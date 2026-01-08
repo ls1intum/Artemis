@@ -419,7 +419,7 @@ def main():
     session = create_session()
 
     # Step 3: Setup PECV Bench and import programming exercises
-    #programming_exercises = pecv_bench_setup(session)
+    programming_exercises = pecv_bench_setup(session)
 
     # Step 4: Get course ID
     pecv_bench_course_id = get_pecv_bench_course_id(session)
