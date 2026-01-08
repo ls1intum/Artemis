@@ -22,6 +22,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
+import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 @Entity
@@ -248,8 +249,7 @@ public class PasskeyCredential extends AbstractAuditingEntity {
      *
      * @return An {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO} object.
      */
-    public de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO toAdminDto() {
-        return new de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved, user.getId(), user.getLogin(),
-                user.getName());
+    public PasskeyAdminDTO toAdminDto() {
+        return new PasskeyAdminDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved, user.getId(), user.getLogin(), user.getName());
     }
 }
