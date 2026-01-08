@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Params, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
@@ -66,6 +66,11 @@ export class IrisExerciseChatbotButtonComponent {
         { initialValue: undefined },
     );
 
+    // Convert route params to signals for proper reactive handling
+    // (route.params emits synchronously on subscription, before inputs are set in constructor)
+    private readonly routeParams = toSignal(this.route.params, { initialValue: {} as Params });
+    private readonly queryParams = toSignal(this.route.queryParams, { initialValue: {} as Params });
+
     private bubbleTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     readonly chatBubble = viewChild<ElementRef>('chatBubble');
@@ -81,17 +86,24 @@ export class IrisExerciseChatbotButtonComponent {
             }
         });
 
-        // Subscribe to route params and switch chat context
-        this.route.params.pipe(takeUntilDestroyed()).subscribe((params) => {
-            const rawId = this.mode() == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
-            const id = parseInt(rawId, 10);
-            this.chatService.switchTo(this.mode(), id);
+        // Effect to switch chat context when mode or route params change
+        // Using effect instead of subscription ensures inputs are set before first run
+        effect(() => {
+            const mode = this.mode();
+            const params = this.routeParams();
+            const rawId = mode === ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
+            if (rawId) {
+                const id = parseInt(rawId, 10);
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => this.chatService.switchTo(mode, id));
+            }
         });
 
-        // Subscribe to query params to auto-open chat
-        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
-            if (params.irisQuestion) {
-                this.openChat();
+        // Effect to auto-open chat when irisQuestion query param is present
+        effect(() => {
+            const params = this.queryParams();
+            if (params['irisQuestion']) {
+                untracked(() => this.openChat());
             }
         });
 

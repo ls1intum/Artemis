@@ -31,7 +31,8 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
-    let mockParamsSubject: any;
+    let mockParamsSubject: Subject<any>;
+    let mockQueryParamsSubject: Subject<any>;
     let mockDialogAfterClosed: Subject<void>;
     let accountService: AccountService;
 
@@ -50,9 +51,11 @@ describe('ExerciseChatbotButtonComponent', () => {
 
     beforeEach(async () => {
         mockParamsSubject = new Subject();
+        mockQueryParamsSubject = new Subject();
         mockDialogAfterClosed = new Subject<void>();
         mockActivatedRoute = {
-            params: mockParamsSubject,
+            params: mockParamsSubject.asObservable(),
+            queryParams: mockQueryParamsSubject.asObservable(),
         } as unknown as ActivatedRoute;
 
         mockDialogClose = jest.fn();
@@ -92,6 +95,8 @@ describe('ExerciseChatbotButtonComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
                 component = fixture.componentInstance;
+                // Set required input before detectChanges to avoid signal errors
+                fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
                 fixture.detectChanges();
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(mockCourseId);
@@ -208,16 +213,14 @@ describe('ExerciseChatbotButtonComponent', () => {
     }));
 
     it('should open chatbot if irisQuestion is provided in the queryParams', fakeAsync(() => {
-        // given - set up queryParams BEFORE creating component
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-        (activatedRoute.queryParams as any) = of({ irisQuestion: 'Can you explain me the error I got?' });
-
-        // Recreate component with queryParams already set
-        fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
-        component = fixture.componentInstance;
+        // given - set the input first
         fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         fixture.detectChanges();
+
+        // when - emit queryParams with irisQuestion
+        mockQueryParamsSubject.next({ irisQuestion: 'Can you explain me the error I got?' });
         tick();
+        fixture.detectChanges();
 
         // then
         expect(component.chatOpen()).toBeTrue();
@@ -225,13 +228,14 @@ describe('ExerciseChatbotButtonComponent', () => {
     }));
 
     it('should not open the chatbot if no irisQuestion is provided in the queryParams', fakeAsync(() => {
-        // given - chatOpen starts as false
+        // given - set the input first
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
+        fixture.detectChanges();
+
+        // chatOpen starts as false
         expect(component.chatOpen()).toBeFalse();
 
         // when - emit empty query params
-        const mockQueryParamsSubject = new Subject();
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-        (activatedRoute.queryParams as any) = mockQueryParamsSubject;
         mockQueryParamsSubject.next({});
         tick();
 
