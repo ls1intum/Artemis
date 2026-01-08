@@ -138,7 +138,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
-    readonly rows = signal(1);
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
@@ -413,23 +412,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
 
         this.adjustScrollButtonPosition(Math.min(textarea.scrollHeight, maxHeight) / lineHeight);
-    }
-
-    /**
-     * Handles the row change event in the message textarea.
-     */
-    onModelChange() {
-        const textareaRef = this.messageTextarea();
-        if (!textareaRef) return;
-        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const newRows = textarea.value.split('\n').length;
-        if (newRows != this.rows()) {
-            if (newRows <= 3) {
-                textarea.rows = newRows;
-                this.adjustScrollButtonPosition(newRows);
-                this.rows.set(newRows);
-            }
-        }
     }
 
     /**
