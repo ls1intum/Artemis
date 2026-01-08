@@ -167,22 +167,24 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
 
         // Handle session changes - reset animations
-        effect(() => {
+        effect((onCleanup) => {
             const sessionId = this.currentSessionId();
             if (this.previousSessionId !== sessionId) {
                 this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
-                setTimeout(() => (this.shouldAnimate = true));
+                const timeoutId = setTimeout(() => (this.shouldAnimate = true));
+                onCleanup(() => clearTimeout(timeoutId));
             }
             this.previousSessionId = sessionId;
         });
 
         // Handle message scroll on new messages
-        effect(() => {
+        effect((onCleanup) => {
             const rawMessages = this.rawMessages();
             if (rawMessages.length !== this.previousMessageCount) {
                 this.scrollToBottom('auto');
-                setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                onCleanup(() => clearTimeout(timeoutId));
             }
             // Track new messages for animation
             if (this.shouldAnimate) {
@@ -224,7 +226,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
 
         // Focus on message textarea after initialization
-        setTimeout(() => {
+        const focusTimeoutId = setTimeout(() => {
             const textarea = this.messageTextarea();
             const acceptBtn = this.acceptButton();
             if (textarea) {
@@ -233,6 +235,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 acceptBtn.nativeElement.focus();
             }
         }, 150);
+        this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
     }
 
     /**
