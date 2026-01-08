@@ -40,9 +40,11 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const attachmentVideoUnitId = Number(params.get('attachmentVideoUnitId'));
-                    this.lectureId.set(Number(parentParams.get('lectureId')));
-                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId()!);
+                    const attachmentVideoUnitIdParam = params.get('attachmentVideoUnitId');
+                    const lectureIdParam = parentParams.get('lectureId');
+                    const attachmentVideoUnitId = attachmentVideoUnitIdParam ? Number(attachmentVideoUnitIdParam) : undefined;
+                    this.lectureId.set(lectureIdParam ? Number(lectureIdParam) : undefined);
+                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId!, this.lectureId()!);
                 }),
                 finalize(() => this.isLoading.set(false)),
             )

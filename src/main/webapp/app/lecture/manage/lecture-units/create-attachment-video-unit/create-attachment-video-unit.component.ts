@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,6 +25,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
 
     readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
     attachmentVideoUnitToCreate: AttachmentVideoUnit = new AttachmentVideoUnit();
@@ -35,10 +37,14 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
-            this.lectureId.set(Number(params.get('lectureId')));
-            this.courseId.set(Number(parentParams.get('courseId')));
-        });
+        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap])
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(([params, parentParams]) => {
+                const lectureIdParam = params.get('lectureId');
+                const courseIdParam = parentParams.get('courseId');
+                this.lectureId.set(lectureIdParam ? Number(lectureIdParam) : undefined);
+                this.courseId.set(courseIdParam ? Number(courseIdParam) : undefined);
+            });
         this.attachmentVideoUnitToCreate = new AttachmentVideoUnit();
         this.attachmentToCreate = new Attachment();
     }
