@@ -255,6 +255,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
+    showMarkdownInfoText = input<boolean>(true);
     editType = input<PostingEditType>();
     course = input<Course>();
 

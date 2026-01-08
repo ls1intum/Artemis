@@ -1,4 +1,7 @@
 <div #fullElement class="h-100">
+    @if (showMarkdownInfoText()) {
+        <div class="pb-1 text-muted small" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+    }
     <div
         #wrapper
         class="markdown-editor-wrapper"
@@ -47,9 +50,11 @@
                                         ></span>
                                     </div>
                                 </label>
-                                <a class="col-auto mx-1" href="https://markdown-it.github.io/">
-                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-                                </a>
+                                @if (!showMarkdownInfoText()) {
+                                    <a class="col-auto mx-1" href="https://markdown-it.github.io/">
+                                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                    </a>
+                                }
                                 @if (editType() !== EditType.UPDATE && isInCommunication()) {
                                     <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto' }" />
                                     <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
