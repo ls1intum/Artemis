@@ -97,7 +97,7 @@ export class ExamTestRunPage {
         await this.page.locator(`#testrun-${testRunId}`).locator('.delete-testrun').click();
         await this.page.locator('#confirm-entity-name').fill('Test Run');
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-run/*`);
-        await this.page.locator('#delete').click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
 }

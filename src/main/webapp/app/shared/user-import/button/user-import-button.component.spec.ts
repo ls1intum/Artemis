@@ -1,29 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { Exam } from 'app/exam/shared/entities/exam.model';
 import { By } from '@angular/platform-browser';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared/user-import/dialog/users-import-dialog.component';
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportButtonComponent>;
     let comp: UsersImportButtonComponent;
-    let modalService: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), TranslateModule.forRoot()],
-            declarations: [UsersImportButtonComponent, MockComponent(ButtonComponent)],
+            imports: [TranslateModule.forRoot(), UsersImportButtonComponent],
             providers: [MockProvider(AlertService)],
         })
+            .overrideComponent(UsersImportButtonComponent, {
+                set: {
+                    imports: [MockComponent(ButtonComponent), MockComponent(UsersImportDialogComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UsersImportButtonComponent);
                 comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
             });
     });
 
@@ -32,13 +33,26 @@ describe('UsersImportButtonComponent', () => {
     });
 
     it('should initialize', () => {
-        const componentInstance = { courseId: Number, exam: Exam };
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-
-        comp.openUsersImportDialog(new MouseEvent('click'));
+        fixture.detectChanges();
         const openStudentsExamImportDialogButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(openStudentsExamImportDialogButton).not.toBeNull();
-        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+    });
+
+    it('should call open on dialog when openUsersImportDialog is called', () => {
+        fixture.detectChanges();
+        const mockDialog = { open: jest.fn() };
+        jest.spyOn(comp, 'importDialog').mockReturnValue(mockDialog as any);
+
+        comp.openUsersImportDialog(new MouseEvent('click'));
+
+        expect(mockDialog.open).toHaveBeenCalledOnce();
+    });
+
+    it('should emit importDone when onImportCompleted is called', () => {
+        const emitSpy = jest.spyOn(comp.importDone, 'emit');
+
+        comp.onImportCompleted();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });

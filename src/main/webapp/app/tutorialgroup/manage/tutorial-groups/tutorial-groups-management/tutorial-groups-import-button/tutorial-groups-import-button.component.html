@@ -2,14 +2,19 @@
     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.importButton"></span>
 </button>
 
-<ng-template #warning let-warning>
-    <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.tutorialGroupImportDialog.warning"></h4>
-    </div>
-    <div class="modal-body">
-        <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" (click)="warning.close()">Ok</button>
-    </div>
-</ng-template>
+<jhi-tutorial-groups-import-dialog #importDialog [courseId]="courseId()" (importCompleted)="onImportCompleted()" />
+
+<p-dialog
+    [header]="'artemisApp.tutorialGroupImportDialog.warning' | artemisTranslate"
+    [modal]="true"
+    [visible]="warningDialogVisible()"
+    [closable]="true"
+    (visibleChange)="warningDialogVisible.set($event)"
+    [style]="{ width: '30rem' }"
+    appendTo="body"
+>
+    <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>
+    <ng-template pTemplate="footer">
+        <button type="button" class="btn btn-light" (click)="closeWarningDialog()">Ok</button>
+    </ng-template>
+</p-dialog>

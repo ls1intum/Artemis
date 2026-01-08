@@ -12,7 +12,7 @@
                 <jhi-help-icon class="mb-1" text="artemisApp.instructorDashboard.courseScoresTooltip" />
             </div>
             @if (course?.isAtLeastInstructor) {
-                <a *titleBarActions [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-sm">
+                <a *titleBarActions [routerLink]="['/course-management', course.id, 'grading']" class="btn btn-info btn-sm">
                     <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                 </a>
             }

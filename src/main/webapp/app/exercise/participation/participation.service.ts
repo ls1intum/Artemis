@@ -70,7 +70,7 @@ export class ParticipationService {
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
-    delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
+    delete(participationId: number, req?: any): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
