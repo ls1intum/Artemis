@@ -56,6 +56,7 @@ describe('AdminContainerComponent', () => {
         features: [],
         git: mockGit,
         java: new Java(),
+        allowedCustomDockerNetworks: [],
         operatorAdminName: '',
         operatorName: '',
         repositoryAuthenticationMechanisms: [],

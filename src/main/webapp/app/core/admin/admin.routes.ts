@@ -35,10 +35,10 @@ const childRoutes: Routes = [
         },
     },
     {
-        path: 'feature-toggles',
+        path: 'features',
         loadComponent: () => import('app/core/admin/features/admin-feature-toggle.component').then((m) => m.AdminFeatureToggleComponent),
         data: {
-            pageTitle: 'featureToggles.title',
+            pageTitle: 'features.title',
         },
     },
     {

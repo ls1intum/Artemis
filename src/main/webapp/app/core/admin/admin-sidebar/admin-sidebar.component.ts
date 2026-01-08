@@ -250,11 +250,11 @@ export class AdminSidebarComponent {
                 testId: 'admin-cleanup-service',
             },
             {
-                routerLink: '/admin/feature-toggles',
+                routerLink: '/admin/features',
                 icon: faToggleOn,
                 title: 'Features',
                 translation: 'global.menu.admin.sidebar.features',
-                testId: 'admin-feature-toggles',
+                testId: 'admin-features',
             },
             {
                 routerLink: '/admin/imprint',
