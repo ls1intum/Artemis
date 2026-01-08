@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, finalize, switchMap, take } from 'rxjs/operators';
@@ -23,6 +24,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
 
     readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
 
@@ -130,7 +132,10 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.attachmentVideoUnitService
             .update(lectureId, currentUnit.id, formData, this.notificationText())
-            .pipe(finalize(() => this.isLoading.set(false)))
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isLoading.set(false)),
+            )
             .subscribe({
                 next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

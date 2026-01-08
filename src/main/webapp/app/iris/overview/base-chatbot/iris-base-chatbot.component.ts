@@ -217,9 +217,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Handle suggestions - clear clicked suggestion
+        // Reset clicked suggestion when new suggestions arrive (read without using value to establish dependency)
         effect(() => {
-            this.suggestions(); // trigger on change
+            this.suggestions();
             this.clickedSuggestion.set(undefined);
         });
 
