@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { filter, finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -39,12 +39,16 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
                 take(1),
+                filter(([params, parentParams]) => {
+                    const hasUnitId = params.get('attachmentVideoUnitId') !== null;
+                    const hasLectureId = parentParams.get('lectureId') !== null;
+                    return hasUnitId && hasLectureId;
+                }),
                 switchMap(([params, parentParams]) => {
-                    const attachmentVideoUnitIdParam = params.get('attachmentVideoUnitId');
-                    const lectureIdParam = parentParams.get('lectureId');
-                    const attachmentVideoUnitId = attachmentVideoUnitIdParam ? Number(attachmentVideoUnitIdParam) : undefined;
-                    this.lectureId.set(lectureIdParam ? Number(lectureIdParam) : undefined);
-                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId!, this.lectureId()!);
+                    const attachmentVideoUnitId = Number(params.get('attachmentVideoUnitId'));
+                    const lectureId = Number(parentParams.get('lectureId'));
+                    this.lectureId.set(lectureId);
+                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, lectureId);
                 }),
                 finalize(() => this.isLoading.set(false)),
             )

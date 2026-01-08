@@ -53,7 +53,8 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
 
-        if (!name || (!(file && fileName) && !videoSource)) {
+        const lectureId = this.lectureId();
+        if (!name || (!(file && fileName) && !videoSource) || lectureId === undefined) {
             return;
         }
 
@@ -82,7 +83,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
         this.attachmentVideoUnitService
-            .create(formData, this.lectureId()!)
+            .create(formData, lectureId)
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
