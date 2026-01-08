@@ -36,8 +36,12 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     readonly courseId = signal<number | undefined>(undefined);
 
     ngOnInit() {
-        const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap])
+        const lectureRoute = this.activatedRoute.parent?.parent;
+        const courseRoute = lectureRoute?.parent;
+        if (!lectureRoute || !courseRoute) {
+            return;
+        }
+        combineLatest([lectureRoute.paramMap, courseRoute.paramMap])
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(([params, parentParams]) => {
                 const lectureIdParam = params.get('lectureId');

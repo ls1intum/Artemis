@@ -35,7 +35,11 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading.set(true);
-        const lectureRoute = this.activatedRoute.parent!.parent!;
+        const lectureRoute = this.activatedRoute.parent?.parent;
+        if (!lectureRoute) {
+            this.isLoading.set(false);
+            return;
+        }
         combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
                 take(1),
@@ -89,8 +93,13 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             this.notificationText.set(updateNotificationText);
         }
 
-        const currentAttachment = this.attachment()!;
-        const currentUnit = this.attachmentVideoUnit()!;
+        const currentAttachment = this.attachment();
+        const currentUnit = this.attachmentVideoUnit();
+        const lectureId = this.lectureId();
+
+        if (!currentAttachment || !currentUnit || lectureId === undefined || currentUnit.id === undefined) {
+            return;
+        }
 
         // === Setting attachment ===
         currentAttachment.name = name;
@@ -115,7 +124,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         formData.append('attachmentVideoUnit', objectToJsonBlob(currentUnit));
 
         this.attachmentVideoUnitService
-            .update(this.lectureId()!, currentUnit.id!, formData, this.notificationText())
+            .update(lectureId, currentUnit.id, formData, this.notificationText())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
