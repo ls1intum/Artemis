@@ -498,7 +498,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 onReply: (payload) => this.onReplyReviewComment.emit(payload),
                 onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),
                 onToggleResolved: (payload) => this.onToggleResolveReviewThread.emit(payload),
-                requestRender: () => this.renderFeedbackWidgets(),
+                requestRender: () => this.renderReviewCommentWidgets(),
             });
         }
         return this.reviewCommentManager;

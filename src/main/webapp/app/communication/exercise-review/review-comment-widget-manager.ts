@@ -68,18 +68,24 @@ export class ReviewCommentWidgetManager {
     }
 
     private addDraftWidgets(): void {
-        for (const [fileName, lines] of this.draftLinesByFile.entries()) {
-            for (const line of lines) {
-                const widgetKey = this.getDraftKey(fileName, line);
-                let widgetRef = this.draftWidgetRefs.get(widgetKey);
-                if (!widgetRef) {
-                    widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-                    widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(fileName, line, text));
-                    widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, line));
-                    this.draftWidgetRefs.set(widgetKey, widgetRef);
-                }
-                this.editor.addLineWidget(line + 1, `review-comment-${fileName}-${line}`, widgetRef.location.nativeElement);
+        const activeFileName = this.config.getDraftFileName();
+        if (!activeFileName) {
+            return;
+        }
+        const lines = this.draftLinesByFile.get(activeFileName);
+        if (!lines) {
+            return;
+        }
+        for (const line of lines) {
+            const widgetKey = this.getDraftKey(activeFileName, line);
+            let widgetRef = this.draftWidgetRefs.get(widgetKey);
+            if (!widgetRef) {
+                widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
+                widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(activeFileName, line, text));
+                widgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line));
+                this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
+            this.editor.addLineWidget(line + 1, `review-comment-${activeFileName}-${line}`, widgetRef.location.nativeElement);
         }
     }
 
