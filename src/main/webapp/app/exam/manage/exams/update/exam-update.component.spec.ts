@@ -599,6 +599,8 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
 
+            jest.spyOn(component as any, 'save').mockImplementation(() => {});
+
             // Trigger handleSubmit
             component.handleSubmit();
             tick();
@@ -636,6 +638,8 @@ describe('ExamUpdateComponent', () => {
 
             // Change the dates
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
+
+            jest.spyOn(component as any, 'save').mockImplementation(() => {});
 
             component.handleSubmit();
             tick();
