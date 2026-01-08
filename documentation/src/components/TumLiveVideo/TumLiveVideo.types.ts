@@ -28,7 +28,7 @@ export type TumLiveVideoProps = {
 
     /**
      * Whether to hide video controls
-     * @default false
+     * @default true
      */
     videoOnly?: boolean;
 

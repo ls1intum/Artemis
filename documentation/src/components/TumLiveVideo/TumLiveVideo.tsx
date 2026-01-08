@@ -54,9 +54,7 @@ const TumLiveVideo: React.FC<TumLiveVideoProps> = ({
         if (videoOnly) {
             params.append('video_only', '1');
         }
-        if (startTime !== undefined) {
-            params.append('t', startTime.toString());
-        }
+        params.append('t', startTime.toString());
 
         // Add query parameters to URL if any exist
         const queryString = params.toString();
