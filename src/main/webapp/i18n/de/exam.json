@@ -747,7 +747,7 @@
             "announcementCreate": {
                 "button": "Ankündigung erstellen",
                 "title": "Klausurweite Ankündigung erstellen",
-                "task": "Gib deine Ankündigung hier ein. Du kannst Markdown verwenden.",
+                "task": "Gib deine Ankündigung hier ein.",
                 "preview": "Vorschau",
                 "sendButton": "Ankündigung senden",
                 "sending": "Sende Ankündigung...",
