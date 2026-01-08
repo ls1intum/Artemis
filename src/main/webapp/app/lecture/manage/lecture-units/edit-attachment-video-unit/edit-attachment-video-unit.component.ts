@@ -27,11 +27,11 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
 
     readonly isLoading = signal(false);
-    attachmentVideoUnit: AttachmentVideoUnit;
-    attachment: Attachment;
-    formData: AttachmentVideoUnitFormData;
-    lectureId: number;
-    notificationText: string;
+    readonly attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
+    readonly attachment = signal<Attachment | undefined>(undefined);
+    readonly formData = signal<AttachmentVideoUnitFormData | undefined>(undefined);
+    readonly lectureId = signal<number | undefined>(undefined);
+    readonly notificationText = signal<string | undefined>(undefined);
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -41,32 +41,34 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 take(1),
                 switchMap(([params, parentParams]) => {
                     const attachmentVideoUnitId = Number(params.get('attachmentVideoUnitId'));
-                    this.lectureId = Number(parentParams.get('lectureId'));
-                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId);
+                    this.lectureId.set(Number(parentParams.get('lectureId')));
+                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId()!);
                 }),
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
                 next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    this.attachmentVideoUnit = attachmentVideoUnitResponse.body!;
-                    this.attachment = this.attachmentVideoUnit.attachment || {};
+                    const unit = attachmentVideoUnitResponse.body!;
+                    const attach = unit.attachment || ({} as Attachment);
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
-                    this.attachmentVideoUnit.attachment = undefined;
-                    this.attachment.attachmentVideoUnit = undefined;
+                    unit.attachment = undefined;
+                    attach.attachmentVideoUnit = undefined;
 
-                    this.formData = {
+                    this.attachmentVideoUnit.set(unit);
+                    this.attachment.set(attach);
+                    this.formData.set({
                         formProperties: {
-                            name: this.attachmentVideoUnit.name,
-                            description: this.attachmentVideoUnit.description,
-                            releaseDate: this.attachmentVideoUnit.releaseDate,
-                            version: this.attachment.version,
-                            competencyLinks: this.attachmentVideoUnit.competencyLinks,
-                            videoSource: this.attachmentVideoUnit.videoSource,
+                            name: unit.name,
+                            description: unit.description,
+                            releaseDate: unit.releaseDate,
+                            version: attach.version,
+                            competencyLinks: unit.competencyLinks,
+                            videoSource: unit.videoSource,
                         },
                         fileProperties: {
-                            fileName: this.attachment.link,
+                            fileName: attach.link,
                         },
-                    };
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -78,21 +80,24 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         // optional update notification text for students
         if (updateNotificationText) {
-            this.notificationText = updateNotificationText;
+            this.notificationText.set(updateNotificationText);
         }
 
+        const currentAttachment = this.attachment()!;
+        const currentUnit = this.attachmentVideoUnit()!;
+
         // === Setting attachment ===
-        this.attachment.name = name;
-        this.attachment.releaseDate = releaseDate;
-        this.attachment.attachmentType = AttachmentType.FILE;
+        currentAttachment.name = name;
+        currentAttachment.releaseDate = releaseDate;
+        currentAttachment.attachmentType = AttachmentType.FILE;
         // === Setting attachmentVideoUnit ===
 
-        this.attachmentVideoUnit.name = name;
-        this.attachmentVideoUnit.description = description;
-        this.attachmentVideoUnit.releaseDate = releaseDate;
-        this.attachmentVideoUnit.competencyLinks = competencyLinks;
+        currentUnit.name = name;
+        currentUnit.description = description;
+        currentUnit.releaseDate = releaseDate;
+        currentUnit.competencyLinks = competencyLinks;
 
-        this.attachmentVideoUnit.videoSource = videoSource;
+        currentUnit.videoSource = videoSource;
 
         this.isLoading.set(true);
 
@@ -100,11 +105,11 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         if (file) {
             formData.append('file', file, fileName);
         }
-        formData.append('attachment', objectToJsonBlob(this.attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit));
+        formData.append('attachment', objectToJsonBlob(currentAttachment));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(currentUnit));
 
         this.attachmentVideoUnitService
-            .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
+            .update(this.lectureId()!, currentUnit.id!, formData, this.notificationText())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),

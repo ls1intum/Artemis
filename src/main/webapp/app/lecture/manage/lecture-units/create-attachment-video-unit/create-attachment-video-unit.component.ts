@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -29,15 +29,15 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     attachmentVideoUnitToCreate: AttachmentVideoUnit = new AttachmentVideoUnit();
     attachmentToCreate: Attachment = new Attachment();
 
-    isLoading: boolean;
-    lectureId: number;
-    courseId: number;
+    readonly isLoading = signal(false);
+    readonly lectureId = signal<number | undefined>(undefined);
+    readonly courseId = signal<number | undefined>(undefined);
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
-            this.lectureId = Number(params.get('lectureId'));
-            this.courseId = Number(parentParams.get('courseId'));
+            this.lectureId.set(Number(params.get('lectureId')));
+            this.courseId.set(Number(parentParams.get('courseId')));
         });
         this.attachmentVideoUnitToCreate = new AttachmentVideoUnit();
         this.attachmentToCreate = new Attachment();
@@ -65,7 +65,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         this.attachmentVideoUnitToCreate.videoSource = videoSource;
         this.attachmentVideoUnitToCreate.competencyLinks = competencyLinks || [];
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         const formData = new FormData();
 
@@ -76,8 +76,8 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
         this.attachmentVideoUnitService
-            .create(formData, this.lectureId)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .create(formData, this.lectureId()!)
+            .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse | Error) => {
