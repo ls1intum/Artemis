@@ -137,6 +137,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly animatingMessageIds = signal(new Set<number>());
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
+    private previousMessageIds = new Set<number>();
     readonly rows = signal(1);
     public ButtonType = ButtonType;
 
@@ -186,19 +187,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
-            // Track new messages for animation
+            // Track new messages for animation (compare against previous IDs, not current)
             if (this.shouldAnimate) {
-                const existingIds = new Set(this.messages().map((m) => m.id));
                 // Use untracked to read current value without creating a dependency
                 // (otherwise updating animatingMessageIds would retrigger this effect infinitely)
                 const newAnimatingIds = new Set(untracked(() => this.animatingMessageIds()));
                 rawMessages.forEach((m) => {
-                    if (m.id && !existingIds.has(m.id)) {
+                    if (m.id && !this.previousMessageIds.has(m.id)) {
                         newAnimatingIds.add(m.id);
                     }
                 });
                 this.animatingMessageIds.set(newAnimatingIds);
             }
+            this.previousMessageIds = new Set(rawMessages.map((m) => m.id).filter((id): id is number => id !== undefined));
             this.previousMessageCount = rawMessages.length;
         });
 
