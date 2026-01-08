@@ -34,7 +34,7 @@ const TumLiveVideo: React.FC<TumLiveVideoProps> = ({
     width = 600,
     height = 350,
     videoOnly = true,
-    startTime,
+    startTime = 0,
     style,
 }) => {
     // Build the full URL if only video ID is provided
