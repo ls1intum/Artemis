@@ -27,6 +27,7 @@
             [enableExerciseReviewComments]="true"
             [reviewCommentThreads]="reviewCommentThreads()"
             [selectedAuxiliaryRepositoryId]="selectedRepositoryId"
+            (onCommit)="onCommitReviewComments()"
             (onSubmitReviewComment)="onSubmitReviewComment($event)"
             (onDeleteReviewComment)="onDeleteReviewComment($event)"
             (onReplyReviewComment)="onReplyReviewComment($event)"
@@ -98,7 +99,7 @@
                             [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
                             jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                         ></button>
-                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
+                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
                                     [disabled]="!exercise"

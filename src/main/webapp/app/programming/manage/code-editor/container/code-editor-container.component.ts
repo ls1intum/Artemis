@@ -113,6 +113,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output()
     onDiscardSuggestion = new EventEmitter<Feedback>();
+    readonly onCommit = output<void>();
 
     readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
     readonly onDeleteReviewComment = output<number>();
@@ -130,6 +131,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     participation: Participation;
 
     /** END WIP */
+
+    onCommitAction(): void {
+        this.onCommit.emit();
+    }
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private selectedFileValue?: string;

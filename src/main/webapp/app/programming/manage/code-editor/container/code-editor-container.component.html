@@ -20,6 +20,7 @@
                     [disableAutoSave]="disableAutoSave"
                     (onSavedFiles)="onSavedFiles($event)"
                     (onRefreshFiles)="onRefreshFiles()"
+                    (onCommit)="onCommitAction()"
                     (commitStateChange)="onCommitStateChange.emit($event)"
                     (onError)="onError($event)"
                     [participation]="participation"

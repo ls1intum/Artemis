@@ -151,6 +151,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private renderScheduled = false;
     private renderFocusLine?: number;
     private renderAnimationFrameId?: number;
+    private reviewRenderScheduled = false;
+    private reviewRenderAnimationFrameId?: number;
 
     constructor() {
         effect(() => {
@@ -168,7 +170,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
         effect(() => {
             this.reviewCommentThreads();
-            this.renderFeedbackWidgets();
+            this.renderReviewCommentWidgets();
         });
     }
 
@@ -178,7 +180,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         // Refreshing the editor resets any local files.
         if (editorWasRefreshed || editorWasReset) {
             this.fileSession.set({});
-            this.reviewCommentManager?.disposeAll();
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
@@ -191,6 +192,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
+            this.renderReviewCommentWidgets();
             if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
                 this.setupAddFeedbackButton();
                 this.setupAddFeedbackShortcut();
@@ -217,6 +219,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         this.reviewCommentManager?.disposeAll();
         if (this.renderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.renderAnimationFrameId);
+        }
+        if (this.reviewRenderAnimationFrameId !== undefined) {
+            window.cancelAnimationFrame(this.reviewRenderAnimationFrameId);
         }
     }
 
@@ -438,7 +443,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 this.ngZone.run(() => {
                     this.changeDetectorRef.detectChanges();
                     const issues = this.consistencyIssues();
-                    this.editor().disposeWidgets();
+                    this.editor().disposeWidgetsByPrefix('feedback-');
                     for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
                         this.addLineWidgetWithFeedback(feedback);
                     }
@@ -457,6 +462,21 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
                     // Readd inconsistency issue comments, because all widgets got removed
                     addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
+                });
+            }),
+        );
+    }
+
+    private renderReviewCommentWidgets(): void {
+        if (this.reviewRenderScheduled) {
+            return;
+        }
+        this.reviewRenderScheduled = true;
+        this.reviewRenderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
+            requestAnimationFrame(() => {
+                this.reviewRenderScheduled = false;
+                this.ngZone.run(() => {
+                    this.editor().disposeWidgetsByPrefix('review-comment-');
                     this.getReviewCommentManager().renderWidgets();
                 });
             }),

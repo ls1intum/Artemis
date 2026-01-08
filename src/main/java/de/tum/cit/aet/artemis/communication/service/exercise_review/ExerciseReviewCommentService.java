@@ -5,13 +5,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.exercise_review.Comment;
 import de.tum.cit.aet.artemis.communication.domain.exercise_review.CommentThread;
+import de.tum.cit.aet.artemis.communication.domain.exercise_review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.communication.domain.exercise_review.CommentType;
 import de.tum.cit.aet.artemis.communication.dto.exercise_review.CommentContentDTO;
 import de.tum.cit.aet.artemis.communication.dto.exercise_review.ConsistencyIssueCommentContentDTO;
@@ -25,12 +29,18 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ExerciseReviewCommentService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseReviewCommentService.class);
 
     private static final String COMMENT_ENTITY_NAME = "exerciseReviewComment";
 
@@ -46,13 +56,16 @@ public class ExerciseReviewCommentService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final GitService gitService;
+
     public ExerciseReviewCommentService(CommentThreadRepository commentThreadRepository, CommentRepository commentRepository, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, GitService gitService) {
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.gitService = gitService;
     }
 
     /**
@@ -210,6 +223,81 @@ public class ExerciseReviewCommentService {
         return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
     }
 
+    /**
+     * Update thread line numbers and outdated state based on a new exercise version (repository threads only).
+     *
+     * @param previousSnapshot the previous exercise snapshot
+     * @param currentSnapshot  the current exercise snapshot
+     */
+    public void updateThreadsForVersionChange(ExerciseSnapshotDTO previousSnapshot, ExerciseSnapshotDTO currentSnapshot) {
+        if (previousSnapshot == null || currentSnapshot == null) {
+            return;
+        }
+
+        ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
+        ProgrammingExerciseSnapshotDTO currentProgramming = currentSnapshot.programmingData();
+        if (previousProgramming == null || currentProgramming == null) {
+            return;
+        }
+
+        List<CommentThread> threads = commentThreadRepository.findByExerciseId(currentSnapshot.id());
+        if (threads.isEmpty()) {
+            return;
+        }
+
+        boolean updated = false;
+        for (CommentThread thread : threads) {
+            if (thread.getLineNumber() == null) {
+                continue;
+            }
+            if (thread.getTargetType() != CommentThreadLocationType.PROBLEM_STATEMENT && thread.getFilePath() == null) {
+                continue;
+            }
+
+            if (thread.getTargetType() == CommentThreadLocationType.PROBLEM_STATEMENT) {
+                GitService.LineMappingResult result = gitService.mapLineInText(previousSnapshot.problemStatement(), currentSnapshot.problemStatement(), thread.getLineNumber());
+                if (result.outdated()) {
+                    thread.setOutdated(true);
+                    updated = true;
+                }
+                if (result.newLine() != null && !Objects.equals(thread.getLineNumber(), result.newLine())) {
+                    thread.setLineNumber(result.newLine());
+                    updated = true;
+                }
+                continue;
+            }
+
+            Optional<RepoDiffInfo> diffInfo = resolveRepoDiffInfo(previousProgramming, currentProgramming, thread);
+            if (diffInfo.isEmpty()) {
+                continue;
+            }
+
+            RepoDiffInfo info = diffInfo.get();
+            if (Objects.equals(info.oldCommit(), info.newCommit())) {
+                continue;
+            }
+
+            try {
+                GitService.LineMappingResult result = gitService.mapLine(info.repositoryUri(), thread.getFilePath(), info.oldCommit(), info.newCommit(), thread.getLineNumber());
+                if (result.outdated()) {
+                    thread.setOutdated(true);
+                    updated = true;
+                }
+                if (result.newLine() != null && !Objects.equals(thread.getLineNumber(), result.newLine())) {
+                    thread.setLineNumber(result.newLine());
+                    updated = true;
+                }
+            }
+            catch (Exception ex) {
+                log.warn("Could not map line for thread {}: {}", thread.getId(), ex.getMessage());
+            }
+        }
+
+        if (updated) {
+            commentThreadRepository.saveAll(threads);
+        }
+    }
+
     private void validateContentMatchesType(CommentType type, CommentContentDTO content) {
         if (content == null) {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
@@ -227,5 +315,48 @@ public class ExerciseReviewCommentService {
 
     private CommentThread findThreadByIdElseThrow(long threadId) {
         return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
+    }
+
+    private Optional<RepoDiffInfo> resolveRepoDiffInfo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, CommentThread thread) {
+        return switch (thread.getTargetType()) {
+            case TEMPLATE_REPO -> mapParticipationRepo(previous.templateParticipation(), current.templateParticipation());
+            case SOLUTION_REPO -> mapParticipationRepo(previous.solutionParticipation(), current.solutionParticipation());
+            case TEST_REPO -> mapTestRepo(previous, current);
+            case AUXILIARY_REPO -> mapAuxRepo(previous, current, thread.getAuxiliaryRepositoryId());
+            case PROBLEM_STATEMENT -> Optional.empty();
+        };
+    }
+
+    private Optional<RepoDiffInfo> mapParticipationRepo(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previous,
+            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO current) {
+        if (previous == null || current == null) {
+            return Optional.empty();
+        }
+        if (previous.commitId() == null || current.commitId() == null || current.repositoryUri() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.repositoryUri()), previous.commitId(), current.commitId()));
+    }
+
+    private Optional<RepoDiffInfo> mapTestRepo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current) {
+        if (previous.testsCommitId() == null || current.testsCommitId() == null || current.testRepositoryUri() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.testRepositoryUri()), previous.testsCommitId(), current.testsCommitId()));
+    }
+
+    private Optional<RepoDiffInfo> mapAuxRepo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, Long auxiliaryRepositoryId) {
+        if (auxiliaryRepositoryId == null || previous.auxiliaryRepositories() == null || current.auxiliaryRepositories() == null) {
+            return Optional.empty();
+        }
+        var previousRepo = previous.auxiliaryRepositories().stream().filter(repo -> repo.id() == auxiliaryRepositoryId).findFirst().orElse(null);
+        var currentRepo = current.auxiliaryRepositories().stream().filter(repo -> repo.id() == auxiliaryRepositoryId).findFirst().orElse(null);
+        if (previousRepo == null || currentRepo == null || previousRepo.commitId() == null || currentRepo.commitId() == null || currentRepo.repositoryUri() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(currentRepo.repositoryUri()), previousRepo.commitId(), currentRepo.commitId()));
+    }
+
+    private record RepoDiffInfo(LocalVCRepositoryUri repositoryUri, String oldCommit, String newCommit) {
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.service.exercise_review.ExerciseReviewCommentService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -53,9 +54,11 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
+    private final ExerciseReviewCommentService exerciseReviewCommentService;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, ExerciseReviewCommentService exerciseReviewCommentService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -64,6 +67,7 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
+        this.exerciseReviewCommentService = exerciseReviewCommentService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -123,6 +127,14 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
+            previousVersion.ifPresent(prev -> {
+                try {
+                    exerciseReviewCommentService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot);
+                }
+                catch (Exception ex) {
+                    log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());
+                }
+            });
         }
         catch (Exception e) {
             log.error("Error creating exercise version for exercise with id {}: {}", targetExercise.getId(), e.getMessage(), e);

@@ -23,7 +23,7 @@ export type ReviewCommentWidgetManagerConfig = {
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
-    private readonly threadWidgetRefs: Map<number, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
+    private readonly threadWidgetRefs: Map<string, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
     private readonly collapseState: Map<number, boolean> = new Map();
 
     constructor(
@@ -87,7 +87,11 @@ export class ReviewCommentWidgetManager {
         this.disposeSavedWidgets();
         const threads = this.config.getThreads().filter((thread) => this.config.filterThread(thread));
         for (const thread of threads) {
+            if (thread.id === undefined || thread.id === null) {
+                continue;
+            }
             const line = this.config.getThreadLine(thread);
+            const widgetId = this.buildThreadWidgetId(thread.id, thread.filePath, line);
             const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
             widgetRef.setInput('thread', thread);
             if (!this.collapseState.has(thread.id)) {
@@ -99,8 +103,8 @@ export class ReviewCommentWidgetManager {
             widgetRef.instance.onUpdate.subscribe((event) => this.config.onUpdate(event));
             widgetRef.instance.onToggleResolved.subscribe((resolved) => this.config.onToggleResolved({ threadId: thread.id, resolved }));
             widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
-            this.threadWidgetRefs.set(thread.id, widgetRef);
-            this.editor.addLineWidget(line + 1, `review-comment-thread-${thread.id}`, widgetRef.location.nativeElement);
+            this.threadWidgetRefs.set(widgetId, widgetRef);
+            this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
         }
     }
 
@@ -131,6 +135,12 @@ export class ReviewCommentWidgetManager {
     private disposeSavedWidgets(): void {
         this.threadWidgetRefs.forEach((ref) => ref.destroy());
         this.threadWidgetRefs.clear();
+    }
+
+    private buildThreadWidgetId(threadId: number, filePath: string | undefined, line: number): string {
+        const safePath = (filePath ?? 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const randomSuffix = Math.random().toString(36).slice(2, 8);
+        return `review-comment-thread-${threadId}-${safePath}-${line}-${randomSuffix}`;
     }
 
     private getDraftKey(fileName: string, line: number): string {

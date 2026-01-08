@@ -111,6 +111,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         );
     }
 
+    onCommitReviewComments(): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+        this.reviewCommentThreads.set([]);
+        this.loadReviewCommentThreads(exerciseId);
+    }
+
     /**
      * Starts Hyperion code generation after user confirmation.
      */
