@@ -125,6 +125,7 @@ export const expectedProfileInfo: ProfileInfo = {
     versionControlName: '',
     versionControlUrl: 'https://artemistest2.aet.cit.tum.de',
     localLLMDeploymentEnabled: false,
+    allowedCustomDockerNetworks: [],
 };
 
 describe('ProfileService', () => {

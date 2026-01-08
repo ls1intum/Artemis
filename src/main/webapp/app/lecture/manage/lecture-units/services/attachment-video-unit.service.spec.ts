@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -13,6 +15,8 @@ import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 
 describe('AttachmentVideoUnitService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
@@ -53,7 +57,7 @@ describe('AttachmentVideoUnitService', () => {
         httpMock.verify();
     });
 
-    it('should find a AttachmentVideoUnit', fakeAsync(() => {
+    it('should find a AttachmentVideoUnit', async () => {
         const returnedFromService = { ...elemDefault };
         service
             .findById(1, 1)
@@ -62,9 +66,9 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(elemDefault);
-    }));
+    });
 
-    it('should create an AttachmentVideoUnit', fakeAsync(() => {
+    it('should create an AttachmentVideoUnit', async () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         const formData = new FormData();
@@ -78,9 +82,9 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    }));
+    });
 
-    it('should update a AttachmentVideoUnit', fakeAsync(() => {
+    it('should update a AttachmentVideoUnit', async () => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
         elemDefault.id = 42;
@@ -94,9 +98,9 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    }));
+    });
 
-    it('should create AttachmentVideoUnits', fakeAsync(() => {
+    it('should create AttachmentVideoUnits', async () => {
         const returnedAttachmentVideoUnits = [
             {
                 type: 'attachment',
@@ -144,9 +148,9 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should get units information', fakeAsync(() => {
+    it('should get units information', async () => {
         const unit1 = {
             unitName: 'Unit 1',
             releaseDate: dayjs().year(2022).month(3).date(5),
@@ -167,9 +171,9 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should get removed slides data', fakeAsync(() => {
+    it('should get removed slides data', async () => {
         let response: any;
         const returnedFromService = [1, 2, 3];
         const expected = [...returnedFromService];
@@ -183,9 +187,9 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should upload slides', fakeAsync(() => {
+    it('should upload slides', async () => {
         let response: any;
         const returnedFromService = 'filename-on-server';
         const expected = 'filename-on-server';
@@ -199,8 +203,8 @@ describe('AttachmentVideoUnitService', () => {
         req.flush(returnedFromService);
 
         expect(response.body).toEqual(expected);
-    }));
-    it('create(): sets ngsw-bypass header and keepFilename=true', fakeAsync(() => {
+    });
+    it('create(): sets ngsw-bypass header and keepFilename=true', async () => {
         const formData = new FormData();
         formData.append('file', new Blob(), 'file.pdf');
 
@@ -214,9 +218,9 @@ describe('AttachmentVideoUnitService', () => {
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
         req.flush({ id: 1 });
         expect(resp.body).toEqual({ id: 1 });
-    }));
+    });
 
-    it('update(): sets ngsw-bypass header and keepFilename=true (no notificationText)', fakeAsync(() => {
+    it('update(): sets ngsw-bypass header and keepFilename=true (no notificationText)', async () => {
         const formData = new FormData();
         let resp: any;
 
@@ -229,9 +233,9 @@ describe('AttachmentVideoUnitService', () => {
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
         req.flush({ id: 42 });
         expect(resp.body).toEqual({ id: 42 });
-    }));
+    });
 
-    it('update(): appends notificationText when provided', fakeAsync(() => {
+    it('update(): appends notificationText when provided', async () => {
         const formData = new FormData();
         let resp: any;
 
@@ -247,9 +251,9 @@ describe('AttachmentVideoUnitService', () => {
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
         req.flush({ id: 42, note: notificationText });
         expect(resp.body).toEqual({ id: 42, note: notificationText });
-    }));
+    });
 
-    it('updateStudentVersion(): calls correct URL with ngsw-bypass header', fakeAsync(() => {
+    it('updateStudentVersion(): calls correct URL with ngsw-bypass header', async () => {
         const formData = new FormData();
         formData.append('file', new Blob(), 'student.pdf');
         let resp: any;
@@ -263,9 +267,9 @@ describe('AttachmentVideoUnitService', () => {
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
         req.flush({ id: 11, ok: true });
         expect(resp.body).toEqual({ id: 11, ok: true });
-    }));
+    });
 
-    it('uploadSlidesForProcessing(): sends FormData with file field', fakeAsync(() => {
+    it('uploadSlidesForProcessing(): sends FormData with file field', async () => {
         const file = new File(['hello'], 'slides.pdf', { type: 'application/pdf' });
         let resp: any;
 
@@ -275,7 +279,7 @@ describe('AttachmentVideoUnitService', () => {
             .subscribe((r) => (resp = r));
 
         const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === 'api/lecture/lectures/55/attachment-video-units/upload');
-        expect(req.request.body instanceof FormData).toBeTrue();
+        expect(req.request.body instanceof FormData).toBe(true);
         const sentFormData = req.request.body as FormData;
         // Verify FormData contains "file" with our name
         const fileEntry = sentFormData.get('file') as File;
@@ -284,9 +288,9 @@ describe('AttachmentVideoUnitService', () => {
 
         req.flush('filename-on-server');
         expect(resp.body).toBe('filename-on-server');
-    }));
+    });
 
-    it('getSlidesToRemove(): sets commaSeparatedKeyPhrases param', fakeAsync(() => {
+    it('getSlidesToRemove(): sets commaSeparatedKeyPhrases param', async () => {
         const lectureId = 12;
         const filename = 'deck.pdf';
         const keyPhrases = 'foo,bar,baz';
@@ -305,9 +309,9 @@ describe('AttachmentVideoUnitService', () => {
         );
         req.flush([2, 5]);
         expect(resp.body).toEqual([2, 5]);
-    }));
+    });
 
-    it('createUnits(): posts DTO payload to correct URL', fakeAsync(() => {
+    it('createUnits(): posts DTO payload to correct URL', async () => {
         const dto: LectureUnitInformationDTO = {
             units: [{ unitName: 'U1', releaseDate: dayjs('2024-04-05'), startPage: 1, endPage: 10 }],
             numberOfPages: 10,
@@ -324,9 +328,9 @@ describe('AttachmentVideoUnitService', () => {
         expect(req.request.body).toEqual(dto);
         req.flush([{ id: 1 }]);
         expect(resp.body).toEqual([{ id: 1 }]);
-    }));
+    });
 
-    it('getSplitUnitsData(): hits correct URL and observes response', fakeAsync(() => {
+    it('getSplitUnitsData(): hits correct URL and observes response', async () => {
         let resp: any;
         service
             .getSplitUnitsData(77, 'file.pdf')
@@ -336,7 +340,7 @@ describe('AttachmentVideoUnitService', () => {
         const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/lecture/lectures/77/attachment-video-units/data/file.pdf');
         req.flush({ lectureUnitDTOS: [], numberOfPages: 0 });
         expect(resp.body).toEqual({ lectureUnitDTOS: [], numberOfPages: 0 });
-    }));
+    });
 
     describe('getAttachmentFile', () => {
         it('should retrieve a file as Blob for a given course and attachment video unit ID', () => {
@@ -360,7 +364,7 @@ describe('AttachmentVideoUnitService', () => {
     });
 
     describe('getPlaylistUrl', () => {
-        it('should return playlist URL on success', fakeAsync(() => {
+        it('should return playlist URL on success', async () => {
             const pageUrl = 'https://tum-live.de/w/course/1';
             const playlistUrl = 'https://stream.tum-live.de/video.m3u8';
             let result: string | undefined;
@@ -375,9 +379,9 @@ describe('AttachmentVideoUnitService', () => {
             req.flush(playlistUrl);
 
             expect(result).toBe(playlistUrl);
-        }));
+        });
 
-        it('should return undefined on error', fakeAsync(() => {
+        it('should return undefined on error', async () => {
             const pageUrl = 'https://invalid-url.com';
             let result: string | undefined = 'initial';
 
@@ -390,11 +394,11 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('Not found', { status: 404, statusText: 'Not Found' });
 
             expect(result).toBeUndefined();
-        }));
+        });
     });
 
     describe('createAttachmentVideoUnitFromFile', () => {
-        it('should create attachment unit with name derived from filename', fakeAsync(() => {
+        it('should create attachment unit with name derived from filename', async () => {
             const file = new File(['content'], 'My_Lecture-Slides.pdf', { type: 'application/pdf' });
             const lectureId = 42;
             let result: any;
@@ -417,9 +421,9 @@ describe('AttachmentVideoUnitService', () => {
 
             req.flush({ id: 1, name: 'My Lecture Slides' });
             expect(result.body).toEqual({ id: 1, name: 'My Lecture Slides' });
-        }));
+        });
 
-        it('should handle filename with uppercase PDF extension', fakeAsync(() => {
+        it('should handle filename with uppercase PDF extension', async () => {
             const file = new File(['content'], 'Document.PDF', { type: 'application/pdf' });
             let result: any;
 
@@ -431,9 +435,9 @@ describe('AttachmentVideoUnitService', () => {
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush({ id: 2, name: 'Document' });
             expect(result.body.name).toBe('Document');
-        }));
+        });
 
-        it('should replace underscores and hyphens with spaces in unit name', fakeAsync(() => {
+        it('should replace underscores and hyphens with spaces in unit name', async () => {
             const file = new File(['content'], 'chapter_01-introduction_to_testing.pdf', { type: 'application/pdf' });
             let result: any;
 
@@ -445,9 +449,9 @@ describe('AttachmentVideoUnitService', () => {
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush({ id: 3, name: 'chapter 01 introduction to testing' });
             expect(result.body.name).toBe('chapter 01 introduction to testing');
-        }));
+        });
 
-        it('should trim whitespace from unit name', fakeAsync(() => {
+        it('should trim whitespace from unit name', async () => {
             const file = new File(['content'], '  spaced_name  .pdf', { type: 'application/pdf' });
             let result: any;
 
@@ -459,9 +463,9 @@ describe('AttachmentVideoUnitService', () => {
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush({ id: 4 });
             expect(result.body).toBeTruthy();
-        }));
+        });
 
-        it('should set attachment type to FILE', fakeAsync(() => {
+        it('should set attachment type to FILE', async () => {
             const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
 
             service.createAttachmentVideoUnitFromFile(1, file).pipe(take(1)).subscribe();
@@ -474,6 +478,6 @@ describe('AttachmentVideoUnitService', () => {
             expect(attachmentBlob.type).toBe('application/json');
 
             req.flush({ id: 5 });
-        }));
+        });
     });
 });

@@ -164,4 +164,5 @@ export class ProfileInfo {
     public versionControlName: string;
     public versionControlUrl: string;
     public localLLMDeploymentEnabled: boolean;
+    public allowedCustomDockerNetworks: string[];
 }
