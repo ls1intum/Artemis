@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Component, ComponentRef, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ComponentRef, input, output } from '@angular/core';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { concat, of, throwError } from 'rxjs';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
@@ -23,20 +23,21 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 
-// Stub component to replace MockComponent which doesn't handle viewChild signals
+// Simple mock to avoid ng-mocks issues with signal-based viewChild
 @Component({
     selector: 'jhi-iris-base-chatbot',
     template: '',
+    standalone: true,
 })
-class IrisBaseChatbotStubComponent {
-    @Input() showDeclineButton = true;
-    @Input() isChatHistoryAvailable = false;
-    @Input() isEmbeddedChat = false;
-    @Input() fullSize?: boolean;
-    @Input() showCloseButton = false;
-    @Input() isChatGptWrapper = false;
-    @Output() fullSizeToggle = new EventEmitter<void>();
-    @Output() closeClicked = new EventEmitter<void>();
+class MockIrisBaseChatbotComponent {
+    readonly showDeclineButton = input<boolean>();
+    readonly isChatHistoryAvailable = input<boolean>();
+    readonly isEmbeddedChat = input<boolean>();
+    readonly fullSize = input<boolean>();
+    readonly showCloseButton = input<boolean>();
+    readonly isChatGptWrapper = input<boolean>();
+    readonly fullSizeToggle = output<void>();
+    readonly closeClicked = output<void>();
 }
 
 describe('TutorSuggestionComponent', () => {
@@ -79,7 +80,7 @@ describe('TutorSuggestionComponent', () => {
         })
             .overrideComponent(TutorSuggestionComponent, {
                 remove: { imports: [IrisBaseChatbotComponent] },
-                add: { imports: [IrisBaseChatbotStubComponent] },
+                add: { imports: [MockIrisBaseChatbotComponent] },
             })
             .compileComponents()
             .then(() => {

@@ -1,9 +1,9 @@
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { MockIrisBaseChatbotComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component.mock';
 import { MockProvider } from 'ng-mocks';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
@@ -27,20 +27,6 @@ jest.mock('interactjs', () => {
 
     return { __esModule: true, default: interactFn };
 });
-
-// Stub component to replace MockComponent which doesn't handle viewChild signals
-@Component({
-    selector: 'jhi-iris-base-chatbot',
-    template: '',
-})
-class IrisBaseChatbotStubComponent {
-    @Input() fullSize?: boolean;
-    @Input() showCloseButton = false;
-    @Input() isChatGptWrapper = false;
-    @Input() isChatHistoryAvailable = false;
-    @Output() fullSizeToggle = new EventEmitter<void>();
-    @Output() closeClicked = new EventEmitter<void>();
-}
 
 type InteractResizeMoveEvent = {
     target: HTMLElement;
@@ -85,7 +71,7 @@ describe('IrisChatbotWidgetComponent', () => {
         })
             .overrideComponent(IrisChatbotWidgetComponent, {
                 remove: { imports: [IrisBaseChatbotComponent] },
-                add: { imports: [IrisBaseChatbotStubComponent] },
+                add: { imports: [MockIrisBaseChatbotComponent] },
             })
             .compileComponents();
 
