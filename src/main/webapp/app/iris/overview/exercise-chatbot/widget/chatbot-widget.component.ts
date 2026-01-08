@@ -1,11 +1,11 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, inject } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
-import { Subscription, map } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
 
@@ -14,6 +14,7 @@ import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.c
     templateUrl: './chatbot-widget.component.html',
     styleUrls: ['./chatbot-widget.component.scss'],
     imports: [IrisBaseChatbotComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private breakpointObserver = inject(BreakpointObserver);
@@ -33,14 +34,13 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     fullSize = false;
     public ButtonType = ButtonType;
 
-    protected navigationSubscription: Subscription;
-
     constructor() {
-        this.navigationSubscription = this.router.events.subscribe((event) => {
-            if (event instanceof NavigationStart) {
-                this.dialog.closeAll();
-            }
-        });
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationStart),
+                takeUntilDestroyed(),
+            )
+            .subscribe(() => this.dialog.closeAll());
     }
 
     @HostListener('window:resize')

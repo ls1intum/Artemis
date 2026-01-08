@@ -3,7 +3,7 @@
     [type]="shouldSubmit() ? 'submit' : 'button'"
     ngbTooltip="{{ tooltip() | artemisTranslate }}"
     (click)="onClick.emit($event)"
-    [jhiFeatureToggle]="$any(featureToggle())"
+    [jhiFeatureToggle]="featureToggle() ?? []"
     [overwriteDisabled]="disabled() || isLoading()"
 >
     @if (isLoading()) {

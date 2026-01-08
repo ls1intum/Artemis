@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -26,7 +26,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
     readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     attachmentVideoUnit: AttachmentVideoUnit;
     attachment: Attachment;
     formData: AttachmentVideoUnitFormData;
@@ -34,7 +34,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     notificationText: string;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
@@ -44,9 +44,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                     this.lectureId = Number(parentParams.get('lectureId'));
                     return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId);
                 }),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
+                finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
                 next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
@@ -96,7 +94,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.attachmentVideoUnit.videoSource = videoSource;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         const formData = new FormData();
         if (file) {
@@ -107,7 +105,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.attachmentVideoUnitService
             .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
