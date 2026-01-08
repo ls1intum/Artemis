@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;
 
 /**
  * Spring Data JPA repository for the Exercise entity.
@@ -108,7 +109,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * If for one exercise type no exercise is active, the result WILL NOT contain an entry for that exercise type.
      *
      * @param now the current time
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @return a set of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
@@ -121,13 +122,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             	AND (e.releaseDate <= :now OR e.releaseDate IS NULL)
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeMetricsEntry> countActiveExercisesGroupByExerciseType(@Param("now") ZonedDateTime now);
+    Set<ExerciseTypeMetricsEntry> countActiveExercisesGroupByExerciseType(@Param("now") ZonedDateTime now);
 
     /**
      * Return the number of exercises, grouped by exercise type
      * If for one exercise type no exercise exists, the result WILL NOT contain an entry for that exercise type.
      *
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @return a set of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
@@ -138,7 +139,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.testCourse = FALSE
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
+    Set<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
 
     /**
      * Return the number of exercises that will end between minDate and maxDate, grouped by exercise type
@@ -146,7 +147,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      *
      * @param minDate the minimum due date
      * @param maxDate the maximum due date
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @return a set of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
@@ -159,15 +160,16 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeMetricsEntry> countExercisesWithEndDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Set<ExerciseTypeMetricsEntry> countExercisesWithEndDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
+     * Return the number of students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type.
+     * Optimized: fetches exercise type and student group pairs first, then counts students per group efficiently.
      * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
      *
      * @param minDate the minimum due date
      * @param maxDate the maximum due date
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @return a set of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
@@ -181,39 +183,41 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Set<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of active students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
-     * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
+     * Return the distinct exercise types and their course's student group names for exercises with release dates in the given range.
+     * This is used as the first step in an optimized two-query approach to count active students.
      *
-     * @param minDate     the minimum due date
-     * @param maxDate     the maximum due date
-     * @param activeSince timestamp defining when a user is considered active
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @param minDate the minimum release date
+     * @param maxDate the maximum release date
+     * @return a set of ExerciseTypeStudentGroupDTO containing exercise type and student group name
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
-                TYPE(e),
-                COUNT(DISTINCT user.id)
-            )
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO(TYPE(e), e.course.studentGroupName)
             FROM Exercise e
-                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :minDate
-                AND e.dueDate <= :maxDate
-                AND LOWER(user.login) NOT LIKE '%test%'
-                AND EXISTS (
-                    SELECT 1
-                    FROM Submission submission
-                        JOIN submission.participation participation
-                    WHERE submission.submissionDate >= :activeSince
-                        AND participation.student.id = user.id
-                )
-            GROUP BY TYPE(e)
+                AND e.releaseDate >= :minDate
+                AND e.releaseDate <= :maxDate
             """)
-    List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
-            @Param("maxDate") ZonedDateTime maxDate, @Param("activeSince") ZonedDateTime activeSince);
+    Set<ExerciseTypeStudentGroupDTO> findExerciseTypesAndStudentGroupsWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the distinct exercise types and their course's student group names for exercises with due dates in the given range.
+     * This is used as the first step in an optimized two-query approach to count active students.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return a set of ExerciseTypeStudentGroupDTO containing exercise type and student group name
+     */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO(TYPE(e), e.course.studentGroupName)
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+                AND e.dueDate >= :minDate
+                AND e.dueDate <= :maxDate
+            """)
+    Set<ExerciseTypeStudentGroupDTO> findExerciseTypesAndStudentGroupsWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
      * Return the number of exercises that will be released between minDate and maxDate, grouped by exercise type
@@ -221,7 +225,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      *
      * @param minDate the minimum release date
      * @param maxDate the maximum release date
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @return a set of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
@@ -234,15 +238,16 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeMetricsEntry> countExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Set<ExerciseTypeMetricsEntry> countExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * Return the number of students that are part of an exercise that will be released between minDate and maxDate, grouped by exercise type
+     * Return the number of students that are part of an exercise that will be released between minDate and maxDate, grouped by exercise type.
      * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
+     * NOTE: This query uses MEMBER OF which can be slow on large datasets. Consider caching results for metrics use cases.
      *
      * @param minDate the minimum release date
      * @param maxDate the maximum release date
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     * @return a set of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
@@ -256,41 +261,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+    Set<ExerciseTypeMetricsEntry> countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
             @Param("maxDate") ZonedDateTime maxDate);
 
-    /**
-     * Return the number of active students that are part of an exercise that will be release between minDate and maxDate, grouped by exercise type
-     * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
-     *
-     * @param minDate     the minimum release date
-     * @param maxDate     the maximum release date
-     * @param activeSince timestamp defining when a user is considered active
-     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
-                TYPE(e),
-                COUNT(DISTINCT user.id)
-            )
-            FROM Exercise e
-                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
-            WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :minDate
-                AND e.releaseDate <= :maxDate
-                AND LOWER(user.login) NOT LIKE '%test%'
-                AND EXISTS (
-                    SELECT 1
-                    FROM Submission submission
-                        JOIN submission.participation participation
-                    WHERE submission.submissionDate >= :activeSince
-                        AND participation.student.id = user.id
-                )
-            GROUP BY TYPE(e)
-            """)
-    List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
-            @Param("maxDate") ZonedDateTime maxDate, @Param("activeSince") ZonedDateTime activeSince);
-
+    // TODO: we should not load so much data at the same time, consider revising this query
     @Query("""
             SELECT e
             FROM Exercise e

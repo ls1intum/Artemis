@@ -90,12 +90,12 @@ public class Channel extends Conversation {
 
     @OneToOne
     @JoinColumn(unique = true, name = "exercise_id")
-    @JsonIgnoreProperties("channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Exercise exercise;
 
     @OneToOne
     @JoinColumn(unique = true, name = "exam_id")
-    @JsonIgnoreProperties("channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Exam exam;
 
     public Channel(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,

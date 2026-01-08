@@ -249,15 +249,17 @@
             </a>
         }
         @if (course.isAtLeastEditor) {
-            <a
-                [routerLink]="['/course-management', course.id, 'lectures']"
-                class="btn btn-primary me-1 mb-1"
-                [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
-                id="course-card-open-lectures"
-            >
-                <fa-icon [icon]="faFilePdf" />
-                <span class="d-none d-xl-inline" jhiTranslate="entity.action.lecture"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="lectureEnabled" placement="right">
+                <a
+                    [routerLink]="['/course-management', course.id, 'lectures']"
+                    class="btn btn-primary me-1 mb-1"
+                    [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
+                    id="course-card-open-lectures"
+                >
+                    <fa-icon [icon]="faFilePdf" />
+                    <span class="d-none d-xl-inline" jhiTranslate="entity.action.lecture"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         @if (course.isAtLeastTutor) {
             <a

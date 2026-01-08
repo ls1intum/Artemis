@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture, LectureSeriesCreateLectureDTO, SimpleLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
@@ -22,8 +22,8 @@ export class LectureService {
     currentTutorialLectureId: number | undefined = undefined;
 
     create(lecture: Lecture): Observable<EntityResponseType> {
-        const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        const dto = this.convertLectureToSimpleDTO(lecture);
+        return this.http.post<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     createSeries(lectures: LectureSeriesCreateLectureDTO[], courseId: number): Observable<void> {
@@ -31,8 +31,8 @@ export class LectureService {
     }
 
     update(lecture: Lecture): Observable<EntityResponseType> {
-        const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.put<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        const dto = this.convertLectureToSimpleDTO(lecture);
+        return this.http.put<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
@@ -119,8 +119,8 @@ export class LectureService {
             );
     }
 
-    delete(lectureId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
+    delete(lectureId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
@@ -209,5 +209,22 @@ export class LectureService {
 
     private sendTitlesToEntityTitleService(lecture: Lecture | undefined | null) {
         this.entityTitleService.setTitle(EntityType.LECTURE, [lecture?.id], lecture?.title);
+    }
+
+    /**
+     * Converts a Lecture object to SimpleLectureDTO for POST/PUT requests.
+     * The server expects this simplified DTO format.
+     */
+    private convertLectureToSimpleDTO(lecture: Lecture): SimpleLectureDTO {
+        return {
+            id: lecture.id,
+            title: lecture.title,
+            description: lecture.description,
+            startDate: convertDateFromClient(lecture.startDate),
+            endDate: convertDateFromClient(lecture.endDate),
+            isTutorialLecture: lecture.isTutorialLecture ?? false,
+            channelName: lecture.channelName,
+            course: lecture.course?.id ? { id: lecture.course.id } : undefined,
+        };
     }
 }

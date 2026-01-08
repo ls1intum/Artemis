@@ -5,12 +5,12 @@
 services:
     postgres:
         container_name: artemis-postgres
-        image: docker.io/library/postgres:17.5-alpine
+        image: docker.io/library/postgres:18.1-alpine
         pull_policy: missing
         user: postgres
         command: ["postgres", "-c", "max_connections=10000"]
         volumes:
-            - artemis-postgres-data:/var/lib/postgresql/data
+            - artemis-postgres-data:/var/lib/postgresql
         # DO NOT use this default file for production systems!
         env_file:
             - ./postgres/default.env
