@@ -150,7 +150,7 @@ export default tseslint.config(
                     object: "Object",
                     property: "assign",
                     message:
-                        "Do not use Object.assign to merge objects. Create a new object and manually enumerate properties instead.",
+                        "Do not use Object.assign. Use lodash-es cloneDeep (e.g., `import cloneDeep from 'lodash-es/cloneDeep'`) and then update the copy.",
                 },
             ],
             "no-restricted-syntax": [
@@ -160,7 +160,7 @@ export default tseslint.config(
                 {
                     selector: "ObjectExpression > SpreadElement",
                     message:
-                        "Do not use object spread to merge objects. Manually specify properties on the new object instead.",
+                        "Do not use object spread (`{ ...obj }`). Use lodash-es cloneDeep (e.g., `import cloneDeep from 'lodash-es/cloneDeep'`) and then update the copy.",
                 },
             ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
