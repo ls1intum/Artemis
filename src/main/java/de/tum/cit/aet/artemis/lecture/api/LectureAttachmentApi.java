@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -17,7 +16,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 /**
  * API for managing lecture attachments.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Controller
 @Lazy
 public class LectureAttachmentApi extends AbstractLectureApi {

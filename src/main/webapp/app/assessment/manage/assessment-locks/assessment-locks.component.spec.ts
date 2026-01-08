@@ -1,4 +1,6 @@
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateModule } from '@ngx-translate/core';
 import { AssessmentLocksComponent } from 'app/assessment/manage/assessment-locks/assessment-locks.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,16 +16,17 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('AssessmentLocksComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: AssessmentLocksComponent;
     let fixture: ComponentFixture<AssessmentLocksComponent>;
     let courseService: CourseManagementService;
@@ -36,12 +39,18 @@ describe('AssessmentLocksComponent', () => {
     const fileUploadSubmission = { id: 22, submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD } as FileUploadSubmission;
     const textSubmission = { id: 23, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
     const programmingSubmission = { id: 24, submissionExerciseType: SubmissionExerciseType.PROGRAMMING } as ProgrammingSubmission;
-    let windowConfirmStub: jest.SpyInstance<boolean, [message?: string | undefined]>;
+    let windowConfirmStub: MockInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
-            declarations: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
+            imports: [
+                TranslateModule.forRoot(),
+                AssessmentLocksComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockRouterLinkDirective,
+                MockHasAnyAuthorityDirective,
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -70,45 +79,47 @@ describe('AssessmentLocksComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentLocksComponent);
         component = fixture.componentInstance;
+        // Mock findAllLockedSubmissionsOfCourse before detectChanges to prevent undefined subscribe error
+        vi.spyOn(courseService, 'findAllLockedSubmissionsOfCourse').mockReturnValue(of(new HttpResponse<Submission[]>({ body: [] })));
         fixture.detectChanges();
-        windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        windowConfirmStub = vi.spyOn(window, 'confirm').mockReturnValue(true);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call getAllLockedSubmissions on init', () => {
-        const courseServiceStub = jest.spyOn(courseService, 'findAllLockedSubmissionsOfCourse').mockReturnValue(of());
-        component.ngOnInit();
-        expect(courseServiceStub).toHaveBeenCalledOnce();
+        // Note: findAllLockedSubmissionsOfCourse is already called once in beforeEach during detectChanges
+        // We verify it was called by checking the spy set up in beforeEach
+        expect(courseService.findAllLockedSubmissionsOfCourse).toHaveBeenCalled();
     });
 
     it('should release lock for programming exercise', () => {
-        const cancelAssessmentStub = jest.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of());
+        const cancelAssessmentStub = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(programmingSubmission);
-        expect(windowConfirmStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
+        expect(windowConfirmStub).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for modeling exercise', () => {
-        const cancelAssessmentStub = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of());
+        const cancelAssessmentStub = vi.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(modelingSubmission);
-        expect(windowConfirmStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
+        expect(windowConfirmStub).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for text exercise', () => {
-        const cancelAssessmentStub = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of());
+        const cancelAssessmentStub = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(textSubmission);
-        expect(windowConfirmStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
+        expect(windowConfirmStub).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for the file upload exercise', () => {
-        const cancelAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
+        const cancelAssessmentStub = vi.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(fileUploadSubmission);
-        expect(windowConfirmStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
+        expect(windowConfirmStub).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 });

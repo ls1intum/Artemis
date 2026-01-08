@@ -4,6 +4,35 @@
     padding: 1rem;
 }
 
+.quick-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    .quick-nav-label {
+        font-weight: 500;
+        color: var(--bs-secondary-color);
+        margin-right: 0.25rem;
+    }
+}
+
+.feature-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--bs-heading-color);
+}
+
+.section-description {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
 .feature-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -14,7 +43,7 @@
     border: 1px solid var(--bs-border-color);
     border-radius: 0.5rem;
     padding: 1rem;
-    background-color: var(--feature-card-bg, #e8f5e9);
+    background-color: var(--feature-card-active-bg);
     transition: all 0.2s ease-in-out;
 
     &:hover {
@@ -22,7 +51,18 @@
     }
 
     &.disabled {
-        background-color: var(--feature-card-disabled-bg, #ffebee);
+        background-color: var(--feature-card-disabled-bg);
+    }
+
+    // Read-only cards for profile and module features
+    &.readonly {
+        &.active {
+            background-color: var(--feature-card-active-bg);
+        }
+
+        &.inactive {
+            background-color: var(--feature-card-inactive-bg);
+        }
     }
 }
 
@@ -43,7 +83,7 @@
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--feature-card-heading-color, var(--bs-body-color));
+    color: var(--feature-card-heading-color);
 }
 
 .documentation-link {
@@ -53,6 +93,11 @@
     &:hover {
         color: var(--bs-primary-text-emphasis);
     }
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
 }
 
 .form-switch {
