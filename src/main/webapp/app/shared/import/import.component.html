@@ -1,8 +1,10 @@
 <form>
-    <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="{{ 'artemisApp.' + entityName + '.import.label' }}"></h4>
-        <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
-    </div>
+    @if (!isOpenedAsDialog) {
+        <div class="modal-header">
+            <h4 class="modal-title" jhiTranslate="{{ 'artemisApp.' + entityName + '.import.label' }}"></h4>
+            <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
+        </div>
+    }
     <div class="modal-body">
         <div class="form-group form-inline">
             <span jhiTranslate="{{ 'artemisApp.' + entityName + '.import.search' }}"></span>
@@ -51,7 +53,16 @@
             </tbody>
         </table>
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true" />
+            <ngb-pagination
+                (pageChange)="onPageChange($event)"
+                [(page)]="state.page"
+                [collectionSize]="total"
+                [maxSize]="5"
+                [pageSize]="state.pageSize"
+                [rotate]="true"
+                [ellipses]="true"
+                [boundaryLinks]="true"
+            />
         </div>
     </div>
 </form>

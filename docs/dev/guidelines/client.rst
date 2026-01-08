@@ -335,6 +335,77 @@ or
 
    jest --detectLeaks
 
+3.4. Object Cloning with ``deepClone()``
+----------------------------------------
+
+When creating copies of objects, always use the ``deepClone()`` utility function from ``app/shared/util/deep-clone.util`` instead of the spread operator, ``Object.assign()``, or manual property copying with ``Object.keys()``.
+
+Why ``deepClone()``?
+********************
+
+The ``deepClone()`` function is a thin wrapper around lodash's battle-tested ``cloneDeep`` implementation, providing:
+
+* **Type-safe**: TypeScript correctly infers the return type, preserving full type information.
+* **Deep copy**: Creates a true deep clone, including nested objects and arrays.
+* **Day.js compatible**: Correctly handles Day.js date objects, unlike ``structuredClone()``.
+* **Supports built-in types**: Properly clones ``Map``, ``Set``, ``Date``, and ``Record`` types.
+* **Circular reference safe**: Handles circular references without infinite recursion.
+* **Clean and readable**: Single function call that clearly expresses intent.
+* **Signal-compatible**: Creates a new object reference, which is essential for Angular signal reactivity.
+* **Battle-tested**: Uses lodash's well-maintained implementation under the hood.
+
+Preferred approach:
+
+.. code-block:: ts
+
+    import { deepClone } from 'app/shared/util/deep-clone.util';
+
+    // Do: Use deepClone() for object copying
+    onTitleChange(newTitle: string | undefined): void {
+        const newLecture = deepClone(this.lecture());
+        newLecture.title = newTitle;
+        this.lectureChange.emit(newLecture);
+    }
+
+Avoid these patterns:
+
+.. code-block:: ts
+
+    // Don't: Spread operator loses type safety and only creates shallow copies
+    const newLecture = { ...this.lecture(), title: newTitle };
+
+    // Don't: Object.assign() has the same issues as spread
+    const newLecture = Object.assign({}, this.lecture(), { title: newTitle });
+
+    // Don't: Manual copying with Object.keys() is verbose and error-prone
+    const newLecture = new Lecture();
+    Object.keys(currentLecture).forEach((key) => {
+        (newLecture as Record<string, unknown>)[key] = (currentLecture as Record<string, unknown>)[key];
+    });
+
+    // Don't: structuredClone() breaks Day.js dates
+    const newLecture = structuredClone(this.lecture()); // Day.js dates will be corrupted!
+
+Why avoid spread and ``Object.assign()``?
+*****************************************
+
+1. **Shallow copy only**: Nested objects are copied by reference, leading to unexpected mutations.
+2. **Type erasure**: The result is often typed as a plain object intersection rather than the original class type.
+3. **Prototype loss**: Class methods and prototype chain are not preserved.
+4. **Hidden bugs**: Changes to nested properties affect the original object.
+
+Why avoid ``structuredClone()``?
+********************************
+
+While ``structuredClone()`` is a native browser API for deep cloning, it **cannot handle Day.js dates**. Day.js objects have a custom prototype that ``structuredClone()`` does not preserve, resulting in corrupted date values. Since many Artemis models (Lecture, Exercise, Exam, etc.) contain Day.js date properties, always use ``deepClone()`` instead.
+
+When to use ``deepClone()``:
+
+* Creating modified copies of objects for signal updates
+* Duplicating complex nested data structures
+* Ensuring immutability when passing objects to child components
+* Any object that may contain Day.js date properties
+
 4. UI/UX & Layout
 =================
 

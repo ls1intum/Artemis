@@ -3,6 +3,7 @@ import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exe
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
@@ -11,7 +12,9 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 })
 export abstract class ExerciseManageButtonComponent implements OnInit {
     protected router = inject(Router);
+    // NgbModal is kept for dismissAll functionality used by ExerciseCreateButtonComponent
     protected modalService = inject(NgbModal);
+    protected dialogService = inject(DialogService);
 
     course = input.required<Course>();
     exerciseType = input.required<ExerciseType>();
