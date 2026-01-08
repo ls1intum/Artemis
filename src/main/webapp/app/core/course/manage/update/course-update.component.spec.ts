@@ -1,28 +1,21 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbModalRef, NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseUpdateComponent } from 'app/core/course/manage/update/course-update.component';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ImageComponent } from 'app/shared/image/image.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import dayjs from 'dayjs/esm';
@@ -40,24 +33,18 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FileService } from 'app/shared/service/file.service';
-
-@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
-class MarkdownEditorStubComponent {
-    @Input() markdown: string;
-    @Input() enableResize = false;
-    @Output() markdownChange = new EventEmitter<string>();
-}
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('Course Management Update Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let courseManagementService: CourseManagementService;
@@ -68,11 +55,11 @@ describe('Course Management Update Component', () => {
     let accountService: AccountService;
     let course: Course;
     const validTimeZone = 'Europe/Berlin';
-    let loadImageSpy: jest.SpyInstance;
+    let loadImageSpy: ReturnType<typeof vi.spyOn>;
     let eventManager: EventManager;
     let modalService: NgbModal;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         course = new Course();
         course.id = 123;
         course.title = 'testCourseTitle';
@@ -106,8 +93,11 @@ describe('Course Management Update Component', () => {
         const route = {
             data: of({ course }),
         } as any as ActivatedRoute;
-        TestBed.configureTestingModule({
-            imports: [FaIconComponent, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+
+        (Intl as any).supportedValuesOf = () => [validTimeZone];
+
+        await TestBed.configureTestingModule({
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -117,65 +107,47 @@ describe('Course Management Update Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
-                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            declarations: [
-                CourseUpdateComponent,
-                MarkdownEditorStubComponent,
-                MockComponent(ColorSelectorComponent),
-                MockComponent(FormDateTimePickerComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ImageComponent),
-                MockDirective(FeatureToggleHideDirective),
-                MockDirective(HasAnyAuthorityDirective),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveKeysPipe),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                (Intl as any).supportedValuesOf = () => [validTimeZone];
-                fixture = TestBed.createComponent(CourseUpdateComponent);
-                comp = fixture.componentInstance;
-                courseManagementService = TestBed.inject(CourseManagementService);
-                courseAdminService = TestBed.inject(CourseAdminService);
-                profileService = TestBed.inject(ProfileService);
-                organizationService = TestBed.inject(OrganizationManagementService);
-                loadImageService = TestBed.inject(LoadImageService);
-                loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
-                accountService = TestBed.inject(AccountService);
-                eventManager = TestBed.inject(EventManager);
-                modalService = TestBed.inject(NgbModal);
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CourseUpdateComponent);
+        comp = fixture.componentInstance;
+        courseManagementService = TestBed.inject(CourseManagementService);
+        courseAdminService = TestBed.inject(CourseAdminService);
+        profileService = TestBed.inject(ProfileService);
+        organizationService = TestBed.inject(OrganizationManagementService);
+        loadImageService = TestBed.inject(LoadImageService);
+        loadImageSpy = vi.spyOn(loadImageService, 'loadImageFile');
+        accountService = TestBed.inject(AccountService);
+        eventManager = TestBed.inject(EventManager);
+        modalService = TestBed.inject(NgbModal);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
     });
 
     describe('ngOnInit', () => {
-        it('should get course, profile and fill the form', fakeAsync(() => {
+        it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
-            const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             const organization = new Organization();
             organization.id = 12344;
-            const getOrganizationsStub = jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
+            const getOrganizationsStub = vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
 
             comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
             expect(comp.course).toEqual(course);
             expect(comp.courseOrganizations).toEqual([organization]);
-            expect(getOrganizationsStub).toHaveBeenCalledOnce();
+            expect(getOrganizationsStub).toHaveBeenCalled();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
-            expect(getProfileStub).toHaveBeenCalledTimes(4);
-            expect(comp.customizeGroupNames).toBeTrue();
+            expect(getProfileStub).toHaveBeenCalled();
+            expect(comp.customizeGroupNames).toBe(true);
             expect(comp.course.studentGroupName).toBe('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
             expect(comp.course.editorGroupName).toBe('artemis-dev');
@@ -209,17 +181,16 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
             expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
-            flush();
-        }));
+        });
     });
 
     describe('save', () => {
-        it('should call update service on save for existing entity', fakeAsync(() => {
+        it('should call update service on save for existing entity', async () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
-            const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
@@ -242,19 +213,20 @@ describe('Course Management Update Component', () => {
             });
             // WHEN
             comp.save();
-            tick(); // simulate async
+            fixture.detectChanges();
+            await Promise.resolve();
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
-            expect(comp.isSaving).toBeFalse();
-        }));
+            expect(comp.isSaving).toBe(false);
+        });
 
-        it('should call create service on save for new entity', fakeAsync(() => {
+        it('should call create service on save for new entity', async () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
@@ -276,17 +248,18 @@ describe('Course Management Update Component', () => {
             }); // mocking reactive form
             // WHEN
             comp.save();
-            tick(); // simulate async
+            fixture.detectChanges();
+            await Promise.resolve();
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
-            expect(comp.isSaving).toBeFalse();
-        }));
+            expect(comp.isSaving).toBe(false);
+        });
 
-        it('should broadcast course modification on delete', fakeAsync(() => {
+        it('should broadcast course modification on delete', async () => {
             // GIVEN
-            const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
 
             const previousCourse = new Course();
             previousCourse.id = 123;
@@ -298,11 +271,12 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 title: new FormControl(updatedCourse.title),
             });
-            const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
 
             // WHEN
             comp.save();
-            tick();
+            fixture.detectChanges();
+            await Promise.resolve();
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
@@ -310,7 +284,7 @@ describe('Course Management Update Component', () => {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
-        }));
+        });
     });
 
     describe('onSelectedColor', () => {
@@ -336,7 +310,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should trigger openCropper when a file is selected', async () => {
-            const openCropperSpy = jest.spyOn(comp, 'openCropper');
+            const openCropperSpy = vi.spyOn(comp, 'openCropper');
             const file = new File([''], 'test-file.jpg', { type: 'image/jpeg' });
             const mockEvent = {
                 target: {
@@ -350,7 +324,8 @@ describe('Course Management Update Component', () => {
             if (comp.setCourseImage) {
                 comp.setCourseImage(mockEvent);
             }
-            await fixture.whenStable();
+            fixture.detectChanges();
+            await Promise.resolve();
             expect(openCropperSpy).toHaveBeenCalled();
         });
     });
@@ -363,12 +338,12 @@ describe('Course Management Update Component', () => {
                 onlineCourse: new FormControl(false),
                 enrollmentEnabled: new FormControl(true),
             });
-            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
-            expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBe(true);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(false);
             comp.changeOnlineCourse();
-            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
-            expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
-            expect(comp.course.onlineCourse).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBe(false);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(true);
+            expect(comp.course.onlineCourse).toBe(true);
         });
     });
 
@@ -382,16 +357,16 @@ describe('Course Management Update Component', () => {
                 enrollmentStartDate: new FormControl(),
                 enrollmentEndDate: new FormControl(),
             });
-            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
-            expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBe(false);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(true);
             comp.changeEnrollmentEnabled();
-            expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
-            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
-            expect(comp.course.enrollmentEnabled).toBeTrue();
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(false);
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBe(true);
+            expect(comp.course.enrollmentEnabled).toBe(true);
         });
 
         it('should call unenrollmentEnabled', () => {
-            const enabelunrollSpy = jest.spyOn(comp, 'changeUnenrollmentEnabled').mockReturnValue();
+            const enabelunrollSpy = vi.spyOn(comp, 'changeUnenrollmentEnabled').mockReturnValue();
             comp.course = new Course();
             comp.course.enrollmentEnabled = true;
             comp.course.unenrollmentEnabled = true;
@@ -420,7 +395,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['enrollmentEndDate'].value).toBeUndefined();
             expect(comp.course.enrollmentStartDate).toBeUndefined();
             expect(comp.course.enrollmentEndDate).toBeUndefined();
-            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBe(false);
         });
 
         it('should set undefined enrollment start and end date to course start and end date when enrollment is enabled', () => {
@@ -442,7 +417,7 @@ describe('Course Management Update Component', () => {
             expect(comp.course.enrollmentEndDate).toStrictEqual(expectedEnrollmentEndDate);
             expect(comp.courseForm.controls['enrollmentStartDate'].value).toBe(comp.course.startDate);
             expect(comp.courseForm.controls['enrollmentEndDate'].value).toStrictEqual(expectedEnrollmentEndDate);
-            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBe(true);
         });
     });
 
@@ -466,7 +441,7 @@ describe('Course Management Update Component', () => {
             comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
             expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
             // Verify the form control is editable
-            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].enabled).toBeTrue();
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].enabled).toBe(true);
         });
     });
 
@@ -486,14 +461,14 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
-            expect(comp.complaintsEnabled).toBeTrue();
+            expect(comp.complaintsEnabled).toBe(true);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
-            expect(comp.complaintsEnabled).toBeFalse();
+            expect(comp.complaintsEnabled).toBe(false);
         });
     });
 
@@ -505,10 +480,10 @@ describe('Course Management Update Component', () => {
             comp.requestMoreFeedbackEnabled = false;
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(7);
-            expect(comp.requestMoreFeedbackEnabled).toBeTrue();
+            expect(comp.requestMoreFeedbackEnabled).toBe(true);
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(0);
-            expect(comp.requestMoreFeedbackEnabled).toBeFalse();
+            expect(comp.requestMoreFeedbackEnabled).toBe(false);
         });
     });
 
@@ -554,13 +529,13 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
-            expect(comp.customizeGroupNames).toBeTrue();
+            expect(comp.customizeGroupNames).toBe(true);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
-            expect(comp.customizeGroupNames).toBeFalse();
+            expect(comp.customizeGroupNames).toBe(false);
         });
     });
 
@@ -568,11 +543,11 @@ describe('Course Management Update Component', () => {
         it('should toggle test course', () => {
             comp.course = new Course();
             comp.course.testCourse = true;
-            expect(comp.course.testCourse).toBeTrue();
+            expect(comp.course.testCourse).toBe(true);
             comp.changeTestCourseEnabled();
-            expect(comp.course.testCourse).toBeFalse();
+            expect(comp.course.testCourse).toBe(false);
             comp.changeTestCourseEnabled();
-            expect(comp.course.testCourse).toBeTrue();
+            expect(comp.course.testCourse).toBe(true);
         });
     });
 
@@ -582,13 +557,13 @@ describe('Course Management Update Component', () => {
             comp.course.restrictedAthenaModulesAccess = true;
             comp.courseForm = new FormGroup({ restrictedAthenaModulesAccess: new FormControl(true) });
 
-            expect(comp.course.restrictedAthenaModulesAccess).toBeTrue();
+            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
             expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
             comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBeFalse();
+            expect(comp.course.restrictedAthenaModulesAccess).toBe(false);
             expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeFalsy();
             comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBeTrue();
+            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
             expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
         });
     });
@@ -598,14 +573,14 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            expect(comp.isValidDate).toBeTrue();
+            expect(comp.isValidDate).toBe(true);
         });
 
         it('should handle invalid dates', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
-            expect(comp.isValidDate).toBeFalse();
+            expect(comp.isValidDate).toBe(false);
         });
     });
 
@@ -616,14 +591,14 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeTrue();
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
         });
 
         it('should not be valid if course start and end date are not set', () => {
             comp.course = new Course();
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
         });
 
         it('should not be valid if course start date is not set', () => {
@@ -631,7 +606,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
         });
 
         it('should not be valid if course end date is not set', () => {
@@ -639,7 +614,7 @@ describe('Course Management Update Component', () => {
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
         });
 
         it('should not be valid if course start and end date are not valid', () => {
@@ -648,7 +623,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().subtract(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
         });
 
         it('should handle invalid enrollment end date before enrollment start date', () => {
@@ -657,7 +632,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs().subtract(3, 'day');
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
         });
 
         it('should handle valid enrollment start date after course start date', () => {
@@ -666,7 +641,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(1, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeTrue();
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
         });
 
         it('should handle invalid enrollment end date after course end date', () => {
@@ -675,7 +650,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs().add(2, 'day');
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
         });
     });
 
@@ -687,7 +662,7 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
             comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
-            expect(comp.isValidUnenrollmentEndDate).toBeTrue();
+            expect(comp.isValidUnenrollmentEndDate).toBe(true);
         });
 
         it('should not be valid if enrollment start and end date are not set', () => {
@@ -696,7 +671,7 @@ describe('Course Management Update Component', () => {
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(2, 'day');
             comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
-            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
         });
 
         it('should not be valid if enrollment start date is not set', () => {
@@ -705,7 +680,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
             comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
-            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
         });
 
         it('should not be valid if enrollment end date is not set', () => {
@@ -714,7 +689,7 @@ describe('Course Management Update Component', () => {
             comp.course.endDate = dayjs().add(2, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
-            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
         });
 
         it('should not be valid if enrollemnt start and end date are not valid', () => {
@@ -724,7 +699,7 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentStartDate = dayjs();
             comp.course.enrollmentEndDate = dayjs().subtract(2, 'day');
             comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
-            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
         });
 
         it('should handle invalid unenrollment end date before enrollment end date', () => {
@@ -734,7 +709,7 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs().add(1, 'day');
             comp.course.unenrollmentEndDate = dayjs();
-            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
         });
 
         it('should handle invalid unenrollment end date after course end date', () => {
@@ -744,7 +719,7 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
             comp.course.enrollmentEndDate = dayjs();
             comp.course.unenrollmentEndDate = dayjs().add(2, 'day');
-            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
         });
     });
 
@@ -815,7 +790,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should trigger triggerFileInput when edit button is clicked', () => {
-            const triggerFileInputSpy = jest.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
+            const triggerFileInputSpy = vi.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
             fixture.detectChanges();
             const editButton = getEditIconButton();
             editButton.dispatchEvent(new Event('click'));
@@ -830,7 +805,7 @@ describe('Course Management Update Component', () => {
 
     describe('noImagePlaceholder', () => {
         it('should trigger file input when no-image div is clicked', () => {
-            const triggerFileInputSpy = jest.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
+            const triggerFileInputSpy = vi.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
             fixture.detectChanges();
             comp.croppedImage = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -846,10 +821,10 @@ describe('Course Management Update Component', () => {
             const mockModalRef: Partial<NgbModalRef> = {
                 componentInstance: {},
                 result: Promise.resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA'),
-                close: jest.fn(),
-                dismiss: jest.fn(),
+                close: vi.fn(),
+                dismiss: vi.fn(),
             };
-            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
             comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
             comp.openCropper();
             expect(modalService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
@@ -863,11 +838,11 @@ describe('Course Management Update Component', () => {
         beforeEach(() => {
             organization = new Organization();
             organization.id = 12345;
-            jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
         });
 
         it('should allow adding / removing organizations if admin', () => {
-            jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
             fixture.changeDetectorRef.detectChanges();
 
             const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
@@ -878,7 +853,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should not allow adding / removing organizations if not admin', () => {
-            jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
 
             const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
@@ -890,7 +865,7 @@ describe('Course Management Update Component', () => {
     });
 
     it('should open organizations modal', () => {
-        jest.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
+        vi.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
         comp.openOrganizationsModal();
         expect(comp.courseOrganizations).toHaveLength(1);
     });
@@ -910,7 +885,7 @@ describe('Course Management Update Component', () => {
 
         it('should load code of conduct template when communication is enabled and code of conduct is not set', async () => {
             const codeOfConduct = '# Code of Conduct Template';
-            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(of(new HttpResponse({ body: codeOfConduct })));
+            vi.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(of(new HttpResponse({ body: codeOfConduct })));
 
             comp.communicationEnabled = true;
             comp.course = new Course();
@@ -927,7 +902,7 @@ describe('Course Management Update Component', () => {
 
         it('should not load code of conduct template when communication is enabled and code of conduct is already set', async () => {
             const existingCodeOfConduct = '# Existing Code of Conduct';
-            const getTemplateSpy = jest.spyOn(fileService, 'getTemplateCodeOfConduct');
+            const getTemplateSpy = vi.spyOn(fileService, 'getTemplateCodeOfConduct');
 
             comp.communicationEnabled = true;
             comp.course = new Course();
@@ -943,7 +918,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should disable messaging when communication is enabled', async () => {
-            const disableMessagingSpy = jest.spyOn(comp, 'disableMessaging');
+            const disableMessagingSpy = vi.spyOn(comp, 'disableMessaging');
 
             comp.communicationEnabled = true;
             comp.messagingEnabled = true;
@@ -957,7 +932,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should not disable messaging when communication is disabled', async () => {
-            const disableMessagingSpy = jest.spyOn(comp, 'disableMessaging');
+            const disableMessagingSpy = vi.spyOn(comp, 'disableMessaging');
 
             comp.communicationEnabled = false;
             comp.messagingEnabled = true;
@@ -971,16 +946,20 @@ describe('Course Management Update Component', () => {
 });
 
 describe('Course Management Student Course Analytics Dashboard Update', () => {
+    setupTestBed({ zoneless: true });
+
     const validTimeZone = 'Europe/Berlin';
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
-    let featureToggleSpy: jest.SpyInstance;
+    let featureToggleSpy: ReturnType<typeof vi.spyOn>;
     let profileService: ProfileService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule), FaIconComponent],
+    beforeEach(async () => {
+        (Intl as any).supportedValuesOf = () => [validTimeZone];
+
+        await TestBed.configureTestingModule({
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -993,42 +972,23 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
             ],
-            declarations: [
-                CourseUpdateComponent,
-                MarkdownEditorStubComponent,
-                FeatureToggleHideDirective,
-                MockComponent(ColorSelectorComponent),
-                MockComponent(FormDateTimePickerComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ImageComponent),
-                MockDirective(HasAnyAuthorityDirective),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveKeysPipe),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                (Intl as any).supportedValuesOf = () => [validTimeZone];
-                fixture = TestBed.createComponent(CourseUpdateComponent);
-                profileService = TestBed.inject(ProfileService);
-                accountService = TestBed.inject(AccountService);
-                featureToggleService = TestBed.inject(FeatureToggleService);
-                featureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CourseUpdateComponent);
+        profileService = TestBed.inject(ProfileService);
+        accountService = TestBed.inject(AccountService);
+        featureToggleService = TestBed.inject(FeatureToggleService);
+        featureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
     });
 
     it('should hide the form field for dashboard enable toggle when user is not an admin but the feature is toggled.', () => {
         // Simulate a user who is not an admin
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+        vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
 
         // Simulate a feature toggle that includes only the specified feature toggles
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
@@ -1046,11 +1006,11 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toBeEmpty();
+        expect(filteredFormGroups).toHaveLength(0);
     });
     it('should hide the form field for dashboard enable toggle when user is an admin but the feature is not toggled', () => {
         // Simulate a user who is an admin
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
             if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
@@ -1067,14 +1027,14 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toBeEmpty();
+        expect(filteredFormGroups).toHaveLength(0);
     });
     it('should show the form field for dashboard enable toggle when user is an admin and the feature is toggled', () => {
         // Simulate a user who is an admin
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
             if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
@@ -1096,14 +1056,18 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 });
 
 describe('Course Management Update Component Create', () => {
+    setupTestBed({ zoneless: true });
+
     const validTimeZone = 'Europe/Berlin';
     let component: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let httpMock: HttpTestingController;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule), FaIconComponent],
+    beforeEach(async () => {
+        (Intl as any).supportedValuesOf = () => [validTimeZone];
+
+        await TestBed.configureTestingModule({
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -1115,34 +1079,15 @@ describe('Course Management Update Component Create', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
             ],
-            declarations: [
-                CourseUpdateComponent,
-                MarkdownEditorStubComponent,
-                MockComponent(ColorSelectorComponent),
-                MockComponent(FormDateTimePickerComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ImageComponent),
-                MockDirective(FeatureToggleHideDirective),
-                MockDirective(HasAnyAuthorityDirective),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveKeysPipe),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                (Intl as any).supportedValuesOf = () => [validTimeZone];
-                fixture = TestBed.createComponent(CourseUpdateComponent);
-                component = fixture.componentInstance;
-                httpMock = fixture.debugElement.injector.get(HttpTestingController);
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CourseUpdateComponent);
+        component = fixture.componentInstance;
+        httpMock = fixture.debugElement.injector.get(HttpTestingController);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
     });
 

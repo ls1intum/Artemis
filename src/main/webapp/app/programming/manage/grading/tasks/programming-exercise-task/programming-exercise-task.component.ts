@@ -53,7 +53,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
         this.programmingExerciseTaskService.initializeTask(this.task);
         test.changed = true;
-        this.updateTasksEvent.emit();
+        this.updateTasksEvent.emit(undefined);
     }
 
     taskUpdateHandler() {
@@ -77,7 +77,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
             }
         });
 
-        this.updateTasksEvent.emit();
+        this.updateTasksEvent.emit(undefined);
     }
 
     formatTestIndex(i: number, j: number): string {

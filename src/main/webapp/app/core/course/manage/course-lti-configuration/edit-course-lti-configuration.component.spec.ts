@@ -1,9 +1,11 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { of } from 'rxjs';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EditCourseLtiConfigurationComponent } from 'app/core/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
@@ -16,6 +18,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -23,6 +27,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Edit Course LTI Configuration Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: EditCourseLtiConfigurationComponent;
     let fixture: ComponentFixture<EditCourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
@@ -43,8 +49,7 @@ describe('Edit Course LTI Configuration Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NgbNavModule, MockModule(ReactiveFormsModule)],
-            declarations: [EditCourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
+            imports: [EditCourseLtiConfigurationComponent],
             providers: [
                 MockProvider(CourseManagementService),
                 { provide: Router, useValue: router },
@@ -61,7 +66,21 @@ describe('Edit Course LTI Configuration Component', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(EditCourseLtiConfigurationComponent, {
+                set: {
+                    imports: [
+                        NgbNavModule,
+                        MockModule(ReactiveFormsModule),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockDirective(MockHasAnyAuthorityDirective),
+                        MockComponent(FaIconComponent),
+                        MockComponent(HelpIconComponent),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(EditCourseLtiConfigurationComponent);
         comp = fixture.componentInstance;
@@ -69,7 +88,7 @@ describe('Edit Course LTI Configuration Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -107,10 +126,10 @@ describe('Edit Course LTI Configuration Component', () => {
             status: 200,
         });
 
-        const updatedStub = jest.spyOn(courseService, 'updateOnlineCourseConfiguration').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const updatedStub = vi.spyOn(courseService, 'updateOnlineCourseConfiguration').mockReturnValue(of(updateResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
-        expect(comp.isSaving).toBeFalse();
+        expect(comp.isSaving()).toBe(false);
 
         comp.save();
 

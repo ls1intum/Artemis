@@ -110,7 +110,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
+                this.onDeleteExercise.emit(undefined);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -124,7 +124,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a modelingExercise',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
+                this.onDeleteExercise.emit(undefined);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -138,7 +138,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
+                this.onDeleteExercise.emit(undefined);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -152,7 +152,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a quiz',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
+                this.onDeleteExercise.emit(undefined);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -166,7 +166,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
+                this.onDeleteExercise.emit(undefined);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

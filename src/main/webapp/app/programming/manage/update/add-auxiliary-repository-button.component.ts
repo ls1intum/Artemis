@@ -38,7 +38,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
         newAuxiliaryRepository.name = '';
         newAuxiliaryRepository.checkoutDirectory = '';
         this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
-        this.onRefresh.emit();
+        this.onRefresh.emit(undefined);
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
     }
 }

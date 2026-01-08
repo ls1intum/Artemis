@@ -372,7 +372,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     closeChat() {
         this.chatService.messagesRead();
-        this.closeClicked.emit();
+        this.closeClicked.emit(undefined);
     }
 
     /**

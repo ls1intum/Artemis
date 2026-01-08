@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementExercisesSearchComponent } from 'app/core/course/manage/exercises-search/course-management-exercises-search.component';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
@@ -5,20 +7,24 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Course Management Exercises Search Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseManagementExercisesSearchComponent;
     let fixture: ComponentFixture<CourseManagementExercisesSearchComponent>;
-    let emitSpy: jest.SpyInstance;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    let emitSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
+
         fixture = TestBed.createComponent(CourseManagementExercisesSearchComponent);
         comp = fixture.componentInstance;
-        emitSpy = jest.spyOn(comp.exerciseFilter, 'emit');
+        emitSpy = vi.spyOn(comp.exerciseFilter, 'emit');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -28,9 +34,9 @@ describe('Course Management Exercises Search Component', () => {
 
     it('should have empty filter on init', () => {
         comp.ngOnInit();
-        expect(comp.exerciseNameSearch).toBe('');
-        expect(comp.exerciseCategorySearch).toBe('');
-        expect(comp.exerciseTypeSearch).toBe('all');
+        expect(comp.exerciseNameSearch()).toBe('');
+        expect(comp.exerciseCategorySearch()).toBe('');
+        expect(comp.exerciseTypeSearch()).toBe('all');
     });
 
     it('should change filter on name change', () => {
@@ -38,7 +44,7 @@ describe('Course Management Exercises Search Component', () => {
         filter.exerciseNameSearch = 'test';
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
-        comp.exerciseNameSearch = filter.exerciseNameSearch;
+        comp.exerciseNameSearch.set(filter.exerciseNameSearch);
         button.click();
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);
@@ -49,7 +55,7 @@ describe('Course Management Exercises Search Component', () => {
         filter.exerciseCategorySearch = 'homework';
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
-        comp.exerciseCategorySearch = filter.exerciseCategorySearch;
+        comp.exerciseCategorySearch.set(filter.exerciseCategorySearch);
         button.click();
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);
@@ -60,7 +66,7 @@ describe('Course Management Exercises Search Component', () => {
         filter.exerciseTypeSearch = 'programming';
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
-        comp.exerciseTypeSearch = filter.exerciseTypeSearch;
+        comp.exerciseTypeSearch.set(filter.exerciseTypeSearch);
         button.click();
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);

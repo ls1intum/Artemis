@@ -126,7 +126,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     triggerExamAboutToEnd() {
         this.saveExercise(false);
-        this.examAboutToEnd.emit();
+        this.examAboutToEnd.emit(undefined);
     }
 
     /**
@@ -252,6 +252,6 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
      * Notify parent component when user wants to hand in early
      */
     handInEarly() {
-        this.onExamHandInEarly.emit();
+        this.onExamHandInEarly.emit(undefined);
     }
 }

@@ -55,10 +55,10 @@ export class ConfirmAutofocusButtonComponent {
         modalRef.componentInstance.contentRef = this.content;
         modalRef.result.then(
             () => {
-                this.onConfirm.emit();
+                this.onConfirm.emit(undefined);
             },
             () => {
-                this.onCancel.emit();
+                this.onCancel.emit(undefined);
             },
         );
     }

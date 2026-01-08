@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -88,9 +88,9 @@ export class CourseUpdateComponent implements OnInit {
 
     ProgrammingLanguage = ProgrammingLanguage;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
-    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
+    readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+    readonly colorSelector = viewChild.required(ColorSelectorComponent);
+    readonly tzTypeAhead = viewChild.required<NgbTypeahead>('timeZoneInput');
 
     tzFocus$ = new Subject<string>();
     tzClick$ = new Subject<string>();
@@ -273,7 +273,7 @@ export class CourseUpdateComponent implements OnInit {
 
     tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
+        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead().isPopupOpen()));
         const inputFocus$ = this.tzFocus$;
 
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
@@ -335,7 +335,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     openColorSelector(event: MouseEvent) {
-        this.colorSelector.openColorSelector(event);
+        this.colorSelector().openColorSelector(event);
     }
 
     onSelectedColor(selectedColor: string) {
@@ -665,7 +665,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly FeatureToggle = FeatureToggle;
 
     triggerFileInput() {
-        this.fileInput.nativeElement.click();
+        this.fileInput().nativeElement.click();
     }
 
     openCropper(): void {

@@ -51,7 +51,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
      */
     clearRenamingNode(event: any) {
         event.stopPropagation();
-        this.onClearRenamingNode.emit();
+        this.onClearRenamingNode.emit(undefined);
     }
 
     /**
@@ -62,7 +62,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
         if (!event.target.value || !this.isBeingRenamed) {
             return;
         } else if (event.target.value === this.item.text) {
-            this.onClearRenamingNode.emit();
+            this.onClearRenamingNode.emit(undefined);
             return;
         }
         this.onRenameNode.emit(event.target.value);

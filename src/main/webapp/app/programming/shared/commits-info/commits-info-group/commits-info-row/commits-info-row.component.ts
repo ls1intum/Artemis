@@ -30,7 +30,7 @@ export class CommitsInfoRowComponent {
     @Output() toggleExpandEvent = new EventEmitter<void>();
 
     onToggleExpand() {
-        this.toggleExpandEvent.emit();
+        this.toggleExpandEvent.emit(undefined);
     }
 
     readonly faCircle = faCircle;

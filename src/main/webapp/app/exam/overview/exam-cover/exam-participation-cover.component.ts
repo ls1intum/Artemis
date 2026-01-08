@@ -207,7 +207,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * Submits the exam
      */
     submitExam() {
-        this.onExamEnded.emit();
+        this.onExamEnded.emit(this.studentExam);
     }
 
     /**
@@ -215,7 +215,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     continueAfterHandInEarly() {
         this.examParticipationService.setEndView(false);
-        this.onExamContinueAfterHandInEarly.emit();
+        this.onExamContinueAfterHandInEarly.emit(undefined);
     }
 
     get startButtonEnabled(): boolean {

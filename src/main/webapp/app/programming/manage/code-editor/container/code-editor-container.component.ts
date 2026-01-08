@@ -247,7 +247,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         }
         this.monacoEditor?.onFileChange(fileChange);
 
-        this.onFileChanged.emit();
+        this.onFileChanged.emit(undefined);
     }
 
     /**
@@ -283,7 +283,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
-        this.onFileChanged.emit();
+        this.onFileChanged.emit(undefined);
     }
 
     fileLoad(selectedFile: string) {

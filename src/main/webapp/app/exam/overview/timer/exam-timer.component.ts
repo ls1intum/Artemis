@@ -53,7 +53,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
                 takeUntil(this.destroy$),
             )
             .subscribe(() => {
-                this.timerAboutToEnd.emit();
+                this.timerAboutToEnd.emit(undefined);
                 // if timer is displayed and duration is already over
                 // -> display at least one display time, that's why we use setTimeout
                 setTimeout(() => this.destroy$.next(true));

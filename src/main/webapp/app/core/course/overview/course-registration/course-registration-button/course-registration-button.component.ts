@@ -46,7 +46,7 @@ export class CourseRegistrationButtonComponent implements OnInit {
         this.courseService.registerForCourse(courseId).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.studentDashboard.enroll.enrollSuccessful');
-                this.onRegistration.emit();
+                this.onRegistration.emit(undefined);
             },
             error: (error: string) => {
                 this.alertService.error(error);
