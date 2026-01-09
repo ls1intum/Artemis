@@ -1391,6 +1391,28 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizWithCompetency() throws Exception {
+        // create a quiz exercise (not yet persisted)
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.INDIVIDUAL);
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        // Create a simple course competency
+        Competency competency = new Competency();
+        competency.setTitle("Test Competency");
+        competency.setDescription("This is a test competency");
+        competency.setCourse(course);
+        competency.setMasteryThreshold(1);
+        competency = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies", competency, Competency.class, HttpStatus.CREATED);
+
+        quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, quizExercise, 0.2)));
+        QuizExercise created = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
+
+        assertThat(created).isNotNull();
+        assertThat(created.getCompetencyLinks()).hasSize(2);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(value = QuizMode.class, names = { "INDIVIDUAL", "BATCHED" })
