@@ -11,14 +11,15 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { Subject } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +33,7 @@ describe('TextExercise Management Component', () => {
     let comp: TextExerciseComponent;
     let fixture: ComponentFixture<TextExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     const course = { id: 123 } as Course;
     const textExercise: TextExercise = { id: 456, title: 'Text Exercise', type: 'text' } as TextExercise;
@@ -45,7 +46,7 @@ describe('TextExercise Management Component', () => {
                 { provide: Router, useClass: MockRouter },
                 LocalStorageService,
                 SessionStorageService,
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -56,7 +57,7 @@ describe('TextExercise Management Component', () => {
         fixture = TestBed.createComponent(TextExerciseComponent);
         comp = fixture.componentInstance;
         courseExerciseService = TestBed.inject(CourseExerciseService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
 
         // Set exercises via internal property since textExercises is a signal input
         comp.internalTextExercises.set([textExercise]);
@@ -89,19 +90,21 @@ describe('TextExercise Management Component', () => {
     });
 
     it('should open import modal', () => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id: 456 } as TextExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const onCloseSubject = new Subject<TextExercise | undefined>();
+        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         // Set the course before opening the modal to ensure courseId is defined
         comp.course = course;
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.TEXT);
+        expect(dialogService.open).toHaveBeenCalledOnce();
+        expect(dialogService.open).toHaveBeenCalledWith(
+            ExerciseImportComponent,
+            expect.objectContaining({
+                data: { exerciseType: ExerciseType.TEXT },
+            }),
+        );
     });
 
     it('should return exercise id', () => {

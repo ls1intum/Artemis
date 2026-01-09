@@ -332,7 +332,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
 
-        if (currentCourse.isAtLeastEditor) {
+        if (this.lectureEnabled && currentCourse.isAtLeastEditor) {
             sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
         }
         const nonInstructorItems: SidebarItem[] = [];
