@@ -80,11 +80,7 @@ export function handleLinkClick(event) {
         if (hash && hash.length > 1) {
             // Remove the # and decode the hash
             const elementId = decodeURIComponent(hash.substring(1));
-
-            // Small delay to allow navigation to complete
-            setTimeout(() => {
-                openDetailsById(elementId);
-            }, 50);
+            openDetailsById(elementId);
         }
     } catch (error) {
         // Fallback for invalid URLs
