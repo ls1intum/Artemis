@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, filter, firstValueFrom, of, throwError } from 'rxjs';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
@@ -55,6 +55,10 @@ describe('IrisChatService', () => {
     const userMock = {
         acceptExternalLLMUsage: vi.fn(),
     };
+
+    const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
+
+    const waitForSessionIdValue = (expectedId: number) => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value === expectedId)));
 
     beforeEach(() => {
         routerMock = { url: '' };
@@ -113,13 +117,13 @@ describe('IrisChatService', () => {
         const createdMessage = mockUserMessageWithContent(message);
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
         service.switchTo(ChatServiceMode.COURSE, id);
-        service.sendMessage(message).subscribe();
+        await waitForSessionId();
+        await firstValueFrom(service.sendMessage(message));
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
-        service.currentMessages().subscribe((messages) => {
-            expect(messages).toHaveLength(mockConversation.messages!.length + 1);
-            expect(messages.last()).toEqual(createdMessage);
-        });
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length + 1);
+        expect(messages.last()).toEqual(createdMessage);
     });
 
     it('should handle error when sending a message', async () => {
@@ -130,12 +134,12 @@ describe('IrisChatService', () => {
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
         service.switchTo(ChatServiceMode.COURSE, id);
-        service.sendMessage(message).subscribe();
+        await waitForSessionId();
+        await firstValueFrom(service.sendMessage(message));
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
-        service.currentError().subscribe((error) => {
-            expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
-        });
+        const error = await firstValueFrom(service.currentError());
+        expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
     });
 
     it('should load existing messages on session creation', async () => {
@@ -144,9 +148,9 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2)));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.COURSE, id);
-        service.currentMessages().subscribe((messages) => {
-            expect(messages).toHaveLength(mockConversation.messages!.length);
-        });
+        await waitForSessionId();
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length);
     });
 
     it('should clear chat', async () => {
@@ -155,20 +159,23 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2, true)));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
         service.switchTo(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
         service.clearChat();
-        service.currentMessages().subscribe((messages) => {
-            expect(messages).toHaveLength(mockConversationWithNoMessages.messages!.length);
-        });
+        await waitForSessionIdValue(2);
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversationWithNoMessages.messages!.length);
     });
 
     it('should rate a message', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessage>));
-        service.switchTo(ChatServiceMode.COURSE, id);
         const message = mockServerMessage;
-        service.rateMessage(message, true).subscribe();
+        const updatedMessage = Object.assign({}, message, { helpful: true });
+        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({ body: updatedMessage } as HttpResponse<IrisMessage>));
+        service.switchTo(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+        await firstValueFrom(service.rateMessage(message, true));
 
         expect(httpService.rateMessage).toHaveBeenCalledWith(id, message.id, true);
     });
@@ -183,13 +190,13 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: message } as HttpResponse<IrisMessage>));
 
         service.switchTo(ChatServiceMode.COURSE, id);
-        service.resendMessage(message).subscribe();
+        await waitForSessionId();
+        await firstValueFrom(service.resendMessage(message));
 
         expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message);
-        service.currentMessages().subscribe((messages) => {
-            expect(messages).toHaveLength(mockConversation.messages!.length);
-            expect(messages.first()).toEqual(message);
-        });
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length);
+        expect(messages.first()).toEqual(message);
     });
 
     it('should handle error when rate limited', async () => {
@@ -200,12 +207,12 @@ describe('IrisChatService', () => {
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
 
         service.switchTo(ChatServiceMode.COURSE, id);
-        service.sendMessage(message).subscribe();
+        await waitForSessionId();
+        await firstValueFrom(service.sendMessage(message));
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
-        service.currentError().subscribe((error) => {
-            expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
-        });
+        const error = await firstValueFrom(service.currentError());
+        expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
     });
 
     it('should handle error when iris is disabled', async () => {
@@ -216,12 +223,12 @@ describe('IrisChatService', () => {
         const stub = vi.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
 
         service.switchTo(ChatServiceMode.COURSE, id);
-        service.sendMessage(message).subscribe();
+        await waitForSessionId();
+        await firstValueFrom(service.sendMessage(message));
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
-        service.currentError().subscribe((error) => {
-            expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
-        });
+        const error = await firstValueFrom(service.currentError());
+        expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
     });
 
     it('should handle websocket status message', async () => {
@@ -229,10 +236,9 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
-
-        service.currentStages().subscribe((stages) => {
-            expect(stages).toEqual(mockWebsocketStatusMessage.stages);
-        });
+        await waitForSessionId();
+        const stages = await firstValueFrom(service.currentStages());
+        expect(stages).toEqual(mockWebsocketStatusMessage.stages);
     });
 
     it('should handle websocket status message with internal stages', async () => {
@@ -240,10 +246,9 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessageWithInteralStage));
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
-
-        service.currentStages().subscribe((stages) => {
-            expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages?.filter((stage: IrisStageDTO) => !stage.internal));
-        });
+        await waitForSessionId();
+        const stages = await firstValueFrom(service.currentStages());
+        expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages?.filter((stage: IrisStageDTO) => !stage.internal));
     });
 
     it('should update session title from websocket STATUS payload', async () => {
@@ -265,16 +270,16 @@ describe('IrisChatService', () => {
             }),
         );
         service.switchTo(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
 
         expect(wsSpy).toHaveBeenCalledWith(id);
 
         // Wait for the async setTimeout in the Observable
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        service.availableChatSessions().subscribe((sessions) => {
-            const current = sessions.find((s) => s.id === id);
-            expect(current?.title).toBe(myTitle);
-        });
+        const sessions = await firstValueFrom(service.availableChatSessions());
+        const current = sessions.find((s) => s.id === id);
+        expect(current?.title).toBe(myTitle);
     });
 
     it('should handle websocket message', async () => {
@@ -283,40 +288,32 @@ describe('IrisChatService', () => {
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         const message = mockServerMessage2;
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
-
-        service.currentMessages().subscribe((messages) => {
-            expect(messages).toHaveLength(mockConversation.messages!.length + 1);
-            expect(messages.last()).toEqual(message);
-        });
+        await waitForSessionId();
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length + 1);
+        expect(messages.last()).toEqual(message);
     });
 
-    it('should emit sessionId when set', () => {
+    it('should emit sessionId when set', async () => {
         const expectedId = 456;
-        service.currentSessionId().subscribe((id) => {
-            expect(id).toBe(expectedId);
-        });
         service.sessionId = expectedId;
+        const sessionId = await firstValueFrom(service.currentSessionId());
+        expect(sessionId).toBe(expectedId);
     });
 
     it('should request tutor suggestion if sessionId is set', async () => {
         service.sessionId = id;
-        const httpStub = vi.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of());
+        const httpStub = vi.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of(undefined));
 
-        service.requestTutorSuggestion().subscribe((res) => {
-            expect(res).toBeUndefined();
-        });
+        const res = await firstValueFrom(service.requestTutorSuggestion());
+        expect(res).toBeUndefined();
 
         expect(httpStub).toHaveBeenCalledWith(id);
     });
 
     it('should throw error if sessionId is undefined on tutor suggestion', async () => {
         service.sessionId = undefined;
-
-        service.requestTutorSuggestion().subscribe({
-            error: (err) => {
-                expect(err.message).toBe('Not initialized');
-            },
-        });
+        await expect(firstValueFrom(service.requestTutorSuggestion())).rejects.toThrow('Not initialized');
     });
 
     describe('switchToSession', () => {
@@ -347,9 +344,8 @@ describe('IrisChatService', () => {
             await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(closeSpy).toHaveBeenCalled();
-            service.currentMessages().subscribe((messages) => {
-                expect(messages).toEqual(newSession.messages);
-            });
+            const messages = await firstValueFrom(service.currentMessages());
+            expect(messages).toEqual(newSession.messages);
             expect(wsStub).toHaveBeenCalledWith(newSession.id);
         });
 

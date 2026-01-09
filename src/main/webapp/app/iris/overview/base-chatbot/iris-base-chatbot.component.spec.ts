@@ -256,6 +256,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should not send a message if newMessageTextContent is empty', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         vi.spyOn(httpService, 'createMessage');
 
@@ -451,7 +452,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should handle suggestion click correctly', () => {
         const suggestion = 'test suggestion';
         vi.spyOn(component, 'onSend');
-        vi.spyOn(chatService, 'sendMessage');
+        vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
 
         component.onSuggestionClick(suggestion);
 
@@ -462,6 +463,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should set clickedSuggestion when clicking a suggestion', () => {
         const suggestion = 'test suggestion';
         vi.spyOn(component, 'onSend');
+        vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
 
         component.onSuggestionClick(suggestion);
 
