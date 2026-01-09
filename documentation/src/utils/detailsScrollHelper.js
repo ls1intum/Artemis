@@ -9,20 +9,26 @@
 /**
  * Opens a details element with the given ID by triggering a click on the summary.
  * This ensures React's internal state is properly updated.
+ * If the element is not a details element itself, it will search for the nearest parent details element.
  */
 export function openDetailsById(elementId) {
     try {
         const element = document.getElementById(elementId);
-        if (element && element.tagName === 'DETAILS') {
-            const isCollapsed = element.getAttribute('data-collapsed') !== 'false';
+        if (!element) {
+            return;
+        }
 
-            if (isCollapsed) {
-                // Find the summary element and click it to trigger React's state update
-                const summary = element.querySelector('summary');
-                if (summary) {
-                    summary.click();
-                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+        // Find the nearest details element (either the element itself or its parent)
+        const detailsElement = element.tagName === 'DETAILS'
+            ? element
+            : element.closest('details');
+
+        if (detailsElement && !detailsElement.open) {
+            // Find the summary element and click it to trigger React's state update
+            const summary = detailsElement.querySelector('summary');
+            if (summary) {
+                summary.click();
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
     } catch (error) {
@@ -34,11 +40,16 @@ export function openDetailsById(elementId) {
  * Opens a details element if the current URL hash matches its ID.
  */
 export function openDetailsOnHash() {
+    const isServerSideRendering = typeof window === 'undefined';
+    if (isServerSideRendering) {
+        return;
+    }
+
     const hash = window.location.hash;
 
     if (hash && hash.length > 1) {
-        // Remove the # from the hash
-        const elementId = hash.substring(1);
+        // Remove the # from the hash and decode it
+        const elementId = decodeURIComponent(hash.substring(1));
         openDetailsById(elementId);
     }
 }
@@ -47,19 +58,40 @@ export function openDetailsOnHash() {
  * Intercepts clicks on anchor links and opens details elements if needed.
  */
 export function handleLinkClick(event) {
-    const target = event.target.closest('a[href*="#"]');
-    if (!target) return;
+    // Safely get the closest anchor element (event.target might be a text node)
+    const target = event.target instanceof Element
+        ? event.target.closest('a[href*="#"]')
+        : null;
+
+    if (!target) {
+        return;
+    }
 
     const href = target.getAttribute('href');
-    if (!href) return;
+    if (!href) {
+        return;
+    }
 
-    const hashIndex = href.indexOf('#');
-    if (hashIndex === -1) return;
+    try {
+        // Parse the href using URL API for more robust handling
+        const url = new URL(href, window.location.href);
+        const hash = url.hash;
 
-    const hash = href.substring(hashIndex + 1);
+        if (hash && hash.length > 1) {
+            // Remove the # and decode the hash
+            const elementId = decodeURIComponent(hash.substring(1));
 
-    // Small delay to allow navigation to complete
-    setTimeout(() => {
-        openDetailsById(hash);
-    }, 50);
+            // Small delay to allow navigation to complete
+            setTimeout(() => {
+                openDetailsById(elementId);
+            }, 50);
+        }
+    } catch (error) {
+        // Fallback for invalid URLs
+        const hashIndex = href.indexOf('#');
+        if (hashIndex !== -1) {
+            const hash = decodeURIComponent(href.substring(hashIndex + 1));
+            openDetailsById(hash);
+        }
+    }
 }
