@@ -4,7 +4,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
@@ -27,7 +28,6 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
@@ -57,7 +57,7 @@ describe('Course Management Update Component', () => {
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: ReturnType<typeof vi.spyOn>;
     let eventManager: EventManager;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     beforeEach(async () => {
         course = new Course();
@@ -103,7 +103,7 @@ describe('Course Management Update Component', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
@@ -123,7 +123,7 @@ describe('Course Management Update Component', () => {
         loadImageSpy = vi.spyOn(loadImageService, 'loadImageFile');
         accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
     });
 
     afterEach(() => {
@@ -297,6 +297,13 @@ describe('Course Management Update Component', () => {
     });
 
     describe('setCourseImage', () => {
+        beforeEach(() => {
+            const mockDialogRef = {
+                onClose: of(undefined),
+            } as unknown as DynamicDialogRef;
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        });
+
         it('should change course image', () => {
             const file = new File([''], 'testFilename');
             const fileList = {
@@ -817,19 +824,16 @@ describe('Course Management Update Component', () => {
     });
 
     describe('openImageCropper', () => {
-        it('should open the image cropper modal and update the croppedImage on result', async () => {
-            const mockModalRef: Partial<NgbModalRef> = {
-                componentInstance: {},
-                result: Promise.resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA'),
-                close: vi.fn(),
-                dismiss: vi.fn(),
-            };
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        it('should open the image cropper modal and update the croppedImage on result', () => {
+            const croppedImageResult = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA';
+            const mockDialogRef = {
+                onClose: of(croppedImageResult),
+            } as unknown as DynamicDialogRef;
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
             comp.openCropper();
-            expect(modalService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
-            const croppedImage = await mockModalRef.result;
-            expect(comp.croppedImage).toBe(croppedImage);
+            expect(dialogService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
+            expect(comp.croppedImage).toBe(croppedImageResult);
         });
     });
 
@@ -865,7 +869,10 @@ describe('Course Management Update Component', () => {
     });
 
     it('should open organizations modal', () => {
-        vi.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
+        const mockDialogRef = {
+            onClose: of(new Organization()),
+        } as unknown as DynamicDialogRef;
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         comp.openOrganizationsModal();
         expect(comp.courseOrganizations).toHaveLength(1);
     });
@@ -971,6 +978,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
+                MockProvider(DialogService),
             ],
         }).compileComponents();
 
@@ -1078,6 +1086,7 @@ describe('Course Management Update Component Create', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
+                MockProvider(DialogService),
             ],
         }).compileComponents();
 

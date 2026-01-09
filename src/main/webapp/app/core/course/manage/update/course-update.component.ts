@@ -16,9 +16,10 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { NgbModal, NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -81,7 +82,7 @@ export class CourseUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
     private profileService = inject(ProfileService);
     private organizationService = inject(OrganizationManagementService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private router = inject(Router);
     private accountService = inject(AccountService);
@@ -557,9 +558,16 @@ export class CourseUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.organizations = this.courseOrganizations;
-        modalRef.closed.subscribe((organization) => {
+        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
+            header: '',
+            width: '80vw',
+            modal: true,
+            dismissableMask: false,
+            data: {
+                organizations: this.courseOrganizations,
+            } as OrganizationSelectorDialogData,
+        });
+        dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
                 if (this.courseOrganizations === undefined) {
                     this.courseOrganizations = [];
@@ -669,10 +677,14 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     openCropper(): void {
-        const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-        modalRef.componentInstance.uploadFile = this.courseImageUploadFile;
-        modalRef.componentInstance.croppedImage = this.croppedImage;
-        modalRef.result.then((result) => {
+        const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
+            header: '',
+            width: '500px',
+            data: {
+                uploadFile: this.courseImageUploadFile,
+            },
+        });
+        dialogRef?.onClose.subscribe((result: string | undefined) => {
             if (result) {
                 this.croppedImage = result;
             }

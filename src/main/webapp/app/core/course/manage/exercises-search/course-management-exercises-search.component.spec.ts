@@ -71,4 +71,63 @@ describe('Course Management Exercises Search Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);
     });
+
+    describe('reset', () => {
+        it('should reset all search fields to default values and emit filter', () => {
+            comp.ngOnInit();
+            // Set some non-default values
+            comp.exerciseNameSearch.set('test name');
+            comp.exerciseCategorySearch.set('test category');
+            comp.exerciseTypeSearch.set('programming');
+
+            comp.reset();
+
+            // Verify values are reset to defaults
+            expect(comp.exerciseNameSearch()).toBe('');
+            expect(comp.exerciseCategorySearch()).toBe('');
+            expect(comp.exerciseTypeSearch()).toBe('all');
+            // Verify emit was called with default filter
+            expect(emitSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('change handlers', () => {
+        it('should update exerciseNameSearch signal on name change', () => {
+            comp.onExerciseNameSearchChange('new name');
+            expect(comp.exerciseNameSearch()).toBe('new name');
+        });
+
+        it('should update exerciseCategorySearch signal on category change', () => {
+            comp.onExerciseCategorySearchChange('new category');
+            expect(comp.exerciseCategorySearch()).toBe('new category');
+        });
+
+        it('should update exerciseTypeSearch signal and emit on type change', () => {
+            comp.onExerciseTypeSearchChange('quiz');
+            expect(comp.exerciseTypeSearch()).toBe('quiz');
+            expect(emitSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('sendUpdate', () => {
+        it('should emit ExerciseFilter with current values', () => {
+            comp.exerciseNameSearch.set('search name');
+            comp.exerciseCategorySearch.set('search category');
+            comp.exerciseTypeSearch.set('text');
+
+            comp.sendUpdate();
+
+            expect(emitSpy).toHaveBeenCalledWith(new ExerciseFilter('search name', 'search category', 'text'));
+        });
+    });
+
+    describe('typeOptions', () => {
+        it('should initialize typeOptions with all exercise types', () => {
+            comp.ngOnInit();
+
+            const options = comp.typeOptions();
+            expect(options).toContain('all');
+            expect(options.length).toBeGreaterThan(1);
+        });
+    });
 });

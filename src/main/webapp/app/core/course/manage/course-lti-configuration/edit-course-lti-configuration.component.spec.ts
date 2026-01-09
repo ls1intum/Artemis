@@ -11,6 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EditCourseLtiConfigurationComponent } from 'app/core/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -137,5 +138,76 @@ describe('Edit Course LTI Configuration Component', () => {
         expect(updatedStub).toHaveBeenCalledWith(123, changedConfiguration);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'lti-configuration']);
+    });
+
+    describe('LTI Platform Methods', () => {
+        it('should set platform correctly', () => {
+            fixture.detectChanges();
+            const platform = { id: 1, customName: 'Test Platform', originalUrl: 'https://test.com' } as LtiPlatformConfiguration;
+
+            comp.setPlatform(platform);
+
+            expect(comp.onlineCourseConfiguration.ltiPlatformConfiguration).toEqual(platform);
+            expect(comp.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.value).toEqual(platform);
+        });
+
+        it('should get LTI platform display string with both customName and originalUrl', () => {
+            const platform = { customName: 'Test Platform', originalUrl: 'https://test.com' } as LtiPlatformConfiguration;
+
+            const result = comp.getLtiPlatform(platform);
+
+            expect(result).toBe('Test Platform https://test.com');
+        });
+
+        it('should get LTI platform display string with only customName', () => {
+            const platform = { customName: 'Test Platform' } as LtiPlatformConfiguration;
+
+            const result = comp.getLtiPlatform(platform);
+
+            expect(result).toBe('Test Platform ');
+        });
+
+        it('should get LTI platform display string with only originalUrl', () => {
+            const platform = { originalUrl: 'https://test.com' } as LtiPlatformConfiguration;
+
+            const result = comp.getLtiPlatform(platform);
+
+            expect(result).toBe(' https://test.com');
+        });
+
+        it('should get LTI platform display string with neither customName nor originalUrl', () => {
+            const platform = {} as LtiPlatformConfiguration;
+
+            const result = comp.getLtiPlatform(platform);
+
+            expect(result).toBe(' ');
+        });
+    });
+
+    describe('transition', () => {
+        it('should navigate with query params', () => {
+            fixture.detectChanges();
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            comp.transition();
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/admin/lti-configuration'], {
+                queryParams: {
+                    page: comp.page(),
+                    sort: ['id', 'asc'],
+                },
+            });
+        });
+    });
+
+    describe('userPrefix getter', () => {
+        it('should return the userPrefix form control', () => {
+            fixture.detectChanges();
+
+            const userPrefixControl = comp.userPrefix;
+
+            expect(userPrefixControl).toBeDefined();
+            expect(userPrefixControl.value).toBe(onlineCourseConfiguration.userPrefix);
+        });
     });
 });
