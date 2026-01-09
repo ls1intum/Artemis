@@ -73,6 +73,10 @@ export class IrisExerciseChatbotButtonComponent {
 
     private bubbleTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
+    // Track the last message shown in bubble to prevent re-showing when chatOpen changes
+    // Not a signal because it's internal bookkeeping read only with untracked() - no reactivity needed
+    private lastShownBubbleMessage: string | undefined;
+
     readonly chatBubble = viewChild<ElementRef>('chatBubble');
 
     constructor() {
@@ -108,9 +112,16 @@ export class IrisExerciseChatbotButtonComponent {
         });
 
         // Handle new iris messages with bubble display and timeout
+        // Only show bubble for genuinely NEW messages to prevent re-showing when chatOpen changes
         effect(() => {
             const message = this.latestIrisMessageContent();
-            if (message && !this.chatOpen()) {
+
+            // Use untracked for chatOpen so effect only triggers on new messages, not chat state changes
+            const isChatClosed = untracked(() => !this.chatOpen());
+
+            // Only show if: message exists, chat is closed, AND it's a new message we haven't shown
+            if (message && isChatClosed && message !== this.lastShownBubbleMessage) {
+                this.lastShownBubbleMessage = message;
                 this.newIrisMessage.set(message);
                 setTimeout(() => this.checkOverflow(), 0);
 
@@ -159,6 +170,7 @@ export class IrisExerciseChatbotButtonComponent {
         this.chatOpen.set(true);
         this.newIrisMessage.set(undefined);
         this.isOverflowing.set(false);
+        this.lastShownBubbleMessage = undefined;
         this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
             hasBackdrop: false,
             scrollStrategy: this.overlay.scrollStrategies.noop(),
