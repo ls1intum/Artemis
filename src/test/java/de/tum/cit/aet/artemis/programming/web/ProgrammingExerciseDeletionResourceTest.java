@@ -58,9 +58,12 @@ class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationI
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 1, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
+        // Add an instructor who is not in the course
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @Test
@@ -137,5 +140,19 @@ class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationI
         assertThat(summary.numberOfBuilds()).isEqualTo(0);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(0);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetDeletionSummary_editorForbidden() throws Exception {
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN,
+                ProgrammingExerciseDeletionSummaryDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void testGetDeletionSummary_instructorNotInCourseForbidden() throws Exception {
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN,
+                ProgrammingExerciseDeletionSummaryDTO.class);
     }
 }
