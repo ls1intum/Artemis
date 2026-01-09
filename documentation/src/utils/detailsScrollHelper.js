@@ -14,7 +14,6 @@ export function openDetailsById(elementId) {
     try {
         const element = document.getElementById(elementId);
         if (element && element.tagName === 'DETAILS') {
-            // Check if the element is already open by checking data-collapsed attribute
             const isCollapsed = element.getAttribute('data-collapsed') !== 'false';
 
             if (isCollapsed) {
