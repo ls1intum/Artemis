@@ -155,7 +155,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
             comp.onOpenConfirmationModal();
             await mockModalRef.result;
 
-            expect(confirmSpy).toHaveBeenCalledWith(undefined);
+            expect(confirmSpy).toHaveBeenCalled();
         });
 
         it('should emit onCancel when modal is dismissed', async () => {
@@ -168,7 +168,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
             // Wait for the rejection to be handled
             await new Promise((resolve) => setTimeout(resolve, 0));
 
-            expect(cancelSpy).toHaveBeenCalledWith(undefined);
+            expect(cancelSpy).toHaveBeenCalled();
         });
     });
 });

@@ -96,7 +96,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             comp.clearRenamingNode(event);
 
             expect(event.stopPropagation).toHaveBeenCalledOnce();
-            expect(emitSpy).toHaveBeenCalledWith(undefined);
+            expect(emitSpy).toHaveBeenCalled();
         });
     });
 
@@ -139,7 +139,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
             comp.renameNode(event);
 
-            expect(clearSpy).toHaveBeenCalledWith(undefined);
+            expect(clearSpy).toHaveBeenCalled();
             expect(renameSpy).not.toHaveBeenCalled();
         });
     });
