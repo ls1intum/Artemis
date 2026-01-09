@@ -36,7 +36,7 @@ describe('Course Management Exercises Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseManagementExercisesComponent],
+            imports: [CourseManagementExercisesComponent, CourseTitleBarActionsDirective],
             providers: [
                 MockProvider(CourseManagementService),
                 {
@@ -48,7 +48,6 @@ describe('Course Management Exercises Component', () => {
                 { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                CourseTitleBarActionsDirective,
             ],
         }).compileComponents();
 

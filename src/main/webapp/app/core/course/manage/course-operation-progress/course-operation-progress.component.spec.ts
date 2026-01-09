@@ -286,13 +286,16 @@ describe('CourseOperationProgressComponent', () => {
             { operationType: CourseOperationType.DELETE, expectedTranslation: 'artemisApp.course.operationProgress.delete' },
             { operationType: CourseOperationType.RESET, expectedTranslation: 'artemisApp.course.operationProgress.reset' },
             { operationType: CourseOperationType.ARCHIVE, expectedTranslation: 'artemisApp.course.operationProgress.archive' },
-        ])('should return correct title key for $operationType operation', async ({ operationType }: { operationType: CourseOperationType }) => {
-            fixture.componentRef.setInput('progress', createProgressDTO({ operationType }));
-            fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            fixture.detectChanges();
+        ])(
+            'should return correct title key for $operationType operation',
+            async ({ operationType, expectedTranslation }: { operationType: CourseOperationType; expectedTranslation: string }) => {
+                fixture.componentRef.setInput('progress', createProgressDTO({ operationType }));
+                fixture.detectChanges();
+                await new Promise((resolve) => setTimeout(resolve, 200));
+                fixture.detectChanges();
 
-            expect(component.operationTitle()).toBeDefined();
-        });
+                expect(component.operationTitle()).toBe(expectedTranslation);
+            },
+        );
     });
 });

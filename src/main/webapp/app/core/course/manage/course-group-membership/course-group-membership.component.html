@@ -12,16 +12,14 @@
         [userSearch]="userSearch"
         (importFinish)="loadAll()"
     >
-        @if (course()) {
-            <span>
-                <span>{{ course()?.title }} - </span>
-                @if (filteredUsersSize() < allCourseGroupUsers().length) {
-                    <span>{{ filteredUsersSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
-                }
-                {{ allCourseGroupUsers().length }}
-                <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName()">{{ capitalize(courseGroupEntityName()) }}</span>
-                <span class="text-body-secondary">({{ courseGroupName() }})</span>
-            </span>
-        }
+        <span>
+            <span>{{ course()!.title }} - </span>
+            @if (filteredUsersSize() < allCourseGroupUsers().length) {
+                <span>{{ filteredUsersSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
+            }
+            {{ allCourseGroupUsers().length }}
+            <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName()">{{ capitalize(courseGroupEntityName()) }}</span>
+            <span class="text-body-secondary">({{ courseGroupName() }})</span>
+        </span>
     </jhi-course-group>
 }

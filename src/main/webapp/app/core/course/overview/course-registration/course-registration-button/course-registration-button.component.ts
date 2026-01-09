@@ -29,9 +29,11 @@ export class CourseRegistrationButtonComponent implements OnInit {
         this.loading = true;
         this.accountService.identity().then((user) => {
             const profileInfo = this.profileService.getProfileInfo();
-            this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);
+            if (user?.login) {
+                this.userIsAllowedToRegister = matchesRegexFully(user.login, profileInfo.allowedCourseRegistrationUsernamePattern);
+            }
+            this.loading = false;
         });
-        this.loading = false;
     }
 
     ngOnInit(): void {
@@ -46,7 +48,7 @@ export class CourseRegistrationButtonComponent implements OnInit {
         this.courseService.registerForCourse(courseId).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.studentDashboard.enroll.enrollSuccessful');
-                this.onRegistration.emit(undefined);
+                this.onRegistration.emit();
             },
             error: (error: string) => {
                 this.alertService.error(error);

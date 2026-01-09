@@ -549,14 +549,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.inEditMode) {
             this.adjustEditorDimensions();
             this.monacoEditor.focus();
-            this.onEditSelect.emit(undefined);
+            this.onEditSelect.emit();
         } else if (this.inPreviewMode) {
-            this.onPreviewSelect.emit(undefined);
+            this.onPreviewSelect.emit();
         }
 
         // Some components need to know when the user leaves the visual tab, as it might make changes to the underlying data.
         if (event.activeId === this.TAB_VISUAL) {
-            this.onLeaveVisualTab.emit(undefined);
+            this.onLeaveVisualTab.emit();
         }
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.

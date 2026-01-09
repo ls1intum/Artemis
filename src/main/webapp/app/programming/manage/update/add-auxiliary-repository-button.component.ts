@@ -25,7 +25,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
 
-    @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
+    @Output() onRefresh: EventEmitter<void> = new EventEmitter<void>();
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.
@@ -38,7 +38,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
         newAuxiliaryRepository.name = '';
         newAuxiliaryRepository.checkoutDirectory = '';
         this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
-        this.onRefresh.emit(undefined);
+        this.onRefresh.emit();
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
     }
 }

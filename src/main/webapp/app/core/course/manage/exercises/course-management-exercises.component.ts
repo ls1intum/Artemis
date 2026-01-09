@@ -96,7 +96,6 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
         this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
         this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
-        this.exerciseFilter.set(new ExerciseFilter(''));
     }
     /**
      * Toggles the search bar

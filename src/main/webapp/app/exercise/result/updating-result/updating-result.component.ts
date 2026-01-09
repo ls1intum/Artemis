@@ -89,7 +89,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             }
 
             if (this.result) {
-                this.showResult.emit(undefined);
+                this.showResult.emit();
             }
         }
     }
@@ -132,9 +132,9 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                     } else {
                         this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults, false);
                     }
-                    this.onParticipationChange.emit(undefined);
+                    this.onParticipationChange.emit();
                     if (result) {
-                        this.showResult.emit(undefined);
+                        this.showResult.emit();
                     }
                 }),
             )

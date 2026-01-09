@@ -29,7 +29,7 @@ describe('Course Exercise Card Component', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CourseExerciseCardComponent).toBeDefined();
+        expect(fixture.componentInstance).toBeTruthy();
         // TODO: implement some proper client tests
     });
 });

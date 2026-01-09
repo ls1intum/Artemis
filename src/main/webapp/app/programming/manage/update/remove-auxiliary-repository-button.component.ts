@@ -20,7 +20,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
 
     @Input() row: AuxiliaryRepository;
 
-    @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
+    @Output() onRefresh: EventEmitter<void> = new EventEmitter<void>();
 
     // Icons
     faTrash = faTrash;
@@ -32,7 +32,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
         this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
-        this.onRefresh.emit(undefined);
+        this.onRefresh.emit();
         // This activates the angular change detection
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
