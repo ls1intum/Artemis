@@ -8,7 +8,7 @@ import { EMPTY, filter, of, switchMap } from 'rxjs';
 import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -37,7 +37,6 @@ export class IrisExerciseChatbotButtonComponent {
 
     protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
     protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 
     readonly mode = input.required<ChatServiceMode>();
 
@@ -57,8 +56,8 @@ export class IrisExerciseChatbotButtonComponent {
         this.chatService.newIrisMessage.pipe(
             filter((msg) => !!msg),
             switchMap((msg) => {
-                if (msg!.content && msg!.content.length > 0) {
-                    return of((msg!.content[0] as IrisTextMessageContent).textContent);
+                if (msg!.content && msg!.content.length > 0 && isTextContent(msg!.content[0])) {
+                    return of(msg!.content[0].textContent);
                 }
                 return EMPTY;
             }),
@@ -106,9 +105,11 @@ export class IrisExerciseChatbotButtonComponent {
         });
 
         // Effect to auto-open chat when irisQuestion query param is present
+        // Use untracked for chatOpen to prevent re-running when chat state changes
         effect(() => {
             const params = this.queryParams();
-            if (params['irisQuestion']) {
+            const isChatClosed = untracked(() => !this.chatOpen());
+            if (params['irisQuestion'] && isChatClosed) {
                 untracked(() => this.openChat());
             }
         });
