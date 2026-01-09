@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseOperationProgressComponent } from './course-operation-progress.component';
@@ -18,6 +18,9 @@ describe('CourseOperationProgressComponent', () => {
     let component: CourseOperationProgressComponent;
     let fixture: ComponentFixture<CourseOperationProgressComponent>;
 
+    const BUFFER_MS = 200;
+    const flushBuffer = async () => vi.advanceTimersByTimeAsync(BUFFER_MS);
+
     const createProgressDTO = (overrides: Partial<CourseOperationProgressDTO> = {}): CourseOperationProgressDTO => ({
         operationType: CourseOperationType.DELETE,
         status: CourseOperationStatus.IN_PROGRESS,
@@ -33,6 +36,7 @@ describe('CourseOperationProgressComponent', () => {
     });
 
     beforeEach(async () => {
+        vi.useFakeTimers();
         await TestBed.configureTestingModule({
             imports: [CourseOperationProgressComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -46,6 +50,11 @@ describe('CourseOperationProgressComponent', () => {
 
         fixture = TestBed.createComponent(CourseOperationProgressComponent);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -62,7 +71,7 @@ describe('CourseOperationProgressComponent', () => {
     it('should show dialog when progress is defined', async () => {
         fixture.componentRef.setInput('progress', createProgressDTO());
         fixture.detectChanges();
-        await new Promise((resolve) => setTimeout(resolve, 200)); // Allow buffer time
+        await flushBuffer(); // Allow buffer time
         fixture.detectChanges();
 
         expect(component.dialogVisible()).toBe(true);
@@ -72,7 +81,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should show spinner icon when in progress', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.IN_PROGRESS }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.isInProgress()).toBe(true);
@@ -83,7 +92,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should show check icon when completed', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.COMPLETED }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.isInProgress()).toBe(false);
@@ -94,7 +103,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should show warning icon when failed', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.FAILED }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.isInProgress()).toBe(false);
@@ -107,7 +116,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return weighted progress percentage', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ weightedProgressPercent: 50 }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.progressPercentage()).toBe(50);
@@ -116,7 +125,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return 0 when weightedProgressPercent is 0', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ weightedProgressPercent: 0 }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.progressPercentage()).toBe(0);
@@ -132,7 +141,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should round weighted percentage to nearest integer', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ weightedProgressPercent: 33.7 }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.progressPercentage()).toBe(34);
@@ -143,7 +152,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return empty string when in progress', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.IN_PROGRESS }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.progressStyleClass()).toBe('');
@@ -152,7 +161,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return progress-success when completed', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.COMPLETED }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.progressStyleClass()).toBe('progress-success');
@@ -161,7 +170,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return progress-danger when failed', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.FAILED }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.progressStyleClass()).toBe('progress-danger');
@@ -179,7 +188,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return undefined when weightedProgressPercent is 0', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ weightedProgressPercent: 0 }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.eta()).toBeUndefined();
@@ -188,7 +197,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return undefined when weightedProgressPercent is 100', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ weightedProgressPercent: 100 }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.eta()).toBeUndefined();
@@ -197,7 +206,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should return undefined when startedAt is not set', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ startedAt: undefined }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.eta()).toBeUndefined();
@@ -213,7 +222,7 @@ describe('CourseOperationProgressComponent', () => {
                 }),
             );
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             const eta = component.eta();
@@ -231,7 +240,7 @@ describe('CourseOperationProgressComponent', () => {
                 }),
             );
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             const eta = component.eta();
@@ -257,7 +266,7 @@ describe('CourseOperationProgressComponent', () => {
             // Set progress and wait for effect to run
             fixture.componentRef.setInput('progress', createProgressDTO({ stepsCompleted: 5, weightedProgressPercent: 50 }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             // Buffered progress should now have the value
@@ -268,7 +277,7 @@ describe('CourseOperationProgressComponent', () => {
         it('should immediately apply status changes', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.IN_PROGRESS }));
             fixture.detectChanges();
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await flushBuffer();
             fixture.detectChanges();
 
             expect(component.isInProgress()).toBe(true);
@@ -291,7 +300,7 @@ describe('CourseOperationProgressComponent', () => {
             async ({ operationType, expectedTranslation }: { operationType: CourseOperationType; expectedTranslation: string }) => {
                 fixture.componentRef.setInput('progress', createProgressDTO({ operationType }));
                 fixture.detectChanges();
-                await new Promise((resolve) => setTimeout(resolve, 200));
+                await flushBuffer();
                 fixture.detectChanges();
 
                 expect(component.operationTitle()).toBe(expectedTranslation);
