@@ -579,14 +579,14 @@ describe('ExamUpdateComponent', () => {
                     contentRef: null,
                     confirmDisabled: false,
                 },
-                result: Promise.resolve(),
+                result: new Promise<void>(() => {}),
             } as any;
 
             const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
 
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
-            examWithoutExercises.title = 'Test Exam';
+            examWithoutExercises.title = 'Test Exam Title';
             examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
             examWithoutExercises.endDate = dayjs().add(1, 'hours');
             component['originalStartDate'] = dayjs().subtract(1, 'hours');
@@ -599,15 +599,12 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
 
-            jest.spyOn(component as any, 'save').mockImplementation(() => {});
-
-            // Trigger handleSubmit
             component.handleSubmit();
             tick();
 
             expect(modalSpy).toHaveBeenCalledOnce();
             expect(modalSpy).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-            expect(component['activeModalRef']).not.toBeNull();
+            expect(component['activeModalRef']).toBe(mockModalRef);
             expect(component.confirmEntityNameValue()).toBe('');
             expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
             expect(mockModalRef.componentInstance.title).toBe('artemisApp.examManagement.dateChange.title');
@@ -622,24 +619,24 @@ describe('ExamUpdateComponent', () => {
                     contentRef: null,
                     confirmDisabled: false,
                 },
-                result: Promise.resolve(),
+                result: new Promise<void>(() => {}),
             } as any;
 
             jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
 
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'My Exam';
             examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
             examWithoutExercises.endDate = dayjs().add(1, 'hours');
             component['originalStartDate'] = dayjs().subtract(1, 'hours');
             component['originalEndDate'] = dayjs().add(1, 'hours');
 
             fixture.detectChanges();
+            tick();
 
             // Change the dates
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
-
-            jest.spyOn(component as any, 'save').mockImplementation(() => {});
 
             component.handleSubmit();
             tick();
@@ -650,22 +647,28 @@ describe('ExamUpdateComponent', () => {
         it('should not open modal when dates have not changed', fakeAsync(() => {
             const modalService = TestBed.inject(NgbModal);
             const modalSpy = jest.spyOn(modalService, 'open');
+            const navigateSpy = jest.spyOn(router, 'navigate');
             const saveSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
                 of(
                     new HttpResponse<Exam>({
-                        body: examWithoutExercises,
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
                     }),
                 ),
             );
 
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'Unchanged Exam';
             examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
             examWithoutExercises.endDate = dayjs().add(1, 'hours');
             component['originalStartDate'] = examWithoutExercises.startDate.clone();
             component['originalEndDate'] = examWithoutExercises.endDate.clone();
 
             fixture.detectChanges();
+            tick();
 
             // Don't change the dates
             component.handleSubmit();
@@ -673,10 +676,51 @@ describe('ExamUpdateComponent', () => {
 
             expect(modalSpy).not.toHaveBeenCalled();
             expect(saveSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
         }));
 
+        it('should enable confirm button when entered value matches exam title', () => {
+            examWithoutExercises.title = 'Exact Title Match';
+            fixture.detectChanges();
+
+            const mockModalRef = {
+                componentInstance: {
+                    confirmDisabled: true,
+                },
+            } as any;
+
+            component['activeModalRef'] = mockModalRef;
+
+            component.onConfirmNameChange('Exact Title Match');
+
+            expect(component.confirmEntityNameValue()).toBe('Exact Title Match');
+            expect(mockModalRef.componentInstance.confirmDisabled).toBeFalse();
+        });
+
+        it('should disable confirm button when entered value does not match exam title', () => {
+            examWithoutExercises.title = 'Correct Title';
+            fixture.detectChanges();
+
+            const mockModalRef = {
+                componentInstance: {
+                    confirmDisabled: false,
+                },
+            } as any;
+
+            component['activeModalRef'] = mockModalRef;
+
+            component.onConfirmNameChange('Wrong Title');
+
+            expect(component.confirmEntityNameValue()).toBe('Wrong Title');
+            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+        });
+
         it('should handle onConfirmNameChange when no modal is active', () => {
+            examWithoutExercises.title = 'Some Exam';
+            fixture.detectChanges();
+
             component['activeModalRef'] = null;
+
             expect(() => component.onConfirmNameChange('Some Value')).not.toThrow();
             expect(component.confirmEntityNameValue()).toBe('Some Value');
         });
