@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from 'test/helpers/sample/iris-sample-data';
@@ -8,6 +10,8 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('IrisChatHttpService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: IrisChatHttpService;
     let httpMock: HttpTestingController;
 
@@ -19,8 +23,12 @@ describe('IrisChatHttpService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     describe('Service methods', () => {
-        it('should create a message', fakeAsync(() => {
+        it('should create a message', async () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
             service
@@ -32,10 +40,9 @@ describe('IrisChatHttpService', () => {
                 });
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should resend a message', fakeAsync(() => {
+        it('should resend a message', async () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = returnedFromService;
             service
@@ -47,10 +54,9 @@ describe('IrisChatHttpService', () => {
                 });
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should return all messages for a session', fakeAsync(() => {
+        it('should return all messages for a session', async () => {
             const returnedFromService = [mockServerMessage, mockClientMessage];
             const expected = returnedFromService;
             service
@@ -59,10 +65,9 @@ describe('IrisChatHttpService', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should update message helpful field', fakeAsync(() => {
+        it('should update message helpful field', async () => {
             const returnedFromService = { ...mockServerMessage, helpful: true };
             const expected = returnedFromService;
             service
@@ -71,10 +76,9 @@ describe('IrisChatHttpService', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should create a session', fakeAsync(() => {
+        it('should create a session', async () => {
             const returnedFromService = { id: '1' };
             service
                 .createSession(ChatServiceMode.COURSE + '/' + 1)
@@ -82,10 +86,9 @@ describe('IrisChatHttpService', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService, { status: 201, statusText: 'Created' });
-            tick();
-        }));
+        });
 
-        it('should return current session', fakeAsync(() => {
+        it('should return current session', async () => {
             const returnedFromService = mockConversation;
             const expected = returnedFromService;
             service
@@ -94,8 +97,7 @@ describe('IrisChatHttpService', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
         afterEach(() => {
             httpMock.verify();
