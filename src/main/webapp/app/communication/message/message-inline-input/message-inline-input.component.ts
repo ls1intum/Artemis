@@ -94,7 +94,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      */
     updatePosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
-        this.isModalOpen.emit(undefined);
+        this.isModalOpen.emit();
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;

@@ -117,7 +117,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
                     break;
             }
             cancelSubscription?.subscribe(() => {
-                this.refresh.emit(undefined);
+                this.refresh.emit();
             });
         }
     }

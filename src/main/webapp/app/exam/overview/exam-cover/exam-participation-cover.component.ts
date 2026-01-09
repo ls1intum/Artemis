@@ -215,7 +215,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     continueAfterHandInEarly() {
         this.examParticipationService.setEndView(false);
-        this.onExamContinueAfterHandInEarly.emit(undefined);
+        this.onExamContinueAfterHandInEarly.emit();
     }
 
     get startButtonEnabled(): boolean {
