@@ -178,9 +178,6 @@ public class ProgrammingExerciseUpdateResource {
         if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        if (!Objects.equals(originalExercise.getTemplateRepositoryUri(), updateDTO.templateRepositoryUri())) {
-            throw new BadRequestAlertException("The template repository URI cannot be changed", ENTITY_NAME, "templateRepositoryUriCannotChange");
-        }
 
         // Check if theia Profile is enabled
         if (Arrays.asList(this.environment.getActiveProfiles()).contains(PROFILE_THEIA)) {
