@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,27 +20,37 @@ export interface PdfUploadTarget {
     templateUrl: './pdf-upload-target-dialog.component.html',
     styleUrls: ['./pdf-upload-target-dialog.component.scss'],
 })
-export class PdfUploadTargetDialogComponent {
-    protected readonly modal = inject(NgbActiveModal);
+export class PdfUploadTargetDialogComponent implements OnInit {
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     protected readonly faFilePdf = faFilePdf;
     protected readonly faFolderPlus = faFolderPlus;
     protected readonly faFolderOpen = faFolderOpen;
 
-    // Using regular properties for modal inputs (NgbModal uses componentInstance assignment)
-    lectures: Lecture[] = [];
-    uploadedFiles: File[] = [];
+    lectures = signal<Lecture[]>([]);
+    uploadedFiles = signal<File[]>([]);
 
     targetType = signal<'new' | 'existing'>('new');
     selectedLectureId = signal<number | undefined>(undefined);
     newLectureTitle = signal<string>('');
 
+    ngOnInit(): void {
+        const data = this.dialogConfig.data;
+        if (data?.lectures) {
+            this.lectures.set(data.lectures);
+        }
+        if (data?.uploadedFiles) {
+            this.initializeWithFiles(data.uploadedFiles);
+        }
+    }
+
     /**
      * Initialize the dialog with uploaded files
      * Derives a default lecture title from the first filename
      */
-    initializeWithFiles(files: File[]): void {
-        this.uploadedFiles = files;
+    private initializeWithFiles(files: File[]): void {
+        this.uploadedFiles.set(files);
         if (files.length > 0) {
             this.newLectureTitle.set(this.deriveLectureTitleFromFiles(files));
         }
@@ -90,10 +100,10 @@ export class PdfUploadTargetDialogComponent {
             lectureId: this.selectedLectureId(),
             newLectureTitle: this.targetType() === 'new' ? this.newLectureTitle().trim() : undefined,
         };
-        this.modal.close(result);
+        this.dialogRef.close(result);
     }
 
     cancel(): void {
-        this.modal.dismiss('cancel');
+        this.dialogRef.close();
     }
 }

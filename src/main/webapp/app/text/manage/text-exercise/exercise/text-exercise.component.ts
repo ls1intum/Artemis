@@ -3,8 +3,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextExerciseService } from '../service/text-exercise.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router, RouterLink } from '@angular/router';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -45,7 +46,8 @@ export class TextExerciseComponent extends ExerciseComponent {
     protected textExerciseService = inject(TextExerciseService); // needed in html code
     private router = inject(Router);
     private courseExerciseService = inject(CourseExerciseService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
@@ -122,10 +124,22 @@ export class TextExerciseComponent extends ExerciseComponent {
     callback() {}
 
     openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseType = ExerciseType.TEXT;
-        modalRef.result.then((result: TextExercise) => {
-            this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
+        const dialogData: ExerciseImportDialogData = { exerciseType: ExerciseType.TEXT };
+        const dialogRef = this.dialogService.open(ExerciseImportComponent, {
+            header: this.translateService.instant('artemisApp.textExercise.home.importLabel'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: dialogData,
+        });
+
+        dialogRef?.onClose.subscribe((result: TextExercise | undefined) => {
+            if (result?.id) {
+                this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
+            }
         });
     }
 }

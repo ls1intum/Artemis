@@ -1,3 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import type { MockInstance } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
@@ -22,18 +25,20 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let router: Router;
-    let navigateSpy: jest.SpyInstance;
-    let updateAttachmentVideoUnitSpy: jest.SpyInstance;
+    let navigateSpy: MockInstance<Router['navigate']>;
+    let updateAttachmentVideoUnitSpy: MockInstance<AttachmentVideoUnitService['update']>;
     let attachment: Attachment;
     let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
     let fakeFile: File;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AttachmentVideoUnitService),
@@ -102,7 +107,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         baseFormData.append('attachment', objectToJsonBlob(attachment));
         baseFormData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitForBlob));
 
-        jest.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
             of(
                 new HttpResponse({
                     body: attachmentVideoUnit,
@@ -110,12 +115,12 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 }),
             ),
         );
-        updateAttachmentVideoUnitSpy = jest.spyOn(attachmentVideoUnitService, 'update');
-        navigateSpy = jest.spyOn(router, 'navigate');
+        updateAttachmentVideoUnitSpy = vi.spyOn(attachmentVideoUnitService, 'update');
+        navigateSpy = vi.spyOn(router, 'navigate');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should set form data correctly', async () => {
@@ -157,12 +162,12 @@ describe('EditAttachmentVideoUnitComponent', () => {
             },
         };
 
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should update attachment video unit with file change with notification', async () => {
@@ -187,12 +192,12 @@ describe('EditAttachmentVideoUnitComponent', () => {
             },
         };
 
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), notification);
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should update attachment video unit without file change without notification', async () => {
@@ -216,11 +221,11 @@ describe('EditAttachmentVideoUnitComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitForBlob));
 
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 });

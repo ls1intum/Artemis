@@ -12,13 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @TestPropertySource(properties = { "artemis.continuous-integration.build-job.retention-period=30" })
-class AutomaticBuildJobCleanupServiceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AutomaticBuildJobCleanupServiceIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     @Autowired
     private AutomaticBuildJobCleanupService cleanupService;
