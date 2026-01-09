@@ -3,6 +3,8 @@ import { OrganizationManagementService } from 'app/core/admin/organization-manag
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 
 export interface OrganizationSelectorDialogData {
     organizations?: Organization[];
@@ -11,7 +13,7 @@ export interface OrganizationSelectorDialogData {
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, RouterLink, HasAnyAuthorityDirective],
 })
 export class OrganizationSelectorComponent implements OnInit {
     private readonly dialogRef = inject(DynamicDialogRef);

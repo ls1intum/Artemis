@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -21,6 +21,7 @@ import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -58,7 +59,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementUpdateComponent implements OnInit {
     private readonly languageHelper = inject(JhiLanguageHelper);
@@ -67,6 +67,7 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
@@ -233,20 +234,19 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     openOrganizationsModal() {
         const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: '',
+            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
             width: '80vw',
             modal: true,
-            dismissableMask: false,
+            closable: true,
+            dismissableMask: true,
             data: {
                 organizations: this.user.organizations,
             } as OrganizationSelectorDialogData,
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                if (this.user.organizations === undefined) {
-                    this.user.organizations = [];
-                }
-                this.user.organizations!.push(organization);
+                // Create a new array reference to trigger change detection with OnPush
+                this.user.organizations = [...(this.user.organizations ?? []), organization];
             }
         });
     }

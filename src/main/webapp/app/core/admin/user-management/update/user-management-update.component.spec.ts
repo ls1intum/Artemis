@@ -263,8 +263,8 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     it('should open organizations modal and add selected organization', () => {
-        const existingOrganizations = [{}] as Organization[];
-        component.user = { organizations: existingOrganizations } as User;
+        const existingOrganization = {} as Organization;
+        component.user = { organizations: [existingOrganization] } as User;
 
         const organizationSubject = new Subject<Organization>();
         const mockDialogRef = {
@@ -280,7 +280,10 @@ describe('UserManagementUpdateComponent', () => {
         // Simulate selecting a new organization
         const newOrganization = {} as Organization;
         organizationSubject.next(newOrganization);
-        expect(existingOrganizations).toContain(newOrganization);
+        // Check component.user.organizations directly since immutable operations create a new array
+        expect(component.user.organizations).toContain(existingOrganization);
+        expect(component.user.organizations).toContain(newOrganization);
+        expect(component.user.organizations).toHaveLength(2);
 
         // Test when user has no organizations yet
         component.user.organizations = undefined;

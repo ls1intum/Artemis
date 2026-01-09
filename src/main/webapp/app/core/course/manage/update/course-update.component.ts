@@ -34,6 +34,7 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -83,6 +84,7 @@ export class CourseUpdateComponent implements OnInit {
     private profileService = inject(ProfileService);
     private organizationService = inject(OrganizationManagementService);
     private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private router = inject(Router);
     private accountService = inject(AccountService);
@@ -559,10 +561,11 @@ export class CourseUpdateComponent implements OnInit {
      */
     openOrganizationsModal() {
         const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: '',
+            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
             width: '80vw',
             modal: true,
-            dismissableMask: false,
+            closable: true,
+            dismissableMask: true,
             data: {
                 organizations: this.courseOrganizations,
             } as OrganizationSelectorDialogData,
