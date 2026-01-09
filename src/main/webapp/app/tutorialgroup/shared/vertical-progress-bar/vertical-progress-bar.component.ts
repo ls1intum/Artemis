@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, computed, effect, input } from '@angular/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
@@ -17,8 +17,23 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbTooltip],
 })
-export class VerticalProgressBarComponent implements OnInit {
-    private cdr = inject(ChangeDetectorRef);
+export class VerticalProgressBarComponent {
+    // Input signals
+    readonly lowerBorder = input(60);
+    readonly upperBorder = input(90);
+    readonly lowerColor = input('var(--success)');
+    readonly intermediateColor = input('var(--warning)');
+    readonly upperColor = input('var(--danger)');
+    readonly tooltip = input('');
+    readonly animateFilling = input(true);
+    readonly heightInPixels = input<number>();
+    readonly widthInPixels = input<number>();
+    readonly fillLevelInPercent = input(0);
+
+    // Computed values for internal processing
+    readonly lowerBorderInternal = computed(() => Math.round(Math.max(this.lowerBorder(), 0)));
+    readonly upperBorderInternal = computed(() => Math.round(Math.min(this.upperBorder(), 100)));
+    readonly fillLevelInPercentInternal = computed(() => Math.min(Math.max(Math.round(this.fillLevelInPercent()), 0), 100));
 
     // CSS VARIABLES START
     @HostBinding('style.--progress-bar-height')
@@ -33,77 +48,45 @@ export class VerticalProgressBarComponent implements OnInit {
     fillDurationCSS = '1s';
     @HostBinding('style.--border-radius')
     borderRadiusCSS = '16px';
-
     // CSS VARIABLES END
 
-    ngOnInit(): void {
-        this.setFillColor();
-    }
+    constructor() {
+        // Effect to update height CSS
+        effect(() => {
+            const height = this.heightInPixels();
+            if (height !== undefined && height !== null && height > 0) {
+                this.heightCSS = `${height}px`;
+            }
+        });
 
-    fillLevelInPercentInternal = 0;
-    lowerBorderInternal = 60;
-    upperBorderInternal = 90;
+        // Effect to update width CSS
+        effect(() => {
+            const width = this.widthInPixels();
+            if (width !== undefined && width !== null && width > 0) {
+                this.widthCSS = `${width}px`;
+            }
+        });
 
-    @Input()
-    set lowerBorder(border: number) {
-        this.lowerBorderInternal = Math.round(Math.max(border, 0));
-        this.setFillColor();
-        this.cdr.markForCheck();
-    }
+        // Effect to update animation duration CSS
+        effect(() => {
+            this.fillDurationCSS = this.animateFilling() ? '1s' : '0s';
+        });
 
-    @Input()
-    set upperBorder(border: number) {
-        this.upperBorderInternal = Math.round(Math.min(border, 100));
-        this.setFillColor();
-        this.cdr.markForCheck();
-    }
-    readonly lowerColor = input('var(--success)');
-    readonly intermediateColor = input('var(--warning)');
-    readonly upperColor = input('var(--danger)');
-    readonly tooltip = input('');
+        // Effect to update fill level and color CSS
+        effect(() => {
+            const fillLevel = this.fillLevelInPercentInternal();
+            const lowerBorder = this.lowerBorderInternal();
+            const upperBorder = this.upperBorderInternal();
 
-    @Input()
-    set animateFilling(showAnimation: boolean) {
-        if (showAnimation) {
-            this.fillDurationCSS = '1s';
-        } else {
-            this.fillDurationCSS = '0s';
-        }
-    }
+            this.fillLevelCSS = `${fillLevel}%`;
 
-    @Input()
-    set heightInPixels(height: number) {
-        if (height !== undefined && height !== null && height > 0) {
-            this.heightCSS = `${height}px`;
-            this.cdr.markForCheck();
-        }
-    }
-
-    @Input()
-    set widthInPixels(width: number) {
-        if (width !== undefined && width !== null && width > 0) {
-            this.widthCSS = `${width}px`;
-            this.cdr.markForCheck();
-        }
-    }
-
-    @Input()
-    set fillLevelInPercent(percent: number) {
-        if (percent !== undefined && percent !== null) {
-            this.fillLevelInPercentInternal = Math.min(Math.max(Math.round(percent), 0), 100);
-            this.fillLevelCSS = `${this.fillLevelInPercentInternal}%`;
-            this.setFillColor();
-            this.cdr.markForCheck();
-        }
-    }
-
-    private setFillColor() {
-        if (this.fillLevelInPercentInternal <= this.lowerBorderInternal) {
-            this.fillColorCSS = this.lowerColor();
-        } else if (this.fillLevelInPercentInternal >= this.upperBorderInternal) {
-            this.fillColorCSS = this.upperColor();
-        } else {
-            this.fillColorCSS = this.intermediateColor();
-        }
+            if (fillLevel <= lowerBorder) {
+                this.fillColorCSS = this.lowerColor();
+            } else if (fillLevel >= upperBorder) {
+                this.fillColorCSS = this.upperColor();
+            } else {
+                this.fillColorCSS = this.intermediateColor();
+            }
+        });
     }
 }

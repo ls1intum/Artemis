@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
@@ -46,7 +46,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
-    @Input() lecture: Lecture;
+    lecture = input.required<Lecture>();
 
     unitManagementComponent = viewChild(LectureUnitManagementComponent);
     editFormContainer = viewChild<ElementRef<HTMLElement>>('editFormContainer');
@@ -62,19 +62,19 @@ export class LectureUpdateUnitsComponent implements OnInit {
         );
     });
 
-    isEditingLectureUnit: boolean;
+    isEditingLectureUnit = signal(false);
     isTextUnitFormOpen = signal<boolean>(false);
     isExerciseUnitFormOpen = signal<boolean>(false);
     isOnlineUnitFormOpen = signal<boolean>(false);
     isAttachmentVideoUnitFormOpen = signal<boolean>(false);
     isUploadingPdfs = signal<boolean>(false);
 
-    currentlyProcessedTextUnit: TextUnit;
-    currentlyProcessedOnlineUnit: OnlineUnit;
-    currentlyProcessedAttachmentVideoUnit: AttachmentVideoUnit;
-    textUnitFormData: TextUnitFormData;
-    onlineUnitFormData: OnlineUnitFormData;
-    attachmentVideoUnitFormData: AttachmentVideoUnitFormData;
+    currentlyProcessedTextUnit = signal<TextUnit | undefined>(undefined);
+    currentlyProcessedOnlineUnit = signal<OnlineUnit | undefined>(undefined);
+    currentlyProcessedAttachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
+    textUnitFormData = signal<TextUnitFormData | undefined>(undefined);
+    onlineUnitFormData = signal<OnlineUnitFormData | undefined>(undefined);
+    attachmentVideoUnitFormData = signal<AttachmentVideoUnitFormData | undefined>(undefined);
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
@@ -86,7 +86,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     onCreateLectureUnit(type: LectureUnitType) {
-        this.isEditingLectureUnit = false;
+        this.isEditingLectureUnit.set(false);
         this.onCloseLectureUnitForms();
         switch (type) {
             case LectureUnitType.TEXT:
@@ -113,7 +113,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isOnlineUnitFormOpen.set(false);
         this.isAttachmentVideoUnitFormOpen.set(false);
         this.isExerciseUnitFormOpen.set(false);
-        this.isEditingLectureUnit = false;
+        this.isEditingLectureUnit.set(false);
     }
 
     createEditTextUnit(formData: TextUnitFormData) {
@@ -123,16 +123,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         const { name, releaseDate, content, competencyLinks } = formData;
 
-        this.currentlyProcessedTextUnit = this.isEditingLectureUnit ? this.currentlyProcessedTextUnit : new TextUnit();
-        this.currentlyProcessedTextUnit.name = name;
-        this.currentlyProcessedTextUnit.releaseDate = releaseDate;
-        this.currentlyProcessedTextUnit.content = content;
-        this.currentlyProcessedTextUnit.competencyLinks = competencyLinks;
+        const textUnit = this.isEditingLectureUnit() ? this.currentlyProcessedTextUnit()! : new TextUnit();
+        textUnit.name = name;
+        textUnit.releaseDate = releaseDate;
+        textUnit.content = content;
+        textUnit.competencyLinks = competencyLinks;
+        this.currentlyProcessedTextUnit.set(textUnit);
 
-        (this.isEditingLectureUnit
-            ? this.textUnitService.update(this.currentlyProcessedTextUnit, this.lecture.id!)
-            : this.textUnitService.create(this.currentlyProcessedTextUnit!, this.lecture.id!)
-        ).subscribe({
+        (this.isEditingLectureUnit() ? this.textUnitService.update(textUnit, this.lecture().id!) : this.textUnitService.create(textUnit, this.lecture().id!)).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent()?.loadData();
@@ -148,17 +146,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         const { name, description, releaseDate, source, competencyLinks } = formData;
 
-        this.currentlyProcessedOnlineUnit = this.isEditingLectureUnit ? this.currentlyProcessedOnlineUnit : new OnlineUnit();
-        this.currentlyProcessedOnlineUnit.name = name || undefined;
-        this.currentlyProcessedOnlineUnit.releaseDate = releaseDate || undefined;
-        this.currentlyProcessedOnlineUnit.description = description || undefined;
-        this.currentlyProcessedOnlineUnit.source = source || undefined;
-        this.currentlyProcessedOnlineUnit.competencyLinks = competencyLinks || undefined;
+        const onlineUnit = this.isEditingLectureUnit() ? this.currentlyProcessedOnlineUnit()! : new OnlineUnit();
+        onlineUnit.name = name || undefined;
+        onlineUnit.releaseDate = releaseDate || undefined;
+        onlineUnit.description = description || undefined;
+        onlineUnit.source = source || undefined;
+        onlineUnit.competencyLinks = competencyLinks || undefined;
+        this.currentlyProcessedOnlineUnit.set(onlineUnit);
 
-        (this.isEditingLectureUnit
-            ? this.onlineUnitService.update(this.currentlyProcessedOnlineUnit, this.lecture.id!)
-            : this.onlineUnitService.create(this.currentlyProcessedOnlineUnit!, this.lecture.id!)
-        ).subscribe({
+        (this.isEditingLectureUnit() ? this.onlineUnitService.update(onlineUnit, this.lecture().id!) : this.onlineUnitService.create(onlineUnit, this.lecture().id!)).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent()?.loadData();
@@ -176,13 +172,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
             return;
         }
 
-        this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
-        const attachmentToCreateOrEdit =
-            this.isEditingLectureUnit && this.currentlyProcessedAttachmentVideoUnit.attachment ? this.currentlyProcessedAttachmentVideoUnit.attachment : new Attachment();
+        const attachmentVideoUnit = this.isEditingLectureUnit() ? this.currentlyProcessedAttachmentVideoUnit()! : new AttachmentVideoUnit();
+        const attachmentToCreateOrEdit = this.isEditingLectureUnit() && attachmentVideoUnit.attachment ? attachmentVideoUnit.attachment : new Attachment();
 
-        if (this.isEditingLectureUnit) {
+        if (this.isEditingLectureUnit()) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
-            this.currentlyProcessedAttachmentVideoUnit.attachment = undefined;
+            attachmentVideoUnit.attachment = undefined;
             if (attachmentToCreateOrEdit != null) {
                 attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
             }
@@ -194,11 +189,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         if (name) {
-            this.currentlyProcessedAttachmentVideoUnit.name = name;
+            attachmentVideoUnit.name = name;
             attachmentToCreateOrEdit.name = name;
         }
         if (releaseDate) {
-            this.currentlyProcessedAttachmentVideoUnit.releaseDate = releaseDate;
+            attachmentVideoUnit.releaseDate = releaseDate;
             attachmentToCreateOrEdit.releaseDate = releaseDate;
         }
         attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
@@ -206,24 +201,25 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentToCreateOrEdit.uploadDate = dayjs();
 
         if (videoSource) {
-            this.currentlyProcessedAttachmentVideoUnit.videoSource = videoSource;
+            attachmentVideoUnit.videoSource = videoSource;
         }
 
         if (description) {
-            this.currentlyProcessedAttachmentVideoUnit.description = description;
+            attachmentVideoUnit.description = description;
         }
-        this.currentlyProcessedAttachmentVideoUnit.competencyLinks = competencyLinks;
+        attachmentVideoUnit.competencyLinks = competencyLinks;
+        this.currentlyProcessedAttachmentVideoUnit.set(attachmentVideoUnit);
 
         const formData = new FormData();
         if (!!file && !!fileName) {
             formData.append('file', file, fileName);
             formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const save$ = this.isEditingLectureUnit
-            ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
-            : this.attachmentVideoUnitService.create(formData, this.lecture.id!);
+        const save$ = this.isEditingLectureUnit()
+            ? this.attachmentVideoUnitService.update(this.lecture().id!, attachmentVideoUnit.id!, formData, notificationText)
+            : this.attachmentVideoUnitService.create(formData, this.lecture().id!);
 
         save$.subscribe({
             next: () => {
@@ -263,15 +259,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     startEditLectureUnit(lectureUnit: LectureUnit) {
-        this.isEditingLectureUnit = true;
+        this.isEditingLectureUnit.set(true);
 
         lectureUnit.lecture = new Lecture();
-        lectureUnit.lecture.id = this.lecture.id;
-        lectureUnit.lecture.course = this.lecture.course;
+        lectureUnit.lecture.id = this.lecture().id;
+        lectureUnit.lecture.course = this.lecture().course;
 
-        this.currentlyProcessedTextUnit = lectureUnit as TextUnit;
-        this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
-        this.currentlyProcessedAttachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
+        this.currentlyProcessedTextUnit.set(lectureUnit as TextUnit);
+        this.currentlyProcessedOnlineUnit.set(lectureUnit as OnlineUnit);
+        this.currentlyProcessedAttachmentVideoUnit.set(lectureUnit as AttachmentVideoUnit);
 
         this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
@@ -281,35 +277,39 @@ export class LectureUpdateUnitsComponent implements OnInit {
         // Scroll to the edit form after a brief delay to allow the form to render
         setTimeout(() => this.scrollToEditForm(), 100);
 
+        const textUnit = this.currentlyProcessedTextUnit();
+        const onlineUnit = this.currentlyProcessedOnlineUnit();
+        const attachmentVideoUnit = this.currentlyProcessedAttachmentVideoUnit();
+
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
-                this.textUnitFormData = {
-                    name: this.currentlyProcessedTextUnit.name,
-                    releaseDate: this.currentlyProcessedTextUnit.releaseDate,
-                    content: this.currentlyProcessedTextUnit.content,
-                };
+                this.textUnitFormData.set({
+                    name: textUnit?.name,
+                    releaseDate: textUnit?.releaseDate,
+                    content: textUnit?.content,
+                });
                 break;
             case LectureUnitType.ONLINE:
-                this.onlineUnitFormData = {
-                    name: this.currentlyProcessedOnlineUnit.name,
-                    description: this.currentlyProcessedOnlineUnit.description,
-                    releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
-                    source: this.currentlyProcessedOnlineUnit.source,
-                };
+                this.onlineUnitFormData.set({
+                    name: onlineUnit?.name,
+                    description: onlineUnit?.description,
+                    releaseDate: onlineUnit?.releaseDate,
+                    source: onlineUnit?.source,
+                });
                 break;
             case LectureUnitType.ATTACHMENT_VIDEO:
-                this.attachmentVideoUnitFormData = {
+                this.attachmentVideoUnitFormData.set({
                     formProperties: {
-                        name: this.currentlyProcessedAttachmentVideoUnit.name,
-                        description: this.currentlyProcessedAttachmentVideoUnit.description,
-                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
-                        version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
-                        videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
+                        name: attachmentVideoUnit?.name,
+                        description: attachmentVideoUnit?.description,
+                        releaseDate: attachmentVideoUnit?.releaseDate,
+                        version: attachmentVideoUnit?.attachment?.version,
+                        videoSource: attachmentVideoUnit?.videoSource,
                     },
                     fileProperties: {
-                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
+                        fileName: attachmentVideoUnit?.attachment?.link,
                     },
-                };
+                });
                 break;
         }
     }
@@ -320,7 +320,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * Opens the edit form for the last created unit
      */
     onPdfFilesDropped(files: File[]): void {
-        if (files.length === 0 || !this.lecture.id) {
+        if (files.length === 0 || !this.lecture().id) {
             return;
         }
 
@@ -357,6 +357,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * Creates a single attachment unit from a file
      */
     private createAttachmentUnitFromFile(file: File) {
-        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lecture.id!, file);
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lecture().id!, file);
     }
 }

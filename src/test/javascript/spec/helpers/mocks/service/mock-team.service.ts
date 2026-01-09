@@ -140,7 +140,7 @@ export class MockTeamService implements ITeamService {
     }
 
     delete(exercise: Exercise, teamId: number) {
-        return MockTeamService.response({});
+        return of(new HttpResponse<void>());
     }
 
     existsByShortName(course: Course, shortName: string) {

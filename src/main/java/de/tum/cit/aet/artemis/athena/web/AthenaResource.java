@@ -47,8 +47,9 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -77,9 +78,9 @@ public class AthenaResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -94,15 +95,15 @@ public class AthenaResource {
      */
     public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
+            Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService,
             AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService, @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingRepositoryApi = modelingRepositoryApi;
+        this.modelingSubmissionApi = modelingSubmissionApi;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaModuleService = athenaModuleService;
@@ -198,7 +199,10 @@ public class AthenaResource {
     @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
+        var exerciseApi = modelingRepositoryApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingRepositoryApi.class));
+        var submissionApi = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));
+
+        return getFeedbackSuggestions(exerciseId, submissionId, exerciseApi::findByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
     }
 

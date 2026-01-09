@@ -63,8 +63,20 @@ import { ProblemStatementComponent } from 'app/core/course/overview/exercise-det
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { Component, input } from '@angular/core';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { ScienceService } from 'app/shared/science/science.service';
+
+// Simple mock to avoid ng-mocks issues with signal-based viewChild
+@Component({
+    selector: 'jhi-exercise-chatbot-button',
+    template: '',
+    standalone: true,
+})
+class MockIrisExerciseChatbotButtonComponent {
+    readonly mode = input<ChatServiceMode>();
+}
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -164,7 +176,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ModelingEditorComponent),
                 MockComponent(ExerciseInfoComponent),
                 MockComponent(ExerciseHeadersInformationComponent),
-                MockComponent(IrisExerciseChatbotButtonComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -189,6 +200,10 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(IrisSettingsService),
             ],
         })
+            .overrideComponent(CourseExerciseDetailsComponent, {
+                remove: { imports: [IrisExerciseChatbotButtonComponent] },
+                add: { imports: [MockIrisExerciseChatbotButtonComponent] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);

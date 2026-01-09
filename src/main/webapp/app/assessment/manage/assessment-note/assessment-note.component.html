@@ -1,2 +1,2 @@
 <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.assessmentNote">Assessment Notes</h4>
-<textarea class="form-control" (input)="onAssessmentNoteInput($event)" [textContent]="assessmentNote?.note ?? ''" name="assessment_note" id="assessment_note"></textarea>
+<textarea class="form-control" (input)="onAssessmentNoteInput($event)" [textContent]="assessmentNote()?.note ?? ''" name="assessment_note" id="assessment_note"></textarea>

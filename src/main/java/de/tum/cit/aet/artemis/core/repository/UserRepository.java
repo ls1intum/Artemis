@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -1431,4 +1432,48 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE ug.user_groups = :groupName
             """, nativeQuery = true)
     int removeGroupFromAllUsers(@Param("groupName") String groupName);
+
+    /**
+     * Get the IDs of users who have submitted at least one submission since the given date.
+     * Excludes users with 'test' in their login (case-insensitive).
+     * <p>
+     * This is used as the first step in the optimized active students count:
+     * 1. Get active user IDs (this query)
+     * 2. Count users by group, filtering to only active user IDs
+     *
+     * @param activeSince the date after which a submission counts as active
+     * @return a set of user IDs who have submitted since activeSince
+     */
+    @Query("""
+            SELECT DISTINCT p.student.id
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN p.student u
+            WHERE s.submissionDate >= :activeSince
+                AND LOWER(u.login) NOT LIKE '%test%'
+            """)
+    Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
+
+    /**
+     * Count users per student group name, filtering to only the specified user IDs.
+     * <p>
+     * This is used as the second step in the optimized active students count,
+     * after getting active user IDs via {@link #findActiveUserIdsSince}.
+     *
+     * @param studentGroupNames the set of student group names to check
+     * @param userIds           the set of user IDs to count (typically active users)
+     * @return a list of StudentGroupCountDTO with group name and count of users
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
+                g,
+                COUNT(DISTINCT user.id)
+            )
+            FROM User user
+                JOIN user.groups g
+            WHERE g IN :studentGroupNames
+                AND user.id IN :userIds
+            GROUP BY g
+            """)
+    List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
 }

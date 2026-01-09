@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerS
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_NORMAL;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -35,8 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -47,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -283,6 +287,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @Nested
     class BuildJobConfigurationTest {
 
+        @Autowired
+        private ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
+
         @BeforeEach
         void setup() {
             queuedJobs.clear();
@@ -399,8 +406,66 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
 
             assertThat(buildJobQueueItem).isNotNull();
-            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().isNetworkDisabled()).isTrue();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
+            // Create build config.
+            String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", networkName);
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setDockerFlags(dockerFlags);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            return buildConfig;
+        }
+
+        private void assertNetworkName(ProgrammingExerciseStudentParticipation studentParticipation, String networkName) {
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo(networkName);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerDefaultNetworkWorks() {
+            var buildConfig = createBuildConfig("");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false); // Does not throw.
+
+            assertNetworkName(studentParticipation, null);
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            assertThat(runConfig).isNotNull();
+            assertThat(runConfig.network()).isEqualTo(null);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerNoneNetworkWorks() {
+            var buildConfig = createBuildConfig("none");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+            // Does not throw.
+
+            assertNetworkName(studentParticipation, "none");
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            assertThat(runConfig).isNotNull();
+            assertThat(runConfig.network()).isEqualTo("none");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerInvalidNetworkThrows() {
+            var _ = createBuildConfig("invalid");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Invalid network: invalid");
         }
     }
 }
