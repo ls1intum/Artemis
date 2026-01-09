@@ -7,24 +7,23 @@
  */
 
 /**
- * Opens a details element with the given ID by setting all necessary attributes
- * to ensure it displays correctly.
+ * Opens a details element with the given ID by triggering a click on the summary.
+ * This ensures React's internal state is properly updated.
  */
 export function openDetailsById(elementId) {
     try {
         const element = document.getElementById(elementId);
         if (element && element.tagName === 'DETAILS') {
-            element.setAttribute('open', '');
-            element.setAttribute('data-collapsed', 'false');
-            element.classList.add('open');
-            element.open = true;
+            // Check if the element is already open by checking data-collapsed attribute
+            const isCollapsed = element.getAttribute('data-collapsed') !== 'false';
 
-            // Find the child div and change its display style
-            const childDiv = element.querySelector(':scope > div');
-            if (childDiv) {
-                childDiv.style.display = 'block';
-                childDiv.style.height = 'auto';
-                childDiv.style.overflow = 'visible';
+            if (isCollapsed) {
+                // Find the summary element and click it to trigger React's state update
+                const summary = element.querySelector('summary');
+                if (summary) {
+                    summary.click();
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         }
     } catch (error) {
