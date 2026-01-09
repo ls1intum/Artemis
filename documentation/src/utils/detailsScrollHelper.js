@@ -82,7 +82,7 @@ export function handleLinkClick(event) {
             const elementId = decodeURIComponent(hash.substring(1));
             openDetailsById(elementId);
         }
-    } catch (error) {
+    } catch {
         // Fallback for invalid URLs
         const hashIndex = href.indexOf('#');
         if (hashIndex !== -1) {
