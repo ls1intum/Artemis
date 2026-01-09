@@ -98,8 +98,10 @@ export class IrisExerciseChatbotButtonComponent {
             const rawId = mode === ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
             if (rawId) {
                 const id = parseInt(rawId, 10);
-                // Use untracked to avoid re-running this effect when chatService state changes
-                untracked(() => this.chatService.switchTo(mode, id));
+                if (!Number.isNaN(id)) {
+                    // Use untracked to avoid re-running this effect when chatService state changes
+                    untracked(() => this.chatService.switchTo(mode, id));
+                }
             }
         });
 
