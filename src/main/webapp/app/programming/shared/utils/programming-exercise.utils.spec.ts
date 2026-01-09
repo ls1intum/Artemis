@@ -1,7 +1,7 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import {
     createBuildPlanUrl,
-    createEntitySummary,
+    createProgrammingExerciseEntitySummary,
     hasDueDatePassed,
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
@@ -53,7 +53,7 @@ describe('ProgrammingExerciseUtils', () => {
             'artemisApp.programmingExercise.delete.summary.numberOfAnswerPosts': 2,
         };
 
-        expect(createEntitySummary(summaryDTO)).toEqual(expectedSummary);
+        expect(createProgrammingExerciseEntitySummary(summaryDTO)).toEqual(expectedSummary);
     });
 
     describe('isProgrammingExerciseStudentParticipation', () => {

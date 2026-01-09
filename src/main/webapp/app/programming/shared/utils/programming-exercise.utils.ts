@@ -7,9 +7,6 @@ import { isPracticeMode } from 'app/exercise/shared/entities/participation/stude
 import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercise/result/result.utils';
 import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { HttpResponse } from '@angular/common/http';
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
@@ -100,20 +97,11 @@ export const hasDueDatePassed = (exercise: ProgrammingExercise) => {
     return referenceDate.isBefore(dayjs());
 };
 
-export const createEntitySummary = (summary: ProgrammingExerciseDeletionSummaryDTO): EntitySummary => {
+export const createProgrammingExerciseEntitySummary = (summary: ProgrammingExerciseDeletionSummaryDTO): EntitySummary => {
     return {
         'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
         'artemisApp.programmingExercise.delete.summary.numberOfBuilds': summary.numberOfBuilds,
         'artemisApp.programmingExercise.delete.summary.numberOfCommunicationPosts': summary.numberOfCommunicationPosts,
         'artemisApp.programmingExercise.delete.summary.numberOfAnswerPosts': summary.numberOfAnswerPosts,
     };
-};
-
-export const formatProgrammingExerciseDeletionSummary = (deletionSummaryObservable: Observable<HttpResponse<ProgrammingExerciseDeletionSummaryDTO>>): Observable<EntitySummary> => {
-    return deletionSummaryObservable.pipe(
-        map((response) => {
-            const summary = response.body;
-            return summary ? createEntitySummary(summary) : {};
-        }),
-    );
 };

@@ -41,7 +41,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
-import { createBuildPlanUrl, formatProgrammingExerciseDeletionSummary } from 'app/programming/shared/utils/programming-exercise.utils';
+import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
@@ -768,7 +768,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return formatProgrammingExerciseDeletionSummary(this.programmingExerciseService.getDeletionSummary(this.programmingExercise.id!));
+        return this.programmingExerciseService.getDeletionSummary(this.programmingExercise.id!);
     }
 
     /**
