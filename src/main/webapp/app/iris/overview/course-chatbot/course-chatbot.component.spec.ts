@@ -5,7 +5,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { MockInstance } from 'vitest';
 
 // Simple mock to avoid ng-mocks issues with signal-based viewChild
 @Component({
@@ -24,13 +23,15 @@ describe('CourseChatbotComponent', () => {
 
     let component: CourseChatbotComponent;
     let fixture: ComponentFixture<CourseChatbotComponent>;
-    let chatService: { setCourseId: MockInstance; switchTo: MockInstance };
+    let chatService: ReturnType<typeof createChatServiceMock>;
+
+    const createChatServiceMock = () => ({
+        setCourseId: vi.fn<(courseId: number | undefined) => void>(),
+        switchTo: vi.fn<(mode: ChatServiceMode, courseId: number) => void>(),
+    });
 
     beforeEach(async () => {
-        const mockChatService = {
-            setCourseId: vi.fn(),
-            switchTo: vi.fn(),
-        };
+        const mockChatService = createChatServiceMock();
 
         await TestBed.configureTestingModule({
             imports: [CourseChatbotComponent],
@@ -44,7 +45,7 @@ describe('CourseChatbotComponent', () => {
 
         fixture = TestBed.createComponent(CourseChatbotComponent);
         component = fixture.componentInstance;
-        chatService = TestBed.inject(IrisChatService) as typeof mockChatService;
+        chatService = mockChatService;
         fixture.detectChanges();
     });
 
