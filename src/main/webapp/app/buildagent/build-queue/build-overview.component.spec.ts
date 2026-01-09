@@ -353,7 +353,7 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should initialize with course data', () => {
-        // Course view: courseId present
+        // Mock ActivatedRoute to return a specific course ID
         routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         // Mock BuildQueueService to return mock data
@@ -372,7 +372,7 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
 
-        // Expectations: Admin endpoints are NOT called in course view
+        // Expectations: The service methods for general build jobs should not be called
         expect(mockBuildQueueService.getQueuedBuildJobs).not.toHaveBeenCalled();
         expect(mockBuildQueueService.getRunningBuildJobs).not.toHaveBeenCalled();
         expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
@@ -598,7 +598,7 @@ describe('BuildQueueComponent', () => {
     describe('BuildOverviewComponent Download Logs', () => {
         let alertService: AlertService;
         let originalClick: typeof HTMLAnchorElement.prototype.click;
-        let originalURL: any;
+        let originalURL: typeof window.URL;
 
         beforeEach(() => {
             alertService = TestBed.inject(AlertService);
@@ -606,7 +606,7 @@ describe('BuildQueueComponent', () => {
             originalClick = HTMLAnchorElement.prototype.click;
             HTMLAnchorElement.prototype.click = vi.fn();
 
-            originalURL = (window as any).URL;
+            originalURL = window.URL;
         });
 
         afterEach(() => {
