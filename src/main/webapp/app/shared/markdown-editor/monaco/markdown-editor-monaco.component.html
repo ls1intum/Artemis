@@ -19,6 +19,7 @@
                             [shrinkToFit]="false"
                             [stickyScroll]="false"
                             [readOnly]="readOnly()"
+                            [textChangedEmitDelay]="200"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (drop)="onFileDrop($event)"
