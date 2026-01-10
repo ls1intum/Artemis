@@ -204,7 +204,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
 
-    it('should NOT update markdown if the problemStatement is changed', () => {
+    it('should NOT update markdown if the problemStatement is changed', fakeAsync(() => {
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -227,11 +227,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
             firstChange: false,
         });
+        // Wait for debounce (150ms) to complete
+        tick(150);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should NOT update the markdown if there is no participation and the exercise has changed', () => {
+    it('should NOT update the markdown if there is no participation and the exercise has changed', fakeAsync(() => {
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -249,10 +251,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
         fixture.changeDetectorRef.detectChanges();
+        // Wait for debounce (150ms) to complete
+        tick(150);
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
-    });
+    }));
 
     it('should still render the instructions if fetching the latest result fails', () => {
         const participation: Participation = { id: 2 };
@@ -469,7 +473,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        tick();
+        // Flush all pending timers (setTimeout in renderMarkdown)
+        flush();
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
