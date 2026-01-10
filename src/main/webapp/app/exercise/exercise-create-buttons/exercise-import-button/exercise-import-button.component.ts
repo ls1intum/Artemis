@@ -20,6 +20,7 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
     protected readonly faFileImport = faFileImport;
 
     openImportModal() {
+        this.beforeNavigate.emit();
         const exerciseType = this.exerciseType();
         const dialogData: ExerciseImportDialogData = { exerciseType };
 

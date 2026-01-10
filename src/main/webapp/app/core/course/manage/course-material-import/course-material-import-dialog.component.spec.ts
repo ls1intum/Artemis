@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseSummaryDTO } from 'app/core/course/shared/entities/course-summary.model';
 import { CourseMaterialImportDialogComponent } from './course-material-import-dialog.component';
@@ -21,6 +23,8 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('CourseMaterialImportDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseMaterialImportDialogComponent;
     let fixture: ComponentFixture<CourseMaterialImportDialogComponent>;
     let importService: CourseMaterialImportService;
@@ -113,22 +117,26 @@ describe('CourseMaterialImportDialogComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
     describe('open and close', () => {
         it('should set show to true when open is called', () => {
-            expect(component.show()).toBeFalse();
+            expect(component.show()).toBe(false);
             component.open();
-            expect(component.show()).toBeTrue();
+            expect(component.show()).toBe(true);
         });
 
         it('should set show to false when close is called', () => {
             component.open();
-            expect(component.show()).toBeTrue();
+            expect(component.show()).toBe(true);
             component.close();
-            expect(component.show()).toBeFalse();
+            expect(component.show()).toBe(false);
         });
 
         it('should reset state when close is called', () => {
@@ -146,7 +154,7 @@ describe('CourseMaterialImportDialogComponent', () => {
 
     describe('course loading', () => {
         it('should load courses when dialog opens', async () => {
-            jest.spyOn(courseSearchService, 'search').mockReturnValue(
+            vi.spyOn(courseSearchService, 'search').mockReturnValue(
                 of({
                     resultsOnPage: mockCourses,
                     numberOfPages: 1,
@@ -163,7 +171,7 @@ describe('CourseMaterialImportDialogComponent', () => {
 
         it('should filter out target course from results', async () => {
             const coursesWithTarget = [...mockCourses, { id: 999, title: 'Target Course', shortName: 'TC', semester: 'WS2024' }];
-            jest.spyOn(courseSearchService, 'search').mockReturnValue(
+            vi.spyOn(courseSearchService, 'search').mockReturnValue(
                 of({
                     resultsOnPage: coursesWithTarget,
                     numberOfPages: 1,
@@ -179,8 +187,8 @@ describe('CourseMaterialImportDialogComponent', () => {
 
         it('should handle error when loading courses', async () => {
             // Use status 403 since status 500 intentionally doesn't show alerts
-            jest.spyOn(courseSearchService, 'search').mockReturnValue(throwError(() => ({ status: 403 })));
-            const alertSpy = jest.spyOn(alertService, 'error');
+            vi.spyOn(courseSearchService, 'search').mockReturnValue(throwError(() => ({ status: 403 })));
+            const alertSpy = vi.spyOn(alertService, 'error');
 
             component.open();
             await component.loadCourses();
@@ -191,7 +199,7 @@ describe('CourseMaterialImportDialogComponent', () => {
 
     describe('course selection', () => {
         beforeEach(() => {
-            jest.spyOn(importService, 'getImportSummary').mockReturnValue(of(mockSummary));
+            vi.spyOn(importService, 'getImportSummary').mockReturnValue(of(mockSummary));
         });
 
         it('should load summary when course is selected', async () => {
@@ -217,41 +225,41 @@ describe('CourseMaterialImportDialogComponent', () => {
 
     describe('computed properties', () => {
         beforeEach(async () => {
-            jest.spyOn(importService, 'getImportSummary').mockReturnValue(of(mockSummary));
+            vi.spyOn(importService, 'getImportSummary').mockReturnValue(of(mockSummary));
             await component.selectCourse(mockCourses[0]);
         });
 
         it('should correctly compute hasExercises', () => {
-            expect(component.hasExercises()).toBeTrue();
+            expect(component.hasExercises()).toBe(true);
         });
 
         it('should correctly compute hasLectures', () => {
-            expect(component.hasLectures()).toBeTrue();
+            expect(component.hasLectures()).toBe(true);
         });
 
         it('should correctly compute hasExams', () => {
-            expect(component.hasExams()).toBeTrue();
+            expect(component.hasExams()).toBe(true);
         });
 
         it('should correctly compute hasCompetencies', () => {
-            expect(component.hasCompetencies()).toBeTrue();
+            expect(component.hasCompetencies()).toBe(true);
         });
 
         it('should correctly compute hasTutorialGroups', () => {
-            expect(component.hasTutorialGroups()).toBeTrue();
+            expect(component.hasTutorialGroups()).toBe(true);
         });
 
         it('should correctly compute hasFaqs', () => {
-            expect(component.hasFaqs()).toBeTrue();
+            expect(component.hasFaqs()).toBe(true);
         });
 
         it('should return false for canImport when no options selected', () => {
-            expect(component.canImport()).toBeFalse();
+            expect(component.canImport()).toBe(false);
         });
 
         it('should return true for canImport when at least one option is selected', () => {
             component.importExercises.set(true);
-            expect(component.canImport()).toBeTrue();
+            expect(component.canImport()).toBe(true);
         });
     });
 
@@ -267,34 +275,34 @@ describe('CourseMaterialImportDialogComponent', () => {
         };
 
         beforeEach(async () => {
-            jest.spyOn(importService, 'getImportSummary').mockReturnValue(of(emptySummary));
+            vi.spyOn(importService, 'getImportSummary').mockReturnValue(of(emptySummary));
             await component.selectCourse(mockCourses[0]);
         });
 
         it('should return false for all has* computeds when source is empty', () => {
-            expect(component.hasExercises()).toBeFalse();
-            expect(component.hasLectures()).toBeFalse();
-            expect(component.hasExams()).toBeFalse();
-            expect(component.hasCompetencies()).toBeFalse();
-            expect(component.hasTutorialGroups()).toBeFalse();
-            expect(component.hasFaqs()).toBeFalse();
+            expect(component.hasExercises()).toBe(false);
+            expect(component.hasLectures()).toBe(false);
+            expect(component.hasExams()).toBe(false);
+            expect(component.hasCompetencies()).toBe(false);
+            expect(component.hasTutorialGroups()).toBe(false);
+            expect(component.hasFaqs()).toBe(false);
         });
 
         it('should return false for canImport even when options are selected if source is empty', () => {
             component.importExercises.set(true);
             component.importLectures.set(true);
-            expect(component.canImport()).toBeFalse();
+            expect(component.canImport()).toBe(false);
         });
     });
 
     describe('execute import', () => {
         beforeEach(async () => {
-            jest.spyOn(importService, 'getImportSummary').mockReturnValue(of(mockSummary));
+            vi.spyOn(importService, 'getImportSummary').mockReturnValue(of(mockSummary));
             await component.selectCourse(mockCourses[0]);
         });
 
         it('should call importMaterial service and close dialog on success', async () => {
-            jest.spyOn(importService, 'importMaterial').mockReturnValue(
+            vi.spyOn(importService, 'importMaterial').mockReturnValue(
                 of({
                     exercisesImported: 15,
                     lecturesImported: 0,
@@ -305,9 +313,9 @@ describe('CourseMaterialImportDialogComponent', () => {
                     errors: [],
                 }),
             );
-            const successSpy = jest.spyOn(alertService, 'success');
-            const closeSpy = jest.spyOn(component, 'close');
-            const emitSpy = jest.spyOn(component.importStarted, 'emit');
+            const successSpy = vi.spyOn(alertService, 'success');
+            const closeSpy = vi.spyOn(component, 'close');
+            const emitSpy = vi.spyOn(component.importStarted, 'emit');
 
             component.importExercises.set(true);
             await component.executeImport();
@@ -327,7 +335,7 @@ describe('CourseMaterialImportDialogComponent', () => {
         });
 
         it('should not execute import when canImport is false', async () => {
-            jest.spyOn(importService, 'importMaterial');
+            vi.spyOn(importService, 'importMaterial');
 
             // No options selected
             await component.executeImport();
@@ -336,7 +344,7 @@ describe('CourseMaterialImportDialogComponent', () => {
         });
 
         it('should not execute import when no course is selected', async () => {
-            jest.spyOn(importService, 'importMaterial');
+            vi.spyOn(importService, 'importMaterial');
 
             component.selectedCourse.set(undefined);
             component.importExercises.set(true);
@@ -348,7 +356,7 @@ describe('CourseMaterialImportDialogComponent', () => {
 
     describe('search and pagination', () => {
         beforeEach(() => {
-            jest.spyOn(courseSearchService, 'search').mockReturnValue(
+            vi.spyOn(courseSearchService, 'search').mockReturnValue(
                 of({
                     resultsOnPage: mockCourses,
                     numberOfPages: 3,
