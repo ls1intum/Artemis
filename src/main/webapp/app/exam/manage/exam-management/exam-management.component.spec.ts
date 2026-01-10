@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,11 +23,10 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { signal } from '@angular/core';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -41,7 +40,7 @@ describe('Exam Management Component', () => {
     let courseManagementService: CourseManagementService;
     let sortService: SortService;
     let eventManager: EventManager;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let router: Router;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
@@ -62,7 +61,7 @@ describe('Exam Management Component', () => {
                 SessionStorageService,
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 EventManager,
@@ -77,7 +76,7 @@ describe('Exam Management Component', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
         eventManager = TestBed.inject(EventManager);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         router = TestBed.inject(Router);
     });
 
@@ -201,23 +200,21 @@ describe('Exam Management Component', () => {
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 
-    it('should open the import modal for exercise groups', fakeAsync(() => {
-        const mockReturnValue = {
-            componentInstance: {
-                subsequentExerciseGroupSelection: signal<boolean>(false),
-                targetCourseId: signal<number | undefined>(undefined),
-                targetExamId: signal<number | undefined>(undefined),
-            },
-            result: Promise.resolve(exam),
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+    it('should open the import dialog for exams', fakeAsync(() => {
+        const onCloseSubject = new Subject<Exam | undefined>();
+        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
+        jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         jest.spyOn(router, 'navigate');
 
         comp.course = { id: 1 } as Course;
         comp.openImportModal();
+
+        // Simulate dialog closing with result
+        onCloseSubject.next(exam);
+        onCloseSubject.complete();
         tick();
 
-        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(dialogService.open).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledOnce();
     }));
 });

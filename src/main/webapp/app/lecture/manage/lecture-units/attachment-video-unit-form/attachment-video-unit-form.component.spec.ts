@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -5,7 +7,7 @@ import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'a
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -16,8 +18,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('AttachmentVideoUnitFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
     let attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent;
 
@@ -26,17 +33,22 @@ describe('AttachmentVideoUnitFormComponent', () => {
             imports: [
                 ReactiveFormsModule,
                 FormsModule,
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
                 FontAwesomeTestingModule,
                 AttachmentVideoUnitFormComponent,
+                FormDateTimePickerComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(CompetencySelectionComponent),
+                MockDirective(NgbTooltip),
             ],
-            declarations: [FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent), MockDirective(NgbTooltip)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
 
@@ -45,7 +57,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -109,15 +121,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
 
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalledTimes(1);
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -155,9 +167,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.file = fakeFile;
         attachmentVideoUnitFormComponent.fileName.set('lorem Ipsum');
 
-        expect(attachmentVideoUnitFormComponent.form.invalid).toBeTrue();
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        expect(attachmentVideoUnitFormComponent.form.invalid).toBe(true);
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -170,11 +182,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
         // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
-        const onFileChangeStub = jest.spyOn(attachmentVideoUnitFormComponent, 'onFileChange');
+        const onFileChangeStub = vi.spyOn(attachmentVideoUnitFormComponent, 'onFileChange');
         attachmentVideoUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledOnce();
+        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
     it('should disable submit button for too big file', () => {
@@ -192,8 +204,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
-        expect(submitButton.disabled).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
+        expect(submitButton.disabled).toBe(true);
     });
 
     it('should not submit a form when file and videoSource is missing', () => {
@@ -213,10 +225,10 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue('');
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -247,15 +259,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalledTimes(1);
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -302,15 +314,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalledTimes(1);
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -332,13 +344,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
         submitFormEventSpy.mockRestore();
     });
 
-    it('should correctly transform YouTube URL into embeddable format', () => {
+    it('should correctly transform YouTube URL into embeddable format', async () => {
         const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
         const validYouTubeUrlInEmbeddableFormat = 'https://www.youtube.com/embed/8iU8LPEa4o0';
 
-        jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
-        jest.spyOn(attachmentVideoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
-        jest.spyOn(attachmentVideoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
+        vi.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
+        vi.spyOn(attachmentVideoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        vi.spyOn(attachmentVideoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
@@ -347,12 +359,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
-        return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
-            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
-        });
+        await attachmentVideoUnitFormComponentFixture.whenStable();
+        expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
     });
 
-    it('should correctly transform TUM-Live URL without video only into embeddable format', () => {
+    it('should correctly transform TUM-Live URL without video only into embeddable format', async () => {
         const tumLiveUrl = 'https://live.rbg.tum.de/w/test/26';
         const expectedUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1';
 
@@ -363,9 +374,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
-        return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
-            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
-        });
+        await attachmentVideoUnitFormComponentFixture.whenStable();
+        expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
     });
 
     it('videoSourceUrlValidator: rejects TUM-Live without video_only=1, accepts others', () => {
@@ -414,12 +424,12 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const original = 'https://live.rbg.tum.de/w/test/26';
         const embedded = 'https://live.rbg.tum.de/w/test/26?video_only=1';
 
-        const extractSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
+        const extractSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(original);
 
-        const stopPropagation = jest.fn();
+        const stopPropagation = vi.fn();
         attachmentVideoUnitFormComponent.setEmbeddedVideoUrl({ stopPropagation } as any);
 
         expect(stopPropagation).toHaveBeenCalled();
@@ -445,7 +455,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
-        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
     });
 
     it('isTransformable reflects urlHelper validity', () => {
@@ -453,14 +463,14 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Empty -> false
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('');
-        expect(attachmentVideoUnitFormComponent.isTransformable).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBe(false);
 
         // Invalid -> false
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('not-a-url');
-        expect(attachmentVideoUnitFormComponent.isTransformable).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBe(false);
 
         // Valid -> true
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-        expect(attachmentVideoUnitFormComponent.isTransformable).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBe(true);
     });
 });
