@@ -42,8 +42,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    delete(modelingExerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
+    delete(modelingExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
 
     /**

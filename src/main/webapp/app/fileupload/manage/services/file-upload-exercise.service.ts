@@ -75,8 +75,8 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * Sends request to delete file upload exercise by its id
      * @param exerciseId id of the exercise
      */
-    delete(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
+    delete(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
     /**

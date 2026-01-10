@@ -14,7 +14,7 @@ export const routes: Routes = [
     },
     {
         path: 'grading-key',
-        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.gradingSystem.title',
