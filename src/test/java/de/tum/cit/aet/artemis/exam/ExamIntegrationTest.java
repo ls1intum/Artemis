@@ -1902,6 +1902,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
         quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
+        quiz.addQuestions(QuizExerciseFactory.createDragAndDropQuestion());
         quizGroup.addExercise(quiz);
         // Use saveAndFlush to ensure quiz questions are persisted before import
         quizExerciseRepository.saveAndFlush(quiz);
@@ -1919,7 +1920,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
         // Quiz questions should get imported into the exam
-        assertThat(exercise.getQuizQuestions()).hasSize(3);
+        assertThat(exercise.getQuizQuestions()).hasSize(4);
     }
 
     @Test

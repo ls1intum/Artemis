@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -44,7 +43,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizExercise actions.
  * CRUD operations have been moved to specialized resource files:
  * - Creation/Update: QuizExerciseCreationUpdateResource
- * - Deletion/Import: QuizExerciseImportDeletionResource
+ * - Deletion: QuizExerciseDeletionResource
  * - Retrieval: QuizExerciseRetrievalResource
  * - Evaluation: QuizExerciseEvaluationResource
  * - Batches: QuizExerciseBatchResource
@@ -72,8 +71,6 @@ public class QuizExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final QuizBatchService quizBatchService;
 
     private final QuizExerciseRepository quizExerciseRepository;
@@ -85,16 +82,14 @@ public class QuizExerciseResource {
     private final ExerciseVersionService exerciseVersionService;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
-            UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
-            QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
+            UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService, QuizBatchService quizBatchService,
+            QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.authCheckService = authCheckService;
-        this.groupNotificationService = groupNotificationService;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionService = quizSubmissionService;

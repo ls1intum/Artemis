@@ -858,8 +858,14 @@ public class FileUtil {
      *
      * @param filePaths A list of all paths to the files that should be deleted
      */
-    public static void deleteFiles(List<Path> filePaths) {
+    public static void deleteFiles(@Nullable List<Path> filePaths) {
+        if (filePaths == null || filePaths.isEmpty()) {
+            return;
+        }
         for (Path filePath : filePaths) {
+            if (filePath == null) {
+                continue;
+            }
             try {
                 Files.delete(filePath);
             }
