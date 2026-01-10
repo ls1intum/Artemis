@@ -372,7 +372,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.mergeResultsAndSubmissionsForParticipations();
                     // Reload exercise details once a result is completed (WS payload does not contain mapped results)
                     const lastResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
-                    if (lastResult?.id && lastResult.id !== this.lastReloadedResultId) {
+                    if (lastResult?.id && lastResult.completionDate && lastResult.id !== this.lastReloadedResultId) {
                         this.lastReloadedResultId = lastResult.id;
                         this.reloadExercise$.next();
                     }
