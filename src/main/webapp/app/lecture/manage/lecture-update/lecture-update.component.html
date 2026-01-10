@@ -27,7 +27,7 @@
                     <div>
                         <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
                         <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
-                        <jhi-lecture-title-channel-name [lecture]="lecture()" />
+                        <jhi-lecture-title-channel-name [lecture]="lecture()" (lectureChange)="onLectureChange($event)" />
                         @if (lecture()) {
                             <div class="form-group" id="field_description">
                                 <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>

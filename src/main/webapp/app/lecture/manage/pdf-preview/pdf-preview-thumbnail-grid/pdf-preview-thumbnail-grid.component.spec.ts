@@ -1,3 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+// Mock pdfjs-dist to avoid DOMMatrix issues in jsdom
+vi.mock('pdfjs-dist', () => {
+    const mockPage = {
+        getViewport: vi.fn().mockReturnValue({ width: 100, height: 100 }),
+        render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
+    };
+    const mockDocument = {
+        numPages: 3,
+        getPage: vi.fn().mockResolvedValue(mockPage),
+    };
+    return {
+        getDocument: vi.fn().mockReturnValue({
+            promise: Promise.resolve(mockDocument),
+        }),
+        GlobalWorkerOptions: { workerSrc: '' },
+    };
+});
+
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -12,15 +33,17 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 
-jest.mock('pdfjs-dist/build/pdf.worker', () => {
+vi.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
 });
 
-jest.mock('app/shared/util/global.utils', () => ({
-    onError: jest.fn(),
+vi.mock('app/shared/util/global.utils', () => ({
+    onError: vi.fn(),
 }));
 
 describe('PdfPreviewThumbnailGridComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PdfPreviewThumbnailGridComponent;
     let fixture: ComponentFixture<PdfPreviewThumbnailGridComponent>;
     let alertServiceMock: any;
@@ -33,7 +56,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
     beforeEach(async () => {
         alertServiceMock = {
-            error: jest.fn(),
+            error: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -50,17 +73,17 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
         const mockPdfContainer = document.createElement('div');
         Object.defineProperty(component, 'pdfContainer', {
-            value: jest.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
+            value: vi.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
             writable: true,
         });
 
-        jest.spyOn(component, 'renderPages').mockResolvedValue();
+        vi.spyOn(component, 'renderPages').mockResolvedValue();
 
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should update hiddenPages when they change', () => {
@@ -77,7 +100,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     });
 
     it('should render pages when orderedPages changes', async () => {
-        const spyRenderPages = jest.spyOn(component, 'renderPages').mockResolvedValue();
+        const spyRenderPages = vi.spyOn(component, 'renderPages').mockResolvedValue();
 
         fixture.componentRef.setInput('orderedPages', mockOrderedPages);
 
@@ -98,7 +121,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should update selectedPages when updatedSelectedPages changes', () => {
         const updatedSelectedPages = new Set<OrderedPage>([mockOrderedPages[0], mockOrderedPages[2]]);
 
-        const spyUpdateCheckboxStates = jest.spyOn(component as any, 'updateCheckboxStates').mockImplementation(() => {});
+        const spyUpdateCheckboxStates = vi.spyOn(component as any, 'updateCheckboxStates').mockImplementation(() => {});
 
         fixture.componentRef.setInput('updatedSelectedPages', updatedSelectedPages);
 
@@ -140,13 +163,13 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         });
 
         Object.defineProperty(mockButton, 'closest', {
-            value: jest.fn().mockReturnValue(mockButton),
+            value: vi.fn().mockReturnValue(mockButton),
         });
 
         fixture.componentRef.setInput('orderedPages', mockOrderedPages);
         fixture.detectChanges();
 
-        const spyStopPropagation = jest.spyOn(mockEvent, 'stopPropagation');
+        const spyStopPropagation = vi.spyOn(mockEvent, 'stopPropagation');
 
         component.toggleVisibility('slide1', mockEvent);
         expect(component.activeButtonPage()).toEqual(mockOrderedPages[0]);
@@ -158,7 +181,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         fixture.componentRef.setInput('orderedPages', mockOrderedPages);
         fixture.detectChanges();
 
-        const spyEmit = jest.spyOn(component.selectedPagesOutput, 'emit');
+        const spyEmit = vi.spyOn(component.selectedPagesOutput, 'emit');
         component.selectedPages.set(new Set());
 
         const mockEventChecked = { target: { checked: true } } as unknown as Event;
@@ -183,7 +206,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         container.id = 'pdf-page-slide1';
         container.appendChild(mockCanvas);
 
-        const querySelectorSpy = jest.fn().mockReturnValue(mockCanvas);
+        const querySelectorSpy = vi.fn().mockReturnValue(mockCanvas);
         const mockNativeElement = { querySelector: querySelectorSpy };
 
         component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
@@ -197,7 +220,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     });
 
     it('should update hiddenPages with a single page and emit the change', () => {
-        const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+        const emitSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
 
         fixture.componentRef.setInput('hiddenPages', {});
         fixture.detectChanges();
@@ -230,8 +253,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         fixture.componentRef.setInput('hiddenPages', initialPages);
         fixture.detectChanges();
 
-        const hideButtonSpy = jest.spyOn(component, 'hideActionButton');
-        const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+        const hideButtonSpy = vi.spyOn(component, 'hideActionButton');
+        const emitSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
 
         let emittedValue = undefined;
         emitSpy.mockImplementation((value) => {
@@ -249,7 +272,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         const mockButton = document.createElement('button');
         mockButton.id = 'hide-show-button-slide1';
 
-        const querySelectorSpy = jest.fn().mockReturnValue(mockButton);
+        const querySelectorSpy = vi.fn().mockReturnValue(mockButton);
         const mockNativeElement = { querySelector: querySelectorSpy };
 
         component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
@@ -273,12 +296,12 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const slideId = 'slide1';
             const mockButton = document.createElement('button');
             const mockEvent = {
-                stopPropagation: jest.fn(),
+                stopPropagation: vi.fn(),
                 target: mockButton,
             } as unknown as Event;
 
             Object.defineProperty(mockButton, 'closest', {
-                value: jest.fn().mockReturnValue(mockButton),
+                value: vi.fn().mockReturnValue(mockButton),
             });
 
             component.toggleVisibility(slideId, mockEvent);
@@ -298,11 +321,11 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             mockButton.appendChild(mockSpan);
 
             Object.defineProperty(mockSpan, 'closest', {
-                value: jest.fn().mockReturnValue(mockButton),
+                value: vi.fn().mockReturnValue(mockButton),
             });
 
             const mockEvent = {
-                stopPropagation: jest.fn(),
+                stopPropagation: vi.fn(),
                 target: mockSpan,
             } as unknown as Event;
 
@@ -321,11 +344,11 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockDiv = document.createElement('div');
 
             Object.defineProperty(mockDiv, 'closest', {
-                value: jest.fn().mockReturnValue(undefined),
+                value: vi.fn().mockReturnValue(undefined),
             });
 
             const mockEvent = {
-                stopPropagation: jest.fn(),
+                stopPropagation: vi.fn(),
                 target: mockDiv,
             } as unknown as Event;
 
@@ -349,7 +372,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             } as unknown as Event;
 
             component.selectedPages.set(new Set());
-            jest.spyOn(component.selectedPagesOutput, 'emit');
+            vi.spyOn(component.selectedPagesOutput, 'emit');
 
             component.togglePageSelection(slideId, mockEvent);
 
@@ -365,7 +388,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             } as unknown as Event;
 
             component.selectedPages.set(new Set([mockOrderedPages[1]]));
-            jest.spyOn(component.selectedPagesOutput, 'emit');
+            vi.spyOn(component.selectedPagesOutput, 'emit');
 
             component.togglePageSelection(slideId, mockEvent);
 
@@ -380,7 +403,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             fixture.componentRef.setInput('hiddenPages', {});
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+            const emitSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
 
             const hiddenPage: HiddenPage = {
                 slideId: 'slide1',
@@ -401,7 +424,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         });
 
         it('should update hiddenPages with multiple pages and emit the change', () => {
-            const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+            const emitSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
 
             const initialHiddenPages: HiddenPageMap = {
                 slide5: { date: dayjs('2023-12-15'), exerciseId: 123 },
@@ -436,7 +459,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         });
 
         it('should overwrite existing page data if same slideId is received', () => {
-            const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+            const emitSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
 
             const initialHiddenPages: HiddenPageMap = {
                 slide1: { date: dayjs('2023-12-15'), exerciseId: 123 },
@@ -469,7 +492,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             fixture.componentRef.setInput('orderedPages', mockOrderedPages);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.pageOrderOutput, 'emit');
+            const emitSpy = vi.spyOn(component.pageOrderOutput, 'emit');
 
             const mockDropEvent = {
                 previousIndex: 0,
@@ -484,8 +507,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             component.onPageDrop(mockDropEvent);
 
             expect(emitSpy).toHaveBeenCalled();
-            expect(component.reordering()).toBeTrue();
-            expect(component.isDragging()).toBeFalse();
+            expect(component.reordering()).toBe(true);
+            expect(component.isDragging()).toBe(false);
 
             // Verify the order changed in the emitted array
             const emittedPages = emitSpy.mock.calls[0][0];
@@ -504,7 +527,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             fixture.componentRef.setInput('orderedPages', mockOrderedPages);
             fixture.detectChanges();
 
-            const emitSpy = jest.spyOn(component.pageOrderOutput, 'emit');
+            const emitSpy = vi.spyOn(component.pageOrderOutput, 'emit');
 
             const mockDropEvent = {
                 previousIndex: 1,
@@ -567,7 +590,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 { id: 'checkbox-slide3', checked: false },
             ] as unknown as NodeListOf<HTMLInputElement>;
 
-            const mockNativeElement = { querySelectorAll: jest.fn().mockReturnValue(mockCheckboxes) };
+            const mockNativeElement = { querySelectorAll: vi.fn().mockReturnValue(mockCheckboxes) };
             component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
 
             component.selectedPages.set(new Set([mockOrderedPages[0], mockOrderedPages[2]]));
@@ -584,7 +607,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     describe('scrollToBottom method', () => {
         it('should scroll the container to the bottom with smooth behavior', () => {
             const mockScrollHeight = 1000;
-            const mockScrollToSpy = jest.fn();
+            const mockScrollToSpy = vi.fn();
 
             const mockNativeElement = {
                 scrollHeight: mockScrollHeight,
@@ -606,19 +629,19 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     describe('renderPages method', () => {
         let mockCanvas: HTMLCanvasElement;
 
-        jest.mock('app/shared/util/global.utils', () => ({
-            onError: jest.fn(),
+        vi.mock('app/shared/util/global.utils', () => ({
+            onError: vi.fn(),
         }));
 
         beforeEach(() => {
-            jest.clearAllMocks();
+            vi.clearAllMocks();
 
             fixture = TestBed.createComponent(PdfPreviewThumbnailGridComponent);
             component = fixture.componentInstance;
 
             alertServiceMock = {
-                error: jest.fn(),
-                addAlert: jest.fn(),
+                error: vi.fn(),
+                addAlert: vi.fn(),
             };
 
             Object.defineProperty(component, 'alertService', {
@@ -635,7 +658,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             }
 
             Object.defineProperty(component, 'pdfContainer', {
-                value: jest.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
+                value: vi.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
                 writable: true,
             });
 
@@ -644,47 +667,47 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             mockCanvas = document.createElement('canvas');
 
             const mockContext = {
-                drawImage: jest.fn(),
-                fillText: jest.fn(),
-                fillRect: jest.fn(),
+                drawImage: vi.fn(),
+                fillText: vi.fn(),
+                fillRect: vi.fn(),
                 canvas: mockCanvas,
-                save: jest.fn(),
-                restore: jest.fn(),
-                scale: jest.fn(),
-                rotate: jest.fn(),
-                translate: jest.fn(),
-                transform: jest.fn(),
-                setTransform: jest.fn(),
-                resetTransform: jest.fn(),
-                createLinearGradient: jest.fn(),
-                createRadialGradient: jest.fn(),
-                createPattern: jest.fn(),
-                clearRect: jest.fn(),
-                beginPath: jest.fn(),
-                closePath: jest.fn(),
-                moveTo: jest.fn(),
-                lineTo: jest.fn(),
-                bezierCurveTo: jest.fn(),
-                quadraticCurveTo: jest.fn(),
-                arc: jest.fn(),
-                arcTo: jest.fn(),
-                ellipse: jest.fn(),
-                rect: jest.fn(),
-                stroke: jest.fn(),
-                fill: jest.fn(),
-                clip: jest.fn(),
-                isPointInPath: jest.fn(),
-                isPointInStroke: jest.fn(),
-                measureText: jest.fn(),
-                createImageData: jest.fn(),
-                getImageData: jest.fn(),
-                putImageData: jest.fn(),
-                setLineDash: jest.fn(),
-                getLineDash: jest.fn(),
-                strokeText: jest.fn(),
+                save: vi.fn(),
+                restore: vi.fn(),
+                scale: vi.fn(),
+                rotate: vi.fn(),
+                translate: vi.fn(),
+                transform: vi.fn(),
+                setTransform: vi.fn(),
+                resetTransform: vi.fn(),
+                createLinearGradient: vi.fn(),
+                createRadialGradient: vi.fn(),
+                createPattern: vi.fn(),
+                clearRect: vi.fn(),
+                beginPath: vi.fn(),
+                closePath: vi.fn(),
+                moveTo: vi.fn(),
+                lineTo: vi.fn(),
+                bezierCurveTo: vi.fn(),
+                quadraticCurveTo: vi.fn(),
+                arc: vi.fn(),
+                arcTo: vi.fn(),
+                ellipse: vi.fn(),
+                rect: vi.fn(),
+                stroke: vi.fn(),
+                fill: vi.fn(),
+                clip: vi.fn(),
+                isPointInPath: vi.fn(),
+                isPointInStroke: vi.fn(),
+                measureText: vi.fn(),
+                createImageData: vi.fn(),
+                getImageData: vi.fn(),
+                putImageData: vi.fn(),
+                setLineDash: vi.fn(),
+                getLineDash: vi.fn(),
+                strokeText: vi.fn(),
             } as unknown as CanvasRenderingContext2D;
 
-            jest.spyOn(mockCanvas, 'getContext').mockReturnValue(mockContext);
+            vi.spyOn(mockCanvas, 'getContext').mockReturnValue(mockContext);
 
             fixture.detectChanges();
         });
@@ -732,8 +755,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
                     pageProxy: {
-                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                        getViewport: vi.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
                     },
                 },
                 {
@@ -743,8 +766,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     sourcePdfId: 'source1',
                     sourceIndex: 1,
                     pageProxy: {
-                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                        getViewport: vi.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
                     },
                 },
             ];
@@ -773,8 +796,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 sourcePdfId: 'source1',
                 sourceIndex: 0,
                 pageProxy: {
-                    getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                    render: jest.fn().mockReturnValue({ promise: Promise.reject(mockError) }),
+                    getViewport: vi.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                    render: vi.fn().mockReturnValue({ promise: Promise.reject(mockError) }),
                 },
             };
 
@@ -803,8 +826,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
                     pageProxy: {
-                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                        getViewport: vi.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
                     },
                 },
             ];
@@ -844,11 +867,11 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 },
             } as unknown as NodeListOf<Element>;
 
-            const querySelectorAllSpy = jest.spyOn(component.pdfContainer().nativeElement, 'querySelectorAll');
+            const querySelectorAllSpy = vi.spyOn(component.pdfContainer().nativeElement, 'querySelectorAll');
             querySelectorAllSpy.mockReturnValue(mockNodeList);
 
-            const removeSpy1 = jest.spyOn(existingCanvas1, 'remove');
-            const removeSpy2 = jest.spyOn(existingCanvas2, 'remove');
+            const removeSpy1 = vi.spyOn(existingCanvas1, 'remove');
+            const removeSpy2 = vi.spyOn(existingCanvas2, 'remove');
 
             fixture.componentRef.setInput('orderedPages', mockPages);
             fixture.detectChanges();
@@ -873,8 +896,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                         sourcePdfId: 'source1',
                         sourceIndex: 0,
                         pageProxy: {
-                            getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                            render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                            getViewport: vi.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                            render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
                         },
                     },
                 ];
@@ -885,7 +908,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 try {
                     // silence console.error only in the non-appending case
                     if (!isAppending) {
-                        console.error = jest.fn();
+                        console.error = vi.fn();
                     }
 
                     // override renderPages to only test the scroll behavior
@@ -895,7 +918,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                         }
                     };
 
-                    const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
                     fixture.componentRef.setInput('isAppendingFile', isAppending);
                     fixture.componentRef.setInput('orderedPages', mockPages);
@@ -926,8 +949,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
                     pageProxy: {
-                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                        getViewport: vi.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
                     },
                 },
             ];
@@ -937,7 +960,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             fixture.componentRef.setInput('orderedPages', mockPages);
             fixture.detectChanges();
 
-            jest.spyOn(component.pdfContainer().nativeElement, 'querySelector').mockReturnValue(null);
+            vi.spyOn(component.pdfContainer().nativeElement, 'querySelector').mockReturnValue(null);
 
             await component.renderPages();
 

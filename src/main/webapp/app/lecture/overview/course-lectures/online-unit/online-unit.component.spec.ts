@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -10,12 +12,14 @@ import { MockScienceService } from 'test/helpers/mocks/service/mock-science-serv
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 describe('OnlineUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let scienceService: ScienceService;
 
     let component: OnlineUnitComponent;
     let fixture: ComponentFixture<OnlineUnitComponent>;
 
-    let windowSpy: jest.SpyInstance;
+    let windowSpy: ReturnType<typeof vi.spyOn>;
 
     const onlineUnit: OnlineUnit = {
         id: 1,
@@ -40,7 +44,7 @@ describe('OnlineUnitComponent', () => {
         }).compileComponents();
 
         scienceService = TestBed.inject(ScienceService);
-        windowSpy = jest.spyOn(window, 'open').mockImplementation(() => {
+        windowSpy = vi.spyOn(window, 'open').mockImplementation(() => {
             return null;
         });
 
@@ -52,7 +56,7 @@ describe('OnlineUnitComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -60,31 +64,31 @@ describe('OnlineUnitComponent', () => {
     });
 
     it('should handle isolated view', async () => {
-        const handleIsolatedViewSpy = jest.spyOn(component, 'handleIsolatedView');
+        const handleIsolatedViewSpy = vi.spyOn(component, 'handleIsolatedView');
 
         fixture.detectChanges();
 
         const viewIsolatedButton = fixture.debugElement.query(By.css('#view-isolated-button'));
         viewIsolatedButton.nativeElement.click();
 
-        expect(handleIsolatedViewSpy).toHaveBeenCalledOnce();
-        expect(windowSpy).toHaveBeenCalledOnce();
+        expect(handleIsolatedViewSpy).toHaveBeenCalledTimes(1);
+        expect(windowSpy).toHaveBeenCalledTimes(1);
         expect(windowSpy).toHaveBeenCalledWith(onlineUnit.source, '_blank');
     });
 
     it('should log event on isolated view', () => {
-        const logEventSpy = jest.spyOn(scienceService, 'logEvent');
+        const logEventSpy = vi.spyOn(scienceService, 'logEvent');
 
         component.handleIsolatedView();
 
-        expect(logEventSpy).toHaveBeenCalledOnce();
+        expect(logEventSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should call completion on isolated view', async () => {
-        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
+        const onCompletionEmitSpy = vi.spyOn(component.onCompletion, 'emit');
 
         component.handleIsolatedView();
 
-        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
+        expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 });
