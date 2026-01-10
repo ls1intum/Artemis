@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { UpperCasePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
@@ -38,7 +36,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FileService } from 'app/shared/service/file.service';
-import { firstValueFrom, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission',
@@ -61,7 +59,6 @@ import { firstValueFrom, map } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
-    private route = inject(ActivatedRoute);
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
     private alertService = inject(AlertService);
     private fileService = inject(FileService);
@@ -172,16 +169,14 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     // Icons
     farListAlt = faListAlt;
 
-    private routeParticipationId = toSignal(this.route.params.pipe(map((params) => Number(params['participationId']))));
-
     constructor() {
         effect((onCleanup) => {
             // Priority: Input values -> Route values
             if (this.inputValuesArePresent()) {
                 this.setupComponentWithInputValues();
             } else {
-                // Check direct input ID (signal) or route ID (signal)
-                const pId = this.participationId() ?? this.routeParticipationId();
+                // participationId will be automatically populated from route when using withComponentInputBinding()
+                const pId = this.participationId();
                 if (pId && !Number.isNaN(pId)) {
                     const sub = this.fileUploadSubmissionService.getDataForFileUploadEditor(pId).subscribe({
                         next: (submission: FileUploadSubmission) => {

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
@@ -93,7 +93,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
-    courseId: number;
+    courseId = input<number | undefined>(undefined);
 
     // Signals
     attachment = signal<Attachment | undefined>(undefined);
@@ -155,8 +155,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isPdfLoading.set(true);
-        this.courseId = Number(this.route?.parent?.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe((data) => {
+            const courseId = this.getCourseId();
+            if (!courseId) {
+                this.isPdfLoading.set(false);
+                return;
+            }
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
                 this.fetchPdfFile('attachment');
@@ -192,11 +196,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param slides Optional array of slides (only used for attachmentVideoUnit)
      */
     private fetchPdfFile(fileType: 'attachment' | 'attachmentVideoUnit', slides?: Slide[]): void {
+        const courseId = this.getCourseId();
+        if (!courseId) {
+            this.isPdfLoading.set(false);
+            return;
+        }
         let subscription: Subscription;
 
         if (fileType === 'attachment') {
             subscription = this.attachmentService
-                .getAttachmentFile(this.courseId, this.attachment()!.id!)
+                .getAttachmentFile(courseId, this.attachment()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -206,7 +215,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentSub = subscription;
         } else {
             subscription = this.attachmentVideoUnitService
-                .getAttachmentFile(this.courseId, this.attachmentVideoUnit()!.id!)
+                .getAttachmentFile(courseId, this.attachmentVideoUnit()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -1011,10 +1020,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Navigates to the appropriate course management page based on context.
      */
     navigateToCourseManagement(): void {
-        if (this.attachment()) {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-        } else {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+        const courseId = this.getCourseId();
+        if (!courseId) {
+            return;
         }
+        if (this.attachment()) {
+            this.router.navigate(['course-management', courseId, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+        } else {
+            this.router.navigate(['course-management', courseId, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+        }
+    }
+
+    private getCourseId(): number | undefined {
+        const courseId = this.courseId();
+        if (courseId === undefined || Number.isNaN(courseId)) {
+            return undefined;
+        }
+        return courseId;
     }
 }

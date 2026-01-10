@@ -1,6 +1,6 @@
 import { AlertService } from 'app/shared/service/alert.service';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +21,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, AdminTitleBarTitleDirective],
 })
 export class EditLtiConfigurationComponent implements OnInit {
-    private readonly route = inject(ActivatedRoute);
     private readonly ltiConfigurationService = inject(LtiConfigurationService);
     private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
@@ -29,6 +28,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     platform: LtiPlatformConfiguration;
     platformConfigurationForm: FormGroup;
 
+    readonly platformId = signal<number | undefined>(undefined);
     /** Whether save is in progress */
     readonly isSaving = signal(false);
 
@@ -39,19 +39,23 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Gets the configuration for the course encoded in the route and prepares the form
      */
+    constructor() {
+        effect(() => {
+            const platformId = this.platformId();
+            if (platformId) {
+                this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
+                    next: (data) => {
+                        this.platform = data;
+                        this.initializeForm();
+                    },
+                    error: (error) => {
+                        this.alertService.error(error);
+                    },
+                });
+            }
+        });
+    }
     ngOnInit() {
-        const platformId = this.route.snapshot.paramMap.get('platformId');
-        if (platformId) {
-            this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
-                next: (data) => {
-                    this.platform = data;
-                    this.initializeForm();
-                },
-                error: (error) => {
-                    this.alertService.error(error);
-                },
-            });
-        }
         this.initializeForm();
     }
 

@@ -34,7 +34,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { DialogService } from 'primeng/dynamicdialog';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -102,11 +102,6 @@ describe('PdfPreviewComponent', () => {
             delete: vi.fn().mockReturnValue(of({})),
         };
         routeMock = {
-            parent: {
-                snapshot: {
-                    paramMap: convertToParamMap({ courseId: 1 }),
-                },
-            },
             data: of({
                 course: { id: 1, name: 'Example Course' },
                 attachment: { id: 1, name: 'Example PDF', lecture: { id: 1 } },
@@ -134,6 +129,7 @@ describe('PdfPreviewComponent', () => {
 
         fixture = TestBed.createComponent(PdfPreviewComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 1);
 
         // ---- Prototype-based mocks (no deprecated createElement) ----
         // Canvas API
@@ -232,7 +228,7 @@ describe('PdfPreviewComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
-            expect(component.courseId).toBe(1);
+            expect(component.courseId()).toBe(1);
             expect(component.attachmentVideoUnit()).toEqual(mockAttachmentUnit);
 
             expect(Object.keys(component.initialHiddenPages())).toContain('slide2');
@@ -365,7 +361,7 @@ describe('PdfPreviewComponent', () => {
 
     describe('Attachment Update', () => {
         it('should update an attachment successfully', async () => {
-            component.courseId = 456;
+            fixture.componentRef.setInput('courseId', 456);
             component.attachment.set({ id: 1, name: 'Test PDF', version: 1, lecture: { id: 123 } });
             component.attachmentToBeEdited.set(undefined);
 
@@ -708,7 +704,7 @@ describe('PdfPreviewComponent', () => {
     describe('Attachment Deletion', () => {
         it('should delete the attachment and navigate to attachments on success', () => {
             component.attachment.set({ id: 1, lecture: { id: 2 } });
-            component.courseId = 3;
+            fixture.componentRef.setInput('courseId', 3);
 
             component.deleteAttachmentFile();
 
@@ -720,7 +716,7 @@ describe('PdfPreviewComponent', () => {
         it('should delete the attachment video unit and navigate to unit management on success', () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
-            component.courseId = 6;
+            fixture.componentRef.setInput('courseId', 6);
 
             component.deleteAttachmentFile();
 
@@ -733,7 +729,7 @@ describe('PdfPreviewComponent', () => {
             const error = { message: 'Deletion failed' };
             attachmentServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set({ id: 1, lecture: { id: 2 } });
-            component.courseId = 3;
+            fixture.componentRef.setInput('courseId', 3);
 
             component.deleteAttachmentFile();
 
@@ -746,7 +742,7 @@ describe('PdfPreviewComponent', () => {
             lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
-            component.courseId = 6;
+            fixture.componentRef.setInput('courseId', 6);
 
             component.deleteAttachmentFile();
 
@@ -806,7 +802,7 @@ describe('PdfPreviewComponent', () => {
     describe('Navigation', () => {
         it('should navigate to attachments page when attachment is present', () => {
             component.attachment.set({ id: 1, lecture: { id: 2 } });
-            component.courseId = 3;
+            fixture.componentRef.setInput('courseId', 3);
 
             component.navigateToCourseManagement();
 
@@ -816,7 +812,7 @@ describe('PdfPreviewComponent', () => {
         it('should navigate to unit management page when attachmentUnit is present', () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
-            component.courseId = 6;
+            fixture.componentRef.setInput('courseId', 6);
 
             component.navigateToCourseManagement();
 

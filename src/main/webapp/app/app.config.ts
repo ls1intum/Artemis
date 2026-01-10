@@ -8,7 +8,7 @@ import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule, Title } from '@angular/platform-browser';
-import { Router, provideRouter, withRouterConfig } from '@angular/router';
+import { Router, provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
@@ -52,11 +52,9 @@ export const appConfig: ApplicationConfig = {
         }),
         provideZoneChangeDetection(),
 
-        // TODO: we should add withComponentInputBinding here
-        //  this would set non-route inputs to undefined, which not all components can handle, currently
-        //  see https://angular.dev/api/router/withComponentInputBinding?tab=usage-notes
-        //  provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
-        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
+        // withComponentInputBinding enables automatic binding of route parameters to component inputs
+        // See https://angular.dev/api/router/withComponentInputBinding
+        provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),
