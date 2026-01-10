@@ -143,6 +143,19 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
+        return createProgrammingExercise(programmingExercise, false);
+    }
+
+    /**
+     * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
+     *
+     * @param programmingExercise The programmingExercise that should be setup
+     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     * @return The new setup exercise
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException     If the template files couldn't be read
+     */
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
         final User exerciseCreator = userRepository.getUser();
 
         // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
@@ -176,7 +189,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
+        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
 
         programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 

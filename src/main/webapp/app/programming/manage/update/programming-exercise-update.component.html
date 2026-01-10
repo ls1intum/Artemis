@@ -69,12 +69,15 @@
                 [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving"
+                [isGeneratingWithAi]="isGeneratingWithAi"
+                [showGenerateWithAi]="hyperionEnabled && !programmingExercise.id && !isImportFromExistingExercise && !isImportFromFile && !isImportFromSharing"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
                 (save)="save()"
+                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>

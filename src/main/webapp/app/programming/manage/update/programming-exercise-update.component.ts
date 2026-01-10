@@ -1,4 +1,4 @@
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -38,7 +38,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -59,6 +59,7 @@ import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -97,6 +98,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
     private readonly aeolusService = inject(AeolusService);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
@@ -199,6 +201,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public customBuildPlansSupported = '';
     public theiaEnabled = false;
     public plagiarismEnabled = false;
+    public hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    public isGeneratingWithAi = false;
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -725,9 +729,51 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Saves the programming exercise with the provided input
+     * Saves the programming exercise with AI preparation.
+     */
+    saveWithAi() {
+        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
+        this.determineProjectTypeIfNotSelectedAndInSimpleMode();
+
+        if (!this.modalService.hasOpenModals()) {
+            this.saveExerciseWithAi();
+        } else {
+            ref.then((reference) => {
+                reference.componentInstance.confirmed.subscribe(() => {
+                    this.saveExerciseWithAi();
+                });
+            });
+        }
+    }
+
+    /**
+     * Saves the programming exercise with the provided input.
      */
     saveExercise() {
+        this.saveExerciseWithOptions(false);
+    }
+
+    /**
+     * Saves the programming exercise with cleared sources and navigates to the code editor.
+     */
+    saveExerciseWithAi() {
+        if (this.isSaving || this.isGeneratingWithAi) {
+            return;
+        }
+        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
+            this.saveExercise();
+            return;
+        }
+        this.isGeneratingWithAi = true;
+        this.saveExerciseWithOptions(true);
+    }
+
+    /**
+     * Saves the programming exercise with optional source cleanup for AI generation.
+     *
+     * @param emptyRepositories if true, clear sources after setup
+     */
+    private saveExerciseWithOptions(emptyRepositories: boolean) {
         // trim potential whitespaces that can lead to issues
         if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
             this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
@@ -799,7 +845,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
-            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
+            if (emptyRepositories) {
+                this.subscribeToSaveResponseWithAi(this.programmingExerciseService.automaticSetup(this.programmingExercise, true));
+            } else {
+                this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
+            }
         }
     }
 
@@ -809,6 +859,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.onSaveSuccess(response.body!);
             },
             error: (error: HttpErrorResponse) => {
+                this.onSaveError(error);
+            },
+        });
+    }
+
+    /**
+     * Subscribes to the save response and navigates to the code editor on success.
+     *
+     * @param result save request observable
+     */
+    private subscribeToSaveResponseWithAi(result: Observable<HttpResponse<ProgrammingExercise>>) {
+        result.subscribe({
+            next: (response: HttpResponse<ProgrammingExercise>) => {
+                this.onSaveSuccessWithAi(response.body!);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isGeneratingWithAi = false;
                 this.onSaveError(error);
             },
         });
@@ -825,6 +892,57 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Handles successful save and navigates to the solution repository in the code editor.
+     *
+     * @param exercise the created exercise
+     */
+    private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
+        this.isSaving = false;
+        this.isGeneratingWithAi = false;
+
+        if (!exercise?.id) {
+            this.onSaveSuccess(exercise);
+            return;
+        }
+
+        this.openCodeEditorForSolution(exercise);
+    }
+
+    /**
+     * Navigates to the code editor for the solution repository of the exercise.
+     *
+     * @param exercise the created exercise
+     */
+    private openCodeEditorForSolution(exercise: ProgrammingExercise) {
+        if (!exercise?.id || !exercise.solutionParticipation?.id) {
+            this.onSaveSuccess(exercise);
+            return;
+        }
+        const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
+        if (!courseId) {
+            this.onSaveSuccess(exercise);
+            return;
+        }
+        if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
+            this.router.navigate([
+                'course-management',
+                courseId,
+                'exams',
+                exercise.exerciseGroup.exam.id,
+                'exercise-groups',
+                exercise.exerciseGroup.id,
+                'programming-exercises',
+                exercise.id,
+                'code-editor',
+                RepositoryType.SOLUTION,
+                exercise.solutionParticipation.id,
+            ]);
+        } else {
+            this.router.navigate(['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.SOLUTION, exercise.solutionParticipation.id]);
+        }
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -844,6 +962,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             disableTranslation: disableTranslation,
         });
         this.isSaving = false;
+        this.isGeneratingWithAi = false;
         window.scrollTo(0, 0);
     }
 

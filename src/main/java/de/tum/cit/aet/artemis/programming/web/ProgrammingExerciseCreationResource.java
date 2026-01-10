@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
@@ -97,12 +98,14 @@ public class ProgrammingExerciseCreationResource {
      * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to set up
+     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping("programming-exercises/setup")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
+    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
+            @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
 
         // Valid exercises have set either a course or an exerciseGroup
@@ -116,7 +119,7 @@ public class ProgrammingExerciseCreationResource {
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, emptyRepositories);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {

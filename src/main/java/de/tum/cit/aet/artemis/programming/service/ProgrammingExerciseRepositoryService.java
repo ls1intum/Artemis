@@ -102,15 +102,59 @@ public class ProgrammingExerciseRepositoryService {
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws GitAPIException {
+        setupExerciseTemplate(programmingExercise, exerciseCreator, false);
+    }
+
+    /**
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
+     * exercise.
+     *
+     * @param programmingExercise the programming exercise that should be set up
+     * @param exerciseCreator     the User that performed the action (used as Git commit author)
+     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     */
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
         final RepositoryResources exerciseResources = getRepositoryResources(programmingExercise, RepositoryType.TEMPLATE);
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
+
+        if (emptyRepositories) {
+            clearRepositorySources(exerciseResources.repository, "template", exerciseCreator);
+            clearRepositorySources(solutionResources.repository, "solution", exerciseCreator);
+            clearRepositorySources(testResources.repository, "test", exerciseCreator);
+        }
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
             Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
+    }
+
+    /**
+     * Clears the repository sources while keeping build scaffolding in place.
+     *
+     * @param repository      the repository to clean
+     * @param repositoryLabel label for logging and commit message
+     * @param exerciseCreator the user performing the cleanup
+     */
+    private void clearRepositorySources(final Repository repository, final String repositoryLabel, final User exerciseCreator) throws GitAPIException {
+        Path sourcePath = repository.getLocalPath().resolve("src");
+        if (!Files.exists(sourcePath)) {
+            log.warn("Skipping AI empty setup: no src directory found in {} repository {}", repositoryLabel, repository.getRemoteRepositoryUri());
+            return;
+        }
+        try {
+            FileUtils.cleanDirectory(sourcePath.toFile());
+            Path readmeFile = sourcePath.resolve("README.md");
+            if (!Files.exists(readmeFile)) {
+                Files.writeString(readmeFile, "");
+            }
+            commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
+        }
+        catch (IOException ex) {
+            log.warn("Failed to clean {} sources for AI generation: {}", repositoryLabel, ex.getMessage());
+        }
     }
 
     /**
