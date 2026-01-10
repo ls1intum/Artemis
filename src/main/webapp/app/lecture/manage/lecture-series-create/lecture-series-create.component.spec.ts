@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureSeriesCreateComponent } from './lecture-series-create.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -10,26 +12,29 @@ import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+
 describe('LectureSeriesCreateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<LectureSeriesCreateComponent>;
     let component: LectureSeriesCreateComponent;
 
-    let lectureServiceMock: jest.Mocked<Pick<LectureService, 'createSeries'>>;
-    let alertServiceMock: jest.Mocked<Pick<AlertService, 'addErrorAlert'>>;
-    let routerMock: jest.Mocked<Pick<Router, 'navigate'>>;
-    let navigationUtilServiceMock: jest.Mocked<Pick<ArtemisNavigationUtilService, 'navigateBack'>>;
+    let lectureServiceMock: { createSeries: ReturnType<typeof vi.fn> };
+    let alertServiceMock: { addErrorAlert: ReturnType<typeof vi.fn> };
+    let routerMock: { navigate: ReturnType<typeof vi.fn> };
+    let navigationUtilServiceMock: { navigateBack: ReturnType<typeof vi.fn> };
 
     const testCourseId = 42;
 
     beforeEach(async () => {
         lectureServiceMock = {
-            createSeries: jest.fn(),
+            createSeries: vi.fn(),
         };
         alertServiceMock = {
-            addErrorAlert: jest.fn(),
+            addErrorAlert: vi.fn(),
         };
-        navigationUtilServiceMock = { navigateBack: jest.fn() };
-        routerMock = { navigate: jest.fn() };
+        navigationUtilServiceMock = { navigateBack: vi.fn() };
+        routerMock = { navigate: vi.fn() };
 
         await TestBed.configureTestingModule({
             imports: [LectureSeriesCreateComponent, MockJhiTranslateDirective],
@@ -51,7 +56,7 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -67,12 +72,12 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.endDate.set(initialLectureEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(component.isSeriesEndDateInvalid()).toBeTrue();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
 
         initialLecture.endDate.set(seriesEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(component.isSeriesEndDateInvalid()).toBeTrue();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
     });
 
     it('should set isSeriesEndDateInvalid to true when an initial lecture startDate is after or equal to seriesEndDate', async () => {
@@ -84,12 +89,12 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.startDate.set(initialLectureStartDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(component.isSeriesEndDateInvalid()).toBeTrue();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
 
         initialLecture.startDate.set(seriesEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(component.isSeriesEndDateInvalid()).toBeTrue();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
     });
 
     it('should set isStartDateInvalid to true when same or after seriesEndDate', async () => {
@@ -101,12 +106,12 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.startDate.set(initialLectureStartDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isStartDateInvalid()).toBeTrue();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
 
         initialLecture.startDate.set(seriesEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isStartDateInvalid()).toBeTrue();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
     });
 
     it('should set isStartDateInvalid to true when same or after endDate', async () => {
@@ -118,12 +123,12 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.endDate.set(initialLectureEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isStartDateInvalid()).toBeTrue();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
 
         initialLecture.startDate.set(initialLectureEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isStartDateInvalid()).toBeTrue();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
     });
 
     it('should set isEndDateInvalid to true when same or before startDate', async () => {
@@ -135,12 +140,12 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.endDate.set(initialLectureEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isEndDateInvalid()).toBeTrue();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
 
         initialLecture.endDate.set(initialLectureStartDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isEndDateInvalid()).toBeTrue();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
     });
 
     it('should set isEndDateInvalid to true when same or after seriesEndDate', async () => {
@@ -152,12 +157,12 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.endDate.set(initialLectureEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isEndDateInvalid()).toBeTrue();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
 
         initialLecture.endDate.set(seriesEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(initialLecture.isEndDateInvalid()).toBeTrue();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
     });
 
     it('should set all validation flags to false when dates are in correct order', async () => {
@@ -171,13 +176,13 @@ describe('LectureSeriesCreateComponent', () => {
         initialLecture.endDate.set(initialLectureEndDate);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(component.isSeriesEndDateInvalid()).toBeFalse();
-        expect(initialLecture.isStartDateInvalid()).toBeFalse();
-        expect(initialLecture.isEndDateInvalid()).toBeFalse();
+        expect(component.isSeriesEndDateInvalid()).toBe(false);
+        expect(initialLecture.isStartDateInvalid()).toBe(false);
+        expect(initialLecture.isEndDateInvalid()).toBe(false);
     });
 
     it('should expose correct noDraftsGenerated based on lectureDrafts', async () => {
-        expect(component.noDraftsGenerated()).toBeTrue();
+        expect(component.noDraftsGenerated()).toBe(true);
 
         const today = dayjs();
         const seriesEndDate = today.add(30, 'day').toDate();
@@ -188,7 +193,7 @@ describe('LectureSeriesCreateComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(component.noDraftsGenerated()).toBeFalse();
+        expect(component.noDraftsGenerated()).toBe(false);
     });
 
     it('should initialize initialLectures with one element', async () => {
@@ -264,13 +269,13 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should navigate back on cancel', async () => {
-        const spy = jest.spyOn(navigationUtilServiceMock, 'navigateBack');
+        const spy = vi.spyOn(navigationUtilServiceMock, 'navigateBack');
         fixture.componentRef.setInput('courseId', testCourseId);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         component.cancel();
-        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledWith(['course-management', testCourseId, 'lectures']);
     });
 
@@ -336,10 +341,10 @@ describe('LectureSeriesCreateComponent', () => {
             new LectureSeriesCreateLectureDTO('Lecture 5', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
         ];
 
-        let isLoadingSpy: jest.SpyInstance<void, [boolean]>;
+        let isLoadingSpy: ReturnType<typeof vi.spyOn>;
 
         beforeEach(async () => {
-            isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+            isLoadingSpy = vi.spyOn(component.isLoading, 'set');
             fixture.componentRef.setInput('courseId', testCourseId);
             component.addInitialLecture();
             fixture.changeDetectorRef.detectChanges();
@@ -364,7 +369,7 @@ describe('LectureSeriesCreateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
-            expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
+            expect(lectureServiceMock.createSeries).toHaveBeenCalledTimes(1);
             const [passedLectureSeriesCreateDTOs, passedCourseId] = lectureServiceMock.createSeries.mock.calls[0];
             expect(passedCourseId).toBe(testCourseId);
             expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithoutExistingLectures);
@@ -385,11 +390,11 @@ describe('LectureSeriesCreateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
-            expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
+            expect(lectureServiceMock.createSeries).toHaveBeenCalledTimes(1);
             const [passedLectureSeriesCreateDTOs, passedLectureCreateCourseId] = lectureServiceMock.createSeries.mock.calls[0];
             expect(passedLectureCreateCourseId).toBe(testCourseId);
             expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithExistingLectures);
-            expect(alertServiceMock.addErrorAlert).toHaveBeenCalledOnce();
+            expect(alertServiceMock.addErrorAlert).toHaveBeenCalledTimes(1);
             const alertStringKey = alertServiceMock.addErrorAlert.mock.calls[0][0];
             expect(alertStringKey).toBe('artemisApp.lecture.createSeries.seriesCreationError');
 

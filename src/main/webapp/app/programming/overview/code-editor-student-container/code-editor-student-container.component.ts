@@ -12,6 +12,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -91,7 +92,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
-                        this.repositoryIsLocked = false; // TODO: load this information dynamically from the server
+                        // TODO: load this information from the server in case submission policies are enabled for programming exercises
+                        this.repositoryIsLocked = dueDateHasPassed && !isPracticeMode(this.participation);
                         const allResults = getAllResultsOfAllSubmissions(this.participation.submissions);
                         this.latestResult = allResults.length >= 1 ? allResults.first() : undefined;
                         this.checkForTutorAssessment(dueDateHasPassed);
