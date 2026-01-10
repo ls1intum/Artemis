@@ -303,7 +303,7 @@ describe('IrisChatService', () => {
 
     it('should request tutor suggestion if sessionId is set', async () => {
         service.sessionId = id;
-        const httpStub = vi.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of(undefined));
+        const httpStub = vi.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of(new HttpResponse<void>()));
 
         const res = await firstValueFrom(service.requestTutorSuggestion());
         expect(res).toBeUndefined();
