@@ -60,7 +60,7 @@ export class LectureUnitComponent {
         if (!this.isCollapsed()) {
             afterNextRender(
                 () => {
-                    this.elementRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
                 },
                 { injector: this.injector },
             );
