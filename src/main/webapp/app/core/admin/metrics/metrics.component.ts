@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 
@@ -20,7 +20,6 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FaIconComponent,

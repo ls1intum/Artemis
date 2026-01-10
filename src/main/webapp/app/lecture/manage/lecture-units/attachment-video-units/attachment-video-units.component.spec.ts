@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { AttachmentVideoUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -24,8 +24,7 @@ import { DateTimeAdapter, NativeDateTimeAdapter, OWL_DATE_TIME_LOCALE, OwlDateTi
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />', standalone: true })
 class LectureUnitLayoutStubComponent {
-    @Input()
-    isLoading = false;
+    isLoading = input(false);
 }
 
 type AttachmentVideoUnitsInfoResponseType = {

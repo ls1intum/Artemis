@@ -329,18 +329,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Clear session and start a new conversation.
-     */
-    onClearSession(content: any) {
-        this.modalService.open(content).result.then((result: string) => {
-            if (result === 'confirm') {
-                this.isLoading.set(false);
-                this.chatService.clearChat();
-            }
-        });
-    }
-
-    /**
      * Accepts the permission to use the chat widget.
      */
     acceptPermission() {
