@@ -22,20 +22,22 @@ describe('ChatStatusBarComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should handle unfinished stages in ngOnChanges', () => {
-        component.stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
-        component.ngOnChanges();
-        expect(component.open).toBeTrue();
-        expect(component.activeStage).toEqual(component.stages[0]);
-        expect(component.displayedText).toBe('Test Stage');
+    it('should handle unfinished stages via effect', async () => {
+        const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
+        fixture.componentRef.setInput('stages', stages);
+        await fixture.whenStable();
+        expect(component.open()).toBeTrue();
+        expect(component.activeStage()).toEqual(stages[0]);
+        expect(component.displayedText()).toBe('Test Stage');
     });
 
-    it('should handle all stages finished in ngOnChanges', () => {
-        component.stages = [{ name: 'Test Stage', state: IrisStageStateDTO.DONE, weight: 1, message: 'Test', internal: false }];
-        component.ngOnChanges();
-        expect(component.open).toBeFalse();
-        expect(component.activeStage).toBeUndefined();
-        expect(component.displayedText).toBeUndefined();
+    it('should handle all stages finished via effect', async () => {
+        const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.DONE, weight: 1, message: 'Test', internal: false }];
+        fixture.componentRef.setInput('stages', stages);
+        await fixture.whenStable();
+        expect(component.open()).toBeFalse();
+        expect(component.activeStage()).toBeUndefined();
+        expect(component.displayedText()).toBeUndefined();
     });
 
     it('should return true for finished stages in isStageFinished', () => {
@@ -50,32 +52,36 @@ describe('ChatStatusBarComponent', () => {
         expect(component.isStageFinished(stage)).toBeFalse();
     });
 
-    it('should render progress bar when stages are present', () => {
-        component.stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
-        fixture.changeDetectorRef.detectChanges();
+    it('should render progress bar when stages are present', async () => {
+        const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
+        fixture.componentRef.setInput('stages', stages);
+        await fixture.whenStable();
+        fixture.detectChanges();
         const progressBar = fixture.debugElement.query(By.css('.progress-bar'));
         expect(progressBar).toBeTruthy();
     });
 
-    it('should not render progress bar when stages are not present', () => {
-        component.stages = [];
-        fixture.changeDetectorRef.detectChanges();
+    it('should not render progress bar when stages are not present', async () => {
+        fixture.componentRef.setInput('stages', []);
+        await fixture.whenStable();
+        fixture.detectChanges();
         const progressBarParts = fixture.debugElement.queryAll(By.css('.progress-bar .part'));
         expect(progressBarParts).toHaveLength(0);
     });
 
-    it('should render stage name when stages are present', () => {
-        component.stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
-        component.ngOnChanges();
-        fixture.changeDetectorRef.detectChanges();
+    it('should render stage name when stages are present', async () => {
+        const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
+        fixture.componentRef.setInput('stages', stages);
+        await fixture.whenStable();
+        fixture.detectChanges();
         const stageName = fixture.debugElement.query(By.css('.display')).nativeElement.textContent;
         expect(stageName).toContain('Test Stage');
     });
 
-    it('should not render stage name when stages are not present', () => {
-        component.stages = [];
-        component.ngOnChanges();
-        fixture.changeDetectorRef.detectChanges();
+    it('should not render stage name when stages are not present', async () => {
+        fixture.componentRef.setInput('stages', []);
+        await fixture.whenStable();
+        fixture.detectChanges();
         const stageName = fixture.debugElement.query(By.css('.display')).nativeElement.textContent;
         expect(stageName).not.toContain('Test Stage');
     });

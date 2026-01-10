@@ -1,9 +1,13 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranscriptViewerComponent } from './transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('TranscriptViewerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TranscriptViewerComponent;
     let fixture: ComponentFixture<TranscriptViewerComponent>;
 
@@ -15,7 +19,7 @@ describe('TranscriptViewerComponent', () => {
 
     beforeEach(async () => {
         // Mock scrollIntoView for tests
-        Element.prototype.scrollIntoView = jest.fn();
+        Element.prototype.scrollIntoView = vi.fn();
 
         await TestBed.configureTestingModule({
             imports: [TranscriptViewerComponent, TranslateModule.forRoot()],
@@ -46,7 +50,7 @@ describe('TranscriptViewerComponent', () => {
     });
 
     it('should emit segment click event', () => {
-        const segmentClickedSpy = jest.fn();
+        const segmentClickedSpy = vi.fn();
         component.segmentClicked.subscribe(segmentClickedSpy);
 
         component.onSegmentClick(5);
@@ -94,7 +98,7 @@ describe('TranscriptViewerComponent', () => {
         component.onSearchQueryChange('test');
         const filtered = component.filteredSegments();
 
-        expect(component.isCurrentSearchResult(filtered[0])).toBeTrue();
-        expect(component.isCurrentSearchResult(mockSegments[0])).toBeFalse();
+        expect(component.isCurrentSearchResult(filtered[0])).toBe(true);
+        expect(component.isCurrentSearchResult(mockSegments[0])).toBe(false);
     });
 });

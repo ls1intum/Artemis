@@ -1,24 +1,45 @@
+import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { SimpleChange } from '@angular/core';
+
+// Simple mock to avoid ng-mocks issues with signal-based viewChild
+@Component({
+    selector: 'jhi-iris-base-chatbot',
+    template: '',
+    standalone: true,
+})
+class MockIrisBaseChatbotComponent {
+    // Provide signal inputs that the template binds to
+    readonly showDeclineButton = input<boolean>();
+    readonly isChatHistoryAvailable = input<boolean>();
+}
 
 describe('CourseChatbotComponent', () => {
     let component: CourseChatbotComponent;
     let fixture: ComponentFixture<CourseChatbotComponent>;
-    let chatService: IrisChatService;
+    let chatService: jest.Mocked<IrisChatService>;
 
     beforeEach(async () => {
+        const mockChatService = {
+            setCourseId: jest.fn(),
+            switchTo: jest.fn(),
+        };
+
         await TestBed.configureTestingModule({
-            declarations: [CourseChatbotComponent, MockComponent(IrisBaseChatbotComponent)],
-            providers: [MockProvider(IrisChatService)],
-        }).compileComponents();
+            imports: [CourseChatbotComponent],
+            providers: [{ provide: IrisChatService, useValue: mockChatService }],
+        })
+            .overrideComponent(CourseChatbotComponent, {
+                remove: { imports: [IrisBaseChatbotComponent] },
+                add: { imports: [MockIrisBaseChatbotComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseChatbotComponent);
         component = fixture.componentInstance;
-        chatService = TestBed.inject(IrisChatService);
+        chatService = TestBed.inject(IrisChatService) as jest.Mocked<IrisChatService>;
         fixture.detectChanges();
     });
 
@@ -26,11 +47,10 @@ describe('CourseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call switchTo when courseId changes', () => {
-        const switchToSpy = jest.spyOn(chatService, 'switchTo');
-        component.courseId = 2;
-        component.ngOnChanges({ courseId: new SimpleChange(null, component.courseId, true) });
+    it('should call switchTo when courseId changes', async () => {
+        fixture.componentRef.setInput('courseId', 2);
+        await fixture.whenStable();
 
-        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, component.courseId);
+        expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
     });
 });

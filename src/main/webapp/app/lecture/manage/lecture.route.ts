@@ -6,6 +6,7 @@ import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-
 import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
 import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
+import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 
 export const lectureRoutes: Routes = [
     {
@@ -15,11 +16,12 @@ export const lectureRoutes: Routes = [
             authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.lecture.home.title',
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, LectureGuard],
     },
     {
         // Create a new path without a component defined to prevent the LectureComponent from being always rendered
         path: '',
+        canActivate: [LectureGuard],
         children: [
             {
                 path: 'new',
