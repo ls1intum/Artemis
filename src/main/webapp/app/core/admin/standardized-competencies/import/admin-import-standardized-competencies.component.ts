@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -51,7 +51,6 @@ interface ImportCount {
         ButtonComponent,
         AdminTitleBarTitleDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminImportStandardizedCompetenciesComponent {
     /** Whether import is loading */

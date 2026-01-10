@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -39,7 +39,6 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '(window:beforeunload)': 'unloadNotification($event)',
     },

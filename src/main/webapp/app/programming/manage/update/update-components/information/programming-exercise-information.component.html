@@ -5,49 +5,63 @@
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage"></p>
     <div class="form-group">
-        <div>
-            <label jhiTranslate="artemisApp.exercise.title"></label>
-            <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip" />
-        </div>
         <jhi-exercise-title-channel-name
             [exercise]="programmingExercise()"
             [course]="programmingExercise().course"
             [minTitleLength]="3"
             [titlePattern]="programmingExerciseCreationConfig.titleNamePattern"
-            [hideTitleLabel]="true"
+            [titleHelpIconText]="'artemisApp.programmingExercise.titleTooltip'"
+            [channelNameHelpIconText]="'artemisApp.programmingExercise.channelNameTooltip'"
             [isExamMode]="isExamMode()"
             [isImport]="isImport()"
             [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             [courseId]="courseId()"
         />
     </div>
-    @if (isEditFieldDisplayedRecord().shortName) {
-        <div class="form-group">
-            <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
-                <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
-            </div>
-            <input
-                required
-                type="text"
-                class="form-control"
-                name="shortName"
-                id="field_shortName"
-                minlength="3"
-                [pattern]="programmingExerciseCreationConfig.shortNamePattern"
-                [(ngModel)]="programmingExercise().shortName"
-                [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
-                [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
-                notIncludedIn
-                [disallowedValues]="alreadyUsedShortNames()"
-                #shortName="ngModel"
-            />
-            @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
-                @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                    <div class="alert alert-danger">
-                        <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
+    @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig.isExamMode && isEditFieldDisplayedRecord().categories)) {
+        <div class="row">
+            @if (isEditFieldDisplayedRecord().shortName) {
+                <div class="form-group col-lg-6">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
+                        <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
                     </div>
-                }
+                    <input
+                        required
+                        type="text"
+                        class="form-control"
+                        name="shortName"
+                        id="field_shortName"
+                        minlength="3"
+                        [pattern]="programmingExerciseCreationConfig.shortNamePattern"
+                        [(ngModel)]="programmingExercise().shortName"
+                        [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
+                        [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
+                        notIncludedIn
+                        [disallowedValues]="alreadyUsedShortNames()"
+                        #shortName="ngModel"
+                    />
+                    @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
+                        @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
+                            <div class="alert alert-danger">
+                                <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+            @if (!programmingExerciseCreationConfig.isExamMode && isEditFieldDisplayedRecord().categories) {
+                <div class="col-12" [class.col-lg-6]="isEditFieldDisplayedRecord().shortName" id="creation-config-selector">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
+                    </div>
+                    <jhi-category-selector
+                        [categories]="programmingExerciseCreationConfig.exerciseCategories"
+                        [existingCategories]="programmingExerciseCreationConfig.existingCategories"
+                        (selectedCategories)="programmingExerciseCreationConfig.updateCategories($event)"
+                    />
+                </div>
             }
         </div>
     }
@@ -217,19 +231,6 @@
             </div>
         }
     </div>
-    @if (!programmingExerciseCreationConfig.isExamMode && isEditFieldDisplayedRecord().categories) {
-        <div id="creation-config-selector">
-            <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
-                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-            </div>
-            <jhi-category-selector
-                [categories]="programmingExerciseCreationConfig.exerciseCategories"
-                [existingCategories]="programmingExerciseCreationConfig.existingCategories"
-                (selectedCategories)="programmingExerciseCreationConfig.updateCategories($event)"
-            />
-        </div>
-    }
     @if (isSimpleMode()) {
         <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise()" />
     }

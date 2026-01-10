@@ -111,7 +111,8 @@ describe('IrisChatService', () => {
         service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledOnce();
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ content: expect.any(Array), uncommittedFiles: {} }));
         service.currentMessages().subscribe((messages) => {
             expect(messages).toHaveLength(mockConversation.messages!.length + 1);
             expect(messages.last()).toEqual(createdMessage);
@@ -129,7 +130,8 @@ describe('IrisChatService', () => {
         service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledOnce();
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ content: expect.any(Array), uncommittedFiles: {} }));
         service.currentError().subscribe((error) => {
             expect(error).toEqual(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
         });
@@ -204,7 +206,8 @@ describe('IrisChatService', () => {
         service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledOnce();
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ content: expect.any(Array), uncommittedFiles: {} }));
         service.currentError().subscribe((error) => {
             expect(error).toEqual(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
         });
@@ -221,7 +224,8 @@ describe('IrisChatService', () => {
         service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
-        expect(stub).toHaveBeenCalledWith(id, expect.anything());
+        expect(stub).toHaveBeenCalledOnce();
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ content: expect.any(Array), uncommittedFiles: {} }));
         service.currentError().subscribe((error) => {
             expect(error).toEqual(IrisErrorMessageKey.IRIS_DISABLED);
         });
