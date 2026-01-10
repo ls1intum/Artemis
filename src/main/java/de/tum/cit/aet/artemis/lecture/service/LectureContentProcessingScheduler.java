@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
  */
+@Conditional(LectureEnabled.class)
 @Component
 @Lazy
 @Profile(PROFILE_CORE_AND_SCHEDULING)

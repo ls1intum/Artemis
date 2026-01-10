@@ -1,7 +1,8 @@
 import { Injector } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -20,8 +21,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Subject, of } from 'rxjs';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -34,7 +35,8 @@ describe('ExerciseImportComponent', () => {
     let quizExercisePagingService: QuizExercisePagingService;
     let sortService: SortService;
     let injector: Injector;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
+    let dialogRefCloseSpy: jest.SpyInstance;
     let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Exercise>;
@@ -42,6 +44,12 @@ describe('ExerciseImportComponent', () => {
     let quizExercise: QuizExercise;
 
     beforeEach(() => {
+        dialogRefCloseSpy = jest.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
             imports: [FaIconComponent, FormsModule, MockComponent(NgbPagination)],
             declarations: [
@@ -52,7 +60,7 @@ describe('ExerciseImportComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(NgbActiveModal), provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: DynamicDialogRef, useValue: dialogRef }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
@@ -61,7 +69,6 @@ describe('ExerciseImportComponent', () => {
                 quizExercisePagingService = TestBed.inject(QuizExercisePagingService);
                 sortService = TestBed.inject(SortService);
                 injector = TestBed.inject(Injector);
-                activeModal = TestBed.inject(NgbActiveModal);
                 searchStub = jest.spyOn(quizExercisePagingService, 'search');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
@@ -95,26 +102,23 @@ describe('ExerciseImportComponent', () => {
         expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
     });
 
-    it('should close the active modal', () => {
-        const dismiss = jest.spyOn(activeModal, 'dismiss');
-
+    it('should close the dialog', () => {
         // WHEN
         comp.clear();
 
         // THEN
-        expect(dismiss).toHaveBeenCalledExactlyOnceWith('cancel');
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith();
     });
 
-    it('should close the active modal with result', () => {
+    it('should close the dialog with result', () => {
         // GIVEN
-        const activeModalSpy = jest.spyOn(activeModal, 'close');
         const exercise = { id: 1 } as TextExercise;
         // WHEN
         comp.selectImport(exercise);
 
         // THEN
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-        expect(activeModalSpy).toHaveBeenCalledWith(exercise);
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith(exercise);
     });
 
     it('should change the page on active modal', fakeAsync(() => {
