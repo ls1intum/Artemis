@@ -42,6 +42,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
@@ -59,7 +60,16 @@ import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.mod
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
+    imports: [
+        MarkdownEditorMonacoComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructionAnalysisComponent,
+        ArtemisTranslatePipe,
+        ProgrammingExerciseInstructionComponent,
+    ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
     private activatedRoute = inject(ActivatedRoute);
@@ -135,9 +145,19 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     @Input() editMode = true;
     @Input() enableResize = true;
-    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight | 'external';
+    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight;
+    /**
+     * If true, the editor height is managed externally by the parent container.
+     * Use this when embedding in a layout that controls height (e.g., code editor view).
+     */
+    @Input() externalHeight = false;
     @Input() showSaveButton = false;
-    @Input() templateParticipation: Participation;
+    /**
+     * Whether to show the preview button and default preview in the markdown editor.
+     * Set to false when using an external preview component (e.g., in the code editor).
+     */
+    @Input() showPreview = true;
+    @Input() templateParticipation?: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     /** Pending inline comments to display in the editor */
@@ -231,6 +251,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         // If forced to render, generate the instruction HTML.
         if (this.forceRender) {
             this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        }
+
+        // Trigger initial preview render after view initialization.
+        // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
+        if (this.showPreview) {
+            // Small delay to allow the instruction component to initialize
+            setTimeout(() => this.generateHtmlSubject.next(), 0);
         }
 
         // Set up the gutter hover button for inline comments (GitHub-style)
@@ -446,6 +473,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
             this.instructionChange.emit(problemStatement);
+            // Trigger preview update when showPreview is enabled
+            this.generateHtmlSubject.next();
         }
     }
 
