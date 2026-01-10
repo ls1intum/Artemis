@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -168,12 +169,10 @@ public class ProgrammingExerciseDeletionResource {
      * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the programming exercise
      */
     @GetMapping("programming-exercises/{exerciseId}/deletion-summary")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
         log.debug("REST request to get deletion summary for programming exercise : {}", exerciseId);
-        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         return ResponseEntity.ok(programmingExerciseDeletionService.getProgrammingExerciseDeletionSummary(exerciseId));
     }
 
