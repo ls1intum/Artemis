@@ -1,8 +1,39 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+// Mock Blob.prototype.arrayBuffer which is not available in jsdom
+if (!Blob.prototype.arrayBuffer) {
+    Blob.prototype.arrayBuffer = function () {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as ArrayBuffer);
+            reader.readAsArrayBuffer(this);
+        });
+    };
+}
+
+// Mock pdfjs-dist to avoid DOMMatrix issues in jsdom
+vi.mock('pdfjs-dist', () => {
+    const mockPage = {
+        getViewport: vi.fn().mockReturnValue({ width: 100, height: 100 }),
+        render: vi.fn().mockReturnValue({ promise: Promise.resolve() }),
+    };
+    const mockDocument = {
+        numPages: 3,
+        getPage: vi.fn().mockResolvedValue(mockPage),
+    };
+    return {
+        getDocument: vi.fn().mockReturnValue({
+            promise: Promise.resolve(mockDocument),
+        }),
+        GlobalWorkerOptions: { workerSrc: '' },
+    };
+});
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
@@ -15,36 +46,38 @@ import { TranslateService } from '@ngx-translate/core';
 import { PDFDocument } from 'pdf-lib';
 import dayjs from 'dayjs/esm';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import PDFJS from 'pdfjs-dist';
+import * as PDFJS from 'pdfjs-dist';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
-jest.mock('pdf-lib', () => {
-    const originalModule = jest.requireActual('pdf-lib');
+vi.mock('pdf-lib', async () => {
+    const originalModule = await vi.importActual('pdf-lib');
 
     return {
         ...originalModule,
         PDFDocument: {
-            ...originalModule.PDFDocument,
-            load: jest.fn().mockResolvedValue({
-                getPageCount: jest.fn().mockReturnValue(1),
-                copyPages: jest.fn().mockResolvedValue([{}]),
-                removePage: jest.fn(),
-                getPage: jest.fn().mockReturnValue({}),
-                addPage: jest.fn(),
-                embedPng: jest.fn().mockResolvedValue({}),
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            ...(originalModule as any).PDFDocument,
+            load: vi.fn().mockResolvedValue({
+                getPageCount: vi.fn().mockReturnValue(1),
+                copyPages: vi.fn().mockResolvedValue([{}]),
+                removePage: vi.fn(),
+                getPage: vi.fn().mockReturnValue({}),
+                addPage: vi.fn(),
+                embedPng: vi.fn().mockResolvedValue({}),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             }),
-            create: jest.fn().mockImplementation(() => ({
-                addPage: jest.fn(),
-                embedPng: jest.fn().mockResolvedValue({}),
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            create: vi.fn().mockImplementation(() => ({
+                addPage: vi.fn(),
+                embedPng: vi.fn().mockResolvedValue({}),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             })),
         },
     };
 });
 
 describe('PdfPreviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let attachmentServiceMock: any;
@@ -56,17 +89,17 @@ describe('PdfPreviewComponent', () => {
 
     beforeEach(async () => {
         attachmentServiceMock = {
-            getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
-            update: jest.fn().mockReturnValue(of({})),
-            delete: jest.fn().mockReturnValue(of({})),
+            getAttachmentFile: vi.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
+            update: vi.fn().mockReturnValue(of({})),
+            delete: vi.fn().mockReturnValue(of({})),
         };
         attachmentUnitServiceMock = {
-            getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
-            update: jest.fn().mockReturnValue(of({})),
-            delete: jest.fn().mockReturnValue(of({})),
+            getAttachmentFile: vi.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
+            update: vi.fn().mockReturnValue(of({})),
+            delete: vi.fn().mockReturnValue(of({})),
         };
         lectureUnitServiceMock = {
-            delete: jest.fn().mockReturnValue(of({})),
+            delete: vi.fn().mockReturnValue(of({})),
         };
         routeMock = {
             parent: {
@@ -80,9 +113,9 @@ describe('PdfPreviewComponent', () => {
             }),
         };
         alertServiceMock = {
-            addAlert: jest.fn(),
-            error: jest.fn(),
-            success: jest.fn(),
+            addAlert: vi.fn(),
+            error: vi.fn(),
+            success: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -107,15 +140,15 @@ describe('PdfPreviewComponent', () => {
         Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
             configurable: true,
             writable: true,
-            value: jest.fn().mockReturnValue({
-                drawImage: jest.fn(),
+            value: vi.fn().mockReturnValue({
+                drawImage: vi.fn(),
             }),
         });
 
         Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
             configurable: true,
             writable: true,
-            value: jest.fn(() => 'data:image/png;base64,test'),
+            value: vi.fn(() => 'data:image/png;base64,test'),
         });
 
         // Optional: ensure reads to width/height are deterministic
@@ -131,44 +164,44 @@ describe('PdfPreviewComponent', () => {
         });
 
         // Input click
-        jest.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+        vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
 
         // ---- Component field wiring ----
         const mockInput = {
             nativeElement: {
-                click: jest.fn(),
+                click: vi.fn(),
                 value: '',
             },
         };
         component.fileInput = signal(mockInput as unknown as ElementRef<HTMLInputElement>);
         component.showPopover = signal({} as NgbPopover);
 
-        jest.spyOn(component.dialogErrorSource, 'next');
+        vi.spyOn(component.dialogErrorSource, 'next');
 
-        global.URL.createObjectURL = jest.fn().mockReturnValue('blob-url');
-        global.URL.revokeObjectURL = jest.fn();
+        global.URL.createObjectURL = vi.fn().mockReturnValue('blob-url');
+        global.URL.revokeObjectURL = vi.fn();
 
-        jest.spyOn(component, 'loadPdf').mockResolvedValue();
-        jest.spyOn(component, 'applyOperations').mockResolvedValue({
+        vi.spyOn(component, 'loadPdf').mockResolvedValue();
+        vi.spyOn(component, 'applyOperations').mockResolvedValue({
             instructorPdf: {} as any,
             studentPdf: {} as any,
         });
-        jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
+        vi.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
 
-        routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+        routerNavigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
 
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('Initialization and Data Loading', () => {
         it('should load attachment file and verify service calls when attachment data is available', () => {
             const mockArrayBuffer = new ArrayBuffer(10);
             const mockBlob = new Blob([''], { type: 'application/pdf' });
-            mockBlob.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
+            mockBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
             attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
 
             component.ngOnInit();
@@ -176,7 +209,7 @@ describe('PdfPreviewComponent', () => {
             expect(attachmentUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
         });
 
-        it('should load attachment video unit file and verify service calls when attachment video unit data is available', fakeAsync(() => {
+        it('should load attachment video unit file and verify service calls when attachment video unit data is available', async () => {
             const mockAttachmentUnit = {
                 id: 1,
                 name: 'Chapter 1',
@@ -189,7 +222,7 @@ describe('PdfPreviewComponent', () => {
 
             const mockArrayBuffer = new ArrayBuffer(10);
             const mockBlob = new Blob([''], { type: 'application/pdf' });
-            mockBlob.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
+            mockBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
             attachmentUnitServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
 
             routeMock.data = of({
@@ -197,7 +230,7 @@ describe('PdfPreviewComponent', () => {
             });
 
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
 
             expect(component.courseId).toBe(1);
             expect(component.attachmentVideoUnit()).toEqual(mockAttachmentUnit);
@@ -207,7 +240,7 @@ describe('PdfPreviewComponent', () => {
 
             expect(attachmentUnitServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
             expect(global.URL.createObjectURL).toHaveBeenCalled();
-        }));
+        });
 
         it('should handle errors and trigger alert when loading an attachment file fails', () => {
             const errorResponse = new HttpErrorResponse({
@@ -217,8 +250,8 @@ describe('PdfPreviewComponent', () => {
             });
 
             const attachmentService = TestBed.inject(AttachmentService);
-            jest.spyOn(attachmentService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
-            const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
+            vi.spyOn(attachmentService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
+            const alertServiceSpy = vi.spyOn(alertServiceMock, 'error');
 
             component.ngOnInit();
             fixture.detectChanges();
@@ -226,7 +259,7 @@ describe('PdfPreviewComponent', () => {
             expect(alertServiceSpy).toHaveBeenCalled();
         });
 
-        it('should handle errors and trigger alert when loading an attachment video unit file fails', fakeAsync(() => {
+        it('should handle errors and trigger alert when loading an attachment video unit file fails', async () => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
                 attachmentVideoUnit: {
@@ -244,19 +277,19 @@ describe('PdfPreviewComponent', () => {
             });
 
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-            jest.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
-            const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
+            vi.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
+            const alertServiceSpy = vi.spyOn(alertServiceMock, 'error');
 
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
 
             expect(alertServiceSpy).toHaveBeenCalled();
-        }));
+        });
     });
 
     describe('Unsubscribing from Observables', () => {
         it('should unsubscribe attachment subscription during component destruction', () => {
-            const unsubscribeSpy = jest.fn();
+            const unsubscribeSpy = vi.fn();
             const mockSubscription = new Subscription();
 
             mockSubscription.unsubscribe = unsubscribeSpy;
@@ -269,7 +302,7 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should unsubscribe attachmentUnit subscription during component destruction', () => {
-            const unsubscribeSpy = jest.fn();
+            const unsubscribeSpy = vi.fn();
             const mockSubscription = new Subscription();
 
             mockSubscription.unsubscribe = unsubscribeSpy;
@@ -291,7 +324,7 @@ describe('PdfPreviewComponent', () => {
         it('should trigger the file input click event', () => {
             const mockFileInput = {
                 nativeElement: {
-                    click: jest.fn(),
+                    click: vi.fn(),
                     type: 'file',
                 },
             };
@@ -336,9 +369,9 @@ describe('PdfPreviewComponent', () => {
             component.attachment.set({ id: 1, name: 'Test PDF', version: 1, lecture: { id: 123 } });
             component.attachmentToBeEdited.set(undefined);
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
                 studentPdf: undefined,
             });
@@ -373,9 +406,9 @@ describe('PdfPreviewComponent', () => {
             });
             component.attachmentToBeEdited.set(undefined);
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
                 studentPdf: undefined,
             });
@@ -385,11 +418,11 @@ describe('PdfPreviewComponent', () => {
 
             const finalPageOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
 
-            jest.spyOn(component, 'getFinalPageOrder').mockImplementation(() => {
+            vi.spyOn(component, 'getFinalPageOrder').mockImplementation(() => {
                 return Promise.resolve(finalPageOrder);
             });
 
-            const appendSpy = jest.spyOn(FormData.prototype, 'append');
+            const appendSpy = vi.spyOn(FormData.prototype, 'append');
 
             attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
@@ -404,14 +437,14 @@ describe('PdfPreviewComponent', () => {
             expect(appendSpy).not.toHaveBeenCalledWith('hiddenPages', expect.any(String));
             expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(3, 2, expect.any(FormData));
             expect(appendSpy).toHaveBeenCalled();
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
 
             // Cleanup
             appendSpy.mockRestore();
         });
 
         it('should update an attachment video unit with hidden pages and create a student version', async () => {
-            attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(of({}));
+            attachmentUnitServiceMock.updateStudentVersion = vi.fn().mockReturnValue(of({}));
 
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({
@@ -422,12 +455,12 @@ describe('PdfPreviewComponent', () => {
             });
             component.attachmentToBeEdited.set(undefined);
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
                 studentPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
                 } as any,
             });
 
@@ -439,22 +472,22 @@ describe('PdfPreviewComponent', () => {
             // Set up page order
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
 
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
+            vi.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
                 { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
                 { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
             ]);
 
             // We need to mock the validateHiddenSlidesDates method to return true
-            jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
+            vi.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
 
             // We need to override the updateAttachmentVideoUnit method
             // because it uses a Promise that resolves inside a subscription
-            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockImplementation(() => {
+            vi.spyOn(component as any, 'updateAttachmentVideoUnit').mockImplementation(() => {
                 return Promise.resolve();
             });
 
             // Also override the updateStudentVersion method for the same reason
-            jest.spyOn(component as any, 'updateStudentVersion').mockImplementation(() => {
+            vi.spyOn(component as any, 'updateStudentVersion').mockImplementation(() => {
                 return Promise.resolve();
             });
 
@@ -467,16 +500,16 @@ describe('PdfPreviewComponent', () => {
         it('should handle file size exceeding the maximum allowed size', async () => {
             component.attachment.set({ id: 1, name: 'Large PDF', version: 1 });
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array(new Array(MAX_FILE_SIZE + 1000))),
+                    save: vi.fn().mockResolvedValue(new Uint8Array(new Array(MAX_FILE_SIZE + 1000))),
                 } as any,
                 studentPdf: undefined,
             });
 
             await component.updateAttachmentWithFile();
 
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.fileSizeError');
             expect(attachmentServiceMock.update).not.toHaveBeenCalled();
             expect(routerNavigateSpy).not.toHaveBeenCalled();
@@ -485,9 +518,9 @@ describe('PdfPreviewComponent', () => {
         it('should handle errors when attachment update fails', async () => {
             component.attachment.set({ id: 1, name: 'Test PDF', version: 1 });
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
                 studentPdf: undefined,
             });
@@ -497,7 +530,7 @@ describe('PdfPreviewComponent', () => {
 
             await component.updateAttachmentWithFile();
 
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
             expect(routerNavigateSpy).not.toHaveBeenCalled();
         });
@@ -511,21 +544,21 @@ describe('PdfPreviewComponent', () => {
                 attachment: { id: 4, name: 'Unit PDF' },
             });
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
                 studentPdf: undefined,
             });
 
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
+            vi.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
 
             const mockError = new Error('Update failed');
             attachmentUnitServiceMock.update.mockReturnValue(throwError(() => mockError));
 
             await component.updateAttachmentWithFile();
 
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
             expect(routerNavigateSpy).not.toHaveBeenCalled();
         });
@@ -534,11 +567,11 @@ describe('PdfPreviewComponent', () => {
             component.attachment.set({ id: 1, name: 'Test PDF', version: 1 });
 
             const mockError = new Error('PDF creation failed');
-            jest.spyOn(component, 'applyOperations').mockRejectedValue(mockError);
+            vi.spyOn(component, 'applyOperations').mockRejectedValue(mockError);
 
             await component.updateAttachmentWithFile();
 
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'PDF creation failed' });
             expect(attachmentServiceMock.update).not.toHaveBeenCalled();
             expect(routerNavigateSpy).not.toHaveBeenCalled();
@@ -572,18 +605,18 @@ describe('PdfPreviewComponent', () => {
             const initialSelectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]);
             component.selectedPages.set(initialSelectedPages);
 
-            global.URL.createObjectURL = jest.fn().mockReturnValue('mock-url');
+            global.URL.createObjectURL = vi.fn().mockReturnValue('mock-url');
             const mockArrayBuffer = new ArrayBuffer(10);
-            mockFile.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
+            mockFile.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
 
-            const loadPdfSpy = jest.spyOn(component, 'loadPdf').mockImplementation(async () => {
+            const loadPdfSpy = vi.spyOn(component, 'loadPdf').mockImplementation(async () => {
                 component.isFileChanged.set(true);
             });
 
             await component.mergePDF(mockEvent as any);
 
-            expect(component.isFileChanged()).toBeTrue();
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isFileChanged()).toBe(true);
+            expect(component.isPdfLoading()).toBe(false);
             expect(component.selectedPages().size).toBe(0);
             expect(loadPdfSpy).toHaveBeenCalledWith('mock-url', mockArrayBuffer, expect.any(String), undefined, true);
             expect(mockEvent.target.value).toBe('');
@@ -601,11 +634,11 @@ describe('PdfPreviewComponent', () => {
             };
 
             const mockError = new Error('PDF loading failed');
-            mockFile.arrayBuffer = jest.fn().mockRejectedValue(mockError);
+            mockFile.arrayBuffer = vi.fn().mockRejectedValue(mockError);
 
             await component.mergePDF(mockEvent as any);
 
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isPdfLoading()).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalled();
 
             const errorCall = alertServiceMock.error.mock.calls[0];
@@ -635,7 +668,7 @@ describe('PdfPreviewComponent', () => {
 
             component.deleteSelectedSlides();
 
-            expect(component.hasOperations()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
 
             expect(component.pageOrder()).toHaveLength(2);
             expect(component.pageOrder()[0].slideId).toBe('slide1');
@@ -650,25 +683,25 @@ describe('PdfPreviewComponent', () => {
             expect(component.hiddenPages()['slide3']).toBeDefined();
             expect(component.hiddenPages()['slide2']).toBeUndefined();
 
-            expect(component.isFileChanged()).toBeTrue();
+            expect(component.isFileChanged()).toBe(true);
             expect(component.selectedPages().size).toBe(0);
         });
 
         it('should handle errors when deleting slides', () => {
             const error = new Error('Deletion failed');
 
-            jest.spyOn(component.pageOrder, 'set').mockImplementation(() => {
+            vi.spyOn(component.pageOrder, 'set').mockImplementation(() => {
                 throw error;
             });
 
-            const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
+            const alertServiceSpy = vi.spyOn(alertServiceMock, 'error');
 
             component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]));
 
             component.deleteSelectedSlides();
 
             expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: 'Deletion failed' });
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isPdfLoading()).toBe(false);
         });
     });
 
@@ -737,7 +770,7 @@ describe('PdfPreviewComponent', () => {
 
             component.hidePages(pages);
 
-            expect(component.hasOperations()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
 
             expect(Object.keys(component.hiddenPages())).toHaveLength(3);
             expect(component.hiddenPages()['slide1']).toBeDefined();
@@ -760,7 +793,7 @@ describe('PdfPreviewComponent', () => {
 
             component.showPages(selectedPages);
 
-            expect(component.hasOperations()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
 
             expect(Object.keys(component.hiddenPages())).toHaveLength(1);
             expect(component.hiddenPages()['slide1']).toBeDefined();
@@ -810,7 +843,7 @@ describe('PdfPreviewComponent', () => {
             component.initialHiddenPages.set({ ...initialHiddenPages });
             component.hiddenPages.set({ ...changedHiddenPages });
 
-            expect(component.hiddenPagesChanged()).toBeTrue();
+            expect(component.hiddenPagesChanged()).toBe(true);
         });
 
         it('should return false when hidden pages have not changed', () => {
@@ -825,7 +858,7 @@ describe('PdfPreviewComponent', () => {
             component.initialHiddenPages.set({ ...hiddenPages });
             component.hiddenPages.set({ ...hiddenPages });
 
-            expect(component.hiddenPagesChanged()).toBeFalse();
+            expect(component.hiddenPagesChanged()).toBe(false);
         });
 
         it('should handle a single hidden page', () => {
@@ -929,11 +962,11 @@ describe('PdfPreviewComponent', () => {
 
             component.pageOrder.set(initialPageOrder);
 
-            expect(component.hasOperations()).toBeFalse();
+            expect(component.hasOperations()).toBe(false);
 
             component.onPageOrderChange(newPageOrder);
 
-            expect(component.hasOperations()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
             expect(component.pageOrder()).toEqual(newPageOrder);
         });
     });
@@ -955,7 +988,7 @@ describe('PdfPreviewComponent', () => {
             component.pageOrder.set(initialPageOrder);
             component.onPageOrderChange(newPageOrder);
 
-            expect(component.hasOperations()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
             expect(component.pageOrder()).toEqual(newPageOrder);
 
             const lastOperation = component.operations()[component.operations().length - 1];
@@ -980,7 +1013,7 @@ describe('PdfPreviewComponent', () => {
 
             component.showPages(selectedPages);
 
-            expect(component.hasOperations()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
             expect(Object.keys(component.hiddenPages())).toEqual(['slide2']);
             expect(component.selectedPages().size).toBe(0);
 
@@ -995,11 +1028,11 @@ describe('PdfPreviewComponent', () => {
         it('should correctly compute allPagesSelected property', () => {
             component.selectedPages.set(new Set());
             component.totalPages.set(5);
-            expect(component.allPagesSelected()).toBeFalse();
+            expect(component.allPagesSelected()).toBe(false);
 
             const selectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
             component.selectedPages.set(selectedPages);
-            expect(component.allPagesSelected()).toBeFalse();
+            expect(component.allPagesSelected()).toBe(false);
 
             const allPages = new Set([
                 { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
@@ -1009,27 +1042,27 @@ describe('PdfPreviewComponent', () => {
                 { slideId: 'slide5', initialIndex: 5, order: 5 } as any,
             ]);
             component.selectedPages.set(allPages);
-            expect(component.allPagesSelected()).toBeTrue();
+            expect(component.allPagesSelected()).toBe(true);
         });
 
         it('should correctly compute pageOrderChanged property', () => {
             const unchangedOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
             component.pageOrder.set(unchangedOrder);
-            expect(component.pageOrderChanged()).toBeFalse();
+            expect(component.pageOrderChanged()).toBe(false);
 
             const changedOrder = [{ slideId: 'slide1', initialIndex: 2, order: 2 } as any, { slideId: 'slide2', initialIndex: 1, order: 1 } as any];
             component.pageOrder.set(changedOrder);
-            expect(component.pageOrderChanged()).toBeTrue();
+            expect(component.pageOrderChanged()).toBe(true);
         });
 
         it('should correctly compute hasHiddenPages property', () => {
             component.hiddenPages.set({});
-            expect(component.hasHiddenPages()).toBeFalse();
+            expect(component.hasHiddenPages()).toBe(false);
 
             component.hiddenPages.set({
                 slide1: { date: dayjs(), exerciseId: undefined },
             });
-            expect(component.hasHiddenPages()).toBeTrue();
+            expect(component.hasHiddenPages()).toBe(true);
         });
 
         it('should correctly compute hasHiddenSelectedPages property', () => {
@@ -1039,10 +1072,10 @@ describe('PdfPreviewComponent', () => {
             });
 
             component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide4', initialIndex: 4, order: 4 } as any]));
-            expect(component.hasHiddenSelectedPages()).toBeFalse();
+            expect(component.hasHiddenSelectedPages()).toBe(false);
 
             component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]));
-            expect(component.hasHiddenSelectedPages()).toBeTrue();
+            expect(component.hasHiddenSelectedPages()).toBe(true);
         });
 
         it('should correctly compute hasChanges property', () => {
@@ -1053,23 +1086,23 @@ describe('PdfPreviewComponent', () => {
             component.isFileChanged.set(false);
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]);
 
-            expect(component.hasChanges()).toBeFalse();
+            expect(component.hasChanges()).toBe(false);
 
             component.operations.set([{ type: 'DELETE', timestamp: dayjs(), data: { slideIds: ['slide1'] } }]);
-            expect(component.hasChanges()).toBeTrue();
+            expect(component.hasChanges()).toBe(true);
             component.operations.set([]);
 
             component.initialHiddenPages.set({});
             component.hiddenPages.set({ slide1: { date: dayjs(), exerciseId: undefined } });
-            expect(component.hasChanges()).toBeTrue();
+            expect(component.hasChanges()).toBe(true);
             component.hiddenPages.set({});
 
             component.isFileChanged.set(true);
-            expect(component.hasChanges()).toBeTrue();
+            expect(component.hasChanges()).toBe(true);
             component.isFileChanged.set(false);
 
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 2, order: 2 } as any]);
-            expect(component.hasChanges()).toBeTrue();
+            expect(component.hasChanges()).toBe(true);
         });
     });
 
@@ -1082,14 +1115,14 @@ describe('PdfPreviewComponent', () => {
                 },
             };
 
-            jest.spyOn(component, 'mergePDF').mockImplementation(async () => {
+            vi.spyOn(component, 'mergePDF').mockImplementation(async () => {
                 return Promise.resolve();
             });
 
             await component.mergePDF(mockEvent as any);
 
             expect(alertServiceMock.error).not.toHaveBeenCalled();
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isPdfLoading()).toBe(false);
         });
 
         it('should handle unsupported file types when merging PDF', async () => {
@@ -1104,17 +1137,17 @@ describe('PdfPreviewComponent', () => {
             await component.mergePDF(mockEvent as any);
 
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.invalidFileType');
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isPdfLoading()).toBe(false);
         });
 
         it('should handle errors when applying operations', async () => {
-            jest.spyOn(component, 'applyOperations').mockRejectedValue(new Error('Operation failed'));
+            vi.spyOn(component, 'applyOperations').mockRejectedValue(new Error('Operation failed'));
 
             component.attachment.set({ id: 1, name: 'Test' });
 
             await component.updateAttachmentWithFile();
 
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Operation failed' });
         });
     });
@@ -1135,26 +1168,26 @@ describe('PdfPreviewComponent', () => {
 
     describe('Student Version Generation', () => {
         it('should generate student version with hidden pages removed', async () => {
-            jest.spyOn(component, 'applyOperations').mockImplementation(async (studentVersion) => {
+            vi.spyOn(component, 'applyOperations').mockImplementation(async (studentVersion) => {
                 const mockInstructorPdf = {
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-                    getPageCount: jest.fn().mockReturnValue(3),
-                    removePage: jest.fn(),
-                    getPage: jest.fn().mockReturnValue({}),
-                    addPage: jest.fn(),
-                    copyPages: jest.fn().mockResolvedValue([{}, {}]),
+                    save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                    getPageCount: vi.fn().mockReturnValue(3),
+                    removePage: vi.fn(),
+                    getPage: vi.fn().mockReturnValue({}),
+                    addPage: vi.fn(),
+                    copyPages: vi.fn().mockResolvedValue([{}, {}]),
                 } as unknown as PDFDocument;
 
                 let mockStudentPdf = undefined;
 
                 if (studentVersion && Object.keys(component.hiddenPages()).length > 0) {
                     mockStudentPdf = {
-                        save: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
-                        removePage: jest.fn(),
-                        getPageCount: jest.fn().mockReturnValue(2),
-                        getPage: jest.fn().mockReturnValue({}),
-                        addPage: jest.fn(),
-                        copyPages: jest.fn().mockResolvedValue([{}, {}]),
+                        save: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+                        removePage: vi.fn(),
+                        getPageCount: vi.fn().mockReturnValue(2),
+                        getPage: vi.fn().mockReturnValue({}),
+                        addPage: vi.fn(),
+                        copyPages: vi.fn().mockResolvedValue([{}, {}]),
                     } as unknown as PDFDocument;
 
                     mockStudentPdf.removePage(1);
@@ -1184,15 +1217,15 @@ describe('PdfPreviewComponent', () => {
 
         it('should not generate student version when no pages are hidden', async () => {
             const mockPdf = {
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-                getPageCount: jest.fn().mockReturnValue(3),
-                removePage: jest.fn(),
-                getPage: jest.fn().mockReturnValue({}),
-                addPage: jest.fn(),
-                copyPages: jest.fn().mockResolvedValue([{}, {}]),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                getPageCount: vi.fn().mockReturnValue(3),
+                removePage: vi.fn(),
+                getPage: vi.fn().mockReturnValue({}),
+                addPage: vi.fn(),
+                copyPages: vi.fn().mockResolvedValue([{}, {}]),
             };
 
-            jest.spyOn(PDFDocument, 'load').mockResolvedValue(mockPdf as any);
+            vi.spyOn(PDFDocument, 'load').mockResolvedValue(mockPdf as any);
 
             component.hiddenPages.set({});
 
@@ -1215,7 +1248,7 @@ describe('PdfPreviewComponent', () => {
                 ]),
             );
 
-            jest.spyOn(component, 'applyOperations').mockImplementation(async () => {
+            vi.spyOn(component, 'applyOperations').mockImplementation(async () => {
                 return {
                     instructorPdf: mockPdf as any,
                     studentPdf: undefined,
@@ -1230,44 +1263,44 @@ describe('PdfPreviewComponent', () => {
 
     describe('PDF Loading', () => {
         beforeEach(() => {
-            jest.spyOn(component, 'loadPdf').mockRestore();
+            vi.spyOn(component, 'loadPdf').mockRestore();
 
             const mockPdfDocument = {
-                getPageCount: jest.fn().mockReturnValue(3),
-                copyPages: jest.fn().mockResolvedValue([{}, {}, {}]),
-                removePage: jest.fn(),
-                getPage: jest.fn().mockReturnValue({}),
-                addPage: jest.fn(),
-                embedPng: jest.fn().mockResolvedValue({}),
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                getPageCount: vi.fn().mockReturnValue(3),
+                copyPages: vi.fn().mockResolvedValue([{}, {}, {}]),
+                removePage: vi.fn(),
+                getPage: vi.fn().mockReturnValue({}),
+                addPage: vi.fn(),
+                embedPng: vi.fn().mockResolvedValue({}),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 context: {},
                 catalog: {},
                 isEncrypted: false,
                 defaultWordBreaks: [],
             } as unknown as PDFDocument;
 
-            jest.spyOn(PDFDocument, 'load').mockResolvedValue(mockPdfDocument);
+            vi.spyOn(PDFDocument, 'load').mockResolvedValue(mockPdfDocument);
 
             const mockPageProxy = {
-                getViewport: jest.fn(() => ({ width: 600, height: 800, scale: 1 })),
-                render: jest.fn(() => ({
+                getViewport: vi.fn(() => ({ width: 600, height: 800, scale: 1 })),
+                render: vi.fn(() => ({
                     promise: Promise.resolve(),
                 })),
             };
 
             const mockPdfJsDocument = {
                 numPages: 3,
-                getPage: jest.fn().mockResolvedValue(mockPageProxy),
+                getPage: vi.fn().mockResolvedValue(mockPageProxy),
             };
 
             const mockLoadingTask = {
                 promise: Promise.resolve(mockPdfJsDocument),
                 docId: 'mock-doc-id',
-                onPassword: jest.fn(),
-                destroy: jest.fn(),
+                onPassword: vi.fn(),
+                destroy: vi.fn(),
             };
 
-            jest.spyOn(PDFJS, 'getDocument').mockImplementation(() => mockLoadingTask as any);
+            vi.spyOn(PDFJS, 'getDocument').mockImplementation(() => mockLoadingTask as any);
         });
 
         it('should load a PDF document and create ordered pages', async () => {
@@ -1279,9 +1312,9 @@ describe('PdfPreviewComponent', () => {
 
             expect(PDFDocument.load).toHaveBeenCalledWith(arrayBuffer);
             expect(PDFJS.getDocument).toHaveBeenCalledWith(fileUrl);
-            expect(component.sourcePDFs().has(sourceId)).toBeTrue();
+            expect(component.sourcePDFs().has(sourceId)).toBe(true);
             expect(component.totalPages()).toBe(3);
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isPdfLoading()).toBe(false);
         });
 
         it('should load a PDF document with existing slides', async () => {
@@ -1321,8 +1354,8 @@ describe('PdfPreviewComponent', () => {
 
             expect(component.pageOrder()).toHaveLength(5);
             expect(component.totalPages()).toBe(5);
-            expect(component.hasOperations()).toBeTrue();
-            expect(component.isFileChanged()).toBeTrue();
+            expect(component.hasOperations()).toBe(true);
+            expect(component.isFileChanged()).toBe(true);
 
             const newPage = component.pageOrder()[2];
             expect(newPage.sourcePdfId).toBe('append-source');
@@ -1332,13 +1365,13 @@ describe('PdfPreviewComponent', () => {
 
         it('should handle errors when loading a PDF', async () => {
             const mockError = new Error('PDF loading failed');
-            jest.spyOn(PDFDocument, 'load').mockRejectedValue(mockError);
+            vi.spyOn(PDFDocument, 'load').mockRejectedValue(mockError);
 
             component.isPdfLoading.set(true);
 
             await component.loadPdf('test-url', new ArrayBuffer(10), 'test-source');
 
-            expect(component.isPdfLoading()).toBeFalse();
+            expect(component.isPdfLoading()).toBe(false);
         });
 
         const testLoadPdf = async (fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string, existingSlides: Slide[]) => {
@@ -1364,7 +1397,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should create temporary slide IDs when appending pages', async () => {
             const mockNow = 1577836800000;
-            jest.spyOn(Date, 'now').mockReturnValue(mockNow);
+            vi.spyOn(Date, 'now').mockReturnValue(mockNow);
 
             component.pageOrder.set([]);
             component.totalPages.set(0);
@@ -1390,24 +1423,24 @@ describe('PdfPreviewComponent', () => {
 
         beforeEach(async () => {
             mockInstructorPdf = {
-                getPageCount: jest.fn().mockReturnValue(3),
-                copyPages: jest.fn().mockResolvedValue([{}, {}, {}]),
-                removePage: jest.fn(),
-                getPage: jest.fn().mockReturnValue({}),
-                addPage: jest.fn(),
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                getPageCount: vi.fn().mockReturnValue(3),
+                copyPages: vi.fn().mockResolvedValue([{}, {}, {}]),
+                removePage: vi.fn(),
+                getPage: vi.fn().mockReturnValue({}),
+                addPage: vi.fn(),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             };
 
             mockStudentPdf = {
-                getPageCount: jest.fn().mockReturnValue(3),
-                copyPages: jest.fn().mockResolvedValue([{}, {}, {}]),
-                removePage: jest.fn(),
-                getPage: jest.fn().mockReturnValue({}),
-                addPage: jest.fn(),
-                save: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+                getPageCount: vi.fn().mockReturnValue(3),
+                copyPages: vi.fn().mockResolvedValue([{}, {}, {}]),
+                removePage: vi.fn(),
+                getPage: vi.fn().mockReturnValue({}),
+                addPage: vi.fn(),
+                save: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
             };
 
-            jest.spyOn(PDFDocument, 'load')
+            vi.spyOn(PDFDocument, 'load')
                 .mockImplementation(() => Promise.resolve(mockInstructorPdf))
                 .mockImplementationOnce(() => Promise.resolve(mockInstructorPdf));
 
@@ -1421,8 +1454,8 @@ describe('PdfPreviewComponent', () => {
                         {
                             id: 'original',
                             pdfDocument: {
-                                getPageCount: jest.fn().mockReturnValue(3),
-                                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                                getPageCount: vi.fn().mockReturnValue(3),
+                                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                             } as any,
                             blob: new Blob(['test'], { type: 'application/pdf' }),
                             url: 'test-url',
@@ -1433,8 +1466,8 @@ describe('PdfPreviewComponent', () => {
                         {
                             id: 'merged',
                             pdfDocument: {
-                                getPageCount: jest.fn().mockReturnValue(2),
-                                save: jest.fn().mockResolvedValue(new Uint8Array([4, 5])),
+                                getPageCount: vi.fn().mockReturnValue(2),
+                                save: vi.fn().mockResolvedValue(new Uint8Array([4, 5])),
                             } as any,
                             blob: new Blob(['test2'], { type: 'application/pdf' }),
                             url: 'merged-url',
@@ -1455,7 +1488,7 @@ describe('PdfPreviewComponent', () => {
         it('should process a DELETE operation correctly', async () => {
             mockInstructorPdf.removePage.mockReset();
 
-            const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
+            const loadMock = vi.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
             component.operations.set([
@@ -1478,7 +1511,7 @@ describe('PdfPreviewComponent', () => {
             const mockCopiedPages = [{}, {}];
             mockInstructorPdf.copyPages.mockResolvedValue(mockCopiedPages);
 
-            const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
+            const loadMock = vi.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
             component.operations.set([
@@ -1500,7 +1533,7 @@ describe('PdfPreviewComponent', () => {
             mockInstructorPdf.removePage.mockReset();
             mockInstructorPdf.addPage.mockReset();
 
-            const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
+            const loadMock = vi.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
             component.operations.set([
@@ -1530,7 +1563,7 @@ describe('PdfPreviewComponent', () => {
 
             mockInstructorPdf.save.mockResolvedValue(new Uint8Array([1, 2, 3]));
 
-            const loadMock = jest
+            const loadMock = vi
                 .spyOn(PDFDocument, 'load')
                 .mockImplementationOnce(() => Promise.resolve(mockInstructorPdf))
                 .mockImplementationOnce(() => Promise.resolve(mockStudentPdf));
@@ -1539,7 +1572,7 @@ describe('PdfPreviewComponent', () => {
                 slide2: { date: dayjs(), exerciseId: undefined },
             });
 
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
+            vi.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
                 { slideId: 'slide1', initialIndex: 0, order: 0 } as any,
                 { slideId: 'slide2', initialIndex: 1, order: 1 } as any,
                 { slideId: 'slide3', initialIndex: 2, order: 2 } as any,
@@ -1556,7 +1589,7 @@ describe('PdfPreviewComponent', () => {
         it('should not create student version when no hidden pages exist', async () => {
             component.hiddenPages.set({});
 
-            const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
+            const loadMock = vi.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
             const result = await component.applyOperations(true);
@@ -1566,7 +1599,7 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should throw an error when original PDF source is not found', async () => {
-            const getMock = jest.spyOn(Map.prototype, 'get').mockReturnValue(undefined);
+            const getMock = vi.spyOn(Map.prototype, 'get').mockReturnValue(undefined);
 
             await expect(component.applyOperations()).rejects.toThrow('Original PDF source not found');
 
@@ -1577,7 +1610,7 @@ describe('PdfPreviewComponent', () => {
             mockInstructorPdf.removePage.mockReset();
             mockInstructorPdf.addPage.mockReset();
 
-            const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
+            const loadMock = vi.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
             component.operations.set([
@@ -1623,7 +1656,7 @@ describe('PdfPreviewComponent', () => {
             mockInstructorPdf.removePage.mockReset();
             mockInstructorPdf.addPage.mockReset();
 
-            const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
+            const loadMock = vi.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
             component.operations.set([
@@ -1655,7 +1688,7 @@ describe('PdfPreviewComponent', () => {
 
     describe('validateHiddenSlidesDates', () => {
         beforeEach(() => {
-            jest.spyOn(alertServiceMock, 'error').mockClear();
+            vi.spyOn(alertServiceMock, 'error').mockClear();
             component.pageOrder.set([
                 { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
                 { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
@@ -1668,7 +1701,7 @@ describe('PdfPreviewComponent', () => {
 
             const result = component['validateHiddenSlidesDates']();
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
             expect(alertServiceMock.error).not.toHaveBeenCalled();
         });
 
@@ -1683,7 +1716,7 @@ describe('PdfPreviewComponent', () => {
 
             const result = component['validateHiddenSlidesDates']();
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
             expect(alertServiceMock.error).not.toHaveBeenCalled();
         });
 
@@ -1696,7 +1729,7 @@ describe('PdfPreviewComponent', () => {
 
             const result = component['validateHiddenSlidesDates']();
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
             expect(alertServiceMock.error).not.toHaveBeenCalled();
         });
 
@@ -1711,7 +1744,7 @@ describe('PdfPreviewComponent', () => {
 
             const result = component['validateHiddenSlidesDates']();
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: '2' });
         });
 
@@ -1728,17 +1761,17 @@ describe('PdfPreviewComponent', () => {
 
             const result = component['validateHiddenSlidesDates']();
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: '1, 3' });
         });
     });
 
     describe('Student Version Updates', () => {
         beforeEach(() => {
-            routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
+            routerNavigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
         });
 
-        it('should successfully update the student version of an attachment video unit', fakeAsync(() => {
+        it('should successfully update the student version of an attachment video unit', async () => {
             component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
@@ -1748,22 +1781,21 @@ describe('PdfPreviewComponent', () => {
 
             const studentPdfFile = new File(['test-student-file'], 'test_student.pdf', { type: 'application/pdf' });
 
-            attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(of({}));
+            attachmentUnitServiceMock.updateStudentVersion = vi.fn().mockReturnValue(of({}));
 
-            const finishSavingSpy = jest.spyOn(component as any, 'finishSaving');
-            const appendSpy = jest.spyOn(FormData.prototype, 'append');
+            const finishSavingSpy = vi.spyOn(component as any, 'finishSaving');
+            const appendSpy = vi.spyOn(FormData.prototype, 'append');
 
-            component['updateStudentVersion'](studentPdfFile).then(() => {
-                expect(attachmentUnitServiceMock.updateStudentVersion).toHaveBeenCalledWith(3, 2, expect.any(FormData));
-                expect(appendSpy).toHaveBeenCalledWith('studentVersion', studentPdfFile);
-                expect(finishSavingSpy).toHaveBeenCalled();
-                appendSpy.mockRestore();
-            });
+            await component['updateStudentVersion'](studentPdfFile);
+            await fixture.whenStable();
 
-            tick();
-        }));
+            expect(attachmentUnitServiceMock.updateStudentVersion).toHaveBeenCalledWith(3, 2, expect.any(FormData));
+            expect(appendSpy).toHaveBeenCalledWith('studentVersion', studentPdfFile);
+            expect(finishSavingSpy).toHaveBeenCalled();
+            appendSpy.mockRestore();
+        });
 
-        it('should handle errors when updating the student version fails', fakeAsync(() => {
+        it('should handle errors when updating the student version fails', async () => {
             component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
@@ -1773,22 +1805,22 @@ describe('PdfPreviewComponent', () => {
 
             const studentPdfFile = new File(['test-student-file'], 'test_student.pdf', { type: 'application/pdf' });
             const mockError = new Error('Student version update failed');
-            attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(throwError(() => mockError));
-            const errorSpy = jest.spyOn(alertServiceMock, 'error');
+            attachmentUnitServiceMock.updateStudentVersion = vi.fn().mockReturnValue(throwError(() => mockError));
+            const errorSpy = vi.spyOn(alertServiceMock, 'error');
             const promise = component['updateStudentVersion'](studentPdfFile);
 
             // The promise should reject
-            promise.catch((error) => {
+            await promise.catch((error) => {
                 expect(error).toBe(mockError);
             });
 
-            tick();
+            await fixture.whenStable();
 
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: 'Student version update failed' });
 
             expect(routerNavigateSpy).not.toHaveBeenCalled();
-        }));
+        });
 
         it('should update student version when updateAttachmentWithFile is called with hidden pages', async () => {
             const mockDate = dayjs('2024-05-15');
@@ -1805,33 +1837,33 @@ describe('PdfPreviewComponent', () => {
                 slide1: { date: mockDate, exerciseId: undefined },
             });
 
-            jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
+            vi.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
 
             const mockInstructorPdf = {
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             };
 
             const mockStudentPdf = {
-                save: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+                save: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
             };
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: mockInstructorPdf as any,
                 studentPdf: mockStudentPdf as any,
             });
 
-            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
+            vi.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
 
-            const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion').mockResolvedValue(undefined);
+            const updateStudentVersionSpy = vi.spyOn(component as any, 'updateStudentVersion').mockResolvedValue(undefined);
 
-            jest.spyOn(component, 'navigateToCourseManagement').mockImplementation(() => {});
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
+            vi.spyOn(component, 'navigateToCourseManagement').mockImplementation(() => {});
+            vi.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
 
             await component.updateAttachmentWithFile();
 
             expect(updateStudentVersionSpy).toHaveBeenCalled();
             const fileArg = updateStudentVersionSpy.mock.calls[0][0] as File;
-            expect(fileArg instanceof File).toBeTrue();
+            expect(fileArg instanceof File).toBe(true);
             expect(fileArg.name).toContain('_student.pdf');
         });
 
@@ -1846,23 +1878,23 @@ describe('PdfPreviewComponent', () => {
 
             component.hiddenPages.set({});
 
-            jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
+            vi.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
 
             const mockInstructorPdf = {
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             };
 
-            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+            vi.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: mockInstructorPdf as any,
                 studentPdf: undefined,
             });
 
-            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
+            vi.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
 
-            const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion');
+            const updateStudentVersionSpy = vi.spyOn(component as any, 'updateStudentVersion');
 
-            jest.spyOn(component, 'navigateToCourseManagement').mockImplementation(() => {});
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
+            vi.spyOn(component, 'navigateToCourseManagement').mockImplementation(() => {});
+            vi.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
 
             await component.updateAttachmentWithFile();
 
@@ -1878,26 +1910,13 @@ describe('PdfPreviewComponent', () => {
             });
 
             const mockPdf = {
-                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             };
-
-            const originalFile = global.File;
-            const capturedArgs: any[] = [];
-
-            global.File = jest.fn().mockImplementation((...args) => {
-                capturedArgs.length = 0; // Clear array
-                capturedArgs.push(...args); // Add elements
-                return new originalFile(args[0], args[1], args[2]);
-            }) as any;
 
             const result = await component['createPdfFile'](mockPdf as any, 'TestUnit', true);
 
             expect(result.name).toBe('TestUnit_student.pdf');
             expect(result.type).toBe('application/pdf');
-            expect(capturedArgs[1]).toBe('TestUnit_student.pdf');
-            expect(capturedArgs[2]).toEqual(expect.objectContaining({ type: 'application/pdf' }));
-
-            global.File = originalFile;
         });
     });
 });

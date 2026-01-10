@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { HttpServerRequests } from 'app/core/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
@@ -8,7 +8,6 @@ import { filterNaN } from 'app/core/admin/metrics/filterNaN-util';
 @Component({
     selector: 'jhi-metrics-request',
     templateUrl: './metrics-request.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe, KeyValuePipe],
 })
 export class MetricsRequestComponent {

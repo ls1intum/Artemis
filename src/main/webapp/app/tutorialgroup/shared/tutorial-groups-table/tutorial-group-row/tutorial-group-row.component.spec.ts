@@ -1,30 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { RouterModule } from '@angular/router';
 import { TutorialGroupRowComponent } from 'app/tutorialgroup/shared/tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
-import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
-import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TutorialGroupRowComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TutorialGroupRowComponent;
     let fixture: ComponentFixture<TutorialGroupRowComponent>;
     let tutorialGroup: TutorialGroup;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
-            declarations: [
-                TutorialGroupRowComponent,
-                MockComponent(TutorialGroupUtilizationIndicatorComponent),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(MeetingPatternPipe),
-            ],
-            providers: [],
+            imports: [TutorialGroupRowComponent, RouterModule.forRoot([])],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupRowComponent);
@@ -36,7 +30,7 @@ describe('TutorialGroupRowComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
