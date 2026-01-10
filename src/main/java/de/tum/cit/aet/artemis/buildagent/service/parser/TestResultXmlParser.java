@@ -15,11 +15,13 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
-import de.tum.cit.aet.artemis.core.config.Constants;
 
 public class TestResultXmlParser {
 
     private static final XmlMapper mapper = new XmlMapper();
+
+    // Default value, will be overridden when customized below in setMaxFeedbackLength
+    private static int maxFeedbackLength = 20_000;
 
     // https://stackoverflow.com/a/4237934
     private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
@@ -29,6 +31,16 @@ public class TestResultXmlParser {
     // Comments cannot contain the string "--".
     private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?([^?]|\\?[^>])*\\?>|<!--(-?[^-])*-->|<!DOCTYPE[^>]*>|\\s)*<testsuites(\\s|/?>)",
             Pattern.DOTALL);
+
+    /**
+     * Sets the maximum length for feedback messages before truncation.
+     * This should be called before processing any test result files.
+     *
+     * @param maxLength the maximum length for feedback messages
+     */
+    public static void setMaxFeedbackLength(int maxLength) {
+        maxFeedbackLength = maxLength;
+    }
 
     /**
      * Parses the test result file and extracts failed and successful tests.
@@ -169,7 +181,7 @@ public class TestResultXmlParser {
      * @return The truncated feedback message.
      */
     private static String truncateFeedbackMessage(String message) {
-        return StringUtils.truncate(message, Constants.LONG_FEEDBACK_MAX_LENGTH);
+        return StringUtils.truncate(message, maxFeedbackLength);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

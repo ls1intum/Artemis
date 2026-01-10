@@ -3,7 +3,7 @@
     <p><span jhiTranslate="artemisApp.lecture.sections.unitsDescription"></span></p>
 
     <jhi-lecture-unit-management
-        [lectureId]="this.lecture.id"
+        [lectureId]="lecture().id"
         [emitEditEvents]="true"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
         [showCreationCard]="false"
@@ -14,44 +14,44 @@
         <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
     </div>
     <div class="form-group" #editFormContainer>
-        @if (isEditingLectureUnit && isAnyUnitFormOpen()) {
+        @if (isEditingLectureUnit() && isAnyUnitFormOpen()) {
             <h4><span jhiTranslate="artemisApp.lecture.editLectureUnit"></span></h4>
         } @else if (isAnyUnitFormOpen()) {
             <h4><span jhiTranslate="artemisApp.lecture.newLectureUnit"></span></h4>
         }
         @if (isTextUnitFormOpen()) {
             <jhi-text-unit-form
-                [isEditMode]="isEditingLectureUnit"
+                [isEditMode]="isEditingLectureUnit()"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
                 (formSubmitted)="createEditTextUnit($event)"
-                [formData]="textUnitFormData"
+                [formData]="textUnitFormData()"
             />
         }
         @if (isOnlineUnitFormOpen()) {
             <jhi-online-unit-form
-                [isEditMode]="isEditingLectureUnit"
+                [isEditMode]="isEditingLectureUnit()"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
                 (formSubmitted)="createEditOnlineUnit($event)"
-                [formData]="onlineUnitFormData"
+                [formData]="onlineUnitFormData()"
             />
         }
         @if (isAttachmentVideoUnitFormOpen()) {
             <jhi-attachment-video-unit-form
-                [isEditMode]="isEditingLectureUnit"
+                [isEditMode]="isEditingLectureUnit()"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
                 (formSubmitted)="createEditAttachmentVideoUnit($event)"
-                [formData]="attachmentVideoUnitFormData"
+                [formData]="attachmentVideoUnitFormData()"
             />
         }
         @if (isExerciseUnitFormOpen()) {
             <jhi-create-exercise-unit
                 [shouldNavigateOnSubmit]="false"
                 (onExerciseUnitCreated)="onExerciseUnitCreated()"
-                [lectureId]="lecture.id"
-                [courseId]="lecture.course?.id"
+                [lectureId]="lecture().id"
+                [courseId]="lecture().course?.id"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
             />

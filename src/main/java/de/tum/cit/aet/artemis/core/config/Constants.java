@@ -140,18 +140,6 @@ public final class Constants {
      */
     public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
-    /**
-     * Upper bound for persisted long feedback text of a single test case / assertion.
-     * <p>
-     * In practice, feedback is short (typically < 1k chars). Very large feedback texts
-     * are almost always caused by runaway output (e.g. infinite loops, excessive logging,
-     * repeated stack traces) and do not provide additional value to students.
-     * <p>
-     * Build logs are stored separately; this limit protects the database from
-     * accidental storage explosions while keeping enough context for debugging.
-     */
-    public static final int LONG_FEEDBACK_MAX_LENGTH = 20_000;
-
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.

@@ -83,6 +83,20 @@ public class BuildJobExecutionService {
     @Value("${artemis.checked-out-repos-path}")
     private String checkedOutReposPath;
 
+    /**
+     * Upper bound for feedback text of a single test case / assertion before truncation.
+     * <p>
+     * In practice, feedback is short (typically &lt; 1k chars). Very large feedback texts
+     * are almost always caused by runaway output (e.g. infinite loops, excessive logging,
+     * repeated stack traces) and do not provide additional value to students.
+     * <p>
+     * This limit prevents excessive network traffic when transmitting build results
+     * from the build agent to the main server, and protects the database from
+     * accidental storage explosions.
+     */
+    @Value("${artemis.feedback.max-feedback-length:20000}")
+    private int maxFeedbackLength;
+
     private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
 
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
@@ -91,6 +105,12 @@ public class BuildJobExecutionService {
         this.buildJobGitService = buildJobGitService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+    }
+
+    @PostConstruct
+    void initParsers() {
+        TestResultXmlParser.setMaxFeedbackLength(maxFeedbackLength);
+        CustomFeedbackParser.setMaxFeedbackLength(maxFeedbackLength);
     }
 
     /**
