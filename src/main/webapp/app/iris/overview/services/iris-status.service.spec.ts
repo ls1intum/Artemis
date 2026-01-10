@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { of } from 'rxjs';
+import { firstValueFrom, of, skip, take } from 'rxjs';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -43,46 +43,32 @@ describe('IrisStatusService', () => {
     });
 
     it('should fetch status when setCurrentCourse is called', async () => {
+        const activePromise = firstValueFrom(service.getActiveStatus().pipe(skip(1), take(1)));
         service.setCurrentCourse(123);
-
-        let isActive: boolean | undefined;
-        service.getActiveStatus().subscribe((active) => {
-            isActive = active;
-        });
 
         const req = httpMock.expectOne('api/iris/courses/123/status');
         expect(req.request.method).toBe('GET');
         req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
 
-        // Wait for the promise chain in checkHeartbeat to resolve
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(isActive).toBe(true);
+        await expect(activePromise).resolves.toBe(true);
     });
 
     it('should get active status after course is set', async () => {
+        const activePromise = firstValueFrom(service.getActiveStatus().pipe(skip(1), take(1)));
         service.setCurrentCourse(456);
-
-        let isActive: boolean | undefined;
-        service.getActiveStatus().subscribe((active) => {
-            isActive = active;
-        });
 
         const req = httpMock.expectOne('api/iris/courses/456/status');
         expect(req.request.method).toBe('GET');
         req.flush({ active: false, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
 
-        expect(isActive).toBe(false);
+        await expect(activePromise).resolves.toBe(false);
     });
 
     it('should get current rate limit info', async () => {
         const testRateLimitInfo = new IrisRateLimitInformation(100, 50, 0);
         service.handleRateLimitInfo(testRateLimitInfo);
 
-        let rateLimitInfo: IrisRateLimitInformation | undefined;
-        service.currentRatelimitInfo().subscribe((info) => {
-            rateLimitInfo = info;
-        });
+        const rateLimitInfo = await firstValueFrom(service.currentRatelimitInfo().pipe(take(1)));
         expect(rateLimitInfo).toEqual(testRateLimitInfo);
     });
 
