@@ -19,6 +19,8 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
+import { createProgrammingExerciseEntitySummary } from 'app/programming/shared/utils/programming-exercise.utils';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -271,15 +273,16 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should make get request for deletion summary', fakeAsync(() => {
-            const returnedFromService = {
+            const dtoResponse: ProgrammingExerciseDeletionSummaryDTO = {
                 numberOfStudentParticipations: 5,
                 numberOfBuilds: 10,
                 numberOfCommunicationPosts: 3,
                 numberOfAnswerPosts: 2,
             };
-            service.getDeletionSummary(123).subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+            const expectedEntitySummary = createProgrammingExerciseEntitySummary(dtoResponse);
+            service.getDeletionSummary(123).subscribe((resp) => expect(resp).toEqual(expectedEntitySummary));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/deletion-summary` });
-            req.flush(returnedFromService);
+            req.flush(dtoResponse);
             tick();
         }));
 
