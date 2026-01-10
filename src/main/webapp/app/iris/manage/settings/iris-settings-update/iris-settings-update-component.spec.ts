@@ -93,12 +93,12 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.courseId).toBe(1);
             expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
-            expect(component.settings).toEqual(mockSettings);
-            expect(component.rateLimitRequests).toBe(100);
-            expect(component.rateLimitTimeframeHours).toBe(24);
-            expect(component.effectiveRateLimit).toEqual({ requests: 100, timeframeHours: 24 });
-            expect(component.applicationDefaults).toEqual({ requests: 50, timeframeHours: 12 });
-            expect(component.isDirty).toBeFalse();
+            expect(component.settings()).toEqual(mockSettings);
+            expect(component.rateLimitRequests()).toBe(100);
+            expect(component.rateLimitTimeframeHours()).toBe(24);
+            expect(component.effectiveRateLimit()).toEqual({ requests: 100, timeframeHours: 24 });
+            expect(component.applicationDefaults()).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.isDirty()).toBeFalse();
         }));
 
         it('should handle null rateLimit from server', fakeAsync(() => {
@@ -114,12 +114,12 @@ describe('IrisSettingsUpdateComponent', () => {
             component.ngOnInit();
             tick();
 
-            expect(component.rateLimitRequests).toBeUndefined();
-            expect(component.rateLimitTimeframeHours).toBeUndefined();
+            expect(component.rateLimitRequests()).toBeUndefined();
+            expect(component.rateLimitTimeframeHours()).toBeUndefined();
         }));
 
         it('should set isAdmin based on account service', () => {
-            expect(component.isAdmin).toBeTrue(); // Default mock returns true
+            expect(component.isAdmin()).toBeTrue(); // Default mock returns true
         });
     });
 
@@ -152,14 +152,14 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.load');
-            expect(component.isLoading).toBeFalse();
+            expect(component.isLoading()).toBeFalse();
         }));
 
         it('should set loading states correctly', fakeAsync(() => {
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
-            expect(component.isLoading).toBeFalse();
+            expect(component.isLoading()).toBeFalse();
         }));
     });
 
@@ -173,15 +173,15 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should save settings as admin with rate limit from form fields', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            component.isAdmin = true;
+            component.isAdmin.set(true);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             const alertSpy = jest.spyOn(alertService, 'success');
             tick();
 
             // Modify form fields (use spread to avoid mutating shared mock)
-            component.settings = { ...component.settings!, enabled: false };
-            component.rateLimitRequests = 200;
-            component.rateLimitTimeframeHours = 48;
+            component.settings.set({ ...component.settings()!, enabled: false });
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(48);
 
             component.saveSettings();
             tick();
@@ -191,20 +191,20 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(savedSettings.enabled).toBeFalse();
             expect(savedSettings.rateLimit).toEqual({ requests: 200, timeframeHours: 48 });
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.success');
-            expect(component.isDirty).toBeFalse();
-            expect(component.isSaving).toBeFalse();
+            expect(component.isDirty()).toBeFalse();
+            expect(component.isSaving()).toBeFalse();
         }));
 
         it('should send undefined rateLimit when both fields are cleared (revert to defaults)', fakeAsync(() => {
             // Course already has explicit rate limits from mockSettings
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            component.isAdmin = true;
+            component.isAdmin.set(true);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
             // Admin clears both fields to revert to application defaults
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
 
             component.saveSettings();
             tick();
@@ -216,13 +216,13 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should send rateLimit object when admin enters values', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            component.isAdmin = true;
+            component.isAdmin.set(true);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
             // Admin enters explicit values
-            component.rateLimitRequests = 200;
-            component.rateLimitTimeframeHours = 48;
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(48);
 
             component.saveSettings();
             tick();
@@ -234,12 +234,12 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should not allow non-admins to change variant', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-            component.isAdmin = false;
+            component.isAdmin.set(false);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
             // Try to change variant as non-admin
-            component.settings = { ...mockSettings, variant: 'advanced' };
+            component.settings.set({ ...mockSettings, variant: 'advanced' });
 
             component.saveSettings();
             tick();
@@ -251,13 +251,13 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should not allow non-admins to change rate limits', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-            component.isAdmin = false;
+            component.isAdmin.set(false);
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
             // Try to change rate limits as non-admin (even though UI shouldn't show these fields)
-            component.rateLimitRequests = 200;
-            component.rateLimitTimeframeHours = 48;
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(48);
 
             component.saveSettings();
             tick();
@@ -280,7 +280,7 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('Custom error message');
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving()).toBeFalse();
         }));
 
         it('should handle save error without message', fakeAsync(() => {
@@ -292,7 +292,7 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.save');
-            expect(component.isSaving).toBeFalse();
+            expect(component.isSaving()).toBeFalse();
         }));
 
         it('should do nothing if no courseId', () => {
@@ -306,7 +306,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should do nothing if no settings', () => {
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings');
-            component.settings = undefined;
+            component.settings.set(undefined);
 
             component.saveSettings();
 
@@ -334,7 +334,7 @@ describe('IrisSettingsUpdateComponent', () => {
             component.setEnabled(false);
             tick();
 
-            expect(component.settings!.enabled).toBeFalse();
+            expect(component.settings()!.enabled).toBeFalse();
             expect(irisSettingsService.updateCourseSettings).toHaveBeenCalledOnce();
         }));
 
@@ -345,7 +345,7 @@ describe('IrisSettingsUpdateComponent', () => {
             (irisSettingsService.updateCourseSettings as jest.Mock).mockClear();
 
             // Get current enabled state and try to set it to the same value
-            const currentEnabled = component.settings!.enabled;
+            const currentEnabled = component.settings()!.enabled;
             component.setEnabled(currentEnabled);
             tick();
 
@@ -357,7 +357,7 @@ describe('IrisSettingsUpdateComponent', () => {
             initComponent();
 
             // Store initial enabled state
-            const initialEnabled = component.settings!.enabled;
+            const initialEnabled = component.settings()!.enabled;
 
             (irisSettingsService.updateCourseSettings as jest.Mock).mockReturnValue(throwError(() => new Error('Save failed')));
 
@@ -366,33 +366,33 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             // Should revert back to initial state on error
-            expect(component.settings!.enabled).toBe(initialEnabled);
+            expect(component.settings()!.enabled).toBe(initialEnabled);
         }));
 
         it('should do nothing if settings are undefined', () => {
             // Reset component state to test undefined case
-            component.settings = undefined;
-            component['originalSettings'] = undefined;
+            component.settings.set(undefined);
+            component['originalSettings'].set(undefined);
             expect(() => component.setEnabled(true)).not.toThrow();
         });
     });
 
     describe('getCustomInstructionsLength', () => {
         it('should return length of custom instructions', () => {
-            component.settings = { ...mockSettings, customInstructions: 'Test' };
+            component.settings.set({ ...mockSettings, customInstructions: 'Test' });
             expect(component.getCustomInstructionsLength()).toBe(4);
 
-            component.settings = { ...mockSettings, customInstructions: 'Hello World' };
+            component.settings.set({ ...mockSettings, customInstructions: 'Hello World' });
             expect(component.getCustomInstructionsLength()).toBe(11);
         });
 
         it('should return 0 if custom instructions are undefined', () => {
-            component.settings = { ...mockSettings, customInstructions: undefined };
+            component.settings.set({ ...mockSettings, customInstructions: undefined });
             expect(component.getCustomInstructionsLength()).toBe(0);
         });
 
         it('should return 0 if settings are undefined', () => {
-            component.settings = undefined;
+            component.settings.set(undefined);
             expect(component.getCustomInstructionsLength()).toBe(0);
         });
     });
@@ -408,67 +408,69 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should detect changes and set isDirty', fakeAsync(() => {
             initComponent();
 
-            expect(component.isDirty).toBeFalse();
+            expect(component.isDirty()).toBeFalse();
 
             // Make a change to customInstructions
-            component.settings!.customInstructions = 'Changed instructions';
-            component.ngDoCheck();
+            component.settings.set({ ...component.settings()!, customInstructions: 'Changed instructions' });
 
-            expect(component.isDirty).toBeTrue();
+            expect(component.isDirty()).toBeTrue();
         }));
 
         it('should not mark as dirty if no changes', fakeAsync(() => {
             initComponent();
 
-            expect(component.isDirty).toBeFalse();
+            expect(component.isDirty()).toBeFalse();
 
-            component.ngDoCheck();
-
-            expect(component.isDirty).toBeFalse();
+            // No changes made - isDirty should still be false
+            expect(component.isDirty()).toBeFalse();
         }));
 
         it('should detect rate limit changes and set isDirty', fakeAsync(() => {
             initComponent();
 
-            expect(component.isDirty).toBeFalse();
+            expect(component.isDirty()).toBeFalse();
 
             // Change only rate limit fields
-            component.rateLimitRequests = 999;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(999);
 
-            expect(component.isDirty).toBeTrue();
+            expect(component.isDirty()).toBeTrue();
         }));
 
         it('should reset isDirty to false when changes are reverted', fakeAsync(() => {
             initComponent();
 
-            expect(component.isDirty).toBeFalse();
+            expect(component.isDirty()).toBeFalse();
 
             // Store the original value
-            const originalInstructions = component.settings!.customInstructions;
+            const originalInstructions = component.settings()!.customInstructions;
 
             // Make a change to customInstructions
-            component.settings = { ...component.settings!, customInstructions: 'Some completely different instructions' };
-            component.ngDoCheck();
-            expect(component.isDirty).toBeTrue();
+            component.settings.set({ ...component.settings()!, customInstructions: 'Some completely different instructions' });
+            expect(component.isDirty()).toBeTrue();
 
             // Revert the change to original
-            component.settings = { ...component.settings!, customInstructions: originalInstructions };
-            component.ngDoCheck();
-            expect(component.isDirty).toBeFalse();
+            component.settings.set({ ...component.settings()!, customInstructions: originalInstructions });
+            expect(component.isDirty()).toBeFalse();
         }));
     });
 
     describe('canDeactivate', () => {
-        it('should allow deactivation when not dirty', () => {
-            component.isDirty = false;
+        it('should allow deactivation when not dirty', fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
+            // No changes made, isDirty should be false
             expect(component.canDeactivate()).toBeTrue();
-        });
+        }));
 
-        it('should prevent deactivation when dirty', () => {
-            component.isDirty = true;
+        it('should prevent deactivation when dirty', fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
+            // Make a change to trigger dirty state
+            component.settings.set({ ...component.settings()!, customInstructions: 'Changed' });
             expect(component.canDeactivate()).toBeFalse();
-        });
+        }));
     });
 
     describe('CUSTOM_INSTRUCTIONS_MAX_LENGTH', () => {
@@ -485,114 +487,103 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should be valid when both fields are empty (use defaults)', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
         it('should be valid when both fields are filled with valid values', fakeAsync(() => {
-            component.rateLimitRequests = 100;
-            component.rateLimitTimeframeHours = 24;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(100);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
         it('should be valid when requests is 0 and timeframe is positive', fakeAsync(() => {
-            component.rateLimitRequests = 0;
-            component.rateLimitTimeframeHours = 24;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(0);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
         it('should mark timeframe field as invalid when only requests is filled', fakeAsync(() => {
-            component.rateLimitRequests = 100;
-            component.rateLimitTimeframeHours = undefined;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(100);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
             expect(component.isFormValid()).toBeFalse();
         }));
 
         it('should mark requests field as invalid when only timeframe is filled', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = 24;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.rateLimitRequestsError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeFalse();
         }));
 
         it('should mark requests field as invalid when requests is negative', fakeAsync(() => {
-            component.rateLimitRequests = -1;
-            component.rateLimitTimeframeHours = 24;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(-1);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.rateLimitRequestsError).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeFalse();
         }));
 
         it('should mark timeframe field as invalid when timeframe is zero', fakeAsync(() => {
-            component.rateLimitRequests = 100;
-            component.rateLimitTimeframeHours = 0;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(100);
+            component.rateLimitTimeframeHours.set(0);
 
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBeFalse();
         }));
 
         it('should mark timeframe field as invalid when timeframe is negative', fakeAsync(() => {
-            component.rateLimitRequests = 100;
-            component.rateLimitTimeframeHours = -1;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(100);
+            component.rateLimitTimeframeHours.set(-1);
 
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBeFalse();
         }));
 
         it('should handle empty string as empty value for requests', fakeAsync(() => {
-            component.rateLimitRequests = '' as unknown as number;
-            component.rateLimitTimeframeHours = undefined;
-            component.ngDoCheck();
+            component.rateLimitRequests.set('' as unknown as number);
+            component.rateLimitTimeframeHours.set(undefined);
 
             // Both effectively empty, should be valid
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
         it('should handle empty string as empty value for timeframe', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = '' as unknown as number;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set('' as unknown as number);
 
             // Both effectively empty, should be valid
-            expect(component.rateLimitRequestsError).toBeUndefined();
-            expect(component.rateLimitTimeframeError).toBeUndefined();
+            expect(component.rateLimitRequestsError()).toBeUndefined();
+            expect(component.rateLimitTimeframeError()).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
         it('should mark both fields as invalid when both have errors', fakeAsync(() => {
-            component.rateLimitRequests = -5;
-            component.rateLimitTimeframeHours = -3;
-            component.ngDoCheck();
+            component.rateLimitRequests.set(-5);
+            component.rateLimitTimeframeHours.set(-3);
 
-            expect(component.rateLimitRequestsError).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
-            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.rateLimitRequestsError()).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
+            expect(component.rateLimitTimeframeError()).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBeFalse();
         }));
     });
@@ -605,45 +596,45 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should return application defaults when both fields are empty', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 50, timeframeHours: 12 });
         }));
 
         it('should return entered values when both fields are filled', fakeAsync(() => {
-            component.rateLimitRequests = 200;
-            component.rateLimitTimeframeHours = 48;
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(48);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 200, timeframeHours: 48 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 200, timeframeHours: 48 });
         }));
 
         it('should merge entered values with defaults when only requests is filled', fakeAsync(() => {
-            component.rateLimitRequests = 200;
-            component.rateLimitTimeframeHours = undefined;
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 200, timeframeHours: 12 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 200, timeframeHours: 12 });
         }));
 
         it('should merge entered values with defaults when only timeframe is filled', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = 48;
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(48);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 48 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 50, timeframeHours: 48 });
         }));
 
         it('should handle zero requests as a valid value', fakeAsync(() => {
-            component.rateLimitRequests = 0;
-            component.rateLimitTimeframeHours = 24;
+            component.rateLimitRequests.set(0);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 0, timeframeHours: 24 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 0, timeframeHours: 24 });
         }));
 
         it('should treat empty string as empty value', fakeAsync(() => {
-            component.rateLimitRequests = '' as unknown as number;
-            component.rateLimitTimeframeHours = '' as unknown as number;
+            component.rateLimitRequests.set('' as unknown as number);
+            component.rateLimitTimeframeHours.set('' as unknown as number);
 
-            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.effectiveRateLimitPreview()).toEqual({ requests: 50, timeframeHours: 12 });
         }));
     });
 
@@ -655,27 +646,27 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should return false when defaults have values', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
             // applicationDefaults is { requests: 50, timeframeHours: 12 }
 
-            expect(component.isEffectiveRateLimitUnlimited).toBeFalse();
+            expect(component.isEffectiveRateLimitUnlimited()).toBeFalse();
         }));
 
         it('should return false when explicit values are set', fakeAsync(() => {
-            component.rateLimitRequests = 100;
-            component.rateLimitTimeframeHours = 24;
+            component.rateLimitRequests.set(100);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.isEffectiveRateLimitUnlimited).toBeFalse();
+            expect(component.isEffectiveRateLimitUnlimited()).toBeFalse();
         }));
 
         it('should return true when defaults are null', fakeAsync(() => {
             // Simulate unlimited defaults
-            component.applicationDefaults = { requests: undefined, timeframeHours: undefined };
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
+            component.applicationDefaults.set({ requests: undefined, timeframeHours: undefined });
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.isEffectiveRateLimitUnlimited).toBeTrue();
+            expect(component.isEffectiveRateLimitUnlimited()).toBeTrue();
         }));
     });
 
@@ -687,35 +678,35 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should return true when defaults have values and fields are empty', fakeAsync(() => {
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.hasEffectiveRequestsLimit).toBeTrue();
-            expect(component.hasEffectiveTimeframeLimit).toBeTrue();
+            expect(component.hasEffectiveRequestsLimit()).toBeTrue();
+            expect(component.hasEffectiveTimeframeLimit()).toBeTrue();
         }));
 
         it('should return true when explicit values are set', fakeAsync(() => {
-            component.rateLimitRequests = 100;
-            component.rateLimitTimeframeHours = 24;
+            component.rateLimitRequests.set(100);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.hasEffectiveRequestsLimit).toBeTrue();
-            expect(component.hasEffectiveTimeframeLimit).toBeTrue();
+            expect(component.hasEffectiveRequestsLimit()).toBeTrue();
+            expect(component.hasEffectiveTimeframeLimit()).toBeTrue();
         }));
 
         it('should return true for requests when requests is 0', fakeAsync(() => {
-            component.rateLimitRequests = 0;
-            component.rateLimitTimeframeHours = 24;
+            component.rateLimitRequests.set(0);
+            component.rateLimitTimeframeHours.set(24);
 
-            expect(component.hasEffectiveRequestsLimit).toBeTrue();
+            expect(component.hasEffectiveRequestsLimit()).toBeTrue();
         }));
 
         it('should return false when defaults are null and fields are empty', fakeAsync(() => {
-            component.applicationDefaults = { requests: undefined, timeframeHours: undefined };
-            component.rateLimitRequests = undefined;
-            component.rateLimitTimeframeHours = undefined;
+            component.applicationDefaults.set({ requests: undefined, timeframeHours: undefined });
+            component.rateLimitRequests.set(undefined);
+            component.rateLimitTimeframeHours.set(undefined);
 
-            expect(component.hasEffectiveRequestsLimit).toBeFalse();
-            expect(component.hasEffectiveTimeframeLimit).toBeFalse();
+            expect(component.hasEffectiveRequestsLimit()).toBeFalse();
+            expect(component.hasEffectiveTimeframeLimit()).toBeFalse();
         }));
     });
 });

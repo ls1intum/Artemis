@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.core.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -31,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -187,7 +187,7 @@ public class Feedback extends DomainObject {
      * educational value to students.
      * <p>
      * To protect the database from excessive storage usage, the feedback text is truncated to
-     * {@link Constants#LONG_FEEDBACK_MAX_LENGTH}. If truncation occurs, a marker is appended to make this
+     * the configured maximum length (default: 20,000). If truncation occurs, a marker is appended to make this
      * behavior explicit and observable.
      *
      * @param detailText the raw feedback text produced by a single test case; may be {@code null}
@@ -200,12 +200,14 @@ public class Feedback extends DomainObject {
             return longFeedback;
         }
 
-        if (detailText.length() <= LONG_FEEDBACK_MAX_LENGTH) {
+        final int maxFeedbackLength = FeedbackConfiguration.getMaxFeedbackLengthStatic();
+
+        if (detailText.length() <= maxFeedbackLength) {
             longFeedback.setText(detailText);
             return longFeedback;
         }
 
-        final int maxTextLength = LONG_FEEDBACK_MAX_LENGTH - LONG_FEEDBACK_TRUNCATION_MARKER.length();
+        final int maxTextLength = maxFeedbackLength - LONG_FEEDBACK_TRUNCATION_MARKER.length();
 
         longFeedback.setText(detailText.substring(0, Math.max(0, maxTextLength)) + LONG_FEEDBACK_TRUNCATION_MARKER);
 

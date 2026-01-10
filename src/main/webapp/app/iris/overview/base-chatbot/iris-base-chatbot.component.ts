@@ -16,15 +16,14 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
-import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -41,7 +40,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
-import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
@@ -65,14 +63,16 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         NgClass,
         SearchFilterComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
+export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
     // Icons
     protected readonly faTrash = faTrash;
@@ -100,185 +100,163 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
-    // State variables
-    relatedEntityIdSubscription: Subscription;
-    chatModeSubscription: Subscription;
-    sessionIdSubscription: Subscription;
-    messagesSubscription: Subscription;
-    stagesSubscription: Subscription;
-    errorSubscription: Subscription;
-    numNewMessageSubscription: Subscription;
-    rateLimitSubscription: Subscription;
-    activeStatusSubscription: Subscription;
-    suggestionsSubscription: Subscription;
-    routeSubscription: Subscription;
-    chatSessionsSubscription: Subscription;
+    // Observable-derived signals (using toSignal for reactive state)
+    private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
+    private readonly currentChatMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
+    readonly relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
+    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
 
-    private currentRelatedEntityId = signal<number | undefined>(undefined);
-    private currentChatMode = signal<ChatServiceMode | undefined>(undefined);
-    relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
-    relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
-    currentSessionId: number | undefined;
-    chatSessions: IrisSessionDTO[] = [];
-    messages: IrisMessage[] = [];
-    stages?: IrisStageDTO[] = [];
-    suggestions?: string[] = [];
-    error?: IrisErrorMessageKey;
-    numNewMessages: number = 0;
-    rateLimitInfo: IrisRateLimitInformation;
-    active = true;
+    readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
+    readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
+    readonly stages = toSignal(this.chatService.currentStages(), { initialValue: [] as IrisStageDTO[] });
+    readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
+    readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
+    readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
+    readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
+    readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
 
-    newMessageTextContent = '';
-    isLoading: boolean;
-    shouldAnimate = false;
-    animatingMessageIds = new Set<number>();
-    hasActiveStage = false;
+    // Messages with processing
+    private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
+    readonly messages = computed(() => this.processMessages(this.rawMessages()));
 
-    isChatHistoryOpen = true;
+    // Computed state
+    readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
 
-    searchValue = '';
+    // UI state signals
+    readonly newMessageTextContent = signal('');
+    readonly isLoading = signal(false);
+    readonly isChatHistoryOpen = signal(true);
+    readonly searchValue = signal('');
+    readonly userAccepted = signal(false);
+    readonly isScrolledToBottom = signal(true);
+    readonly resendAnimationActive = signal(false);
+    readonly clickedSuggestion = signal<string | undefined>(undefined);
 
-    // User preferences
-    user: User | undefined;
-    userAccepted: boolean;
-    isScrolledToBottom = true;
-    rows = 1;
-    resendAnimationActive: boolean;
+    // Animation state (internal tracking)
+    private shouldAnimate = false;
+    readonly animatingMessageIds = signal(new Set<number>());
+    private previousSessionId: number | undefined;
+    private previousMessageCount = 0;
+    private previousMessageIds = new Set<number>();
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
-    @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton = false;
-    @Input() isChatGptWrapper = false;
-    @Output() fullSizeToggle = new EventEmitter<void>();
-    @Output() closeClicked = new EventEmitter<void>();
+    readonly fullSize = input<boolean>();
+    readonly showCloseButton = input<boolean>(false);
+    readonly isChatGptWrapper = input<boolean>(false);
+    readonly fullSizeToggle = output<void>();
+    readonly closeClicked = output<void>();
 
     // ViewChilds
-    @ViewChild('messagesElement') messagesElement!: ElementRef;
-    @ViewChild('scrollArrow') scrollArrow!: ElementRef;
-    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
-    @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+    readonly messagesElement = viewChild<ElementRef>('messagesElement');
+    readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
+    readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
+    readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
-    ngOnInit() {
-        this.routeSubscription = this.route.queryParams?.subscribe((params: any) => {
+    constructor() {
+        // Initialize user acceptance state
+        this.userAccepted.set(!!this.accountService.userIdentity()?.externalLLMUsageAccepted);
+
+        // Handle route query params (irisQuestion)
+        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
             if (params?.irisQuestion) {
-                this.newMessageTextContent = params.irisQuestion;
+                this.newMessageTextContent.set(params.irisQuestion);
             }
         });
-        this.sessionIdSubscription = this.chatService.currentSessionId().subscribe((sessionId) => {
-            // Disable animations when switching sessions, re-enable after messages load
-            if (this.currentSessionId !== sessionId) {
-                this.animatingMessageIds.clear();
+
+        // Handle session changes - reset animations
+        effect((onCleanup) => {
+            const sessionId = this.currentSessionId();
+            if (this.previousSessionId !== sessionId) {
+                this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
-                setTimeout(() => (this.shouldAnimate = true));
+                const timeoutId = setTimeout(() => (this.shouldAnimate = true));
+                onCleanup(() => clearTimeout(timeoutId));
             }
-            this.currentSessionId = sessionId;
+            this.previousSessionId = sessionId;
         });
-        this.relatedEntityIdSubscription = this.chatService.currentRelatedEntityId().subscribe((entityId) => {
-            this.currentRelatedEntityId.set(entityId);
-        });
-        this.chatModeSubscription = this.chatService.currentChatMode().subscribe((chatMode) => {
-            this.currentChatMode.set(chatMode);
-        });
-        this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
-            if (messages.length !== this.messages?.length) {
+
+        // Handle message scroll on new messages
+        effect((onCleanup) => {
+            const rawMessages = this.rawMessages();
+            if (rawMessages.length !== this.previousMessageCount) {
                 this.scrollToBottom('auto');
-                setTimeout(() => this.messageTextarea?.nativeElement?.focus(), 10);
+                const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                onCleanup(() => clearTimeout(timeoutId));
             }
-            // Track new messages for animation (only if shouldAnimate is enabled)
+            // Track new messages for animation (compare against previous IDs, not current)
             if (this.shouldAnimate) {
-                const existingIds = new Set(this.messages?.map((m) => m.id) ?? []);
-                messages.forEach((m) => {
-                    if (m.id && !existingIds.has(m.id)) {
-                        this.animatingMessageIds.add(m.id);
+                // Use untracked to read current value without creating a dependency
+                // (otherwise updating animatingMessageIds would retrigger this effect infinitely)
+                const newAnimatingIds = new Set(untracked(() => this.animatingMessageIds()));
+                rawMessages.forEach((m) => {
+                    if (m.id && !this.previousMessageIds.has(m.id)) {
+                        newAnimatingIds.add(m.id);
                     }
                 });
+                this.animatingMessageIds.set(newAnimatingIds);
             }
-            this.messages = _.cloneDeep(messages).reverse();
-            this.messages.forEach((message) => {
-                if (message.content?.[0] && 'textContent' in message.content[0]) {
-                    // Double all \n
-                    const cnt = message.content[0] as IrisTextMessageContent;
-                    cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
-                    cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
-                }
-                if ('accessedMemories' in message) {
-                    // eslint-disable-next-line no-undef
-                    console.log('Accessed memories found in message:', message.accessedMemories);
-                }
-                if ('createdMemories' in message) {
-                    // eslint-disable-next-line no-undef
-                    console.log('Created memories found in message:', message.createdMemories);
-                }
-            });
-        });
-        this.chatSessionsSubscription = this.chatService.availableChatSessions().subscribe((sessions) => {
-            this.chatSessions = sessions;
-        });
-        this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
-            this.stages = stages;
-            this.hasActiveStage = stages?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state));
-        });
-        this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
-        this.numNewMessageSubscription = this.chatService.currentNumNewMessages().subscribe((num) => {
-            this.numNewMessages = num;
-            this.checkUnreadMessageScroll();
-        });
-        this.rateLimitSubscription = this.statusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
-        this.activeStatusSubscription = this.statusService.getActiveStatus().subscribe((active) => {
-            if (!active) {
-                this.isLoading = false;
-                this.resendAnimationActive = false;
-            }
-            this.active = active;
-        });
-        this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
-            this.suggestions = suggestions;
-            this.clickedSuggestion = undefined;
+            this.previousMessageIds = new Set(rawMessages.map((m) => m.id).filter((id): id is number => id !== undefined));
+            this.previousMessageCount = rawMessages.length;
         });
 
-        this.checkIfUserAcceptedExternalLLMUsage();
+        // Handle new message scroll
+        effect(() => {
+            const num = this.numNewMessages();
+            if (num > 0) {
+                this.scrollToBottom('smooth');
+            }
+        });
 
-        // Focus on message textarea
-        setTimeout(() => {
-            if (this.messageTextarea) {
-                this.messageTextarea.nativeElement.focus();
-            } else {
-                this.acceptButton.nativeElement.focus();
+        // Handle active status changes
+        effect(() => {
+            const activeValue = this.active();
+            if (!activeValue) {
+                this.isLoading.set(false);
+                this.resendAnimationActive.set(false);
+            }
+        });
+
+        // Reset clicked suggestion when new suggestions arrive (read without using value to establish dependency)
+        effect(() => {
+            this.suggestions();
+            this.clickedSuggestion.set(undefined);
+        });
+
+        // Focus on message textarea after initialization
+        const focusTimeoutId = setTimeout(() => {
+            const textarea = this.messageTextarea();
+            const acceptBtn = this.acceptButton();
+            if (textarea) {
+                textarea.nativeElement.focus();
+            } else if (acceptBtn) {
+                acceptBtn.nativeElement.focus();
             }
         }, 150);
+        this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
+    }
+
+    /**
+     * Process messages for display (clone, reverse, format)
+     */
+    private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
+        const processed = _.cloneDeep(rawMessages).reverse();
+        processed.forEach((message) => {
+            if (message.content?.[0] && 'textContent' in message.content[0]) {
+                const cnt = message.content[0] as IrisTextMessageContent;
+                cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
+                cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
+            }
+        });
+        return processed;
     }
 
     ngAfterViewInit() {
-        this.checkUnreadMessageScroll();
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
-    }
-
-    checkUnreadMessageScroll() {
-        if (this.numNewMessages > 0) {
-            this.scrollToBottom('smooth');
-        }
-    }
-
-    ngOnDestroy() {
-        this.messagesSubscription.unsubscribe();
-        this.stagesSubscription.unsubscribe();
-        this.errorSubscription.unsubscribe();
-        this.numNewMessageSubscription.unsubscribe();
-        this.rateLimitSubscription.unsubscribe();
-        this.activeStatusSubscription.unsubscribe();
-        this.suggestionsSubscription.unsubscribe();
-        this.routeSubscription?.unsubscribe();
-        this.chatSessionsSubscription.unsubscribe();
-    }
-
-    checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
-        setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
     /**
@@ -286,12 +264,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     onSend(): void {
         this.chatService.messagesRead();
-        if (this.newMessageTextContent) {
-            this.isLoading = true;
-            this.chatService.sendMessage(this.newMessageTextContent).subscribe(() => {
-                this.isLoading = false;
-            });
-            this.newMessageTextContent = '';
+        const content = this.newMessageTextContent();
+        if (content) {
+            this.isLoading.set(true);
+            this.chatService
+                .sendMessage(content)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(() => {
+                    this.isLoading.set(false);
+                });
+            this.newMessageTextContent.set('');
         }
         this.resetChatBodyHeight();
     }
@@ -303,18 +285,18 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         let observable;
         if (message.id) {
             observable = this.chatService.resendMessage(message);
-            this.resendAnimationActive = true;
+            this.resendAnimationActive.set(true);
         } else if (message.content?.[0]?.textContent) {
             observable = this.chatService.sendMessage(message.content[0].textContent);
         } else {
-            this.resendAnimationActive = false;
+            this.resendAnimationActive.set(false);
             return;
         }
-        this.isLoading = true;
+        this.isLoading.set(true);
 
-        observable.subscribe(() => {
-            this.resendAnimationActive = false;
-            this.isLoading = false;
+        observable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            this.resendAnimationActive.set(false);
+            this.isLoading.set(false);
             this.chatService.messagesRead();
         });
     }
@@ -329,7 +311,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             return;
         }
         message.helpful = !!helpful;
-        this.chatService.rateMessage(message, helpful).subscribe();
+        this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
 
     /**
@@ -338,7 +320,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
-            const messagesElement: HTMLElement = this.messagesElement?.nativeElement;
+            const messagesElement: HTMLElement = this.messagesElement()?.nativeElement;
             messagesElement?.scrollTo({
                 top: 0,
                 behavior: behavior,
@@ -352,7 +334,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     onClearSession(content: any) {
         this.modalService.open(content).result.then((result: string) => {
             if (result === 'confirm') {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.chatService.clearChat();
             }
         });
@@ -363,7 +345,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     acceptPermission() {
         this.chatService.updateExternalLLMUsageConsent(true);
-        this.userAccepted = true;
+        this.userAccepted.set(true);
     }
 
     /**
@@ -381,7 +363,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     handleKey(event: KeyboardEvent): void {
         if (event.key === 'Enter') {
-            if (!this.isLoading && this.active) {
+            if (!this.isLoading() && this.active()) {
                 if (!event.shiftKey) {
                     event.preventDefault();
                     this.onSend();
@@ -418,7 +400,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Adjusts the height of the message textarea based on its content.
      */
     adjustTextareaRows() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const textareaRef = this.messageTextarea();
+        if (!textareaRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
         const bufferForSpaceBetweenLines = 4;
         const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
@@ -431,27 +415,15 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     /**
-     * Handles the row change event in the message textarea.
-     */
-    onModelChange() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const newRows = textarea.value.split('\n').length;
-        if (newRows != this.rows) {
-            if (newRows <= 3) {
-                textarea.rows = newRows;
-                this.adjustScrollButtonPosition(newRows);
-                this.rows = newRows;
-            }
-        }
-    }
-
-    /**
      * Adjusts the position of the scroll button based on the number of rows in the message textarea.
      * @param newRows - The new number of rows.
      */
     adjustScrollButtonPosition(newRows: number) {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
+        const textareaRef = this.messageTextarea();
+        const scrollArrowRef = this.scrollArrow();
+        if (!textareaRef || !scrollArrowRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
+        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows - lineHeight;
         setTimeout(() => {
@@ -463,24 +435,26 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Resets the height of the chat body.
      */
     resetChatBodyHeight() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
+        const textareaRef = this.messageTextarea();
+        const scrollArrowRef = this.scrollArrow();
+        if (!textareaRef || !scrollArrowRef) return;
+        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
+        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         textarea.rows = 1;
         textarea.style.height = '';
         scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
-        const messagesElement = this.messagesElement.nativeElement;
+        const messagesElement = this.messagesElement()?.nativeElement;
+        if (!messagesElement) return;
         const scrollTop = messagesElement.scrollTop;
-        this.isScrolledToBottom = scrollTop < 50;
+        this.isScrolledToBottom.set(scrollTop < 50);
     }
 
-    clickedSuggestion: string | undefined;
-
     onSuggestionClick(suggestion: string) {
-        this.clickedSuggestion = suggestion;
-        this.newMessageTextContent = suggestion;
+        this.clickedSuggestion.set(suggestion);
+        this.newMessageTextContent.set(suggestion);
         this.onSend();
     }
 
@@ -489,7 +463,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     setChatHistoryVisibility(isOpen: boolean) {
-        this.isChatHistoryOpen = isOpen;
+        this.isChatHistoryOpen.set(isOpen);
         if (!isOpen) {
             this.setSearchValue('');
         }
@@ -541,14 +515,15 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     setSearchValue(searchValue: string) {
-        this.searchValue = searchValue.trim().toLowerCase();
+        this.searchValue.set(searchValue.trim().toLowerCase());
     }
 
     private getFilteredSessions(): IrisSessionDTO[] {
-        if (!this.searchValue) {
-            return this.chatSessions;
+        const search = this.searchValue();
+        if (!search) {
+            return this.chatSessions();
         }
-        return this.chatSessions.filter((s) => (s.title ?? '').toLowerCase().includes(this.searchValue));
+        return this.chatSessions().filter((s) => (s.title ?? '').toLowerCase().includes(search));
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {

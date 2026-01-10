@@ -2,29 +2,30 @@ import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/l
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { MockIrisBaseChatbotComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component.mock';
+import { MockProvider } from 'ng-mocks';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import interact from 'interactjs';
 
 jest.mock('interactjs', () => {
-    const interact = jest.fn(() => {
+    const interactFn = jest.fn(() => {
         return {
             resizable: jest.fn().mockReturnThis(),
             draggable: jest.fn().mockReturnThis(),
         };
     });
 
-    (interact as unknown as { modifiers: unknown }).modifiers = {
+    (interactFn as unknown as { modifiers: unknown }).modifiers = {
         restrictEdges: jest.fn((opts: unknown) => ({ type: 'restrictEdges', opts })),
         restrictSize: jest.fn((opts: unknown) => ({ type: 'restrictSize', opts })),
         restrictRect: jest.fn((opts: unknown) => ({ type: 'restrictRect', opts })),
     };
 
-    return { __esModule: true, default: interact };
+    return { __esModule: true, default: interactFn };
 });
 
 type InteractResizeMoveEvent = {
@@ -53,7 +54,7 @@ describe('IrisChatbotWidgetComponent', () => {
             breakpoints: { [Breakpoints.Handset]: false },
         });
         await TestBed.configureTestingModule({
-            declarations: [IrisChatbotWidgetComponent, MockComponent(IrisBaseChatbotComponent)],
+            imports: [IrisChatbotWidgetComponent],
             providers: [
                 MockProvider(IrisChatService),
                 { provide: MatDialog, useValue: { closeAll: jest.fn() } },
@@ -67,7 +68,12 @@ describe('IrisChatbotWidgetComponent', () => {
                     },
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(IrisChatbotWidgetComponent, {
+                remove: { imports: [IrisBaseChatbotComponent] },
+                add: { imports: [MockIrisBaseChatbotComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
         component = fixture.componentInstance;
@@ -96,9 +102,9 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should toggle fullSize and call setPositionAndScale when toggleFullSize is called', () => {
         const setPositionAndScaleSpy = jest.spyOn(component, 'setPositionAndScale');
-        const initialFullSize = component.fullSize;
+        const initialFullSize = component.fullSize();
         component.toggleFullSize();
-        expect(component.fullSize).toBe(!initialFullSize);
+        expect(component.fullSize()).toBe(!initialFullSize);
         expect(setPositionAndScaleSpy).toHaveBeenCalled();
     });
 
@@ -229,7 +235,7 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(widget.style.transform).toBe('translate(15px,30px)');
         expect(widget.getAttribute('data-x')).toBe('15');
         expect(widget.getAttribute('data-y')).toBe('30');
-        expect(component.fullSize).toBeTrue();
+        expect(component.fullSize()).toBeTrue();
 
         // Shrink -> should flip fullSize back
         resizableConfig.listeners.move({
@@ -237,7 +243,7 @@ describe('IrisChatbotWidgetComponent', () => {
             rect: { width: 500, height: 500 },
             deltaRect: { left: -2, top: -3 },
         });
-        expect(component.fullSize).toBeFalse();
+        expect(component.fullSize()).toBeFalse();
 
         // Drag move -> should update transform and data-x/y
         draggableConfig.listeners.move({ target: widget, dx: 7, dy: -3 });
