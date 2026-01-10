@@ -732,10 +732,12 @@
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
             },
             "dockerFlags": {
-                "disableNetworkAccess": {
-                    "title": "Disable internet access when executing the student submission",
-                    "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission.",
-                    "warning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
+                "useCustomNetwork": {
+                    "title": "Use custom network",
+                    "description": "Enable this option to use your own Docker network, or no network at all.",
+                    "defaultOption": "Default (Bridge)",
+                    "noneOption": "None (no network)",
+                    "disableNetworkAccessWarning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
                 },
                 "envVars": {
                     "title": "Environment Variables",

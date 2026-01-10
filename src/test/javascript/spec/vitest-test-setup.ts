@@ -5,6 +5,7 @@
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
  */
 import '@angular/compiler';
+import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
 import { vi } from 'vitest';
 
@@ -15,8 +16,11 @@ import relativeTime from 'dayjs/esm/plugin/relativeTime';
 import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
 import utc from 'dayjs/esm/plugin/utc';
 import timezone from 'dayjs/esm/plugin/timezone';
+import isBetween from 'dayjs/esm/plugin/isBetween';
 import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/esm/plugin/isSameOrAfter';
+import minMax from 'dayjs/esm/plugin/minMax';
+import customParseFormat from 'dayjs/esm/plugin/customParseFormat';
 import isoWeek from 'dayjs/esm/plugin/isoWeek';
 import duration from 'dayjs/esm/plugin/duration';
 
@@ -24,8 +28,11 @@ dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(isBetween);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
+dayjs.extend(minMax);
+dayjs.extend(customParseFormat);
 dayjs.extend(isoWeek);
 dayjs.extend(duration);
 
@@ -100,14 +107,31 @@ window.addEventListener('error', (event) => {
     }
 });
 
-// Suppress console.error for jsdom CSS parsing errors (PrimeNG custom properties)
+// Suppress console.error for jsdom CSS parsing errors (PrimeNG custom properties) and navigation warnings
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
     const msg = args[0];
-    if (typeof msg === 'string' && msg.includes('Cannot create property') && msg.includes('border')) {
-        return; // Suppress CSS variable parsing errors from jsdom
+    if (typeof msg === 'string') {
+        // Suppress CSS variable parsing errors from jsdom
+        if (msg.includes('Cannot create property') && msg.includes('border')) {
+            return;
+        }
+        // Suppress jsdom "Not implemented" warnings for navigation
+        if (msg.includes('Not implemented')) {
+            return;
+        }
     }
     originalConsoleError.apply(console, args);
+};
+
+// Also suppress via process.stderr for jsdom messages that bypass console
+const originalStderrWrite = process.stderr.write.bind(process.stderr);
+process.stderr.write = (chunk: string | Uint8Array, ...args: unknown[]): boolean => {
+    const str = typeof chunk === 'string' ? chunk : chunk.toString();
+    if (str.includes('Not implemented')) {
+        return true;
+    }
+    return originalStderrWrite(chunk, ...(args as [BufferEncoding?, ((err?: Error) => void)?]));
 };
 
 // Patch CSSStyleDeclaration to handle CSS custom properties gracefully

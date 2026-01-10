@@ -16,7 +16,7 @@ import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/te
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
@@ -63,6 +63,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     exerciseFilter: ExerciseFilter;
 
     textExerciseEnabled = false;
+    modelingExerciseEnabled = false;
+    fileUploadExerciseEnabled = false;
 
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
@@ -78,6 +80,8 @@ export class CourseManagementExercisesComponent implements OnInit {
         });
 
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        this.modelingExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
+        this.fileUploadExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
         this.exerciseFilter = new ExerciseFilter('');
     }
     /**

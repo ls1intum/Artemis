@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -15,10 +15,9 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { signal } from '@angular/core';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -53,7 +52,7 @@ describe('Exercise Groups Component', () => {
     let exerciseGroupService: ExerciseGroupService;
     let examManagementService: ExamManagementService;
     let eventManager: EventManager;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let router: Router;
     let alertService: AlertService;
 
@@ -82,7 +81,7 @@ describe('Exercise Groups Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -90,7 +89,6 @@ describe('Exercise Groups Component', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseGroupsComponent);
@@ -99,7 +97,7 @@ describe('Exercise Groups Component', () => {
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
-                modalService = TestBed.inject(NgbModal);
+                dialogService = TestBed.inject(DialogService);
                 alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
 
@@ -204,43 +202,46 @@ describe('Exercise Groups Component', () => {
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
-        'opens the import modal and navigates to import page',
+        'opens the import dialog and navigates to import page',
         fakeAsync((exerciseType: ExerciseType) => {
-            const mockReturnValue = {
-                result: Promise.resolve({ id: 1 } as Exercise),
-                componentInstance: {},
-            } as NgbModalRef;
-            jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const onCloseSubject = new Subject<Exercise | undefined>();
+            const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
+            jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             jest.spyOn(router, 'navigate');
 
             comp.openImportModal(groups[0], exerciseType);
+
+            // Simulate dialog closing with result
+            onCloseSubject.next({ id: 1 } as Exercise);
+            onCloseSubject.complete();
             tick();
 
-            expect(modalService.open).toHaveBeenCalledOnce();
+            expect(dialogService.open).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1]);
-            expect(mockReturnValue.componentInstance.exerciseType).toEqual(exerciseType);
         }),
     );
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
-        'opens the import modal and navigates to import from file page',
+        'opens the import dialog and navigates to import from file page',
         fakeAsync((exerciseType: ExerciseType) => {
-            const mockReturnValue = {
-                result: Promise.resolve({ id: undefined } as Exercise),
-                componentInstance: {},
-            } as NgbModalRef;
-            jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const onCloseSubject = new Subject<Exercise | undefined>();
+            const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
+            jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             jest.spyOn(router, 'navigate');
 
             comp.openImportModal(groups[0], exerciseType);
+
+            // Simulate dialog closing with result (no id means import from file)
+            onCloseSubject.next({ id: undefined } as Exercise);
+            onCloseSubject.complete();
             tick();
-            expect(modalService.open).toHaveBeenCalledOnce();
+
+            expect(dialogService.open).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledWith(
                 ['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import-from-file'],
                 expect.anything(),
             );
-            expect(mockReturnValue.componentInstance.exerciseType).toEqual(exerciseType);
         }),
     );
 
@@ -288,19 +289,19 @@ describe('Exercise Groups Component', () => {
     it('opens the import modal for exercise groups', fakeAsync(() => {
         const alertSpy = jest.spyOn(alertService, 'success');
         const exerciseGroup = { id: 1 } as ExerciseGroup;
-        const mockReturnValue = {
-            componentInstance: {
-                subsequentExerciseGroupSelection: signal<boolean>(false),
-                targetCourseId: signal<number | undefined>(undefined),
-                targetExamId: signal<number | undefined>(undefined),
-            },
-            result: Promise.resolve([exerciseGroup]),
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        const onCloseSubject = new Subject<ExerciseGroup[] | undefined>();
+        const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
+        jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+
         comp.openExerciseGroupImportModal();
+
+        // Simulate dialog closing with result
+        onCloseSubject.next([exerciseGroup]);
+        onCloseSubject.complete();
         tick();
 
-        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(dialogService.open).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
     }));
