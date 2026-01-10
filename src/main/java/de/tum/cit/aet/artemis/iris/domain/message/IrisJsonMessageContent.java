@@ -28,8 +28,6 @@ public class IrisJsonMessageContent extends IrisMessageContent {
 
     @NonNull
     @Column(name = "json_content")
-    @JsonRawValue
-    @JsonProperty(value = "attributes", required = true)
     private String jsonContent = "{}";
 
     @NonNull
@@ -44,6 +42,17 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     public IrisJsonMessageContent(@NonNull JsonNode jsonNode) {
         this.jsonNode = jsonNode;
         this.jsonContent = jsonNode.toPrettyString();
+    }
+
+    @JsonProperty(value = "attributes", required = true)
+    @JsonRawValue
+    public String getAttributes() {
+        return jsonContent;
+    }
+
+    @JsonProperty(value = "attributes", required = true)
+    public void setAttributes(JsonNode attributes) {
+        setJsonNode(attributes);
     }
 
     @Override
