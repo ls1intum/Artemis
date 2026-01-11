@@ -42,9 +42,9 @@
         <div class="list-group-item">
             <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
             <input type="file" accept="image/png, image/jpeg" #fileInput style="display: none" (change)="setUserImage($event)" />
-            @if (user.imageUrl) {
+            @if (user.imageUrl && !imageLoadFailed()) {
                 <div class="position-relative d-inline-block rounded-3 overflow-hidden">
-                    <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" />
+                    <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" (loadingStatus)="onImageLoadingStatus($event)" />
 
                     <button
                         id="delete-course-icon"

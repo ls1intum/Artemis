@@ -1,10 +1,10 @@
-import { Component, ElementRef, Signal, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, Signal, inject, signal, viewChild } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -28,32 +28,40 @@ export class AccountInformationComponent {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private readonly accountService = inject(AccountService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
     private readonly userSettingsService = inject(UserSettingsService);
     private readonly alertService = inject(AlertService);
 
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
+    readonly imageLoadFailed = signal(false);
 
     private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+
+    onImageLoadingStatus(status: ImageLoadingStatus): void {
+        this.imageLoadFailed.set(status === ImageLoadingStatus.ERROR);
+    }
 
     setUserImage(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
         if (element.files && element.files.length > 0) {
-            const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-            modalRef.componentInstance.roundCropper = false;
-            modalRef.componentInstance.fileFormat = 'jpeg';
-            modalRef.componentInstance.uploadFile = element.files[0];
+            const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
+                header: '',
+                width: '500px',
+                data: {
+                    uploadFile: element.files[0],
+                    roundCropper: false,
+                    fileFormat: 'jpeg',
+                },
+            });
             // Use 'image/jpeg' since the cropper outputs JPEG format regardless of input
             const mimeType = 'image/jpeg';
-            modalRef.result
-                .then((result: string) => {
-                    if (result) {
-                        const base64Data = result.replace('data:image/jpeg;base64,', '');
-                        const fileToUpload = base64StringToBlob(base64Data, mimeType);
-                        this.updateProfilePicture(fileToUpload);
-                    }
-                })
-                .catch(() => undefined); // Handle modal dismissal
+            dialogRef?.onClose.subscribe((result: string | undefined) => {
+                if (result) {
+                    const base64Data = result.replace('data:image/jpeg;base64,', '');
+                    const fileToUpload = base64StringToBlob(base64Data, mimeType);
+                    this.updateProfilePicture(fileToUpload);
+                }
+            });
         }
         element.value = '';
     }
@@ -74,6 +82,7 @@ export class AccountInformationComponent {
             next: (response: HttpResponse<User>) => {
                 const user = response.body;
                 if (user?.imageUrl !== undefined) {
+                    this.imageLoadFailed.set(false);
                     this.accountService.setImageUrl(user.imageUrl);
                 }
             },
