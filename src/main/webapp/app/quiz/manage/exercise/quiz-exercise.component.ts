@@ -71,9 +71,10 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                    exercise.visibleToStudents = ExerciseService.isExerciseVisibleToStudents(exercise);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-                    exercise.status = this.quizExerciseService.getStatus(exercise);
                     exercise.isEditable = (exercise.isEditable ?? true) && isQuizEditable(exercise);
+                    exercise.quizStarted = exercise.status === QuizStatus.ACTIVE;
                     this.selectedExercises = [];
                 });
                 this.quizExercises.set(quizExercises);

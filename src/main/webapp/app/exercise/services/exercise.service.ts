@@ -586,4 +586,9 @@ export class ExerciseService {
     static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
         return exercise.categories?.map((category) => JSON.stringify(category));
     }
+
+    static isExerciseVisibleToStudents(exercise: Exercise): boolean {
+        const now = dayjs();
+        return exercise.releaseDate ? now.isSameOrAfter(exercise.releaseDate) : false;
+    }
 }

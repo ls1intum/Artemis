@@ -98,7 +98,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     startBatch(quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
             next: () => {
-                this.loadOne.emit(this.quizExercise().id!);
+                this.quizExercise().quizBatches!.find((batch) => batch.id === quizBatchId)!.started = true;
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
