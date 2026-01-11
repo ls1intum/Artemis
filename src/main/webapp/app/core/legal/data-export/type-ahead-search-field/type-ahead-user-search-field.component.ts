@@ -65,14 +65,16 @@ export class TypeAheadUserSearchFieldComponent {
         // When user selects from typeahead, currentValue is a User object
         // We extract the login string for the parent component
         const user = typeof currentValue === 'string' ? undefined : currentValue;
+        // Compute normalized string value for validation (handles User without login)
+        const normalizedValue = typeof currentValue === 'string' ? currentValue : (currentValue.login ?? '');
+
         if (user?.login) {
             this.loginOrName.set(user.login);
         }
-        const value = this.loginOrName();
-        this.searchQueryTooShort.set(typeof value === 'string' && value.length < this.MIN_SEARCH_QUERY_LENGTH);
+        this.searchQueryTooShort.set(normalizedValue.length < this.MIN_SEARCH_QUERY_LENGTH);
     }
 
-    resultFormatter = (result: User): string => result.name! + ' (' + result.login! + ')';
+    resultFormatter = (result: User): string => (result.name ?? '<no name>') + ' (' + (result.login ?? '<no login>') + ')';
 
     inputFormatter(input: User | string): string {
         return typeof input === 'string' ? input : (input.login ?? '');
