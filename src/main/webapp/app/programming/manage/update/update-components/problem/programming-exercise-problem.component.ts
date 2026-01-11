@@ -35,8 +35,6 @@ import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscr
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
-import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.model';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -132,16 +130,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
 
     // Injected services
     private fileService = inject(FileService);
-    private inlineCommentService = inject(InlineCommentService);
 
     // Inline comment state
-    protected pendingComments = this.inlineCommentService.getPendingComments();
-    protected hasPendingComments = this.inlineCommentService.hasPendingComments;
-    protected pendingCount = this.inlineCommentService.pendingCount;
-    protected applyingCommentId = signal<string | undefined>(undefined);
-    protected isApplyingAll = signal(false);
-    /** True if any AI operation is in progress (single comment, all comments, refinement, or generation) */
-    protected isAnyApplying = computed(() => this.isApplyingAll() || this.applyingCommentId() !== undefined || this.isRefining() || this.isGenerating());
+    /** True if any AI operation is in progress (refinement or generation) */
+    protected isAnyApplying = computed(() => this.isRefining() || this.isGenerating());
 
     /**
      * Lifecycle hook called after every check of the component's view.
@@ -175,11 +167,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                 },
             });
         }
-
-        // Initialize inline comment service with exercise context
-        if (exercise?.id) {
-            this.inlineCommentService.setExerciseContext(exercise.id);
-        }
     }
 
     /**
@@ -196,30 +183,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         // Reset global generation/refinement flags
         this.isGenerating.set(false);
         this.isRefining.set(false);
-
-        // Reset inline comment application states
-        const wasApplyingSingle = this.applyingCommentId() !== undefined;
-        const wasApplyingAll = this.isApplyingAll();
-
-        if (wasApplyingSingle) {
-            const commentId = this.applyingCommentId();
-            this.applyingCommentId.set(undefined);
-            if (commentId) {
-                // Revert the comment status from 'applying' back to 'pending'
-                this.inlineCommentService.updateStatus(commentId, 'pending');
-            }
-        }
-
-        if (wasApplyingAll) {
-            this.isApplyingAll.set(false);
-            // Revert all comments that were 'applying' back to 'pending'
-            const comments = this.pendingComments();
-            comments.forEach((c) => {
-                if (c.status === 'applying') {
-                    this.inlineCommentService.updateStatus(c.id, 'pending');
-                }
-            });
-        }
     }
 
     /**
@@ -420,186 +383,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             exercise.competencyLinks = competencyLinks;
             this.programmingExerciseChange.emit(exercise);
         }
-    }
-
-    // Inline Comment Methods
-
-    /**
-     * Applies a single inline comment using AI refinement.
-     */
-    applySingleComment(comment: InlineComment): void {
-        const exercise = this.programmingExercise();
-        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
-
-        if (!courseId || !exercise?.problemStatement) {
-            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-            return;
-        }
-
-        this.applyingCommentId.set(comment.id);
-        this.inlineCommentService.updateStatus(comment.id, 'applying');
-
-        const apiComment: ApiInlineComment = {
-            startLine: comment.startLine,
-            endLine: comment.endLine,
-            instruction: comment.instruction,
-        };
-
-        const request: ProblemStatementRefinementRequest = {
-            problemStatementText: exercise.problemStatement,
-            inlineComments: [apiComment],
-        };
-
-        this.currentGenerationSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.applyingCommentId.set(undefined);
-                    this.currentGenerationSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Store original and refined content for diff view
-                        this.originalProblemStatement = exercise.problemStatement || '';
-                        this.refinedProblemStatement = response.refinedProblemStatement;
-                        this.diffContentSet = false;
-                        this.showDiff = true;
-
-                        // Mark comment as applied and remove from pending
-                        this.inlineCommentService.markApplied(comment.id);
-                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applySuccess');
-                    } else {
-                        this.inlineCommentService.updateStatus(comment.id, 'error');
-                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-                    }
-                },
-                error: () => {
-                    this.inlineCommentService.updateStatus(comment.id, 'error');
-                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-                },
-            });
-    }
-
-    /**
-     * Applies all pending inline comments in batch using AI refinement.
-     */
-    applyAllComments(): void {
-        const exercise = this.programmingExercise();
-        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
-        const comments = this.pendingComments();
-
-        if (!courseId || !exercise?.problemStatement || comments.length === 0) {
-            return;
-        }
-
-        this.isApplyingAll.set(true);
-
-        // Update status for all comments
-        comments.forEach((c) => this.inlineCommentService.updateStatus(c.id, 'applying'));
-
-        const apiComments: ApiInlineComment[] = comments.map((c) => ({
-            startLine: c.startLine,
-            endLine: c.endLine,
-            instruction: c.instruction,
-        }));
-
-        const request: ProblemStatementRefinementRequest = {
-            problemStatementText: exercise.problemStatement,
-            inlineComments: apiComments,
-        };
-
-        this.currentGenerationSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isApplyingAll.set(false);
-                    this.currentGenerationSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Store original and refined content for diff view
-                        this.originalProblemStatement = exercise.problemStatement || '';
-                        this.refinedProblemStatement = response.refinedProblemStatement;
-                        this.diffContentSet = false;
-                        this.showDiff = true;
-
-                        // Mark all comments as applied
-                        const commentIds = comments.map((c) => c.id);
-                        this.inlineCommentService.markAllApplied(commentIds);
-                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applyAllSuccess');
-                    } else {
-                        comments.forEach((c) => this.inlineCommentService.updateStatus(c.id, 'error'));
-                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyAllError');
-                    }
-                },
-                error: () => {
-                    comments.forEach((c) => this.inlineCommentService.updateStatus(c.id, 'error'));
-                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyAllError');
-                },
-            });
-    }
-
-    /**
-     * Handles saving an inline comment (adds to pending list or updates existing).
-     */
-    onSaveInlineComment(comment: InlineComment): void {
-        const existingComment = this.inlineCommentService.getComment(comment.id);
-        if (existingComment) {
-            // Update existing comment's instruction
-            this.inlineCommentService.updateStatus(comment.id, 'pending');
-        } else {
-            // Add new comment
-            this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
-        }
-    }
-
-    /**
-     * Handles applying an inline comment immediately.
-     */
-    onApplyInlineComment(comment: InlineComment): void {
-        // First add to service, then apply
-        if (!this.inlineCommentService.getComment(comment.id)) {
-            this.inlineCommentService.addExistingComment(comment);
-        }
-        this.applySingleComment(comment);
-    }
-
-    /**
-     * Handles deleting an inline comment.
-     */
-    onDeleteInlineComment(commentId: string): void {
-        this.inlineCommentService.removeComment(commentId);
-    }
-
-    /**
-     * Clears all pending inline comments.
-     */
-    clearAllComments(): void {
-        this.inlineCommentService.clearAll();
-    }
-
-    /**
-     * Cancels the current inline comment apply operation.
-     */
-    onCancelInlineCommentApply(): void {
-        // Cancel the current API subscription
-        if (this.currentGenerationSubscription) {
-            this.currentGenerationSubscription.unsubscribe();
-            this.currentGenerationSubscription = undefined;
-        }
-
-        // Reset the applying state
-        const commentId = this.applyingCommentId();
-        if (commentId) {
-            // Reset comment status to pending so user can try again
-            this.inlineCommentService.updateStatus(commentId, 'pending');
-        }
-        this.applyingCommentId.set(undefined);
-        this.isApplyingAll.set(false);
     }
 
     /**
