@@ -17,7 +17,6 @@ import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemSta
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
-import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
@@ -39,20 +38,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         warning: jest.fn(),
     };
 
-    const mockInlineCommentService = {
-        getPendingComments: jest.fn(() => () => []),
-        pendingCount: jest.fn(() => 0),
-        hasPendingComments: jest.fn(() => false),
-        updateStatus: jest.fn(),
-        markApplied: jest.fn(),
-        markAllApplied: jest.fn(),
-        clearAll: jest.fn(),
-        getComment: jest.fn(),
-        addExistingComment: jest.fn(),
-        removeComment: jest.fn(),
-        setExerciseContext: jest.fn(),
-    };
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -62,7 +47,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
                 { provide: AlertService, useValue: mockAlertService },
-                { provide: InlineCommentService, useValue: mockInlineCommentService },
+
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -318,51 +303,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.handleProblemStatementAction();
 
         expect(refineSpy).toHaveBeenCalled();
-    });
-
-    it('should clear all comments', () => {
-        comp.clearAllComments();
-
-        expect(mockInlineCommentService.clearAll).toHaveBeenCalled();
-    });
-
-    it('should save inline comment (new)', () => {
-        mockInlineCommentService.getComment.mockReturnValue(undefined);
-        const comment = { id: 'c1', startLine: 1, endLine: 2, instruction: 'Fix this', status: 'pending' as const, createdAt: new Date() };
-
-        comp.onSaveInlineComment(comment);
-
-        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith({
-            id: comment.id,
-            startLine: comment.startLine,
-            endLine: comment.endLine,
-            instruction: comment.instruction,
-            status: 'pending',
-            createdAt: comment.createdAt,
-        });
-    });
-
-    it('should update existing inline comment', () => {
-        const existingComment = { id: 'c1', startLine: 1, endLine: 2, instruction: 'Fix', status: 'applied' as const, createdAt: new Date() };
-        mockInlineCommentService.getComment.mockReturnValue(existingComment);
-
-        comp.onSaveInlineComment(existingComment);
-
-        expect(mockInlineCommentService.updateStatus).toHaveBeenCalledWith('c1', 'pending');
-    });
-
-    it('should cancel inline comment apply operation gracefully', () => {
-        mockInlineCommentService.updateStatus.mockClear();
-
-        comp.onCancelInlineCommentApply();
-
-        expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
-    });
-
-    it('should delete inline comment', () => {
-        comp.onDeleteInlineComment('c1');
-
-        expect(mockInlineCommentService.removeComment).toHaveBeenCalledWith('c1');
     });
 
     it('should return translated placeholder', () => {
