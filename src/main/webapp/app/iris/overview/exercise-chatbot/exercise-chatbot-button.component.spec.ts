@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -31,9 +31,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
-    let mockParamsSubject: Subject<any>;
-    let mockQueryParamsSubject: Subject<any>;
-    let mockDialogAfterClosed: Subject<void>;
+    let mockParamsSubject: any;
     let accountService: AccountService;
 
     const statusMock = {
@@ -48,18 +46,17 @@ describe('ExerciseChatbotButtonComponent', () => {
 
     beforeEach(async () => {
         mockParamsSubject = new Subject();
-        mockQueryParamsSubject = new Subject();
-        mockDialogAfterClosed = new Subject<void>();
         mockActivatedRoute = {
-            params: mockParamsSubject.asObservable(),
-            queryParams: mockQueryParamsSubject.asObservable(),
+            params: mockParamsSubject,
         } as unknown as ActivatedRoute;
 
         mockDialogClose = jest.fn();
 
         mockDialog = {
             open: jest.fn().mockReturnValue({
-                afterClosed: jest.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
+                afterClosed: jest.fn().mockReturnValue({
+                    subscribe: jest.fn(),
+                }),
                 close: mockDialogClose,
             }),
             closeAll: jest.fn(),
@@ -92,8 +89,6 @@ describe('ExerciseChatbotButtonComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
                 component = fixture.componentInstance;
-                // Set required input before detectChanges to avoid signal errors
-                fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
                 fixture.detectChanges();
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(mockCourseId);
@@ -115,7 +110,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
         const spy = jest.spyOn(chatService, 'switchTo');
 
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
+        component.mode = ChatServiceMode.PROGRAMMING_EXERCISE;
         fixture.changeDetectorRef.detectChanges();
 
         mockParamsSubject.next({
@@ -133,7 +128,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
         const spy = jest.spyOn(chatService, 'switchTo');
 
-        fixture.componentRef.setInput('mode', ChatServiceMode.TEXT_EXERCISE);
+        component.mode = ChatServiceMode.TEXT_EXERCISE;
         fixture.changeDetectorRef.detectChanges();
 
         mockParamsSubject.next({
@@ -149,8 +144,8 @@ describe('ExerciseChatbotButtonComponent', () => {
         // given
         component.openChat();
 
-        // when - destroy the fixture (triggers destroyRef.onDestroy)
-        fixture.destroy();
+        // when
+        component.ngOnDestroy();
 
         // then
         expect(mockDialogClose).toHaveBeenCalled();
@@ -161,15 +156,14 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
-        // when - tick a small amount (not enough to trigger the 10s message clear timeout), then detect changes
-        tick(100);
-        fixture.detectChanges();
+        // when
+        tick();
+        fixture.changeDetectorRef.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
@@ -182,61 +176,41 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
-
-        // Wait for message to be received, then open chat
-        tick(100);
-        fixture.detectChanges();
-
-        // Verify indicator shows when chat is closed
-        expect(component.chatOpen()).toBeFalse();
-        let unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
-
-        // Now open chat
         component.openChat();
+
+        // when
         tick();
-        fixture.detectChanges();
-
-        // then - when chat is open, the entire button section (including unread indicator) should not be rendered
-        expect(component.chatOpen()).toBeTrue();
-        unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).toBeNull();
-        discardPeriodicTasks();
-    }));
-
-    it('should open chatbot if irisQuestion is provided in the queryParams', fakeAsync(() => {
-        // given - set the input first
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-        fixture.detectChanges();
-
-        // when - emit queryParams with irisQuestion
-        mockQueryParamsSubject.next({ irisQuestion: 'Can you explain me the error I got?' });
-        tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // then
-        expect(component.chatOpen()).toBeTrue();
-        discardPeriodicTasks();
+        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        expect(unreadIndicatorElement).toBeNull();
+        flush();
     }));
 
-    it('should not open the chatbot if no irisQuestion is provided in the queryParams', fakeAsync(() => {
-        // given - set the input first
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-        fixture.detectChanges();
+    it('should open chatbot if irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+        const activatedRoute = TestBed.inject(ActivatedRoute);
 
-        // chatOpen starts as false
-        expect(component.chatOpen()).toBeFalse();
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
 
-        // when - emit empty query params
-        mockQueryParamsSubject.next({});
-        tick();
+        component.ngOnInit();
 
-        // then - chatOpen should still be false
-        expect(component.chatOpen()).toBeFalse();
-    }));
+        expect(component.chatOpen).toBeTrue();
+    });
+
+    it('should not open the chatbot if no irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.chatOpen).toBeFalse();
+    });
 });
