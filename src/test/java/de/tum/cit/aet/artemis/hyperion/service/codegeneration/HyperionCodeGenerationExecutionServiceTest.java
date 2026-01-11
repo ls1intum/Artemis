@@ -156,8 +156,8 @@ class HyperionCodeGenerationExecutionServiceTest {
     void generateAndCompileCode_withSuccessfulRun_createsExerciseVersion() throws Exception {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
         Repository repository = mock(Repository.class);
-        ObjectId originalCommitId = mock(ObjectId.class);
-        ObjectId newCommitId = mock(ObjectId.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.setId(99L);
         solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
@@ -165,8 +165,6 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(originalCommitId.getName()).thenReturn("orig-hash");
-        when(newCommitId.getName()).thenReturn("new-hash");
         when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
