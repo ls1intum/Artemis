@@ -1,50 +1,50 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
-    @if (currentUser?.internal) {
+    @if (currentUser()?.internal) {
         <a class="btn btn-primary btn-sm" [routerLink]="['/account', 'settings']">
             <fa-icon [icon]="faPen" />
             <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.editAccountSettings"></span>
         </a>
     }
 </div>
-@if (currentUser) {
+@if (currentUser(); as user) {
     <div class="list-group d-block">
-        @if (currentUser.name) {
+        @if (user.name) {
             <div class="list-group-item">
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
-                <dd>{{ currentUser.name }}</dd>
+                <dd>{{ user.name }}</dd>
             </div>
         }
-        @if (currentUser.login) {
+        @if (user.login) {
             <div class="list-group-item">
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
-                <dd>{{ currentUser.login }}</dd>
+                <dd>{{ user.login }}</dd>
             </div>
         }
-        @if (currentUser.email) {
+        @if (user.email) {
             <div class="list-group-item">
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
-                <dd>{{ currentUser.email }}</dd>
+                <dd>{{ user.email }}</dd>
             </div>
         }
-        @if (currentUser.visibleRegistrationNumber) {
+        @if (user.visibleRegistrationNumber) {
             <div class="list-group-item">
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
-                <dd>{{ currentUser.visibleRegistrationNumber }}</dd>
+                <dd>{{ user.visibleRegistrationNumber }}</dd>
             </div>
         }
-        @if (currentUser.createdDate) {
+        @if (user.createdDate) {
             <div class="list-group-item">
                 <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
-                <dd>{{ currentUser.createdDate | artemisDate }}</dd>
+                <dd>{{ user.createdDate | artemisDate }}</dd>
             </div>
         }
         <div class="list-group-item">
             <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
             <input type="file" accept="image/png, image/jpeg" #fileInput style="display: none" (change)="setUserImage($event)" />
-            @if (currentUser.imageUrl) {
+            @if (user.imageUrl) {
                 <div class="position-relative d-inline-block rounded-3 overflow-hidden">
-                    <jhi-image class="secured-image" [src]="addPublicFilePrefix(currentUser.imageUrl)!" />
+                    <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" />
 
                     <button
                         id="delete-course-icon"
@@ -64,8 +64,7 @@
                         <fa-icon [icon]="faPen" />
                     </button>
                 </div>
-            }
-            @if (!currentUser.imageUrl) {
+            } @else {
                 <button (click)="triggerUserImageFileInput()" class="btn btn-primary btn-sm mt-1">
                     <fa-icon [icon]="faPlus" />
                     <span class="ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>

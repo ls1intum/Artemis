@@ -9,19 +9,22 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountInformationComponent } from 'app/core/user/settings/account-information/account-information.component';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
+import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
     let comp: AccountInformationComponent;
 
-    let accountServiceMock: { getAuthenticationState: jest.Mock };
+    let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: jest.Mock };
     let userSettingsServiceMock: { updateProfilePicture: jest.Mock; removeProfilePicture: jest.Mock };
     let modalServiceMock: { open: jest.Mock };
     let alertServiceMock: { addAlert: jest.Mock };
 
     beforeEach(async () => {
         accountServiceMock = {
-            getAuthenticationState: jest.fn(),
+            userIdentity: signal<User | undefined>({ id: 99, internal: true } as User),
+            setImageUrl: jest.fn(),
         };
         userSettingsServiceMock = {
             updateProfilePicture: jest.fn(),
@@ -41,20 +44,15 @@ describe('AccountInformationComponent', () => {
                 { provide: NgbModal, useValue: modalServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideRouter([]),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
     });
 
-    beforeEach(() => {
-        accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 99 } as User));
-        comp.ngOnInit();
-    });
-
-    it('should initialize and fetch current user', () => {
-        expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
-        expect(comp.currentUser).toEqual({ id: 99 });
+    it('should initialize and have current user from signal', () => {
+        expect(comp.currentUser()).toEqual({ id: 99, internal: true });
     });
 
     it('should open image cropper modal when setting user image', () => {
@@ -66,15 +64,16 @@ describe('AccountInformationComponent', () => {
         expect(modalServiceMock.open).toHaveBeenCalled();
     });
 
-    it('should call removeProfilePicture when deleting user image', () => {
+    it('should call removeProfilePicture and setImageUrl when deleting user image', () => {
         userSettingsServiceMock.removeProfilePicture.mockReturnValue(of(new HttpResponse({ status: 200 })));
 
         comp.deleteUserImage();
 
         expect(userSettingsServiceMock.removeProfilePicture).toHaveBeenCalled();
+        expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith(undefined);
     });
 
-    it('should update user image on successful upload', () => {
+    it('should update user image on successful upload via setUserImage flow', async () => {
         const userResponse = new HttpResponse<User>({
             body: {
                 imageUrl: 'new-image-url',
@@ -83,43 +82,51 @@ describe('AccountInformationComponent', () => {
         });
         userSettingsServiceMock.updateProfilePicture.mockReturnValue(of(userResponse));
 
-        comp['subscribeToUpdateProfilePictureResponse'](userSettingsServiceMock.updateProfilePicture());
+        const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
+        const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
+        modalServiceMock.open.mockReturnValue({
+            componentInstance: {},
+            result: Promise.resolve('data:image/jpeg;base64,dGVzdA=='),
+        });
 
-        expect(comp.currentUser!.imageUrl).toBe('new-image-url');
+        comp.setUserImage(event);
+
+        // Wait for the modal result promise
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(userSettingsServiceMock.updateProfilePicture).toHaveBeenCalled();
+        expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith('new-image-url');
     });
 
-    it('should show error alert when image upload fails', () => {
+    it('should show error alert when image upload fails', async () => {
         const errorResponse = new HttpErrorResponse({ error: { title: 'Upload failed' }, status: 400 });
         userSettingsServiceMock.updateProfilePicture.mockReturnValue(throwError(() => errorResponse));
 
-        comp['subscribeToUpdateProfilePictureResponse'](userSettingsServiceMock.updateProfilePicture());
+        const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
+        const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
+        modalServiceMock.open.mockReturnValue({
+            componentInstance: {},
+            result: Promise.resolve('data:image/jpeg;base64,dGVzdA=='),
+        });
+
+        comp.setUserImage(event);
+
+        // Wait for the modal result promise
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Upload failed' }));
     });
 
     it('should show error alert when profile picture removal fails', () => {
         const errorResponse = new HttpErrorResponse({ error: { title: 'Removal failed' }, status: 400 });
+        userSettingsServiceMock.removeProfilePicture.mockReturnValue(throwError(() => errorResponse));
 
-        comp['onProfilePictureRemoveError'](errorResponse);
+        comp.deleteUserImage();
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: expect.anything(),
                 message: 'Removal failed',
-                disableTranslation: true,
-            }),
-        );
-    });
-
-    it('should show error alert when profile picture upload fails', () => {
-        const errorResponse = new HttpErrorResponse({ error: { title: 'Upload failed' }, status: 400 });
-
-        comp['onProfilePictureUploadError'](errorResponse);
-
-        expect(alertServiceMock.addAlert).toHaveBeenCalledWith(
-            expect.objectContaining({
-                type: expect.anything(),
-                message: 'Upload failed',
                 disableTranslation: true,
             }),
         );

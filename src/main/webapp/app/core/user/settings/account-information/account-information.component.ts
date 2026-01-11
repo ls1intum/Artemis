@@ -1,7 +1,6 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, Signal, inject, viewChild } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Observable } from 'rxjs';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
@@ -22,29 +21,22 @@ import { RouterLink } from '@angular/router';
     styleUrls: ['../user-settings.scss'],
     imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe, RouterLink],
 })
-export class AccountInformationComponent implements OnInit {
+export class AccountInformationComponent {
     protected readonly faPen = faPencil;
     protected readonly faTrash = faTrash;
     protected readonly faPlus = faPlus;
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
-    private accountService = inject(AccountService);
-    private modalService = inject(NgbModal);
-    private userSettingsService = inject(UserSettingsService);
-    private alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly modalService = inject(NgbModal);
+    private readonly userSettingsService = inject(UserSettingsService);
+    private readonly alertService = inject(AlertService);
 
-    currentUser?: User;
-    croppedImage?: string;
+    readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
+    private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
-    ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user) => {
-            this.currentUser = user;
-        });
-    }
-
-    setUserImage(event: Event) {
+    setUserImage(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
         if (element.files && element.files.length > 0) {
             const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
@@ -52,64 +44,42 @@ export class AccountInformationComponent implements OnInit {
             modalRef.componentInstance.fileFormat = 'jpeg';
             modalRef.componentInstance.uploadFile = element.files[0];
             const mimeType = element.files[0].type;
-            modalRef.result.then((result: any) => {
+            modalRef.result.then((result: string) => {
                 if (result) {
                     const base64Data = result.replace('data:image/jpeg;base64,', '');
                     const fileToUpload = base64StringToBlob(base64Data, mimeType);
-                    this.subscribeToUpdateProfilePictureResponse(this.userSettingsService.updateProfilePicture(fileToUpload));
+                    this.updateProfilePicture(fileToUpload);
                 }
             });
         }
         element.value = '';
     }
 
-    deleteUserImage() {
-        this.subscribeToRemoveProfilePictureResponse(this.userSettingsService.removeProfilePicture());
-    }
-
-    triggerUserImageFileInput() {
-        this.fileInput.nativeElement.click();
-    }
-
-    private subscribeToUpdateProfilePictureResponse(result: Observable<HttpResponse<User>>) {
-        result.subscribe({
-            next: (response: HttpResponse<User>) => this.onProfilePictureUploadSuccess(response.body),
-            error: (res: HttpErrorResponse) => this.onProfilePictureUploadError(res),
+    deleteUserImage(): void {
+        this.userSettingsService.removeProfilePicture().subscribe({
+            next: () => this.accountService.setImageUrl(undefined),
+            error: (error: HttpErrorResponse) => this.showErrorAlert(error),
         });
     }
 
-    private subscribeToRemoveProfilePictureResponse(result: Observable<HttpResponse<User>>) {
-        result.subscribe({
-            next: () => this.onProfilePictureRemoveSuccess(),
-            error: (res: HttpErrorResponse) => this.onProfilePictureRemoveError(res),
+    triggerUserImageFileInput(): void {
+        this.fileInput().nativeElement.click();
+    }
+
+    private updateProfilePicture(file: Blob): void {
+        this.userSettingsService.updateProfilePicture(file).subscribe({
+            next: (response: HttpResponse<User>) => {
+                const user = response.body;
+                if (user?.imageUrl !== undefined) {
+                    this.accountService.setImageUrl(user.imageUrl);
+                }
+            },
+            error: (error: HttpErrorResponse) => this.showErrorAlert(error),
         });
     }
 
-    private onProfilePictureUploadSuccess(user: User | null) {
-        if (user !== null && user.imageUrl !== undefined) {
-            this.currentUser!.imageUrl = user.imageUrl;
-            this.accountService.setImageUrl(user.imageUrl);
-        }
-    }
-
-    private onProfilePictureUploadError(error: HttpErrorResponse) {
-        const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
-        if (errorMessage) {
-            this.alertService.addAlert({
-                type: AlertType.DANGER,
-                message: errorMessage,
-                disableTranslation: true,
-            });
-        }
-    }
-
-    private onProfilePictureRemoveSuccess() {
-        this.currentUser!.imageUrl = undefined;
-        this.accountService.setImageUrl(undefined);
-    }
-
-    private onProfilePictureRemoveError(error: HttpErrorResponse) {
-        const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
+    private showErrorAlert(error: HttpErrorResponse): void {
+        const errorMessage = error.error?.title ?? error.headers?.get('x-artemisapp-alert');
         if (errorMessage) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,

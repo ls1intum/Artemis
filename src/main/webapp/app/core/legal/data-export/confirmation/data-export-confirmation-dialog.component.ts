@@ -1,5 +1,6 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Component, DestroyRef, OnInit, OutputEmitterRef, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -14,53 +15,44 @@ import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/ty
     templateUrl: './data-export-confirmation-dialog.component.html',
     imports: [FormsModule, TranslateDirective, TypeAheadUserSearchFieldComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
-export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy {
-    private activeModal = inject(NgbActiveModal);
-    private alertService = inject(AlertService);
+export class DataExportConfirmationDialogComponent implements OnInit {
+    private readonly activeModal = inject(NgbActiveModal);
+    private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
-    private dialogErrorSubscription: Subscription;
+    readonly dataExportConfirmationForm = viewChild.required<NgForm>('dataExportConfirmationForm');
+
+    // These are set from the dialog service, not as regular inputs
     dialogError: Observable<string>;
-    @Output() dataExportRequest: EventEmitter<void>;
-    @Output() dataExportRequestForAnotherUser: EventEmitter<string>;
-    @ViewChild('dataExportConfirmationForm', { static: true }) dataExportConfirmationForm: NgForm;
+    dataExportRequest: OutputEmitterRef<void>;
+    dataExportRequestForAnotherUser: OutputEmitterRef<string>;
 
-    submitDisabled: boolean;
-    enteredLogin: string;
-    expectedLogin: string;
-    adminDialog = false;
-    requestForAnotherUser = false;
-    expectedLoginOfOtherUser: string;
-    deleteQuestion: string;
-    confirmationTextHint: string;
-    ownLogin: string;
+    readonly submitDisabled = signal(false);
+    readonly enteredLogin = signal('');
+    readonly expectedLogin = signal('');
+    readonly adminDialog = signal(false);
+    readonly requestForAnotherUser = signal(false);
+    readonly expectedLoginOfOtherUser = signal('');
+    readonly confirmationTextHint = signal('artemisApp.dataExport.typeLoginToConfirm');
 
-    // Icons
-    faBan = faBan;
-    faSpinner = faSpinner;
-    faCheck = faCheck;
+    ownLogin = '';
+
+    protected readonly faBan = faBan;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faCheck = faCheck;
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        this.dialogErrorSubscription = this.dialogError.subscribe((errorMessage: string) => {
+        this.dialogError.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((errorMessage: string) => {
             if (errorMessage === '') {
                 this.clear();
             } else {
-                this.submitDisabled = false;
+                this.submitDisabled.set(false);
                 this.alertService.error(errorMessage);
             }
         });
-        this.confirmationTextHint = 'artemisApp.dataExport.typeLoginToConfirm';
-    }
-
-    /**
-     * Life cycle hook called by Angular for cleanup just before Angular destroys the component
-     */
-    ngOnDestroy(): void {
-        if (this.dialogErrorSubscription) {
-            this.dialogErrorSubscription.unsubscribe();
-        }
     }
 
     /**
@@ -75,26 +67,27 @@ export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy 
      * Emits the data export request event
      */
     confirmDataExportRequest(): void {
-        this.submitDisabled = true;
+        this.submitDisabled.set(true);
         // we need to emit the login if it is a request by an admin for another user, so we can make the request for the data export using the login
-        if (this.requestForAnotherUser) {
-            this.dataExportRequestForAnotherUser.emit(this.expectedLogin);
+        if (this.requestForAnotherUser()) {
+            this.dataExportRequestForAnotherUser.emit(this.expectedLogin());
         } else {
             this.dataExportRequest.emit();
         }
     }
 
-    onRequestDataExportForOtherUserChanged(event: any) {
-        if (event.target.checked) {
-            this.ownLogin = this.expectedLogin;
-            this.expectedLogin = this.expectedLoginOfOtherUser ?? '';
-            this.confirmationTextHint = 'artemisApp.dataExport.typeUserLoginToConfirm';
-            this.enteredLogin = '';
+    onRequestDataExportForOtherUserChanged(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        if (target.checked) {
+            this.ownLogin = this.expectedLogin();
+            this.expectedLogin.set(this.expectedLoginOfOtherUser() ?? '');
+            this.confirmationTextHint.set('artemisApp.dataExport.typeUserLoginToConfirm');
+            this.enteredLogin.set('');
         } else {
-            this.enteredLogin = '';
-            this.expectedLogin = this.ownLogin;
-            this.confirmationTextHint = 'artemisApp.dataExport.typeLoginToConfirm';
-            this.expectedLoginOfOtherUser = '';
+            this.enteredLogin.set('');
+            this.expectedLogin.set(this.ownLogin);
+            this.confirmationTextHint.set('artemisApp.dataExport.typeLoginToConfirm');
+            this.expectedLoginOfOtherUser.set('');
         }
     }
 }

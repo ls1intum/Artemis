@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -21,75 +22,80 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [DataExportRequestButtonDirective, ButtonComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class DataExportComponent implements OnInit {
-    private dataExportService = inject(DataExportService);
-    private accountService = inject(AccountService);
-    private alertService = inject(AlertService);
-    private route = inject(ActivatedRoute);
+    private readonly dataExportService = inject(DataExportService);
+    private readonly accountService = inject(AccountService);
+    private readonly alertService = inject(AlertService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
-    readonly ActionType = ActionType;
-    readonly ButtonSize = ButtonSize;
-    readonly ButtonType = ButtonType;
-    readonly DataExportState = DataExportState;
+    protected readonly ActionType = ActionType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly DataExportState = DataExportState;
 
-    protected dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    canDownload = false;
-    canRequestDataExport = false;
-    currentLogin: string | undefined;
-    dataExportId: number;
-    downloadMode = false;
-    titleKey: string;
-    description: string;
-    state?: DataExportState;
-    dataExport: DataExport = new DataExport();
-    isAdmin = false;
+    readonly canDownload = signal(false);
+    readonly canRequestDataExport = signal(false);
+    readonly currentLogin = signal<string | undefined>(undefined);
+    readonly dataExportId = signal<number | undefined>(undefined);
+    readonly downloadMode = signal(false);
+    readonly titleKey = signal('');
+    readonly description = signal('');
+    readonly state = signal<DataExportState | undefined>(undefined);
+    readonly dataExport = signal<DataExport>(new DataExport());
+    readonly isAdmin = signal(false);
 
-    ngOnInit() {
-        this.currentLogin = this.accountService.userIdentity()?.login;
-        this.isAdmin = this.accountService.isAdmin();
-        this.route.params.subscribe((params) => {
+    ngOnInit(): void {
+        this.currentLogin.set(this.accountService.userIdentity()?.login);
+        this.isAdmin.set(this.accountService.isAdmin());
+
+        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             if (params['id']) {
-                this.downloadMode = true;
-                this.dataExportId = params['id'];
+                this.downloadMode.set(true);
+                this.dataExportId.set(params['id']);
             }
         });
 
-        if (this.downloadMode) {
-            this.titleKey = 'artemisApp.dataExport.titleDownload';
-            this.description = 'artemisApp.dataExport.descriptionDownload';
-            this.dataExportService.canDownloadSpecificDataExport(this.dataExportId).subscribe((canDownloadDataExport) => {
-                this.canDownload = canDownloadDataExport;
+        if (this.downloadMode()) {
+            this.titleKey.set('artemisApp.dataExport.titleDownload');
+            this.description.set('artemisApp.dataExport.descriptionDownload');
+            this.dataExportService.canDownloadSpecificDataExport(this.dataExportId()!).subscribe((canDownloadDataExport) => {
+                this.canDownload.set(canDownloadDataExport);
             });
         } else {
-            this.titleKey = 'artemisApp.dataExport.title';
-            this.description = 'artemisApp.dataExport.description';
+            this.titleKey.set('artemisApp.dataExport.title');
+            this.description.set('artemisApp.dataExport.description');
             this.dataExportService.canRequestDataExport().subscribe((canRequestDataExport) => {
-                this.canRequestDataExport = canRequestDataExport;
+                this.canRequestDataExport.set(canRequestDataExport);
             });
             this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
-                this.dataExport.createdDate = convertDateFromServer(dataExport.createdDate);
-                this.dataExport.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
-                this.canDownload = !!dataExport.id;
-                if (this.canDownload) {
-                    this.dataExport.id = dataExport.id!;
-                    this.dataExportId = dataExport.id!;
+                this.dataExport.update((current) => ({
+                    ...current,
+                    createdDate: convertDateFromServer(dataExport.createdDate),
+                    nextRequestDate: convertDateFromServer(dataExport.nextRequestDate),
+                    dataExportState: dataExport.dataExportState,
+                }));
+                this.canDownload.set(!!dataExport.id);
+                if (dataExport.id) {
+                    this.dataExport.update((current) => ({ ...current, id: dataExport.id }));
+                    this.dataExportId.set(dataExport.id);
                 }
-                this.dataExport.dataExportState = dataExport.dataExportState;
-                this.state = dataExport.dataExportState!;
+                this.state.set(dataExport.dataExportState);
             });
         }
     }
 
-    requestExport() {
+    requestExport(): void {
         this.dataExportService.requestDataExport().subscribe({
             next: (response: DataExport) => {
                 this.dialogErrorSource.next('');
                 this.alertService.success('artemisApp.dataExport.requestSuccess');
-                this.dataExportId = response.id!;
-                this.canRequestDataExport = false;
-                this.state = response.dataExportState!;
-                this.dataExport.createdDate = response.createdDate;
+                this.dataExportId.set(response.id);
+                this.canRequestDataExport.set(false);
+                this.state.set(response.dataExportState);
+                this.dataExport.update((current) => ({ ...current, createdDate: response.createdDate }));
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
@@ -98,11 +104,14 @@ export class DataExportComponent implements OnInit {
         });
     }
 
-    downloadDataExport() {
-        this.dataExportService.downloadDataExport(this.dataExportId);
+    downloadDataExport(): void {
+        const id = this.dataExportId();
+        if (id) {
+            this.dataExportService.downloadDataExport(id);
+        }
     }
 
-    requestExportForAnotherUser(login: string) {
+    requestExportForAnotherUser(login: string): void {
         this.dataExportService.requestDataExportForAnotherUser(login).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');

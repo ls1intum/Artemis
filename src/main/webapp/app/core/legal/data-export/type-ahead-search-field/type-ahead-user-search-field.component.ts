@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { Observable, OperatorFunction, catchError, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/core/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -16,41 +16,40 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FormsModule, NgbTypeahead, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
-    private userService = inject(UserService);
+    private readonly userService = inject(UserService);
 
-    @Input() loginOrName: string;
-    @Output() loginOrNameChange = new EventEmitter<string>();
+    readonly loginOrName = model<string>('');
 
-    searching = false;
-    searchFailed = false;
-    searchNoResults = false;
-    searchQueryTooShort = true;
+    readonly searching = signal(false);
+    readonly searchFailed = signal(false);
+    readonly searchNoResults = signal(false);
+    readonly searchQueryTooShort = signal(true);
 
-    readonly faCircleNotch = faCircleNotch;
-    readonly MIN_SEARCH_QUERY_LENGTH = 3;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
     search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
-        this.searchFailed = false;
+        this.searchFailed.set(false);
         return login.pipe(
             switchMap((loginOrName: string) => {
                 if (loginOrName.length < this.MIN_SEARCH_QUERY_LENGTH) {
-                    this.searchQueryTooShort = true;
-                    this.searching = false;
+                    this.searchQueryTooShort.set(true);
+                    this.searching.set(false);
                     return of([]);
                 } else {
-                    this.searchQueryTooShort = false;
+                    this.searchQueryTooShort.set(false);
                 }
-                this.searching = true;
+                this.searching.set(true);
 
                 return this.userService.search(loginOrName).pipe(
                     switchMap((usersResponse) => of(usersResponse.body!)),
                     tap((users) => {
-                        this.searching = false;
-                        this.searchNoResults = users.length === 0;
+                        this.searching.set(false);
+                        this.searchNoResults.set(users.length === 0);
                     }),
                     catchError(() => {
-                        this.searching = false;
-                        this.searchFailed = true;
+                        this.searching.set(false);
+                        this.searchFailed.set(true);
                         return of([]);
                     }),
                 );
@@ -58,21 +57,21 @@ export class TypeAheadUserSearchFieldComponent {
         );
     };
 
-    onChange() {
-        const user = this.loginOrName as unknown as User;
+    onChange(): void {
+        const currentValue = this.loginOrName();
+        const user = currentValue as unknown as User;
         // this is a user object returned by search, but we are only interested in the login
         // if we don't do this, the user object will be converted to a string and passed to the parent component
         // before we sent a request to the server this is a string, and we can emit it directly
         if (user && user.login) {
-            this.loginOrNameChange.emit(user.login);
-        } else {
-            this.loginOrNameChange.emit(this.loginOrName);
+            this.loginOrName.set(user.login);
         }
-        this.searchQueryTooShort = this.loginOrName.length < this.MIN_SEARCH_QUERY_LENGTH;
+        this.searchQueryTooShort.set(this.loginOrName().length < this.MIN_SEARCH_QUERY_LENGTH);
     }
 
-    resultFormatter = (result: User) => result.name! + ' (' + result.login! + ')';
-    inputFormatter(input: User | string) {
+    resultFormatter = (result: User): string => result.name! + ' (' + result.login! + ')';
+
+    inputFormatter(input: User | string): string {
         // here applies the same as in onChange()
         const user = input as unknown as User;
         if (user && user.login) {

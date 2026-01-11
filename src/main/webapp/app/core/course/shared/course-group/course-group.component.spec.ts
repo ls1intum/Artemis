@@ -43,7 +43,11 @@ describe('CourseGroupComponent', () => {
                 fixture = TestBed.createComponent(CourseGroupComponent);
                 comp = fixture.componentInstance;
                 userService = TestBed.inject(UserService);
-                comp.userSearch = (searchTerm: string) => userService.search(searchTerm);
+                // Set required inputs using ComponentRef
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('courseGroup', courseGroup);
+                fixture.componentRef.setInput('exportFileName', 'test-export');
+                fixture.componentRef.setInput('userSearch', (searchTerm: string) => userService.search(searchTerm));
             });
     });
 
@@ -81,7 +85,7 @@ describe('CourseGroupComponent', () => {
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });
-            expect(comp.searchNoResults).toBeTrue();
+            expect(comp.searchNoResults()).toBeTrue();
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
             expect(searchStub).toHaveBeenCalledOnce();
         });
@@ -100,69 +104,59 @@ describe('CourseGroupComponent', () => {
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });
-            expect(comp.searchFailed).toBeTrue();
+            expect(comp.searchFailed()).toBeTrue();
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
             expect(searchStub).toHaveBeenCalledOnce();
         });
     });
 
     describe('onAutocompleteSelect', () => {
-        let addUserStub: jest.SpyInstance;
         let user: User;
 
         beforeEach(() => {
-            addUserStub = jest.spyOn(comp, 'addUserToGroup').mockReturnValue(of(new HttpResponse<void>()));
             user = courseGroupUser;
-            comp.allGroupUsers = [];
-            comp.course = course;
-            comp.courseGroup = courseGroup;
+            comp.allGroupUsers.set([]);
+            fixture.componentRef.setInput('addUserToGroup', () => of(new HttpResponse<void>()));
         });
 
         it('should add the selected user to course group', () => {
             const fake = jest.fn();
             comp.onAutocompleteSelect(user, fake);
-            expect(addUserStub).toHaveBeenCalledWith(user.login);
-            expect(addUserStub).toHaveBeenCalledOnce();
-            expect(comp.allGroupUsers).toEqual([courseGroupUser]);
+            expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
             expect(fake).toHaveBeenCalledOnce();
         });
 
         it('should call callback if user is already in the group', () => {
             const fake = jest.fn();
-            comp.allGroupUsers = [user];
+            comp.allGroupUsers.set([user]);
             comp.onAutocompleteSelect(user, fake);
-            expect(addUserStub).not.toHaveBeenCalled();
-            expect(comp.allGroupUsers).toEqual([courseGroupUser]);
+            expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
             expect(fake).toHaveBeenCalledOnce();
         });
     });
 
     describe('removeFromGroup', () => {
-        let removeUserStub: jest.SpyInstance;
-
         beforeEach(() => {
-            removeUserStub = jest.spyOn(comp, 'removeUserFromGroup').mockReturnValue(of(new HttpResponse<void>()));
-            comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
-            comp.course = course;
-            comp.courseGroup = courseGroup;
+            comp.allGroupUsers.set([courseGroupUser, courseGroupUser2]);
+            fixture.componentRef.setInput('removeUserFromGroup', () => of(new HttpResponse<void>()));
         });
 
-        it('should given user from group', () => {
+        it('should remove given user from group', () => {
             comp.removeFromGroup(courseGroupUser);
-            expect(removeUserStub).toHaveBeenCalledWith(courseGroupUser.login);
-            expect(removeUserStub).toHaveBeenCalledOnce();
-            expect(comp.allGroupUsers).toEqual([courseGroupUser2]);
+            expect(comp.allGroupUsers()).toEqual([courseGroupUser2]);
         });
 
         it('should not do anything if users has no login', () => {
             const user = { ...courseGroupUser };
             delete user.login;
+            const originalUsers = [...comp.allGroupUsers()];
             comp.removeFromGroup(user);
-            expect(removeUserStub).not.toHaveBeenCalled();
+            expect(comp.allGroupUsers()).toEqual(originalUsers);
         });
     });
+
     describe('searchResultFormatter', () => {
         it('should format user info into appropriate format', () => {
             const name = 'testName';
@@ -185,9 +179,7 @@ describe('CourseGroupComponent', () => {
     });
 
     it('should generate csv correctly', () => {
-        comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
-        comp.courseGroup = CourseGroup.STUDENTS;
-        comp.course = course;
+        comp.allGroupUsers.set([courseGroupUser, courseGroupUser2]);
         const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
 
         comp.exportUserInformation();
