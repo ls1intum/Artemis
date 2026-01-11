@@ -4,10 +4,10 @@
         <div class="header-start">
             @if (isChatHistoryAvailable()) {
                 <button
-                    [ngClass]="{ 'is-collapsed': !isChatHistoryOpen() }"
+                    [ngClass]="{ 'is-collapsed': !isChatHistoryOpen }"
                     triggers="hover"
                     class="btn btn-sidebar-collapse btn-sm rounded-3"
-                    (click)="setChatHistoryVisibility(!isChatHistoryOpen())"
+                    (click)="setChatHistoryVisibility(!isChatHistoryOpen)"
                 >
                     <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
                     <div class="btn-sidebar-collapse-chevron d-flex gap-1">
@@ -24,8 +24,8 @@
 
             <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
 
-            <div class="word-iris">{{ isChatGptWrapper() ? 'ChatGPT' : 'Iris' }}</div>
-            @if (!isChatGptWrapper()) {
+            <div class="word-iris">{{ isChatGptWrapper ? 'ChatGPT' : 'Iris' }}</div>
+            @if (!isChatGptWrapper) {
                 <a [routerLink]="'/about-iris'" target="_blank">
                     <fa-icon [icon]="faCircleInfo" class="info-button" />
                 </a>
@@ -42,28 +42,23 @@
                     </button>
                 </div>
             }
-            @if (rateLimitInfo()?.rateLimit; as rateLimit) {
-                @if (rateLimit > 0) {
-                    <div class="toolbox">
-                        <span
-                            class="rate-limit"
-                            [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
-                        >
-                            {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
-                        </span>
-                    </div>
-                }
+            @if (rateLimitInfo.rateLimit > 0) {
+                <div class="toolbox">
+                    <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo.rateLimitTimeframeHours }">
+                        {{ rateLimitInfo.currentMessageCount }} / {{ rateLimitInfo.rateLimit }}
+                    </span>
+                </div>
             }
             <div class="toolbox">
-                @if (messages().length >= 1) {
+                @if (this.messages.length >= 1) {
                     <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                         <fa-icon [icon]="faPenToSquare" />
                     </button>
                 }
 
-                @if (fullSize() !== undefined) {
-                    <button (click)="fullSizeToggle.emit()" class="header-control">
-                        @if (!fullSize()) {
+                @if (fullSize !== undefined) {
+                    <button (click)="fullSizeToggle.next()" class="header-control">
+                        @if (!fullSize) {
                             <fa-icon [icon]="faExpand" />
                         } @else {
                             <fa-icon [icon]="faCompress" />
@@ -71,7 +66,7 @@
                     </button>
                 }
 
-                @if (showCloseButton()) {
+                @if (showCloseButton) {
                     <button (click)="closeChat()" class="header-control">
                         <fa-icon [icon]="faXmark" />
                     </button>
@@ -99,8 +94,8 @@
 <!-- main chat section -->
 <div class="chat-container">
     @if (isChatHistoryAvailable()) {
-        <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen() }">
-            @if (isChatHistoryOpen()) {
+        <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen }">
+            @if (isChatHistoryOpen) {
                 <div class="chat-history-container">
                     <div class="chat-history-close-btn-row">
                         <h6 jhiTranslate="artemisApp.iris.chatHistory.title"></h6>
@@ -116,7 +111,7 @@
                             <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
                         </div>
                         @for (session of todaySessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
 
@@ -126,7 +121,7 @@
                             <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
                         </div>
                         @for (session of yesterdaySessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
 
@@ -136,7 +131,7 @@
                             <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
                         </div>
                         @for (session of last7DaysSessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
 
@@ -146,7 +141,7 @@
                             <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
                         </div>
                         @for (session of last30DaysSessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
 
@@ -156,28 +151,28 @@
                             <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
                         </div>
                         @for (session of olderSessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
                 </div>
             }
         </div>
     }
-    <div class="chat-body" [class.not-accepted]="!userAccepted()" #chatBody>
-        @if (messages()?.length) {
+    <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
+        @if (messages?.length) {
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                 @if (
-                    suggestions()?.length &&
+                    suggestions?.length &&
                     (userAccepted === LLMSelectionDecision.CLOUD_AI || userAccepted === LLMSelectionDecision.LOCAL_AI) &&
-                    active() &&
-                    (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                    !hasActiveStage()
+                    this.active &&
+                    (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
+                    !this.hasActiveStage
                 ) {
                     <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                         <div class="suggestions-container">
-                            @for (suggestion of suggestions(); track suggestion) {
-                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
-                                    @if (clickedSuggestion() === suggestion) {
+                            @for (suggestion of suggestions; track suggestion) {
+                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading">
+                                    @if (clickedSuggestion === suggestion) {
                                         <fa-icon [icon]="faCircleNotch" animation="spin" />
                                     } @else {
                                         <span [innerHTML]="suggestion"></span>
@@ -187,10 +182,10 @@
                         </div>
                     </div>
                 }
-                @for (message of messages(); track message.id; let i = $index) {
+                @for (message of messages; track message.id; let i = $index) {
                     <div
                         animate.enter="message-entering"
-                        [class.animate-enabled]="animatingMessageIds().has(message.id!)"
+                        [class.animate-enabled]="animatingMessageIds.has(message.id!)"
                         [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                     >
                         @for (content of message.content; track content.id) {
@@ -244,35 +239,39 @@
                 }
             </div>
         }
-        @if (!messages()?.length && !isEmbeddedChat()) {
+        @if (!messages?.length && !isEmbeddedChat()) {
             <div class="empty-chat-message">
                 <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                 <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
             </div>
         }
-        <jhi-chat-status-bar [stages]="stages" />
         <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
             <fa-icon [icon]="faArrowDown" />
         </div>
-        @if (error()) {
+        @if (error) {
             <div class="client-chat-error">
-                {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
+                {{ error | artemisTranslate: { hours: rateLimitInfo?.rateLimitTimeframeHours } }}
             </div>
         }
-        @if (!active()) {
+        @if (!active) {
             <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
         }
         @if (userAccepted === LLMSelectionDecision.CLOUD_AI || userAccepted === LLMSelectionDecision.LOCAL_AI) {
             <div class="chat-input">
                 <textarea
-                    [ngModel]="newMessageTextContent()"
-                    (ngModelChange)="newMessageTextContent.set($event)"
+                    [(ngModel)]="newMessageTextContent"
                     rows="1"
                     class="form-control"
+                    (ngModelChange)="onModelChange()"
                     (input)="onInput()"
                     (paste)="onPaste()"
                     type="text"
-                    [disabled]="isLoading() || !active() || (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) || hasActiveStage()"
+                    [disabled]="
+                        this.isLoading ||
+                        !this.active ||
+                        (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) ||
+                        this.hasActiveStage
+                    "
                     (keydown)="handleKey($event)"
                     placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                     #messageTextarea
@@ -282,9 +281,14 @@
                     (onClick)="onSend()"
                     [btnType]="ButtonType.SUCCESS_OUTLINE"
                     [icon]="faPaperPlane"
-                    [disabled]="isLoading() || !active() || (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) || hasActiveStage()"
+                    [disabled]="
+                        this.isLoading ||
+                        !this.active ||
+                        (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) ||
+                        this.hasActiveStage
+                    "
                 />
-                @if (!isChatGptWrapper()) {
+                @if (!isChatGptWrapper) {
                     <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
                 } @else {
                     <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimerGPT"></span>
