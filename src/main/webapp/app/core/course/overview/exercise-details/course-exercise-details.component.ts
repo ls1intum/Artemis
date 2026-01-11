@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
-import { catchError, exhaustMap, filter, retry, skip, take } from 'rxjs/operators';
+import { catchError, debounceTime, filter, retry, skip, switchMap, take, tap } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -110,9 +110,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
-    private readonly reloadExercise$ = new Subject<void>();
     private reloadExerciseSubscription?: Subscription;
-    private lastReloadedResultId?: number;
+    private readonly reloadExercise$ = new Subject<{ participationId: number; resultId: number }>();
+    private readonly lastReloadedResultIdByParticipationId = new Map<number, number>();
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -176,11 +176,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const exerciseIdParams$ = this.route.params;
         this.reloadExerciseSubscription = this.reloadExercise$
             .pipe(
-                exhaustMap(() =>
+                debounceTime(500),
+                switchMap(({ participationId, resultId }) =>
                     this.exerciseService.getExerciseDetails(this.exerciseId).pipe(
                         take(1),
-                        retry(1),
-                        catchError(() => of(null)),
+                        retry({ count: 2, delay: 1000 }),
+                        tap((res) => {
+                            if (res.body) {
+                                this.lastReloadedResultIdByParticipationId.set(participationId, resultId);
+                            }
+                        }),
+                        catchError((_) => of(null)),
                     ),
                 ),
             )
@@ -202,6 +208,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.courseId = parseInt(courseIdParams.courseId, 10);
                 }
                 if (didExerciseChange || didCourseChange) {
+                    this.lastReloadedResultIdByParticipationId.clear();
                     this.loadExercise();
                 }
 
@@ -370,11 +377,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
                     }
                     this.mergeResultsAndSubmissionsForParticipations();
-                    // Reload exercise details once a result is completed (WS payload does not contain mapped results)
+
                     const lastResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
-                    if (lastResult?.id && lastResult.completionDate && lastResult.id !== this.lastReloadedResultId) {
-                        this.lastReloadedResultId = lastResult.id;
-                        this.reloadExercise$.next();
+                    const participationId = changedParticipation.id;
+                    const resultId = lastResult?.id;
+                    if (participationId && resultId) {
+                        const lastReloadedId = this.lastReloadedResultIdByParticipationId.get(participationId);
+                        const isNewResult = lastReloadedId !== resultId;
+                        const isNowCompleted = lastResult.completionDate !== undefined && lastReloadedId === resultId;
+
+                        if (isNewResult || isNowCompleted) {
+                            this.reloadExercise$.next({ participationId, resultId });
+                        }
                     }
                 }
             });
