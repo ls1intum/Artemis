@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -11,6 +10,7 @@ import { AccountInformationComponent } from 'app/core/user/settings/account-info
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
@@ -18,10 +18,12 @@ describe('AccountInformationComponent', () => {
 
     let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: jest.Mock };
     let userSettingsServiceMock: { updateProfilePicture: jest.Mock; removeProfilePicture: jest.Mock };
-    let modalServiceMock: { open: jest.Mock };
+    let dialogServiceMock: { open: jest.Mock };
     let alertServiceMock: { addAlert: jest.Mock };
+    let dialogCloseSubject: Subject<string | undefined>;
 
     beforeEach(async () => {
+        dialogCloseSubject = new Subject<string | undefined>();
         accountServiceMock = {
             userIdentity: signal<User | undefined>({ id: 99, internal: true } as User),
             setImageUrl: jest.fn(),
@@ -30,8 +32,10 @@ describe('AccountInformationComponent', () => {
             updateProfilePicture: jest.fn(),
             removeProfilePicture: jest.fn(),
         };
-        modalServiceMock = {
-            open: jest.fn(),
+        dialogServiceMock = {
+            open: jest.fn().mockReturnValue({
+                onClose: dialogCloseSubject.asObservable(),
+            } as Partial<DynamicDialogRef>),
         };
         alertServiceMock = {
             addAlert: jest.fn(),
@@ -41,7 +45,7 @@ describe('AccountInformationComponent', () => {
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: UserSettingsService, useValue: userSettingsServiceMock },
-                { provide: NgbModal, useValue: modalServiceMock },
+                { provide: DialogService, useValue: dialogServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideRouter([]),
@@ -56,12 +60,11 @@ describe('AccountInformationComponent', () => {
     });
 
     it('should open image cropper modal when setting user image', () => {
-        const event = { currentTarget: { files: [new File([''], 'test.jpg', { type: 'image/jpeg' })] } } as unknown as Event;
-        modalServiceMock.open.mockReturnValue({ componentInstance: {}, result: Promise.resolve('data:image/jpeg;base64,test') });
+        const event = { currentTarget: { files: [new File([''], 'test.jpg', { type: 'image/jpeg' })], value: '' } } as unknown as Event;
 
         comp.setUserImage(event);
 
-        expect(modalServiceMock.open).toHaveBeenCalled();
+        expect(dialogServiceMock.open).toHaveBeenCalled();
     });
 
     it('should call removeProfilePicture and setImageUrl when deleting user image', () => {
@@ -73,7 +76,7 @@ describe('AccountInformationComponent', () => {
         expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith(undefined);
     });
 
-    it('should update user image on successful upload via setUserImage flow', async () => {
+    it('should update user image on successful upload via setUserImage flow', () => {
         const userResponse = new HttpResponse<User>({
             body: {
                 imageUrl: 'new-image-url',
@@ -84,35 +87,27 @@ describe('AccountInformationComponent', () => {
 
         const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
         const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
-        modalServiceMock.open.mockReturnValue({
-            componentInstance: {},
-            result: Promise.resolve('data:image/jpeg;base64,dGVzdA=='),
-        });
 
         comp.setUserImage(event);
 
-        // Wait for the modal result promise
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        // Emit the dialog result via the subject
+        dialogCloseSubject.next('data:image/jpeg;base64,dGVzdA==');
 
         expect(userSettingsServiceMock.updateProfilePicture).toHaveBeenCalled();
         expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith('new-image-url');
     });
 
-    it('should show error alert when image upload fails', async () => {
+    it('should show error alert when image upload fails', () => {
         const errorResponse = new HttpErrorResponse({ error: { title: 'Upload failed' }, status: 400 });
         userSettingsServiceMock.updateProfilePicture.mockReturnValue(throwError(() => errorResponse));
 
         const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
         const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
-        modalServiceMock.open.mockReturnValue({
-            componentInstance: {},
-            result: Promise.resolve('data:image/jpeg;base64,dGVzdA=='),
-        });
 
         comp.setUserImage(event);
 
-        // Wait for the modal result promise
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        // Emit the dialog result via the subject
+        dialogCloseSubject.next('data:image/jpeg;base64,dGVzdA==');
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Upload failed' }));
     });
