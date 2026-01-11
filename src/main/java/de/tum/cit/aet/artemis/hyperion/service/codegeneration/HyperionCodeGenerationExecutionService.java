@@ -101,7 +101,7 @@ public class HyperionCodeGenerationExecutionService {
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
-            ProgrammingSubmissionService programmingSubmissionService, @Lazy ExerciseVersionService exerciseVersionService) {
+            ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
