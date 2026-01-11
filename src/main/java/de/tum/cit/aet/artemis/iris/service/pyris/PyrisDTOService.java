@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,10 +67,23 @@ public class PyrisDTOService {
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
+        return toPyrisSubmissionDTO(submission, Map.of());
+    }
+
+    /**
+     * Uncommitted files override the committed files if they have the same path.
+     *
+     * @param submission       the student's submission
+     * @param uncommittedFiles the uncommitted files from the client
+     * @return the converted PyrisSubmissionDTO
+     */
+    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
-        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
+        Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
+        Map<String, String> mergedRepository = new HashMap<>(committedFiles);
+        mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
+        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 

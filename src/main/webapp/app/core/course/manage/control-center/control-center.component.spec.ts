@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ControlCenterComponent } from './control-center.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -12,6 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ControlCenterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let componentRef: ComponentRef<ControlCenterComponent>;
     let fixture: ComponentFixture<ControlCenterComponent>;
     let course: Course;
@@ -20,16 +24,25 @@ describe('ControlCenterComponent', () => {
         course = { id: 1, isAtLeastInstructor: true } as Course;
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(TranslateDirective), MockComponent(IrisLogoComponent)],
-            declarations: [ControlCenterComponent, MockComponent(HelpIconComponent), MockComponent(IrisEnabledComponent)],
+            imports: [ControlCenterComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        })
+            .overrideComponent(ControlCenterComponent, {
+                set: {
+                    imports: [MockDirective(TranslateDirective), MockComponent(IrisLogoComponent), MockComponent(HelpIconComponent), MockComponent(IrisEnabledComponent)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ControlCenterComponent);
         componentRef = fixture.componentRef;
         componentRef.setInput('course', course);
         componentRef.setInput('irisEnabled', true);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display the control center card when iris is enabled and the user is at least an instructor', () => {

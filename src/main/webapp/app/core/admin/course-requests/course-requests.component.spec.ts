@@ -185,7 +185,7 @@ describe('CourseRequestsComponent', () => {
     describe('reject', () => {
         beforeEach(() => {
             component.selectedRequest.set(mockRequest);
-            component.modalRef = { close: vi.fn() } as unknown as NgbModalRef;
+            component.modalRef.set({ close: vi.fn() } as unknown as NgbModalRef);
         });
 
         it('should reject a request with a reason and move it to decided list', () => {
@@ -202,7 +202,7 @@ describe('CourseRequestsComponent', () => {
             expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.REJECTED);
             expect(component.totalDecidedCount()).toBe(1);
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.rejectSuccess', { title: 'Test Course' });
-            expect(component.modalRef?.close).toHaveBeenCalled();
+            expect(component.modalRef()?.close).toHaveBeenCalled();
             expect(component.reasonInvalid()).toBe(false);
             expect(component.selectedRequest()).toBeUndefined();
         });
@@ -313,7 +313,7 @@ describe('CourseRequestsComponent', () => {
     describe('saveEdit', () => {
         beforeEach(() => {
             component.selectedRequest.set(mockRequest);
-            component.modalRef = { close: vi.fn() } as unknown as NgbModalRef;
+            component.modalRef.set({ close: vi.fn() } as unknown as NgbModalRef);
         });
 
         it('should update request and refresh list on success', () => {
@@ -338,7 +338,7 @@ describe('CourseRequestsComponent', () => {
             );
             expect(component.pendingRequests()[0].title).toBe('Updated Course');
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.editSuccess');
-            expect(component.modalRef?.close).toHaveBeenCalled();
+            expect(component.modalRef()?.close).toHaveBeenCalled();
             expect(component.isSubmittingEdit()).toBe(false);
             expect(component.selectedRequest()).toBeUndefined();
         });

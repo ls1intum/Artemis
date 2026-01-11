@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +32,6 @@ interface SystemNotificationForm {
     selector: 'jhi-system-notification-management-update',
     templateUrl: './system-notification-management-update.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     private readonly systemNotificationService = inject(AdminSystemNotificationService);
