@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminDataExport, DataExportState } from 'app/core/shared/entities/data-export.model';
@@ -44,7 +44,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
         PaginatorModule,
         DeleteButtonDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminDataExportsComponent implements OnInit {
     private readonly adminDataExportsService = inject(AdminDataExportsService);

@@ -212,4 +212,27 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
+    {
+        files: ['documentation/src/**/*.js'],
+        languageOptions: {
+            parserOptions: {
+                ecmaVersion: 'latest',
+                sourceType: 'module',
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
+            globals: {
+                console: 'readonly',
+                document: 'readonly',
+                window: 'readonly',
+                Element: 'readonly',
+                URL: 'readonly',
+            },
+        },
+        rules: {
+            'no-undef': 'error',
+            'no-unused-vars': 'error',
+        },
+    },
 );

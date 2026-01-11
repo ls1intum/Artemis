@@ -136,6 +136,9 @@ artemis:
         destination: https://telemetry.artemis.cit.tum.de
     version-control:
         local-vcs-repo-path: ./local-vcs-repos
+    continuous-integration:
+        build-job:
+          retention-period: 365 # Number of days before build job entries are deleted
     security:
         internal:
             allowed-cidrs:
@@ -154,4 +157,3 @@ helios:
 atlas:
     atlasml:
         base-url: https://atlasml.aet.cit.tum.de
-
