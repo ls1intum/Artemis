@@ -29,17 +29,16 @@ export class TypeAheadUserSearchFieldComponent {
     protected readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
     search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
+        // Reset all status flags at the beginning before any branching
         this.searchFailed.set(false);
         this.searchNoResults.set(false);
+        this.searchQueryTooShort.set(false);
         return login.pipe(
             switchMap((loginOrName: string) => {
                 if (loginOrName.length < this.MIN_SEARCH_QUERY_LENGTH) {
                     this.searchQueryTooShort.set(true);
                     this.searching.set(false);
-                    this.searchNoResults.set(false);
                     return of([]);
-                } else {
-                    this.searchQueryTooShort.set(false);
                 }
                 this.searching.set(true);
 
@@ -52,7 +51,6 @@ export class TypeAheadUserSearchFieldComponent {
                     catchError(() => {
                         this.searching.set(false);
                         this.searchFailed.set(true);
-                        this.searchNoResults.set(false);
                         return of([]);
                     }),
                 );
