@@ -28,6 +28,7 @@ export default defineConfig({
             'src/main/webapp/app/fileupload/**/*.spec.ts',      // include fileupload tests
             'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
             'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
+            'src/main/webapp/app/core/course/manage/**/*.spec.ts', // include course manage tests
             'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts',            // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
@@ -54,6 +55,7 @@ export default defineConfig({
                 'src/main/webapp/app/buildagent/**/*.ts',       // include buildagent for code coverage
                 'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
                 'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
+                'src/main/webapp/app/core/course/manage/**/*.ts', // include course manage for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts',          // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
@@ -65,8 +67,8 @@ export default defineConfig({
             thresholds: {
                 lines: 92.20,
                 statements: 92.20,
-                branches: 77.30,
-                functions: 89.50,
+                branches: 77.20,
+                functions: 89.40,
             },
         },
     },

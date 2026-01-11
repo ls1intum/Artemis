@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
+import java.util.Map;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -102,17 +103,32 @@ public class IrisSessionService {
     }
 
     /**
+     * @param session The session to get a message for
+     * @param <S>     The type of the session
+     * @see #requestMessageFromIris(IrisSession, Map)
+     */
+    public <S extends IrisSession> void requestMessageFromIris(S session) {
+        requestMessageFromIris(session, Map.of());
+    }
+
+    /**
      * Sends a request to Iris to get a message for the given session.
      * It decides which Iris subsystem should handle it based on the session type.
      *
-     * @param session The session to get a message for
-     * @param <S>     The type of the session
+     * @param session          The session to get a message for
+     * @param uncommittedFiles The uncommitted files from the client
+     * @param <S>              The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            if (!uncommittedFiles.isEmpty() && session instanceof IrisProgrammingExerciseChatSession programmingSession) {
+                irisExerciseChatSessionService.requestAndHandleResponseWithUncommittedChanges(programmingSession, uncommittedFiles);
+            }
+            else {
+                chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            }
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());

@@ -311,11 +311,11 @@ describe('UserManagementComponent', () => {
         ${AuthorityFilter.TA}
         ${AuthorityFilter.USER}
     `('should toggle authority filter: $input', (param: { input: AuthorityFilter }) => {
-        component.toggleFilter(component.filters.authorityFilter, param.input);
-        expect(component.filters.authorityFilter).toEqual(new Set([param.input]));
+        component.toggleFilter(component.filters().authorityFilter, param.input);
+        expect(component.filters().authorityFilter).toEqual(new Set([param.input]));
 
-        component.toggleFilter(component.filters.authorityFilter, param.input);
-        expect(component.filters.authorityFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters().authorityFilter, param.input);
+        expect(component.filters().authorityFilter).toEqual(new Set([]));
     });
 
     it.each`
@@ -323,11 +323,11 @@ describe('UserManagementComponent', () => {
         ${OriginFilter.INTERNAL}
         ${OriginFilter.EXTERNAL}
     `('should toggle origin filter: $input', (param: { input: OriginFilter }) => {
-        component.toggleFilter(component.filters.originFilter, param.input);
-        expect(component.filters.originFilter).toEqual(new Set([param.input]));
+        component.toggleFilter(component.filters().originFilter, param.input);
+        expect(component.filters().originFilter).toEqual(new Set([param.input]));
 
-        component.toggleFilter(component.filters.originFilter, param.input);
-        expect(component.filters.originFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters().originFilter, param.input);
+        expect(component.filters().originFilter).toEqual(new Set([]));
     });
 
     it.each`
@@ -335,11 +335,11 @@ describe('UserManagementComponent', () => {
         ${StatusFilter.ACTIVATED}
         ${StatusFilter.DEACTIVATED}
     `('should toggle status filter: $input', (param: { input: StatusFilter }) => {
-        component.toggleFilter(component.filters.statusFilter, param.input);
-        expect(component.filters.statusFilter).toEqual(new Set([param.input]));
+        component.toggleFilter(component.filters().statusFilter, param.input);
+        expect(component.filters().statusFilter).toEqual(new Set([param.input]));
 
-        component.toggleFilter(component.filters.statusFilter, param.input);
-        expect(component.filters.statusFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters().statusFilter, param.input);
+        expect(component.filters().statusFilter).toEqual(new Set([]));
     });
 
     it.each`
@@ -347,11 +347,11 @@ describe('UserManagementComponent', () => {
         ${RegistrationNumberFilter.WITH_REG_NO}
         ${RegistrationNumberFilter.WITHOUT_REG_NO}
     `('should toggle registration number filter: $input', (param: { input: RegistrationNumberFilter }) => {
-        component.toggleFilter(component.filters.registrationNumberFilter, param.input);
-        expect(component.filters.registrationNumberFilter).toEqual(new Set([param.input]));
+        component.toggleFilter(component.filters().registrationNumberFilter, param.input);
+        expect(component.filters().registrationNumberFilter).toEqual(new Set([param.input]));
 
-        component.toggleFilter(component.filters.registrationNumberFilter, param.input);
-        expect(component.filters.registrationNumberFilter).toEqual(new Set([]));
+        component.toggleFilter(component.filters().registrationNumberFilter, param.input);
+        expect(component.filters().registrationNumberFilter).toEqual(new Set([]));
     });
 
     it('should return correct filter values', () => {
@@ -366,13 +366,13 @@ describe('UserManagementComponent', () => {
         const val = Object.keys(AuthorityFilter).join(',');
         vi.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
 
-        component.filters.authorityFilter = new Set(component.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter)) as Set<AuthorityFilter>;
+        component.filters().authorityFilter = new Set(component.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter)) as Set<AuthorityFilter>;
 
         component.deselectAllRoles();
-        expect(component.filters.authorityFilter).toEqual(new Set());
+        expect(component.filters().authorityFilter).toEqual(new Set());
 
         component.selectAllRoles();
-        expect(component.filters.authorityFilter).toEqual(new Set(component.authorityFilters));
+        expect(component.filters().authorityFilter).toEqual(new Set(component.authorityFilters));
     });
 
     it('should delete all selected users', () => {
@@ -403,117 +403,117 @@ describe('UserManagementComponent', () => {
     });
 
     it('should return number of applied filters', () => {
-        component.filters = new UserFilter();
-        expect(component.filters.numberOfAppliedFilters).toBe(0);
+        component.filters.set(new UserFilter());
+        expect(component.filters().numberOfAppliedFilters).toBe(0);
 
-        component.filters.noAuthority = true;
-        expect(component.filters.numberOfAppliedFilters).toBe(1);
+        component.filters().noAuthority = true;
+        expect(component.filters().numberOfAppliedFilters).toBe(1);
 
-        component.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
-        expect(component.filters.numberOfAppliedFilters).toBe(2);
+        component.filters().registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+        expect(component.filters().numberOfAppliedFilters).toBe(2);
 
-        component.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        expect(component.filters.numberOfAppliedFilters).toBe(3);
+        component.filters().authorityFilter.add(AuthorityFilter.ADMIN);
+        expect(component.filters().numberOfAppliedFilters).toBe(3);
 
-        component.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
-        expect(component.filters.numberOfAppliedFilters).toBe(2);
+        component.filters().authorityFilter.delete(AuthorityFilter.ADMIN);
+        expect(component.filters().numberOfAppliedFilters).toBe(2);
     });
 
     it('should toggle authority filter and store in local storage', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        component.filters = new UserFilter();
-        component.filters.noAuthority = true;
+        component.filters.set(new UserFilter());
+        component.filters().noAuthority = true;
 
-        component.toggleAuthorityFilter(component.filters.authorityFilter, AuthorityFilter.ADMIN);
+        component.toggleAuthorityFilter(component.filters().authorityFilter, AuthorityFilter.ADMIN);
 
-        expect(component.filters.authorityFilter).toEqual(new Set<AuthorityFilter>([AuthorityFilter.ADMIN]));
-        expect(component.filters.noAuthority).toBe(false);
+        expect(component.filters().authorityFilter).toEqual(new Set<AuthorityFilter>([AuthorityFilter.ADMIN]));
+        expect(component.filters().noAuthority).toBe(false);
         expect(storeSpy).toHaveBeenCalledTimes(2);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, 'ADMIN');
 
-        component.toggleAuthorityFilter(component.filters.authorityFilter, AuthorityFilter.ADMIN);
+        component.toggleAuthorityFilter(component.filters().authorityFilter, AuthorityFilter.ADMIN);
         expect(storeSpy).toHaveBeenCalledTimes(4);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, '');
-        expect(component.filters.authorityFilter).toEqual(new Set<AuthorityFilter>());
+        expect(component.filters().authorityFilter).toEqual(new Set<AuthorityFilter>());
     });
 
     it('should toggle origin filter and store in local storage', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
         component.toggleOriginFilter(OriginFilter.EXTERNAL);
 
-        expect(component.filters.originFilter).toEqual(new Set<OriginFilter>([OriginFilter.EXTERNAL]));
+        expect(component.filters().originFilter).toEqual(new Set<OriginFilter>([OriginFilter.EXTERNAL]));
         expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, 'EXTERNAL');
 
         component.toggleOriginFilter(OriginFilter.EXTERNAL);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, '');
-        expect(component.filters.authorityFilter).toEqual(new Set<OriginFilter>());
+        expect(component.filters().authorityFilter).toEqual(new Set<OriginFilter>());
     });
 
     it('should toggle registration number filter and store in local storage', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
         component.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
 
-        expect(component.filters.registrationNumberFilter).toEqual(new Set<RegistrationNumberFilter>([RegistrationNumberFilter.WITHOUT_REG_NO]));
+        expect(component.filters().registrationNumberFilter).toEqual(new Set<RegistrationNumberFilter>([RegistrationNumberFilter.WITHOUT_REG_NO]));
         expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, 'WITHOUT_REG_NO');
 
         component.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, '');
-        expect(component.filters.authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
+        expect(component.filters().authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
     });
 
     it('should toggle status filter and store in local storage', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
         component.toggleStatusFilter(StatusFilter.DEACTIVATED);
 
-        expect(component.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
+        expect(component.filters().statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
         expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
 
         component.toggleStatusFilter(StatusFilter.DEACTIVATED);
         expect(storeSpy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
-        expect(component.filters.authorityFilter).toEqual(new Set<StatusFilter>());
+        expect(component.filters().authorityFilter).toEqual(new Set<StatusFilter>());
     });
 
     it('should deselect filter', () => {
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
-        component.filters.statusFilter.add(StatusFilter.DEACTIVATED);
-        component.filters.originFilter.add(OriginFilter.INTERNAL);
+        component.filters().statusFilter.add(StatusFilter.DEACTIVATED);
+        component.filters().originFilter.add(OriginFilter.INTERNAL);
 
-        component.deselectFilter<StatusFilter>(component.filters.statusFilter, UserStorageKey.STATUS);
-        expect(component.filters.statusFilter).toEqual(new Set());
+        component.deselectFilter<StatusFilter>(component.filters().statusFilter, UserStorageKey.STATUS);
+        expect(component.filters().statusFilter).toEqual(new Set());
 
-        component.deselectFilter<OriginFilter>(component.filters.originFilter, UserStorageKey.ORIGIN);
-        expect(component.filters.originFilter).toEqual(new Set());
+        component.deselectFilter<OriginFilter>(component.filters().originFilter, UserStorageKey.ORIGIN);
+        expect(component.filters().originFilter).toEqual(new Set());
     });
 
     it('should select empty roles filter', () => {
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
-        component.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        component.filters.noAuthority = false;
+        component.filters().authorityFilter.add(AuthorityFilter.ADMIN);
+        component.filters().noAuthority = false;
 
         component.selectEmptyRoles();
-        expect(component.filters.authorityFilter).toEqual(new Set());
-        expect(component.filters.noAuthority).toBe(true);
+        expect(component.filters().authorityFilter).toEqual(new Set());
+        expect(component.filters().noAuthority).toBe(true);
     });
 
     it('should get users without current user', () => {
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
         const currentUser = new User();
         currentUser.login = '1';
@@ -530,7 +530,7 @@ describe('UserManagementComponent', () => {
     });
 
     it('should toggle all users selection', () => {
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
         const currentUser = new User();
         currentUser.login = '1';
@@ -553,28 +553,28 @@ describe('UserManagementComponent', () => {
 
     it('should adjust options with filters', () => {
         let httpParams = new HttpParams();
-        component.filters = new UserFilter();
+        component.filters.set(new UserFilter());
 
         httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('registrationNumbers', '').append('status', '');
-        component.filters.noAuthority = true;
+        component.filters().noAuthority = true;
 
-        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        component.filters.noAuthority = false;
+        component.filters().noAuthority = false;
         httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '');
-        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
 
         httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '');
-        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        component.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+        component.filters().registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
         httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', 'WITH_REG_NO').append('status', '');
-        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        component.filters.originFilter.add(OriginFilter.INTERNAL);
-        component.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        component.filters.statusFilter.add(StatusFilter.ACTIVATED);
+        component.filters().originFilter.add(OriginFilter.INTERNAL);
+        component.filters().authorityFilter.add(AuthorityFilter.ADMIN);
+        component.filters().statusFilter.add(StatusFilter.ACTIVATED);
         httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('registrationNumbers', 'WITH_REG_NO').append('status', 'ACTIVATED');
-        expect(component.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+        expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });

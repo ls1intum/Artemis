@@ -204,7 +204,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), any(), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())),
-                eq(exercise), eq(irisSession), eq(Optional.of("progress_stalled")));
+                eq(exercise), eq(irisSession), eq(Optional.of("progress_stalled")), eq(java.util.Map.of()));
     }
 
     @Test
@@ -227,7 +227,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), any(),
-                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
+                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed")), eq(java.util.Map.of())));
     }
 
     @Test
@@ -378,7 +378,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(testCustomInstructions),
-                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
+                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed")), eq(java.util.Map.of())));
     }
 
     @Test

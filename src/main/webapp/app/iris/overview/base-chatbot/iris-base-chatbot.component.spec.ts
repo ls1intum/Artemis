@@ -22,10 +22,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { mockClientMessage, mockServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -82,14 +82,17 @@ describe('IrisBaseChatbotComponent', () => {
                 window.scroll = jest.fn();
                 window.HTMLElement.prototype.scrollTo = jest.fn();
 
-                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
                 accountService = TestBed.inject(AccountService);
-                component = fixture.componentInstance;
 
                 accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
                 jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of());
+
+                // Now create component
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
@@ -120,8 +123,8 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should disable enter key if isLoading and active', () => {
-        component.active = true;
-        component.isLoading = true;
+        // active() is true by default (initialValue: true in toSignal)
+        component.isLoading.set(true);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
         jest.spyOn(component, 'onSend');
 
@@ -216,71 +219,79 @@ describe('IrisBaseChatbotComponent', () => {
         const expectedSuggestions = ['suggestion1', 'suggestion2'];
         const mockMessages = [mockClientMessage, mockServerMessage];
 
-        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
+            suggestionButtons.forEach((button: HTMLButtonElement) => {
+                expect(button.disabled).toBeTrue();
+            });
+        });
 
         // Act
         component.ngOnInit();
         component.userAccepted = LLMSelectionDecision.NO_AI;
         fixture.changeDetectorRef.detectChanges();
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
     });
 
-    it('should not render suggestions if the rate limit is exceeded', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
+    describe('suggestions not rendered', () => {
+        it('should not render suggestions when suggestions array is empty', () => {
+            jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of([]));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
 
-        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
 
-        // Act
-        component.ngOnInit();
-        component.rateLimitInfo = { currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 };
-        fixture.changeDetectorRef.detectChanges();
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
-    });
+        it('should not render suggestions if the rate limit is exceeded', () => {
+            jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            statusMock.currentRatelimitInfo.mockReturnValue(of({ currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 }));
 
-    it('should not render suggestions if the user is not active', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
 
-        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
 
-        // Act
-        component.ngOnInit();
-        component.active = false;
-        fixture.changeDetectorRef.detectChanges();
+        it('should not render suggestions if the user is not active', () => {
+            jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            statusMock.getActiveStatus.mockReturnValue(of(false));
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
-    });
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
 
-    it('should not render suggestions if hasActiveStage is true', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
 
-        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+        it('should not render suggestions if hasActiveStage is true', () => {
+            const activeStage = { state: IrisStageStateDTO.IN_PROGRESS } as IrisStageDTO;
+            jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            jest.spyOn(chatService, 'currentStages').mockReturnValue(of([activeStage]));
 
-        // Act
-        component.ngOnInit();
-        component.hasActiveStage = true;
-        fixture.changeDetectorRef.detectChanges();
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
     });
 
     describe('clear chat session', () => {
@@ -290,26 +301,24 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
-    it('should set irisQuestion onInit when provided in the queryParams', () => {
-        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
-
-        component.ngOnInit();
-
-        expect(component.newMessageTextContent).toBe(mockQueryParams.irisQuestion);
+    it('should leave newMessageTextContent empty when no irisQuestion provided in queryParams', () => {
+        // newMessageTextContent starts empty by default
+        expect(component.newMessageTextContent()).toBe('');
     });
 
-    it('should leave irisQuestion empty onInit when no question provided in the queryParams', () => {
-        const mockQueryParams = {};
-        const activatedRoute = TestBed.inject(ActivatedRoute);
+    describe('irisQuestion from queryParams', () => {
+        it('should set newMessageTextContent when irisQuestion is provided', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            (activatedRoute.queryParams as any) = of({ irisQuestion: 'Can you explain me the error I got?' });
 
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
+            // Recreate component with mocked queryParams
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
 
-        component.ngOnInit();
-
-        expect(component.newMessageTextContent).toBe('');
+            expect(component.newMessageTextContent()).toBe('Can you explain me the error I got?');
+        });
     });
 
     it('should switch to the selected session on session click', () => {
@@ -328,15 +337,15 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should set isChatHistoryOpen to true when called with true', () => {
-        component.isChatHistoryOpen = false;
+        component.isChatHistoryOpen.set(false);
         component.setChatHistoryVisibility(true);
-        expect(component.isChatHistoryOpen).toBeTrue();
+        expect(component.isChatHistoryOpen()).toBeTrue();
     });
 
     it('should set isChatHistoryOpen to false when called with false', () => {
-        component.isChatHistoryOpen = true;
+        component.isChatHistoryOpen.set(true);
         component.setChatHistoryVisibility(false);
-        expect(component.isChatHistoryOpen).toBeFalse();
+        expect(component.isChatHistoryOpen()).toBeFalse();
     });
 
     it('should call chatService.clearChat when openNewSession is executed', () => {
@@ -383,7 +392,12 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            component.chatSessions = [...sortedSessions];
+            // Mock chatSessions before component creation (chatSessions is readonly from toSignal)
+            jest.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
         });
 
         it('filters by title (case-insensitive)', () => {
@@ -463,7 +477,12 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            component.chatSessions = [...sortedSessions];
+            // Mock chatSessions before component creation (chatSessions is readonly from toSignal)
+            jest.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.detectChanges();
         });
 
         it('should handle invalid day ranges gracefully', () => {
@@ -509,45 +528,44 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('Related entity button', () => {
-        const setupAndVerifyRelatedEntityButton = (session: IrisSessionDTO, expectedLinkFragment: string) => {
-            jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
-                component['currentChatMode'].set(session.chatMode);
-                component['currentRelatedEntityId'].set(session.entityId);
-            });
+        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
+            // Mock the service observables before component creation
+            jest.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+            jest.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
 
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
             fixture.componentRef.setInput('isChatHistoryAvailable', true);
-
-            chatService.switchToSession(session);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
             tick();
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe(expectedLinkFragment);
-        };
-
-        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
-            const session: IrisSessionDTO = {
-                id: 10,
-                creationDate: new Date(),
-                chatMode: ChatServiceMode.LECTURE,
-                entityId: 55,
-                entityName: 'Lecture 1',
-            };
-
-            setupAndVerifyRelatedEntityButton(session, '../lectures/55');
+            expect(component.relatedEntityRoute()).toBe('../lectures/55');
         }));
 
         it('should display correct related entity button when programming exercise session selected', fakeAsync(() => {
-            const session: IrisSessionDTO = {
-                id: 11,
-                creationDate: new Date(),
-                chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
-                entityId: 99,
-                entityName: 'Exercise 1',
-            };
+            // Mock the service observables before component creation
+            jest.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            jest.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(99));
 
-            setupAndVerifyRelatedEntityButton(session, '../exercises/99');
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
+            tick();
+
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../exercises/99');
         }));
     });
     describe('showAISelectionModal', () => {
