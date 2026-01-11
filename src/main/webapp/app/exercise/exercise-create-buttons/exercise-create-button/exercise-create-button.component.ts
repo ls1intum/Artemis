@@ -13,6 +13,7 @@ import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-to
 export class ExerciseCreateButtonComponent extends ExerciseManageButtonComponent {
     protected readonly faPlus = faPlus;
     linkToExerciseCreation() {
+        this.beforeNavigate.emit();
         this.modalService.dismissAll();
         this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', 'new']);
     }

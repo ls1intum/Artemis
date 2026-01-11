@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -15,7 +15,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
 @Component({
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent, AdminTitleBarTitleDirective],
 })
 export class OrganizationManagementUpdateComponent implements OnInit {

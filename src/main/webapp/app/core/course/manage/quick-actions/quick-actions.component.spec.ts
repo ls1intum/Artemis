@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CourseManagementSection, QuickActionsComponent } from './quick-actions.component';
@@ -18,6 +20,8 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('QuickActionsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: QuickActionsComponent;
     let fixture: ComponentFixture<QuickActionsComponent>;
     let router: Router;
@@ -41,9 +45,13 @@ describe('QuickActionsComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should open the add exercise modal', () => {
         const addExercisePopoverComponent = fixture.debugElement.query(By.directive(AddExercisePopoverComponent));
-        const addExerciseModalSpy = jest.spyOn(addExercisePopoverComponent.componentInstance, 'showPopover');
+        const addExerciseModalSpy = vi.spyOn(addExercisePopoverComponent.componentInstance, 'showPopover');
         const addExerciseModalButton = fixture.debugElement.query(By.css('#open-add-exercise-popover'));
         addExerciseModalButton.nativeElement.click();
         expect(addExerciseModalSpy).toHaveBeenCalled();
@@ -55,14 +63,14 @@ describe('QuickActionsComponent', () => {
         { section: CourseManagementSection.FAQ, expectedLink: 'faqs' },
     ])('should link to correct section', ({ section, expectedLink }) => {
         fixture.componentRef.setInput('course', { id: 123 });
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routerSpy = vi.spyOn(router, 'navigate');
         component.navigateToCourseManagementSection(section);
         expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, expectedLink, 'new']);
     });
 
     it('should initialize lectureEnabled from ProfileService', () => {
         const profileService = TestBed.inject(ProfileService);
-        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive');
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive');
         isModuleFeatureActiveSpy.mockReturnValue(true);
 
         // Create a new component to test initialization
@@ -71,6 +79,6 @@ describe('QuickActionsComponent', () => {
         const newComponent = newFixture.componentInstance;
 
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_LECTURE);
-        expect(newComponent.lectureEnabled).toBeTrue();
+        expect(newComponent.lectureEnabled).toBe(true);
     });
 });

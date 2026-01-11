@@ -1,13 +1,13 @@
 <div class="modal-header">
-    @if (health) {
+    @if (health(); as h) {
         <h4 class="modal-title" id="showHealthLabel">
-            {{ 'health.indicator.' + health.key | artemisTranslate }}
+            {{ 'health.indicator.' + h.key | artemisTranslate }}
         </h4>
     }
     <button aria-label="Close" data-dismiss="modal" class="btn-close" type="button" (click)="dismiss()"></button>
 </div>
 <div class="modal-body pad">
-    @if (health) {
+    @if (health(); as h) {
         <div>
             <h5 jhiTranslate="health.details.properties"></h5>
             <div class="table-responsive">
@@ -19,7 +19,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (healthDetail of health.value.details! | keyvalue; track healthDetail) {
+                        @for (healthDetail of h.value.details! | keyvalue; track healthDetail) {
                             <tr>
                                 <td class="text-left">{{ healthDetail.key }}</td>
                                 <td class="text-left" [ngStyle]="{ 'white-space': 'pre-line' }">{{ readableValue(healthDetail.value) }}</td>
