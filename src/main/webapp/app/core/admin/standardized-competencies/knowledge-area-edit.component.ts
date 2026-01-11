@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
+import { Component, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -29,7 +29,6 @@ interface KnowledgeAreaForm {
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
     imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, FormsModule, ReactiveFormsModule, MarkdownEditorMonacoComponent, HtmlForMarkdownPipe],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KnowledgeAreaEditComponent {
     private readonly formBuilder = inject(FormBuilder);

@@ -6,7 +6,7 @@ import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/ent
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, Input, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
@@ -44,9 +44,9 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
-    @Input() courseId!: number;
-    @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
-    @Input() navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
+    courseId = input.required<number>();
+    competencyLinks = input<CompetencyLectureUnitLink[]>([]);
+    navigateTo = input<'competencyManagement' | 'courseStatistics'>('courseStatistics');
 }
 
 @Component({ selector: 'jhi-pdf-drop-zone', template: '' })
