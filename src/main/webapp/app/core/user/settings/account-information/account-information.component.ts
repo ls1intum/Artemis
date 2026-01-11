@@ -43,14 +43,17 @@ export class AccountInformationComponent {
             modalRef.componentInstance.roundCropper = false;
             modalRef.componentInstance.fileFormat = 'jpeg';
             modalRef.componentInstance.uploadFile = element.files[0];
-            const mimeType = element.files[0].type;
-            modalRef.result.then((result: string) => {
-                if (result) {
-                    const base64Data = result.replace('data:image/jpeg;base64,', '');
-                    const fileToUpload = base64StringToBlob(base64Data, mimeType);
-                    this.updateProfilePicture(fileToUpload);
-                }
-            });
+            // Use 'image/jpeg' since the cropper outputs JPEG format regardless of input
+            const mimeType = 'image/jpeg';
+            modalRef.result
+                .then((result: string) => {
+                    if (result) {
+                        const base64Data = result.replace('data:image/jpeg;base64,', '');
+                        const fileToUpload = base64StringToBlob(base64Data, mimeType);
+                        this.updateProfilePicture(fileToUpload);
+                    }
+                })
+                .catch(() => undefined); // Handle modal dismissal
         }
         element.value = '';
     }

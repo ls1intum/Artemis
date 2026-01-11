@@ -9,6 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-data-export-confirmation-dialog',
@@ -23,9 +24,9 @@ export class DataExportConfirmationDialogComponent implements OnInit {
     readonly dataExportConfirmationForm = viewChild.required<NgForm>('dataExportConfirmationForm');
 
     // These are set from the dialog service, not as regular inputs
-    dialogError: Observable<string>;
-    dataExportRequest: OutputEmitterRef<void>;
-    dataExportRequestForAnotherUser: OutputEmitterRef<string>;
+    dialogError!: Observable<string>;
+    dataExportRequest!: OutputEmitterRef<void>;
+    dataExportRequestForAnotherUser!: OutputEmitterRef<string>;
 
     readonly submitDisabled = signal(false);
     readonly enteredLogin = signal('');
@@ -89,5 +90,10 @@ export class DataExportConfirmationDialogComponent implements OnInit {
             this.confirmationTextHint.set('artemisApp.dataExport.typeLoginToConfirm');
             this.expectedLoginOfOtherUser.set('');
         }
+    }
+
+    onLoginOrNameChange(value: string | User): void {
+        const login = typeof value === 'string' ? value : (value.login ?? '');
+        this.expectedLogin.set(login);
     }
 }

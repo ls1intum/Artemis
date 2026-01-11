@@ -18,7 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class TypeAheadUserSearchFieldComponent {
     private readonly userService = inject(UserService);
 
-    readonly loginOrName = model<string>('');
+    readonly loginOrName = model<string | User>('');
 
     readonly searching = signal(false);
     readonly searchFailed = signal(false);
@@ -30,11 +30,13 @@ export class TypeAheadUserSearchFieldComponent {
 
     search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
         this.searchFailed.set(false);
+        this.searchNoResults.set(false);
         return login.pipe(
             switchMap((loginOrName: string) => {
                 if (loginOrName.length < this.MIN_SEARCH_QUERY_LENGTH) {
                     this.searchQueryTooShort.set(true);
                     this.searching.set(false);
+                    this.searchNoResults.set(false);
                     return of([]);
                 } else {
                     this.searchQueryTooShort.set(false);
@@ -50,6 +52,7 @@ export class TypeAheadUserSearchFieldComponent {
                     catchError(() => {
                         this.searching.set(false);
                         this.searchFailed.set(true);
+                        this.searchNoResults.set(false);
                         return of([]);
                     }),
                 );
@@ -59,25 +62,19 @@ export class TypeAheadUserSearchFieldComponent {
 
     onChange(): void {
         const currentValue = this.loginOrName();
-        const user = currentValue as unknown as User;
-        // this is a user object returned by search, but we are only interested in the login
-        // if we don't do this, the user object will be converted to a string and passed to the parent component
-        // before we sent a request to the server this is a string, and we can emit it directly
-        if (user && user.login) {
+        // When user selects from typeahead, currentValue is a User object
+        // We extract the login string for the parent component
+        const user = typeof currentValue === 'string' ? undefined : currentValue;
+        if (user?.login) {
             this.loginOrName.set(user.login);
         }
-        this.searchQueryTooShort.set(this.loginOrName().length < this.MIN_SEARCH_QUERY_LENGTH);
+        const value = this.loginOrName();
+        this.searchQueryTooShort.set(typeof value === 'string' && value.length < this.MIN_SEARCH_QUERY_LENGTH);
     }
 
     resultFormatter = (result: User): string => result.name! + ' (' + result.login! + ')';
 
     inputFormatter(input: User | string): string {
-        // here applies the same as in onChange()
-        const user = input as unknown as User;
-        if (user && user.login) {
-            return user.login!;
-        } else {
-            return input as string;
-        }
+        return typeof input === 'string' ? input : (input.login ?? '');
     }
 }

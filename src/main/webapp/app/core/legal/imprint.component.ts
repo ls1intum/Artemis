@@ -5,6 +5,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-imprint',
@@ -24,11 +25,12 @@ export class ImprintComponent implements AfterViewInit, OnInit {
      */
     ngOnInit(): void {
         // Update the view if the language was changed
-        this.languageHelper.language.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((lang) => {
-            this.legalDocumentService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => {
-                this.imprint.set(imprint.text);
-            });
-        });
+        this.languageHelper.language
+            .pipe(
+                switchMap((lang) => this.legalDocumentService.getImprint(lang as LegalDocumentLanguage)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((imprint) => this.imprint.set(imprint.text));
     }
 
     /**

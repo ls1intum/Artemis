@@ -81,8 +81,8 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         expect(component.loginOrName()).toBe('ge12abc');
         expect(component.searchQueryTooShort()).toBeFalse();
 
-        // When loginOrName is set to an object (user), onChange should extract the login
-        component.loginOrName.set({ login: 'ge12abc' } as unknown as string);
+        // When loginOrName is set to a User object (from typeahead selection), onChange should extract the login
+        component.loginOrName.set({ login: 'ge12abc' } as User);
         component.onChange();
         expect(component.loginOrName()).toBe('ge12abc');
 

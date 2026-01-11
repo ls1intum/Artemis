@@ -7,6 +7,7 @@ import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-privacy',
@@ -34,9 +35,12 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
     ngOnInit(): void {
         this.isAuthenticated.set(this.accountService.isAuthenticated());
         // Update the view if the language was changed
-        this.languageHelper.language.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((lang) => {
-            this.legalDocumentService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => this.privacyStatement.set(statement.text));
-        });
+        this.languageHelper.language
+            .pipe(
+                switchMap((lang) => this.legalDocumentService.getPrivacyStatement(lang as LegalDocumentLanguage)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((statement) => this.privacyStatement.set(statement.text));
     }
 
     /**

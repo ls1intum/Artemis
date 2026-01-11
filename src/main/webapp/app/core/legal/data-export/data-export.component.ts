@@ -55,36 +55,33 @@ export class DataExportComponent implements OnInit {
             if (params['id']) {
                 this.downloadMode.set(true);
                 this.dataExportId.set(params['id']);
+                this.titleKey.set('artemisApp.dataExport.titleDownload');
+                this.description.set('artemisApp.dataExport.descriptionDownload');
+                this.dataExportService.canDownloadSpecificDataExport(params['id']).subscribe((canDownloadDataExport) => {
+                    this.canDownload.set(canDownloadDataExport);
+                });
+            } else {
+                this.titleKey.set('artemisApp.dataExport.title');
+                this.description.set('artemisApp.dataExport.description');
+                this.dataExportService.canRequestDataExport().subscribe((canRequestDataExport) => {
+                    this.canRequestDataExport.set(canRequestDataExport);
+                });
+                this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
+                    this.dataExport.update((current) => ({
+                        ...current,
+                        createdDate: convertDateFromServer(dataExport.createdDate),
+                        nextRequestDate: convertDateFromServer(dataExport.nextRequestDate),
+                        dataExportState: dataExport.dataExportState,
+                    }));
+                    this.canDownload.set(!!dataExport.id);
+                    if (dataExport.id) {
+                        this.dataExport.update((current) => ({ ...current, id: dataExport.id }));
+                        this.dataExportId.set(dataExport.id);
+                    }
+                    this.state.set(dataExport.dataExportState);
+                });
             }
         });
-
-        if (this.downloadMode()) {
-            this.titleKey.set('artemisApp.dataExport.titleDownload');
-            this.description.set('artemisApp.dataExport.descriptionDownload');
-            this.dataExportService.canDownloadSpecificDataExport(this.dataExportId()!).subscribe((canDownloadDataExport) => {
-                this.canDownload.set(canDownloadDataExport);
-            });
-        } else {
-            this.titleKey.set('artemisApp.dataExport.title');
-            this.description.set('artemisApp.dataExport.description');
-            this.dataExportService.canRequestDataExport().subscribe((canRequestDataExport) => {
-                this.canRequestDataExport.set(canRequestDataExport);
-            });
-            this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
-                this.dataExport.update((current) => ({
-                    ...current,
-                    createdDate: convertDateFromServer(dataExport.createdDate),
-                    nextRequestDate: convertDateFromServer(dataExport.nextRequestDate),
-                    dataExportState: dataExport.dataExportState,
-                }));
-                this.canDownload.set(!!dataExport.id);
-                if (dataExport.id) {
-                    this.dataExport.update((current) => ({ ...current, id: dataExport.id }));
-                    this.dataExportId.set(dataExport.id);
-                }
-                this.state.set(dataExport.dataExportState);
-            });
-        }
     }
 
     requestExport(): void {
