@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -33,8 +33,6 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
-import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.model';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
 import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
@@ -71,7 +69,7 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
         MarkdownDiffEditorMonacoComponent,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy, AfterViewChecked {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
     @ViewChild('diffEditor') diffEditor?: MarkdownDiffEditorMonacoComponent;
@@ -83,7 +81,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
-    private inlineCommentService = inject(InlineCommentService);
     private hyperionApiService = inject(HyperionProblemStatementApiService);
 
     // Icons
@@ -247,18 +244,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 1_200_000);
     }
 
-    // Inline comment state
-    protected pendingComments = this.inlineCommentService.getPendingComments();
-    protected pendingCount = this.inlineCommentService.pendingCount;
-    protected hasPendingComments = this.inlineCommentService.hasPendingComments;
-    protected applyingCommentId = signal<string | undefined>(undefined);
-    protected isApplyingAll = signal(false);
-    protected isAnyApplying = computed(() => !!this.applyingCommentId() || this.isApplyingAll());
-    // Currently in this component, applying inline comments IS refinement. TODO: Add refinement button
-    protected isRefining = this.isAnyApplying;
+    // Inline refinement state (selection-based refinement)
+    protected isInlineRefining = signal(false);
+    protected isRefining = computed(() => this.isInlineRefining());
     private currentRefinementSubscription: Subscription | undefined;
-    private exerciseContextInitialized = false;
-    private lastExerciseId: number | undefined;
 
     // Diff mode properties
     showDiff = signal(false);
@@ -272,17 +261,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     /**
-     * Effect to set diff editor content when signals change.
-     * More efficient than ngAfterViewChecked as it only runs when signals change.
+     * Lifecycle hook called after every check of the component's view.
+     * Used to set diff editor content when it becomes available.
      */
     constructor() {
         super();
-        effect(() => {
-            if (this.showDiff() && this.diffEditor && !this.diffContentSet) {
-                this.diffEditor.setFileContents(this.originalProblemStatement(), this.refinedProblemStatement(), 'original.md', 'refined.md');
-                this.diffContentSet = true;
-            }
-        });
+    }
+
+    /**
+     * Sets diff editor content when it becomes available.
+     * ngAfterViewChecked is used because @ViewChild is not available in effect().
+     */
+    ngAfterViewChecked(): void {
+        if (this.showDiff() && this.diffEditor && !this.diffContentSet) {
+            this.diffEditor.setFileContents(this.originalProblemStatement(), this.refinedProblemStatement(), 'original.md', 'refined.md');
+            this.diffContentSet = true;
+        }
     }
 
     /**
@@ -290,23 +284,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     protected override applyDomainChange(domainType: any, domainValue: any): void {
         super.applyDomainChange(domainType, domainValue);
-
-        // Initialize inline comment service with exercise context (reinitialize if exercise changes)
-        if (this.exercise?.id && (this.lastExerciseId !== this.exercise.id || !this.exerciseContextInitialized)) {
-            this.inlineCommentService.setExerciseContext(this.exercise.id);
-            this.lastExerciseId = this.exercise.id;
-            this.exerciseContextInitialized = true;
-        }
     }
 
     override ngOnDestroy(): void {
         super.ngOnDestroy();
         this.currentRefinementSubscription?.unsubscribe();
-        // Clear inline comment context when leaving the page
-        this.inlineCommentService.clearContext();
-        // Reset context tracking so it reinitializes on component reuse
-        this.exerciseContextInitialized = false;
-        this.lastExerciseId = undefined;
     }
 
     /**
@@ -401,135 +383,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.diffContentSet = false;
     }
 
-    // Inline Comment Methods
-
     /**
-     * Handles saving an inline comment (adds to pending list).
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
-    onSaveInlineComment(comment: InlineComment): void {
-        const existingComment = this.inlineCommentService.getComment(comment.id);
-        if (existingComment) {
-            // Update existing comment's status
-            this.inlineCommentService.updateStatus(comment.id, 'pending');
-        } else {
-            // Add new comment
-            this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
-        }
-    }
-
-    /**
-     * Handles applying an inline comment immediately with AI.
-     */
-    onApplyInlineComment(comment: InlineComment): void {
-        // First add to service if not already there
-        if (!this.inlineCommentService.getComment(comment.id)) {
-            this.inlineCommentService.addExistingComment(comment);
-        }
-        this.applySingleComment(comment);
-    }
-
-    /**
-     * Handles deleting an inline comment.
-     */
-    onDeleteInlineComment(commentId: string): void {
-        this.inlineCommentService.removeComment(commentId);
-    }
-
-    /**
-     * Cancels the current inline comment apply operation.
-     */
-    onCancelInlineCommentApply(): void {
-        if (this.currentRefinementSubscription) {
-            this.currentRefinementSubscription.unsubscribe();
-            this.currentRefinementSubscription = undefined;
-        }
-
-        const commentId = this.applyingCommentId();
-        if (commentId) {
-            this.inlineCommentService.updateStatus(commentId, 'pending');
-        }
-        this.applyingCommentId.set(undefined);
-        this.isApplyingAll.set(false);
-    }
-
-    /**
-     * Clears all pending inline comments.
-     */
-    clearAllComments(): void {
-        this.inlineCommentService.clearAll();
-    }
-
-    /**
-     * Applies all pending inline comments.
-     */
-    applyAllComments(): void {
-        const comments = this.pendingComments();
-        if (comments.length === 0) {
-            return;
-        }
-
-        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
-        if (!courseId || !this.exercise?.problemStatement?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-            return;
-        }
-
-        this.isApplyingAll.set(true);
-
-        // Mark all comments as applying
-        for (const comment of comments) {
-            this.inlineCommentService.updateStatus(comment.id, 'applying');
-        }
-
-        const apiComments: ApiInlineComment[] = comments.map((comment) => ({
-            startLine: comment.startLine,
-            endLine: comment.endLine,
-            instruction: comment.instruction,
-        }));
-
-        const request: ProblemStatementRefinementRequest = {
-            problemStatementText: this.exercise.problemStatement,
-            inlineComments: apiComments,
-        };
-
-        this.currentRefinementSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isApplyingAll.set(false);
-                    this.currentRefinementSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        this.originalProblemStatement.set(this.exercise.problemStatement || '');
-                        this.refinedProblemStatement.set(response.refinedProblemStatement);
-                        this.diffContentSet = false;
-                        this.showDiff.set(true);
-
-                        this.inlineCommentService.markAllApplied(comments.map((c) => c.id));
-                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applyAllSuccess');
-                    } else {
-                        for (const comment of comments) {
-                            this.inlineCommentService.updateStatus(comment.id, 'error');
-                        }
-                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-                    }
-                },
-                error: () => {
-                    for (const comment of comments) {
-                        this.inlineCommentService.updateStatus(comment.id, 'error');
-                    }
-                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-                },
-            });
-    }
-
-    /**
-     * Applies a single inline comment using AI refinement.
-     */
-    private applySingleComment(comment: InlineComment): void {
+    onInlineRefinement(event: { selectedText: string; instruction: string }): void {
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
 
         if (!courseId || !this.exercise?.problemStatement?.trim()) {
@@ -537,13 +395,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.applyingCommentId.set(comment.id);
-        this.inlineCommentService.updateStatus(comment.id, 'applying');
+        // Find the line range of the selected text
+        const lines = this.exercise.problemStatement.split('\n');
+        let startLine = 1;
+        let endLine = lines.length;
+        let currentPos = 0;
+        for (let i = 0; i < lines.length; i++) {
+            if (currentPos + lines[i].length >= this.exercise.problemStatement.indexOf(event.selectedText)) {
+                startLine = i + 1;
+                break;
+            }
+            currentPos += lines[i].length + 1;
+        }
+        // Find end line
+        const selectedLines = event.selectedText.split('\n').length;
+        endLine = startLine + selectedLines - 1;
+
+        this.isInlineRefining.set(true);
 
         const apiComment: ApiInlineComment = {
-            startLine: comment.startLine,
-            endLine: comment.endLine,
-            instruction: comment.instruction,
+            startLine,
+            endLine,
+            instruction: event.instruction,
         };
 
         const request: ProblemStatementRefinementRequest = {
@@ -555,7 +428,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .refineProblemStatement(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.applyingCommentId.set(undefined);
+                    this.isInlineRefining.set(false);
                     this.currentRefinementSubscription = undefined;
                 }),
             )
@@ -567,18 +440,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.refinedProblemStatement.set(response.refinedProblemStatement);
                         this.diffContentSet = false;
                         this.showDiff.set(true);
-
-                        // Mark comment as applied and remove from pending
-                        this.inlineCommentService.markApplied(comment.id);
-                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applySuccess');
+                        this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {
-                        this.inlineCommentService.updateStatus(comment.id, 'error');
-                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                        this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                     }
                 },
                 error: () => {
-                    this.inlineCommentService.updateStatus(comment.id, 'error');
-                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
             });
     }

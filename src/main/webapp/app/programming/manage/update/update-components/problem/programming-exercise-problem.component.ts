@@ -601,4 +601,73 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         this.applyingCommentId.set(undefined);
         this.isApplyingAll.set(false);
     }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then shows diff.
+     */
+    onInlineRefinement(event: { selectedText: string; instruction: string }): void {
+        const exercise = this.programmingExercise();
+        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+
+        if (!courseId || !exercise?.problemStatement?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            return;
+        }
+
+        // Find the line range of the selected text
+        const lines = exercise.problemStatement.split('\n');
+        let startLine = 1;
+        let endLine = lines.length;
+        let currentPos = 0;
+        for (let i = 0; i < lines.length; i++) {
+            if (currentPos + lines[i].length >= exercise.problemStatement.indexOf(event.selectedText)) {
+                startLine = i + 1;
+                break;
+            }
+            currentPos += lines[i].length + 1;
+        }
+        // Find end line
+        const selectedLines = event.selectedText.split('\n').length;
+        endLine = startLine + selectedLines - 1;
+
+        this.isRefining.set(true);
+
+        const apiComment: ApiInlineComment = {
+            startLine,
+            endLine,
+            instruction: event.instruction,
+        };
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: exercise.problemStatement,
+            inlineComments: [apiComment],
+        };
+
+        this.currentGenerationSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isRefining.set(false);
+                    this.currentGenerationSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+                        // Store original and refined content for diff view
+                        this.originalProblemStatement = exercise.problemStatement || '';
+                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.diffContentSet = false;
+                        this.showDiff = true;
+                        this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                    }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                },
+            });
+    }
 }

@@ -157,6 +157,22 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     listeners: Disposable[] = [];
 
     /*
+     * Decorations collection for revert buttons in the glyph margin.
+     */
+    private revertDecorations: monaco.editor.IEditorDecorationsCollection | undefined;
+
+    /*
+     * Store line changes for revert functionality.
+     */
+    private currentLineChanges: monaco.editor.ILineChange[] = [];
+
+    /*
+     * Hover widget for showing revert options.
+     */
+    private hoverWidget: HTMLDivElement | undefined;
+    private currentHoverLineNumber: number | undefined;
+
+    /*
      * Injected services and elements.
      */
     private readonly renderer = inject(Renderer2);
@@ -187,6 +203,8 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
                 modifiedEditor.updateOptions({ readOnly: this.readOnly() });
             }
         });
+
+        this.setupRevertButtonClickHandler();
     }
 
     ngAfterViewInit(): void {
@@ -247,6 +265,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
             }
 
             const monacoLineChanges = this._editor.getLineChanges() ?? [];
+            this.currentLineChanges = monacoLineChanges;
             this.onReadyForDisplayChange.emit({
                 ready: true,
                 lineChange: this.convertMonacoLineChanges(monacoLineChanges),
@@ -254,6 +273,247 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
         });
 
         this.listeners.push(diffListener);
+    }
+
+    /**
+     * Sets up hover and click handlers for revert buttons.
+     * Shows the glyph icon only when hovering over a changed line (like Monaco's lightbulb).
+     */
+    private setupRevertButtonClickHandler(): void {
+        const modifiedEditor = this._editor.getModifiedEditor();
+
+        // Create hover widget element for the 3-option menu
+        this.hoverWidget = document.createElement('div');
+        this.hoverWidget.className = 'diff-revert-hover-widget';
+        this.hoverWidget.style.display = 'none';
+        this.hoverWidget.style.position = 'absolute';
+        this.hoverWidget.style.zIndex = '100';
+        this.monacoDiffEditorContainerElement.appendChild(this.hoverWidget);
+
+        // Hide widget
+        const hideWidget = () => {
+            if (this.hoverWidget) {
+                this.hoverWidget.style.display = 'none';
+            }
+        };
+
+        // Track which line we're hovering on to show the glyph icon only there
+        const mouseMoveListener = modifiedEditor.onMouseMove((e) => {
+            const lineNumber = e.target.position?.lineNumber;
+
+            // Check if hovering on a changed line
+            if (lineNumber && this.isLineInChange(lineNumber)) {
+                if (lineNumber !== this.currentHoverLineNumber) {
+                    this.currentHoverLineNumber = lineNumber;
+                    this.updateHoverDecoration(lineNumber);
+                }
+            } else {
+                // Not on a changed line, clear the hover decoration
+                if (this.currentHoverLineNumber !== undefined) {
+                    this.currentHoverLineNumber = undefined;
+                    this.clearHoverDecoration();
+                }
+            }
+        });
+
+        // On click of the glyph, show the widget
+        const mouseDownListener = modifiedEditor.onMouseDown((e) => {
+            // If clicking in glyph margin on a line that has a hover decoration, show the widget
+            if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && this.currentHoverLineNumber !== undefined) {
+                e.event.preventDefault();
+                e.event.stopPropagation();
+                this.showHoverWidget(this.currentHoverLineNumber, e.event.posx, e.event.posy);
+            } else if (!this.hoverWidget?.contains(e.event.target as Node)) {
+                hideWidget();
+            }
+        });
+
+        // Hide on escape
+        const keyDownListener = modifiedEditor.onKeyDown((e) => {
+            if (e.keyCode === monaco.KeyCode.Escape) {
+                hideWidget();
+            }
+        });
+
+        // Hide when clicking outside the widget (with a slight delay to not conflict with editor click)
+        const documentClickHandler = (e: MouseEvent) => {
+            if (this.hoverWidget && this.hoverWidget.style.display !== 'none' && !this.hoverWidget.contains(e.target as Node)) {
+                hideWidget();
+            }
+        };
+        // Use setTimeout to add listener after current click event
+        setTimeout(() => {
+            document.addEventListener('mousedown', documentClickHandler);
+        }, 0);
+
+        // Clear decoration when mouse leaves editor
+        const mouseLeaveListener = modifiedEditor.onMouseLeave(() => {
+            this.currentHoverLineNumber = undefined;
+            this.clearHoverDecoration();
+        });
+
+        this.listeners.push(mouseMoveListener, mouseDownListener, keyDownListener, mouseLeaveListener);
+    }
+
+    /**
+     * Checks if a line number is within any change block.
+     */
+    private isLineInChange(lineNumber: number): boolean {
+        return this.currentLineChanges.some((c) => lineNumber >= c.modifiedStartLineNumber && lineNumber <= (c.modifiedEndLineNumber || c.modifiedStartLineNumber));
+    }
+
+    /**
+     * Updates the hover decoration to show the revert glyph on a specific line.
+     */
+    private updateHoverDecoration(lineNumber: number): void {
+        const modifiedEditor = this._editor.getModifiedEditor();
+
+        if (!this.revertDecorations) {
+            this.revertDecorations = modifiedEditor.createDecorationsCollection();
+        }
+
+        this.revertDecorations.set([
+            {
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                options: {
+                    glyphMarginClassName: 'diff-revert-glyph',
+                },
+            },
+        ]);
+    }
+
+    /**
+     * Clears the hover decoration (hides the glyph icon).
+     */
+    private clearHoverDecoration(): void {
+        if (this.revertDecorations) {
+            this.revertDecorations.set([]);
+        }
+    }
+
+    /**
+     * Shows the hover widget with 3 options at the specified position.
+     */
+    private showHoverWidget(lineNumber: number, x: number, y: number): void {
+        if (!this.hoverWidget || this.readOnly()) return;
+
+        const change = this.currentLineChanges.find((c) => lineNumber >= c.modifiedStartLineNumber && lineNumber <= (c.modifiedEndLineNumber || c.modifiedStartLineNumber));
+
+        if (!change) return;
+
+        this.currentHoverLineNumber = lineNumber;
+        const linesCount = change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
+        const isMultipleLines = linesCount > 1;
+
+        // Build the menu HTML
+        this.hoverWidget.innerHTML = `
+            <div class="diff-revert-menu">
+                <button class="diff-revert-menu-item" data-action="copy-all">
+                    <span class="codicon codicon-copy"></span>
+                    Copy changed line${isMultipleLines ? 's' : ''}
+                </button>
+                <button class="diff-revert-menu-item" data-action="copy-line">
+                    <span class="codicon codicon-copy"></span>
+                    Copy changed line (${lineNumber})
+                </button>
+                <button class="diff-revert-menu-item" data-action="revert">
+                    <span class="codicon codicon-discard"></span>
+                    Revert this change
+                </button>
+            </div>
+        `;
+
+        // Position the widget using fixed positioning at the click location
+        // This mirrors how Monaco positions its popups
+        this.hoverWidget.style.position = 'fixed';
+        this.hoverWidget.style.left = `${x}px`;
+        this.hoverWidget.style.top = `${y}px`;
+        this.hoverWidget.style.display = 'block';
+
+        // Add click handlers
+        this.hoverWidget.querySelectorAll('.diff-revert-menu-item').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                const action = (e.currentTarget as HTMLElement).dataset['action'];
+                if (action === 'copy-all') {
+                    this.copyChangedLines(change);
+                } else if (action === 'copy-line') {
+                    this.copyLineContent(lineNumber);
+                } else if (action === 'revert') {
+                    this.revertChangeAtLine(lineNumber);
+                }
+                this.hoverWidget!.style.display = 'none';
+                this.currentHoverLineNumber = undefined;
+            });
+        });
+    }
+
+    /**
+     * Copies all changed lines in the block to clipboard.
+     */
+    private copyChangedLines(change: monaco.editor.ILineChange): void {
+        const modifiedModel = this._editor.getModifiedEditor().getModel();
+        if (!modifiedModel) return;
+
+        const content = modifiedModel.getValueInRange(
+            new monaco.Range(change.modifiedStartLineNumber, 1, change.modifiedEndLineNumber, modifiedModel.getLineMaxColumn(change.modifiedEndLineNumber)),
+        );
+        navigator.clipboard.writeText(content);
+    }
+
+    /**
+     * Copies a single line's content to clipboard.
+     */
+    private copyLineContent(lineNumber: number): void {
+        const modifiedModel = this._editor.getModifiedEditor().getModel();
+        if (!modifiedModel) return;
+
+        const content = modifiedModel.getLineContent(lineNumber);
+        navigator.clipboard.writeText(content);
+    }
+
+    /**
+     * Reverts the change at the specified line number in the modified editor.
+     * Reverts the entire block that contains the line.
+     */
+    private revertChangeAtLine(lineNumber: number): void {
+        if (this.readOnly()) return;
+
+        // Find the change that contains this line
+        const change = this.currentLineChanges.find((c) => lineNumber >= c.modifiedStartLineNumber && lineNumber <= (c.modifiedEndLineNumber || c.modifiedStartLineNumber));
+
+        if (!change) return;
+
+        const originalModel = this._editor.getOriginalEditor().getModel();
+        const modifiedModel = this._editor.getModifiedEditor().getModel();
+
+        if (!originalModel || !modifiedModel) return;
+
+        // Get the original content for this change range
+        let originalContent = '';
+        if (change.originalStartLineNumber <= change.originalEndLineNumber) {
+            originalContent = originalModel.getValueInRange(
+                new monaco.Range(change.originalStartLineNumber, 1, change.originalEndLineNumber, originalModel.getLineMaxColumn(change.originalEndLineNumber)),
+            );
+        }
+
+        // Calculate the range in the modified model to replace
+        const modifiedEndLineNumber = change.modifiedEndLineNumber || change.modifiedStartLineNumber;
+        const modifiedRange =
+            change.modifiedStartLineNumber <= modifiedEndLineNumber
+                ? new monaco.Range(change.modifiedStartLineNumber, 1, modifiedEndLineNumber, modifiedModel.getLineMaxColumn(modifiedEndLineNumber))
+                : new monaco.Range(change.modifiedStartLineNumber, 1, change.modifiedStartLineNumber, 1);
+
+        // Apply the edit to revert the change
+        modifiedModel.pushEditOperations(
+            [],
+            [
+                {
+                    range: modifiedRange,
+                    text: originalContent,
+                },
+            ],
+            () => null,
+        );
     }
 
     /**

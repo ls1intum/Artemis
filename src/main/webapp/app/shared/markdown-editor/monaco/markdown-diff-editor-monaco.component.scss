@@ -102,3 +102,62 @@
 .default-font-size {
     font-size: var(--bs-body-font-size);
 }
+
+// Custom revert button in glyph margin (like Monaco's lightbulb)
+.diff-revert-glyph {
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.15s ease-in-out;
+
+    &::before {
+        content: '\ea61'; // codicon-lightbulb
+        font-family: codicon;
+        font-size: 16px;
+        color: var(--bs-warning);
+    }
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+// Hover widget for revert options (mimics Monaco's diff popup exactly)
+.diff-revert-hover-widget {
+    background-color: #252526;
+    border: 1px solid #454545;
+    border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.36);
+    padding: 0;
+    min-width: 160px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, Ubuntu, 'Droid Sans', sans-serif;
+    font-size: 13px;
+    color: #cccccc;
+
+    .diff-revert-menu {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .diff-revert-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: none;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        color: #cccccc;
+        white-space: nowrap;
+
+        &:hover {
+            background-color: #094771;
+            color: #ffffff;
+        }
+
+        .codicon {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    }
+}

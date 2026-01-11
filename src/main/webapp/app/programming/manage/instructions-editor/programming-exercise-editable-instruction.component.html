@@ -45,6 +45,17 @@
                 }
             </div>
         </jhi-markdown-editor-monaco>
+
+        <!-- Floating inline refinement button -->
+        @if (inlineRefinementPosition && hyperionEnabled) {
+            <jhi-inline-refinement-button
+                [top]="inlineRefinementPosition.top"
+                [left]="inlineRefinementPosition.left"
+                [selectedText]="selectedTextForRefinement"
+                (refine)="onInlineRefine($event)"
+                (closeRefinement)="hideInlineRefinementButton()"
+            />
+        }
     }
     @if (editMode) {
         <button

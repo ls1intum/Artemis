@@ -1,0 +1,109 @@
+.inline-refinement-container {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+}
+
+.refinement-trigger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+    }
+
+    fa-icon {
+        font-size: 14px;
+    }
+}
+
+.refinement-input-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #1e1e1e;
+    border: 1px solid #3c3c3c;
+    border-radius: 20px;
+    padding: 4px 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.refinement-input {
+    width: 240px;
+    border: none;
+    background: transparent;
+    color: #e0e0e0;
+    font-size: 13px;
+    padding: 6px 8px;
+    outline: none;
+
+    &::placeholder {
+        color: #888;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+    }
+}
+
+.refinement-submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: #6366f1;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+        background: #8b5cf6;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    fa-icon {
+        font-size: 12px;
+    }
+}
+
+.refinement-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        color: #e0e0e0;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    fa-icon {
+        font-size: 11px;
+    }
+}

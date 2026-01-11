@@ -18,6 +18,7 @@ import {
     signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import * as monaco from 'monaco-editor';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -293,8 +294,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
 
-    /** Emits when user selects lines in the editor */
-    readonly onSelectionChange = output<{ startLine: number; endLine: number } | null>();
+    /** Emits when user selects lines in the editor (includes selectedText and position for inline refinement) */
+    readonly onSelectionChange = output<{ startLine: number; endLine: number; selectedText: string; screenPosition: { top: number; left: number } } | null>();
 
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
@@ -465,12 +466,32 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
         this.renderConsistencyIssues();
 
-        // Set up selection change listener for inline comments
+        // Set up selection change listener for inline comments/refinement
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
             if (selection) {
+                // Get selected text and screen position for inline refinement
+                const model = this.monacoEditor.getModel();
+                const editor = this.monacoEditor['_editor'] as monaco.editor.IStandaloneCodeEditor;
+                const selectedText = model ? model.getValueInRange(selection) : '';
+
+                // Calculate screen position for floating button
+                let screenPosition = { top: 0, left: 0 };
+                const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
+                const coords = editor.getScrolledVisiblePosition(endPosition);
+                const editorDom = editor.getDomNode();
+                if (coords && editorDom) {
+                    const editorRect = editorDom.getBoundingClientRect();
+                    screenPosition = {
+                        top: editorRect.top + coords.top + coords.height + 5,
+                        left: editorRect.left + coords.left,
+                    };
+                }
+
                 this.onSelectionChange.emit({
                     startLine: selection.startLineNumber,
                     endLine: selection.endLineNumber,
+                    selectedText,
+                    screenPosition,
                 });
             } else {
                 this.onSelectionChange.emit(null);

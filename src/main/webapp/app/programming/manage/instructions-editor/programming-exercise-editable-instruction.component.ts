@@ -12,7 +12,6 @@ import {
     ViewChild,
     ViewEncapsulation,
     computed,
-    effect,
     inject,
     input,
     output,
@@ -52,8 +51,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { InlineCommentHostService } from 'app/shared/monaco-editor/service/inline-comment-host.service';
-import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.model';
+import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -69,6 +67,7 @@ import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.mod
         ProgrammingExerciseInstructionAnalysisComponent,
         ArtemisTranslatePipe,
         ProgrammingExerciseInstructionComponent,
+        InlineRefinementButtonComponent,
     ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
@@ -79,35 +78,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private inlineCommentHostService = inject(InlineCommentHostService);
 
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
 
-    /** Flag to track if the editor is ready for widgets */
-    private editorReady = false;
-
-    /** Map of comment IDs to widget IDs for tracking and updating widgets */
-    private commentWidgetMap = new Map<string, string>();
-
     constructor() {
-        // Effect to watch pendingComments and render widgets when they change
-        effect(() => {
-            // Subscribe to pendingComments signal - reading it triggers re-run when it changes
-            this.pendingComments();
-            if (this.editorReady && this.markdownEditorMonaco && this.hyperionEnabled) {
-                this.renderPendingCommentsAsWidgets();
-            }
-        });
-
-        // Effect to propagate isAnyApplying changes to all active widgets
-        effect(() => {
-            const applying = this.isAnyApplying();
-            // Update all active widgets with the new applying state
-            this.inlineCommentHostService.updateGlobalApplyingState(applying);
-        });
+        // Empty constructor - inline comment effects removed
     }
 
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
@@ -160,10 +138,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() templateParticipation?: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-    /** Pending inline comments to display in the editor */
-    readonly pendingComments = input<InlineComment[]>([]);
-    /** Whether any apply operation is in progress globally */
-    readonly isAnyApplying = input<boolean>(false);
     /** Whether any refinement is in progress (makes editor read-only) */
     readonly isRefining = input<boolean>(false);
 
@@ -180,20 +154,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() instructionChange = new EventEmitter<string>();
-    /** Emits when user wants to create an inline comment for selected lines */
-    readonly onCreateInlineComment = output<{ startLine: number; endLine: number }>();
-    /** Emits when user saves a comment for later */
-    readonly onInlineCommentSave = output<InlineComment>();
-    /** Emits when user wants to apply a comment with AI */
-    readonly onInlineCommentApply = output<InlineComment>();
-    /** Emits when user deletes a comment */
-    readonly onInlineCommentDelete = output<string>();
-    /** Emits when user cancels an in-progress apply operation */
-    readonly onInlineCommentCancelApply = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
-    // Inline comment selection state
-    currentSelection: { startLine: number; endLine: number } | null = null;
+    // Inline refinement state
+    inlineRefinementPosition: { top: number; left: number } | null = null;
+    selectedTextForRefinement = '';
+    /** Emits when user wants to refine selected text */
+    readonly onInlineRefinement = output<{ selectedText: string; instruction: string }>();
 
     set participation(participation: Participation) {
         this.participationValue = participation;
@@ -242,9 +209,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
         }
-        // Forcefully clear all active widgets - editor may already be destroyed
-        this.inlineCommentHostService.clearAllWidgets();
-        this.commentWidgetMap.clear();
     }
 
     ngAfterViewInit() {
@@ -259,174 +223,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             // Small delay to allow the instruction component to initialize
             setTimeout(() => this.generateHtmlSubject.next(), 0);
         }
-
-        // Set up the gutter hover button for inline comments (GitHub-style)
-        if (this.markdownEditorMonaco && this.hyperionEnabled) {
-            this.editorReady = true;
-            this.setupGutterButton();
-            // Render any existing pending comments as collapsed widgets
-            this.renderPendingCommentsAsWidgets();
-        }
     }
 
     /**
      * Sets up the gutter hover button (+) for adding inline comments.
      */
-    private setupGutterButton(): void {
-        this.markdownEditorMonaco?.monacoEditor?.setLineDecorationsHoverButton('inline-comment-add-gutter-button', (lineNumber: number) => this.onGutterButtonClick(lineNumber));
-    }
-
-    /**
-     * Handles click on the gutter (+) button.
-     * Opens inline comment widget at the clicked line.
-     */
-    private onGutterButtonClick(lineNumber: number): void {
-        // Check if there's already a widget at this line
-        if (this.inlineCommentHostService.hasWidgetAtLine(lineNumber)) {
-            return;
-        }
-
-        // Use current selection if available, otherwise just the clicked line
-        const selection = this.currentSelection;
-        const startLine = selection?.startLine ?? lineNumber;
-        const endLine = selection?.endLine ?? lineNumber;
-
-        this.doOpenInlineCommentWidget(startLine, endLine);
-    }
-
-    /**
-     * Shared helper to open an inline comment widget with consistent callbacks.
-     * Used by both gutter button clicks and selection-based widget opening.
-     * Returns early if editor is not initialized or Hyperion is not enabled.
-     */
-    private doOpenInlineCommentWidget(startLine: number, endLine: number, existingComment?: InlineComment): void {
-        // Guard: ensure editor is initialized and Hyperion is enabled
-        if (!this.markdownEditorMonaco || !this.hyperionEnabled) {
-            return;
-        }
-
-        // Check if there's already a widget at this line range
-        if (this.inlineCommentHostService.hasWidgetAtLine(startLine)) {
-            return;
-        }
-
-        // Open the inline comment widget
-        this.inlineCommentHostService.openWidget(
-            this.markdownEditorMonaco,
-            startLine,
-            endLine,
-            existingComment,
-            {
-                onSave: (comment: InlineComment) => {
-                    this.onCreateInlineComment.emit({ startLine: comment.startLine, endLine: comment.endLine });
-                    // Also emit the full comment for the parent to handle
-                    this.onInlineCommentSave.emit(comment);
-                },
-                onApply: (comment: InlineComment) => {
-                    this.onInlineCommentApply.emit(comment);
-                },
-                onCancel: () => {
-                    // Clear selection
-                    this.currentSelection = null;
-                },
-                onCancelApply: () => {
-                    this.onInlineCommentCancelApply.emit();
-                },
-                onDelete: (commentId: string) => {
-                    this.onInlineCommentDelete.emit(commentId);
-                },
-            },
-            { globalApplying: this.isAnyApplying() },
-        );
-
-        // Clear selection after opening widget
-        this.currentSelection = null;
-    }
-
-    /**
-     * Renders pending comments as collapsed widgets in the editor.
-     * Called on component init and when pending comments change.
-     * Also handles cleanup when comments are cleared.
-     */
-    private renderPendingCommentsAsWidgets(): void {
-        if (!this.markdownEditorMonaco || !this.hyperionEnabled) {
-            return;
-        }
-        const comments = this.pendingComments();
-
-        // If no pending comments (e.g., after Clear All), close all widgets
-        if (comments.length === 0) {
-            this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco);
-            this.commentWidgetMap.clear();
-            return;
-        }
-
-        // Build set of current comment IDs for cleanup
-        const currentCommentIds = new Set(comments.map((c) => c.id));
-
-        // Close widgets for comments that no longer exist
-        for (const [commentId, widgetId] of this.commentWidgetMap.entries()) {
-            if (!currentCommentIds.has(commentId)) {
-                this.inlineCommentHostService.closeWidget(widgetId, this.markdownEditorMonaco);
-                this.commentWidgetMap.delete(commentId);
-            }
-        }
-
-        for (const comment of comments) {
-            // Skip comments that are currently being applied - preserve their existing widget
-            // to show the loading state, don't close or re-create it
-            if (comment.status === 'applying') {
-                continue;
-            }
-
-            // Skip if there's already a widget at this line (e.g., from context menu)
-            if (this.inlineCommentHostService.hasWidgetAtLine(comment.startLine)) {
-                continue;
-            }
-
-            // Check if widget exists for this comment in our tracking map
-            const existingWidgetId = this.commentWidgetMap.get(comment.id);
-            if (existingWidgetId) {
-                // Widget exists - only close/refresh if status is NOT pending
-                // This prevents unnecessary widget recreation for unchanged comments
-                if (comment.status !== 'pending') {
-                    this.inlineCommentHostService.closeWidget(existingWidgetId, this.markdownEditorMonaco);
-                    this.commentWidgetMap.delete(comment.id);
-                } else {
-                    // Already has a widget and is pending - skip to avoid duplicate
-                    continue;
-                }
-            }
-
-            const widgetId = this.inlineCommentHostService.openWidget(
-                this.markdownEditorMonaco,
-                comment.startLine,
-                comment.endLine,
-                comment,
-                {
-                    onSave: (updatedComment: InlineComment) => {
-                        this.onInlineCommentSave.emit(updatedComment);
-                    },
-                    onApply: (applyComment: InlineComment) => {
-                        this.onInlineCommentApply.emit(applyComment);
-                    },
-                    onCancel: () => {
-                        // Keep the comment but close widget - parent handles state
-                    },
-                    onCancelApply: () => {
-                        this.onInlineCommentCancelApply.emit();
-                    },
-                    onDelete: (commentId: string) => {
-                        this.onInlineCommentDelete.emit(commentId);
-                    },
-                },
-                { collapsed: true, globalApplying: this.isAnyApplying() },
-            );
-
-            // Track the widget ID for this comment
-            this.commentWidgetMap.set(comment.id, widgetId);
-        }
-    }
 
     /** Save the problem statement on the server.
      * @param event
@@ -569,18 +370,33 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     /**
      * Handles selection changes from the markdown editor.
+     * Shows floating refinement button when text is selected.
      */
-    onEditorSelectionChange(selection: { startLine: number; endLine: number } | null): void {
-        this.currentSelection = selection;
+    onEditorSelectionChange(selection: { startLine: number; endLine: number; selectedText: string; screenPosition: { top: number; left: number } } | null): void {
+        // Show/hide inline refinement button based on selection
+        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled) {
+            this.inlineRefinementPosition = selection.screenPosition;
+            this.selectedTextForRefinement = selection.selectedText;
+        } else {
+            this.hideInlineRefinementButton();
+        }
     }
 
     /**
-     * Opens the inline comment widget for the current selection.
-     * Uses the shared helper for consistent behavior with gutter button clicks.
+     * Hides the floating inline refinement button.
+     * @param event
      */
-    openInlineCommentWidget(): void {
-        if (this.currentSelection) {
-            this.doOpenInlineCommentWidget(this.currentSelection.startLine, this.currentSelection.endLine);
-        }
+    hideInlineRefinementButton(): void {
+        this.inlineRefinementPosition = null;
+        this.selectedTextForRefinement = '';
+    }
+
+    /**
+     * Handles inline refinement submission.
+     * Emits the event for parent to process the refinement.
+     */
+    onInlineRefine(event: { selectedText: string; instruction: string }): void {
+        this.onInlineRefinement.emit(event);
+        this.hideInlineRefinementButton();
     }
 }

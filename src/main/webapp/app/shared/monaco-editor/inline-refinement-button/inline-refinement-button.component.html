@@ -1,0 +1,27 @@
+<div class="inline-refinement-container" [style.top.px]="top()" [style.left.px]="left()">
+    @if (!isExpanded()) {
+        <!-- Collapsed: Just the sparkle button -->
+        <button type="button" class="refinement-trigger-btn" (click)="expand()" [attr.aria-label]="'artemisApp.programmingExercise.inlineRefine' | artemisTranslate">
+            <fa-icon [icon]="faMagic" />
+        </button>
+    } @else {
+        <!-- Expanded: Input field with submit -->
+        <div class="refinement-input-container">
+            <input
+                #instructionInput
+                type="text"
+                class="refinement-input"
+                [placeholder]="'Edit or explain...'"
+                [(ngModel)]="instruction"
+                (keydown)="onKeydown($event)"
+                [disabled]="isSubmitting()"
+            />
+            <button type="button" class="refinement-submit-btn" (click)="submit()" [disabled]="!instruction || isSubmitting()">
+                <fa-icon [icon]="faPaperPlane" />
+            </button>
+            <button type="button" class="refinement-close-btn" (click)="handleClose()">
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+    }
+</div>
