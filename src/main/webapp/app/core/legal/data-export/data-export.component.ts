@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { cloneDeep } from 'lodash-es';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
@@ -53,11 +54,12 @@ export class DataExportComponent implements OnInit {
 
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             if (params['id']) {
+                const exportId = Number(params['id']);
                 this.downloadMode.set(true);
-                this.dataExportId.set(params['id']);
+                this.dataExportId.set(exportId);
                 this.titleKey.set('artemisApp.dataExport.titleDownload');
                 this.description.set('artemisApp.dataExport.descriptionDownload');
-                this.dataExportService.canDownloadSpecificDataExport(params['id']).subscribe((canDownloadDataExport) => {
+                this.dataExportService.canDownloadSpecificDataExport(exportId).subscribe((canDownloadDataExport) => {
                     this.canDownload.set(canDownloadDataExport);
                 });
             } else {
@@ -67,15 +69,20 @@ export class DataExportComponent implements OnInit {
                     this.canRequestDataExport.set(canRequestDataExport);
                 });
                 this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
-                    this.dataExport.update((current) => ({
-                        ...current,
-                        createdDate: convertDateFromServer(dataExport.createdDate),
-                        nextRequestDate: convertDateFromServer(dataExport.nextRequestDate),
-                        dataExportState: dataExport.dataExportState,
-                    }));
+                    this.dataExport.update((current) => {
+                        const updated: DataExport = cloneDeep(current);
+                        updated.createdDate = convertDateFromServer(dataExport.createdDate);
+                        updated.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
+                        updated.dataExportState = dataExport.dataExportState;
+                        return updated;
+                    });
                     this.canDownload.set(!!dataExport.id);
                     if (dataExport.id) {
-                        this.dataExport.update((current) => ({ ...current, id: dataExport.id }));
+                        this.dataExport.update((current) => {
+                            const updated: DataExport = cloneDeep(current);
+                            updated.id = dataExport.id;
+                            return updated;
+                        });
                         this.dataExportId.set(dataExport.id);
                     }
                     this.state.set(dataExport.dataExportState);
@@ -102,9 +109,9 @@ export class DataExportComponent implements OnInit {
     }
 
     downloadDataExport(): void {
-        const id = this.dataExportId();
-        if (id) {
-            this.dataExportService.downloadDataExport(id);
+        const exportId = this.dataExportId();
+        if (exportId) {
+            this.dataExportService.downloadDataExport(exportId);
         }
     }
 
