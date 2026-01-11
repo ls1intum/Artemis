@@ -113,7 +113,6 @@ describe('DataExportComponent', () => {
                 expect(canRequestSpy).not.toHaveBeenCalled();
                 expect(canDownloadAnyDataExportSpy).not.toHaveBeenCalled();
                 expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
-                expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
                 expect(component.canDownload()).toBeTrue();
                 expect(component.dataExportId()).toBe(1);
             } else {

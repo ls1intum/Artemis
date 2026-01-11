@@ -1,5 +1,5 @@
 import { Component, inject, model, signal } from '@angular/core';
-import { Observable, OperatorFunction, catchError, of, switchMap, tap } from 'rxjs';
+import { Observable, OperatorFunction, catchError, map, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/core/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
@@ -43,7 +43,7 @@ export class TypeAheadUserSearchFieldComponent {
                 this.searching.set(true);
 
                 return this.userService.search(loginOrName).pipe(
-                    switchMap((usersResponse) => of(usersResponse.body!)),
+                    map((usersResponse) => usersResponse.body ?? []),
                     tap((users) => {
                         this.searching.set(false);
                         this.searchNoResults.set(users.length === 0);

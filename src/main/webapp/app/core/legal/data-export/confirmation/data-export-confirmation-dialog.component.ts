@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, OutputEmitterRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -24,9 +24,10 @@ export class DataExportConfirmationDialogComponent implements OnInit {
     readonly dataExportConfirmationForm = viewChild.required<NgForm>('dataExportConfirmationForm');
 
     // These are set from the dialog service, not as regular inputs
-    dialogError!: Observable<string>;
-    dataExportRequest!: OutputEmitterRef<void>;
-    dataExportRequestForAnotherUser!: OutputEmitterRef<string>;
+    // Using EMPTY as fallback to prevent runtime errors if service fails to set them
+    dialogError: Observable<string> = EMPTY;
+    dataExportRequest?: OutputEmitterRef<void>;
+    dataExportRequestForAnotherUser?: OutputEmitterRef<string>;
 
     readonly submitDisabled = signal(false);
     readonly enteredLogin = signal('');
@@ -71,14 +72,17 @@ export class DataExportConfirmationDialogComponent implements OnInit {
         this.submitDisabled.set(true);
         // we need to emit the login if it is a request by an admin for another user, so we can make the request for the data export using the login
         if (this.requestForAnotherUser()) {
-            this.dataExportRequestForAnotherUser.emit(this.expectedLogin());
+            this.dataExportRequestForAnotherUser?.emit(this.expectedLogin());
         } else {
-            this.dataExportRequest.emit();
+            this.dataExportRequest?.emit();
         }
     }
 
     onRequestDataExportForOtherUserChanged(event: Event): void {
-        const target = event.target as HTMLInputElement;
+        const target = event.target as HTMLInputElement | null;
+        if (!target) {
+            return;
+        }
         if (target.checked) {
             this.ownLogin = this.expectedLogin();
             this.expectedLogin.set(this.expectedLoginOfOtherUser() ?? '');
@@ -95,5 +99,9 @@ export class DataExportConfirmationDialogComponent implements OnInit {
     onLoginOrNameChange(value: string | User): void {
         const login = typeof value === 'string' ? value : (value.login ?? '');
         this.expectedLogin.set(login);
+        // Also update expectedLoginOfOtherUser so toggling the checkbox preserves the selection
+        if (this.requestForAnotherUser()) {
+            this.expectedLoginOfOtherUser.set(login);
+        }
     }
 }
