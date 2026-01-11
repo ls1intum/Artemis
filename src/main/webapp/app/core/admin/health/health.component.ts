@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -31,7 +31,6 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HealthComponent implements OnInit {
     private readonly modalService = inject(NgbModal);
@@ -73,6 +72,6 @@ export class HealthComponent implements OnInit {
 
     showHealth(health: { key: string; value: HealthDetails }): void {
         const modalRef = this.modalService.open(HealthModalComponent);
-        modalRef.componentInstance.health = health;
+        modalRef.componentInstance.health.set(health);
     }
 }

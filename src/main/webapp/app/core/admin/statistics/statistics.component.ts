@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
@@ -13,7 +13,6 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
     imports: [TranslateDirective, StatisticsGraphComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatisticsComponent {
     /** Enum for template access */

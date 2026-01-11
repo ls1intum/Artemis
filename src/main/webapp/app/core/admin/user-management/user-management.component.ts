@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -128,7 +128,6 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
     private readonly adminUserService = inject(AdminUserService);
@@ -178,7 +177,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly ascending = signal(true);
 
     /** Current search term */
-    private searchTermString = '';
+    readonly searchTerm = signal('');
 
     /** Whether search input is invalid (less than 3 characters) */
     readonly searchInvalid = signal(false);
@@ -187,7 +186,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly isLdapProfileActive = signal(false);
 
     /** User filters */
-    filters: UserFilter = new UserFilter();
+    readonly filters = signal(new UserFilter());
 
     /** Filter storage keys */
     protected readonly faFilter = faFilter;
@@ -228,12 +227,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                         {
                             page: this.page() - 1,
                             pageSize: this.itemsPerPage,
-                            searchTerm: this.searchTermString,
+                            searchTerm: this.searchTerm(),
                             sortingOrder: this.ascending() ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate(),
-                            filters: this.filters,
+                            filters: this.filters(),
                         },
-                        this.filters,
+                        this.filters(),
                     ),
                 ),
             )
@@ -273,11 +272,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Inits the available filter and maps the functions.
      */
     initFilters() {
-        this.filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
-        this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
-        this.filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
-        this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
-        this.filters.noAuthority = this.localStorageService.retrieve<boolean>(UserStorageKey.NO_AUTHORITY) ?? false;
+        const filters = this.filters();
+        filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
+        filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
+        filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
+        filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
+        filters.noAuthority = this.localStorageService.retrieve<boolean>(UserStorageKey.NO_AUTHORITY) ?? false;
+        this.filters.set(filters);
     }
 
     /**
@@ -314,7 +315,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove an authority filter and store the selected authority filters in the local store if required.
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
-        this.filters.noAuthority = false;
+        this.filters().noAuthority = false;
         this.updateNoAuthority(false);
         this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
     }
@@ -323,7 +324,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove an origin filter and store the selected origin filters in the local store if required.
      */
     toggleOriginFilter(value?: OriginFilter) {
-        const filter = this.filters.originFilter;
+        const filter = this.filters().originFilter;
         this.deselectFilter<OriginFilter>(filter, this.originKey);
         if (value) {
             this.toggleFilter<OriginFilter>(filter, value, this.originKey);
@@ -334,7 +335,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove a status filter and store the selected status filters in the local store if required.
      */
     toggleStatusFilter(value?: StatusFilter) {
-        const filter = this.filters.statusFilter;
+        const filter = this.filters().statusFilter;
         this.deselectFilter<StatusFilter>(filter, this.statusKey);
         if (value) {
             this.toggleFilter<StatusFilter>(filter, value, this.statusKey);
@@ -347,7 +348,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * When the filter is added, the value is set to the filter. Thus, when the value is present, the filter is toggled.
      */
     toggleRegistrationNumberFilter(registrationNumber?: RegistrationNumberFilter) {
-        const filter = this.filters.registrationNumberFilter;
+        const filter = this.filters().registrationNumberFilter;
         this.deselectFilter<RegistrationNumberFilter>(filter, this.registrationKey);
         if (registrationNumber) {
             this.toggleFilter<RegistrationNumberFilter>(filter, registrationNumber, this.registrationKey);
@@ -394,14 +395,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        this.filters.noAuthority = value;
+        this.filters().noAuthority = value;
     }
 
     /**
      * Deselect all roles
      */
     deselectAllRoles() {
-        this.filters.authorityFilter.clear();
+        this.filters().authorityFilter.clear();
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
         this.updateNoAuthority(false);
     }
@@ -410,7 +411,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        this.filters.authorityFilter.clear();
+        this.filters().authorityFilter.clear();
         this.updateNoAuthority(true);
     }
 
@@ -418,7 +419,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        this.filters.authorityFilter = new Set(this.authorityFilters);
+        this.filters().authorityFilter = new Set(this.authorityFilters);
         this.updateNoAuthority(false);
     }
 
@@ -517,8 +518,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
-        this.searchTerm = this.searchControl.value;
-        if (this.searchTerm.length >= 3 || this.searchTerm.length === 0) {
+        this.searchTerm.set(this.searchControl.value);
+        if (this.searchTerm().length >= 3 || this.searchTerm().length === 0) {
             this.searchInvalid.set(false);
             this.search.next();
         } else {
@@ -593,14 +594,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private onSuccess(users: User[], headers: HttpHeaders): void {
         this.totalItems.set(Number(headers.get('X-Total-Count')));
         this.users.set(users);
-    }
-
-    set searchTerm(searchTerm: string) {
-        this.searchTermString = searchTerm;
-    }
-
-    get searchTerm(): string {
-        return this.searchTermString;
     }
 
     get searchControl() {
