@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -47,7 +47,6 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
@@ -81,7 +80,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly eventManager = inject(EventManager);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly calendarService = inject(CalendarService);
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
@@ -277,9 +275,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         !this.modelingExercise.releaseDate?.isValid()),
             },
         ];
-
-        // otherwise, the change detection does not work on the initial load
-        this.changeDetectorRef.detectChanges();
     }
 
     /**

@@ -220,7 +220,7 @@ describe('Example Modeling Submission Component', () => {
         comp.isNewSubmission = true;
         comp.exercise = exercise;
         // WHEN
-        fixture.detectChanges(); // Needed for @ViewChild to set fields.
+        fixture.detectChanges(); // Needed for viewChild signals to resolve.
         comp.upsertExampleModelingSubmission();
 
         // THEN

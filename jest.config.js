@@ -95,6 +95,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/modeling/**',       // modeling module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/quiz/**',           // quiz module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/text/**',           // text module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
@@ -110,6 +111,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
+        '<rootDir>/src/main/webapp/app/modeling/',          // modeling module uses Vitest
         '<rootDir>/src/main/webapp/app/quiz/',              // quiz module uses Vitest
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
@@ -152,6 +154,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
+        '<rootDir>/src/main/webapp/app/modeling/',      // modeling module
         '<rootDir>/src/main/webapp/app/quiz/',          // quiz module
         '<rootDir>/src/main/webapp/app/text/',          // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module

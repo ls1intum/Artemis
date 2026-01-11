@@ -42,6 +42,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private modelSubscription: number;
     private modelPatchSubscription: number;
+    private isDestroyed = false;
 
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
@@ -51,7 +52,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         effect(() => {
             const diagramType = this.diagramType();
 
-            if (!diagramType || !this.editorContainer()) {
+            if (this.isDestroyed || !diagramType || !this.editorContainer()) {
                 return;
             }
 
@@ -61,14 +62,19 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         effect(() => {
             const model = this.umlModel();
 
-            if (!model || !this.apollonEditor) {
+            if (this.isDestroyed || !model || !this.apollonEditor) {
                 return;
             }
 
-            // work on a copy if removeAssessments mutates
-            const umlModel = { ...model } as UMLModel;
-            ModelingEditorComponent.removeAssessments(umlModel);
-            this.apollonEditor.model = umlModel;
+            try {
+                // work on a copy if removeAssessments mutates
+                const umlModel = { ...model } as UMLModel;
+                ModelingEditorComponent.removeAssessments(umlModel);
+                this.apollonEditor.model = umlModel;
+            } catch (err) {
+                // Editor may not be fully initialized yet or already destroyed
+                captureException(err);
+            }
         });
     }
 
@@ -181,6 +187,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
+        this.isDestroyed = true;
         try {
             this.destroyApollonEditor();
         } catch (err) {

@@ -30,7 +30,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { Component, Input, input, output, signal, viewChild } from '@angular/core';
+import { Component, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -76,12 +76,12 @@ class StubTitleChannelNameComponent {
     imports: [StubTitleChannelNameComponent],
 })
 class StubExerciseTitleChannelNameComponent {
-    @Input() exercise: ModelingExercise | undefined;
-    @Input() titlePattern: string = '';
-    @Input() minTitleLength: number = 0;
-    @Input() isExamMode: boolean = false;
-    @Input() isImport: boolean = false;
-    @Input() hideTitleLabel: boolean = false;
+    exercise = input<ModelingExercise>();
+    titlePattern = input<string>('');
+    minTitleLength = input<number>(0);
+    isExamMode = input<boolean>(false);
+    isImport = input<boolean>(false);
+    hideTitleLabel = input<boolean>(false);
     course = input<Course>();
     isEditFieldDisplayedRecord = input<Record<string, boolean>>();
     courseId = input<number>();
@@ -93,11 +93,11 @@ class StubExerciseTitleChannelNameComponent {
 // Stub for ModelingEditorComponent
 @Component({ selector: 'jhi-modeling-editor', template: '' })
 class StubModelingEditorComponent {
-    @Input() umlModel: unknown;
-    @Input() diagramType: unknown;
-    @Input() readOnly: boolean = false;
-    @Input() resizeOptions: unknown;
-    @Input() withExplanation: boolean = false;
+    umlModel = input<unknown>();
+    diagramType = input<unknown>();
+    readOnly = input<boolean>(false);
+    resizeOptions = input<unknown>();
+    withExplanation = input<boolean>(false);
     onModelChanged = output<unknown>();
     apollonEditor = { nextRender: Promise.resolve() };
 
@@ -109,8 +109,8 @@ class StubModelingEditorComponent {
 // Stub for MarkdownEditorMonacoComponent
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class StubMarkdownEditorMonacoComponent {
-    @Input() markdown: string = '';
-    @Input() domainActions: unknown[] = [];
+    markdown = input<string>('');
+    domainActions = input<unknown[]>([]);
     markdownChange = output<string>();
 }
 
