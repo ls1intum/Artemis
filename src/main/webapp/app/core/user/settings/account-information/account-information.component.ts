@@ -1,4 +1,5 @@
-import { Component, ElementRef, Signal, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Signal, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
@@ -31,6 +32,7 @@ export class AccountInformationComponent {
     private readonly dialogService = inject(DialogService);
     private readonly userSettingsService = inject(UserSettingsService);
     private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
     readonly imageLoadFailed = signal(false);
@@ -55,7 +57,7 @@ export class AccountInformationComponent {
             });
             // Use 'image/jpeg' since the cropper outputs JPEG format regardless of input
             const mimeType = 'image/jpeg';
-            dialogRef?.onClose.subscribe((result: string | undefined) => {
+            dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result: string | undefined) => {
                 if (result) {
                     const base64Data = result.replace('data:image/jpeg;base64,', '');
                     const fileToUpload = base64StringToBlob(base64Data, mimeType);
@@ -67,10 +69,13 @@ export class AccountInformationComponent {
     }
 
     deleteUserImage(): void {
-        this.userSettingsService.removeProfilePicture().subscribe({
-            next: () => this.accountService.setImageUrl(undefined),
-            error: (error: HttpErrorResponse) => this.showErrorAlert(error),
-        });
+        this.userSettingsService
+            .removeProfilePicture()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.accountService.setImageUrl(undefined),
+                error: (error: HttpErrorResponse) => this.showErrorAlert(error),
+            });
     }
 
     triggerUserImageFileInput(): void {
@@ -78,16 +83,19 @@ export class AccountInformationComponent {
     }
 
     private updateProfilePicture(file: Blob): void {
-        this.userSettingsService.updateProfilePicture(file).subscribe({
-            next: (response: HttpResponse<User>) => {
-                const user = response.body;
-                if (user?.imageUrl !== undefined) {
-                    this.imageLoadFailed.set(false);
-                    this.accountService.setImageUrl(user.imageUrl);
-                }
-            },
-            error: (error: HttpErrorResponse) => this.showErrorAlert(error),
-        });
+        this.userSettingsService
+            .updateProfilePicture(file)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: HttpResponse<User>) => {
+                    const user = response.body;
+                    if (user?.imageUrl !== undefined) {
+                        this.imageLoadFailed.set(false);
+                        this.accountService.setImageUrl(user.imageUrl);
+                    }
+                },
+                error: (error: HttpErrorResponse) => this.showErrorAlert(error),
+            });
     }
 
     private showErrorAlert(error: HttpErrorResponse): void {
