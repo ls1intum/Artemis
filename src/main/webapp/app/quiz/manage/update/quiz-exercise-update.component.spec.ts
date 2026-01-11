@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -18,7 +18,7 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -42,6 +42,7 @@ import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 
 describe('QuizExerciseUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -463,6 +464,55 @@ describe('QuizExerciseUpdateComponent', () => {
             });
         });
 
+        it('should set isImport to true when route contains /import', () => {
+            configureStubs();
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/quiz-exercises/import');
+
+            comp.ngOnInit();
+
+            expect(comp.isImport).toBeTruthy();
+        });
+
+        it('should assign exerciseGroup to existing quizExercise in exam mode', () => {
+            configureStubs();
+            comp.isExamMode = true;
+
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
+            (comp as any).route = testRoute;
+
+            comp.quizExercise = new QuizExercise(undefined, undefined);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = 2;
+            exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: exerciseGroup })));
+
+            comp.ngOnInit();
+
+            expect(comp.quizExercise.exerciseGroup).toEqual(exerciseGroup);
+        });
+
+        it('should assign course to existing quizExercise in course mode', () => {
+            configureStubs();
+            comp.isExamMode = false;
+
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
+            (comp as any).route = testRoute;
+
+            comp.quizExercise = new QuizExercise(undefined, undefined);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            comp.ngOnInit();
+
+            expect(comp.quizExercise.course).toEqual(course);
+        });
+
         it('should updateCategories properly by making category available for selection again when removing it', () => {
             comp.quizExercise = quizExercise;
             comp.exerciseCategories = [];
@@ -533,6 +583,50 @@ describe('QuizExerciseUpdateComponent', () => {
                 courseServiceStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 comp.init();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
+            });
+
+            it('should force includedInOverallScore to INCLUDED_COMPLETELY if exam mode and currently NOT_INCLUDED', () => {
+                comp.isExamMode = true;
+                comp.quizExercise = quizExercise;
+                comp.quizExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+
+                comp.init();
+                expect(comp.quizExercise.includedInOverallScore).toBe(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            });
+
+            it('should not change includedInOverallScore if exam mode but already INCLUDED_AS_BONUS', () => {
+                comp.isExamMode = true;
+                comp.quizExercise = quizExercise;
+                comp.quizExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+
+                comp.init();
+                expect(comp.quizExercise.includedInOverallScore).toBe(IncludedInOverallScore.INCLUDED_AS_BONUS);
+            });
+
+            it('should not change includedInOverallScore if not exam mode, even if NOT_INCLUDED', () => {
+                comp.isExamMode = false;
+                comp.quizExercise = quizExercise;
+                comp.quizExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+
+                comp.init();
+                expect(comp.quizExercise.includedInOverallScore).toBe(IncludedInOverallScore.NOT_INCLUDED);
+            });
+
+            it('should overwrite exercise group in exam mode if isImport is true, even if exercise group is already set', () => {
+                comp.isExamMode = true;
+                comp.isImport = true;
+
+                const oldGroup = { id: 1 } as ExerciseGroup;
+                const newGroup = { id: 2 } as ExerciseGroup;
+
+                comp.exerciseGroup = newGroup;
+                comp.quizExercise = quizExercise;
+                comp.quizExercise.exerciseGroup = oldGroup;
+
+                comp.init();
+
+                expect(comp.quizExercise.exerciseGroup).toEqual(newGroup);
+                expect(comp.quizExercise.course).toBeUndefined();
             });
         });
 
@@ -1032,7 +1126,6 @@ describe('QuizExerciseUpdateComponent', () => {
         describe('saving', () => {
             let quizExerciseServiceCreateStub: any;
             let quizExerciseServiceUpdateStub: any;
-            let quizExerciseServiceImportStub: any;
             let exerciseSanitizeSpy: any;
             let refreshSpy: any;
 
@@ -1065,8 +1158,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceUpdateStub = vi.spyOn(quizExerciseService, 'update');
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                quizExerciseServiceImportStub = vi.spyOn(quizExerciseService, 'import');
-                quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 const calendarService = TestBed.inject(CalendarService);
                 refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = vi.spyOn(Exercise, 'sanitize');
@@ -1082,7 +1173,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
@@ -1093,7 +1183,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(exerciseSanitizeSpy).not.toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
                 expect(refreshSpy).not.toHaveBeenCalled();
             });
 
@@ -1102,17 +1191,16 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), {});
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
             it('should import if valid and quiz exercise has id and flag', () => {
                 comp.isImport = true;
+                comp.quizExercise.id = undefined;
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
-                expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
+                expect(quizExerciseServiceCreateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise, new Map<string, Blob>());
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise, new Map<string, Blob>());
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
@@ -1123,7 +1211,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(exerciseSanitizeSpy).not.toHaveBeenCalled();
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
                 expect(refreshSpy).not.toHaveBeenCalled();
             });
 
@@ -1133,7 +1220,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), { notificationText: 'test' });
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
@@ -1150,7 +1236,8 @@ describe('QuizExerciseUpdateComponent', () => {
 
             it('should call alert service if response has no body on import', () => {
                 comp.isImport = true;
-                quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
+                comp.quizExercise.id = undefined;
+                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
                 saveAndExpectAlertService();
             });
 
@@ -1167,8 +1254,42 @@ describe('QuizExerciseUpdateComponent', () => {
 
             it('should call alert service if import fails', () => {
                 comp.isImport = true;
-                quizExerciseServiceImportStub.mockReturnValue(throwError(() => ({ status: 404 })));
+                comp.quizExercise.id = undefined;
+                quizExerciseServiceCreateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
+            });
+
+            it('should assign exercise group on import if one exists (Exam Import)', () => {
+                comp.isImport = true;
+                comp.quizExercise.id = undefined;
+
+                const exerciseGroup = new ExerciseGroup();
+                exerciseGroup.id = 123;
+                comp.exerciseGroup = exerciseGroup;
+
+                saveQuizWithPendingChangesCache();
+
+                expect(comp.quizExercise.exerciseGroup).toEqual(exerciseGroup);
+                expect(quizExerciseServiceCreateStub).toHaveBeenCalled();
+            });
+
+            it('should call alert service with specific error title if provided on save error', () => {
+                comp.quizExercise.id = undefined;
+                const mockErrorResponse = {
+                    error: {
+                        title: 'Test Error Title',
+                        message: 'Test Error Message',
+                        params: { someParam: 'value' },
+                    },
+                };
+
+                quizExerciseServiceCreateStub.mockReturnValue(throwError(() => mockErrorResponse));
+                const addErrorAlertSpy = vi.spyOn(alertService, 'addErrorAlert');
+
+                saveQuizWithPendingChangesCache();
+
+                expect(addErrorAlertSpy).toHaveBeenCalledExactlyOnceWith('Test Error Title', 'Test Error Message', { someParam: 'value' });
+                expect(comp.isSaving).toBeFalsy();
             });
         });
 
@@ -1243,6 +1364,288 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.quizExercise.problemStatement = 'Problem statement fallback';
                 expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Problem statement fallback');
             });
+
+            it('should handle undefined quizQuestions gracefully (cover ?? [])', () => {
+                comp.quizExercise.quizQuestions = undefined;
+
+                comp.prepareEntity(comp.quizExercise);
+
+                expect(comp.quizExercise.quizQuestions).toBeUndefined();
+            });
+
+            it('should call shortAnswerQuestionUtil for SHORT_ANSWER questions', () => {
+                const saQuestion = new ShortAnswerQuestion();
+                saQuestion.type = QuizQuestionType.SHORT_ANSWER;
+                comp.quizExercise.quizQuestions = [saQuestion];
+
+                const prepareSpy = vi.spyOn(shortAnswerQuestionUtil, 'prepareShortAnswerQuestion');
+
+                comp.prepareEntity(comp.quizExercise);
+
+                expect(prepareSpy).toHaveBeenCalledWith(saQuestion);
+            });
+
+            describe('hasSavedQuizStarted', () => {
+                beforeEach(() => {
+                    comp.savedEntity = new QuizExercise(undefined, undefined);
+                });
+
+                it('should return false if savedEntity is undefined', () => {
+                    comp.savedEntity = undefined as any;
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
+                });
+
+                it('should return false if quizBatches is undefined', () => {
+                    comp.savedEntity.quizBatches = undefined;
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
+                });
+
+                it('should return false if quizBatches is empty', () => {
+                    comp.savedEntity.quizBatches = [];
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
+                });
+
+                it('should return false if no batch has started (future date)', () => {
+                    const batch = new QuizBatch();
+                    batch.startTime = dayjs().add(1, 'hour');
+                    comp.savedEntity.quizBatches = [batch];
+                    expect(comp.hasSavedQuizStarted).toBeFalsy();
+                });
+
+                it('should return true if a batch has started (past date)', () => {
+                    const batch = new QuizBatch();
+                    batch.startTime = dayjs().subtract(1, 'hour');
+                    comp.savedEntity.quizBatches = [batch];
+                    expect(comp.hasSavedQuizStarted).toBeTruthy();
+                });
+            });
+
+            describe('isSaveDisabled', () => {
+                beforeEach(() => {
+                    comp.isSaving = false;
+                    comp.pendingChangesCache = true;
+                    comp.quizIsValid = true;
+                    comp.quizExercise = quizExercise;
+                    comp.quizExercise.dueDateError = false;
+
+                    vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(false);
+                    vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(false);
+                });
+
+                it('should be enabled (return false) when all conditions are valid', () => {
+                    expect(comp.isSaveDisabled()).toBeFalsy();
+                });
+
+                it('should be disabled if currently saving', () => {
+                    comp.isSaving = true;
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if there are no pending changes', () => {
+                    comp.pendingChangesCache = false;
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if quiz validation failed', () => {
+                    comp.quizIsValid = false;
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if the saved quiz has already started', () => {
+                    vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(true);
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if there is a due date error', () => {
+                    comp.quizExercise.dueDateError = true;
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if there is an error in quiz batches', () => {
+                    vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(true);
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+            });
+
+            describe('resetQuizQuestionForImport (via init)', () => {
+                beforeEach(() => {
+                    comp.isImport = true;
+                    resetQuizExercise();
+                    comp.quizExercise = quizExercise;
+                });
+
+                it('should reset IDs for generic questions (Multiple Choice)', () => {
+                    const mcQuestion = createValidMCQuestion().question;
+                    mcQuestion.id = 100;
+                    comp.quizExercise.quizQuestions = [mcQuestion];
+
+                    comp.init();
+
+                    expect(comp.quizExercise.quizQuestions![0].id).toBeUndefined();
+                });
+
+                it('should fully reset Drag and Drop questions (IDs, TempIDs, Mappings)', () => {
+                    // GIVEN
+                    const dndQuestion = new DragAndDropQuestion();
+                    dndQuestion.id = 100;
+                    dndQuestion.type = QuizQuestionType.DRAG_AND_DROP;
+
+                    const dragItem = new DragItem();
+                    dragItem.id = 1;
+                    dragItem.text = 'Item 1';
+
+                    const dropLocation = new DropLocation();
+                    dropLocation.id = 2;
+                    dropLocation.posX = 10;
+
+                    dndQuestion.dragItems = [dragItem];
+                    dndQuestion.dropLocations = [dropLocation];
+
+                    const dragItemCopy = new DragItem();
+                    dragItemCopy.id = 1;
+                    const dropLocationCopy = new DropLocation();
+                    dropLocationCopy.id = 2;
+
+                    const mapping = new DragAndDropMapping(dragItemCopy, dropLocationCopy);
+                    dndQuestion.correctMappings = [mapping];
+
+                    comp.quizExercise.quizQuestions = [dndQuestion];
+
+                    comp.init();
+
+                    const processedQuestion = comp.quizExercise.quizQuestions![0] as DragAndDropQuestion;
+
+                    expect(processedQuestion.id).toBeUndefined();
+
+                    const processedItem = processedQuestion.dragItems![0];
+                    expect(processedItem.id).toBeUndefined();
+                    expect(processedItem.tempID).toBeDefined();
+
+                    const processedLocation = processedQuestion.dropLocations![0];
+                    expect(processedLocation.id).toBeUndefined();
+                    expect(processedLocation.tempID).toBeDefined();
+
+                    expect(processedQuestion.correctMappings![0].dragItem).toBe(processedItem);
+                    expect(processedQuestion.correctMappings![0].dropLocation).toBe(processedLocation);
+                });
+
+                it('should fully reset Short Answer questions (IDs, TempIDs, Mappings)', () => {
+                    const saQuestion = new ShortAnswerQuestion();
+                    saQuestion.id = 200;
+                    saQuestion.type = QuizQuestionType.SHORT_ANSWER;
+
+                    const solution = new ShortAnswerSolution();
+                    solution.id = 10;
+                    solution.text = 'Solution 1';
+
+                    const spot = new ShortAnswerSpot();
+                    spot.id = 20;
+                    spot.spotNr = 1;
+
+                    saQuestion.solutions = [solution];
+                    saQuestion.spots = [spot];
+
+                    const solutionCopy = new ShortAnswerSolution();
+                    solutionCopy.id = 10;
+                    const spotCopy = new ShortAnswerSpot();
+                    spotCopy.id = 20;
+
+                    const mapping = new ShortAnswerMapping(spotCopy, solutionCopy);
+                    saQuestion.correctMappings = [mapping];
+
+                    comp.quizExercise.quizQuestions = [saQuestion];
+
+                    comp.init();
+
+                    const processedQuestion = comp.quizExercise.quizQuestions![0] as ShortAnswerQuestion;
+
+                    expect(processedQuestion.id).toBeUndefined();
+
+                    const processedSolution = processedQuestion.solutions![0];
+                    expect(processedSolution.id).toBeUndefined();
+                    expect(processedSolution.tempID).toBeDefined();
+
+                    const processedSpot = processedQuestion.spots![0];
+                    expect(processedSpot.id).toBeUndefined();
+                    expect(processedSpot.tempID).toBeDefined();
+
+                    expect(processedQuestion.correctMappings![0].solution).toBe(processedSolution);
+                    expect(processedQuestion.correctMappings![0].spot).toBe(processedSpot);
+                });
+
+                it('should handle missing or empty lists in Drag and Drop gracefully', () => {
+                    // GIVEN
+                    const dndQuestion = new DragAndDropQuestion();
+                    dndQuestion.type = QuizQuestionType.DRAG_AND_DROP;
+                    dndQuestion.dragItems = undefined;
+                    dndQuestion.dropLocations = undefined;
+                    dndQuestion.correctMappings = undefined;
+
+                    comp.quizExercise.quizQuestions = [dndQuestion];
+                    comp.init();
+
+                    expect(comp.quizExercise.quizQuestions![0].id).toBeUndefined();
+                });
+
+                it('should handle empty lists in Short Answer gracefully', () => {
+                    const saQuestion = new ShortAnswerQuestion();
+                    saQuestion.type = QuizQuestionType.SHORT_ANSWER;
+                    saQuestion.solutions = [];
+                    saQuestion.spots = [];
+                    saQuestion.correctMappings = [];
+
+                    comp.quizExercise.quizQuestions = [saQuestion];
+                    comp.init();
+
+                    expect(comp.quizExercise.quizQuestions![0].id).toBeUndefined();
+                });
+
+                it('should handle undefined IDs in sub-elements gracefully', () => {
+                    const dndQuestion = new DragAndDropQuestion();
+                    dndQuestion.type = QuizQuestionType.DRAG_AND_DROP;
+
+                    const item = new DragItem();
+                    item.id = undefined;
+                    dndQuestion.dragItems = [item];
+
+                    const mapping = new DragAndDropMapping(undefined, undefined);
+                    dndQuestion.correctMappings = [mapping];
+
+                    comp.quizExercise.quizQuestions = [dndQuestion];
+
+                    comp.init();
+                    expect(dndQuestion.dragItems[0].id).toBeUndefined();
+                });
+            });
+
+            it('should return empty string if quizExercise is not set', () => {
+                comp.quizExercise = undefined as any;
+
+                const result = comp.getEnhancedDescriptionForSuggestions();
+
+                expect(result).toBe('');
+            });
+
+            it('should handle undefined title or text in questions gracefully (cover || "")', () => {
+                comp.quizExercise.title = 'Main Title';
+
+                const q1 = new MultipleChoiceQuestion();
+                q1.title = undefined;
+                q1.text = undefined;
+
+                const q2 = new MultipleChoiceQuestion();
+                q2.title = undefined;
+                q2.text = 'Only Text';
+
+                const q3 = new MultipleChoiceQuestion();
+                q3.title = 'Only Title';
+                q3.text = null as any;
+
+                comp.quizExercise.quizQuestions = [q1, q2, q3];
+
+                const result = comp.getEnhancedDescriptionForSuggestions();
+                expect(result).toBe('Main Title Only Text Only Title');
+            });
         });
 
         describe('quiz mode', () => {
@@ -1291,6 +1694,146 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExercise.quizBatches = [b1, b3];
                 comp.removeQuizBatch(b2);
                 expect(quizExercise.quizBatches).toEqual([b1, b3]);
+            });
+        });
+
+        describe('checkItemCountDragAndDrop', () => {
+            it('should return false if input is undefined', () => {
+                expect(comp.checkItemCountDragAndDrop(undefined as any)).toBeFalsy();
+            });
+
+            it('should return false if input is empty', () => {
+                expect(comp.checkItemCountDragAndDrop([])).toBeFalsy();
+            });
+
+            it('should return false if complexity is below limit (13^3)', () => {
+                const question = new DragAndDropQuestion();
+                // 10 * 10 * 10 = 1000 < 2197
+                question.dragItems = new Array(10).fill(new DragItem());
+                question.dropLocations = new Array(10).fill(new DropLocation());
+                question.correctMappings = new Array(10).fill(new DragAndDropMapping(undefined, undefined));
+
+                expect(comp.checkItemCountDragAndDrop([question])).toBeFalsy();
+            });
+
+            it('should return true if complexity exceeds limit (13^3)', () => {
+                const question = new DragAndDropQuestion();
+                // 14 * 13 * 13 = 2366 > 2197
+                question.dragItems = new Array(14).fill(new DragItem());
+                question.dropLocations = new Array(13).fill(new DropLocation());
+                question.correctMappings = new Array(13).fill(new DragAndDropMapping(undefined, undefined));
+
+                expect(comp.checkItemCountDragAndDrop([question])).toBeTruthy();
+            });
+
+            it('should default undefined arrays to length 1 (cover nullish coalescing)', () => {
+                const question = new DragAndDropQuestion();
+                question.dragItems = undefined;
+                question.dropLocations = undefined;
+                question.correctMappings = undefined;
+
+                // calculation becomes 1 * 1 * 1 = 1
+                expect(comp.checkItemCountDragAndDrop([question])).toBeFalsy();
+            });
+        });
+
+        describe('checkItemCountShortAnswer', () => {
+            it('should return false if input is undefined', () => {
+                expect(comp.checkItemCountShortAnswer(undefined as any)).toBeFalsy();
+            });
+
+            it('should return false if input is empty', () => {
+                expect(comp.checkItemCountShortAnswer([])).toBeFalsy();
+            });
+
+            it('should return false if complexity is below limit (13^3)', () => {
+                const question = new ShortAnswerQuestion();
+                // 10 * 10 * 10 = 1000 < 2197
+                question.solutions = new Array(10).fill(new ShortAnswerSolution());
+                question.spots = new Array(10).fill(new ShortAnswerSpot());
+                question.correctMappings = new Array(10).fill(new ShortAnswerMapping(undefined, undefined));
+
+                expect(comp.checkItemCountShortAnswer([question])).toBeFalsy();
+            });
+
+            it('should return true if complexity exceeds limit (13^3)', () => {
+                const question = new ShortAnswerQuestion();
+                // 14 * 13 * 13 = 2366 > 2197
+                question.solutions = new Array(14).fill(new ShortAnswerSolution());
+                question.spots = new Array(13).fill(new ShortAnswerSpot());
+                question.correctMappings = new Array(13).fill(new ShortAnswerMapping(undefined, undefined));
+
+                expect(comp.checkItemCountShortAnswer([question])).toBeTruthy();
+            });
+
+            it('should default undefined arrays to length 1 (cover nullish coalescing)', () => {
+                const question = new ShortAnswerQuestion();
+                question.solutions = undefined;
+                question.spots = undefined;
+                question.correctMappings = undefined;
+
+                // calculation becomes 1 * 1 * 1 = 1
+                expect(comp.checkItemCountShortAnswer([question])).toBeFalsy();
+            });
+        });
+
+        describe('validateItemLimit', () => {
+            let modalService: NgbModal;
+            let saveSpy: any;
+            let modalOpenSpy: any;
+
+            beforeEach(() => {
+                modalService = TestBed.inject(NgbModal);
+                saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
+                modalOpenSpy = vi.spyOn(modalService, 'open');
+                comp.quizExercise = quizExercise;
+            });
+
+            it('should save immediately if no limits are exceeded', () => {
+                vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(false);
+                vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(false);
+
+                comp.validateItemLimit();
+
+                expect(modalOpenSpy).not.toHaveBeenCalled();
+                expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
+            });
+
+            it('should open modal and save if confirmed when limit is exceeded', async () => {
+                vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
+
+                const mockModalRef = {
+                    componentInstance: { initialize: vi.fn() } as any,
+                    result: Promise.resolve(),
+                };
+                modalOpenSpy.mockReturnValue(mockModalRef as any);
+                comp.validateItemLimit();
+
+                await new Promise(process.nextTick);
+
+                expect(modalOpenSpy).toHaveBeenCalledExactlyOnceWith(GenericConfirmationDialogComponent, expect.anything());
+
+                expect(mockModalRef.componentInstance.translationKeys).toBeDefined();
+                expect(mockModalRef.componentInstance.canBeUndone).toBeTruthy();
+
+                expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
+            });
+
+            it('should open modal and NOT save if cancelled', async () => {
+                vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
+
+                const mockModalRef = {
+                    componentInstance: { initialize: vi.fn() },
+                    result: Promise.reject(),
+                };
+                modalOpenSpy.mockReturnValue(mockModalRef as any);
+
+                comp.validateItemLimit();
+
+                await new Promise(process.nextTick);
+
+                expect(modalOpenSpy).toHaveBeenCalled();
+                expect(saveSpy).not.toHaveBeenCalled();
             });
         });
 
@@ -1564,6 +2107,35 @@ describe('QuizExerciseUpdateComponent', () => {
                     spot1.invalid = true;
                     checkForInvalidFlaggedQuestionAndReason();
                 });
+            });
+        });
+        describe('unloadNotification', () => {
+            let event: BeforeUnloadEvent;
+            let translateSpy: any;
+
+            beforeEach(() => {
+                event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
+                const translateService = TestBed.inject(TranslateService);
+                translateSpy = vi.spyOn(translateService, 'instant');
+            });
+
+            it('should prevent default and return warning text when changes are pending', () => {
+                comp.pendingChangesCache = true;
+                translateSpy.mockReturnValue('Unsaved changes detected');
+
+                const result = comp.unloadNotification(event);
+
+                expect(event.preventDefault).toHaveBeenCalled();
+                expect(translateSpy).toHaveBeenCalledWith('pendingChanges');
+                expect(result).toBe('Unsaved changes detected');
+            });
+
+            it('should return true and not prevent default when no changes are pending', () => {
+                comp.pendingChangesCache = false;
+                const result = comp.unloadNotification(event);
+
+                expect(event.preventDefault).not.toHaveBeenCalled();
+                expect(result).toBeTruthy();
             });
         });
     });

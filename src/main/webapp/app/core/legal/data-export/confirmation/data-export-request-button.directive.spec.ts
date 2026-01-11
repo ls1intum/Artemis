@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, DebugElement } from '@angular/core';
+import { Component, DebugElement, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-test-component',
-    template: '<button jhiDataExportRequestButton [adminDialog]="true" expectedLogin="login"></button>',
+    template: '<button jhiDataExportRequestButton [adminDialog]="true" [expectedLogin]="\'login\'"></button>',
     imports: [DataExportRequestButtonDirective],
 })
 class TestComponent {}
@@ -23,10 +23,20 @@ describe('DataExportRequestButtonDirective', () => {
     let translateSpy: jest.SpyInstance;
 
     beforeEach(() => {
+        // Create mock componentInstance with signal-like properties
+        const mockComponentInstance = {
+            expectedLogin: signal(''),
+            adminDialog: signal(false),
+            expectedLoginOfOtherUser: signal(''),
+            dataExportRequest: undefined,
+            dataExportRequestForAnotherUser: undefined,
+            dialogError: undefined,
+        };
+
         const mockModalService = {
             open: jest.fn().mockReturnValue({
                 result: Promise.resolve(),
-                componentInstance: {},
+                componentInstance: mockComponentInstance,
             }),
         };
 
@@ -69,7 +79,7 @@ describe('DataExportRequestButtonDirective', () => {
         const directiveEl = debugElement.query(By.directive(DataExportRequestButtonDirective));
         expect(directiveEl).not.toBeNull();
         const directiveInstance = directiveEl.injector.get(DataExportRequestButtonDirective);
-        expect(directiveInstance.expectedLogin).toBe('login');
+        expect(directiveInstance.expectedLogin()).toBe('login');
     });
 
     it('should on click call data export confirmation dialog service', fakeAsync(() => {
