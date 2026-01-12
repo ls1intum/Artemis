@@ -71,4 +71,82 @@ describe('ExamBarComponent', () => {
         comp.handInEarly();
         expect(comp.onExamHandInEarly.emit).toHaveBeenCalledOnce();
     });
+
+    describe('ngOnInit', () => {
+        it('should initialize exam properties from inputs', () => {
+            comp.exam = new Exam();
+            comp.exam.title = 'Test Exam Title';
+            comp.exam.testExam = true;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.testRun = true;
+            comp.studentExam.exercises = [{ id: 1 } as Exercise];
+
+            comp.ngOnInit();
+
+            expect(comp.examTitle).toBe('Test Exam Title');
+            expect(comp.exercises).toEqual([{ id: 1 }]);
+            expect(comp.testExam).toBeTrue();
+            expect(comp.isTestRun).toBeTrue();
+        });
+
+        it('should handle undefined exam title', () => {
+            comp.exam = new Exam();
+            comp.exam.title = undefined;
+            comp.studentExam = new StudentExam();
+
+            comp.ngOnInit();
+
+            expect(comp.examTitle).toBe('');
+        });
+
+        it('should handle undefined exercises', () => {
+            comp.exam = new Exam();
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = undefined;
+
+            comp.ngOnInit();
+
+            expect(comp.exercises).toEqual([]);
+        });
+    });
+
+    describe('saveExercise', () => {
+        it('should mark submission as submitted for non-programming exercise', () => {
+            comp.exerciseIndex = 1;
+            const submission = { id: 1, submitted: false } as Submission;
+            comp.exercises[1] = {
+                id: 1,
+                type: ExerciseType.TEXT,
+                studentParticipations: [{ submissions: [submission] } as StudentParticipation],
+            } as Exercise;
+
+            comp.saveExercise();
+
+            expect(submission.submitted).toBeTrue();
+        });
+
+        it('should not mark submission as submitted for programming exercise', () => {
+            comp.exerciseIndex = 0;
+            const submission = { id: 1, submitted: false, isSynced: true } as Submission;
+            comp.exercises[0] = {
+                id: 0,
+                type: ExerciseType.PROGRAMMING,
+                studentParticipations: [{ submissions: [submission] } as StudentParticipation],
+            } as Exercise;
+
+            comp.saveExercise();
+
+            expect(submission.submitted).toBeFalse();
+        });
+    });
+
+    describe('onHeightChange', () => {
+        it('should emit heightChange event', () => {
+            jest.spyOn(comp.heightChange, 'emit');
+
+            comp.onHeightChange(100);
+
+            expect(comp.heightChange.emit).toHaveBeenCalledWith(100);
+        });
+    });
 });

@@ -66,15 +66,15 @@ describe('AdminDataExportCreateModalComponent', () => {
     });
 
     it('should open dialog and reset state', () => {
-        component.selectedUserLogin = 'olduser';
-        component.executeNow = true;
+        component.selectedUserLogin.set('olduser');
+        component.executeNow.set(true);
         component.isSubmitting.set(true);
 
         component.open();
 
         expect(component.visible()).toBe(true);
-        expect(component.selectedUserLogin).toBe('');
-        expect(component.executeNow).toBe(false);
+        expect(component.selectedUserLogin()).toBe('');
+        expect(component.executeNow()).toBe(false);
         expect(component.isSubmitting()).toBe(false);
     });
 
@@ -85,14 +85,14 @@ describe('AdminDataExportCreateModalComponent', () => {
     });
 
     it('should not submit when no user is selected', () => {
-        component.selectedUserLogin = '';
+        component.selectedUserLogin.set('');
         component.submit();
         expect(adminDataExportsService.requestDataExportForUser).not.toHaveBeenCalled();
     });
 
     it('should submit with schedule option', async () => {
-        component.selectedUserLogin = 'testuser';
-        component.executeNow = false;
+        component.selectedUserLogin.set('testuser');
+        component.executeNow.set(false);
         component.visible.set(true);
 
         component.submit();
@@ -104,8 +104,8 @@ describe('AdminDataExportCreateModalComponent', () => {
     });
 
     it('should submit with execute now option', async () => {
-        component.selectedUserLogin = 'testuser';
-        component.executeNow = true;
+        component.selectedUserLogin.set('testuser');
+        component.executeNow.set(true);
         component.visible.set(true);
 
         component.submit();
@@ -119,7 +119,7 @@ describe('AdminDataExportCreateModalComponent', () => {
     it('should invoke onSuccess callback after successful submission', async () => {
         const onSuccessSpy = vi.fn();
         component.open(onSuccessSpy);
-        component.selectedUserLogin = 'testuser';
+        component.selectedUserLogin.set('testuser');
 
         component.submit();
         await fixture.whenStable();
@@ -129,8 +129,8 @@ describe('AdminDataExportCreateModalComponent', () => {
 
     it('should show error on submit failure', async () => {
         mockAdminDataExportsService.requestDataExportForUser.mockReturnValue(throwError(() => new Error('Network error')));
-        component.selectedUserLogin = 'testuser';
-        component.executeNow = false;
+        component.selectedUserLogin.set('testuser');
+        component.executeNow.set(false);
         component.visible.set(true);
 
         component.submit();
@@ -151,7 +151,7 @@ describe('AdminDataExportCreateModalComponent', () => {
 
     it('should reset isSubmitting on error', async () => {
         mockAdminDataExportsService.requestDataExportForUser.mockReturnValue(throwError(() => new Error('Network error')));
-        component.selectedUserLogin = 'testuser';
+        component.selectedUserLogin.set('testuser');
 
         component.submit();
         await fixture.whenStable();

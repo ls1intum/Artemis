@@ -130,9 +130,9 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * @param overviewPage: user wants to switch to the overview page
-     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
-     * @param forceSave: true if forceSave shall be used.
+     * @param overviewPage user wants to switch to the overview page
+     * @param exerciseIndex index of the exercise to switch to, if it should not be used, you can pass -1
+     * @param forceSave true if forceSave shall be used.
      * @param submission the submission to be viewed, used in the exam timeline
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {

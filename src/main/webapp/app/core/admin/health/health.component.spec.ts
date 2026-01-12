@@ -65,7 +65,8 @@ describe('HealthComponent', () => {
     });
 
     it('should open modal with health details when showHealth is called', () => {
-        const mockModalRef = { componentInstance: {} } as NgbModalRef;
+        const healthSetSpy = vi.fn();
+        const mockModalRef = { componentInstance: { health: { set: healthSetSpy } } } as unknown as NgbModalRef;
         const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
 
         const healthDetails = { key: 'mail', value: { status: 'UP', details: { mailDetail: 'mail' } } };
@@ -73,6 +74,6 @@ describe('HealthComponent', () => {
 
         expect(modalServiceSpy).toHaveBeenCalledOnce();
         expect(modalServiceSpy).toHaveBeenCalledWith(HealthModalComponent);
-        expect(mockModalRef.componentInstance.health).toEqual(healthDetails);
+        expect(healthSetSpy).toHaveBeenCalledWith(healthDetails);
     });
 });
