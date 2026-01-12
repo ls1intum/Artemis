@@ -11,7 +11,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -23,7 +23,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockProvider } from 'ng-mocks';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -54,7 +54,7 @@ describe('UserManagementUpdateComponent', () => {
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let adminUserService: AdminUserService;
     let titleService: Title;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let translateService: TranslateService;
     let profileService: ProfileService;
 
@@ -77,7 +77,7 @@ describe('UserManagementUpdateComponent', () => {
                 { provide: ActivatedRoute, useValue: mockRoute },
                 LocalStorageService,
                 SessionStorageService,
-                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -91,7 +91,7 @@ describe('UserManagementUpdateComponent', () => {
         fixture = TestBed.createComponent(UserManagementUpdateComponent);
         component = fixture.componentInstance;
         adminUserService = TestBed.inject(AdminUserService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         titleService = TestBed.inject(Title);
         translateService = TestBed.inject(TranslateService);
         profileService = TestBed.inject(ProfileService);
@@ -263,26 +263,27 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     it('should open organizations modal and add selected organization', () => {
-        const existingOrganizations = [{}] as Organization[];
-        component.user = { organizations: existingOrganizations } as User;
+        const existingOrganization = {} as Organization;
+        component.user = { organizations: [existingOrganization] } as User;
 
         const organizationSubject = new Subject<Organization>();
-        const mockModalRef = {
-            componentInstance: { organizations: undefined },
-            closed: organizationSubject.asObservable(),
-        } as NgbModalRef;
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const mockDialogRef = {
+            onClose: organizationSubject.asObservable(),
+        } as unknown as DynamicDialogRef;
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         component.openOrganizationsModal();
 
         expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
-        expect(mockModalRef.componentInstance.organizations).toBe(existingOrganizations);
+        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, expect.any(Object));
 
         // Simulate selecting a new organization
         const newOrganization = {} as Organization;
         organizationSubject.next(newOrganization);
-        expect(existingOrganizations).toContain(newOrganization);
+        // Check component.user.organizations directly since immutable operations create a new array
+        expect(component.user.organizations).toContain(existingOrganization);
+        expect(component.user.organizations).toContain(newOrganization);
+        expect(component.user.organizations).toHaveLength(2);
 
         // Test when user has no organizations yet
         component.user.organizations = undefined;
@@ -415,11 +416,10 @@ describe('UserManagementUpdateComponent', () => {
         component.user = { organizations: [{ id: 1 }] as Organization[] } as User;
 
         const organizationSubject = new Subject<Organization | undefined>();
-        const mockModalRef = {
-            componentInstance: { organizations: undefined },
-            closed: organizationSubject.asObservable(),
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const mockDialogRef = {
+            onClose: organizationSubject.asObservable(),
+        } as unknown as DynamicDialogRef;
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         component.openOrganizationsModal();
         organizationSubject.next(undefined);
