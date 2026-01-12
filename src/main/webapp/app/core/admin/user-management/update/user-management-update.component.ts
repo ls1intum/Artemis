@@ -109,7 +109,7 @@ export class UserManagementUpdateComponent implements OnInit {
             ROLE_TA: 4,
             ROLE_USER: 5,
         };
-        return this.authorities().sort((a, b) => {
+        return [...this.authorities()].sort((a, b) => {
             const orderA = roleOrder[a] ?? 999;
             const orderB = roleOrder[b] ?? 999;
             return orderA - orderB;
