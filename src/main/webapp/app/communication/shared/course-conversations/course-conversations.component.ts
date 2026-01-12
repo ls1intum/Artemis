@@ -165,6 +165,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
+    private reloadSidebarEventSubscription: Subscription;
     course = signal<Course | undefined>(undefined);
     isLoading = false;
     isServiceSetUp = false;
@@ -264,6 +265,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.toggleSidebar();
+        });
+
+        this.reloadSidebarEventSubscription = this.courseSidebarService.reloadSidebar$.subscribe(() => {
+            this.prepareSidebarData();
         });
 
         if (!this.isMobile()) {
@@ -387,6 +392,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.openSidebarEventSubscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
+        this.reloadSidebarEventSubscription?.unsubscribe();
     }
 
     private subscribeToActiveConversation() {

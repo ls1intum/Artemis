@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/core/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -23,7 +23,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
 })
 export class CleanupServiceComponent implements OnInit {
