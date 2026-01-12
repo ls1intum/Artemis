@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
+import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Lecture Management Page.
@@ -109,9 +110,9 @@ export class LectureManagementPage {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
         await this.page.fill('#pick-releaseDate #date-input-field', releaseDate.toString());
-        const contentField = this.page.locator('.monaco-editor');
-        await contentField.click();
-        await contentField.pressSequentially(text);
+        // Use the specific container for the content Monaco editor
+        const contentField = this.page.locator('#content');
+        await setMonacoEditorContentByLocator(this.page, contentField, text);
         return this.submitUnit();
     }
 
