@@ -2,7 +2,7 @@
     color: var(--default-btn-font);
 }
 
-// Refinement Prompt Popup Styles
+/* Refinement Prompt Popup Styles */
 .refinement-backdrop {
     position: fixed;
     top: 0;
@@ -78,7 +78,7 @@
     }
 }
 
-// Consistency check dropdown styles
+/* Consistency check dropdown styles */
 .dropdown-item-nohover {
     &:hover,
     &:focus {
