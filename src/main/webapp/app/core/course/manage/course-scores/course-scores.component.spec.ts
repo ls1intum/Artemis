@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -42,6 +44,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -52,8 +55,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from '../../../layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 describe('CourseScoresComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseManagementService: CourseManagementService;
@@ -236,13 +242,13 @@ describe('CourseScoresComponent', () => {
     };
 
     const setupMocks = () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
         fixture.detectChanges();
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         exerciseMaxPointsPerType.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, 10);
         exerciseMaxPointsPerType.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
         exerciseMaxPointsPerType.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 10);
@@ -261,20 +267,8 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.set(ExerciseType.PROGRAMMING, new Map());
         pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
 
-        return TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
-                CourseScoresComponent,
-                MockComponent(ParticipantScoresDistributionComponent),
-                MockComponent(ExportButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(TranslateDirective),
-                MockTranslateValuesDirective,
-            ],
+        await TestBed.configureTestingModule({
+            imports: [CourseScoresComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -299,25 +293,43 @@ describe('CourseScoresComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseScoresComponent);
-                component = fixture.componentInstance;
-                courseManagementService = TestBed.inject(CourseManagementService);
-                gradingService = TestBed.inject(GradingService);
-                plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-                jest.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
-                profileService = fixture.debugElement.injector.get(ProfileService);
-                const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM] } as ProfileInfo;
-                const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoMock.mockReturnValue(profileInfo);
-            });
+            .overrideComponent(CourseScoresComponent, {
+                set: {
+                    imports: [
+                        MockModule(NgbTooltipModule),
+                        NgClass,
+                        MockComponent(FaIconComponent),
+                        MockComponent(ParticipantScoresDistributionComponent),
+                        MockComponent(ExportButtonComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(ArtemisDatePipe),
+                        MockDirective(SortByDirective),
+                        MockDirective(SortDirective),
+                        MockDirective(DeleteButtonDirective),
+                        MockDirective(TranslateDirective),
+                        MockTranslateValuesDirective,
+                        MockComponent(HelpIconComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(CourseScoresComponent);
+        component = fixture.componentInstance;
+        courseManagementService = TestBed.inject(CourseManagementService);
+        gradingService = TestBed.inject(GradingService);
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
+        vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
+        profileService = fixture.debugElement.injector.get(ProfileService);
+        const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM] } as ProfileInfo;
+        const getProfileInfoMock = vi.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoMock.mockReturnValue(profileInfo);
     });
 
     afterEach(() => {
         quizIncludedWith10Points0BonusPoints.title = 'exercise'; // testing duplicated titles
         textIncludedWith10Points10BonusPoints.title = 'exercise'; // testing duplicated titles
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -326,11 +338,11 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should filter and sort exercises', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
 
-        expect(component.course).toEqual(course);
-        expect(component.includedExercises).toEqual([
+        expect(component.course()).toEqual(course);
+        expect(component.includedExercises()).toEqual([
             modelingIncludedWith10Points0BonusPoints,
             quizIncludedWith10Points0BonusPoints,
             fileBonusWith10Points0BonusPoints,
@@ -339,60 +351,60 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should make duplicated titles unique', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
         expect(quizIncludedWith10Points0BonusPoints.title).toBe(`exercise (id=2)`);
         expect(textIncludedWith10Points10BonusPoints.title).toBe(`exercise (id=1)`);
     });
 
     it('should group exercises and calculate exercise max score', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
         fixture.detectChanges();
 
-        expect(component.gradeScores).toEqual(courseGradeInformation.gradeScores);
-        expect(component.maxNumberOfOverallPoints).toEqual(overallPoints);
+        expect(component.gradeScores()).toEqual(courseGradeInformation.gradeScores);
+        expect(component.maxNumberOfOverallPoints()).toEqual(overallPoints);
         expect(component.exerciseMaxPointsPerType).toEqual(exerciseMaxPointsPerType);
     });
 
     it('should calculate per student score', () => {
         setupMocks();
 
-        expect(component.studentStatistics[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
-        expect(component.studentStatistics[0].numberOfParticipatedExercises).toBe(3);
-        expect(component.studentStatistics[0].numberOfSuccessfulExercises).toBe(3);
-        expect(component.studentStatistics[0].presentationPoints).toBe(10);
-        expect(component.studentStatistics[0].overallPoints).toBe(50);
+        expect(component.studentStatistics()[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
+        expect(component.studentStatistics()[0].numberOfParticipatedExercises).toBe(3);
+        expect(component.studentStatistics()[0].numberOfSuccessfulExercises).toBe(3);
+        expect(component.studentStatistics()[0].presentationPoints).toBe(10);
+        expect(component.studentStatistics()[0].overallPoints).toBe(50);
 
-        expect(component.studentStatistics[1].pointsPerExerciseType).toEqual(pointsOfStudent2);
-        expect(component.studentStatistics[1].numberOfParticipatedExercises).toBe(2);
-        expect(component.studentStatistics[1].numberOfSuccessfulExercises).toBe(1);
-        expect(component.studentStatistics[1].presentationPoints).toBe(0);
-        expect(component.studentStatistics[1].overallPoints).toBe(15);
+        expect(component.studentStatistics()[1].pointsPerExerciseType).toEqual(pointsOfStudent2);
+        expect(component.studentStatistics()[1].numberOfParticipatedExercises).toBe(2);
+        expect(component.studentStatistics()[1].numberOfSuccessfulExercises).toBe(1);
+        expect(component.studentStatistics()[1].presentationPoints).toBe(0);
+        expect(component.studentStatistics()[1].overallPoints).toBe(15);
 
-        expect(component.maxNumberOfPresentationPoints).toBe(10);
-        expect(component.averageNumberOfPresentationPoints).toBe(5);
+        expect(component.maxNumberOfPresentationPoints()).toBe(10);
+        expect(component.averageNumberOfPresentationPoints()).toBe(5);
 
-        expect(component.exportReady).toBeTrue();
+        expect(component.exportReady()).toBe(true);
     });
 
     it('should omit student statistics with no participations', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of({} as CourseGradeInformationDTO));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of({} as CourseGradeInformationDTO));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
 
         fixture.detectChanges();
 
-        expect(component.studentStatistics).toBeEmpty();
+        expect(component.studentStatistics()).toHaveLength(0);
     });
 
     it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
-        jest.spyOn(gradingService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
+        vi.spyOn(gradingService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
         const matchingGradeStep = gradingScale.gradeSteps[0];
-        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(
+        vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(
             of(
                 new HttpResponse<PlagiarismCaseDTO[]>({
                     body: [
@@ -408,14 +420,14 @@ describe('CourseScoresComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.studentStatistics[0].gradeStep?.gradeName).toEqual(GradingScale.DEFAULT_PLAGIARISM_GRADE);
-        expect(component.studentStatistics[1].gradeStep?.gradeName).toEqual(matchingGradeStep.gradeName);
-        expect(component.averageGrade).toEqual(matchingGradeStep.gradeName);
+        expect(component.studentStatistics()[0].gradeStep?.gradeName).toEqual(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+        expect(component.studentStatistics()[1].gradeStep?.gradeName).toEqual(matchingGradeStep.gradeName);
+        expect(component.averageGrade()).toEqual(matchingGradeStep.gradeName);
     });
 
     it('should generate excel row correctly', () => {
         setupMocks();
-        const exportAsExcelStub = jest.spyOn(component, 'exportAsExcel').mockImplementation();
+        const exportAsExcelStub = vi.spyOn(component, 'exportAsExcel').mockImplementation(() => {});
         component.exportResults();
         const generatedRows = exportAsExcelStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
@@ -464,7 +476,7 @@ describe('CourseScoresComponent', () => {
 
     it('should generate csv correctly', () => {
         setupMocks();
-        const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
+        const exportAsCsvStub = vi.spyOn(component, 'exportAsCsv').mockImplementation(() => {});
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: true,
@@ -500,39 +512,39 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should set grading scale properties correctly', () => {
-        jest.spyOn(gradingService, 'sortGradeSteps').mockReturnValue([gradeStep]);
-        jest.spyOn(gradingService, 'maxGrade').mockReturnValue('A');
-        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
+        vi.spyOn(gradingService, 'sortGradeSteps').mockReturnValue([gradeStep]);
+        vi.spyOn(gradingService, 'maxGrade').mockReturnValue('A');
+        vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
         component.setUpGradingScale(gradingScale);
         component.calculateGradingScaleInformation();
 
-        expect(component.gradingScaleExists).toBeTrue();
-        expect(component.gradingScale).toEqual(gradingScale);
-        expect(component.isBonus).toBeFalse();
-        expect(component.maxGrade).toBe('A');
-        expect(component.averageGrade).toBe('A');
+        expect(component.gradingScaleExists()).toBe(true);
+        expect(component.gradingScale()).toEqual(gradingScale);
+        expect(component.isBonus()).toBe(false);
+        expect(component.maxGrade()).toBe('A');
+        expect(component.averageGrade()).toBe('A');
     });
 
     it('should set highlighting to default if current highlighting is deselected', () => {
-        component.highlightedType = HighlightType.AVERAGE;
+        component.highlightedType.set(HighlightType.AVERAGE);
 
         // we deselect the current highlighting
         component.highlightBar(HighlightType.AVERAGE);
 
-        expect(component.highlightedType).toBe(HighlightType.NONE);
-        expect(component.valueToHighlight).toBeUndefined();
+        expect(component.highlightedType()).toBe(HighlightType.NONE);
+        expect(component.valueToHighlight()).toBeUndefined();
     });
 
     it('should highlight the median correctly', () => {
-        component.highlightedType = HighlightType.AVERAGE;
-        component.medianScoreIncluded = 55.5;
+        component.highlightedType.set(HighlightType.AVERAGE);
+        component.medianScoreIncluded.set(55.5);
 
         // we select the median
         component.highlightBar(HighlightType.MEDIAN);
 
-        expect(component.highlightedType).toBe(HighlightType.MEDIAN);
-        expect(component.valueToHighlight).toBe(55.5);
+        expect(component.highlightedType()).toBe(HighlightType.MEDIAN);
+        expect(component.valueToHighlight()).toBe(55.5);
     });
 
     function validateUserExportRow(

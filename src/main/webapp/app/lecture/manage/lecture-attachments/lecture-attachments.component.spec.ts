@@ -161,10 +161,11 @@ describe('LectureAttachmentsComponent', () => {
         const backup = Object.assign({}, attachment);
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.fileInput = { nativeElement: { value: '' } };
+        const mockFileInput = { nativeElement: { value: '' } };
+        vi.spyOn(comp, 'fileInput').mockReturnValue(mockFileInput as any);
         const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
         if (withFile) {
-            comp.fileInput.nativeElement.value = 'Test-File.pdf';
+            mockFileInput.nativeElement.value = 'Test-File.pdf';
             comp.attachmentFile.set(file);
         }
         comp.attachmentToBeUpdatedOrCreated.set(attachment);
@@ -182,7 +183,7 @@ describe('LectureAttachmentsComponent', () => {
         expect(attachmentServiceUpdateStub).toHaveBeenCalledWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
         expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
         expect(comp.errorMessage).toBe(errorMessage);
-        expect(comp.fileInput.nativeElement.value).toBe('');
+        expect(mockFileInput.nativeElement.value).toBe('');
         expect(comp.attachments).toEqual([backup]);
         expect(comp.attachmentBackup).toBeUndefined();
         expect(comp.attachmentFile()).toBeUndefined();

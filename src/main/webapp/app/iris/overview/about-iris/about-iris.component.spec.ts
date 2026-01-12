@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -6,27 +8,31 @@ import { AboutIrisComponent } from './about-iris.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 
 describe('AboutIrisComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AboutIrisComponent;
     let fixture: ComponentFixture<AboutIrisComponent>;
     let compiled: DebugElement;
 
-    beforeEach(() => {
-        jest.spyOn(console, 'warn').mockImplementation();
+    beforeEach(async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
         TestBed.configureTestingModule({
-            imports: [MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            declarations: [AboutIrisComponent],
+            imports: [AboutIrisComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         fixture = TestBed.createComponent(AboutIrisComponent);
         component = fixture.componentInstance;
         compiled = fixture.debugElement;
-        fixture.detectChanges();
+        await fixture.whenStable();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -45,7 +51,7 @@ describe('AboutIrisComponent', () => {
     });
 
     it('should render all required template elements', () => {
-        const logoComponent = compiled.query(By.directive(MockComponent(IrisLogoComponent)));
+        const logoComponent = compiled.query(By.css('jhi-iris-logo'));
         const titleElement = compiled.query(By.css('h2'));
         const subheadings = compiled.queryAll(By.css('h4'));
         const bulletLists = compiled.queryAll(By.css('ul'));

@@ -26,7 +26,7 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
 
     createFile(event: any) {
         if (!event.target.value) {
-            this.onClearCreatingFile.emit();
+            this.onClearCreatingFile.emit(event);
             return;
         }
         this.onCreateFile.emit(event.target.value);

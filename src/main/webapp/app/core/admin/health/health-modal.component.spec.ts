@@ -42,14 +42,14 @@ describe('HealthModalComponent', () => {
     });
 
     it('should parse GB-value to String for diskSpace', () => {
-        comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
+        comp.health.set({ key: 'diskSpace' as HealthKey, value: {} as HealthDetails });
         const gbValueInByte = 4156612385;
         const expectedString = '3.87 GB';
         expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
     });
 
     it('should parse MB-value to String for diskSpace', () => {
-        comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
+        comp.health.set({ key: 'diskSpace' as HealthKey, value: {} as HealthDetails });
         const mbValueInByte = 41566;
         const expectedString = '0.04 MB';
         expect(comp.readableValue(mbValueInByte)).toBe(expectedString);
