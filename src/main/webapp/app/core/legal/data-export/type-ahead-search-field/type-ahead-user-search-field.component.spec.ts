@@ -17,8 +17,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule)],
-            declarations: [TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
+            imports: [MockModule(FormsModule), TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
             providers: [provideHttpClient()],
         });
         fixture = TestBed.createComponent(TypeAheadUserSearchFieldComponent);
@@ -46,8 +45,8 @@ describe('TypeAheadUserSearchFieldComponent', () => {
 
         component.search(of('ge')).subscribe();
         expect(searchSpy).not.toHaveBeenCalled();
-        expect(component.searchQueryTooShort).toBeTrue();
-        expect(component.searching).toBeFalse();
+        expect(component.searchQueryTooShort()).toBeTrue();
+        expect(component.searching()).toBeFalse();
     });
 
     it('should set searchNoResults to true if no users are found', () => {
@@ -58,8 +57,8 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         );
 
         component.search(of('ge12abc')).subscribe();
-        expect(component.searchNoResults).toBeTrue();
-        expect(component.searching).toBeFalse();
+        expect(component.searchNoResults()).toBeTrue();
+        expect(component.searching()).toBeFalse();
     });
 
     it('should set searchFailed to true if the user service throws an error', () => {
@@ -72,26 +71,24 @@ describe('TypeAheadUserSearchFieldComponent', () => {
             ),
         );
         component.search(of('ge12abc')).subscribe();
-        expect(component.searchFailed).toBeTrue();
-        expect(component.searching).toBeFalse();
+        expect(component.searchFailed()).toBeTrue();
+        expect(component.searching()).toBeFalse();
     });
 
-    it('should emit the loginOrNameChange event on change with the correct value and update searchQueryTooShort', () => {
-        const loginOrNameChangeSpy = jest.spyOn(component.loginOrNameChange, 'emit');
-        component.loginOrName = 'ge12abc';
+    it('should update loginOrName on change with the correct value and update searchQueryTooShort', () => {
+        component.loginOrName.set('ge12abc');
         component.onChange();
-        expect(loginOrNameChangeSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
-        expect(component.searchQueryTooShort).toBeFalse();
-        jest.resetAllMocks();
+        expect(component.loginOrName()).toBe('ge12abc');
+        expect(component.searchQueryTooShort()).toBeFalse();
 
-        // @ts-ignore, otherwise we cannot set the loginOrName to an object
-        component.loginOrName = { login: 'ge12abc' };
+        // When loginOrName is set to a User object (from typeahead selection), onChange should extract the login
+        component.loginOrName.set({ login: 'ge12abc' } as User);
         component.onChange();
-        expect(loginOrNameChangeSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
+        expect(component.loginOrName()).toBe('ge12abc');
 
-        component.loginOrName = 'ge';
+        component.loginOrName.set('ge');
         component.onChange();
-        expect(component.searchQueryTooShort).toBeTrue();
+        expect(component.searchQueryTooShort()).toBeTrue();
     });
 
     it('should format the result correctly', () => {

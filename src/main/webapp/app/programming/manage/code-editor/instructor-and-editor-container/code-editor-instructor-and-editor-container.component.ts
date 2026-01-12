@@ -19,6 +19,7 @@ import {
     faTimesCircle,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
@@ -82,6 +83,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 

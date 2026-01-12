@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -8,9 +10,11 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('IrisGuard', () => {
+    setupTestBed({ zoneless: true });
+
     let guard: IrisGuard;
-    let profileInfoSpy: jest.SpyInstance;
-    let navigateSpy: jest.SpyInstance;
+    let profileInfoSpy: ReturnType<typeof vi.spyOn>;
+    let navigateSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -18,8 +22,12 @@ describe('IrisGuard', () => {
         });
 
         guard = TestBed.inject(IrisGuard);
-        profileInfoSpy = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-        navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+        profileInfoSpy = vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
+        navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should allow access if PROFILE_IRIS is active', async () => {
@@ -29,7 +37,7 @@ describe('IrisGuard', () => {
 
         const canActivate = guard.canActivate();
 
-        expect(canActivate).toBeTrue();
+        expect(canActivate).toBe(true);
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
@@ -40,7 +48,7 @@ describe('IrisGuard', () => {
 
         const canActivate = guard.canActivate();
 
-        expect(canActivate).toBeFalse();
+        expect(canActivate).toBe(false);
         expect(navigateSpy).toHaveBeenCalledWith(['/']);
     });
 });

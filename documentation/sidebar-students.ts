@@ -12,7 +12,7 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'exercises/intro',
             },
-            items: ['exercises/quiz-exercise', 'exercises/modeling-exercise'],
+            items: ['exercises/quiz-exercise', 'exercises/modeling-exercise', 'exercises/programming-exercise'],
         },
         'lectures',
         'assessment',
