@@ -68,7 +68,7 @@ public class ExerciseReviewCommentResource {
     private final GitService gitService;
 
     public ExerciseReviewCommentResource(ExerciseReviewCommentService exerciseReviewCommentService, ExerciseVersionRepository exerciseVersionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, @Lazy GitService gitService) {
         this.exerciseReviewCommentService = exerciseReviewCommentService;
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -133,8 +133,9 @@ public class ExerciseReviewCommentResource {
     /**
      * PUT /exercises/:exerciseId/review-threads/:threadId/resolved : Update the resolved state of a thread.
      *
-     * @param threadId the thread id
-     * @param dto      the resolved state
+     * @param exerciseId the exercise id
+     * @param threadId   the thread id
+     * @param dto        the resolved state
      * @return the updated thread
      */
     @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/resolved")
@@ -149,8 +150,9 @@ public class ExerciseReviewCommentResource {
     /**
      * PUT /exercises/:exerciseId/review-threads/:threadId/outdated : Update the outdated state of a thread.
      *
-     * @param threadId the thread id
-     * @param dto      the outdated state
+     * @param exerciseId the exercise id
+     * @param threadId   the thread id
+     * @param dto        the outdated state
      * @return the updated thread
      */
     @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/outdated")
@@ -165,8 +167,9 @@ public class ExerciseReviewCommentResource {
     /**
      * PUT /exercises/:exerciseId/review-comments/:commentId : Update a comment's content.
      *
-     * @param commentId the comment id
-     * @param dto       the updated content
+     * @param exerciseId the exercise id
+     * @param commentId  the comment id
+     * @param dto        the updated content
      * @return the updated comment
      */
     @PutMapping("exercises/{exerciseId}/review-comments/{commentId}")
@@ -180,7 +183,8 @@ public class ExerciseReviewCommentResource {
     /**
      * DELETE /exercises/:exerciseId/review-comments/:commentId : Delete a comment.
      *
-     * @param commentId the comment id
+     * @param exerciseId the exercise id
+     * @param commentId  the comment id
      * @return 200 OK
      */
     @DeleteMapping("exercises/{exerciseId}/review-comments/{commentId}")
