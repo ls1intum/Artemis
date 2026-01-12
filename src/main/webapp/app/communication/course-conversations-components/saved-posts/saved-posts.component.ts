@@ -5,6 +5,7 @@ import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
+import { take } from 'rxjs';
 
 @Component({
     selector: 'jhi-saved-posts',
@@ -53,14 +54,12 @@ export class SavedPostsComponent {
     protected trackPostFunction = (index: number, post: Posting): string => index + '' + post.id!;
 
     protected changeSavedPostStatus(post: Posting, status: SavedPostStatus) {
-        this.savedPostService.changeSavedPostStatus(post, status).subscribe({
-            next: () => {},
-        });
+        this.savedPostService.changeSavedPostStatus(post, status).pipe(take(1)).subscribe();
         this.hiddenPosts.push(post.id!);
     }
 
     protected removeSavedPost(post: Posting) {
-        this.savedPostService.removeSavedPost(post).subscribe();
+        this.savedPostService.removeSavedPost(post).pipe(take(1)).subscribe();
         this.hiddenPosts.push(post.id!);
     }
 
