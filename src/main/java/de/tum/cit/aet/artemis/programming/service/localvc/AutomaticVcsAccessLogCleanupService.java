@@ -21,7 +21,7 @@ public class AutomaticVcsAccessLogCleanupService {
 
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
-    @Value("${artemis.audit-events.retention-period:120}")
+    @Value("${artemis.audit-events.retention-period:365}")
     private int vcsAccessLogRetentionPeriod;
 
     public AutomaticVcsAccessLogCleanupService(VcsAccessLogRepository vcsAccessLogRepository) {

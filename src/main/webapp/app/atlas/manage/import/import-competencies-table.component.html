@@ -46,9 +46,11 @@
             (pageChange)="onPageChange($event)"
             [page]="search().page"
             [collectionSize]="search().pageSize * content().numberOfPages"
-            [maxSize]="10"
+            [maxSize]="5"
             [pageSize]="search().pageSize"
             [rotate]="true"
+            [ellipses]="true"
+            [boundaryLinks]="true"
         />
     </div>
 }

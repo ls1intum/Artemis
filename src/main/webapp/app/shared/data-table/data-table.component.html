@@ -20,6 +20,7 @@
                     <input
                         #ngbTypeahead
                         id="typeahead-basic"
+                        name="search-filter"
                         type="text"
                         class="form-control"
                         (selectItem)="onAutocompleteSelect($event.item)"
@@ -28,6 +29,12 @@
                         [resultFormatter]="searchResultFormatter"
                         [inputFormatter]="searchInputFormatter"
                         (blur)="onSearchInputBlur()"
+                        autocomplete="nope"
+                        role="searchbox"
+                        aria-autocomplete="list"
+                        data-1p-ignore="true"
+                        data-lpignore="true"
+                        data-form-type="other"
                     />
                     <div class="search-info" [class.active]="isSearching">
                         <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />

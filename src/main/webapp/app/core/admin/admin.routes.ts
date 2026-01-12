@@ -3,6 +3,7 @@ import { userManagementRoute } from 'app/core/admin/user-management/user-managem
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
+import { adminDataExportsRoute } from 'app/core/admin/admin-data-exports/admin-data-exports.route';
 
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-configuration.route';
@@ -34,10 +35,10 @@ const childRoutes: Routes = [
         },
     },
     {
-        path: 'feature-toggles',
+        path: 'features',
         loadComponent: () => import('app/core/admin/features/admin-feature-toggle.component').then((m) => m.AdminFeatureToggleComponent),
         data: {
-            pageTitle: 'featureToggles.title',
+            pageTitle: 'features.title',
         },
     },
     {
@@ -174,6 +175,7 @@ const childRoutes: Routes = [
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,
+    ...adminDataExportsRoute,
 ];
 
 const routes: Routes = [

@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 @Repository
 public interface ExamRoomExamAssignmentRepository extends ArtemisJpaRepository<ExamRoomExamAssignment, Long> {
 
-    @Transactional // ok because of modifying query
     @Modifying
+    @Transactional // ok because of delete
     void deleteAllByExamId(long examId);
 }

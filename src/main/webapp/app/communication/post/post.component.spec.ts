@@ -136,6 +136,13 @@ describe('PostComponent', () => {
     });
 
     afterEach(() => {
+        // Clear any active timers to prevent test leaks
+        if (component.deleteTimer) {
+            clearTimeout(component.deleteTimer);
+        }
+        if (component.deleteInterval) {
+            clearInterval(component.deleteInterval);
+        }
         jest.restoreAllMocks();
     });
 

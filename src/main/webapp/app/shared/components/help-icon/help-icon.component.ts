@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-help-icon',
-    template: ` <fa-icon [icon]="faQuestionCircle" class="text-secondary" [placement]="placement()" ngbTooltip="{{ text() | artemisTranslate }}" /> `,
+    template: ` <fa-icon [icon]="faQuestionCircle" class="text-secondary" [placement]="placement()" [ngbTooltip]="text() | artemisTranslate" container="body" /> `,
     imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class HelpIconComponent {

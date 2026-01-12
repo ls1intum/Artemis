@@ -20,7 +20,7 @@ describe('ImprintComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
+            imports: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 SessionStorageService,

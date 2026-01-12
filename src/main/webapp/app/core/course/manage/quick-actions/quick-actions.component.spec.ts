@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CourseManagementSection, QuickActionsComponent } from './quick-actions.component';
@@ -11,8 +13,15 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('QuickActionsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: QuickActionsComponent;
     let fixture: ComponentFixture<QuickActionsComponent>;
     let router: Router;
@@ -20,7 +29,13 @@ describe('QuickActionsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(UserManagementDropdownComponent), MockComponent(ButtonComponent), MockComponent(AddExercisePopoverComponent)],
-            providers: [{ provide: Router, useClass: MockRouter }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuickActionsComponent);
@@ -30,9 +45,13 @@ describe('QuickActionsComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should open the add exercise modal', () => {
         const addExercisePopoverComponent = fixture.debugElement.query(By.directive(AddExercisePopoverComponent));
-        const addExerciseModalSpy = jest.spyOn(addExercisePopoverComponent.componentInstance, 'showPopover');
+        const addExerciseModalSpy = vi.spyOn(addExercisePopoverComponent.componentInstance, 'showPopover');
         const addExerciseModalButton = fixture.debugElement.query(By.css('#open-add-exercise-popover'));
         addExerciseModalButton.nativeElement.click();
         expect(addExerciseModalSpy).toHaveBeenCalled();
@@ -44,8 +63,22 @@ describe('QuickActionsComponent', () => {
         { section: CourseManagementSection.FAQ, expectedLink: 'faqs' },
     ])('should link to correct section', ({ section, expectedLink }) => {
         fixture.componentRef.setInput('course', { id: 123 });
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routerSpy = vi.spyOn(router, 'navigate');
         component.navigateToCourseManagementSection(section);
         expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, expectedLink, 'new']);
+    });
+
+    it('should initialize lectureEnabled from ProfileService', () => {
+        const profileService = TestBed.inject(ProfileService);
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive');
+        isModuleFeatureActiveSpy.mockReturnValue(true);
+
+        // Create a new component to test initialization
+        const newFixture = TestBed.createComponent(QuickActionsComponent);
+        newFixture.componentRef.setInput('course', { id: 1, isAtLeastEditor: true });
+        const newComponent = newFixture.componentInstance;
+
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_LECTURE);
+        expect(newComponent.lectureEnabled).toBe(true);
     });
 });

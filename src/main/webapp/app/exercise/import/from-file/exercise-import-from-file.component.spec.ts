@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -24,7 +24,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
     let fixture: ComponentFixture<ExerciseImportFromFileComponent>;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
     let alertService: AlertService;
     let alertServiceSpy: jest.SpyInstance;
 
@@ -32,27 +32,27 @@ describe('ExerciseImportFromFileComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(HelpIconComponent), ButtonComponent, FaIconComponent],
             declarations: [ExerciseImportFromFileComponent, MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(FeatureToggleService)],
+            providers: [MockProvider(DynamicDialogRef), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(FeatureToggleService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportFromFileComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
+        dialogRef = TestBed.inject(DynamicDialogRef);
         alertService = TestBed.inject(AlertService);
 
         fixture.detectChanges();
     });
 
-    it('should close the active modal with result', () => {
+    it('should close the dialog with result', () => {
         // GIVEN
-        const activeModalSpy = jest.spyOn(activeModal, 'close');
+        const dialogRefSpy = jest.spyOn(dialogRef, 'close');
         const exercise = { id: undefined } as ProgrammingExercise;
         // WHEN
         component.openImport(exercise);
 
         // THEN
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-        expect(activeModalSpy).toHaveBeenCalledWith(exercise);
+        expect(dialogRefSpy).toHaveBeenCalledOnce();
+        expect(dialogRefSpy).toHaveBeenCalledWith(exercise);
     });
 
     // using fakeasync and tick didn't work here, that's why I used whenStable and async

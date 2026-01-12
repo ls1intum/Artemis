@@ -1,3 +1,9 @@
+/**
+ * Test suite for TextEditorService.
+ * Tests language prediction functionality for German and English text.
+ */
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 
 import { provideHttpClient } from '@angular/common/http';
@@ -6,10 +12,11 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 describe('TextEditorService', () => {
+    setupTestBed({ zoneless: true });
     let textEditorService: TextEditorService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         textEditorService = TestBed.inject(TextEditorService);

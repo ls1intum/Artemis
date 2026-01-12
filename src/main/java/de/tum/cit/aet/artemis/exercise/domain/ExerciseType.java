@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -8,7 +10,24 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 public enum ExerciseType {
 
-    TEXT, PROGRAMMING, MODELING, FILE_UPLOAD, QUIZ;
+    TEXT("text"), PROGRAMMING("programming"), MODELING("modeling"), FILE_UPLOAD("file-upload"), QUIZ("quiz");
+
+    private final String value;
+
+    ExerciseType(String value) {
+        this.value = value;
+    }
+
+    /**
+     * Returns the JSON serialization value for this exercise type.
+     * This matches the type discriminator values used in Exercise entity.
+     *
+     * @return lowercase string representation (e.g., "text", "programming", "file-upload")
+     */
+    @JsonValue
+    public String getValue() {
+        return value;
+    }
 
     /**
      * Used for human-readable string manipulations e.g. for notifications texts

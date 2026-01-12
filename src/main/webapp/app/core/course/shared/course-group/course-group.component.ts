@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, input, model, output, signal, viewChild } from '@angular/core';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
@@ -39,45 +39,37 @@ export type GroupUserInformationRow = {
     encapsulation: ViewEncapsulation.None,
     imports: [UsersImportButtonComponent, FaIconComponent, TranslateDirective, DataTableComponent, NgxDatatableModule, RouterLink, ProfilePictureComponent, DeleteButtonDirective],
 })
-export class CourseGroupComponent implements OnDestroy {
-    @ViewChild(DataTableComponent) dataTable: DataTableComponent;
+export class CourseGroupComponent {
+    private readonly dataTable = viewChild(DataTableComponent);
 
-    @Input() allGroupUsers: User[] = [];
-    @Input() isLoadingAllGroupUsers = false;
-    @Input() isAdmin = false;
-    @Input() course: Course;
-    @Input() tutorialGroup: TutorialGroup | undefined = undefined;
-    @Input() courseGroup: CourseGroup;
-    @Input() exportFileName: string;
+    readonly allGroupUsers = model<User[]>([]);
+    readonly isLoadingAllGroupUsers = input(false);
+    readonly isAdmin = input(false);
+    readonly course = input.required<Course>();
+    readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
+    readonly courseGroup = input.required<CourseGroup>();
+    readonly exportFileName = input.required<string>();
 
-    @Input() userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>> = () => of(new HttpResponse<User[]>({ body: [] }));
-    @Input() addUserToGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
-    @Input() removeUserFromGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
-    @Input() handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
+    readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
+    readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
+    readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
+    readonly handleUsersSizeChange = input<(filteredUsersSize: number) => void>(() => {});
 
-    @Output() importFinish: EventEmitter<void> = new EventEmitter();
+    readonly importFinish = output<void>();
 
-    readonly ActionType = ActionType;
+    protected readonly ActionType = ActionType;
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    isSearching = false;
-    searchFailed = false;
-    searchNoResults = false;
-    isTransitioning = false;
-    rowClass: string;
+    readonly isSearching = signal(false);
+    readonly searchFailed = signal(false);
+    readonly searchNoResults = signal(false);
+    readonly isTransitioning = signal(false);
+    readonly rowClass = signal('');
 
-    // Icons
-    faDownload = faDownload;
-    faUserSlash = faUserSlash;
-
-    /**
-     * Unsubscribe dialog error source on component destruction.
-     */
-    ngOnDestroy() {
-        this.dialogErrorSource.unsubscribe();
-    }
+    protected readonly faDownload = faDownload;
+    protected readonly faUserSlash = faUserSlash;
 
     /**
      * Receives the search text and filter results from DataTableComponent, modifies them and returns the result which will be used by ngbTypeahead.
@@ -91,34 +83,38 @@ export class CourseGroupComponent implements OnDestroy {
     searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
             switchMap(({ text: loginOrName }) => {
-                this.searchFailed = false;
-                this.searchNoResults = false;
+                this.searchFailed.set(false);
+                this.searchNoResults.set(false);
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
-                this.isSearching = true;
-                return this.userSearch(loginOrName)
+                this.isSearching.set(true);
+                return this.userSearch()(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         tap((users) => {
                             if (users.length === 0) {
-                                this.searchNoResults = true;
+                                this.searchNoResults.set(true);
                             }
                         }),
                         catchError(() => {
-                            this.searchFailed = true;
+                            this.searchFailed.set(true);
                             return of([]);
                         }),
                     );
             }),
             tap(() => {
-                this.isSearching = false;
+                this.isSearching.set(false);
             }),
             tap((users) => {
                 setTimeout(() => {
-                    for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
-                        const button = this.dataTable.typeaheadButtons[i];
-                        const isAlreadyInGroup = this.allGroupUsers.map((user) => user.id).includes(users[i].id);
+                    const dataTable = this.dataTable();
+                    if (!dataTable) return;
+                    for (let i = 0; i < dataTable.typeaheadButtons.length; i++) {
+                        const button = dataTable.typeaheadButtons[i];
+                        const isAlreadyInGroup = this.allGroupUsers()
+                            .map((user) => user.id)
+                            .includes(users[i].id);
                         const hasIcon = button.querySelector('fa-icon');
                         if (!hasIcon) {
                             button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInGroup ? 'users' : 'users-plus']);
@@ -141,14 +137,19 @@ export class CourseGroupComponent implements OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not part of this course group yet, perform the server call to add them
-        if (!this.allGroupUsers.map((u) => u.id).includes(user.id) && user.login) {
-            this.isTransitioning = true;
-            this.addUserToGroup(user.login).subscribe({
+        if (
+            !this.allGroupUsers()
+                .map((u) => u.id)
+                .includes(user.id) &&
+            user.login
+        ) {
+            this.isTransitioning.set(true);
+            this.addUserToGroup()(user.login).subscribe({
                 next: () => {
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
 
                     // Add newly added user to the list of all users in the course group
-                    this.allGroupUsers.push(user);
+                    this.allGroupUsers.update((users) => [...users, user]);
 
                     // Hand back over to the data table for updating
                     callback(user);
@@ -157,7 +158,7 @@ export class CourseGroupComponent implements OnDestroy {
                     this.flashRowClass(cssClasses.newlyAddedMember);
                 },
                 error: () => {
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
                 },
             });
         } else {
@@ -171,11 +172,11 @@ export class CourseGroupComponent implements OnDestroy {
      *
      * @param user User that should be removed from the currently viewed course group
      */
-    removeFromGroup(user: User) {
+    removeFromGroup(user: User): void {
         if (user.login) {
-            this.removeUserFromGroup(user.login).subscribe({
+            this.removeUserFromGroup()(user.login).subscribe({
                 next: () => {
-                    this.allGroupUsers = this.allGroupUsers.filter((u) => u.login !== user.login);
+                    this.allGroupUsers.update((users) => users.filter((u) => u.login !== user.login));
                     this.dialogErrorSource.next('');
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -206,8 +207,8 @@ export class CourseGroupComponent implements OnDestroy {
     /**
      * Computes the row class that is being added to all rows of the datatable
      */
-    dataTableRowClass = () => {
-        return this.rowClass;
+    dataTableRowClass = (): string => {
+        return this.rowClass();
     };
 
     /**
@@ -215,17 +216,18 @@ export class CourseGroupComponent implements OnDestroy {
      *
      * @param className Name of the class to be applied to all rows
      */
-    flashRowClass = (className: string) => {
-        this.rowClass = className;
-        setTimeout(() => (this.rowClass = ''));
+    flashRowClass = (className: string): void => {
+        this.rowClass.set(className);
+        setTimeout(() => this.rowClass.set(''));
     };
 
     /**
      * Method for exporting the csv with the needed data
      */
-    exportUserInformation = () => {
-        if (this.allGroupUsers.length > 0) {
-            const rows: any[] = this.allGroupUsers.map((user: User): GroupUserInformationRow => {
+    exportUserInformation = (): void => {
+        const users = this.allGroupUsers();
+        if (users.length > 0) {
+            const rows: GroupUserInformationRow[] = users.map((user: User): GroupUserInformationRow => {
                 return {
                     [NAME_KEY]: user.name?.trim() ?? '',
                     [USERNAME_KEY]: user.login?.trim() ?? '',
@@ -244,14 +246,14 @@ export class CourseGroupComponent implements OnDestroy {
      * @param rows the data to export
      * @param keys the keys of the data
      */
-    exportAsCsv = (rows: any[], keys: string[]) => {
+    exportAsCsv = (rows: GroupUserInformationRow[], keys: string[]): void => {
         const options = {
             fieldSeparator: ';',
             quoteStrings: true,
             quoteCharacter: '"',
             showLabels: true,
             showTitle: false,
-            filename: this.exportFileName,
+            filename: this.exportFileName(),
             useTextFile: false,
             useBom: true,
             columnHeaders: keys,
@@ -260,5 +262,6 @@ export class CourseGroupComponent implements OnDestroy {
         const csvData = generateCsv(csvExportConfig)(rows);
         download(csvExportConfig)(csvData);
     };
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

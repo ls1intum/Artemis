@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, OnChanges, SimpleChanges, TemplateRef, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, contentChild, effect, inject, input } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -21,11 +21,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbTooltip, RouterLink, TutorialGroupRowComponent, NgClass, ArtemisTranslatePipe],
 })
-export class TutorialGroupsTableComponent implements OnChanges {
+export class TutorialGroupsTableComponent {
     private sortService = inject(SortService);
-    private cdr = inject(ChangeDetectorRef);
 
-    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
+    readonly extraColumn = contentChild(TemplateRef);
 
     readonly showIdColumn = input(false);
 
@@ -58,6 +57,26 @@ export class TutorialGroupsTableComponent implements OnChanges {
      */
     mifOfDifferentLanguages = false;
 
+    constructor() {
+        // Effect to update timeZone
+        effect(() => {
+            const tz = this.timeZone();
+            if (tz) {
+                this.timeZoneUsedForDisplay = tz;
+            }
+        });
+
+        // Effect to update tutorial groups display properties
+        effect(() => {
+            const groups = this.tutorialGroups();
+            if (groups && groups.length > 0) {
+                this.tutorialGroupsSplitAcrossMultipleCampuses = groups.some((tutorialGroup) => tutorialGroup.campus !== groups[0].campus);
+                this.mixOfOfflineAndOfflineTutorialGroups = groups.some((tutorialGroup) => tutorialGroup.isOnline !== groups[0].isOnline);
+                this.mifOfDifferentLanguages = groups.some((tutorialGroup) => tutorialGroup.language !== groups[0].language);
+            }
+        });
+    }
+
     trackId(index: number, item: TutorialGroup) {
         return item.id;
     }
@@ -69,37 +88,6 @@ export class TutorialGroupsTableComponent implements OnChanges {
             this.sortService.sortByMultipleProperties(this.tutorialGroups(), ['capacity', 'numberOfRegisteredUsers'], this.ascending);
         } else {
             this.sortService.sortByProperty(this.tutorialGroups(), this.sortingPredicate, this.ascending);
-        }
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        for (const propName in changes) {
-            if (changes.hasOwnProperty(propName)) {
-                const change = changes[propName];
-                switch (propName) {
-                    case 'timeZone': {
-                        if (change.currentValue) {
-                            this.timeZoneUsedForDisplay = change.currentValue;
-                            this.cdr.detectChanges();
-                        }
-                        break;
-                    }
-                    case 'tutorialGroups':
-                        {
-                            if (change.currentValue && change.currentValue.length > 0) {
-                                this.tutorialGroupsSplitAcrossMultipleCampuses = this.tutorialGroups().some(
-                                    (tutorialGroup) => tutorialGroup.campus !== this.tutorialGroups()[0].campus,
-                                );
-                                this.mixOfOfflineAndOfflineTutorialGroups = this.tutorialGroups().some(
-                                    (tutorialGroup) => tutorialGroup.isOnline !== this.tutorialGroups()[0].isOnline,
-                                );
-                                this.mifOfDifferentLanguages = this.tutorialGroups().some((tutorialGroup) => tutorialGroup.language !== this.tutorialGroups()[0].language);
-                                this.cdr.detectChanges();
-                            }
-                        }
-                        break;
-                }
-            }
         }
     }
 }

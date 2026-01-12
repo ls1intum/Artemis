@@ -7,8 +7,8 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 
 @Injectable({ providedIn: 'root' })
 export class DataExportConfirmationDialogService {
-    private modalService = inject(NgbModal);
-    alertService = inject(AlertService);
+    private readonly modalService = inject(NgbModal);
+    private readonly alertService = inject(AlertService);
 
     modalRef: NgbModalRef | null;
 
@@ -19,8 +19,8 @@ export class DataExportConfirmationDialogService {
     openConfirmationDialog(dataExportConfirmationDialogData: DataExportConfirmationDialogData): void {
         this.alertService.closeAll();
         this.modalRef = this.modalService.open(DataExportConfirmationDialogComponent, { size: 'lg', backdrop: 'static' });
-        this.modalRef.componentInstance.expectedLogin = dataExportConfirmationDialogData.userLogin;
-        this.modalRef.componentInstance.adminDialog = dataExportConfirmationDialogData.adminDialog;
+        this.modalRef.componentInstance.expectedLogin.set(dataExportConfirmationDialogData.userLogin ?? '');
+        this.modalRef.componentInstance.adminDialog.set(dataExportConfirmationDialogData.adminDialog);
         this.modalRef.componentInstance.dataExportRequest = dataExportConfirmationDialogData.dataExportRequest;
         this.modalRef.componentInstance.dataExportRequestForAnotherUser = dataExportConfirmationDialogData.dataExportRequestForAnotherUser;
         this.modalRef.componentInstance.dialogError = dataExportConfirmationDialogData.dialogError;

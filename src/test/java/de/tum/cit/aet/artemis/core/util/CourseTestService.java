@@ -77,10 +77,14 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
+import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
@@ -93,8 +97,12 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
+import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
@@ -115,6 +123,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportUtil;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -142,6 +152,8 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
+import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -171,6 +183,9 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 @Lazy
 @Service
@@ -309,6 +324,39 @@ public class CourseTestService {
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private Optional<IrisChatSessionUtilService> irisChatSessionUtilService;
+
+    @Autowired
+    private Optional<IrisCourseChatSessionRepository> irisCourseChatSessionRepository;
+
+    @Autowired
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Autowired
+    private LLMTokenUsageRequestTestRepository llmTokenUsageRequestRepository;
+
+    @Autowired
+    private Optional<CompetencyProgressUtilService> competencyProgressUtilService;
+
+    @Autowired
+    private Optional<CompetencyProgressTestRepository> competencyProgressRepository;
+
+    @Autowired
+    private Optional<LearnerProfileUtilService> learnerProfileUtilService;
+
+    @Autowired
+    private Optional<CourseLearnerProfileRepository> courseLearnerProfileRepository;
+
+    @Autowired
+    private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
+
+    @Autowired
+    private Optional<TutorialGroupTestRepository> tutorialGroupRepository;
+
+    @Autowired
+    private Optional<TutorialGroupRegistrationTestRepository> tutorialGroupRegistrationRepository;
+
     private static final int NUMBER_OF_STUDENTS = 8;
 
     private static final int NUMBER_OF_TUTORS = 5;
@@ -364,9 +412,8 @@ public class CourseTestService {
         var result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         courseRepo.findByIdElseThrow(course.getId());
-
-        course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        // Note: The old test for creating a course with an ID is no longer needed since the CourseCreateDTO
+        // doesn't include an ID field - the server-side always creates a new entity with a fresh ID.
     }
 
     // Test
@@ -386,9 +433,7 @@ public class CourseTestService {
 
     // Test
     private void testCreateCourseWithNegativeValue(Course course) throws Exception {
-        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-        request.performMvcRequest(builder).andExpect(status().isBadRequest());
+        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
         List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
@@ -512,6 +557,26 @@ public class CourseTestService {
         courses.add(course3);
         addConversationsToCourse(course3);
         examUtilService.addExamWithExerciseGroup(courses.getFirst(), true);
+
+        // Create additional test data for deletion verification
+        User student1 = userRepo.findOneByLogin(userPrefix + "student1").orElseThrow();
+        Course testCourse = courses.getFirst();
+
+        // Create Iris chat session for the course (if Iris is enabled)
+        irisChatSessionUtilService.ifPresent(service -> service.createAndSaveCourseChatSessionForUser(testCourse, student1));
+
+        // Create LLM token usage traces for the course
+        createLLMTokenUsageTraceForCourse(testCourse, student1);
+
+        // Create competency with progress (if Atlas is enabled)
+        competencyUtilService.ifPresent(compService -> {
+            var competency = compService.createCompetency(testCourse);
+            competencyProgressUtilService.ifPresent(progressService -> progressService.createCompetencyProgress(competency, student1, 0.5, 0.7));
+        });
+
+        // Create course learner profiles (if Atlas is enabled)
+        learnerProfileUtilService.ifPresent(service -> service.createCourseLearnerProfileForUsers(userPrefix, Set.of(testCourse)));
+
         // mock certain requests
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
@@ -540,7 +605,54 @@ public class CourseTestService {
             assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
             assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
             assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
+
+            // Verify new data is also deleted
+            irisCourseChatSessionRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All Iris chat sessions are deleted").isZero());
+
+            assertThat(llmTokenUsageTraceRepository.findAllByCourseId(course.getId())).as("All LLM token usage traces are deleted").isEmpty();
+            assertThat(llmTokenUsageRequestRepository.findAllByTraceCourseId(course.getId())).as("All LLM token usage requests are deleted").isEmpty();
+
+            competencyProgressRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All competency progress is deleted").isZero());
+
+            courseLearnerProfileRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All course learner profiles are deleted").isZero());
         }
+    }
+
+    /**
+     * Creates an LLM token usage trace with associated requests for a course.
+     * This tests that both traces and their child requests are properly deleted
+     * when deleting a course (avoiding foreign key constraint violations).
+     *
+     * @param course  the course
+     * @param student the user
+     */
+    private void createLLMTokenUsageTraceForCourse(Course course, User student) {
+        var trace = new LLMTokenUsageTrace();
+        trace.setCourseId(course.getId());
+        trace.setUserId(student.getId());
+        trace.setServiceType(LLMServiceType.IRIS);
+        trace = llmTokenUsageTraceRepository.save(trace);
+
+        // Create associated LLM token usage requests to test proper cascade deletion
+        var request1 = new LLMTokenUsageRequest();
+        request1.setModel("gpt-4");
+        request1.setNumInputTokens(100);
+        request1.setNumOutputTokens(50);
+        request1.setCostPerMillionInputTokens(30.0f);
+        request1.setCostPerMillionOutputTokens(60.0f);
+        request1.setServicePipelineId("test-pipeline");
+        request1.setTrace(trace);
+        llmTokenUsageRequestRepository.save(request1);
+
+        var request2 = new LLMTokenUsageRequest();
+        request2.setModel("gpt-3.5-turbo");
+        request2.setNumInputTokens(200);
+        request2.setNumOutputTokens(100);
+        request2.setCostPerMillionInputTokens(0.5f);
+        request2.setCostPerMillionOutputTokens(1.5f);
+        request2.setServicePipelineId("test-pipeline");
+        request2.setTrace(trace);
+        llmTokenUsageRequestRepository.save(request2);
     }
 
     private void addConversationsToCourse(Course course3) throws Exception {
@@ -558,6 +670,99 @@ public class CourseTestService {
         participant.setIsModerator(false);
         participant.setUser(user);
         conversationParticipantRepository.save(participant);
+    }
+
+    // Test
+    public void testResetCourseWithPermission() throws Exception {
+        // Create a simple course with text exercise (no programming exercises which need CI mocking)
+        Course course = courseUtilService.createCourse();
+        Long courseId = course.getId();
+
+        // Add a text exercise with participations
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2));
+
+        // Get group names
+        String studentGroupName = course.getStudentGroupName();
+        String tutorGroupName = course.getTeachingAssistantGroupName();
+        String editorGroupName = course.getEditorGroupName();
+        String instructorGroupName = course.getInstructorGroupName();
+
+        // Verify initial state
+        Set<User> studentsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(studentGroupName);
+        Set<User> tutorsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(tutorGroupName);
+        Set<User> editorsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(editorGroupName);
+        Set<User> instructorsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(instructorGroupName);
+
+        assertThat(studentsBefore).as("Course has students before reset").isNotEmpty();
+        assertThat(tutorsBefore).as("Course has tutors before reset").isNotEmpty();
+        assertThat(editorsBefore).as("Course has editors before reset").isNotEmpty();
+        assertThat(instructorsBefore).as("Course has instructors before reset").isNotEmpty();
+
+        // Create tutorial group with registrations (if tutorial groups feature is enabled)
+        tutorialGroupUtilService.ifPresent(service -> {
+            User student1 = userUtilService.getUserByLogin(userPrefix + "student1");
+            User tutor1 = userUtilService.getUserByLogin(userPrefix + "tutor1");
+            service.createTutorialGroup(courseId, "Test Tutorial Group", "Test Info", 10, false, "Test Campus", "en", tutor1, Set.of(student1));
+        });
+
+        // Verify tutorial group registrations exist before reset
+        tutorialGroupRegistrationRepository.ifPresent(repo -> {
+            var registrations = repo.findAllByTutorialGroupCourseId(courseId);
+            assertThat(registrations).as("Tutorial group has registrations before reset").isNotEmpty();
+        });
+
+        // Perform reset (use postWithoutLocation since reset endpoint returns 200 OK without location header)
+        request.postWithoutLocation("/api/core/admin/courses/" + courseId + "/reset", null, HttpStatus.OK, null);
+
+        // Verify course structure is preserved
+        assertThat(courseRepo.findById(courseId)).as("Course still exists after reset").isPresent();
+        assertThat(exerciseRepo.findAllExercisesByCourseId(courseId)).as("Exercises still exist after reset").isNotEmpty();
+
+        // Verify students are unenrolled
+        Set<User> studentsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(studentGroupName);
+        assertThat(studentsAfter).as("Students are unenrolled after reset").isEmpty();
+
+        // Verify tutors are removed
+        Set<User> tutorsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(tutorGroupName);
+        assertThat(tutorsAfter).as("Tutors are removed after reset").isEmpty();
+
+        // Verify editors are removed
+        Set<User> editorsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(editorGroupName);
+        assertThat(editorsAfter).as("Editors are removed after reset").isEmpty();
+
+        // Verify instructors are preserved
+        Set<User> instructorsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(instructorGroupName);
+        assertThat(instructorsAfter).as("Instructors are preserved after reset").isNotEmpty();
+        assertThat(instructorsAfter).as("Same instructors as before reset").containsExactlyInAnyOrderElementsOf(instructorsBefore);
+
+        // Verify tutorial group definitions are preserved but registrations are deleted
+        tutorialGroupRepository.ifPresent(repo -> {
+            var groups = repo.findAllByCourseId(courseId);
+            assertThat(groups).as("Tutorial group definitions are preserved after reset").isNotEmpty();
+        });
+
+        tutorialGroupRegistrationRepository.ifPresent(repo -> {
+            var registrations = repo.findAllByTutorialGroupCourseId(courseId);
+            assertThat(registrations).as("Tutorial group registrations are deleted after reset").isEmpty();
+        });
+
+        // Verify audit event was created
+        List<AuditEvent> auditEvents = auditEventRepo.find("admin", Instant.now().minusSeconds(20), Constants.RESET_COURSE);
+        AuditEvent auditEvent = auditEvents.stream().max(Comparator.comparing(AuditEvent::getTimestamp)).orElse(null);
+        assertThat(auditEvent).as("Reset course audit event was created").isNotNull();
+        assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course.getTitle());
+    }
+
+    // Test
+    public void testResetCourseWithoutPermission() throws Exception {
+        Course course = courseUtilService.createCourse();
+        request.postWithoutLocation("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
+    }
+
+    // Test
+    public void testResetCourseNotFound() throws Exception {
+        request.postWithoutLocation("/api/core/admin/courses/" + Long.MAX_VALUE + "/reset", null, HttpStatus.NOT_FOUND, null);
     }
 
     // Test
@@ -603,11 +808,8 @@ public class CourseTestService {
 
     }
 
-    // Test
-    public void testUpdateCourseIsEmpty() throws Exception {
-        Course course = CourseFactory.generateCourse(1042001L, null, null, new HashSet<>());
-        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
-    }
+    // Note: testUpdateCourseIsEmpty was removed because with CourseCreateDTO, the ID field is not sent,
+    // so the old test case (sending a non-existent ID to create endpoint) is no longer applicable.
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
@@ -3127,13 +3329,31 @@ public class CourseTestService {
     }
 
     public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
-        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
+        CourseCreateDTO dto = toCourseCreateDTO(course);
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
         if (fileContent != null) {
             var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    /**
+     * Converts a Course entity to a CourseCreateDTO for use in API tests.
+     *
+     * @param course the course entity to convert
+     * @return the corresponding CourseCreateDTO
+     */
+    private CourseCreateDTO toCourseCreateDTO(@NonNull Course course) {
+        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStudentGroupName(),
+                course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
+                course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.isOnlineCourse(),
+                course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
+                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
+                course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.isFaqEnabled(), course.getLearningPathsEnabled(),
+                course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
+                course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
     }
 
     public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
