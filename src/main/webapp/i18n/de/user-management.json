@@ -25,6 +25,7 @@
                 "authority": {
                     "title": "Rolle ({{ num }})",
                     "tooltip": "Filter die Nutzer:innen anhand ihrer Berechtigungen",
+                    "super_admin": "Super-Administrator",
                     "admin": "Administrator",
                     "instructor": "Lehrende",
                     "editor": "Editor:in",

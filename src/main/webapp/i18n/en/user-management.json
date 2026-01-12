@@ -25,6 +25,7 @@
                 "authority": {
                     "title": "Role ({{ num }})",
                     "tooltip": "Filter the users according to their permissions",
+                    "super_admin": "Super Admin",
                     "admin": "Admin",
                     "instructor": "Instructor",
                     "editor": "Editor",

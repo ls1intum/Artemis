@@ -66,6 +66,7 @@ export class UserFilter {
 }
 
 export enum AuthorityFilter {
+    SUPER_ADMIN = 'SUPER_ADMIN',
     ADMIN = 'ADMIN',
     INSTRUCTOR = 'INSTRUCTOR',
     EDITOR = 'EDITOR',
