@@ -144,7 +144,6 @@ describe('ParticipationWebsocketService', () => {
 
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
-
         expect(participationSpy).toHaveBeenCalledOnce();
         const updatedParticipation = participationSpy.mock.calls[0][0] as StudentParticipation;
 
@@ -201,7 +200,6 @@ describe('ParticipationWebsocketService', () => {
 
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
-
         expect(participationSpy).toHaveBeenCalledOnce();
         const updatedParticipation = participationSpy.mock.calls[0][0] as Participation;
 

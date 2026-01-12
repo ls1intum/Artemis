@@ -11,6 +11,8 @@ import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { deepClone } from 'app/shared/util/deep-clone.util';
+import { SubmissionUpdateResult } from 'app/exercise/shared/entities/submission/submission-updated-with-result.model';
 
 /**
  * Websocket destination for user-specific participation results.
@@ -126,19 +128,28 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
     /**
-     * Creates an RxJS pipe that:
-     * 1. Notifies result subscribers,
-     * 2. Adds the result to the cached participation,
-     * 3. Notifies participation subscribers.
+     * Central pipe for handling incoming results from the websocket.
      *
-     * @returns A pipeable operator for handling incoming results
+     * The server only sends Result objects, but callers consume them in two ways:
+     *  - via per-participation "latest result" streams (can be read as-is), and
+     *  - via Participation objects (e.g. in course exercise details/result history component).
+     *  - participation objects need to be updated with the latest results wherever the participation object
+     *  is used to display the latest results
+     *
+     * To keep both views in sync, each incoming result is processed as follows:
+     *  1. Notify result subscribers,
+     *  2. Update the cached participation's submissions
+     *  3. Read the updated participation from the cache
+     *  4. Notify participation subscribers.
+     *
+     * @returns A pipeable operator that applies this flow to each websocket result.
      */
     private getNotifyAllSubscribersPipe = () => {
         return pipe(
-            tap(this.notifyResultSubscribers),
-            tap(this.updateCachedParticipationWithResult),
-            switchMap(this.getParticipationForResult),
-            tap(this.notifyParticipationSubscribers),
+            tap(this.notifyResultSubscribers), // update latest-result streams
+            tap(this.updateCachedParticipationWithResult), // mutate cachedParticipations by appending the uptodate results
+            switchMap(this.getParticipationForResult), // read updated participation to include latest result
+            tap(this.notifyParticipationSubscribers), // emit updated participation with result
         );
     };
 
@@ -346,12 +357,16 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             return;
         }
 
+        // load submissions of given participation
         const submissions = cachedParticipation.submissions ?? [];
 
-        const { submissionsAfterUpdate, matchedExistingSubmission } = this.updateExistingSubmissionResult(submissions, result);
-        const updatedSubmissions = matchedExistingSubmission ? submissionsAfterUpdate : this.appendNewSubmission(submissionsAfterUpdate, cachedParticipation, result);
+        // if submission with latest result exists, append result to submission
+        const { updatedSubmissions, hasMatchingSubmission } = this.updateExistingSubmissionResult(submissions, result);
+        // if not then create a new submission object with result appended
+        const appendedOrUpdatedSubmission = hasMatchingSubmission ? updatedSubmissions : this.appendNewSubmission(updatedSubmissions, cachedParticipation, result);
 
-        const updatedParticipation = Object.assign({}, cachedParticipation, { submissions: updatedSubmissions });
+        const updatedParticipation = deepClone(cachedParticipation);
+        updatedParticipation.submissions = appendedOrUpdatedSubmission;
         this.cachedParticipations.set(participationId, updatedParticipation);
     };
 
@@ -368,13 +383,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *          - submissionsWithMatch: the updated submissions array
      *          - matchedExistingSubmission: whether a submission was updated
      */
-    private updateExistingSubmissionResult(
-        submissions: Submission[],
-        result: Result,
-    ): {
-        submissionsAfterUpdate: Submission[];
-        matchedExistingSubmission: boolean;
-    } {
+    private updateExistingSubmissionResult(submissions: Submission[], result: Result): SubmissionUpdateResult {
         let matchedExistingSubmission = false;
 
         const submissionsAfterUpdate: Submission[] = submissions.map((submission) => {
@@ -384,37 +393,33 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
             matchedExistingSubmission = true;
 
-            const oldResults = submission.results ?? [];
-            const withoutSameId = oldResults.filter((r) => r.id !== result.id);
-            const newResults = [...withoutSameId, result];
+            const existingResults = (submission.results ?? []).filter((r) => r.id !== result.id);
+            const mergedResults = [...existingResults, result];
 
             return {
                 ...submission,
-                results: newResults,
+                results: mergedResults,
             };
         });
 
-        return { submissionsAfterUpdate, matchedExistingSubmission };
+        return { updatedSubmissions: submissionsAfterUpdate, hasMatchingSubmission: matchedExistingSubmission };
     }
 
     private appendNewSubmission(submissions: Submission[], participation: StudentParticipation, result: Result): Submission[] {
         const baseResults = result.submission?.results ?? [];
-        const resultsWithNew = [...baseResults, result];
+        const mergedResults = [...baseResults, result];
 
-        const deduplicatedResults = resultsWithNew.filter((r, index, arr) => {
+        const deduplicatedResults = mergedResults.filter((r, index, existing) => {
             if (r.id == null) {
                 // For results without an ID, we keep all of them
                 return true;
             }
-            return arr.findIndex((other) => other.id === r.id) === index;
+            return existing.findIndex((result) => result.id === r.id) === index;
         });
 
-        const newSubmission: Submission = {
-            ...Object.assign({}, result.submission as Submission, {
-                participation,
-                results: deduplicatedResults,
-            }),
-        };
+        const newSubmission = deepClone(result.submission as Submission);
+        newSubmission.participation = participation;
+        newSubmission.results = deduplicatedResults;
 
         return [...submissions, newSubmission];
     }

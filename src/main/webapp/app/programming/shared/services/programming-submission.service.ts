@@ -560,7 +560,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 // We now keep the same BehaviorSubject instance and "clear" it by emitting `undefined`,
                 // ensuring all subscribers stay subscribed.
                 this.getOrResetSubmissionSubject(participationId);
-
                 this.processPendingSubmission(isPendingSubmission ? latestSubmission : undefined, participation.id!, exercise.id!, true).subscribe();
             });
     }
@@ -684,14 +683,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
         const params = new HttpParams().set('lastGraded', lastGraded.toString());
-        return this.http.post(
-            this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build',
-            {},
-            {
-                params,
-                observe: 'response',
-            },
-        );
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { params, observe: 'response' });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
@@ -749,11 +741,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         if (queueRemainingTime > 0) {
                             this.emitQueuedSubmission(participationId, exerciseId, submission);
                             this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
-                            return {
-                                participationId,
-                                submission: submissionToBeProcessed,
-                                submissionState: ProgrammingSubmissionState.IS_QUEUED,
-                            };
+                            return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }
                     } else {
                         let buildTimingInfo: BuildTimingInfo | undefined = {
@@ -775,25 +763,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     }
                     // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
                     this.emitFailedSubmission(participationId, exerciseId);
-                    return {
-                        participationId,
-                        submission: submissionToBeProcessed,
-                        submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
-                    };
+                    return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
                 }
                 this.emitNoPendingSubmission(participationId, exerciseId);
-                return {
-                    participationId,
-                    submission: undefined,
-                    submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-                };
+                return { participationId, submission: undefined, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
             }),
             // Now update the exercise build state object and start the build and result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                const exerciseSubmissionState: ExerciseSubmissionState = {
-                    ...(this.exerciseBuildState[exerciseId] || {}),
-                    [participationId]: submissionStateObj,
-                };
+                const exerciseSubmissionState: ExerciseSubmissionState = { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj };
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseSubmissionState };
                 this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
@@ -828,14 +805,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param req request parameters
      * @param correctionRound for which to get the Submissions
      */
-    getSubmissions(
-        exerciseId: number,
-        req: {
-            submittedOnly?: boolean;
-            assessedByTutor?: boolean;
-        },
-        correctionRound = 0,
-    ): Observable<HttpResponse<ProgrammingSubmission[]>> {
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ProgrammingSubmission[]>> {
         const url = `api/programming/exercises/${exerciseId}/programming-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
