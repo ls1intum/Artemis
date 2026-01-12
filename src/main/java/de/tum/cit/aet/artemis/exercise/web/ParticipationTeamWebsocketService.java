@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -29,9 +28,6 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -50,6 +46,8 @@ import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.OnlineTeamStudentDTO;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -76,25 +74,15 @@ public class ParticipationTeamWebsocketService {
 
     private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
-    private final HazelcastInstance hazelcastInstance;
-
-    // TODO: Follow-Up: move this into a separate service that contains all Hazelcast related data structures
+    private final DistributedDataAccessService distributedDataAccessService;
 
     /** Always access using the getter to ensure that the map is initialized **/
     @Nullable
     private Map<String, String> destinationTracker;
 
-    /** Always access using the getter to ensure that the map is initialized **/
-    @Nullable
-    private Map<String, Instant> lastTypingTracker;
-
-    /** Always access using the getter to ensure that the map is initialized **/
-    @Nullable
-    private Map<String, Instant> lastActionTracker;
-
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, DistributedDataAccessService distributedDataAccessService) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
@@ -102,51 +90,12 @@ public class ParticipationTeamWebsocketService {
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
-        this.hazelcastInstance = hazelcastInstance;
-    }
-
-    /**
-     * Lazy Init: Returns the last typing tracker map which keeps track of the last typing date for each user in a participation.
-     * This is used to determine which team members are currently typing.
-     *
-     * @return the destination tracker map
-     */
-    public Map<String, Instant> getLastTypingTracker() {
-        if (this.lastTypingTracker == null) {
-            this.lastTypingTracker = this.hazelcastInstance.getMap("lastTypingTracker");
-        }
-        return lastTypingTracker;
-    }
-
-    /**
-     * Lazy Init: Returns the last action tracker map which keeps track of the last action date for each user in a participation.
-     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
-     *
-     * @return the last action tracker map
-     */
-    private Map<String, Instant> getLastActionTracker() {
-        if (this.lastActionTracker == null) {
-            this.lastActionTracker = this.hazelcastInstance.getMap("lastActionTracker");
-        }
-        return lastActionTracker;
-    }
-
-    /**
-     * Lazy Init: Returns the destination tracker map which keeps track of the destination that each session is subscribed to.
-     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
-     *
-     * @return the destination tracker map
-     */
-    public Map<String, String> getDestinationTracker() {
-        if (this.destinationTracker == null) {
-            this.destinationTracker = this.hazelcastInstance.getMap("destinationTracker");
-        }
-        return destinationTracker;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     // only used for testing purposes, could be moved to a test utility class
     public void clearDestinationTracker() {
-        this.getDestinationTracker().clear();
+        distributedDataAccessService.getDistributedParticipationTeamDestinationTracker().clear();
     }
 
     /**
@@ -161,7 +110,7 @@ public class ParticipationTeamWebsocketService {
     @SubscribeMapping("topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
-        getDestinationTracker().put(stompHeaderAccessor.getSessionId(), destination);
+        distributedDataAccessService.getDistributedParticipationTeamDestinationTracker().put(stompHeaderAccessor.getSessionId(), destination);
         sendOnlineTeamStudents(participationId);
     }
 
@@ -184,7 +133,7 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
-        updateValue(getLastTypingTracker(), participationId, principal.getName());
+        updateValue(distributedDataAccessService.getDistributedParticipationTeamLastTypingTracker(), participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
     }
 
@@ -267,7 +216,7 @@ public class ParticipationTeamWebsocketService {
 
         if (syncTeammates) {
             // update the last action date for the user and send out list of team members
-            updateValue(getLastActionTracker(), participationId, principal.getName());
+            updateValue(distributedDataAccessService.getDistributedParticipationTeamLastActionTracker(), participationId, principal.getName());
             sendOnlineTeamStudents(participationId);
 
             SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
@@ -295,7 +244,7 @@ public class ParticipationTeamWebsocketService {
         }
 
         // update the last action date for the user and send out list of team members
-        updateValue(getLastActionTracker(), participationId, principal.getName());
+        updateValue(distributedDataAccessService.getDistributedParticipationTeamLastActionTracker(), participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
         SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, principal.getName());
@@ -312,7 +261,8 @@ public class ParticipationTeamWebsocketService {
         final String destination = getDestination(participationId);
 
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
-                .map(login -> new OnlineTeamStudentDTO(login, getValue(getLastTypingTracker(), participationId, login), getLastActionTracker().get(participationId + "-" + login)))
+                .map(login -> new OnlineTeamStudentDTO(login, getValue(distributedDataAccessService.getParticipationTeamLastTypingTracker(), participationId, login),
+                        distributedDataAccessService.getParticipationTeamLastActionTracker().get(participationId + "-" + login)))
                 .toList();
 
         websocketMessagingService.sendMessage(destination, onlineTeamStudents);
@@ -352,17 +302,12 @@ public class ParticipationTeamWebsocketService {
      */
     public void unsubscribe(String sessionId) {
         // check if Hazelcast is still active, before invoking this
-        try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                Optional.ofNullable(getDestinationTracker().get(sessionId)).ifPresent(destination -> {
-                    getDestinationTracker().remove(sessionId);
-                    Long participationId = getParticipationIdFromDestination(destination);
-                    sendOnlineTeamStudents(participationId, sessionId);
-                });
-            }
-        }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to unsubscribe as Hazelcast is no longer active");
+        if (distributedDataAccessService.isInstanceRunning()) {
+            Optional.ofNullable(distributedDataAccessService.getParticipationTeamDestinationTracker().get(sessionId)).ifPresent(destination -> {
+                distributedDataAccessService.getDistributedParticipationTeamDestinationTracker().remove(sessionId);
+                Long participationId = getParticipationIdFromDestination(destination);
+                sendOnlineTeamStudents(participationId, sessionId);
+            });
         }
     }
 
@@ -418,7 +363,7 @@ public class ParticipationTeamWebsocketService {
         return getDestination(participationId, "");
     }
 
-    private void updateValue(Map<String, Instant> map, long participationId, String username) {
+    private void updateValue(DistributedMap<String, Instant> map, long participationId, String username) {
         map.put(participationId + "-" + username, Instant.now());
     }
 

@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
@@ -35,12 +37,39 @@ public interface DistributedMap<K, V> {
     void put(K key, V value);
 
     /**
+     * Associates the specified value with the specified key in this map and applies a time-to-live for the entry.
+     *
+     * @param key      the key with which the specified value is to be associated
+     * @param value    the value to be associated with the specified key
+     * @param ttl      the time-to-live duration for the entry
+     * @param timeUnit the time unit of the ttl argument
+     */
+    void put(K key, V value, long ttl, TimeUnit timeUnit);
+
+    /**
+     * Associates all key-value pairs from the provided map into this map.
+     *
+     * @param keyValueMap the map containing key-value pairs to be added
+     */
+    void putAll(Map<K, V> keyValueMap);
+
+    /**
      * Removes the mapping for the specified key from this map if present.
      *
      * @param key the key whose mapping is to be removed
      * @return the previous value associated with the specified key, or {@code null} if there was no mapping
      */
     V remove(K key);
+
+    /**
+     * Checks if the map contains a mapping for the specified key.
+     *
+     * @param key the key to check for existence in the map
+     * @return {@code true} if the map contains a mapping for the specified key, {@code false} otherwise
+     */
+    boolean containsKey(K key);
+
+    V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction);
 
     /**
      * Get a collection of all values in this map.

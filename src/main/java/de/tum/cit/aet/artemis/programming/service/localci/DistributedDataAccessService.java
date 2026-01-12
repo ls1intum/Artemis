@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,15 +16,23 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.stereotype.Service;
+
+import com.nimbusds.jose.jwk.JWK;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
@@ -51,6 +61,26 @@ public class DistributedDataAccessService {
     private DistributedTopic<String> pauseBuildAgentTopic;
 
     private DistributedTopic<String> resumeBuildAgentTopic;
+
+    private DistributedMap<Feature, Boolean> features;
+
+    private DistributedSet<Long> activePlagiarismChecksPerCourse;
+
+    private DistributedMap<String, PyrisJob> pyrisJobMap;
+
+    private DistributedMap<String, PublicKeyCredentialCreationOptionsDTO> passkeyCreationOptionsMap;
+
+    private DistributedMap<String, JWK> clientRegistrationIdToJwk;
+
+    private DistributedMap<String, OAuth2AuthorizationRequest> ltiOAuth2AuthorizationRequestMap;
+
+    private DistributedMap<String, PublicKeyCredentialRequestOptions> passkeyAuthOptionsMap;
+
+    private DistributedMap<String, Instant> participationTeamLastTypingTracker;
+
+    private DistributedMap<String, Instant> participationTeamLastActionTracker;
+
+    private DistributedMap<String, String> participationTeamDestinationTracker;
 
     public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider.orElseThrow(
@@ -366,5 +396,278 @@ public class DistributedDataAccessService {
             return null;
         }
         return localAgentInfo.status();
+    }
+
+    /**
+     * This method is used to get the distributed map of feature toggle. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getFeatures()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of feature toggles
+     */
+    public DistributedMap<Feature, Boolean> getDistributedFeatures() {
+        if (this.features == null) {
+            this.features = this.distributedDataProvider.getMap("features");
+        }
+        return this.features;
+    }
+
+    /**
+     * This method is used to get a Map containing all feature toggles. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedFeatures()} instead.
+     *
+     * @return a map of feature toggles
+     */
+    public Map<Feature, Boolean> getFeatures() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedFeatures().getMapCopy();
+    }
+
+    /**
+     * This method is used to get the distributed set of active plagiarism checks per course. This should only be used in special cases like writing to the queue or adding a
+     * listener.
+     * In general, the queue should be accessed via the {@link DistributedDataAccessService#getActivePlagiarismChecksPerCourse()} method.
+     * The queue is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed set of active plagiarism checks per course.
+     */
+    public DistributedSet<Long> getDistributedActivePlagiarismChecksPerCourse() {
+        if (this.activePlagiarismChecksPerCourse == null) {
+            this.activePlagiarismChecksPerCourse = this.distributedDataProvider.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
+        }
+        return this.activePlagiarismChecksPerCourse;
+    }
+
+    /**
+     * This method is used to get a set of active plagiarism checks per course. This should be used for reading the queue.
+     * If you want to write to the queue or add a listener, use {@link DistributedDataAccessService#getDistributedActivePlagiarismChecksPerCourse()} instead.
+     *
+     * @return a set of active plagiarism checks per course
+     */
+    public Set<Long> getActivePlagiarismChecksPerCourse() {
+        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedActivePlagiarismChecksPerCourse().getSetCopy();
+    }
+
+    /**
+     * This method is used to get the distributed map of pyris jobs. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getPyrisJobMap()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of pyris jobs
+     */
+    public DistributedMap<String, PyrisJob> getDistributedPyrisJobMap() {
+        if (this.pyrisJobMap == null) {
+            this.pyrisJobMap = this.distributedDataProvider.getMap("pyris-job-map");
+        }
+        return this.pyrisJobMap;
+    }
+
+    /**
+     * This method is used to get a Map containing pyris jobs. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedPyrisJobMap()} instead.
+     *
+     * @return a map of pyris jobs
+     */
+    public Map<String, PyrisJob> getPyrisJobMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedPyrisJobMap().getMapCopy();
+    }
+
+    /**
+     * This method is used to get the distributed map of passkey creation options. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getPasskeyCreationOptionsMap()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of passkey creation options
+     */
+    public DistributedMap<String, PublicKeyCredentialCreationOptionsDTO> getDistributedPasskeyCreationOptionsMap() {
+        if (this.passkeyCreationOptionsMap == null) {
+            this.passkeyCreationOptionsMap = this.distributedDataProvider.getMap("http-session-public-key-credential-creation-options-map");
+        }
+        return this.passkeyCreationOptionsMap;
+    }
+
+    /**
+     * This method is used to get a Map containing passkey creation options. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedPasskeyCreationOptionsMap()} instead.
+     *
+     * @return a map of passkey creation options
+     */
+    public Map<String, PublicKeyCredentialCreationOptionsDTO> getPasskeyCreationOptionsMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedPasskeyCreationOptionsMap().getMapCopy();
+    }
+
+    /**
+     * This method is used to get the distributed map of passkey creation options. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getClientRegistrationIdToJwk()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of passkey creation options
+     */
+    public DistributedMap<String, JWK> getDistributedClientRegistrationIdToJwk() {
+        if (this.clientRegistrationIdToJwk == null) {
+            this.clientRegistrationIdToJwk = this.distributedDataProvider.getMap("ltiJwkMap");
+        }
+        return this.clientRegistrationIdToJwk;
+    }
+
+    /**
+     * This method is used to get a Map containing passkey creation options. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedClientRegistrationIdToJwk()} instead.
+     *
+     * @return a map of passkey creation options
+     */
+    public Map<String, JWK> getClientRegistrationIdToJwk() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedClientRegistrationIdToJwk().getMapCopy();
+    }
+
+    /**
+     * This method is used to get the distributed map of LTI OAuth2 authorization requests. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getLtiOAuth2AuthorizationRequestMap()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of LTI OAuth2 authorization requests
+     */
+    public DistributedMap<String, OAuth2AuthorizationRequest> getDistributedLtiOAuth2AuthorizationRequestMap() {
+        if (this.ltiOAuth2AuthorizationRequestMap == null) {
+            this.ltiOAuth2AuthorizationRequestMap = this.distributedDataProvider.getMap("ltiStateAuthorizationRequestStore");
+        }
+        return this.ltiOAuth2AuthorizationRequestMap;
+    }
+
+    /**
+     * This method is used to get a Map containing LTI OAuth2 authorization requests. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedLtiOAuth2AuthorizationRequestMap()} instead.
+     *
+     * @return a map of LTI OAuth2 authorization requests
+     */
+    public Map<String, OAuth2AuthorizationRequest> getLtiOAuth2AuthorizationRequestMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedLtiOAuth2AuthorizationRequestMap().getMapCopy();
+    }
+
+    /**
+     * This method is used to get the distributed map of passkey auth options. This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getPasskeyAuthOptionsMap()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of passkey auth options
+     */
+    public DistributedMap<String, PublicKeyCredentialRequestOptions> getDistributedPasskeyAuthOptionsMap() {
+        if (this.passkeyAuthOptionsMap == null) {
+            this.passkeyAuthOptionsMap = this.distributedDataProvider.getMap("public-key-credentials-request-options-map");
+        }
+        return this.passkeyAuthOptionsMap;
+    }
+
+    /**
+     * This method is used to get a Map containing passkey auth options. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedPasskeyAuthOptionsMap()} instead.
+     *
+     * @return a map of passkey auth options
+     */
+    public Map<String, PublicKeyCredentialRequestOptions> getPasskeyAuthOptionsMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedPasskeyAuthOptionsMap().getMapCopy();
+    }
+
+    /**
+     * Returns the last typing tracker map which keeps track of the last typing date for each user in a participation.
+     * This is used to determine which team members are currently typing.
+     * This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getParticipationTeamLastTypingTracker()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of last typing trackers
+     */
+    public DistributedMap<String, Instant> getDistributedParticipationTeamLastTypingTracker() {
+        if (this.participationTeamLastTypingTracker == null) {
+            this.participationTeamLastTypingTracker = this.distributedDataProvider.getMap("lastTypingTracker");
+        }
+        return this.participationTeamLastTypingTracker;
+    }
+
+    /**
+     * This method is used to get a Map containing last typing trackers. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedParticipationTeamLastTypingTracker()} instead.
+     *
+     * @return a map of last typing trackers
+     */
+    public Map<String, Instant> getParticipationTeamLastTypingTracker() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedParticipationTeamLastTypingTracker().getMapCopy();
+    }
+
+    /**
+     * Returns the last action tracker map which keeps track of the last action date for each user in a participation.
+     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
+     * This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getParticipationTeamLastActionTracker()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of last action trackers
+     */
+    public DistributedMap<String, Instant> getDistributedParticipationTeamLastActionTracker() {
+        if (this.participationTeamLastActionTracker == null) {
+            this.participationTeamLastActionTracker = this.distributedDataProvider.getMap("lastActionTracker");
+        }
+        return this.participationTeamLastActionTracker;
+    }
+
+    /**
+     * This method is used to get a Map containing last action trackers. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedParticipationTeamLastActionTracker()} instead.
+     *
+     * @return a map of last action trackers
+     */
+    public Map<String, Instant> getParticipationTeamLastActionTracker() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedParticipationTeamLastActionTracker().getMapCopy();
+    }
+
+    // TODO
+
+    /**
+     * Returns the destination tracker map which keeps track of the destination that each session is subscribed to.
+     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
+     * This should only be used in special cases like writing to the map or adding a listener.
+     * In general, the map should be accessed via the {@link DistributedDataAccessService#getParticipationTeamDestinationTracker()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map of destination trackers
+     */
+    public DistributedMap<String, String> getDistributedParticipationTeamDestinationTracker() {
+        if (this.participationTeamDestinationTracker == null) {
+            this.participationTeamDestinationTracker = this.distributedDataProvider.getMap("public-key-credentials-request-options-map");
+        }
+        return this.participationTeamDestinationTracker;
+    }
+
+    /**
+     * This method is used to get a Map containing destination trackers. This should be used for reading the map.
+     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedParticipationTeamDestinationTracker()} instead.
+     *
+     * @return a map of destination trackers
+     */
+    public Map<String, String> getParticipationTeamDestinationTracker() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedParticipationTeamDestinationTracker().getMapCopy();
+    }
+
+    // TODO
+
+    public DistributedMap<Object, Object> getDistributedMap(String mapName) {
+        return this.distributedDataProvider.getMap(mapName);
+    }
+
+    public Map<Object, Object> getMap(String mapName) {
+        return getDistributedMap(mapName).getMapCopy();
+    }
+
+    public <T> DistributedTopic<T> getDistributedTopic(String topicName) {
+        return this.distributedDataProvider.getTopic(topicName);
     }
 }

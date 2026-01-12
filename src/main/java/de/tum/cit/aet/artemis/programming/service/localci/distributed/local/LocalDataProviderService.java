@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.core.config.LocalDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 @Service
@@ -25,6 +26,8 @@ public class LocalDataProviderService implements DistributedDataProvider {
     private final ConcurrentHashMap<String, DistributedMap<?, ?>> maps = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<String, DistributedTopic<?>> topics = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<String, DistributedSet<?>> sets = new ConcurrentHashMap<>();
 
     @Override
     public <T> DistributedQueue<T> getQueue(String name) {
@@ -48,6 +51,12 @@ public class LocalDataProviderService implements DistributedDataProvider {
     public <T> DistributedTopic<T> getTopic(String name) {
         // noinspection unchecked
         return (DistributedTopic<T>) topics.computeIfAbsent(name, n -> new LocalTopic<T>());
+    }
+
+    @Override
+    public <E> DistributedSet<E> getSet(String name) {
+        // noinspection unchecked
+        return (DistributedSet<E>) sets.computeIfAbsent(name, n -> new LocalSet<E>());
     }
 
     @Override

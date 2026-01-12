@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.map.IMap;
@@ -42,8 +44,28 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
+    public void put(K key, V value, long ttl, TimeUnit timeUnit) {
+        map.put(key, value, ttl, timeUnit);
+    }
+
+    @Override
+    public void putAll(Map<K, V> keyValueMap) {
+        map.putAll(keyValueMap);
+    }
+
+    @Override
     public V remove(K key) {
         return map.remove(key);
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return map.containsKey(key);
+    }
+
+    @Override
+    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        return map.computeIfAbsent(key, mappingFunction);
     }
 
     @Override
