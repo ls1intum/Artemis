@@ -52,6 +52,11 @@ export class ReviewCommentWidgetManager {
         this.collapseState.clear();
     }
 
+    clearDrafts(): void {
+        this.disposeDraftWidgets();
+        this.draftLinesByFile.clear();
+    }
+
     private addDraft(lineNumber: number): void {
         const fileName = this.config.getDraftFileName();
         if (!fileName) {
