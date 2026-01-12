@@ -5,7 +5,8 @@
         name="search-filter"
         type="text"
         class="form-control"
-        [(ngModel)]="loginOrName"
+        [ngModel]="loginOrName()"
+        (ngModelChange)="loginOrName.set($event)"
         [ngbTypeahead]="search"
         [placeholder]="'artemisApp.dataExport.loginOrName' | artemisTranslate"
         (input)="onChange()"
@@ -23,16 +24,16 @@
         data-form-type="other"
     />
 
-    <div class="search-info" [class.active]="searching">
+    <div class="search-info" [class.active]="searching()">
         <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
     </div>
-    <div class="search-info" [class.active]="searchFailed">
+    <div class="search-info" [class.active]="searchFailed()">
         <span class="badge bg-danger" [jhiTranslate]="'artemisApp.dataTable.search.failed'"> Search failed </span>
     </div>
-    <div class="search-info" [class.active]="searchNoResults">
+    <div class="search-info" [class.active]="searchNoResults()">
         <span class="badge bg-warning" [jhiTranslate]="'artemisApp.dataTable.search.noResults'"> No results </span>
     </div>
-    <div class="search-info" [class.active]="searchQueryTooShort">
+    <div class="search-info" [class.active]="searchQueryTooShort()">
         <span class="badge bg-info" [jhiTranslate]="'artemisApp.dataExport.searchQueryTooShort'" [translateValues]="{ length: MIN_SEARCH_QUERY_LENGTH }">
             Please enter at least {{ MIN_SEARCH_QUERY_LENGTH }} characters
         </span>

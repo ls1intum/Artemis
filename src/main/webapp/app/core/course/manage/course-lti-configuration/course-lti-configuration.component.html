@@ -1,11 +1,11 @@
 <form name="editForm" role="form" novalidate>
     <div class="modal-header lti-edit-button">
-        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
-            LTI Configuration for course {{ course?.title }}
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
+            LTI Configuration for course {{ course()?.title }}
         </h4>
-        @if (course.isAtLeastInstructor) {
+        @if (course()?.isAtLeastInstructor) {
             <div class="controls">
-                <a id="lti-config" [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']" class="btn btn-warning btn-md">
+                <a id="lti-config" [routerLink]="['/course-management', course()?.id!, 'lti-configuration', 'edit']" class="btn btn-warning btn-md">
                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
             </div>
@@ -19,13 +19,13 @@
                     <span jhiTranslate="artemisApp.lti.userPrefix"></span>
                 </dt>
                 <dd>
-                    <span>{{ onlineCourseConfiguration?.userPrefix }}</span>
+                    <span>{{ onlineCourseConfiguration()?.userPrefix }}</span>
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.lti.requireExistingUser"></span>
                 </dt>
                 <dd>
-                    <span jhiTranslate="{{ onlineCourseConfiguration?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
+                    <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                 </dd>
                 <div class="form-group">
                     <dt>
@@ -48,58 +48,58 @@
                         <span jhiTranslate="artemisApp.lti.customName"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName }}</span>
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.registrationId"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId }}</span>
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.clientId"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId }}</span>
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri }}</span>
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.tokenUri"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri }}</span>
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri }}</span>
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
                     </dd>
                 </div>
                 <div>
                     <dd>
                         <a (click)="toggleAdvancedSettings()">
-                            @if (!showAdvancedSettings) {
+                            @if (!showAdvancedSettings()) {
                                 <span jhiTranslate="artemisApp.lti.viewAdvancedSettings"></span>
                             }
-                            @if (showAdvancedSettings) {
+                            @if (showAdvancedSettings()) {
                                 <span jhiTranslate="artemisApp.lti.closeAdvancedSettings"></span>
                             }
                         </a>
                     </dd>
                 </div>
-                @if (showAdvancedSettings) {
+                @if (showAdvancedSettings()) {
                     <div>
                         <dt>
                             <span jhiTranslate="artemisApp.lti.ltiLaunchTarget"></span>
@@ -171,7 +171,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (exercise of exercises; track exercise) {
+                                    @for (exercise of exercises(); track exercise) {
                                         <tr id="exercise-{{ exercise.id }}">
                                             <td>{{ exercise.id ? exercise.id : '' }}</td>
                                             <td>{{ exercise.type ? exercise.type : '' }}</td>
@@ -224,7 +224,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (lecture of lectures; track lecture) {
+                                    @for (lecture of lectures(); track lecture) {
                                         <tr id="lecture-{{ lecture.id }}">
                                             <td>{{ lecture.id ? lecture.id : '' }}</td>
                                             <td>{{ lecture.title ? lecture.title : '' }}</td>

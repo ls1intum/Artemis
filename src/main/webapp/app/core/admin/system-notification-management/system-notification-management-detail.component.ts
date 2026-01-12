@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
@@ -15,7 +15,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
     selector: 'jhi-system-notification-management-detail',
     templateUrl: './system-notification-management-detail.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, AdminTitleBarTitleDirective],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementDetailComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

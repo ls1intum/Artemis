@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
 import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
@@ -9,7 +9,6 @@ import { DecimalPipe } from '@angular/common';
 @Component({
     selector: 'jhi-jvm-threads',
     templateUrl: './jvm-threads.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe],
 })
 export class JvmThreadsComponent {

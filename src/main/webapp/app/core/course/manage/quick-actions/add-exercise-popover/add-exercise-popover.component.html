@@ -21,7 +21,7 @@
                                     [translationKey]="'global.generic.create'"
                                     [exerciseType]="exercise.type"
                                     [featureToggle]="exercise.featureToggle"
-                                    (click)="hidePopover()"
+                                    (beforeNavigate)="hidePopover()"
                                 />
                             </div>
                             <div class="col-6">
@@ -30,7 +30,7 @@
                                     [translationKey]="'entity.action.to-import'"
                                     [exerciseType]="exercise.type"
                                     [featureToggle]="exercise.featureToggle"
-                                    (click)="hidePopover()"
+                                    (beforeNavigate)="hidePopover()"
                                 />
                             </div>
                         </div>
