@@ -70,7 +70,6 @@ import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectio
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
     protected accountService = inject(AccountService);
-    protected modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);

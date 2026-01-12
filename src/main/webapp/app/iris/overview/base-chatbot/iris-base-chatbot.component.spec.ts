@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
@@ -33,6 +35,8 @@ import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisBaseChatbotComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
@@ -40,10 +44,10 @@ describe('IrisBaseChatbotComponent', () => {
     let accountService: AccountService;
 
     const statusMock = {
-        currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
-        handleRateLimitInfo: jest.fn(),
-        getActiveStatus: jest.fn().mockReturnValue(of({})),
-        setCurrentCourse: jest.fn(),
+        currentRatelimitInfo: vi.fn().mockReturnValue(of({})),
+        handleRateLimitInfo: vi.fn(),
+        getActiveStatus: vi.fn().mockReturnValue(of({})),
+        setCurrentCourse: vi.fn(),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: jest.fn(),
@@ -51,8 +55,10 @@ describe('IrisBaseChatbotComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 IrisBaseChatbotComponent,
+                FontAwesomeModule,
+                RouterModule,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockDirective(TranslateDirective),
@@ -60,9 +66,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
             ],
-            imports: [FontAwesomeModule, RouterModule],
             providers: [
-                MockProvider(NgbModal),
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -77,10 +81,10 @@ describe('IrisBaseChatbotComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                jest.spyOn(console, 'error').mockImplementation(() => {});
+                vi.spyOn(console, 'error').mockImplementation(() => {});
                 global.window ??= window;
-                window.scroll = jest.fn();
-                window.HTMLElement.prototype.scrollTo = jest.fn();
+                window.scroll = vi.fn();
+                window.HTMLElement.prototype.scrollTo = vi.fn();
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
@@ -97,7 +101,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -123,7 +127,7 @@ describe('IrisBaseChatbotComponent', () => {
         component.active = true;
         component.isLoading = true;
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
-        jest.spyOn(component, 'onSend');
+        vi.spyOn(component, 'onSend');
 
         component.handleKey(event);
 
@@ -138,7 +142,7 @@ describe('IrisBaseChatbotComponent', () => {
         textAreaElement.value = 'Sample text';
         textAreaElement.selectionStart = selectionStart;
         textAreaElement.selectionEnd = selectionEnd;
-        jest.spyOn(event, 'target', 'get').mockReturnValue(textAreaElement);
+        vi.spyOn(event, 'target', 'get').mockReturnValue(textAreaElement);
 
         component.handleKey(event);
 
@@ -320,7 +324,7 @@ describe('IrisBaseChatbotComponent', () => {
             entityId: 1,
             entityName: 'Course 1',
         };
-        const switchToSessionSpy = jest.spyOn(chatService, 'switchToSession').mockReturnValue();
+        const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(mockSession);
 
@@ -340,7 +344,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should call chatService.clearChat when openNewSession is executed', () => {
-        const clearChatSpy = jest.spyOn(chatService, 'clearChat').mockReturnValue();
+        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
         component.openNewSession();
         expect(clearChatSpy).toHaveBeenCalledOnce();
     });
@@ -374,12 +378,12 @@ describe('IrisBaseChatbotComponent', () => {
         const sortedSessions = [sessionToday, sessionYesterday, sessionNoTitle];
 
         beforeAll(() => {
-            jest.useFakeTimers();
-            jest.setSystemTime(mockDate);
+            vi.useFakeTimers();
+            vi.setSystemTime(mockDate);
         });
 
         afterAll(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         beforeEach(() => {
@@ -401,7 +405,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('ignores sessions with null title when searching', () => {
             component.setSearchValue('anything');
             const res = component.getSessionsBetween(0, 7);
-            expect(res.some((s) => s.id === 3)).toBeFalse();
+            expect(res.some((s) => s.id === 3)).toBe(false);
         });
 
         it('returns all sessions again when search is cleared', () => {
@@ -454,12 +458,12 @@ describe('IrisBaseChatbotComponent', () => {
         const sortedSessions = [sessionToday, sessionYesterday, session7DaysAgo, session8DaysAgo, session30DaysAgo];
 
         beforeAll(() => {
-            jest.useFakeTimers();
-            jest.setSystemTime(mockDate);
+            vi.useFakeTimers();
+            vi.setSystemTime(mockDate);
         });
 
         afterAll(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         beforeEach(() => {

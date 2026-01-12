@@ -205,7 +205,7 @@ export class IrisChatService implements OnDestroy {
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
-                return of();
+                return of(undefined);
             }),
         );
     }
@@ -221,7 +221,7 @@ export class IrisChatService implements OnDestroy {
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
-                return of();
+                return of(undefined);
             }),
         );
     }
@@ -279,7 +279,7 @@ export class IrisChatService implements OnDestroy {
             map(() => undefined),
             catchError(() => {
                 this.error.next(IrisErrorMessageKey.RATE_MESSAGE_FAILED);
-                return of();
+                return of(undefined);
             }),
         );
     }
