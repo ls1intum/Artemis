@@ -189,7 +189,11 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
     void usedInProductionCode() {
         var excludedMethods = Set.of("de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository.find(java.lang.String, java.time.Instant, java.lang.String)",
                 // ArtemisUserCredentialRepository.save is called by Spring Security WebAuthn framework, not by our production code directly
-                "de.tum.cit.aet.artemis.core.repository.passkey.ArtemisUserCredentialRepository.save(org.springframework.security.web.webauthn.api.CredentialRecord)");
+                "de.tum.cit.aet.artemis.core.repository.passkey.ArtemisUserCredentialRepository.save(org.springframework.security.web.webauthn.api.CredentialRecord)",
+                // These UserRepository methods are kept for future use
+                "de.tum.cit.aet.artemis.core.repository.UserRepository.isAtLeastStudentInParticipation(java.lang.String, long)",
+                "de.tum.cit.aet.artemis.core.repository.UserRepository.isAtLeastEditorInParticipation(java.lang.String, long)",
+                "de.tum.cit.aet.artemis.core.repository.UserRepository.isAtLeastInstructorInParticipation(java.lang.String, long)");
 
         // allow empty should since some modules do not have repositories
         methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).and().areDeclaredInClassesThat(new DescribedPredicate<>("") {
