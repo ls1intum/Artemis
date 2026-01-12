@@ -349,7 +349,7 @@ public class UserUtilService {
      */
     public List<User> addUsers(String prefix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
         if (authorityRepository.count() == 0) {
-            authorityRepository.saveAll(adminAuthorities);
+            authorityRepository.saveAll(superAdminAuthorities);
         }
         log.debug("Generate {} students...", numberOfStudents);
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD),
