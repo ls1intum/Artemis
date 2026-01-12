@@ -131,11 +131,9 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
-
         const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
-
         const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
@@ -161,11 +159,9 @@ describe('ParticipationWebsocketService', () => {
         const resultObservable = new BehaviorSubject<Result | undefined>(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
-
         const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
-
         receiveResultForParticipationSubject.next(newUnratedResult);
 
         expect(resultSpy).toHaveBeenCalledOnce();
@@ -185,11 +181,9 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
         participationWebsocketService.addParticipation(participation as Participation);
         participationWebsocketService.subscribeForParticipationChanges();
-
         const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
-
         const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
