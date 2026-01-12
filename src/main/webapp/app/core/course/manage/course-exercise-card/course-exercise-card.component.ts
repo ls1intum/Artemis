@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -12,10 +12,10 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
     imports: [TranslateDirective, FaIconComponent, NgbCollapse],
 })
 export class CourseExerciseCardComponent {
-    @Input() headingJhiTranslate: string;
-    @Input() exerciseCount: number;
-    @Input() course: Course;
-    isCollapsed = false;
+    readonly headingJhiTranslate = input<string>(undefined!);
+    readonly exerciseCount = input<number>(undefined!);
+    readonly course = input<Course>(undefined!);
+    readonly isCollapsed = signal(false);
 
     // Icons
     faAngleRight = faAngleRight;

@@ -53,9 +53,11 @@ describe('ExerciseImportButtonComponent', () => {
         const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
         const openSpy = jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         const routerSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+        const beforeNavigateSpy = jest.spyOn(component.beforeNavigate, 'emit');
 
         component.openImportModal();
 
+        expect(beforeNavigateSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledWith(
             expectedComponent,

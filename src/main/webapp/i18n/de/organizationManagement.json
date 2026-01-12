@@ -29,7 +29,9 @@
             },
             "modalSelector": {
                 "select": "Auswählen",
-                "title": "Organisationen"
+                "title": "Organisationen",
+                "noOrganizations": "Keine Organisationen verfügbar. ",
+                "manageOrganizations": "Organisationen verwalten"
             },
             "patternChangeWarning": "Beim Ändern des E-Mail-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
         },

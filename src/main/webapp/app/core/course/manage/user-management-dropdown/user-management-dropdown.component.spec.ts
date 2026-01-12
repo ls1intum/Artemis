@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { UserManagementDropdownComponent } from './user-management-dropdown.component';
 import { faGraduationCap, faListAlt, faPersonChalkboard, faSchool } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,6 +12,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('UserManagementDropdownComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: UserManagementDropdownComponent;
     let fixture: ComponentFixture<UserManagementDropdownComponent>;
 
@@ -25,6 +29,10 @@ describe('UserManagementDropdownComponent', () => {
         fixture = TestBed.createComponent(UserManagementDropdownComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create the component', () => {
