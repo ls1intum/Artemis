@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Conditional(PasskeyEnabled.class)
@@ -49,5 +50,5 @@ public interface PasskeyCredentialsRepository extends ArtemisJpaRepository<Passk
             JOIN pc.user u
             WHERE :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF u.authorities
             """)
-    List<de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO> findPasskeysForAdminUsers();
+    List<PasskeyAdminDTO> findPasskeysForAdminUsers();
 }
