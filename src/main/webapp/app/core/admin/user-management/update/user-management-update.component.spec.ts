@@ -704,6 +704,41 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(component.editForm.get('authorities')?.value).toEqual(['ROLE_ADMIN']);
         });
+
+        it('should sort authorities by role hierarchy', () => {
+            // Set authorities in random order
+            component.authorities.set(['ROLE_USER', 'ROLE_EDITOR', 'ROLE_SUPER_ADMIN', 'ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+
+            // Get sorted authorities
+            const sorted = component.sortedAuthorities();
+
+            // Verify correct order: super admin > admin > instructor > editor > tutor > user
+            expect(sorted).toEqual(['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA', 'ROLE_USER']);
+        });
+
+        it('should reactively update sortedAuthorities when authorities signal changes', () => {
+            // Initially set some authorities
+            component.authorities.set(['ROLE_USER', 'ROLE_ADMIN']);
+            expect(component.sortedAuthorities()).toEqual(['ROLE_ADMIN', 'ROLE_USER']);
+
+            // Update authorities signal
+            component.authorities.set(['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_SUPER_ADMIN']);
+
+            // Verify sortedAuthorities updated automatically
+            expect(component.sortedAuthorities()).toEqual(['ROLE_SUPER_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
+        });
+
+        it('should handle unknown authorities in sorting', () => {
+            // Set authorities including unknown ones
+            component.authorities.set(['ROLE_UNKNOWN', 'ROLE_ADMIN', 'ROLE_CUSTOM']);
+
+            const sorted = component.sortedAuthorities();
+
+            // Known roles should come first, unknown roles last (sorted by their fallback value of 999)
+            expect(sorted[0]).toBe('ROLE_ADMIN');
+            expect(sorted).toContain('ROLE_UNKNOWN');
+            expect(sorted).toContain('ROLE_CUSTOM');
+        });
     });
 
     describe('filteredGroups observable', () => {
