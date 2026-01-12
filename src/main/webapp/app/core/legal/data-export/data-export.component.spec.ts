@@ -27,13 +27,7 @@ describe('DataExportComponent', () => {
     let route: ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                DataExportComponent,
-                MockComponent(ButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-                MockDirective(DeleteButtonDirective),
-            ],
+            imports: [DataExportComponent, MockComponent(ButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockDirective(DeleteButtonDirective)],
             providers: [
                 MockProvider(AlertService),
                 { provide: AccountService, useClass: MockAccountService },
@@ -68,7 +62,7 @@ describe('DataExportComponent', () => {
         accountService.userIdentity.set(user);
         component.ngOnInit();
         tick();
-        expect(component.currentLogin).toBe('admin');
+        expect(component.currentLogin()).toBe('admin');
     }));
 
     it('should call data export service when data export is requested', () => {
@@ -89,41 +83,46 @@ describe('DataExportComponent', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.requestExport();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.dataExport.requestError');
-        expect(component.canDownload).toBeFalse();
+        expect(component.canDownload()).toBeFalse();
     });
 
     it('should call data export service when data export is downloaded', () => {
         const dataExportServiceSpy = jest.spyOn(dataExportService, 'downloadDataExport').mockImplementation();
-        component.canDownload = true;
-        component.dataExportId = 1;
+        component.canDownload.set(true);
+        component.dataExportId.set(1);
         component.downloadDataExport();
         expect(dataExportServiceSpy).toHaveBeenCalledOnce();
         expect(dataExportServiceSpy).toHaveBeenCalledWith(1);
     });
 
-    it.each([true, false])('should execute correct checks on init', (downloadMode: boolean) => {
-        if (downloadMode) {
-            route.params = of({ id: 1 });
-        }
-        const canRequestSpy = jest.spyOn(dataExportService, 'canRequestDataExport').mockReturnValue(of(true));
-        const canDownloadAnyDataExportSpy = jest.spyOn(dataExportService, 'canDownloadAnyDataExport').mockReturnValue(of({ id: 1 } as DataExport));
-        const canDownloadSpecificDataExportSpy = jest.spyOn(dataExportService, 'canDownloadSpecificDataExport').mockReturnValue(of(true));
-        component.ngOnInit();
-        if (downloadMode) {
-            expect(component.canRequestDataExport).toBeFalse();
-            expect(canRequestSpy).not.toHaveBeenCalled();
-            expect(canDownloadAnyDataExportSpy).not.toHaveBeenCalled();
-            expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
-            expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
-            expect(component.canDownload).toBeTrue();
-            expect(component.dataExportId).toBe(1);
-        } else {
-            expect(canRequestSpy).toHaveBeenCalledOnce();
-            expect(canDownloadAnyDataExportSpy).toHaveBeenCalledOnce();
-            expect(component.canRequestDataExport).toBeTrue();
-            expect(component.canDownload).toBeTrue();
-        }
-    });
+    it.each([true, false])(
+        'should execute correct checks on init',
+        fakeAsync((downloadMode: boolean) => {
+            if (downloadMode) {
+                route.params = of({ id: 1 });
+            } else {
+                route.params = of({});
+            }
+            const canRequestSpy = jest.spyOn(dataExportService, 'canRequestDataExport').mockReturnValue(of(true));
+            const canDownloadAnyDataExportSpy = jest.spyOn(dataExportService, 'canDownloadAnyDataExport').mockReturnValue(of({ id: 1 } as DataExport));
+            const canDownloadSpecificDataExportSpy = jest.spyOn(dataExportService, 'canDownloadSpecificDataExport').mockReturnValue(of(true));
+            component.ngOnInit();
+            tick();
+            if (downloadMode) {
+                expect(component.canRequestDataExport()).toBeFalse();
+                expect(canRequestSpy).not.toHaveBeenCalled();
+                expect(canDownloadAnyDataExportSpy).not.toHaveBeenCalled();
+                expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
+                expect(component.canDownload()).toBeTrue();
+                expect(component.dataExportId()).toBe(1);
+            } else {
+                expect(canRequestSpy).toHaveBeenCalledOnce();
+                expect(canDownloadAnyDataExportSpy).toHaveBeenCalledOnce();
+                expect(component.canRequestDataExport()).toBeTrue();
+                expect(component.canDownload()).toBeTrue();
+            }
+        }),
+    );
 
     it('should call data export service when data export for another user is requested', () => {
         const dataExportServiceSpy = jest.spyOn(dataExportService, 'requestDataExportForAnotherUser').mockReturnValue(of({} as DataExport));

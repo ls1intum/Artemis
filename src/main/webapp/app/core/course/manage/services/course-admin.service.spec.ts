@@ -1,25 +1,26 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
-import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Course Admin Service', () => {
+    setupTestBed({ zoneless: true });
+
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/core/admin/courses';
     let course: Course;
-    let exercises: Exercise[];
     let returnedFromService: any;
 
     beforeEach(() => {
@@ -36,25 +37,16 @@ describe('Course Admin Service', () => {
         courseAdminService = TestBed.inject(CourseAdminService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        course = new Course();
-        course.id = 1234;
-        course.title = 'testTitle';
-        exercises = [new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined), new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined)];
-        course.exercises = exercises;
-        course.lectures = undefined;
-        course.startDate = undefined;
-        course.endDate = undefined;
-        course.competencies = [];
-        course.prerequisites = [];
+        ({ course } = createSampleCourse());
         returnedFromService = { ...course } as Course;
     });
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should create course', fakeAsync(() => {
+    it('should create course', () => {
         delete course.id;
 
         courseAdminService
@@ -64,20 +56,18 @@ describe('Course Admin Service', () => {
 
         const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should delete a course', fakeAsync(() => {
+    it('should delete a course', () => {
         courseAdminService
             .delete(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}` });
         req.flush({});
-        tick();
-    }));
+    });
 
-    it('should get course summary', fakeAsync(() => {
+    it('should get course summary', () => {
         const expectedSummary = {
             numberOfStudents: 10,
             numberOfTutors: 2,
@@ -111,16 +101,14 @@ describe('Course Admin Service', () => {
             .subscribe((res) => expect(res.body).toEqual(expectedSummary));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/summary` });
         req.flush(expectedSummary);
-        tick();
-    }));
+    });
 
-    it('should reset a course', fakeAsync(() => {
+    it('should reset a course', () => {
         courseAdminService
             .reset(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/reset` });
         req.flush({});
-        tick();
-    }));
+    });
 });
