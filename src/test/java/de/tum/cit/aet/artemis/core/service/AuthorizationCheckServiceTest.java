@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -359,6 +360,194 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkIsSuperAdminElseThrow(student));
+        }
+    }
+
+    @Nested
+    class IsAtLeastRoleInCourseWithSuperAdminTest {
+
+        private Course course;
+
+        private User superAdmin;
+
+        private User student;
+
+        private User tutor;
+
+        private User editor;
+
+        private User instructor;
+
+        @BeforeEach
+        void setUp() {
+            course = courseUtilService.addEmptyCourse();
+            userUtilService.addSuperAdmin(TEST_PREFIX);
+            superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+            student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+            // Add tutor to the course's TA group
+            tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            tutor.setGroups(Set.of(course.getTeachingAssistantGroupName()));
+            userRepository.save(tutor);
+
+            // Create and add editor to the course's editor group
+            userUtilService.createAndSaveUser(TEST_PREFIX + "editor");
+            editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor");
+            editor.setGroups(Set.of(course.getEditorGroupName()));
+            userRepository.save(editor);
+
+            // Add instructor to the course's instructor group
+            instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+            instructor.setGroups(Set.of(course.getInstructorGroupName()));
+            userRepository.save(instructor);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsAtLeastStudentInCourse_superAdmin_shouldReturnTrue() {
+            boolean isAtLeastStudent = authCheckService.isAtLeastStudentInCourse(course, superAdmin);
+            assertThat(isAtLeastStudent).as("Super admin should have student-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsAtLeastStudentInCourse_student_shouldReturnTrue() {
+            boolean isAtLeastStudent = authCheckService.isAtLeastStudentInCourse(course, student);
+            assertThat(isAtLeastStudent).as("Student should have student-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "nonEnrolledStudent", roles = "USER")
+        void testIsAtLeastStudentInCourse_nonEnrolledStudent_shouldReturnFalse() {
+            userUtilService.createAndSaveUser(TEST_PREFIX + "nonEnrolledStudent");
+            User nonEnrolledStudent = userUtilService.getUserByLogin(TEST_PREFIX + "nonEnrolledStudent");
+            boolean isAtLeastStudent = authCheckService.isAtLeastStudentInCourse(course, nonEnrolledStudent);
+            assertThat(isAtLeastStudent).as("Non-enrolled student should not have student-level access in course").isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsAtLeastTeachingAssistantInCourse_superAdmin_shouldReturnTrue() {
+            boolean isAtLeastTA = authCheckService.isAtLeastTeachingAssistantInCourse(course, superAdmin);
+            assertThat(isAtLeastTA).as("Super admin should have TA-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
+        void testIsAtLeastTeachingAssistantInCourse_tutor_shouldReturnTrue() {
+            boolean isAtLeastTA = authCheckService.isAtLeastTeachingAssistantInCourse(course, tutor);
+            assertThat(isAtLeastTA).as("Tutor should have TA-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsAtLeastTeachingAssistantInCourse_student_shouldReturnFalse() {
+            boolean isAtLeastTA = authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
+            assertThat(isAtLeastTA).as("Student should not have TA-level access in course").isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsAtLeastEditorInCourse_superAdmin_shouldReturnTrue() {
+            boolean isAtLeastEditor = authCheckService.isAtLeastEditorInCourse(course, superAdmin);
+            assertThat(isAtLeastEditor).as("Super admin should have editor-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
+        void testIsAtLeastEditorInCourse_editor_shouldReturnTrue() {
+            boolean isAtLeastEditor = authCheckService.isAtLeastEditorInCourse(course, editor);
+            assertThat(isAtLeastEditor).as("Editor should have editor-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
+        void testIsAtLeastEditorInCourse_tutor_shouldReturnFalse() {
+            boolean isAtLeastEditor = authCheckService.isAtLeastEditorInCourse(course, tutor);
+            assertThat(isAtLeastEditor).as("Tutor should not have editor-level access in course").isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsAtLeastInstructorInCourse_superAdmin_shouldReturnTrue() {
+            boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, superAdmin);
+            assertThat(isAtLeastInstructor).as("Super admin should have instructor-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testIsAtLeastInstructorInCourse_instructor_shouldReturnTrue() {
+            boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, instructor);
+            assertThat(isAtLeastInstructor).as("Instructor should have instructor-level access in course").isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
+        void testIsAtLeastInstructorInCourse_editor_shouldReturnFalse() {
+            boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, editor);
+            assertThat(isAtLeastInstructor).as("Editor should not have instructor-level access in course").isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testCheckIsAtLeastStudentInCourse_superAdmin_shouldNotThrow() {
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.STUDENT, course, superAdmin))
+                    .as("Super admin should pass student-level access check").doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "nonEnrolledStudent2", roles = "USER")
+        void testCheckIsAtLeastStudentInCourse_nonEnrolledStudent_shouldThrow() {
+            userUtilService.createAndSaveUser(TEST_PREFIX + "nonEnrolledStudent2");
+            User nonEnrolledStudent = userUtilService.getUserByLogin(TEST_PREFIX + "nonEnrolledStudent2");
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.STUDENT, course, nonEnrolledStudent))
+                    .as("Non-enrolled student should fail student-level access check");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testCheckIsAtLeastTeachingAssistantInCourse_superAdmin_shouldNotThrow() {
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT, course, superAdmin))
+                    .as("Super admin should pass TA-level access check").doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testCheckIsAtLeastTeachingAssistantInCourse_student_shouldThrow() {
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT, course, student))
+                    .as("Student should fail TA-level access check");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testCheckIsAtLeastEditorInCourse_superAdmin_shouldNotThrow() {
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.EDITOR, course, superAdmin))
+                    .as("Super admin should pass editor-level access check").doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
+        void testCheckIsAtLeastEditorInCourse_tutor_shouldThrow() {
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.EDITOR, course, tutor))
+                    .as("Tutor should fail editor-level access check");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testCheckIsAtLeastInstructorInCourse_superAdmin_shouldNotThrow() {
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR, course, superAdmin))
+                    .as("Super admin should pass instructor-level access check").doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
+        void testCheckIsAtLeastInstructorInCourse_editor_shouldThrow() {
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR, course, editor))
+                    .as("Editor should fail instructor-level access check");
         }
     }
 }
