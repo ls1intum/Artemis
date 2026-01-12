@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -17,6 +19,8 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingExercise Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ModelingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
@@ -44,7 +48,12 @@ describe('ModelingExercise Service', () => {
         elemDefault.studentParticipations = [];
     });
 
-    it('should find an element', fakeAsync(() => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        httpMock.verify();
+    });
+
+    it('should find an element', () => {
         const returnedFromService = Object.assign({}, elemDefault);
         service
             .find(123)
@@ -52,10 +61,9 @@ describe('ModelingExercise Service', () => {
             .subscribe((resp) => expect(resp.body).toEqual(elemDefault));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should create a ModelingExercise', fakeAsync(() => {
+    it('should create a ModelingExercise', () => {
         const returnedFromService = {
             id: 0,
             ...elemDefault,
@@ -70,10 +78,9 @@ describe('ModelingExercise Service', () => {
             });
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should update a ModelingExercise', fakeAsync(() => {
+    it('should update a ModelingExercise', () => {
         const returnedFromService = {
             diagramType: UMLDiagramType.ClassDiagram,
             exampleSolutionModel: 'BBBBBB',
@@ -89,27 +96,26 @@ describe('ModelingExercise Service', () => {
             .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should delete a ModelingExercise', fakeAsync(() => {
-        service.delete(123).subscribe((resp) => expect(resp.ok).toBeTrue());
+    it('should delete a ModelingExercise', () => {
+        service.delete(123).subscribe((resp) => expect(resp.ok).toBe(true));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-    }));
+    });
 
-    it('should convert model to pdf', fakeAsync(() => {
-        jest.spyOn(helper, 'downloadStream').mockReturnValue();
+    it('should convert model to pdf', async () => {
+        vi.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
 
-        // We use a fake async and don't need to await the promise
-        // eslint-disable-next-line jest/valid-expect
-        expect(lastValueFrom(service.convertToPdf('model1', 'filename'))).resolves.toContainEntry(['body', blob]);
+        const promise = lastValueFrom(service.convertToPdf('model1', 'filename'));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(blob);
-        tick();
-    }));
+
+        const result = await promise;
+        expect(result.body).toEqual(blob);
+    });
 
     it('should re-evaluate and update a modelling exercise', () => {
         const modelingExerciseReturned = { ...elemDefault };
@@ -124,7 +130,7 @@ describe('ModelingExercise Service', () => {
         req.flush(modelingExerciseReturned);
     });
 
-    it('should import a modeling exercise', fakeAsync(() => {
+    it('should import a modeling exercise', () => {
         const modelingExercise = { ...elemDefault };
         modelingExercise.id = 445;
         modelingExercise.categories = [category];
@@ -142,10 +148,5 @@ describe('ModelingExercise Service', () => {
             });
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import/${modelingExercise.id}` });
         req.flush(returnedFromService);
-        tick();
-    }));
-
-    afterEach(() => {
-        httpMock.verify();
     });
 });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
@@ -19,7 +19,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
     imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigurationComponent implements OnInit {
     private readonly configurationService = inject(ConfigurationService);
