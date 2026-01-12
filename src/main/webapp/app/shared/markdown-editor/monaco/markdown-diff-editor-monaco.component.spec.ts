@@ -55,6 +55,11 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
             setPosition: jest.fn(),
             focus: jest.fn(),
             updateOptions: jest.fn(),
+            onMouseMove: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+            onMouseDown: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+            onKeyDown: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+            onMouseLeave: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+            createDecorationsCollection: jest.fn().mockReturnValue({ set: jest.fn(), clear: jest.fn() }),
         } as any;
 
         mockDiffEditor = {
