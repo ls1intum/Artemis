@@ -4,7 +4,7 @@ import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/e
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFileExport, faPlayCircle, faPlus, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -32,7 +32,6 @@ export class QuizExerciseLifecycleButtonsComponent {
     faEye = faEye;
     faWrench = faWrench;
     faTable = faTable;
-    faSignal = faSignal;
     faFileExport = faFileExport;
     faPlayCircle = faPlayCircle;
     faStopCircle = faStopCircle;
@@ -51,25 +50,25 @@ export class QuizExerciseLifecycleButtonsComponent {
     startQuiz() {
         this.quizExerciseService.start(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                this.updateDatesForQuizExercise(res.body!);
-                this.quizExercise().visibleToStudents = true;
-                this.quizExercise().status = QuizStatus.ACTIVE;
+                const updatedExercise = { ...this.quizExercise() };
 
-                if (!this.quizExercise().quizBatches) {
-                    this.quizExercise().quizBatches = [];
-                }
-
-                const batch = this.quizExercise().quizBatches?.first();
-                if (batch) {
-                    batch.started = true;
-                    batch.startTime = this.quizExercise().startDate;
+                this.applyDatesToExercise(updatedExercise, res.body!);
+                updatedExercise.visibleToStudents = true;
+                updatedExercise.status = QuizStatus.ACTIVE;
+                const batches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
+                if (batches.length > 0) {
+                    const firstBatch = { ...batches[0] };
+                    firstBatch.started = true;
+                    firstBatch.startTime = updatedExercise.startDate;
+                    batches[0] = firstBatch;
                 } else {
-                    this.quizExercise().quizBatches?.push({
+                    batches.push({
                         started: true,
-                        startTime: this.quizExercise().startDate,
+                        startTime: updatedExercise.startDate,
                     });
                 }
-                this.handleNewQuizExercise.emit(this.quizExercise());
+                updatedExercise.quizBatches = batches;
+                this.handleNewQuizExercise.emit(updatedExercise);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -83,9 +82,10 @@ export class QuizExerciseLifecycleButtonsComponent {
     endQuiz() {
         return this.quizExerciseService.end(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                this.updateDatesForQuizExercise(res.body!);
-                this.quizExercise().quizEnded = true;
-                this.handleNewQuizExercise.emit(this.quizExercise());
+                const updatedExercise = { ...this.quizExercise() };
+                this.applyDatesToExercise(updatedExercise, res.body!);
+                updatedExercise.quizEnded = true;
+                this.handleNewQuizExercise.emit(updatedExercise);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -100,7 +100,16 @@ export class QuizExerciseLifecycleButtonsComponent {
     startBatch(quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
             next: () => {
-                this.quizExercise().quizBatches!.find((batch) => batch.id === quizBatchId)!.started = true;
+                const updatedExercise = { ...this.quizExercise() };
+                if (updatedExercise.quizBatches) {
+                    updatedExercise.quizBatches = updatedExercise.quizBatches.map((batch) => {
+                        if (batch.id === quizBatchId) {
+                            return { ...batch, started: true };
+                        }
+                        return batch;
+                    });
+                    this.handleNewQuizExercise.emit(updatedExercise);
+                }
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -114,10 +123,14 @@ export class QuizExerciseLifecycleButtonsComponent {
     addBatch() {
         this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizBatch>) => {
-                if (!this.quizExercise().quizBatches) {
-                    this.quizExercise().quizBatches = [];
-                }
-                this.quizExercise().quizBatches?.push(res.body!);
+                const updatedExercise = { ...this.quizExercise() };
+                const newBatch = res.body!;
+
+                const currentBatches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
+                currentBatches.push(newBatch);
+                updatedExercise.quizBatches = currentBatches;
+
+                this.handleNewQuizExercise.emit(updatedExercise);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -131,9 +144,10 @@ export class QuizExerciseLifecycleButtonsComponent {
     showQuiz() {
         this.quizExerciseService.setVisible(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                this.updateDatesForQuizExercise(res.body!);
-                this.quizExercise().visibleToStudents = true;
-                this.handleNewQuizExercise.emit(this.quizExercise());
+                const updatedExercise = { ...this.quizExercise() };
+                this.applyDatesToExercise(updatedExercise, res.body!);
+                updatedExercise.visibleToStudents = true;
+                this.handleNewQuizExercise.emit(updatedExercise);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -146,9 +160,9 @@ export class QuizExerciseLifecycleButtonsComponent {
         this.loadOne.emit(this.quizExercise().id!);
     }
 
-    private updateDatesForQuizExercise(dates: QuizExerciseDates) {
-        this.quizExercise().releaseDate = dates.releaseDate;
-        this.quizExercise().startDate = dates.startDate;
-        this.quizExercise().dueDate = dates.dueDate;
+    private applyDatesToExercise(exercise: QuizExercise, dates: QuizExerciseDates) {
+        exercise.releaseDate = dates.releaseDate;
+        exercise.startDate = dates.startDate;
+        exercise.dueDate = dates.dueDate;
     }
 }
