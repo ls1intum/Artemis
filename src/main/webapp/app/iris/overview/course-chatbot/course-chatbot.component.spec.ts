@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
@@ -17,15 +19,19 @@ class MockIrisBaseChatbotComponent {
 }
 
 describe('CourseChatbotComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseChatbotComponent;
     let fixture: ComponentFixture<CourseChatbotComponent>;
-    let chatService: jest.Mocked<IrisChatService>;
+    let chatService: ReturnType<typeof createChatServiceMock>;
+
+    const createChatServiceMock = () => ({
+        setCourseId: vi.fn<(courseId: number | undefined) => void>(),
+        switchTo: vi.fn<(mode: ChatServiceMode, courseId: number) => void>(),
+    });
 
     beforeEach(async () => {
-        const mockChatService = {
-            setCourseId: jest.fn(),
-            switchTo: jest.fn(),
-        };
+        const mockChatService = createChatServiceMock();
 
         await TestBed.configureTestingModule({
             imports: [CourseChatbotComponent],
@@ -39,8 +45,12 @@ describe('CourseChatbotComponent', () => {
 
         fixture = TestBed.createComponent(CourseChatbotComponent);
         component = fixture.componentInstance;
-        chatService = TestBed.inject(IrisChatService) as jest.Mocked<IrisChatService>;
+        chatService = mockChatService;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

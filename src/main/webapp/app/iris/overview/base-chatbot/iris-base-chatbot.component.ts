@@ -15,7 +15,7 @@ import {
     faTrash,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
@@ -67,7 +67,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
-    protected modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
