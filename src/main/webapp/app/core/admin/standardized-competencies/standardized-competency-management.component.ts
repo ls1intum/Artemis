@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -65,6 +65,13 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private modalService = inject(NgbModal);
     private translateService = inject(TranslateService);
 
+    /** Reference to the knowledge area tree component for tree control */
+    private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
+
+    protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return this.knowledgeAreaTree();
+    }
+
     /** Loading state */
     protected readonly isLoading = signal(false);
     /** true if a competency is getting edited in the detail component */
@@ -105,7 +112,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                 const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForTree;
-                this.treeControl.dataNodes = knowledgeAreasForTree;
                 knowledgeAreasForTree.forEach((knowledgeArea) => {
                     this.addSelfAndDescendantsToMap(knowledgeArea);
                     this.addSelfAndDescendantsToSelectArray(knowledgeArea);
@@ -292,7 +298,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.dataSource.data.filter((ka) => ka.id !== knowledgeArea.id);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
         const descendantIds = this.getIdsOfSelfAndAllDescendants(knowledgeArea);
         descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
@@ -314,7 +319,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.insertBasedOnTitle(knowledgeAreaForTree, this.dataSource.data);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
@@ -361,7 +365,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
         this.knowledgeAreasForSelect = [];
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
-        this.treeControl.dataNodes = this.dataSource.data;
 
         // refresh tree if dataSource.data was not modified directly
         if (previousParent || parent) {
