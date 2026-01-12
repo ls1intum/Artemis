@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
@@ -30,7 +32,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -42,8 +44,13 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 
 describe('ModelingAssessmentEditorComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ModelingAssessmentEditorComponent;
     let fixture: ComponentFixture<ModelingAssessmentEditorComponent>;
     let service: ModelingAssessmentService;
@@ -51,8 +58,8 @@ describe('ModelingAssessmentEditorComponent', () => {
     let modelingSubmissionService: ModelingSubmissionService;
     let athenaService: AthenaService;
     let complaintService: ComplaintService;
-    let modelingSubmissionSpy: jest.SpyInstance;
-    let complaintSpy: jest.SpyInstance;
+    let modelingSubmissionSpy: ReturnType<typeof vi.spyOn>;
+    let complaintSpy: ReturnType<typeof vi.spyOn>;
     let router: Router;
     let submissionService: SubmissionService;
     let exampleParticipationService: ExampleParticipationService;
@@ -61,8 +68,8 @@ describe('ModelingAssessmentEditorComponent', () => {
     beforeEach(() => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([]),
                 ModelingAssessmentEditorComponent,
                 MockComponent(AssessmentLayoutComponent),
                 MockComponent(ModelingAssessmentComponent),
@@ -91,30 +98,31 @@ describe('ModelingAssessmentEditorComponent', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(TextAssessmentAnalytics),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingAssessmentEditorComponent);
-                component = fixture.componentInstance;
-                service = TestBed.inject(ModelingAssessmentService);
-                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                athenaService = TestBed.inject(AthenaService);
-                complaintService = TestBed.inject(ComplaintService);
-                submissionService = TestBed.inject(SubmissionService);
-                mockAuth = TestBed.inject(AccountService) as any as MockAccountService;
-                exampleParticipationService = TestBed.inject(ExampleParticipationService);
-                mockAuth.hasAnyAuthorityDirect([]);
-                mockAuth.identity();
-                fixture.detectChanges();
-            });
+        });
+
+        fixture = TestBed.createComponent(ModelingAssessmentEditorComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(ModelingAssessmentService);
+        modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+        athenaService = TestBed.inject(AthenaService);
+        complaintService = TestBed.inject(ComplaintService);
+        submissionService = TestBed.inject(SubmissionService);
+        mockAuth = TestBed.inject(AccountService) as any as MockAccountService;
+        exampleParticipationService = TestBed.inject(ExampleParticipationService);
+        mockAuth.hasAnyAuthorityDirect([]);
+        mockAuth.identity();
+        fixture.detectChanges();
+
         router = TestBed.inject(Router);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const getSubmissionWithData = (): ModelingSubmission => {
@@ -159,9 +167,9 @@ describe('ModelingAssessmentEditorComponent', () => {
     };
 
     describe('ngOnInit tests', () => {
-        it('ngOnInit', fakeAsync(() => {
-            modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
-            complaintSpy = jest.spyOn(complaintService, 'findBySubmissionId');
+        it('ngOnInit', async () => {
+            modelingSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission');
+            complaintSpy = vi.spyOn(complaintService, 'findBySubmissionId');
             const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
@@ -179,32 +187,32 @@ describe('ModelingAssessmentEditorComponent', () => {
             const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
             complaintSpy.mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
 
-            const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
-            const verifyFeedbackSpy = jest.spyOn(component, 'validateFeedback');
+            const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const verifyFeedbackSpy = vi.spyOn(component, 'validateFeedback');
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
-            expect(component.isLoading).toBeFalse();
+            expect(component.isLoading).toBe(false);
             expect(component.complaint).toEqual(complaint);
             modelingSubmissionSpy.mockRestore();
             // called twice, since the feedback is additionally verified during the component initialization
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
-            expect(component.assessmentsAreValid).toBeTrue();
-        }));
+            expect(component.assessmentsAreValid).toBe(true);
+        });
 
-        it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
-            modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
+        it('wrongly call ngOnInit and throw exception', async () => {
+            modelingSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission');
             const response = new HttpErrorResponse({ status: 403 });
             modelingSubmissionSpy.mockReturnValue(throwError(() => response));
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
-        }));
-        it('call ngOnInit with submissionId set to new', fakeAsync(() => {
+        });
+        it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
                     submissionId: 'new',
@@ -225,29 +233,29 @@ describe('ModelingAssessmentEditorComponent', () => {
                 },
             } as ModelingSubmission;
 
-            const modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
-            jest.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback(), new Feedback()]));
+            const modelingSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback(), new Feedback()]));
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
 
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.submission).toBe(mockSubmission);
-            expect(component.assessmentsAreValid).toBeFalse();
-        }));
+            expect(component.assessmentsAreValid).toBe(false);
+        });
     });
 
     describe('should test the overwrite access rights and return true', () => {
-        it('tests the method with instructor rights', fakeAsync(() => {
+        it('tests the method with instructor rights', async () => {
             const course = new Course();
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.isAtLeastInstructor = true;
-            expect(component.canOverride).toBeTrue();
-        }));
+            expect(component.canOverride).toBe(true);
+        });
 
-        it('tests the method with tutor rights and as assessor', fakeAsync(() => {
+        it('tests the method with tutor rights and as assessor', async () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.isAtLeastInstructor = false;
@@ -256,13 +264,13 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.complaint.id = 0;
             component.complaint.complaintText = 'complaint';
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             mockAuth.isAtLeastInstructorInCourse(course);
             component['checkPermissions']();
             fixture.changeDetectorRef.detectChanges();
-            expect(component.modelingExercise.isAtLeastInstructor).toBeFalse();
-            expect(component.canOverride).toBeFalse();
-        }));
+            expect(component.modelingExercise.isAtLeastInstructor).toBe(false);
+            expect(component.canOverride).toBe(false);
+        });
     });
 
     describe('save and submit', () => {
@@ -298,64 +306,64 @@ describe('ModelingAssessmentEditorComponent', () => {
             ];
         });
 
-        it('should save assessment', fakeAsync(() => {
-            const saveAssessmentSpy = jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
+        it('should save assessment', async () => {
+            const saveAssessmentSpy = vi.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             component.onSaveAssessment();
             expect(saveAssessmentSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should try to submit assessment', fakeAsync(() => {
-            jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
-            jest.spyOn(window, 'confirm').mockReturnValue(false);
+        it('should try to submit assessment', async () => {
+            vi.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
+            vi.spyOn(window, 'confirm').mockReturnValue(false);
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
 
             component.onSubmitAssessment();
 
             expect(window.confirm).toHaveBeenCalledOnce();
-            expect(component.highlightMissingFeedback).toBeTrue();
+            expect(component.highlightMissingFeedback).toBe(true);
 
             component.modelingExercise!.isAtLeastInstructor = true;
-            expect(component.canOverride).toBeTrue();
-        }));
+            expect(component.canOverride).toBe(true);
+        });
 
-        it('should allow overriding directly after submitting', fakeAsync(() => {
-            jest.spyOn(window, 'confirm').mockReturnValue(false);
+        it('should allow overriding directly after submitting', async () => {
+            vi.spyOn(window, 'confirm').mockReturnValue(false);
 
             component.modelingExercise!.isAtLeastInstructor = true;
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
 
             component.onSubmitAssessment();
-            expect(component.canOverride).toBeTrue();
-        }));
+            expect(component.canOverride).toBe(true);
+        });
 
-        it('should not invalidate assessment after saving', fakeAsync(() => {
+        it('should not invalidate assessment after saving', async () => {
             component.submission = getSubmissionWithData();
-            jest.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(component.submission));
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(component.submission));
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             component.onSaveAssessment();
-            expect(component.assessmentsAreValid).toBeTrue();
-        }));
+            expect(component.assessmentsAreValid).toBe(true);
+        });
 
-        it('should submit the assessment', fakeAsync(() => {
-            const submitMock = jest.spyOn(service, 'saveAssessment').mockReturnValue(of(component.result!));
-            jest.spyOn(window, 'confirm').mockReturnValue(true);
+        it('should submit the assessment', async () => {
+            const submitMock = vi.spyOn(service, 'saveAssessment').mockReturnValue(of(component.result!));
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
 
             component.validateFeedback();
-            expect(component.assessmentsAreValid).toBeTrue();
+            expect(component.assessmentsAreValid).toBe(true);
 
             component.onSubmitAssessment();
-            tick(500);
+            await fixture.whenStable();
 
             expect(submitMock).toHaveBeenCalledOnce();
-        }));
+        });
     });
 
     const createTestFeedback = (): Feedback => {
@@ -368,83 +376,80 @@ describe('ModelingAssessmentEditorComponent', () => {
         return feedback;
     };
 
-    it.each([undefined, 'genericErrorKey', 'complaintLock'])(
-        'should update assessment after complaint, errorKeyFromServer=%s',
-        fakeAsync((errorKeyFromServer: string | undefined) => {
-            const complaintResponse = new ComplaintResponse();
-            complaintResponse.id = 1;
-            complaintResponse.responseText = 'response';
+    it.each([undefined, 'genericErrorKey', 'complaintLock'])('should update assessment after complaint, errorKeyFromServer=%s', async (errorKeyFromServer: string | undefined) => {
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = 1;
+        complaintResponse.responseText = 'response';
 
-            component.submission = {
-                id: 1,
-                submitted: true,
-                type: 'MANUAL',
-                text: 'Test\n\nTest\n\nTest',
-            } as unknown as ModelingSubmission;
+        component.submission = {
+            id: 1,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+        } as unknown as ModelingSubmission;
 
-            const changedResult = {
-                id: 2374,
-                score: 8,
-                rated: true,
-                hasComplaint: false,
-            } as unknown as Result;
+        const changedResult = {
+            id: 2374,
+            score: 8,
+            rated: true,
+            hasComplaint: false,
+        } as unknown as Result;
 
-            const errorMessage = 'errMsg';
-            const errorParams = ['errParam1', 'errParam2'];
+        const errorMessage = 'errMsg';
+        const errorParams = ['errParam1', 'errParam2'];
 
-            const serviceSpy = jest.spyOn(service, 'updateAssessmentAfterComplaint');
+        const serviceSpy = vi.spyOn(service, 'updateAssessmentAfterComplaint');
 
-            if (errorKeyFromServer) {
-                serviceSpy.mockReturnValue(
-                    throwError(
-                        () =>
-                            new HttpErrorResponse({
-                                status: 400,
-                                error: { message: errorMessage, errorKey: errorKeyFromServer, params: errorParams },
-                            }),
-                    ),
-                );
-            } else {
-                serviceSpy.mockReturnValue(of({ body: changedResult } as EntityResponseType));
-            }
+        if (errorKeyFromServer) {
+            serviceSpy.mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            error: { message: errorMessage, errorKey: errorKeyFromServer, params: errorParams },
+                        }),
+                ),
+            );
+        } else {
+            serviceSpy.mockReturnValue(of({ body: changedResult } as EntityResponseType));
+        }
 
-            component.ngOnInit();
-            tick(500);
+        component.ngOnInit();
+        await fixture.whenStable();
 
-            let onSuccessCalled = false;
-            let onErrorCalled = false;
-            const assessmentAfterComplaint: AssessmentAfterComplaint = {
-                complaintResponse,
-                onSuccess: () => (onSuccessCalled = true),
-                onError: () => (onErrorCalled = true),
-            };
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse,
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
 
-            const alertService = TestBed.inject(AlertService);
-            const errorSpy = jest.spyOn(alertService, 'error');
-            const validateSpy = jest.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = true));
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+        const validateSpy = vi.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = true));
 
-            component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
 
-            expect(validateSpy).toHaveBeenCalledOnce();
-            expect(serviceSpy).toHaveBeenCalledOnce();
-            if (!errorKeyFromServer) {
-                expect(errorSpy).not.toHaveBeenCalled();
-                expect(component.result).toEqual(changedResult);
-            } else if (errorKeyFromServer === 'complaintLock') {
-                expect(errorSpy).toHaveBeenCalledOnce();
-                expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
-            } else {
-                // Handle all other errors
-                expect(errorSpy).toHaveBeenCalledOnce();
-                expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-            }
-            expect(onSuccessCalled).toBe(!errorKeyFromServer);
-            expect(onErrorCalled).toBe(!!errorKeyFromServer);
-        }),
-    );
+        expect(validateSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        if (!errorKeyFromServer) {
+            expect(errorSpy).not.toHaveBeenCalled();
+            expect(component.result).toEqual(changedResult);
+        } else if (errorKeyFromServer === 'complaintLock') {
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
+        } else {
+            // Handle all other errors
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+        }
+        expect(onSuccessCalled).toBe(!errorKeyFromServer);
+        expect(onErrorCalled).toBe(!!errorKeyFromServer);
+    });
 
-    it('should cancel the current assessment', fakeAsync(() => {
-        const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    it('should cancel the current assessment', async () => {
+        const windowSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
         component.submission = {
             id: 2,
@@ -453,17 +458,17 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown as ModelingSubmission;
 
-        const serviceSpy = jest.spyOn(service, 'cancelAssessment').mockReturnValue(of());
+        const serviceSpy = vi.spyOn(service, 'cancelAssessment').mockReturnValue(of());
 
         component.ngOnInit();
-        tick(500);
+        await fixture.whenStable();
 
         component.onCancelAssessment();
         expect(windowSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should handle changed feedback', fakeAsync(() => {
+    it('should handle changed feedback', async () => {
         const feedbacks = [
             {
                 id: 0,
@@ -477,28 +482,28 @@ describe('ModelingAssessmentEditorComponent', () => {
         ];
 
         component.ngOnInit();
-        tick(500);
+        await fixture.whenStable();
 
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.maxPoints = 5;
         component.modelingExercise.bonusPoints = 5;
-        const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).toHaveLength(1);
         expect(component.totalScore).toBe(3);
         expect(handleFeedbackSpy).toHaveBeenCalled();
-    }));
+    });
 
     describe('test assessNext', () => {
-        it('should navigate to the next submission', fakeAsync(() => {
+        it('should navigate to the next submission', async () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
-            const routerSpy = jest.spyOn(router, 'navigate').mockImplementation();
+            const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             const modelingSubmission: ModelingSubmission = { id: 1 };
-            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(modelingSubmission));
+            const serviceSpy = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(modelingSubmission));
 
             component.ngOnInit();
 
@@ -512,20 +517,20 @@ describe('ModelingAssessmentEditorComponent', () => {
             const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
             const queryParams = { queryParams: { 'correction-round': correctionRound } };
 
-            tick(500);
+            await fixture.whenStable();
             component.assessNext();
-            tick(500);
+            await fixture.whenStable();
 
             expect(serviceSpy).toHaveBeenCalledOnce();
             expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
-        }));
+        });
 
         it('no submission left', () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
-            const routerSpy = jest.spyOn(router, 'navigate').mockImplementation();
-            jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
             component.ngOnInit();
 
             component.assessNext();
@@ -534,19 +539,19 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(routerSpy).toHaveBeenCalledTimes(0);
         });
 
-        it('throw error while assessNext', fakeAsync(() => {
+        it('throw error while assessNext', async () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
-            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(throwError(() => response));
+            const serviceSpy = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(throwError(() => response));
 
             component.ngOnInit();
-            tick(500);
+            await fixture.whenStable();
             component.assessNext();
             expect(serviceSpy).toHaveBeenCalledOnce();
-        }));
+        });
     });
 
     it('should invoke import example submission', () => {
@@ -560,7 +565,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as ModelingSubmission;
 
-        const importSpy = jest.spyOn(exampleParticipationService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleParticipation() })));
+        const importSpy = vi.spyOn(exampleParticipationService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleParticipation() })));
 
         component.useStudentSubmissionAsExampleSubmission();
 
@@ -577,29 +582,29 @@ describe('ModelingAssessmentEditorComponent', () => {
             onError: () => (onErrorCalled = true),
         };
         const alertService = TestBed.inject(AlertService);
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const errorSpy = vi.spyOn(alertService, 'error');
 
-        const validateSpy = jest.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = false));
+        const validateSpy = vi.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = false));
 
         component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(validateSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessment.invalidAssessments');
-        expect(onSuccessCalled).toBeFalse();
-        expect(onErrorCalled).toBeTrue();
+        expect(onSuccessCalled).toBe(false);
+        expect(onErrorCalled).toBe(true);
     });
 
     it('should report feedback suggestions not enabled', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         component.ngOnInit();
-        expect(component.isFeedbackSuggestionsEnabled).toBeFalse();
+        expect(component.isFeedbackSuggestionsEnabled).toBe(false);
     });
 
     it('should report feedback suggestions enabled', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
-        expect(component.isFeedbackSuggestionsEnabled).toBeTrue();
+        expect(component.isFeedbackSuggestionsEnabled).toBe(true);
     });
 
     it('should return unreferenced feedback only', () => {

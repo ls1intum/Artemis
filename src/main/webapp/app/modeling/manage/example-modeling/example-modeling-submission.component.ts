@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -62,10 +62,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor: ModelingEditorComponent;
-    @ViewChild(ModelingAssessmentComponent, { static: false })
-    assessmentEditor: ModelingAssessmentComponent;
+    readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly assessmentEditor = viewChild(ModelingAssessmentComponent);
 
     private readonly themeService = inject(ThemeService);
 
@@ -114,13 +112,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     ];
 
     private exampleParticipationId: number;
+    referencedFeedback = signal<Feedback[]>([]);
+    unreferencedFeedback = signal<Feedback[]>([]);
 
-    referencedFeedback: Feedback[] = [];
-    unreferencedFeedback: Feedback[] = [];
-
-    get assessments(): Feedback[] {
-        return [...this.referencedFeedback, ...this.unreferencedFeedback];
-    }
+    assessments = computed(() => [...this.referencedFeedback(), ...this.unreferencedFeedback()]);
 
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
@@ -233,7 +228,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     private createNewExampleModelingSubmission(): void {
         const modelingSubmission: ModelingSubmission = new ModelingSubmission();
-        modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
+        modelingSubmission.model = JSON.stringify(this.modelingEditor()?.getCurrentModel());
         modelingSubmission.explanationText = this.explanationText;
         modelingSubmission.exampleSubmission = true;
 
@@ -272,14 +267,14 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (!this.modelingSubmission) {
             this.createNewExampleModelingSubmission();
         }
-        const currentModel = this.modelingEditor.getCurrentModel();
+        const currentModel = this.modelingEditor()?.getCurrentModel();
         this.modelingSubmission.model = JSON.stringify(currentModel);
 
         this.modelingSubmission.explanationText = this.explanationText;
         this.modelingSubmission.exampleSubmission = true;
         if (this.result) {
-            this.referencedFeedback = filterInvalidFeedback(this.referencedFeedback, currentModel);
-            this.result.feedbacks = this.assessments;
+            this.referencedFeedback.set(filterInvalidFeedback(this.referencedFeedback(), currentModel));
+            this.result.feedbacks = this.assessments();
             setLatestSubmissionResult(this.modelingSubmission, this.result);
             delete this.result.submission;
         }
@@ -315,13 +310,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     onReferencedFeedbackChanged(referencedFeedback: Feedback[]) {
-        this.referencedFeedback = referencedFeedback;
+        this.referencedFeedback.set(referencedFeedback);
         this.feedbackChanged = true;
         this.checkScoreBoundaries();
     }
 
     onUnReferencedFeedbackChanged(unreferencedFeedback: Feedback[]) {
-        this.unreferencedFeedback = unreferencedFeedback;
+        this.unreferencedFeedback.set(unreferencedFeedback);
         this.feedbackChanged = true;
         this.checkScoreBoundaries();
     }
@@ -334,7 +329,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private modelChanged(): boolean {
-        return this.modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(this.modelingEditor.getCurrentModel());
+        const modelingEditor = this.modelingEditor();
+        return !!modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(modelingEditor.getCurrentModel());
     }
 
     explanationChanged(explanation: string) {
@@ -355,11 +351,11 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
-        if (this.assessmentExplanation !== this.exampleParticipation.assessmentExplanation && this.assessments) {
+        if (this.assessmentExplanation !== this.exampleParticipation.assessmentExplanation && this.assessments()) {
             this.updateAssessmentExplanationAndExampleAssessment();
         } else if (this.assessmentExplanation !== this.exampleParticipation.assessmentExplanation) {
             this.updateAssessmentExplanation();
-        } else if (this.assessments) {
+        } else if (this.assessments()) {
             this.updateExampleAssessment();
         }
     }
@@ -373,7 +369,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     this.exampleParticipation = exampleParticipationResponse.body!;
                     this.assessmentExplanation = this.exampleParticipation.assessmentExplanation!;
                 }),
-                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleParticipationId)),
+                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleParticipationId)),
             )
             .subscribe({
                 next: (result: Result) => {
@@ -398,7 +394,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private updateExampleAssessment() {
-        this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleParticipationId).subscribe({
+        this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleParticipationId).subscribe({
             next: (result: Result) => {
                 this.updateAssessment(result);
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
@@ -415,13 +411,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
      * because a score is not a number/empty.
      */
     public checkScoreBoundaries() {
-        if (this.assessments.length === 0) {
+        if (this.assessments().length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = true;
             return;
         }
 
-        const credits = this.assessments.map((feedback) => feedback.credits);
+        const credits = this.assessments().map((feedback) => feedback.credits);
         if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
@@ -470,33 +466,36 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         const result = new Result();
         setLatestSubmissionResult(submission, result);
         delete result.submission;
-        getLatestSubmissionResult(submission)!.feedbacks = this.assessments;
+        getLatestSubmissionResult(submission)!.feedbacks = this.assessments();
 
         const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
         command.assessExampleParticipation(exampleParticipation, this.exerciseId);
     }
 
     markAllFeedbackToCorrect() {
-        this.assessments.forEach((feedback) => {
-            feedback.correctionStatus = 'CORRECT';
-        });
-        this.assessmentEditor.resultFeedbacks = this.referencedFeedback;
+        this.referencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
+        this.unreferencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
     }
 
     markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
-        correctionErrors.forEach((correctionError) => {
-            const validatedFeedback = this.assessments.find((feedback) => feedback.reference === correctionError.reference);
-            if (validatedFeedback != undefined) {
-                validatedFeedback.correctionStatus = correctionError.type;
+        const byReference = new Map(correctionErrors.map((err) => [err.reference, err]));
+
+        // mutate referenced feedback
+        const referenced = this.referencedFeedback();
+        referenced.forEach((feedback) => {
+            const err = byReference.get(feedback.reference!);
+            if (err) {
+                feedback.correctionStatus = err.type;
             }
         });
-        this.assessmentEditor.resultFeedbacks = this.referencedFeedback;
+        this.referencedFeedback.set(referenced);
+
         this.highlightMissedFeedback();
     }
 
     highlightMissedFeedback() {
         const missedReferencedExampleFeedbacks = this.referencedExampleFeedback.filter(
-            (feedback) => !this.referencedFeedback.some((referencedFeedback) => referencedFeedback.reference === feedback.reference),
+            (feedback) => !this.referencedFeedback().some((referencedFeedback) => referencedFeedback.reference === feedback.reference),
         );
         const highlightedElements = new Map<string, string>();
         for (const feedback of missedReferencedExampleFeedbacks) {
@@ -521,8 +520,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private updateAssessment(result: Result) {
         this.result = result;
         if (result) {
-            this.referencedFeedback = result.feedbacks?.filter((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED) || [];
-            this.unreferencedFeedback = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED) || [];
+            this.referencedFeedback.set(result.feedbacks?.filter((f) => f.type !== FeedbackType.MANUAL_UNREFERENCED) || []);
+            this.unreferencedFeedback.set(result.feedbacks?.filter((f) => f.type === FeedbackType.MANUAL_UNREFERENCED) || []);
         }
     }
 }

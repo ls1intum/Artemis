@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ResultComponent } from '../../result/result.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -35,6 +35,7 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
 })
 export class ExampleSubmissionImportComponent extends ImportComponent<Submission> {
     private exampleParticipationService = inject(ExampleParticipationService);
+    private activeModal = inject(NgbActiveModal);
 
     exercise: Exercise;
 
@@ -58,5 +59,12 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
 
     protected override createOptions(): object | undefined {
         return { exerciseId: this.exercise.id! };
+    }
+
+    /**
+     * Dismisses the modal dialog without any action.
+     */
+    dismiss(): void {
+        this.activeModal.dismiss();
     }
 }

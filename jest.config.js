@@ -95,10 +95,12 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/modeling/**',       // modeling module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/quiz/**',           // quiz module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/text/**',           // text module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
@@ -110,10 +112,12 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
+        '<rootDir>/src/main/webapp/app/modeling/',          // modeling module uses Vitest
         '<rootDir>/src/main/webapp/app/quiz/',              // quiz module uses Vitest
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
+        '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
@@ -152,10 +156,12 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
+        '<rootDir>/src/main/webapp/app/modeling/',      // modeling module
         '<rootDir>/src/main/webapp/app/quiz/',          // quiz module
         '<rootDir>/src/main/webapp/app/text/',          // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/lti/',           // lti module
+        '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
     ],
     testTimeout: 3000,
