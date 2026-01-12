@@ -170,6 +170,47 @@
                             }
                             <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                         </button>
+                        <!-- Refine Problem Statement Button -->
+                        <div class="position-relative">
+                            <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary me-2" [disabled]="isRefining()">
+                                @if (isRefining()) {
+                                    <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                                } @else {
+                                    <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                }
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                            </button>
+                            <!-- Refinement Prompt Popup -->
+                            @if (showRefinementPrompt()) {
+                                <!-- Backdrop for click-outside-to-close -->
+                                <div class="refinement-backdrop" (click)="toggleRefinementPrompt()"></div>
+                                <div class="refinement-prompt-popup">
+                                    <div class="refinement-prompt-header">
+                                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                                        <button type="button" class="btn-close" (click)="toggleRefinementPrompt()" aria-label="Close"></button>
+                                    </div>
+                                    <div class="refinement-prompt-body">
+                                        <textarea
+                                            [(ngModel)]="refinementPrompt"
+                                            class="form-control refinement-textarea"
+                                            rows="5"
+                                            [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+                                        >
+                                        </textarea>
+                                    </div>
+                                    <div class="refinement-prompt-footer">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm me-2" (click)="toggleRefinementPrompt()">
+                                            <fa-icon [icon]="faTimes" class="me-1" />
+                                            <span jhiTranslate="artemisApp.generic.cancel"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt.trim()" (click)="submitRefinement()">
+                                            <fa-icon [icon]="faPaperPlane" class="me-1" />
+                                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refine"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     }
                 </div>
             </div>
@@ -213,13 +254,13 @@
                     <!-- Markdown Diff Editor -->
                     <jhi-markdown-diff-editor-monaco
                         #diffEditor
-                        class="overflow-hidden flex-grow-1"
+                        class="overflow-hidden flex-grow-1 hide-resize"
                         [allowSplitView]="false"
                         [domainActions]="domainActions"
                         [metaActions]="metaActions"
                         [enableResize]="false"
+                        [readOnly]="isRefining()"
                         [fillHeight]="true"
-                        [readOnly]="false"
                     />
                 } @else if (exercise.templateParticipation) {
                     <jhi-programming-exercise-editable-instructions

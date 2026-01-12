@@ -1,4 +1,5 @@
 import { AfterViewChecked, Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -8,7 +9,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { faBan, faCircleNotch, faPlus, faSave, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleNotch, faPaperPlane, faPlus, faSave, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
@@ -67,6 +68,7 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
         MarkdownDiffEditorMonacoComponent,
+        FormsModule,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy, AfterViewChecked {
@@ -260,6 +262,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
+    // Full problem statement refinement prompt state
+    showRefinementPrompt = signal(false);
+    refinementPrompt = '';
+    protected readonly faPaperPlane = faPaperPlane;
+
     /**
      * Lifecycle hook called after every check of the component's view.
      * Used to set diff editor content when it becomes available.
@@ -436,6 +443,66 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (response) => {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         // Store original and refined content for diff view
+                        this.originalProblemStatement.set(this.exercise.problemStatement || '');
+                        this.refinedProblemStatement.set(response.refinedProblemStatement);
+                        this.diffContentSet = false;
+                        this.showDiff.set(true);
+                        this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                    }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                },
+            });
+    }
+
+    /**
+     * Toggles the refinement prompt visibility.
+     */
+    toggleRefinementPrompt(): void {
+        this.showRefinementPrompt.update((value) => !value);
+        if (!this.showRefinementPrompt()) {
+            this.refinementPrompt = '';
+        }
+    }
+
+    /**
+     * Submits the full problem statement refinement.
+     * Uses the user prompt to refine the entire problem statement.
+     */
+    submitRefinement(): void {
+        const prompt = this.refinementPrompt.trim();
+        if (!prompt) return;
+
+        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
+        if (!courseId || !this.exercise?.problemStatement?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            return;
+        }
+
+        this.isInlineRefining.set(true);
+        this.showRefinementPrompt.set(false);
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: this.exercise.problemStatement,
+            userPrompt: prompt,
+            inlineComments: [],
+        };
+
+        this.currentRefinementSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isInlineRefining.set(false);
+                    this.refinementPrompt = '';
+                    this.currentRefinementSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         this.originalProblemStatement.set(this.exercise.problemStatement || '');
                         this.refinedProblemStatement.set(response.refinedProblemStatement);
                         this.diffContentSet = false;

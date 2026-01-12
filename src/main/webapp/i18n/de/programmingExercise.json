@@ -250,7 +250,8 @@
                     "triggerButton": "Mit KI verfeinern",
                     "placeholder": "Beschreibe, wie dieser Abschnitt verbessert werden soll...",
                     "submitTooltip": "Verfeinerung anwenden"
-                }
+                },
+                "refine": "Verfeinern"
             },
             "inlineRefine": {
                 "success": "Abschnitt erfolgreich verfeinert.",

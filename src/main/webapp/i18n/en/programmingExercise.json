@@ -250,7 +250,8 @@
                     "triggerButton": "Refine with AI",
                     "placeholder": "Describe how to improve this section...",
                     "submitTooltip": "Apply refinement"
-                }
+                },
+                "refine": "Refine"
             },
             "inlineRefine": {
                 "success": "Section refined successfully.",
