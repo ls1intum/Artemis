@@ -84,6 +84,7 @@ examples.forEach((conversation) => {
         it('should remove conversation from favorites when hidden', fakeAsync(() => {
             component.conversation.isFavorite = true;
             component.conversation.isHidden = false;
+            fixture.changeDetectorRef.detectChanges();
 
             const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
             hideButton.click();
@@ -102,7 +103,7 @@ examples.forEach((conversation) => {
         it('should remove conversation from hidden when favorited', fakeAsync(() => {
             component.conversation.isFavorite = false;
             component.conversation.isHidden = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const favoriteButton = fixture.debugElement.nativeElement.querySelector('.favorite');
             favoriteButton.click();

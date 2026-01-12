@@ -1,0 +1,120 @@
+---
+id: exports
+title: Exports
+sidebar_label: Exports
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import privacyStatementImg from "./assets/exports/privacy_statement.png";
+import dataExportImg from "./assets/exports/data_export.png";
+
+# Exports
+
+## Overview
+
+Artemis offers several options to export your user data. Under the General Data Protection Regulation (GDPR), you have the right to access all personal data stored about you. Artemis provides a comprehensive data export feature that allows you to download all your data.
+
+---
+
+## Export user data (GDPR Data Export)
+
+You can request a complete export of all data Artemis stores about you. This export is provided in accordance with Article 15 of the GDPR (Right of Access).
+
+### How to request a data export
+
+1. Click on your profile icon in the top right corner
+2. Select <Image src={privacyStatementImg} alt={"Privacy statement"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> (Privacy Statement)
+3. Click on <Image src={dataExportImg} alt={"Data export"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> (Request Data Export)
+4. Once the export has been created, you will receive an email with a download link
+
+:::info
+The export process may take a few minutes depending on the amount of data. The download link will be valid for a limited time.
+:::
+
+### Data included in the export
+
+The data export contains a ZIP file with the following categories of data:
+
+#### General User Information (`general_user_information.csv`)
+- Your login name
+- Full name
+- Email address
+- Registration number (if applicable)
+
+#### Exercise Participations and Submissions
+For each course you participated in, the export includes:
+- **Programming exercises**: Your code repositories
+- **Modeling exercises**: Your diagrams as PDF files
+- **Text exercises**: Your submitted text
+- **Quiz exercises**: Your answers and results
+- **File upload exercises**: Your uploaded files
+- **Results and feedback**: Grades and feedback received on each exercise
+
+#### Exam Participations
+- Exam submissions and results (if the results publication date has passed)
+- Feedback received on exam exercises
+
+#### Communication Data (`messages_posts_reactions.csv`)
+For each course:
+- Messages and posts you authored
+- Thread replies (answer posts) you created
+- Reactions you added to posts and answers
+
+#### Saved Posts (`saved_posts.csv`)
+- Posts and answers you bookmarked/saved for later
+- Status of each saved post (in progress, completed, archived)
+
+#### Notification Settings (`notification_settings.csv`)
+- Your global notification preferences
+
+#### Conversation Participations (`conversation_participations.csv`)
+- All conversations you are a member of (channels, group chats, direct messages)
+- Your role in each conversation (moderator status)
+- Conversation preferences (muted, hidden, favorited)
+
+#### Tutorial Group Registrations (`tutorial_group_registrations.csv`)
+If tutorial groups are enabled:
+- Tutorial groups you are enrolled in
+- Course associations
+- Registration type (instructor-registered or self-enrolled)
+
+#### AI Tutor Interactions (`iris_chat_sessions.json`)
+If Iris (AI tutor) is enabled:
+- All chat sessions with the AI tutor
+- Messages exchanged (both your questions and AI responses)
+- Timestamps and feedback provided
+
+#### Learner Profiles (`learner_profiles.csv`)
+If learning analytics is enabled:
+- Your learning preferences per course
+- Goal orientation settings
+- Time investment preferences
+- Repetition intensity settings
+
+#### Competency Progress (`competency_progress.csv`)
+If competency-based learning is enabled:
+- Your progress on each competency
+- Confidence levels
+- Last modification timestamps
+
+#### Science Events (`science_events.csv`)
+If science/analytics tracking is enabled:
+- Learning events (opening lectures, exercises, etc.)
+- Timestamps of activities
+
+#### Plagiarism Cases
+If you were involved in plagiarism cases:
+- Case details and verdicts
+- Associated evidence
+
+### Additional Information
+
+The export also includes a `README.md` file with information about:
+- Purposes of data processing
+- Categories of personal data
+- Recipients of your data
+- Data storage period
+- Your rights under GDPR
+- Source of personal data
+- Information about automatic decision-making

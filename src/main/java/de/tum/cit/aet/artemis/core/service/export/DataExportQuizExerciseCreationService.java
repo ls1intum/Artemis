@@ -177,7 +177,7 @@ public class DataExportQuizExerciseCreationService {
                         + quizExercise.getId() + ". Won't export this participation.");
                 continue;
             }
-            boolean successful = createQuizAnswersExport(quizExercise, participation, outputDir, true, Optional.ofNullable(exportErrors));
+            boolean successful = createQuizAnswersExport(quizExercise, participation, outputDir, true, Optional.of(exportErrors));
             if (successful) {
                 successfulExports++;
             }

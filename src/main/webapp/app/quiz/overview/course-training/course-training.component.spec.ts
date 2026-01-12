@@ -1,7 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingComponent } from './course-training.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideHttpClient } from '@angular/common/http';
@@ -10,8 +11,11 @@ import { LeaderboardService } from './course-training-quiz/leaderboard/service/l
 import { LeaderboardDTO, LeaderboardEntry, LeaderboardSettingsDTO } from './course-training-quiz/leaderboard/leaderboard-types';
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
 import dayjs from 'dayjs/esm';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseTrainingComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CourseTrainingComponent;
     let fixture: ComponentFixture<CourseTrainingComponent>;
     let leaderboardService: LeaderboardService;
@@ -36,13 +40,16 @@ describe('CourseTrainingComponent', () => {
         currentTime: new Date(Date.now()).toISOString(),
     };
 
-    beforeEach(async () => {
-        await MockBuilder(CourseTrainingComponent)
-            .keep(Router)
-            .provide([
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [CourseTrainingComponent],
+            providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                Router,
+                LeaderboardService,
                 { provide: LocationStrategy, useClass: PathLocationStrategy },
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -51,19 +58,22 @@ describe('CourseTrainingComponent', () => {
                         },
                     },
                 },
-            ]);
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                leaderboardService = TestBed.inject(LeaderboardService);
+                vi.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
+                vi.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true } as LeaderboardSettingsDTO);
 
-        leaderboardService = TestBed.inject(LeaderboardService);
-        jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
-        jest.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true } as LeaderboardSettingsDTO);
-
-        fixture = TestBed.createComponent(CourseTrainingComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+                fixture = TestBed.createComponent(CourseTrainingComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should extract courseId from route params', () => {
@@ -72,23 +82,23 @@ describe('CourseTrainingComponent', () => {
 
     it('should navigate to quiz', () => {
         const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         component.navigateToTraining();
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training', 'quiz']);
     });
 
     it('should load leaderboard data on initialization', async () => {
-        const leaderboardSpy = jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
+        const leaderboardSpy = vi.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
 
         await component.loadLeaderboard(1);
 
         expect(leaderboardSpy).toHaveBeenCalledWith(1);
         expect(component.leaderboardEntries()).toEqual([mockLeaderboardEntry]);
         expect(component.currentUserEntry()).toEqual(mockLeaderboardEntry);
-        expect(component.isLoading()).toBeFalse();
-        expect(component.isDataLoaded()).toBeTrue();
-        expect(component.showDialog).toBeFalse();
-        expect(component.isFirstVisit()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
+        expect(component.isDataLoaded()).toBe(true);
+        expect(component.showDialog).toBe(false);
+        expect(component.isFirstVisit()).toBe(false);
     });
 
     it('should calculate league based on user entry', () => {
@@ -121,8 +131,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeTrue();
-        expect(dueIn.isPast).toBeFalse();
+        expect(dueIn.isValid).toBe(true);
+        expect(dueIn.isPast).toBe(false);
         expect(dueIn.days).toBe(2);
         expect(dueIn.hours).toBe(3);
     });
@@ -137,8 +147,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeTrue();
-        expect(dueIn.isPast).toBeTrue();
+        expect(dueIn.isValid).toBe(true);
+        expect(dueIn.isPast).toBe(true);
     });
 
     it('should handle undefined due date', () => {
@@ -149,8 +159,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeFalse();
-        expect(dueIn.isPast).toBeFalse();
+        expect(dueIn.isValid).toBe(false);
+        expect(dueIn.isPast).toBe(false);
         expect(dueIn.days).toBe(0);
         expect(dueIn.hours).toBe(0);
         expect(dueIn.minutes).toBe(0);
@@ -166,8 +176,8 @@ describe('CourseTrainingComponent', () => {
         });
 
         const dueIn = component.dueIn();
-        expect(dueIn.isValid).toBeTrue();
-        expect(dueIn.isPast).toBeTrue();
+        expect(dueIn.isValid).toBe(true);
+        expect(dueIn.isPast).toBe(true);
         expect(dueIn.days).toBe(0);
         expect(dueIn.hours).toBe(0);
         expect(dueIn.minutes).toBe(0);
@@ -194,14 +204,14 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should save leaderboard settings', async () => {
-        const saveSpy = jest.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
-        const loadSpy = jest.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
+        const saveSpy = vi.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
+        const loadSpy = vi.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
 
         component.showInLeaderboard = true;
         component.isFirstVisit.set(true);
         await component.onSaveDialog();
 
-        expect(component.isFirstVisit()).toBeFalse();
+        expect(component.isFirstVisit()).toBe(false);
         expect(saveSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 showInLeaderboard: true,
@@ -211,40 +221,40 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle error when saving leaderboard settings', async () => {
-        jest.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+        vi.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
 
         component.isLoading.set(true);
         await component.onSaveDialog();
 
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should load settings and open info dialog', async () => {
-        const getSettingsSpy = jest.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true });
+        const getSettingsSpy = vi.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true });
 
         await component.showInfoDialog();
 
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
         expect(getSettingsSpy).toHaveBeenCalled();
-        expect(component.showInLeaderboard).toBeTrue();
-        expect(component.initialShowInLeaderboard()).toBeTrue();
-        expect(component.displayInfoDialog).toBeTrue();
+        expect(component.showInLeaderboard).toBe(true);
+        expect(component.initialShowInLeaderboard()).toBe(true);
+        expect(component.displayInfoDialog).toBe(true);
     });
 
     it('should handle error when loading settings for info dialog', async () => {
-        jest.spyOn(leaderboardService, 'getSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+        vi.spyOn(leaderboardService, 'getSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
 
         component.displayInfoDialog = false;
         component.isLoading.set(true);
         await component.showInfoDialog();
 
-        expect(component.isLoading()).toBeFalse();
-        expect(component.displayInfoDialog).toBeFalse();
+        expect(component.isLoading()).toBe(false);
+        expect(component.displayInfoDialog).toBe(false);
     });
 
     it('should save info dialog settings and reload leaderboard', async () => {
-        const updateSettingsSpy = jest.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
-        const loadLeaderboardSpy = jest.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
+        const updateSettingsSpy = vi.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
+        const loadLeaderboardSpy = vi.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
 
         component.showInLeaderboard = false;
         component.displayInfoDialog = true;
@@ -255,19 +265,19 @@ describe('CourseTrainingComponent', () => {
                 showInLeaderboard: false,
             }),
         );
-        expect(component.initialShowInLeaderboard()).toBeFalse();
-        expect(component.displayInfoDialog).toBeFalse();
+        expect(component.initialShowInLeaderboard()).toBe(false);
+        expect(component.displayInfoDialog).toBe(false);
         expect(loadLeaderboardSpy).toHaveBeenCalledWith(1);
     });
 
     it('should handle error when saving info dialog settings', async () => {
-        jest.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+        vi.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
 
         component.displayInfoDialog = true;
         component.isLoading.set(true);
         await component.onSaveInfoDialog();
 
-        expect(component.isLoading()).toBeFalse();
-        expect(component.displayInfoDialog).toBeTrue();
+        expect(component.isLoading()).toBe(false);
+        expect(component.displayInfoDialog).toBe(true);
     });
 });

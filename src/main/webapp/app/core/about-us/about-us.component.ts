@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
@@ -11,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
     styleUrls: ['./about-us.component.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class AboutUsComponent implements OnInit {
     private profileService = inject(ProfileService);

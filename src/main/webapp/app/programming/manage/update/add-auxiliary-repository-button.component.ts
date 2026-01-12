@@ -25,7 +25,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
 
-    @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
+    @Output() onRefresh: EventEmitter<void> = new EventEmitter<void>();
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.

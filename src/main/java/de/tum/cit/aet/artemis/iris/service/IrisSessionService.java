@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
@@ -81,7 +80,7 @@ public class IrisSessionService {
      */
     public void checkIsIrisActivated(IrisSession session) {
         var wrapper = getIrisSessionSubService(session);
-        wrapper.irisSubFeatureInterface.checkIsFeatureActivatedFor(wrapper.irisSession);
+        wrapper.irisSubFeatureInterface.checkIrisEnabledFor(wrapper.irisSession);
     }
 
     /**
@@ -104,17 +103,32 @@ public class IrisSessionService {
     }
 
     /**
+     * @param session The session to get a message for
+     * @param <S>     The type of the session
+     * @see #requestMessageFromIris(IrisSession, Map)
+     */
+    public <S extends IrisSession> void requestMessageFromIris(S session) {
+        requestMessageFromIris(session, Map.of());
+    }
+
+    /**
      * Sends a request to Iris to get a message for the given session.
      * It decides which Iris subsystem should handle it based on the session type.
      *
-     * @param session The session to get a message for
-     * @param <S>     The type of the session
+     * @param session          The session to get a message for
+     * @param uncommittedFiles The uncommitted files from the client
+     * @param <S>              The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            if (!uncommittedFiles.isEmpty() && session instanceof IrisProgrammingExerciseChatSession programmingSession) {
+                irisExerciseChatSessionService.requestAndHandleResponseWithUncommittedChanges(programmingSession, uncommittedFiles);
+            }
+            else {
+                chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            }
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());
@@ -149,9 +163,14 @@ public class IrisSessionService {
      */
     public void checkRateLimit(IrisSession session, User user) {
         var wrapper = getIrisSessionSubService(session);
-        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface rateLimitedWrapper) {
-            rateLimitedWrapper.checkRateLimit(user);
+        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface<?> rateLimitedWrapper) {
+            invokeRateLimitCheck(rateLimitedWrapper, wrapper.irisSession, user);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <S extends IrisSession> void invokeRateLimitCheck(IrisRateLimitedFeatureInterface<S> rateLimitedWrapper, IrisSession session, User user) {
+        rateLimitedWrapper.checkRateLimit(user, (S) session);
     }
 
     /**
@@ -187,26 +206,12 @@ public class IrisSessionService {
      * @return A list of all IrisChatSessionsDTOs for a course
      */
     public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, Long userId) {
-        var settings = irisSettingsService.getCombinedIrisSettingsForCourse(course.getId(), true);
-        List<Class<? extends IrisChatSession>> enabledTypes = new ArrayList<>();
-
-        if (settings.irisTextExerciseChatSettings().enabled()) {
-            enabledTypes.add(IrisTextExerciseChatSession.class);
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
+            return List.of();
         }
 
-        if (settings.irisProgrammingExerciseChatSettings().enabled()) {
-            enabledTypes.add(IrisProgrammingExerciseChatSession.class);
-        }
-
-        if (settings.irisCourseChatSettings().enabled()) {
-            enabledTypes.add(IrisCourseChatSession.class);
-        }
-
-        if (settings.irisLectureChatSettings().enabled()) {
-            enabledTypes.add(IrisLectureChatSession.class);
-        }
-
-        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(),
-                dao.entityId(), dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode())).toList();
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
+                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode())).toList();
     }
 }

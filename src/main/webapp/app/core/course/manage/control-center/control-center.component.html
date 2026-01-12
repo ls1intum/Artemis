@@ -1,10 +1,12 @@
 @if (course().isAtLeastInstructor && this.irisEnabled()) {
-    <jhi-card-wrapper title="entity.controlCenter">
-        <div class="d-flex justify-content-center align-items-center mt-n1 pt-2 pb-1 mb-3">
-            <fa-icon [icon]="faRobot" class="me-2" size="lg" />
-            <h5 class="mb-0 me-2 fw-bold" jhiTranslate="artemisApp.iris.settings.button.course.title"></h5>
-            <jhi-help-icon text="artemisApp.iris.controlCenter.tooltip" class="ms-1" />
+    <div class="card mb-3 w-100" style="max-width: 50rem; min-height: 90%">
+        <h5 class="card-header mb-3 d-flex align-items-center">
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+            <span jhiTranslate="artemisApp.iris.settings.button.course.title" class="ms-2 flex-grow-1"></span>
+            <jhi-help-icon text="artemisApp.iris.controlCenter.tooltip" class="ms-2" />
+        </h5>
+        <div class="card-body">
+            <jhi-iris-enabled [course]="course()" />
         </div>
-        <jhi-iris-enabled [course]="course()" [irisSubSettingsType]="IrisSubSettingsType.ALL" [showCustomButton]="true" />
-    </jhi-card-wrapper>
+    </div>
 }

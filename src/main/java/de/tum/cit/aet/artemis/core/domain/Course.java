@@ -119,6 +119,7 @@ public class Course extends DomainObject {
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
+    // TODO: move this into a separate entity to avoid it is loaded whenever the course is loaded
     @Column(name = "info_sharing_messaging_code_of_conduct")
     private String courseInformationSharingMessagingCodeOfConduct;
 

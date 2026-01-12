@@ -16,31 +16,33 @@ describe('DetailOverviewNavigationBar', () => {
     let component: DetailOverviewNavigationBarComponent;
     let fixture: ComponentFixture<DetailOverviewNavigationBarComponent>;
 
-    let getElementByIdSpy: jest.SpyInstance;
-
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                getElementByIdSpy = jest.spyOn(document, 'getElementById').mockReturnValue(headlineToScrollInto);
-            });
+        }).compileComponents();
 
         fixture = TestBed.createComponent(DetailOverviewNavigationBarComponent);
         component = fixture.componentInstance;
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should initialize', () => {
         component.sectionHeadlines = sectionHeadlines;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(DetailOverviewNavigationBarComponent).not.toBeNull();
     });
 
     it('should scroll into view', () => {
+        // Mock getElementById only for this test, after component is created
+        const getElementByIdSpy = jest.spyOn(document, 'getElementById').mockReturnValue(headlineToScrollInto);
         const scrollIntroViewSpy = jest.spyOn(headlineToScrollInto, 'scrollIntoView');
+
         component.sectionHeadlines = sectionHeadlines;
         component.scrollToView('general');
+
         expect(getElementByIdSpy).toHaveBeenCalledWith('general');
         expect(scrollIntroViewSpy).toHaveBeenCalledOnce();
     });

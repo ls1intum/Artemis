@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ContentChild, OnChanges, SimpleChanges, TemplateRef, inject, input } from '@angular/core';
+import { Component, TemplateRef, contentChild, effect, inject, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
@@ -38,15 +38,14 @@ import { addPublicFilePrefix } from 'app/app.constants';
         ArtemisTranslatePipe,
     ],
 })
-export class ManagementTutorialGroupDetailComponent implements OnChanges {
+export class ManagementTutorialGroupDetailComponent {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private artemisMarkdownService = inject(ArtemisMarkdownService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private sortService = inject(SortService);
 
-    @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;
+    readonly header = contentChild<TemplateRef<any>>(TemplateRef);
 
     readonly timeZone = input<string>();
     readonly tutorialGroup = input.required<TutorialGroup>();
@@ -70,21 +69,19 @@ export class ManagementTutorialGroupDetailComponent implements OnChanges {
     readonly faCircle = faCircle;
     readonly faCircleXmark = faCircleXmark;
 
-    ngOnChanges(changes: SimpleChanges) {
-        for (const propName in changes) {
-            if (changes.hasOwnProperty(propName) && propName === 'tutorialGroup') {
-                const change = changes[propName];
-
-                if (change.currentValue && change.currentValue.additionalInformation) {
-                    this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup().additionalInformation);
+    constructor() {
+        effect(() => {
+            const group = this.tutorialGroup();
+            if (group) {
+                if (group.additionalInformation) {
+                    this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(group.additionalInformation);
                 }
-                if (change.currentValue && change.currentValue.tutorialGroupSessions) {
-                    this.sessions = change.currentValue.tutorialGroupSessions;
+                if (group.tutorialGroupSessions) {
+                    this.sessions = group.tutorialGroupSessions;
                 }
-                this.changeDetectorRef.detectChanges();
+                this.getTutorialDetail();
             }
-        }
-        this.getTutorialDetail();
+        });
     }
 
     private getTutorialDetail() {

@@ -1,0 +1,122 @@
+---
+id: tutorial-groups
+title: Tutorial Groups
+sidebar_label: Tutorial Groups
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import instructorTutGroupButtonImg from './assets/tutorial-groups/instructors-tutorial-group-button.png';
+import instructorsChecklistImg from './assets/tutorial-groups/instructors-checklist.png';
+import instructorsCreateGroupsImg from './assets/tutorial-groups/instructors-create-groups.png';
+import instructorsTutGroupFormImg from './assets/tutorial-groups/instructors-tutorial-group-form.png';
+import instructorsCsvImportImg from './assets/tutorial-groups/instructors-csv-import.png';
+import instructorsHolidaysImg from './assets/tutorial-groups/instructors-holidays.png';
+import tutorOverviewImg from './assets/tutorial-groups/tutor-overview.png';
+import tutorRegistrationsImg from './assets/tutorial-groups/tutor-registrations.png';
+import tutorSessionsImg from './assets/tutorial-groups/tutor-sessions.png';
+
+# Tutorial Groups
+
+## Overview
+
+Artemis facilitates the coordination of tutorial groups in a course. Tutorial groups are a learning strategy where students teach and learn from each other in small groups (20-30). In this strategy, proficient students act as tutors and lead the groups. The tutor and the group members usually meet weekly either on campus or online. Students present their solutions to homework assignments or other tasks and receive feedback and suggestions from the tutor and their peers.
+
+<Callout variant={CalloutVariant.info}>
+    <p>The tutorial group overview page (used by students) displays dates in the student's current time zone. The tutorial group management page (used by instructors and tutors to manage groups and their sessions) displays dates in the course time zone. This is helpful if the instructors or tutors travel and work across multiple time zones. A header at the top of the page shows the current time zone used for dates.</p>
+</Callout>
+
+## Setting up Tutorial Group Plan as an Instructor
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/27045?video_only=1&t=0"
+    title="Setting up Tutorial Groups as Instructor"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+/>
+
+Tutorial groups can be managed by instructors by navigating to the course's  <code>Tutorial Groups</code> page in the course administration section.
+
+<Image src={instructorTutGroupButtonImg} alt={"instructors-button"} size={ImageSize.large} />
+
+## Initial Configuration
+
+Before the tutorial group feature can be used, three configurations need to be set up:
+
+* **Time zone information:** This ensures that the tutorial group meeting times are displayed correctly for each student and instructor.
+
+* **Default tutorial group period:** This is the semester period when the groups usually meet. It is used to prefill the meeting period when creating a new tutorial group. The tutorial group period can be changed later on for each group individually.
+
+* **Artemis managed tutorial group channels:** This option allows Artemis to create and manage a dedicated channel for each tutorial group in the 'Communication' section of the course. This feature is only selectable if the course has the <code>Communication</code> feature enabled in the course settings. If activated, tutorial group channels can still be managed manually but Artemis automatically performs some common tasks, such as:
+
+* Adding and removing students from the channel when they register or unregister for the tutorial group
+
+* Making the assigned tutor a moderator of the channel
+
+* Deleting the channel when the tutorial group is deleted
+
+If not all of these configurations are done, the instructor will see a checklist page with the missing configurations. These configurations can also be changed later in the <code>Global Configuration</code> section of the tutorial group page. A link to this section is hidden behind the <code>More...</code> button.
+
+<Image src={instructorsChecklistImg} alt={"instructors-checklist"} size={ImageSize.large} />
+
+## Creating Tutorial Groups
+
+Tutorial groups can be created manually or by importing a CSV file. Importing a CSV file is a convenient option if the tutorial groups and student assignments already exist in a campus management system (e.g. TUM-Online). This way, both the groups and the assignments (student to tutorial group) can be created at once.
+
+<Image src={instructorsCreateGroupsImg} alt={"instructors-create-groups"} size={ImageSize.large} />
+
+The assigned tutor and the session schedule are the most important settings of a tutorial group. The tutor holds the sessions, tracks the number of attending students, and gives feedback to the students. The tutor can also register or unregister students and edit the sessions by cancelling or rescheduling them. The meeting schedule shows the regular times of the sessions during the semester. It is used to create the individual sessions automatically.
+
+<Image src={instructorsTutGroupFormImg} alt={"instructors-tutorial-group-form"} size={ImageSize.large} />
+<Image src={instructorsCsvImportImg} alt={"instructors-csv-import"} size={ImageSize.large} />
+
+## Defining Tutorial Group Free Days
+
+By clicking on the <code>Holidays</code> button, the instructor can define course-wide days where no tutorial group sessions are held (no matter which tutorial group). If such a day overlaps with a tutorial group session, the session is automatically cancelled and the holiday given as the reason.
+
+<Image src={instructorsHolidaysImg} alt={"instructors-holidays"} size={ImageSize.large} />
+
+## Managing Tutorial Groups as a Tutor
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/27044?video_only=1&t=0"
+    title="Managing Tutorial Groups as Tutor"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+/>
+
+Assigned tutors can manage their tutorial groups by navigating to the course's <code>Tutorial Groups</code> page in the course administration section. The tutor can view the group's details, register or unregister students, and edit the sessions by cancelling or rescheduling them. The tutor also has moderation rights in the tutorial group's channel in the <code>Messages</code> section of the course if the <code>Artemis managed tutorial group channels</code> feature is enabled in the tutorial group settings.
+
+The groups for which the tutor is responsible have a blue background.
+
+<Callout variant={CalloutVariant.info}>
+    <p>The instructor can perform the same actions as the tutor for all tutorial groups in the course. The tutor can only manage the tutorial groups that they are assigned to.</p>
+</Callout>
+
+<Image src={tutorOverviewImg} alt={"tutor-overview"} size={ImageSize.large} />
+
+## Managing the Registration of a Tutorial Group
+
+By clicking on the <code>Registered Students</code> button, the tutor can view the list of students that are registered for the tutorial group. From this list, the tutor can register or unregister students for the tutorial group. Only users that are enrolled in the course can be registered for a tutorial group.
+
+<Callout variant={CalloutVariant.info}>
+    <p>An instructor can also import student registrations from a CSV file and export the list of registered students as a CSV file. Extra buttons for these actions are available in the <code>Registered Students</code> page of the tutorial group page for instructors.</p>
+</Callout>
+
+<Image src={tutorRegistrationsImg} alt={"tutor-registrations"} size={ImageSize.large} />
+
+## Managing the Sessions of a Tutorial Group
+
+By clicking on the <code>Sessions</code> button, the tutor can view the list of sessions that are scheduled for the tutorial group. From this list, the tutor can cancel or reschedule sessions. The tutor can also create new sessions by clicking on the <code>Create New Tutorial Group Session</code> button. Furthermore, the tutor can enter the number of attending students for each session. This information is used to calculate the utilization of the tutorial group.
+
+<Callout variant={CalloutVariant.info}>
+    <p>The utilization of a tutorial group is the average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with one or two sessions.</p>
+</Callout>
+
+<Image src={tutorSessionsImg} alt={"tutor-sessions"} size={ImageSize.large} />

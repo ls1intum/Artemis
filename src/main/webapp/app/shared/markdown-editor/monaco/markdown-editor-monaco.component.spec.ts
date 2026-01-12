@@ -53,7 +53,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
-        comp.initialEditorHeight = 'external';
+        comp.externalHeight = true;
         comp.domainActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
         fileUploaderService = TestBed.inject(FileUploaderService);
     });
@@ -261,14 +261,15 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should pass the entire element to the fullscreen action for external height', () => {
-        comp.initialEditorHeight = 'external';
+        comp.externalHeight = true;
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
         expect(fullscreenAction.element).toBe(comp.fullElement.nativeElement);
     });
 
-    it('should pass the wrapper element to the fullscreen action for a set initial height', () => {
+    it('should pass the wrapper element to the fullscreen action when height is managed internally', () => {
+        comp.externalHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
@@ -282,6 +283,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should not react to content height changes if the height is not liked to the editor size', () => {
+        comp.externalHeight = false;
         comp.linkEditorHeightToContentHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
         fixture.detectChanges();
@@ -291,6 +293,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should not react to content height changes if file upload is enabled but the footer has not loaded', () => {
+        comp.externalHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.SMALL;
         jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(0);
         comp.enableFileUpload = true;
@@ -304,6 +307,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should react to content height changes if the height is linked to the editor', () => {
+        comp.externalHeight = false;
         jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(20);
         comp.linkEditorHeightToContentHeight = true;
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
@@ -316,6 +320,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should adjust the wrapper height when resized manually', () => {
+        comp.externalHeight = false;
         const cdkDragMove = { source: { reset: jest.fn() }, pointerPosition: { y: 300 } } as unknown as CdkDragMove;
         const wrapperTop = 100;
         const dragElemHeight = 20;

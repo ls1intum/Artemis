@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -6,6 +8,44 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { signal } from '@angular/core';
+
+// Mock canvas 2d context for jsdom
+function createMockContext() {
+    return {
+        clearRect: vi.fn(),
+        drawImage: vi.fn(),
+        fillRect: vi.fn(),
+        fillText: vi.fn(),
+        strokeRect: vi.fn(),
+        getImageData: vi.fn(),
+        putImageData: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        scale: vi.fn(),
+        translate: vi.fn(),
+        rotate: vi.fn(),
+        transform: vi.fn(),
+        setTransform: vi.fn(),
+        beginPath: vi.fn(),
+        closePath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        stroke: vi.fn(),
+        fill: vi.fn(),
+        arc: vi.fn(),
+        rect: vi.fn(),
+        clip: vi.fn(),
+    };
+}
+
+function createMockCanvas(width = 500, height = 400): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const mockContext = createMockContext();
+    vi.spyOn(canvas, 'getContext').mockReturnValue(mockContext as unknown as CanvasRenderingContext2D);
+    return canvas;
+}
 
 function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
     const event = new MouseEvent(eventType, {
@@ -18,6 +58,8 @@ function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
 }
 
 describe('PdfPreviewEnlargedCanvasComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PdfPreviewEnlargedCanvasComponent;
     let fixture: ComponentFixture<PdfPreviewEnlargedCanvasComponent>;
     let mockCanvasElement: HTMLCanvasElement;
@@ -25,11 +67,12 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
     let mockContainer: HTMLDivElement;
 
     beforeEach(async () => {
+        vi.useFakeTimers();
         await TestBed.configureTestingModule({
             imports: [PdfPreviewEnlargedCanvasComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: { data: of({}) } },
-                { provide: AlertService, useValue: { error: jest.fn() } },
+                { provide: AlertService, useValue: { error: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -37,15 +80,15 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
         fixture = TestBed.createComponent(PdfPreviewEnlargedCanvasComponent);
         component = fixture.componentInstance;
 
-        mockEnlargedCanvas = document.createElement('canvas');
+        mockEnlargedCanvas = createMockCanvas();
         component.enlargedCanvas = signal({ nativeElement: mockEnlargedCanvas });
 
         mockContainer = document.createElement('div');
         fixture.componentRef.setInput('pdfContainer', mockContainer);
 
-        mockCanvasElement = document.createElement('canvas');
+        mockCanvasElement = createMockCanvas();
 
-        const mockOriginalCanvas = document.createElement('canvas');
+        const mockOriginalCanvas = createMockCanvas();
         mockOriginalCanvas.id = 'canvas-3';
         fixture.componentRef.setInput('originalCanvas', mockOriginalCanvas);
 
@@ -53,13 +96,14 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
+        vi.useRealTimers();
     });
 
     describe('Keyboard Navigation', () => {
         it('should navigate through pages using keyboard in enlarged view', () => {
             component.isEnlargedViewOutput.emit(true);
-            const mockCanvas = document.createElement('canvas');
+            const mockCanvas = createMockCanvas();
             mockCanvas.id = 'canvas-3';
             fixture.componentRef.setInput('originalCanvas', mockCanvas);
             fixture.componentRef.setInput('totalPages', 5);
@@ -91,8 +135,8 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
         });
 
         it('should stop event propagation and navigate pages', () => {
-            const navigateSpy = jest.spyOn(component, 'navigatePages');
-            const eventMock = { stopPropagation: jest.fn() } as unknown as MouseEvent;
+            const navigateSpy = vi.spyOn(component, 'navigatePages');
+            const eventMock = { stopPropagation: vi.fn() } as unknown as MouseEvent;
 
             component.handleNavigation('next', eventMock);
 
@@ -141,8 +185,8 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             mockCanvasElement.height = 400;
 
             const mockContext = mockEnlargedCanvas.getContext('2d')!;
-            jest.spyOn(mockContext, 'clearRect');
-            jest.spyOn(mockContext, 'drawImage');
+            vi.spyOn(mockContext, 'clearRect');
+            vi.spyOn(mockContext, 'drawImage');
 
             component.resizeCanvas(mockCanvasElement, 2);
             component.redrawCanvas(mockCanvasElement);
@@ -167,7 +211,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             component.isEnlargedViewOutput.emit(false);
             component.currentPage.set(3);
 
-            const spy = jest.spyOn(component, 'updateEnlargedCanvas');
+            const spy = vi.spyOn(component, 'updateEnlargedCanvas');
             component.adjustCanvasSize();
 
             expect(spy).not.toHaveBeenCalled();
@@ -180,7 +224,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             target.classList.add('enlarged-container');
             const mockEvent = createMockEvent(target);
 
-            const closeSpy = jest.fn();
+            const closeSpy = vi.fn();
             component.isEnlargedViewOutput.subscribe(closeSpy);
 
             component.closeIfOutside(mockEvent);
@@ -192,7 +236,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             const mockEvent = createMockEvent(mockEnlargedCanvas);
             component.isEnlargedViewOutput.emit(true);
 
-            const closeSpy = jest.spyOn(component, 'closeEnlargedView');
+            const closeSpy = vi.spyOn(component, 'closeEnlargedView');
 
             component.closeIfOutside(mockEvent as unknown as MouseEvent);
             expect(closeSpy).not.toHaveBeenCalled();
