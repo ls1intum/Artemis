@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -54,7 +54,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
             <ng-template pTemplate="footer">
                 <div class="d-flex justify-content-end gap-2">
                     <button pButton severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-                    <button pButton [disabled]="!selectedUserLogin || isSubmitting()" (click)="submit()">
+                    <button pButton [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()">
                         @if (isSubmitting()) {
                             <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
                         }
@@ -71,16 +71,16 @@ export class AdminDataExportCreateModalComponent {
     private readonly alertService = inject(AlertService);
 
     /** Controls the visibility of the dialog */
-    visible = signal(false);
+    readonly visible = signal(false);
 
     /** The login of the selected user (bound to user search component) */
-    selectedUserLogin = '';
+    readonly selectedUserLogin = model('');
 
     /** Whether to execute the export immediately vs scheduling it */
-    executeNow = false;
+    readonly executeNow = model(false);
 
     /** Signal indicating whether a submission is in progress */
-    isSubmitting = signal(false);
+    readonly isSubmitting = signal(false);
 
     /** Callback function to be called when export is created successfully */
     private onSuccess?: () => void;
@@ -94,8 +94,8 @@ export class AdminDataExportCreateModalComponent {
      */
     open(onSuccess?: () => void): void {
         this.onSuccess = onSuccess;
-        this.selectedUserLogin = '';
-        this.executeNow = false;
+        this.selectedUserLogin.set('');
+        this.executeNow.set(false);
         this.isSubmitting.set(false);
         this.visible.set(true);
     }
@@ -118,23 +118,24 @@ export class AdminDataExportCreateModalComponent {
      * On failure, shows an error alert and keeps the dialog open.
      */
     submit(): void {
-        if (!this.selectedUserLogin) {
+        const login = this.selectedUserLogin();
+        if (!login) {
             return;
         }
 
         this.isSubmitting.set(true);
-        this.adminDataExportsService.requestDataExportForUser(this.selectedUserLogin, this.executeNow).subscribe({
+        this.adminDataExportsService.requestDataExportForUser(login, this.executeNow()).subscribe({
             next: () => {
-                if (this.executeNow) {
-                    this.alertService.success('artemisApp.dataExport.admin.createSuccessImmediate', { login: this.selectedUserLogin });
+                if (this.executeNow()) {
+                    this.alertService.success('artemisApp.dataExport.admin.createSuccessImmediate', { login });
                 } else {
-                    this.alertService.success('artemisApp.dataExport.admin.createSuccessScheduled', { login: this.selectedUserLogin });
+                    this.alertService.success('artemisApp.dataExport.admin.createSuccessScheduled', { login });
                 }
                 this.visible.set(false);
                 this.onSuccess?.();
             },
             error: () => {
-                this.alertService.error('artemisApp.dataExport.admin.createError', { login: this.selectedUserLogin });
+                this.alertService.error('artemisApp.dataExport.admin.createError', { login });
                 this.isSubmitting.set(false);
             },
         });

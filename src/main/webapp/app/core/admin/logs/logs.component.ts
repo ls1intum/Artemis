@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/core/admin/logs/log.model';
 import { LogsService } from 'app/core/admin/logs/logs.service';
@@ -19,7 +19,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
     templateUrl: './logs.component.html',
     styleUrls: ['./logs.component.scss'],
     imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe, AdminTitleBarTitleDirective],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LogsComponent implements OnInit {
     private readonly logsService = inject(LogsService);

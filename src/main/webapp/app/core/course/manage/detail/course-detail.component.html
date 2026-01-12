@@ -1,9 +1,9 @@
 <div class="row justify-content-center">
-    @if (course) {
+    @if (course()) {
         <div class="d-flex flex-column flex-md-row p-2">
-            <jhi-quick-actions [course]="course" class="mb-md-0 me-md-3" style="min-height: 13rem" />
+            <jhi-quick-actions [course]="course()!" class="mb-md-0 me-md-3" style="min-height: 13rem" />
 
-            <jhi-control-center [course]="course" [irisEnabled]="irisEnabled" style="min-height: 13rem" />
+            <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" style="min-height: 13rem" />
         </div>
         <div class="col-12">
             <div class="row">
@@ -11,56 +11,56 @@
                     <div class="row">
                         <jhi-course-detail-doughnut-chart
                             class="doughnut-container col-sm-6 my-3"
-                            [course]="course"
+                            [course]="course()!"
                             [contentType]="DoughnutChartType.ASSESSMENT"
-                            [currentPercentage]="courseDTO?.currentPercentageAssessments"
-                            [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
-                            [currentMax]="courseDTO?.currentMaxAssessments"
+                            [currentPercentage]="courseDTO()?.currentPercentageAssessments"
+                            [currentAbsolute]="courseDTO()?.currentAbsoluteAssessments"
+                            [currentMax]="courseDTO()?.currentMaxAssessments"
                         />
-                        @if (course.complaintsEnabled) {
+                        @if (course()!.complaintsEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
-                                [course]="course"
+                                [course]="course()!"
                                 [contentType]="DoughnutChartType.COMPLAINTS"
-                                [currentPercentage]="courseDTO?.currentPercentageComplaints"
-                                [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
-                                [currentMax]="courseDTO?.currentMaxComplaints"
+                                [currentPercentage]="courseDTO()?.currentPercentageComplaints"
+                                [currentAbsolute]="courseDTO()?.currentAbsoluteComplaints"
+                                [currentMax]="courseDTO()?.currentMaxComplaints"
                             />
                         }
-                        @if (course.requestMoreFeedbackEnabled) {
+                        @if (course()!.requestMoreFeedbackEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
-                                [course]="course"
+                                [course]="course()!"
                                 [contentType]="DoughnutChartType.FEEDBACK"
-                                [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
-                                [currentAbsolute]="courseDTO?.currentAbsoluteMoreFeedbacks"
-                                [currentMax]="courseDTO?.currentMaxMoreFeedbacks"
+                                [currentPercentage]="courseDTO()?.currentPercentageMoreFeedbacks"
+                                [currentAbsolute]="courseDTO()?.currentAbsoluteMoreFeedbacks"
+                                [currentMax]="courseDTO()?.currentMaxMoreFeedbacks"
                             />
                         }
                         <jhi-course-detail-doughnut-chart
                             class="doughnut-container col-sm-6 my-3"
-                            [course]="course"
+                            [course]="course()!"
                             [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
-                            [currentPercentage]="courseDTO?.currentPercentageAverageScore"
-                            [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"
-                            [currentMax]="courseDTO?.currentMaxAverageScore"
+                            [currentPercentage]="courseDTO()?.currentPercentageAverageScore"
+                            [currentAbsolute]="courseDTO()?.currentAbsoluteAverageScore"
+                            [currentMax]="courseDTO()?.currentMaxAverageScore"
                         />
-                        @if (this.irisChatEnabled || this.isAthenaEnabled) {
+                        @if (irisChatEnabled() || isAthenaEnabled()) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
-                                [course]="course"
+                                [course]="course()!"
                                 [contentType]="DoughnutChartType.CURRENT_LLM_COST"
-                                [showText]="courseDTO?.currentTotalLlmCostInEur + ' €'"
+                                [showText]="courseDTO()?.currentTotalLlmCostInEur + ' €'"
                                 [currentMax]="0"
                             />
                         }
                     </div>
                 </div>
-                <jhi-course-detail-line-chart class="col-xxl-8" [course]="course" [numberOfStudentsInCourse]="course.numberOfStudents!" />
+                <jhi-course-detail-line-chart class="col-xxl-8" [course]="course()!" [numberOfStudentsInCourse]="course()!.numberOfStudents!" />
             </div>
         </div>
     }
-    @if (courseDetailSections) {
-        <jhi-detail-overview-list [sections]="courseDetailSections" class="col-12" />
+    @if (courseDetailSections().length) {
+        <jhi-detail-overview-list [sections]="courseDetailSections()" class="col-12" />
     }
 </div>

@@ -258,5 +258,5 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 Production setup
 """"""""""""""""
 
-See `Hyperion Service <https://ls1intum.github.io/Artemis/admin/hyperion>`_ in the Administration Guide for instructions on enabling the
+See `Hyperion Service Administration Guide <https://ls1intum.github.io/Artemis/admin/hyperion>`_ for instructions on enabling the
 module in production and configuring LLM credentials.
