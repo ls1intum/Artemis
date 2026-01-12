@@ -451,7 +451,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 user.activated = isActivated;
                 this.loadAll();
             },
-            error: (err) => {
+            error: (err: any) => {
                 if (isErrorAlert(err)) {
                     return;
                 }
