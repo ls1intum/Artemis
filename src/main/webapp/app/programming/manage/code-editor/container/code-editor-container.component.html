@@ -74,7 +74,7 @@
                 [reviewCommentThreads]="reviewCommentThreads()"
                 [selectedAuxiliaryRepositoryId]="selectedAuxiliaryRepositoryId()"
                 [selectedFile]="selectedFile"
-                [selectedRepository]="selectedRepository"
+                [selectedRepository]="selectedRepository()"
                 [buildAnnotations]="annotations"
                 [sessionId]="participation?.id ?? 'test'"
                 [consistencyIssues]="consistencyIssues()"
@@ -90,6 +90,7 @@
                 (onToggleResolveReviewThread)="onToggleResolveReviewThread.emit($event)"
                 (onError)="onError($event)"
                 (onFileLoad)="fileLoad($event)"
+                (onEditorLoaded)="onEditorLoaded.emit()"
             />
         }
     </ng-container>
