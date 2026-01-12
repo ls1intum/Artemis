@@ -39,6 +39,16 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse, di
     }
 };
 
+/**
+ * Error alerts from the server do already have a user-friendly message defined via the errorKey which is handled by
+ * {@link AlertService}, we therefore do not want to show a generic error message in addition to that.
+ *
+ * @param error which was received
+ */
+export function isErrorAlert(error: any) {
+    return !!error.error?.errorKey;
+}
+
 export function getCurrentLocaleSignal(translateService: TranslateService): Signal<string> {
     return toSignal(translateService.onLangChange.pipe(map((event) => event.lang)), {
         initialValue: translateService.getCurrentLang(),
