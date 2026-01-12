@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, effect, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -16,13 +16,6 @@ export class ReviewCommentDraftWidgetComponent {
     readonly onCancel = output<void>();
 
     text = '';
-    readonly initialText = input<string>('');
-
-    constructor() {
-        effect(() => {
-            this.text = this.initialText();
-        });
-    }
 
     submit(): void {
         const trimmed = this.text.trim();

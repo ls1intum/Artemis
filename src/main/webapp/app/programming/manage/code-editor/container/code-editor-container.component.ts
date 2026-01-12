@@ -120,8 +120,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
     readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
     readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
-    @Output()
-    onAddReviewComment = new EventEmitter<{ lineNumber: number; fileName: string }>();
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     @Input()
     course?: Course;
 
@@ -131,10 +130,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     participation: Participation;
 
     /** END WIP */
-
-    onCommitAction(): void {
-        this.onCommit.emit();
-    }
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private selectedFileValue?: string;

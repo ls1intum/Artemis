@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/communication/shared/entities/exercise-review/comment.model';
-import { CommentThread, CreateCommentThread, UpdateThreadOutdatedState, UpdateThreadResolvedState } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
+import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
@@ -29,11 +29,6 @@ export class ExerciseReviewCommentService {
     updateThreadResolvedState(exerciseId: number, threadId: number, resolved: boolean): Observable<CommentThreadResponseType> {
         const body: UpdateThreadResolvedState = { resolved };
         return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/resolved`, body, { observe: 'response' });
-    }
-
-    updateThreadOutdatedState(exerciseId: number, threadId: number, outdated: boolean): Observable<CommentThreadResponseType> {
-        const body: UpdateThreadOutdatedState = { outdated };
-        return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/outdated`, body, { observe: 'response' });
     }
 
     updateCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {

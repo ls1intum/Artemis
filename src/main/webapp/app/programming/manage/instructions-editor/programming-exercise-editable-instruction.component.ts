@@ -267,26 +267,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
-    handleSubmitReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
-        this.onSubmitReviewComment.emit(event);
-    }
-
-    handleDeleteReviewComment(commentId: number): void {
-        this.onDeleteReviewComment.emit(commentId);
-    }
-
-    handleReplyReviewComment(event: { threadId: number; text: string }): void {
-        this.onReplyReviewComment.emit(event);
-    }
-
-    handleUpdateReviewComment(event: { commentId: number; text: string }): void {
-        this.onUpdateReviewComment.emit(event);
-    }
-
-    handleToggleResolveReviewThread(event: { threadId: number; resolved: boolean }): void {
-        this.onToggleResolveReviewThread.emit(event);
-    }
-
     /**
      * Signal that the markdown should be rendered into html.
      */

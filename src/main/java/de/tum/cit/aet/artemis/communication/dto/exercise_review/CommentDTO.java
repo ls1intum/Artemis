@@ -31,6 +31,6 @@ public record CommentDTO(Long id, Long threadId, Long authorId, String authorNam
         if (name != null && !name.isBlank()) {
             return name;
         }
-        return author.getLogin();
+        return null;
     }
 }

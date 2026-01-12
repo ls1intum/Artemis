@@ -192,21 +192,6 @@ public class ExerciseReviewCommentService {
     }
 
     /**
-     * Update the outdated flag of a thread.
-     *
-     * @param threadId the thread id
-     * @param outdated whether the thread is outdated
-     * @return the updated thread
-     */
-    public CommentThread updateThreadOutdatedState(long threadId, boolean outdated) {
-        CommentThread thread = findThreadByIdElseThrow(threadId);
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
-        thread.setOutdated(outdated);
-        CommentThread saved = commentThreadRepository.save(thread);
-        return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
-    }
-
-    /**
      * Update the content of a comment.
      *
      * @param commentId the comment id

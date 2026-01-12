@@ -40,7 +40,3 @@ export interface CreateCommentThread {
 export interface UpdateThreadResolvedState {
     resolved: boolean;
 }
-
-export interface UpdateThreadOutdatedState {
-    outdated: boolean;
-}

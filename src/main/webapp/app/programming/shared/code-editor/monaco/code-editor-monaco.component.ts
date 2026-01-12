@@ -40,7 +40,8 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/communication/exercise-review/review-comment-widget-manager';
-import { CommentThread, CommentThreadLocationType } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
+import { CommentThread } from 'app/communication/shared/entities/exercise-review/comment-thread.model';
+import { matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -498,7 +499,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
                 getDraftFileName: () => this.selectedFile(),
                 getThreads: () => this.reviewCommentThreads(),
-                filterThread: (thread) => thread.filePath === this.selectedFile() && this.matchesSelectedRepository(thread),
+                filterThread: (thread) =>
+                    thread.filePath === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
                 getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onSubmit: (payload) => this.onSubmitReviewComment.emit(payload),
@@ -510,30 +512,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             });
         }
         return this.reviewCommentManager;
-    }
-
-    private matchesSelectedRepository(thread: CommentThread): boolean {
-        const repository = this.selectedRepository();
-        switch (repository) {
-            case RepositoryType.SOLUTION:
-                return thread.targetType === CommentThreadLocationType.SOLUTION_REPO;
-            case RepositoryType.TESTS:
-                return thread.targetType === CommentThreadLocationType.TEST_REPO;
-            case RepositoryType.AUXILIARY: {
-                if (thread.targetType !== CommentThreadLocationType.AUXILIARY_REPO) {
-                    return false;
-                }
-                const auxiliaryId = this.selectedAuxiliaryRepositoryId();
-                if (auxiliaryId === undefined || auxiliaryId === null) {
-                    return true;
-                }
-                return thread.auxiliaryRepositoryId === auxiliaryId;
-            }
-            case RepositoryType.TEMPLATE:
-                return thread.targetType === CommentThreadLocationType.TEMPLATE_REPO;
-            default:
-                return false;
-        }
     }
 
     /**

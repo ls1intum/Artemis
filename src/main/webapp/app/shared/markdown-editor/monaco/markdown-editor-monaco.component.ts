@@ -767,12 +767,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     private isProblemStatementThread(thread: CommentThread): boolean {
-        if (thread.targetType !== CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return false;
-        }
-        if (!thread.filePath) {
-            return true;
-        }
-        return thread.filePath === PROBLEM_STATEMENT_FILE_PATH;
+        return thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
     }
 }

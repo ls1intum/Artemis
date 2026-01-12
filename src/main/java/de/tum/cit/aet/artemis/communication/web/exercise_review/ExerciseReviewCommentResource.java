@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.communication.dto.exercise_review.CommentThreadDTO
 import de.tum.cit.aet.artemis.communication.dto.exercise_review.CreateCommentDTO;
 import de.tum.cit.aet.artemis.communication.dto.exercise_review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.communication.dto.exercise_review.UpdateCommentContentDTO;
-import de.tum.cit.aet.artemis.communication.dto.exercise_review.UpdateThreadOutdatedStateDTO;
 import de.tum.cit.aet.artemis.communication.dto.exercise_review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.communication.service.exercise_review.ExerciseReviewCommentService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -144,23 +143,6 @@ public class ExerciseReviewCommentResource {
             @Valid @RequestBody UpdateThreadResolvedStateDTO dto) {
         log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
         CommentThread updated = exerciseReviewCommentService.updateThreadResolvedState(threadId, dto.resolved());
-        return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
-    }
-
-    /**
-     * PUT /exercises/:exerciseId/review-threads/:threadId/outdated : Update the outdated state of a thread.
-     *
-     * @param exerciseId the exercise id
-     * @param threadId   the thread id
-     * @param dto        the outdated state
-     * @return the updated thread
-     */
-    @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/outdated")
-    @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<CommentThreadDTO> updateThreadOutdatedState(@PathVariable long exerciseId, @PathVariable long threadId,
-            @Valid @RequestBody UpdateThreadOutdatedStateDTO dto) {
-        log.debug("REST request to update outdated state of thread {} for exercise {}", threadId, exerciseId);
-        CommentThread updated = exerciseReviewCommentService.updateThreadOutdatedState(threadId, dto.outdated());
         return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
     }
 

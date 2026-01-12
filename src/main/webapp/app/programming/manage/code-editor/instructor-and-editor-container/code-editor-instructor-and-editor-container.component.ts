@@ -113,7 +113,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         );
     }
 
-    onCommitReviewComments(): void {
+    onCommit(): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
             return;
@@ -319,89 +319,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     onSubmitReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-
         const targetType = this.mapRepositoryToThreadLocationType(this.selectedRepository);
-        const createThread: CreateCommentThread = {
-            targetType,
-            filePath: event.fileName,
-            initialFilePath: event.fileName,
-            lineNumber: event.lineNumber,
-            initialLineNumber: event.lineNumber,
-        };
-        if (this.selectedRepository === RepositoryType.AUXILIARY) {
-            createThread.auxiliaryRepositoryId = this.selectedRepositoryId;
-        }
-        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
-        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
-
-        this.exerciseReviewCommentService
-            .createThread(exerciseId, createThread)
-            .pipe(
-                map((response) => response.body),
-                switchMap((thread) => {
-                    if (!thread?.id) {
-                        return throwError(() => new Error('missingThreadId'));
-                    }
-                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
-                }),
-                tap(({ thread, comment }) => {
-                    if (!thread?.id || !comment) {
-                        return;
-                    }
-                    const newThread: CommentThread = { ...thread, comments: [comment] };
-                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
-                }),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.saveFailed');
-                    return of(null);
-                }),
-            )
-            .subscribe();
+        const auxiliaryRepositoryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+        this.createThreadWithInitialComment(targetType, event.fileName, event.lineNumber, event.text, auxiliaryRepositoryId);
     }
 
     onSubmitProblemStatementReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-
-        const createThread: CreateCommentThread = {
-            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
-            filePath: PROBLEM_STATEMENT_FILE_PATH,
-            initialFilePath: PROBLEM_STATEMENT_FILE_PATH,
-            lineNumber: event.lineNumber,
-            initialLineNumber: event.lineNumber,
-        };
-        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
-        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
-
-        this.exerciseReviewCommentService
-            .createThread(exerciseId, createThread)
-            .pipe(
-                map((response) => response.body),
-                switchMap((thread) => {
-                    if (!thread?.id) {
-                        return throwError(() => new Error('missingThreadId'));
-                    }
-                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
-                }),
-                tap(({ thread, comment }) => {
-                    if (!thread?.id || !comment) {
-                        return;
-                    }
-                    const newThread: CommentThread = { ...thread, comments: [comment] };
-                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
-                }),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.saveFailed');
-                    return of(null);
-                }),
-            )
-            .subscribe();
+        this.createThreadWithInitialComment(CommentThreadLocationType.PROBLEM_STATEMENT, PROBLEM_STATEMENT_FILE_PATH, event.lineNumber, event.text);
     }
 
     onDeleteReviewComment(commentId: number): void {
@@ -555,5 +479,47 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             default:
                 return CommentThreadLocationType.TEMPLATE_REPO;
         }
+    }
+
+    private createThreadWithInitialComment(targetType: CommentThreadLocationType, filePath: string, lineNumber: number, text: string, auxiliaryRepositoryId?: number): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        const createThread: CreateCommentThread = {
+            targetType,
+            filePath,
+            initialFilePath: filePath,
+            lineNumber,
+            initialLineNumber: lineNumber,
+            auxiliaryRepositoryId,
+        };
+        const commentContent: UserCommentContent = { contentType: 'USER', text };
+        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
+
+        this.exerciseReviewCommentService
+            .createThread(exerciseId, createThread)
+            .pipe(
+                map((response) => response.body),
+                switchMap((thread) => {
+                    if (!thread?.id) {
+                        return throwError(() => new Error('missingThreadId'));
+                    }
+                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
+                }),
+                tap(({ thread, comment }) => {
+                    if (!thread?.id || !comment) {
+                        return;
+                    }
+                    const newThread: CommentThread = { ...thread, comments: [comment] };
+                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
+                }),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.saveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
     }
 }
