@@ -48,7 +48,7 @@
                         }}
                     </button>
                     <div ngbDropdownMenu>
-                        @for (platform of ltiConfiguredPlatforms; track platform) {
+                        @for (platform of ltiConfiguredPlatforms(); track platform) {
                             <button
                                 type="button"
                                 (click)="setPlatform(platform)"
@@ -61,13 +61,13 @@
                         }
                         <div>
                             <div class="row justify-content-center">
-                                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage() }" />
                             </div>
                             <div class="row justify-content-center">
                                 <ngb-pagination
-                                    [collectionSize]="totalItems"
+                                    [collectionSize]="totalItems()"
                                     [(page)]="page"
-                                    [pageSize]="itemsPerPage"
+                                    [pageSize]="itemsPerPage()"
                                     [maxSize]="5"
                                     [rotate]="true"
                                     [boundaryLinks]="true"
@@ -85,7 +85,7 @@
         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="navigateToLtiConfigurationPage()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button type="submit" id="save-entity" [disabled]="onlineCourseConfigurationForm.invalid || isSaving" class="btn btn-primary ms-2">
+        <button type="submit" id="save-entity" [disabled]="onlineCourseConfigurationForm.invalid || isSaving()" class="btn btn-primary ms-2">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>
