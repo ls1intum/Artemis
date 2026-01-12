@@ -4,6 +4,15 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
+/**
+ * Generates a random integer within Java's max integer range.
+ * Used for message differentiators and similar use cases.
+ */
+export function randomInt(): number {
+    const maxIntJava = 2147483647;
+    return Math.floor(Math.random() * maxIntJava);
+}
+
 export function cleanString(str?: string): string {
     if (!str) {
         return '';

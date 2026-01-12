@@ -47,6 +47,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { of } from 'rxjs';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;
@@ -54,6 +55,8 @@ describe('PostingReactionsBarComponent', () => {
     let debugElement: DebugElement;
     let metisService: MetisService;
     let accountService: AccountService;
+    let courseSidebarService: CourseSidebarService;
+    let reloadSidebarSpy: jest.SpyInstance;
     let metisServiceUpdateDisplayPriorityMock: jest.SpyInstance;
     let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
@@ -85,6 +88,7 @@ describe('PostingReactionsBarComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
+                MockProvider(CourseSidebarService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -99,6 +103,8 @@ describe('PostingReactionsBarComponent', () => {
                 fixture = TestBed.createComponent(PostingReactionsBarComponent);
                 metisService = TestBed.inject(MetisService);
                 accountService = TestBed.inject(AccountService);
+                courseSidebarService = TestBed.inject(CourseSidebarService);
+                reloadSidebarSpy = jest.spyOn(courseSidebarService, 'reloadSidebar');
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 metisServiceUpdateDisplayPriorityMock = jest.spyOn(metisService, 'updatePostDisplayPriority');
@@ -678,4 +684,18 @@ describe('PostingReactionsBarComponent', () => {
         expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
         expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
+
+    it('should reload sidebar when forwardPost is completed', fakeAsync(() => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const content = 'Test content';
+        const isAnswer = false;
+
+        createForwardedMessagesSpy.mockReturnValue(of(null));
+
+        component.forwardPost(testPost, testConversation, content, isAnswer);
+        tick();
+
+        expect(reloadSidebarSpy).toHaveBeenCalledOnce();
+    }));
 });

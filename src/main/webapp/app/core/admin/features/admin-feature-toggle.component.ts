@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -64,7 +64,6 @@ type ModuleFeatureInfo = {
     selector: 'jhi-feature-toggles',
     templateUrl: './admin-feature-toggle.component.html',
     styleUrl: './admin-feature-toggle.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, NgbTooltip, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
 })
 export class AdminFeatureToggleComponent implements OnInit {
