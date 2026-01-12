@@ -50,6 +50,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { editor } from 'monaco-editor';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -325,6 +326,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
         this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
     };
+
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
+    jumpToLine(lineNumber: number) {
+        this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
         return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>
