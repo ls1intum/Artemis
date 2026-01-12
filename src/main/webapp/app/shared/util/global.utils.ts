@@ -46,6 +46,10 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse, di
  * @param error which was received
  */
 export function isErrorAlert(error: any) {
+    if (!error) {
+        return false;
+    }
+
     return !!error.error?.errorKey;
 }
 
