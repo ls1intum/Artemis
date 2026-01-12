@@ -109,7 +109,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user) || isSuperAdmin(user);
     }
 
     /**
@@ -224,7 +224,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user) || isSuperAdmin(user);
     }
 
     /**
@@ -393,8 +393,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
-                || isAdmin(user);
+        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user)
+                || isSuperAdmin(user);
     }
 
     /**
@@ -503,7 +503,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user) || isSuperAdmin(user);
     }
 
     /**
