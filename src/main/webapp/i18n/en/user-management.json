@@ -92,6 +92,7 @@
             "deactivated": "Deactivated",
             "globalRoles": "Global Roles",
             "roles": {
+                "superAdmin": "Super Admin",
                 "admin": "Admin",
                 "instructor": "Instructor",
                 "editor": "Editor",

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -99,6 +99,23 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
 
+    /** Sorted authorities by role hierarchy (super admin > admin > instructor > editor > tutor) */
+    readonly sortedAuthorities = computed(() => {
+        const roleOrder: Record<string, number> = {
+            ROLE_SUPER_ADMIN: 0,
+            ROLE_ADMIN: 1,
+            ROLE_INSTRUCTOR: 2,
+            ROLE_EDITOR: 3,
+            ROLE_TA: 4,
+            ROLE_USER: 5,
+        };
+        return this.authorities().sort((a, b) => {
+            const orderA = roleOrder[a] ?? 999;
+            const orderB = roleOrder[b] ?? 999;
+            return orderA - orderB;
+        });
+    });
+
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
 
@@ -116,6 +133,7 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
+        ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
         ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
         ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
         ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',

@@ -92,7 +92,8 @@
             "deactivated": "Deaktiviert",
             "globalRoles": "Globale Rollen",
             "roles": {
-                "admin": "Administrator",
+                "superAdmin": "Super-Administrator:in",
+                "admin": "Administrator:in",
                 "instructor": "Lehrende:r",
                 "editor": "Editor:in",
                 "tutor": "Tutor:in",
