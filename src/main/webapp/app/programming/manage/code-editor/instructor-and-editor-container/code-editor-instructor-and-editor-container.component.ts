@@ -341,14 +341,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService
             .createThread(exerciseId, createThread)
             .pipe(
-                map((response) => response.body?.id),
-                switchMap((threadId) => {
-                    if (!threadId) {
+                map((response) => response.body),
+                switchMap((thread) => {
+                    if (!thread?.id) {
                         return throwError(() => new Error('missingThreadId'));
                     }
-                    return this.exerciseReviewCommentService.createComment(exerciseId, threadId, createComment);
+                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
                 }),
-                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                tap(({ thread, comment }) => {
+                    if (!thread?.id || !comment) {
+                        return;
+                    }
+                    const newThread: CommentThread = { ...thread, comments: [comment] };
+                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
+                }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
                     return of(null);
@@ -376,14 +382,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService
             .createThread(exerciseId, createThread)
             .pipe(
-                map((response) => response.body?.id),
-                switchMap((threadId) => {
-                    if (!threadId) {
+                map((response) => response.body),
+                switchMap((thread) => {
+                    if (!thread?.id) {
                         return throwError(() => new Error('missingThreadId'));
                     }
-                    return this.exerciseReviewCommentService.createComment(exerciseId, threadId, createComment);
+                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
                 }),
-                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                tap(({ thread, comment }) => {
+                    if (!thread?.id || !comment) {
+                        return;
+                    }
+                    const newThread: CommentThread = { ...thread, comments: [comment] };
+                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
+                }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
                     return of(null);
@@ -401,7 +413,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService
             .deleteComment(exerciseId, commentId)
             .pipe(
-                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                tap(() => {
+                    this.reviewCommentThreads.update((threads) =>
+                        threads
+                            .map((thread) => {
+                                if (!thread.comments) {
+                                    return thread;
+                                }
+                                const remainingComments = thread.comments.filter((comment) => comment.id !== commentId);
+                                if (remainingComments.length === thread.comments.length) {
+                                    return thread;
+                                }
+                                return { ...thread, comments: remainingComments };
+                            })
+                            .filter((thread) => !thread.comments || thread.comments.length > 0),
+                    );
+                }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.deleteFailed');
                     return of(null);
@@ -422,7 +449,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService
             .createComment(exerciseId, event.threadId, createComment)
             .pipe(
-                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                tap((response) => {
+                    const createdComment = response.body;
+                    if (!createdComment?.threadId) {
+                        return;
+                    }
+                    this.reviewCommentThreads.update((threads) =>
+                        threads.map((thread) => {
+                            if (thread.id !== createdComment.threadId) {
+                                return thread;
+                            }
+                            const comments = thread.comments ?? [];
+                            return { ...thread, comments: [...comments, createdComment] };
+                        }),
+                    );
+                }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
                     return of(null);
@@ -441,7 +482,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService
             .updateCommentContent(exerciseId, event.commentId, { content: commentContent })
             .pipe(
-                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                tap((response) => {
+                    const updatedComment = response.body;
+                    if (!updatedComment?.id || !updatedComment.threadId) {
+                        return;
+                    }
+                    this.reviewCommentThreads.update((threads) =>
+                        threads.map((thread) => {
+                            if (thread.id !== updatedComment.threadId || !thread.comments) {
+                                return thread;
+                            }
+                            return {
+                                ...thread,
+                                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? { ...comment, ...updatedComment } : comment)),
+                            };
+                        }),
+                    );
+                }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
                     return of(null);
@@ -459,7 +516,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService
             .updateThreadResolvedState(exerciseId, event.threadId, event.resolved)
             .pipe(
-                tap(() => this.loadReviewCommentThreads(exerciseId)),
+                tap((response) => {
+                    const updatedThread = response.body;
+                    if (!updatedThread?.id) {
+                        return;
+                    }
+                    this.reviewCommentThreads.update((threads) => threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread)));
+                }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.resolveFailed');
                     return of(null);

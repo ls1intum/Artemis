@@ -23,7 +23,7 @@ export type ReviewCommentWidgetManagerConfig = {
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
-    private readonly threadWidgetRefs: Map<string, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
+    private readonly threadWidgetRefs: Map<number, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
     private readonly collapseState: Map<number, boolean> = new Map();
 
     constructor(
@@ -43,6 +43,22 @@ export class ReviewCommentWidgetManager {
     renderWidgets(): void {
         this.addSavedWidgets();
         this.addDraftWidgets();
+    }
+
+    updateThreadInputs(threads: CommentThread[]): boolean {
+        let updated = true;
+        for (const thread of threads) {
+            if (thread.id === undefined || thread.id === null) {
+                continue;
+            }
+            const widgetRef = this.threadWidgetRefs.get(thread.id);
+            if (!widgetRef) {
+                updated = false;
+                continue;
+            }
+            widgetRef.setInput('thread', thread);
+        }
+        return updated;
     }
 
     disposeAll(): void {
@@ -95,26 +111,42 @@ export class ReviewCommentWidgetManager {
     }
 
     private addSavedWidgets(): void {
-        this.disposeSavedWidgets();
         const threads = this.config.getThreads().filter((thread) => this.config.filterThread(thread));
+        const threadIds = new Set<number>();
+        for (const thread of threads) {
+            if (thread.id !== undefined && thread.id !== null) {
+                threadIds.add(thread.id);
+            }
+        }
+        for (const [threadId, ref] of this.threadWidgetRefs.entries()) {
+            if (!threadIds.has(threadId)) {
+                ref.destroy();
+                this.threadWidgetRefs.delete(threadId);
+            }
+        }
         for (const thread of threads) {
             if (thread.id === undefined || thread.id === null) {
                 continue;
             }
             const line = this.config.getThreadLine(thread);
-            const widgetId = this.buildThreadWidgetId(thread.id, thread.filePath, line);
-            const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
-            widgetRef.setInput('thread', thread);
-            if (!this.collapseState.has(thread.id)) {
-                this.collapseState.set(thread.id, thread.resolved);
+            const widgetId = this.buildThreadWidgetId(thread.id);
+            let widgetRef = this.threadWidgetRefs.get(thread.id);
+            if (!widgetRef) {
+                widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
+                widgetRef.setInput('thread', thread);
+                if (!this.collapseState.has(thread.id)) {
+                    this.collapseState.set(thread.id, thread.resolved);
+                }
+                widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
+                widgetRef.instance.onDelete.subscribe((commentId) => this.config.onDelete(commentId));
+                widgetRef.instance.onReply.subscribe((text) => this.config.onReply({ threadId: thread.id, text }));
+                widgetRef.instance.onUpdate.subscribe((event) => this.config.onUpdate(event));
+                widgetRef.instance.onToggleResolved.subscribe((resolved) => this.config.onToggleResolved({ threadId: thread.id, resolved }));
+                widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
+                this.threadWidgetRefs.set(thread.id, widgetRef);
+            } else {
+                widgetRef.setInput('thread', thread);
             }
-            widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
-            widgetRef.instance.onDelete.subscribe((commentId) => this.config.onDelete(commentId));
-            widgetRef.instance.onReply.subscribe((text) => this.config.onReply({ threadId: thread.id, text }));
-            widgetRef.instance.onUpdate.subscribe((event) => this.config.onUpdate(event));
-            widgetRef.instance.onToggleResolved.subscribe((resolved) => this.config.onToggleResolved({ threadId: thread.id, resolved }));
-            widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
-            this.threadWidgetRefs.set(widgetId, widgetRef);
             this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
         }
     }
@@ -148,10 +180,8 @@ export class ReviewCommentWidgetManager {
         this.threadWidgetRefs.clear();
     }
 
-    private buildThreadWidgetId(threadId: number, filePath: string | undefined, line: number): string {
-        const safePath = (filePath ?? 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const randomSuffix = Math.random().toString(36).slice(2, 8);
-        return `review-comment-thread-${threadId}-${safePath}-${line}-${randomSuffix}`;
+    private buildThreadWidgetId(threadId: number): string {
+        return `review-comment-thread-${threadId}`;
     }
 
     private getDraftKey(fileName: string, line: number): string {
