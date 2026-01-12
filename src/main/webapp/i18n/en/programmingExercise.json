@@ -245,7 +245,16 @@
                 "acceptChanges": "Accept Changes",
                 "rejectChanges": "Reject Changes",
                 "changesApplied": "Changes have been applied to the problem statement.",
-                "aiRefining": "AI is refining the problem statement..."
+                "aiRefining": "AI is refining the problem statement...",
+                "inlineRefinement": {
+                    "triggerButton": "Refine with AI",
+                    "placeholder": "Describe how to improve this section...",
+                    "submitTooltip": "Apply refinement"
+                }
+            },
+            "inlineRefine": {
+                "success": "Section refined successfully.",
+                "error": "Failed to refine section. Please try again."
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",

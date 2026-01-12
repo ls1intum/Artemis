@@ -8,49 +8,56 @@
 .refinement-trigger-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
+    gap: 6px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 16px;
+    background: var(--bs-primary, #3e8acc);
     color: white;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(62, 138, 204, 0.35);
     transition: all 0.2s ease;
 
     &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+        background: var(--bs-primary, #3e8acc);
+        filter: brightness(1.1);
+        box-shadow: 0 4px 12px rgba(62, 138, 204, 0.45);
+        transform: translateY(-1px);
     }
 
     fa-icon {
-        font-size: 14px;
+        font-size: 12px;
+    }
+
+    .trigger-label {
+        white-space: nowrap;
     }
 }
 
 .refinement-input-container {
     display: flex;
     align-items: center;
-    gap: 4px;
-    background: #1e1e1e;
-    border: 1px solid #3c3c3c;
+    gap: 6px;
+    background: var(--bs-body-bg, #303030);
+    border: 1px solid var(--bs-border-color, #444);
     border-radius: 20px;
     padding: 4px 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .refinement-input {
-    width: 240px;
+    width: 420px;
     border: none;
     background: transparent;
-    color: #e0e0e0;
+    color: var(--bs-body-color, #e0e0e0);
     font-size: 13px;
     padding: 6px 8px;
     outline: none;
 
     &::placeholder {
-        color: #888;
+        color: var(--bs-secondary, #888);
     }
 
     &:disabled {
@@ -66,7 +73,7 @@
     height: 28px;
     border: none;
     border-radius: 50%;
-    background: #6366f1;
+    background: var(--bs-primary, #3e8acc);
     color: white;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -77,7 +84,7 @@
     }
 
     &:hover:not(:disabled) {
-        background: #8b5cf6;
+        filter: brightness(1.15);
     }
 
     fa-icon {
@@ -94,12 +101,12 @@
     border: none;
     border-radius: 50%;
     background: transparent;
-    color: #888;
+    color: var(--bs-secondary, #888);
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-        color: #e0e0e0;
+        color: var(--bs-body-color, #e0e0e0);
         background: rgba(255, 255, 255, 0.1);
     }
 

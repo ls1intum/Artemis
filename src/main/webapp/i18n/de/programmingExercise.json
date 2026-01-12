@@ -245,7 +245,16 @@
                 "acceptChanges": "Änderungen akzeptieren",
                 "rejectChanges": "Änderungen ablehnen",
                 "changesApplied": "Änderungen wurden auf die Aufgabenstellung angewendet.",
-                "aiRefining": "KI verfeinert die Aufgabenstellung..."
+                "aiRefining": "KI verfeinert die Aufgabenstellung...",
+                "inlineRefinement": {
+                    "triggerButton": "Mit KI verfeinern",
+                    "placeholder": "Beschreibe, wie dieser Abschnitt verbessert werden soll...",
+                    "submitTooltip": "Verfeinerung anwenden"
+                }
+            },
+            "inlineRefine": {
+                "success": "Abschnitt erfolgreich verfeinert.",
+                "error": "Abschnitt konnte nicht verfeinert werden. Bitte versuche es erneut."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",

@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faMagic, faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
 /**
  * Floating refinement button component that appears near text selection.
@@ -16,7 +19,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./inline-refinement-button.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InlineRefinementButtonComponent {
+export class InlineRefinementButtonComponent implements OnInit {
+    private readonly translateService = inject(TranslateService);
+    private readonly cdr = inject(ChangeDetectorRef);
+    private readonly destroyRef = inject(DestroyRef);
+
     // Input: Position where the button should appear
     top = input.required<number>();
     left = input.required<number>();
@@ -36,12 +43,19 @@ export class InlineRefinementButtonComponent {
     isSubmitting = signal(false);
 
     // Icons
-    readonly faMagic = faMagic;
+    readonly facArtemisIntelligence = facArtemisIntelligence;
     readonly faPaperPlane = faPaperPlane;
     readonly faTimes = faTimes;
 
     // Reference to input element for focus
     inputElement = viewChild<ElementRef<HTMLInputElement>>('instructionInput');
+
+    ngOnInit(): void {
+        // Subscribe to language changes to trigger re-render for translations
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            this.cdr.markForCheck();
+        });
+    }
 
     /**
      * Expands the button to show the input field.
