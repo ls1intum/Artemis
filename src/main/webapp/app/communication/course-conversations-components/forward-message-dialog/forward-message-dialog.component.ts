@@ -71,8 +71,8 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     private cdr = inject(ChangeDetectorRef);
     private renderer = inject(Renderer2);
 
-    readonly faPeopleGroup = faPeopleGroup;
-    readonly faHashtag = faHashtag;
+    protected readonly faPeopleGroup = faPeopleGroup;
+    protected readonly faHashtag = faHashtag;
 
     ngOnInit(): void {
         this.filteredChannels = this.channels() || [];
