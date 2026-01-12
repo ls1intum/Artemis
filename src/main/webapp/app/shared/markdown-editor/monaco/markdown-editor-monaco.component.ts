@@ -752,15 +752,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Adds a line widget after the specified line.
-     * @param lineNumber The line after which to add the widget.
-     * @param id Unique ID for this widget.
-     * @param domNode The HTML element to display.
-     */
-    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement): void {
-        this.monacoEditor.addLineWidget(lineNumber, id, domNode);
-    }
-    /**
      * Gets the current selection in the editor.
      * @returns The current selection or null.
      */

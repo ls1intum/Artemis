@@ -71,13 +71,13 @@
     cursor: pointer;
     transition: all 0.2s ease;
 
-    &:hover:not(:disabled) {
-        background: #8b5cf6;
-    }
-
     &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+        background: #8b5cf6;
     }
 
     fa-icon {
