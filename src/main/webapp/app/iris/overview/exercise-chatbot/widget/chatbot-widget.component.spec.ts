@@ -1,5 +1,25 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('interactjs', () => {
+    const interactFn = vi.fn(() => {
+        return {
+            resizable: vi.fn().mockReturnThis(),
+            draggable: vi.fn().mockReturnThis(),
+        };
+    });
+
+    (interactFn as unknown as { modifiers: unknown }).modifiers = {
+        restrictEdges: vi.fn((opts: unknown) => ({ type: 'restrictEdges', opts })),
+        restrictSize: vi.fn((opts: unknown) => ({ type: 'restrictSize', opts })),
+        restrictRect: vi.fn((opts: unknown) => ({ type: 'restrictRect', opts })),
+    };
+
+    return { __esModule: true, default: interactFn };
+});
+
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
@@ -10,23 +30,6 @@ import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import interact from 'interactjs';
-
-jest.mock('interactjs', () => {
-    const interactFn = jest.fn(() => {
-        return {
-            resizable: jest.fn().mockReturnThis(),
-            draggable: jest.fn().mockReturnThis(),
-        };
-    });
-
-    (interactFn as unknown as { modifiers: unknown }).modifiers = {
-        restrictEdges: jest.fn((opts: unknown) => ({ type: 'restrictEdges', opts })),
-        restrictSize: jest.fn((opts: unknown) => ({ type: 'restrictSize', opts })),
-        restrictRect: jest.fn((opts: unknown) => ({ type: 'restrictRect', opts })),
-    };
-
-    return { __esModule: true, default: interactFn };
-});
 
 type InteractResizeMoveEvent = {
     target: HTMLElement;
@@ -41,6 +44,8 @@ type InteractDragMoveEvent = {
 };
 
 describe('IrisChatbotWidgetComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: IrisChatbotWidgetComponent;
     let fixture: ComponentFixture<IrisChatbotWidgetComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;
@@ -57,7 +62,7 @@ describe('IrisChatbotWidgetComponent', () => {
             imports: [IrisChatbotWidgetComponent],
             providers: [
                 MockProvider(IrisChatService),
-                { provide: MatDialog, useValue: { closeAll: jest.fn() } },
+                { provide: MatDialog, useValue: { closeAll: vi.fn() } },
                 { provide: Router, useValue: { events: routerEvents$.asObservable() } },
                 { provide: MAT_DIALOG_DATA, useValue: { isChatGptWrapper: false } },
                 {
@@ -82,18 +87,22 @@ describe('IrisChatbotWidgetComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
     it('should call closeAll on dialog when closeChat is called', () => {
-        const closeAllSpy = jest.spyOn(dialog, 'closeAll');
+        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
         component.closeChat();
         expect(closeAllSpy).toHaveBeenCalled();
     });
 
     it('should close all dialogs on NavigationStart', () => {
-        const closeAllSpy = jest.spyOn(dialog, 'closeAll');
+        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
 
         routerEvents$.next(new NavigationStart(1, '/somewhere'));
 
@@ -101,7 +110,7 @@ describe('IrisChatbotWidgetComponent', () => {
     });
 
     it('should toggle fullSize and call setPositionAndScale when toggleFullSize is called', () => {
-        const setPositionAndScaleSpy = jest.spyOn(component, 'setPositionAndScale');
+        const setPositionAndScaleSpy = vi.spyOn(component, 'setPositionAndScale');
         const initialFullSize = component.fullSize();
         component.toggleFullSize();
         expect(component.fullSize()).toBe(!initialFullSize);
@@ -110,35 +119,35 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should add or remove cdk-global-scroll class when toggleScrollLock is called', () => {
         component.toggleScrollLock(true);
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeTrue();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBe(true);
         component.toggleScrollLock(false);
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeFalse();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBe(false);
     });
 
     it('should call onResize when window is resized', () => {
-        const spy = jest.spyOn(component, 'onResize');
+        const spy = vi.spyOn(component, 'onResize');
         window.dispatchEvent(new Event('resize'));
         expect(spy).toHaveBeenCalled();
     });
 
     it('should call setPositionAndScale on initialization', () => {
-        const spy = jest.spyOn(component, 'setPositionAndScale');
+        const spy = vi.spyOn(component, 'setPositionAndScale');
         component.ngAfterViewInit();
         expect(spy).toHaveBeenCalled();
     });
 
     it('should add or remove cdk-global-scroll class when mouse enters or leaves container', () => {
-        const spy = jest.spyOn(component, 'toggleScrollLock');
+        const spy = vi.spyOn(component, 'toggleScrollLock');
         const container = fixture.debugElement.query(By.css('.container'));
 
         container.triggerEventHandler('mouseenter', null);
         fixture.detectChanges();
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeTrue();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBe(true);
         expect(spy).toHaveBeenCalledWith(true);
 
         container.triggerEventHandler('mouseleave', null);
         fixture.detectChanges();
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeFalse();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBe(false);
         expect(spy).toHaveBeenCalledWith(false);
     });
 
@@ -151,7 +160,7 @@ describe('IrisChatbotWidgetComponent', () => {
         const overlay = document.createElement('div');
         overlay.className = 'cdk-overlay-container';
 
-        overlay.getBoundingClientRect = jest.fn(() => ({
+        overlay.getBoundingClientRect = vi.fn(() => ({
             x: 0,
             y: 0,
             width: 500,
@@ -170,7 +179,7 @@ describe('IrisChatbotWidgetComponent', () => {
 
         component.setPositionAndScale();
 
-        expect(component.isMobile()).toBeTrue();
+        expect(component.isMobile()).toBe(true);
 
         // Clean up
         document.body.removeChild(overlay);
@@ -185,7 +194,7 @@ describe('IrisChatbotWidgetComponent', () => {
         // DOM required by the handlers
         const overlay = document.createElement('div');
         overlay.className = 'cdk-overlay-container';
-        overlay.getBoundingClientRect = jest.fn(() => ({
+        overlay.getBoundingClientRect = vi.fn(() => ({
             x: 0,
             y: 0,
             width: 1000,
@@ -204,16 +213,16 @@ describe('IrisChatbotWidgetComponent', () => {
         widget.setAttribute('data-y', '20');
         document.body.appendChild(widget);
 
-        const interactMock = interact as unknown as jest.Mock;
+        const interactMock = interact as unknown as ReturnType<typeof vi.fn>;
         interactMock.mockClear();
 
         component.ngAfterViewInit();
 
         expect(interactMock).toHaveBeenCalledWith('.chat-widget');
 
-        const chain = interactMock.mock.results[0].value as {
-            resizable: jest.Mock;
-            draggable: jest.Mock;
+        const chain = (interactMock as ReturnType<typeof vi.fn>).mock.results[0].value as {
+            resizable: ReturnType<typeof vi.fn>;
+            draggable: ReturnType<typeof vi.fn>;
         };
 
         const resizableConfig = chain.resizable.mock.calls[0][0] as {
@@ -235,7 +244,7 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(widget.style.transform).toBe('translate(15px,30px)');
         expect(widget.getAttribute('data-x')).toBe('15');
         expect(widget.getAttribute('data-y')).toBe('30');
-        expect(component.fullSize()).toBeTrue();
+        expect(component.fullSize()).toBe(true);
 
         // Shrink -> should flip fullSize back
         resizableConfig.listeners.move({
@@ -243,7 +252,7 @@ describe('IrisChatbotWidgetComponent', () => {
             rect: { width: 500, height: 500 },
             deltaRect: { left: -2, top: -3 },
         });
-        expect(component.fullSize()).toBeFalse();
+        expect(component.fullSize()).toBe(false);
 
         // Drag move -> should update transform and data-x/y
         draggableConfig.listeners.move({ target: widget, dx: 7, dy: -3 });

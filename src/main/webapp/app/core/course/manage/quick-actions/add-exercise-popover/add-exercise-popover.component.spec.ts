@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -9,8 +11,12 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('AddExercisePopoverComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AddExercisePopoverComponent;
     let fixture: ComponentFixture<AddExercisePopoverComponent>;
 
@@ -20,6 +26,7 @@ describe('AddExercisePopoverComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
@@ -29,13 +36,18 @@ describe('AddExercisePopoverComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should show popover when showPopover is invoked', () => {
-        const modalSpy = jest.spyOn(component.addExercisePopover()!, 'show');
+        const modalSpy = vi.spyOn(component.addExercisePopover()!, 'show');
         component.showPopover(new Event('click'));
         expect(modalSpy).toHaveBeenCalledOnce();
     });
+
     it('should hide popover when hidePopover is invoked', () => {
-        const modalSpy = jest.spyOn(component.addExercisePopover()!, 'hide');
+        const modalSpy = vi.spyOn(component.addExercisePopover()!, 'hide');
         component.hidePopover();
         expect(modalSpy).toHaveBeenCalledOnce();
     });
