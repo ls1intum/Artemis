@@ -163,16 +163,6 @@ export class QuizExerciseService {
     }
 
     /**
-     * Open a quiz exercise for practice
-     * @param quizExerciseId the id of the quiz exercise that should be opened for practice
-     */
-    openForPractice(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/open-for-practice`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
-    }
-
-    /**
      * Start a quiz exercise
      * @param quizExerciseId the id of the quiz exercise that should be started
      */
