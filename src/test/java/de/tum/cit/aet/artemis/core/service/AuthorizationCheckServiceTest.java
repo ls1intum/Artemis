@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -491,8 +492,8 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
         void testCheckIsAtLeastStudentInCourse_superAdmin_shouldNotThrow() {
-            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.STUDENT, course, superAdmin))
-                    .as("Super admin should pass student-level access check").doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, superAdmin)).as("Super admin should pass student-level access check")
+                    .doesNotThrowAnyException();
         }
 
         @Test
@@ -501,14 +502,14 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             userUtilService.createAndSaveUser(TEST_PREFIX + "nonEnrolledStudent2");
             User nonEnrolledStudent = userUtilService.getUserByLogin(TEST_PREFIX + "nonEnrolledStudent2");
             assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.STUDENT, course, nonEnrolledStudent))
+                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, nonEnrolledStudent))
                     .as("Non-enrolled student should fail student-level access check");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
         void testCheckIsAtLeastTeachingAssistantInCourse_superAdmin_shouldNotThrow() {
-            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT, course, superAdmin))
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, superAdmin))
                     .as("Super admin should pass TA-level access check").doesNotThrowAnyException();
         }
 
@@ -516,37 +517,35 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testCheckIsAtLeastTeachingAssistantInCourse_student_shouldThrow() {
             assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT, course, student))
+                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, student))
                     .as("Student should fail TA-level access check");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
         void testCheckIsAtLeastEditorInCourse_superAdmin_shouldNotThrow() {
-            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.EDITOR, course, superAdmin))
-                    .as("Super admin should pass editor-level access check").doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, superAdmin)).as("Super admin should pass editor-level access check")
+                    .doesNotThrowAnyException();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student2", roles = "TA")
         void testCheckIsAtLeastEditorInCourse_tutor_shouldThrow() {
-            assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.EDITOR, course, tutor))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, tutor))
                     .as("Tutor should fail editor-level access check");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
         void testCheckIsAtLeastInstructorInCourse_superAdmin_shouldNotThrow() {
-            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR, course, superAdmin))
+            assertThatCode(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, superAdmin))
                     .as("Super admin should pass instructor-level access check").doesNotThrowAnyException();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor", roles = "EDITOR")
         void testCheckIsAtLeastInstructorInCourse_editor_shouldThrow() {
-            assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR, course, editor))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, editor))
                     .as("Editor should fail instructor-level access check");
         }
     }
