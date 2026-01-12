@@ -98,7 +98,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-        // Create a course without the super admin being enrolled
+        // Create a regular admin user
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin = userRepository.save(admin);
+
+        // Create a course without the super admin or admin being enrolled
         Course course = courseUtilService.createCourse();
 
         // Create a regular user who is not enrolled
@@ -109,6 +114,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInCourse(superAdmin.getLogin(), course.getId())).isTrue();
         assertThat(userRepository.isAtLeastEditorInCourse(superAdmin.getLogin(), course.getId())).isTrue();
         assertThat(userRepository.isAtLeastInstructorInCourse(superAdmin.getLogin(), course.getId())).isTrue();
+
+        // Test that admin has access
+        assertThat(userRepository.isAtLeastStudentInCourse(admin.getLogin(), course.getId())).isTrue();
+        assertThat(userRepository.isAtLeastTeachingAssistantInCourse(admin.getLogin(), course.getId())).isTrue();
+        assertThat(userRepository.isAtLeastEditorInCourse(admin.getLogin(), course.getId())).isTrue();
+        assertThat(userRepository.isAtLeastInstructorInCourse(admin.getLogin(), course.getId())).isTrue();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInCourse(regularUser.getLogin(), course.getId())).isFalse();
@@ -123,7 +134,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-        // Create a course and exercise without the super admin being enrolled
+        // Create a regular admin user
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin = userRepository.save(admin);
+
+        // Create a course and exercise without the super admin or admin being enrolled
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         Exercise exercise = course.getExercises().iterator().next();
 
@@ -135,6 +151,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
         assertThat(userRepository.isAtLeastEditorInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
         assertThat(userRepository.isAtLeastInstructorInExercise(superAdmin.getLogin(), exercise.getId())).isTrue();
+
+        // Test that admin has access
+        assertThat(userRepository.isAtLeastStudentInExercise(admin.getLogin(), exercise.getId())).isTrue();
+        assertThat(userRepository.isAtLeastTeachingAssistantInExercise(admin.getLogin(), exercise.getId())).isTrue();
+        assertThat(userRepository.isAtLeastEditorInExercise(admin.getLogin(), exercise.getId())).isTrue();
+        assertThat(userRepository.isAtLeastInstructorInExercise(admin.getLogin(), exercise.getId())).isTrue();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInExercise(regularUser.getLogin(), exercise.getId())).isFalse();
@@ -149,7 +171,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-        // Create a course, exercise, and participation without the super admin being enrolled
+        // Create a regular admin user
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin = userRepository.save(admin);
+
+        // Create a course, exercise, and participation without the super admin or admin being enrolled
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         Exercise exercise = course.getExercises().iterator().next();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "student");
@@ -164,6 +191,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastEditorInParticipation(superAdmin.getLogin(), participation.getId())).isTrue();
         assertThat(userRepository.isAtLeastInstructorInParticipation(superAdmin.getLogin(), participation.getId())).isTrue();
 
+        // Test that admin has access
+        assertThat(userRepository.isAtLeastStudentInParticipation(admin.getLogin(), participation.getId())).isTrue();
+        assertThat(userRepository.isAtLeastTeachingAssistantInParticipation(admin.getLogin(), participation.getId())).isTrue();
+        assertThat(userRepository.isAtLeastEditorInParticipation(admin.getLogin(), participation.getId())).isTrue();
+        assertThat(userRepository.isAtLeastInstructorInParticipation(admin.getLogin(), participation.getId())).isTrue();
+
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInParticipation(regularUser.getLogin(), participation.getId())).isFalse();
         assertThat(userRepository.isAtLeastTeachingAssistantInParticipation(regularUser.getLogin(), participation.getId())).isFalse();
@@ -177,7 +210,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-        // Create a course and lecture without the super admin being enrolled
+        // Create a regular admin user
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin = userRepository.save(admin);
+
+        // Create a course and lecture without the super admin or admin being enrolled
         Course course = courseUtilService.createCourse();
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
@@ -189,6 +227,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
         assertThat(userRepository.isAtLeastEditorInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
         assertThat(userRepository.isAtLeastInstructorInLecture(superAdmin.getLogin(), lecture.getId())).isTrue();
+
+        // Test that admin has access
+        assertThat(userRepository.isAtLeastStudentInLecture(admin.getLogin(), lecture.getId())).isTrue();
+        assertThat(userRepository.isAtLeastTeachingAssistantInLecture(admin.getLogin(), lecture.getId())).isTrue();
+        assertThat(userRepository.isAtLeastEditorInLecture(admin.getLogin(), lecture.getId())).isTrue();
+        assertThat(userRepository.isAtLeastInstructorInLecture(admin.getLogin(), lecture.getId())).isTrue();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInLecture(regularUser.getLogin(), lecture.getId())).isFalse();
@@ -203,7 +247,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addSuperAdmin(TEST_PREFIX);
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-        // Create a course, lecture, and lecture unit without the super admin being enrolled
+        // Create a regular admin user
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin = userRepository.save(admin);
+
+        // Create a course, lecture, and lecture unit without the super admin or admin being enrolled
         Course course = courseUtilService.createCourse();
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
         LectureUnit lectureUnit = lectureUtilService.createTextUnit(lecture);
@@ -216,6 +265,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
         assertThat(userRepository.isAtLeastEditorInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
         assertThat(userRepository.isAtLeastInstructorInLectureUnit(superAdmin.getLogin(), lectureUnit.getId())).isTrue();
+
+        // Test that admin has access
+        assertThat(userRepository.isAtLeastStudentInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
+        assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
+        assertThat(userRepository.isAtLeastEditorInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
+        assertThat(userRepository.isAtLeastInstructorInLectureUnit(admin.getLogin(), lectureUnit.getId())).isTrue();
 
         // Verify regular user does not have access
         assertThat(userRepository.isAtLeastStudentInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
