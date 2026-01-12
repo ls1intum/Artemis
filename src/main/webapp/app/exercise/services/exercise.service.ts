@@ -588,7 +588,10 @@ export class ExerciseService {
     }
 
     static isExerciseVisibleToStudents(exercise: Exercise): boolean {
-        const now = dayjs();
-        return exercise.releaseDate ? now.isSameOrAfter(exercise.releaseDate) : false;
+        const effectiveDate = exercise.releaseDate ?? exercise.startDate;
+        if (!effectiveDate) {
+            return false;
+        }
+        return dayjs().isSameOrAfter(effectiveDate);
     }
 }

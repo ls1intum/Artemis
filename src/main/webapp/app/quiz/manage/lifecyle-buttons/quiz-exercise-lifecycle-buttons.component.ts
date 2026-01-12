@@ -52,8 +52,23 @@ export class QuizExerciseLifecycleButtonsComponent {
         this.quizExerciseService.start(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
                 this.updateDatesForQuizExercise(res.body!);
-                this.quizExercise().quizStarted = true;
+                this.quizExercise().visibleToStudents = true;
                 this.quizExercise().status = QuizStatus.ACTIVE;
+
+                if (!this.quizExercise().quizBatches) {
+                    this.quizExercise().quizBatches = [];
+                }
+
+                const batch = this.quizExercise().quizBatches?.first();
+                if (batch) {
+                    batch.started = true;
+                    batch.startTime = this.quizExercise().startDate;
+                } else {
+                    this.quizExercise().quizBatches?.push({
+                        started: true,
+                        startTime: this.quizExercise().startDate,
+                    });
+                }
                 this.handleNewQuizExercise.emit(this.quizExercise());
             },
             error: (res: HttpErrorResponse) => {
