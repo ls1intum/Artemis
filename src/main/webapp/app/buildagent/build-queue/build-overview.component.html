@@ -194,7 +194,7 @@
                                 <span>{{ value | artemisDate: 'long' : true }}</span>
                             </ng-template>
                         </ngx-datatable-column>
-                        @if (isAdministrationView) {
+                        @if (isAdministrationView()) {
                             <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
                                 <ng-template ngx-datatable-header-template>
                                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
@@ -375,7 +375,7 @@
                                 <span>{{ value | artemisDate: 'long' : true }}</span>
                             </ng-template>
                         </ngx-datatable-column>
-                        @if (isAdministrationView) {
+                        @if (isAdministrationView()) {
                             <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
                                 <ng-template ngx-datatable-header-template>
                                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
@@ -489,7 +489,7 @@
                                 <span jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            @if (isAdministrationView) {
+                            @if (isAdministrationView()) {
                                 <th jhiSortBy="courseId" class="finish-jobs-column">
                                     <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
                                     <fa-icon [icon]="faSort" />
@@ -643,7 +643,7 @@
                                         <span class="wrap-long-text">{{ finishedBuildJob.commitHash?.substring(0, 7) }}</span>
                                     }
                                 </td>
-                                @if (isAdministrationView) {
+                                @if (isAdministrationView()) {
                                     <td class="finish-jobs-column">
                                         <a [routerLink]="['/course-management', finishedBuildJob.courseId]">{{ finishedBuildJob.courseId }}</a>
                                     </td>

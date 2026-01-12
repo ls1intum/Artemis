@@ -39,6 +39,7 @@ class ActivatedRouteStub {
         this.snapshot = { paramMap: paramMapValue };
     }
 }
+
 describe('BuildQueueComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -334,7 +335,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
 
         // Admin view should be enabled when no courseId is present
-        expect(component.isAdministrationView).toBe(true);
+        expect(component.isAdministrationView()).toBe(true);
 
         // Expectations: The service methods for general build jobs are called
         expect(mockBuildQueueService.getQueuedBuildJobs).toHaveBeenCalled();
@@ -365,7 +366,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
 
         // Admin view should be disabled when courseId is present
-        expect(component.isAdministrationView).toBe(false);
+        expect(component.isAdministrationView()).toBe(false);
 
         // Expectations: The service methods are called with the test course ID
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
