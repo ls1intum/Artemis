@@ -33,6 +33,7 @@ public class HyperionCodeGenerationTaskService {
      * @param user           requesting user
      * @param exercise       target exercise
      * @param repositoryType target repository type
+     * @param cleanup        optional cleanup action to run after job completion
      */
     @Async
     public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, RepositoryType repositoryType, Runnable cleanup) {
