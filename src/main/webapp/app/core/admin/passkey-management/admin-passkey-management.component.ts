@@ -6,7 +6,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { isErrorAlert, onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-admin-passkey-management',
@@ -50,6 +50,15 @@ export class AdminPasskeyManagementComponent implements OnInit {
             passkey.isSuperAdminApproved = newApprovalStatus;
             this.passkeys.update((passkeys) => [...passkeys]);
         } catch (error) {
+            if (!isErrorAlert(error)) {
+                if (error.status === 404) {
+                    this.alertService.error('artemisApp.adminPasskeyManagement.errors.passkeyNotFound');
+                    return;
+                }
+
+                onError(this.alertService, error);
+            }
+
             await this.loadPasskeys(false);
         }
     }

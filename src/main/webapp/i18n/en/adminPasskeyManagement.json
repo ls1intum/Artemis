@@ -11,7 +11,10 @@
             "yes": "Yes",
             "no": "No",
             "noPasskeys": "No passkeys found in the system.",
-            "toggleApproval": "Toggle approval status"
+            "toggleApproval": "Toggle approval status",
+            "errors": {
+                "passkeyNotFound": "Passkey not found."
+            }
         }
     }
 }

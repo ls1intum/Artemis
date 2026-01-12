@@ -11,7 +11,10 @@
             "yes": "Ja",
             "no": "Nein",
             "noPasskeys": "Keine Passkeys im System gefunden.",
-            "toggleApproval": "Freigabestatus umschalten"
+            "toggleApproval": "Freigabestatus umschalten",
+            "errors": {
+                "passkeyNotFound": "Der Passkey wurde nicht gefunden."
+            }
         }
     }
 }
