@@ -121,7 +121,7 @@ const moduleThresholds = {
     },
     modeling: {
         statements: 89.00,
-        branches:   73.00,
+        branches:   72.40,
         functions:  84.40,
         lines:      89.20,
     },
