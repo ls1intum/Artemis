@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GraphColors, Graphs } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
@@ -18,44 +19,60 @@ import { ActiveStudentsChart } from 'app/core/course/shared/entities/active-stud
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
     imports: [RouterLink, TranslateDirective, HelpIconComponent, LineChartModule, ArtemisDatePipe],
 })
-export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
-    private translateService = inject(TranslateService);
+export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart {
+    private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
 
-    @Input() amountOfStudentsInCourse: number;
-    @Input() initialStats: number[] | undefined;
-    @Input() course: Course;
+    readonly amountOfStudentsInCourse = input.required<number>();
+    readonly initialStats = input<number[]>();
+    readonly course = input.required<Course>();
 
-    graphType: Graphs = Graphs.ACTIVE_STUDENTS;
+    readonly graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
     // Data
-    lineChartLabels: string[] = [];
+    readonly lineChartLabels = signal<string[]>([]);
 
     // ngx-data
-    ngxData: any[] = [];
-    chartColor: Color = {
+    readonly ngxData = signal<any[]>([]);
+    readonly chartColor: Color = {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLACK],
     };
-    curve: CurveFactory = shape.curveMonotoneX;
+    readonly curve: CurveFactory = shape.curveMonotoneX;
 
     // Icons
-    faSpinner = faSpinner;
+    readonly faSpinner = faSpinner;
 
-    ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+    private initialized = false;
+
+    constructor() {
+        super();
+
+        // Subscribe to language changes with proper cleanup
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.updateTranslation();
         });
-        this.determineDisplayedPeriod(this.course, 4);
-        this.createChartLabels(this.currentOffsetToEndDate);
-        this.createChartData();
-    }
 
-    ngOnChanges() {
-        if (this.initialStats) {
-            this.createChartData();
-        }
+        // Effect for initialization based on course
+        effect(() => {
+            const course = this.course();
+            if (!this.initialized && course) {
+                this.initialized = true;
+                this.determineDisplayedPeriod(course, 4);
+                this.createChartLabels(this.currentOffsetToEndDate);
+                untracked(() => this.createChartData());
+            }
+        });
+
+        // Effect for initialStats changes
+        effect(() => {
+            const stats = this.initialStats();
+            if (stats && this.initialized) {
+                untracked(() => this.createChartData());
+            }
+        });
     }
 
     /**
@@ -63,21 +80,22 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
      */
     private createChartData(): void {
         const set: any[] = [];
-        this.ngxData = [];
-        if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
-            this.initialStats.forEach((absoluteValue, index) => {
+        const initialStats = this.initialStats();
+        const labels = this.lineChartLabels();
+        if (this.amountOfStudentsInCourse() > 0 && !!initialStats) {
+            initialStats.forEach((absoluteValue, index) => {
                 set.push({
-                    name: this.lineChartLabels[index],
-                    value: (absoluteValue * 100) / this.amountOfStudentsInCourse,
+                    name: labels[index],
+                    value: (absoluteValue * 100) / this.amountOfStudentsInCourse(),
                     absoluteValue,
                 });
             });
         } else {
-            this.lineChartLabels.forEach((label) => {
+            labels.forEach((label) => {
                 set.push({ name: label, value: 0, absoluteValue: 0 });
             });
         }
-        this.ngxData.push({ name: 'active students', series: set });
+        this.ngxData.set([{ name: 'active students', series: set }]);
     }
 
     /**
@@ -89,6 +107,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     }
 
     private createChartLabels(weekOffset: number): void {
+        const labels: string[] = [];
         for (let i = 0; i < this.currentSpanSize; i++) {
             let translatePath: string;
             const week = Math.min(this.currentSpanSize - 1, 3) - i + weekOffset;
@@ -105,8 +124,9 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
                     translatePath = 'overview.weeksAgo';
                 }
             }
-            this.lineChartLabels[i] = this.translateService.instant(translatePath, { amount: week });
+            labels[i] = this.translateService.instant(translatePath, { amount: week });
         }
+        this.lineChartLabels.set(labels);
     }
 
     /**

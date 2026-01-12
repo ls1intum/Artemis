@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -19,7 +19,6 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationManagementComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);
