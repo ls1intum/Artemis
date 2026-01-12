@@ -1,4 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
+import { Component, input, model, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -6,15 +7,36 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { MockDirective, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { HttpResponse as HttpResponseType } from '@angular/common/http';
+
+// Manual mock component to avoid ng-mocks issues with signal queries
+@Component({
+    selector: 'jhi-course-group',
+    template: '<ng-content />',
+})
+class MockCourseGroupComponent {
+    readonly allGroupUsers = model<User[]>([]);
+    readonly isLoadingAllGroupUsers = input(false);
+    readonly isAdmin = input(false);
+    readonly course = input.required<Course>();
+    readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
+    readonly courseGroup = input.required<CourseGroup>();
+    readonly exportFileName = input.required<string>();
+    readonly userSearch = input<(loginOrName: string) => Observable<HttpResponseType<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
+    readonly addUserToGroup = input<(login: string) => Observable<HttpResponseType<void>>>(() => of(new HttpResponse<void>()));
+    readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponseType<void>>>(() => of(new HttpResponse<void>()));
+    readonly handleUsersSizeChange = input<(filteredUsersSize: number) => void>(() => {});
+    readonly importFinish = output<void>();
+}
 
 describe('Course Group Membership Component', () => {
     setupTestBed({ zoneless: true });
@@ -42,7 +64,7 @@ describe('Course Group Membership Component', () => {
         })
             .overrideComponent(CourseGroupMembershipComponent, {
                 set: {
-                    imports: [MockComponent(CourseGroupComponent), MockDirective(TranslateDirective)],
+                    imports: [MockCourseGroupComponent, MockDirective(TranslateDirective)],
                 },
             })
             .compileComponents()
