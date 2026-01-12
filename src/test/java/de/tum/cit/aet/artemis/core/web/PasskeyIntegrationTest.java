@@ -272,8 +272,9 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         existingCredential.setSuperAdminApproved(true);
         passkeyCredentialsRepository.save(existingCredential);
 
-        // Try to revoke approval
-        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST);
+        // Try to revoke approval - should fail with specific error
+        request.putAndExpectError("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
+                "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
 
         // Verify the approval was not revoked
         PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
