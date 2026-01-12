@@ -444,15 +444,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param isActivated true if user should be activated, otherwise false
      */
     setActive(user: User, isActivated: boolean) {
-        const previousState = user.activated;
-        user.activated = isActivated;
         const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
         action.call(this.adminUserService, user.id!).subscribe({
             next: () => {
+                user.activated = isActivated;
                 this.loadAll();
-            },
-            error: () => {
-                user.activated = previousState;
             },
         });
     }
