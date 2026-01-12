@@ -26,7 +26,7 @@ describe('GradingKeyOverviewComponent', () => {
 
     const studentGrade = '2.0';
 
-    beforeEach(() => {
+    beforeEach(async () => {
         route = {
             snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params, data: {} },
             parent: {
@@ -39,7 +39,7 @@ describe('GradingKeyOverviewComponent', () => {
             },
         } as ActivatedRoute;
 
-        return TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [GradingKeyOverviewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -59,11 +59,10 @@ describe('GradingKeyOverviewComponent', () => {
                     imports: [MockComponent(GradingKeyTableComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 },
             })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(GradingKeyOverviewComponent);
-                component = fixture.componentInstance;
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(GradingKeyOverviewComponent);
+        component = fixture.componentInstance;
     });
 
     it('should initialize component', () => {

@@ -44,7 +44,7 @@ export function addCommentBoxes(
  * @param translateService  Service to translate text in the comments.
  */
 export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number, translateService: TranslateService) {
-    const headingText = translateService.instant('artemisApp.consistencyCheck.issueHeading');
+    const headingText = translateService.instant('artemisApp.hyperion.consistencyCheck.issueHeading');
     const node = document.createElement('div');
     node.className = 'alert alert-warning alert-dismissible text-start fade show';
     node.innerHTML = `
@@ -80,18 +80,7 @@ export function issuesForSelectedFile(
                 continue;
             }
 
-            // Problem statement filePath is either problem_statement.md or empty
-            const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
-            // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
-            // Remove only known repo prefixes (template_repository/..., solution_repository/..., tests_repository/...)
-            const issueFile = (() => {
-                if (isProblemStatement) {
-                    return 'problem_statement.md';
-                }
-                const parts = (loc.filePath ?? '').split('/');
-                const knownPrefixes = ['template_repository', 'solution_repository', 'tests_repository'];
-                return knownPrefixes.includes(parts[0]) ? parts.slice(1).join('/') : loc.filePath;
-            })();
+            const issueFile = getRepoPath(loc);
 
             if (issueFile !== selectedFile) {
                 continue;
@@ -111,6 +100,33 @@ export function issuesForSelectedFile(
     }
 
     return inlineIssues;
+}
+
+/**
+ * Normalizes a repository-relative file path from an artifact location.
+ *
+ * If the location refers to the problem statement, the fixed filename
+ * `problem_statement.md` is returned. Otherwise, known repository prefixes
+ * (`template_repository`, `solution_repository`, `tests_repository`)
+ * are removed, returning only the internal path.
+ *
+ * @param {ArtifactLocation} loc
+ *        The artifact location containing the raw repository file path.
+ *
+ * @returns {string}
+ *          The normalized file path inside the repository.
+ */
+export function getRepoPath(loc: ArtifactLocation): string {
+    // Problem statement filePath is either problem_statement.md or empty
+    const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
+    // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
+    // Remove only known repo prefixes (template_repository/..., solution_repository/..., tests_repository/...)
+    if (isProblemStatement) {
+        return 'problem_statement.md';
+    }
+    const parts = (loc.filePath ?? '').split('/');
+    const knownPrefixes = ['template_repository', 'solution_repository', 'tests_repository'];
+    return knownPrefixes.includes(parts[0]) ? parts.slice(1).join('/') : loc.filePath;
 }
 
 /**

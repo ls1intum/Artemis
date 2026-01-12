@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router, RouterLink } from '@angular/router';
@@ -19,30 +19,28 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
     imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
 })
-export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
+export class CourseDetailDoughnutChartComponent {
     private router = inject(Router);
 
-    @Input() contentType: DoughnutChartType;
-    @Input() currentPercentage?: number;
-    @Input() currentAbsolute?: number;
-    @Input() currentMax?: number;
-    @Input() course: Course;
-    @Input() showText?: string;
+    readonly contentType = input.required<DoughnutChartType>();
+    readonly currentPercentage = input<number>();
+    readonly currentAbsolute = input<number>();
+    readonly currentMax = input<number>();
+    readonly course = input.required<Course>();
+    readonly showText = input<string>();
 
-    receivedStats = false;
-    doughnutChartTitle: string;
-    stats: number[];
-    titleLink?: string;
+    readonly receivedStats = signal(false);
+    readonly stats = signal<number[]>([]);
+    readonly ngxData = signal<NgxChartsSingleSeriesDataEntry[]>([
+        { name: 'Done', value: 0 },
+        { name: 'Not done', value: 0 },
+        { name: 'N/A', value: 0 }, // fallback to display grey circle if there is no maxValue
+    ]);
 
     // Icons
     faSpinner = faSpinner;
 
     // ngx-charts
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [
-        { name: 'Done', value: 0 },
-        { name: 'Not done', value: 0 },
-        { name: 'N/A', value: 0 }, // fallback to display grey circle if there is no maxValue
-    ];
     ngxColor = {
         name: 'vivid',
         selectable: true,
@@ -51,61 +49,91 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
-    ngOnChanges() {
-        // [0, 0, 0] will lead to the chart not being displayed,
-        // assigning [0, 0, 1] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
-        if (this.currentAbsolute == undefined && !this.receivedStats && !this.showText) {
-            this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
-        } else {
-            this.receivedStats = true;
-            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
-            this.stats = [this.currentAbsolute!, remaining, 0]; // done, not done, na
-            return this.currentMax === 0 ? this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE) : this.updatePieChartData(this.stats);
-        }
-    }
-
-    /**
-     * Depending on the information we want to display in the doughnut chart, we need different titles and links
-     */
-    ngOnInit(): void {
-        switch (this.contentType) {
+    // Computed values for title and link based on contentType
+    readonly doughnutChartTitle = computed(() => {
+        switch (this.contentType()) {
             case DoughnutChartType.ASSESSMENT:
-                this.doughnutChartTitle = 'assessments';
-                this.titleLink = 'assessment-dashboard';
-                break;
+                return 'assessments';
             case DoughnutChartType.COMPLAINTS:
-                this.doughnutChartTitle = 'complaints';
-                this.titleLink = 'complaints';
-                break;
+                return 'complaints';
             case DoughnutChartType.FEEDBACK:
-                this.doughnutChartTitle = 'moreFeedback';
-                this.titleLink = 'more-feedback-requests';
-                break;
+                return 'moreFeedback';
             case DoughnutChartType.AVERAGE_COURSE_SCORE:
-                this.doughnutChartTitle = 'averageStudentScore';
-                this.titleLink = undefined;
-                if (this.course.isAtLeastInstructor) {
-                    this.titleLink = 'scores';
-                }
-                this.ngxData[0].name = 'Average score';
-                break;
+                return 'averageStudentScore';
             case DoughnutChartType.CURRENT_LLM_COST:
-                this.doughnutChartTitle = 'currentTotalLLMCost';
-                this.titleLink = undefined;
-                break;
+                return 'currentTotalLLMCost';
             default:
-                this.doughnutChartTitle = '';
-                this.titleLink = undefined;
+                return '';
         }
-        this.ngxData = [...this.ngxData];
+    });
+
+    readonly titleLink = computed(() => {
+        switch (this.contentType()) {
+            case DoughnutChartType.ASSESSMENT:
+                return 'assessment-dashboard';
+            case DoughnutChartType.COMPLAINTS:
+                return 'complaints';
+            case DoughnutChartType.FEEDBACK:
+                return 'more-feedback-requests';
+            case DoughnutChartType.AVERAGE_COURSE_SCORE:
+                if (this.course().isAtLeastInstructor) {
+                    return 'scores';
+                }
+                return undefined;
+            case DoughnutChartType.CURRENT_LLM_COST:
+                return undefined;
+            default:
+                return undefined;
+        }
+    });
+
+    constructor() {
+        // Effect to handle ngOnChanges logic for input changes
+        effect(() => {
+            const currentAbsolute = this.currentAbsolute();
+            const currentMax = this.currentMax();
+            const showText = this.showText();
+            const course = this.course();
+
+            untracked(() => {
+                // [0, 0, 0] will lead to the chart not being displayed,
+                // assigning [0, 0, 1] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
+                if (currentAbsolute == undefined && !this.receivedStats() && !showText) {
+                    this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
+                } else {
+                    this.receivedStats.set(true);
+                    const remaining = roundValueSpecifiedByCourseSettings(currentMax! - currentAbsolute!, course);
+                    this.stats.set([currentAbsolute!, remaining, 0]); // done, not done, na
+                    if (currentMax === 0) {
+                        this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
+                    } else {
+                        this.updatePieChartData(this.stats());
+                    }
+                }
+            });
+        });
+
+        // Effect to handle contentType initialization (for AVERAGE_COURSE_SCORE name change)
+        effect(() => {
+            const contentType = this.contentType();
+            untracked(() => {
+                if (contentType === DoughnutChartType.AVERAGE_COURSE_SCORE) {
+                    const currentData = this.ngxData();
+                    currentData[0].name = 'Average score';
+                    this.ngxData.set([...currentData]);
+                }
+            });
+        });
     }
 
     /**
      * handles clicks onto the graph, which then redirects the user to the corresponding page, e.g. complaints page for the complaints chart
      */
     openCorrespondingPage() {
-        if (this.course.id && this.titleLink) {
-            this.router.navigate(['/course-management', this.course.id, this.titleLink]);
+        const course = this.course();
+        const titleLink = this.titleLink();
+        if (course.id && titleLink) {
+            this.router.navigate(['/course-management', course.id, titleLink]);
         }
     }
 
@@ -114,8 +142,9 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * @param values the values that should be displayed by the chart
      */
     private updatePieChartData(values: number[]): void {
-        this.ngxData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
-        this.ngxData = [...this.ngxData];
+        const currentData = this.ngxData();
+        currentData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
+        this.ngxData.set([...currentData]);
     }
 
     /**
@@ -127,6 +156,6 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * returns string representing custom tooltip content
      */
     valueFormatting(data: any): string {
-        return this.currentMax === 0 ? '0' : data.value;
+        return this.currentMax() === 0 ? '0' : data.value;
     }
 }
