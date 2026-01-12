@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.repository.passkey;
 import static de.tum.cit.aet.artemis.core.authentication.CredentialRecordFactory.createCredentialRecord;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -87,10 +88,11 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
 
     @AfterAll
     void tearDown() {
-        // Clean up passkeys first (due to foreign key constraints)
-        passkeyCredentialsRepository.deleteAll();
-        // Clean up users
-        userTestRepository.deleteAll();
+        List<User> testUsers = List.of(superAdminUser, regularUser, adminUser, tutorUser, editorUser, instructorUser);
+        for (User user : testUsers) {
+            List<PasskeyCredential> credentials = passkeyCredentialsRepository.findByUser(user.getId());
+            passkeyCredentialsRepository.deleteAll(credentials);
+        }
     }
 
     private User getUserForTestCase(UserTestCase testCase) {
