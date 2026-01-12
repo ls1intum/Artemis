@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -53,6 +53,7 @@ describe('ExampleSubmissionImportComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
