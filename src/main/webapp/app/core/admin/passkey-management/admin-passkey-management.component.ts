@@ -14,8 +14,8 @@ import { onError } from 'app/shared/util/global.utils';
     imports: [NgxDatatableModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
 })
 export class AdminPasskeyManagementComponent implements OnInit {
-    private adminPasskeyService = inject(AdminPasskeyManagementService);
-    private alertService = inject(AlertService);
+    private readonly adminPasskeyService = inject(AdminPasskeyManagementService);
+    private readonly alertService = inject(AlertService);
 
     passkeys = signal<AdminPasskeyDTO[]>([]);
     isLoading = signal<boolean>(false);
