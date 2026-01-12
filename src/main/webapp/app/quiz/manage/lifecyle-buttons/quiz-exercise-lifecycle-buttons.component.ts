@@ -46,20 +46,6 @@ export class QuizExerciseLifecycleButtonsComponent {
     readonly handleNewQuizExercise = output<QuizExercise>();
 
     /**
-     * Set the quiz open for practice
-     */
-    openForPractice() {
-        this.quizExerciseService.openForPractice(this.quizExercise().id!).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise.emit(res.body!);
-            },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-            },
-        });
-    }
-
-    /**
      * Start the given quiz-exercise immediately
      */
     startQuiz() {
@@ -67,6 +53,7 @@ export class QuizExerciseLifecycleButtonsComponent {
             next: (res: HttpResponse<QuizExerciseDates>) => {
                 this.updateDatesForQuizExercise(res.body!);
                 this.quizExercise().quizStarted = true;
+                this.quizExercise().status = QuizStatus.ACTIVE;
                 this.handleNewQuizExercise.emit(this.quizExercise());
             },
             error: (res: HttpErrorResponse) => {
