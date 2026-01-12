@@ -516,18 +516,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         };
     }
 
-    /**
-     * Removes a line widget by its ID.
-     * @param id The ID of the widget to remove.
-     */
-    removeLineWidget(id: string): void {
-        const index = this.lineWidgets.findIndex((w) => w.getId() === id);
-        if (index !== -1) {
-            this.lineWidgets[index].dispose();
-            this.lineWidgets.splice(index, 1);
-        }
-    }
-
     setWordWrap(value: boolean): void {
         this._editor.updateOptions({
             wordWrap: value ? 'on' : 'off',

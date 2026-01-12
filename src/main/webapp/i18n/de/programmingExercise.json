@@ -247,23 +247,6 @@
                 "changesApplied": "Änderungen wurden auf die Aufgabenstellung angewendet.",
                 "aiRefining": "KI verfeinert die Aufgabenstellung..."
             },
-            "inlineComment": {
-                "placeholder": "Beschreibe, was sich in diesen Zeilen ändern soll...",
-                "save": "Speichern",
-                "applyWithAI": "Mit KI anwenden",
-                "pendingComments": "{{ count }} ausstehende(r) Kommentar(e)",
-                "applyAll": "Alle anwenden",
-                "addComment": "Kommentar hinzufügen",
-                "unsavedWarning": "Du hast ungespeicherte Inline-Kommentare. Möchtest du die Seite verlassen, ohne sie anzuwenden?",
-                "applySuccess": "Kommentar erfolgreich angewendet.",
-                "applyError": "Kommentar konnte nicht angewendet werden. Bitte versuche es erneut.",
-                "applyAllSuccess": "Alle Kommentare erfolgreich angewendet.",
-                "applyAllError": "Einige Kommentare konnten nicht angewendet werden.",
-                "line": "Zeile {{ line }}",
-                "lines": "Zeilen {{ start }}-{{ end }}",
-                "expand": "Kommentar erweitern",
-                "collapse": "Kommentar zusammenklappen"
-            },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
