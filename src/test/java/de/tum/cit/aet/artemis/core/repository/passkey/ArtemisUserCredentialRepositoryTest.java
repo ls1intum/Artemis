@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -82,6 +83,14 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
         adminUser = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
         adminUser.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         userTestRepository.save(adminUser);
+    }
+
+    @AfterAll
+    void tearDown() {
+        // Clean up passkeys first (due to foreign key constraints)
+        passkeyCredentialsRepository.deleteAll();
+        // Clean up users
+        userTestRepository.deleteAll();
     }
 
     private User getUserForTestCase(UserTestCase testCase) {

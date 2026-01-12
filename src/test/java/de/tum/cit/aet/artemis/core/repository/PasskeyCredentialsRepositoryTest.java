@@ -60,7 +60,10 @@ class PasskeyCredentialsRepositoryTest extends AbstractSpringIntegrationIndepend
 
     @AfterEach
     void tearDown() {
+        // Clean up passkeys first (due to foreign key constraints)
         passkeyCredentialsRepository.deleteAll();
+        // Clean up users to prevent test pollution
+        userTestRepository.deleteAll();
     }
 
     @Test
