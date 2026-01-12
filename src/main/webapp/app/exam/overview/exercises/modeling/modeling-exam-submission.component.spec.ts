@@ -1,4 +1,4 @@
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, input, model } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
@@ -10,6 +10,23 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+
+// Stub for ModelingEditorComponent to avoid Apollon editor initialization issues
+@Component({
+    selector: 'jhi-modeling-editor',
+    template: '',
+})
+class StubModelingEditorComponent {
+    umlModel = input<UMLModel>();
+    diagramType = input<UMLDiagramType>();
+    readOnly = input(false);
+    withExplanation = input(false);
+    explanation = model<string>('');
+
+    getCurrentModel(): UMLModel {
+        return this.umlModel() ?? ({} as UMLModel);
+    }
+}
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
@@ -45,7 +62,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
+            imports: [FaIconComponent, StubModelingEditorComponent],
             declarations: [
                 ModelingExamSubmissionComponent,
                 TranslatePipeMock,
@@ -61,7 +78,12 @@ describe('ModelingExamSubmissionComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ModelingExamSubmissionComponent, {
+                remove: { imports: [ModelingEditorComponent] },
+                add: { imports: [StubModelingEditorComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ModelingExamSubmissionComponent);
         comp = fixture.componentInstance;
@@ -120,12 +142,12 @@ describe('ModelingExamSubmissionComponent', () => {
 
         it('should show modeling editor with correct props when there is submission and exercise', () => {
             fixture.detectChanges();
-            const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
+            const modelingEditor = fixture.debugElement.query(By.directive(StubModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
-            expect(modelingEditor.componentInstance.umlModel).toEqual({ version: '2.0.0', model: true, assessments: {} });
-            expect(modelingEditor.componentInstance.withExplanation).toBeTrue();
-            expect(modelingEditor.componentInstance.explanation).toEqual(mockSubmission.explanationText);
-            expect(modelingEditor.componentInstance.diagramType).toEqual(UMLDiagramType.ClassDiagram);
+            expect(modelingEditor.componentInstance.umlModel()).toEqual({ version: '2.0.0', model: true });
+            expect(modelingEditor.componentInstance.withExplanation()).toBeTrue();
+            expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
+            expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
         });
 
         it('should show problem statement if there is any', () => {
@@ -166,9 +188,12 @@ describe('ModelingExamSubmissionComponent', () => {
     describe('updateSubmissionFromView', () => {
         it('should set submission model to new model from modeling editor', () => {
             fixture.detectChanges();
-            const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent)).componentInstance;
+            const modelingEditorElement = fixture.debugElement.query(By.directive(StubModelingEditorComponent));
+            const stubModelingEditor = modelingEditorElement.componentInstance as StubModelingEditorComponent;
             const newModel = { newModel: true };
-            const currentModelStub = jest.spyOn(modelingEditor, 'getCurrentModel').mockReturnValue(newModel);
+            const currentModelStub = jest.spyOn(stubModelingEditor, 'getCurrentModel').mockReturnValue(newModel as unknown as UMLModel);
+            // Mock the viewChild to return the stub
+            jest.spyOn(comp, 'modelingEditor').mockReturnValue(stubModelingEditor as unknown as ModelingEditorComponent);
             const explanationText = 'New explanation text';
             comp.explanationText = explanationText;
             comp.updateSubmissionFromView();
