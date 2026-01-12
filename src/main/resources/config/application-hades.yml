@@ -8,8 +8,6 @@ artemis:
     url: http://localhost:8082
     artemis-authentication-token-value: ""
     hades:
-      username: testuser
-      password: testpassword
       images:
         clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
         result-image: ghcr.io/mtze/hades-junit-result-parser:latest

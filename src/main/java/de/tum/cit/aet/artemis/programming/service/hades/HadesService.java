@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,11 +48,25 @@ public class HadesService implements StatelessCIService {
     @Value("${artemis.continuous-integration.hades.images.clone-image}")
     private String cloneDockerImage;
 
-    @Value("${artemis.continuous-integration.hades.username}")
-    private String hadesUsername;
+    @Value("${artemis.version-control.build-agent-git-username}")
+    private String username;
 
-    @Value("${artemis.continuous-integration.hades.password}")
-    private String hadesPassword;
+    @Value("${artemis.version-control.build-agent-git-password}")
+    private String password;
+
+    private String repositoryDir = "/shared";
+
+    private String workingDir = "/shared";
+
+    private String hadesTestPath = "./";
+
+    private String assignmentPath = "./assignment";
+
+    private List<HadesBuildStepDTO.VolumeMount> volumeMounts = List.of(new HadesBuildStepDTO.VolumeMount("shared", "/shared"));
+
+    private String testOrder = "1";
+
+    private String assignmentOrder = "2";
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -123,26 +138,27 @@ public class HadesService implements StatelessCIService {
         // Create Clone Step
         // TODO: Add support for ssh authentication
         var cloneMetadata = new HashMap<String, String>();
-        cloneMetadata.put("REPOSITORY_DIR", "/shared");
-        cloneMetadata.put("HADES_TEST_USERNAME", hadesUsername);
-        cloneMetadata.put("HADES_TEST_PASSWORD", hadesPassword);
+        cloneMetadata.put("REPOSITORY_DIR", repositoryDir);
+        cloneMetadata.put("HADES_TEST_USERNAME", username);
+        cloneMetadata.put("HADES_TEST_PASSWORD", password);
         cloneMetadata.put("HADES_TEST_URL", buildTriggerRequestDTO.testRepository().url());
-        cloneMetadata.put("HADES_TEST_PATH", "./");
-        cloneMetadata.put("HADES_TEST_ORDER", "1");
-        cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", hadesUsername);
-        cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", hadesPassword);
+        cloneMetadata.put("HADES_TEST_PATH", hadesTestPath);
+        cloneMetadata.put("HADES_TEST_ORDER", testOrder);
+        cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", username);
+        cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", password);
         cloneMetadata.put("HADES_ASSIGNMENT_URL", buildTriggerRequestDTO.exerciseRepository().url());
-        cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
-        cloneMetadata.put("HADES_ASSIGNMENT_ORDER", "2");
+        cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentPath);
+        cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
         // TODO: Auxiliary Repository clone is not supported yet
 
-        steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, cloneMetadata));
+        steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, volumeMounts, workingDir, cloneMetadata));
 
         // Create Execute Step
         ProjectType projectType = ProjectType.tryFromString(buildTriggerRequestDTO.additionalProperties().get("projectType"));
         var image = programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), Optional.ofNullable(projectType));
         var script = buildTriggerRequestDTO.buildScript();
-        steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
+        var fullScript = "set -e && cd /shared && " + script;
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, fullScript));
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();

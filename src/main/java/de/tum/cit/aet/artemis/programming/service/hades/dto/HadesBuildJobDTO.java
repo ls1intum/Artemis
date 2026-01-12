@@ -14,17 +14,27 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * The API Specification for Hades can be found here: https://github.com/Mtze/hades/blob/main/shared/payload/payload.go
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps) implements Serializable {
+public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps)
+        implements Serializable {
 
-    public static HadesBuildJobDTO create(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps) {
+    public record Volume(String name, EmptyDir emptyDir) {
+    }
+
+    public record EmptyDir() {
+    }
+
+    public HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps) {
         if (steps == null) {
             steps = List.of();  // Assigning an empty list if null
         }
-        return new HadesBuildJobDTO(name, metadata, timestamp, priority, steps);
+
+        List<Volume> volumes = List.of(new Volume("shared", new EmptyDir()));
+        this(name, volumes, metadata, timestamp, priority, steps);
     }
 
     @Override
     public String toString() {
-        return "HadesBuildJobDTO{" + "name='" + name + '\'' + ", metadata=" + metadata + ", timestamp='" + timestamp + '\'' + ", priority=" + priority + ", steps=" + steps + '}';
+        return "HadesBuildJobDTO{" + "name='" + name + '\'' + ", volumes=" + volumes + ", metadata=" + metadata + ", timestamp='" + timestamp + '\'' + ", priority=" + priority
+                + ", steps=" + steps + '}';
     }
 }
