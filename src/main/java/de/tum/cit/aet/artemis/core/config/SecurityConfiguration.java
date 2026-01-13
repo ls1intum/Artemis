@@ -13,6 +13,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -28,7 +29,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -38,7 +38,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
+import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
@@ -113,26 +113,43 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Spring Security will attempt to authenticate with the providers in the order they're added. If an external provider is configured, it will be queried first;
-     * the internal database is used as a fallback if external authentication fails or is not configured.
+     * Configures the {@link AuthenticationManager} with the appropriate authentication providers.
+     * <p>
+     * Spring Security attempts to authenticate with providers in the order they're added:
+     * <ol>
+     * <li>If an external provider (e.g., LDAP) is configured, it is tried first. The external provider will skip
+     * internal users (returns null) and only authenticate external users or users not yet in the database.</li>
+     * <li>The internal provider serves as a fallback, authenticating only internal users stored in the Artemis database.</li>
+     * </ol>
+     * <p>
+     * This explicit configuration is required to:
+     * <ul>
+     * <li>Ensure the correct provider order (external first, internal second)</li>
+     * <li>Prevent Spring Boot's auto-configuration from creating a parent AuthenticationManager that would register
+     * providers twice (as both parent and child), which could cause authentication issues</li>
+     * </ul>
      *
-     * @param http                             The {@link HttpSecurity} to configure.
-     * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
-     *                                             implementation.
-     * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
+     * @param http                                  The {@link HttpSecurity} to configure.
+     * @param artemisInternalAuthenticationProvider The {@link ArtemisInternalAuthenticationProvider} for internal authentication using the Artemis database.
+     * @param externalUserAuthenticationProvider    An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, UserDetailsService userDetailsService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider)
-            throws Exception {
+    @Primary
+    public AuthenticationManager authenticationManager(HttpSecurity http, ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider,
+            @Qualifier("ldapAuthenticationProvider") Optional<AuthenticationProvider> externalUserAuthenticationProvider) throws Exception {
         var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        // Configure the user details service for internal authentication using the Artemis database.
-        builder.userDetailsService(userDetailsService);
-        // Optionally configure an external authentication provider (e.g., {@link de.tum.cit.aet.artemis.service.connectors.ldap.LdapAuthenticationProvider}) for remote user
-        // authentication.
-        remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
-        // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
-        // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
+
+        // External provider (e.g., LDAP) is added first - it will be tried first and skip internal users by returning null
+        externalUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
+
+        // Internal provider is added second - it serves as a fallback for internal users
+        builder.authenticationProvider(artemisInternalAuthenticationProvider);
+
+        // Explicitly set parent to null to prevent Spring Boot's auto-configured AuthenticationManager from being used as parent.
+        // Without this, providers could be registered twice (in parent and child), causing duplicate authentication attempts.
+        builder.parentAuthenticationManager(null);
+
         return builder.build();
     }
 
@@ -219,7 +236,16 @@ public class SecurityConfiguration {
             // Configures security headers.
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
-                .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives(
+                        // Allow scripts only from the same origin.
+                        // 'unsafe-inline' and 'unsafe-eval' are necessary for Angular/Zone.js, but do NOT allow loading arbitrary external script files.
+                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                        // Allow Web Workers to be created from your own origin ('self') AND from blob: URLs. Required because RxStomp creates its ticker
+                        // worker dynamically using a Blob -> blob: URL. Does NOT weaken main-page script loading.
+                        "worker-src 'self' blob:"
+                    )
+                )
                 // Prevents the website from being framed, avoiding clickjacking attacks.
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                 // Sets Referrer Policy to limit the amount of referrer information sent with requests.

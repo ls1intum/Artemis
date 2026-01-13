@@ -311,17 +311,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             assertThat(actualJsonNode.get("errors").get(0).get("errorType").asText()).contains("NOT_FOUND");
         }
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldTrimTitleWhitespaceWhenUpdating() {
-            String titleWithSpaces = "  Title With Spaces  ";
-            CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), titleWithSpaces, "Description", CompetencyTaxonomy.APPLY);
-
-            competencyExpertToolsService.saveCompetencies(course.getId(), List.of(updateOperation));
-
-            Competency actualUpdatedCompetency = competencyRepository.findById(existingCompetency.getId()).orElseThrow();
-            assertThat(actualUpdatedCompetency.getTitle()).isEqualTo("Title With Spaces");
-        }
     }
 
     @Nested

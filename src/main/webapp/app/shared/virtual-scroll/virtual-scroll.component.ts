@@ -105,7 +105,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      * updates screen height when window is resized
      * this value is needed to calculate number of rendered items on the DOM tree
      */
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     getScreenSize() {
         this.screenHeight = window.innerHeight;
     }

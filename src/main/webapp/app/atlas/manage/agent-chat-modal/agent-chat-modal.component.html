@@ -43,7 +43,7 @@
                                 }
                                 @for (preview of message.competencyPreviews; track preview.title + preview.competencyId) {
                                     <div class="mb-2">
-                                        <jhi-competency-card [courseId]="courseId" [competency]="preview" [noProgressRings]="true" />
+                                        <jhi-competency-card [courseId]="courseId()" [competency]="preview" [noProgressRings]="true" />
                                     </div>
                                 }
                                 @if (!message.competencyPreviews[0]?.viewOnly) {

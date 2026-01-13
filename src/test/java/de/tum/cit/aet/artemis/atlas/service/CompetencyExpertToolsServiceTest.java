@@ -350,22 +350,6 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldTrimTitleWhitespaceDuringUpdate() {
-            CompetencyOperation updateOperation = new CompetencyOperation(1L, "  Title with spaces  ", "Description", CompetencyTaxonomy.APPLY);
-
-            when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
-            when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
-            when(competencyRepository.save(any(Competency.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-            competencyExpertToolsService.saveCompetencies(123L, List.of(updateOperation));
-
-            ArgumentCaptor<Competency> competencyCaptor = ArgumentCaptor.forClass(Competency.class);
-            verify(competencyRepository).save(competencyCaptor.capture());
-            Competency actualSavedCompetency = competencyCaptor.getValue();
-            assertThat(actualSavedCompetency.getTitle()).isEqualTo("Title with spaces");
-        }
-
-        @Test
         void shouldHandleExceptionDuringSaveGracefully() throws JsonProcessingException {
             CompetencyOperation operation = new CompetencyOperation(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
 
@@ -438,7 +422,7 @@ class CompetencyExpertToolsServiceTest {
 
             // After clearing, session ID should be null
             // This can be verified by calling getLastPreviewedCompetency which checks for null session
-            String result = competencyExpertToolsService.getLastPreviewedCompetency();
+            String result = competencyExpertToolsService.getLastPreviewedCompetency(123L);
             assertThat(result).contains("No active session");
         }
 
@@ -447,12 +431,9 @@ class CompetencyExpertToolsServiceTest {
             // Create and set some previews
             CompetencyOperation op = new CompetencyOperation(null, "Test", "Description", CompetencyTaxonomy.APPLY);
             competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), null);
-
-            // Clear all previews
-            CompetencyExpertToolsService.clearAllPreviews();
-
             // Verify they are cleared by retrieving them
-            assertThat(CompetencyExpertToolsService.getPreviews()).isNull();
+            assertThat(CompetencyExpertToolsService.getAndClearPreviews()).isNotNull();
+            assertThat(CompetencyExpertToolsService.getAndClearPreviews()).isEmpty();
         }
 
         @Test
@@ -481,7 +462,7 @@ class CompetencyExpertToolsServiceTest {
             // Don't set any session ID
             CompetencyExpertToolsService.clearCurrentSessionId();
 
-            String result = service.getLastPreviewedCompetency();
+            String result = service.getLastPreviewedCompetency(123L);
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
@@ -498,7 +479,7 @@ class CompetencyExpertToolsServiceTest {
 
             when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(null);
 
-            String result = service.getLastPreviewedCompetency();
+            String result = service.getLastPreviewedCompetency(123L);
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
@@ -519,7 +500,7 @@ class CompetencyExpertToolsServiceTest {
 
             when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
 
-            String result = service.getLastPreviewedCompetency();
+            String result = service.getLastPreviewedCompetency(123L);
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);

@@ -56,7 +56,7 @@ class CourseAdminServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest
     }
 
     @Test
-    void testDeletionSummary() {
+    void testCourseSummary() {
         SecurityUtils.setAuthorizationObject();
         Course course = courseUtilService.addEmptyCourse();
 
@@ -72,8 +72,8 @@ class CourseAdminServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest
         Result result = participationUtilService.createSubmissionAndResult(participation, 1L, true);
         createBuildJob(programmingExercise, course, participation, result);
 
-        var summary = courseAdminService.getDeletionSummary(course.getId());
-        assertThat(summary.numberOfCommunicationPosts()).isEqualTo(1L);
+        var summary = courseAdminService.getCourseSummary(course.getId());
+        assertThat(summary.numberOfPosts()).isEqualTo(1L);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1L);
         assertThat(summary.numberOfBuilds()).isEqualTo(1L);
     }

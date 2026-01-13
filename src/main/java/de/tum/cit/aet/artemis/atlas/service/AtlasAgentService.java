@@ -5,8 +5,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
@@ -16,7 +16,6 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,18 +29,17 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
-import de.tum.cit.aet.artemis.atlas.dto.BatchRelationPreviewResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationPreviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.RelationGraphPreviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.SingleRelationPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
  * Handles chat interactions and competency-related AI assistance.
- * Manages multi-agent orchestration between Main Agent and sub-agents (Competency Expert).
+ * Manages multi-agent orchestration between Main Agent and Sub-agents (Competency Expert Sub-agent).
  */
 @Lazy
 @Service
@@ -75,14 +73,23 @@ public class AtlasAgentService {
     /**
      * Track which agent is active for each session.
      * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * - Entries expire after 2 hours of inactivity (expireAfterAccess)
-     * - Maximum 5000 sessions cached (maximumSize)
-     * - Automatic cleanup on access and during GC
+     * Entries expire after 2 hours of inactivity
+     * Maximum 5000 sessions cached
+     * Automatic cleanup on access and during garbage collection.
      */
     private final Cache<String, AgentType> sessionAgentMap = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
 
-    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
+    /**
+     * Track pending competency operations for each session.
+     * Uses Guava Cache with automatic eviction to prevent memory leaks:
+     * Entries expire after 2 hours of inactivity
+     * Maximum 5000 sessions cached
+     * Automatic cleanup on access and during garbage collection.
+     *
+     * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
+     */
+    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
+            .maximumSize(MAX_SESSIONS).build();
 
     private final Cache<String, List<CompetencyMappingToolsService.RelationOperation>> sessionPendingRelationOperationsCache = CacheBuilder.newBuilder()
             .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
@@ -99,13 +106,19 @@ public class AtlasAgentService {
 
     private final ChatMemory chatMemory;
 
-    @Value("${atlas.chat-model:gpt-4o}")
-    private String deploymentName;
+    private final String deploymentName;
 
-    @Value("${atlas.chat-temperature:0.2}")
-    private double temperature;
+    private final double temperature;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * Thread-local storage for the session-specific ChatClient with memory advisor.
+     * This ensures each request uses a single ChatClient instance with memory configured once,
+     * avoiding duplicate memory advisor registrations during multi-agent delegation.
+     *
+     * @return the competency modified flag for the current request
+     */
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
@@ -179,13 +192,16 @@ public class AtlasAgentService {
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Nullable ChatMemory chatMemory) {
+            @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
+                             @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
         this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
         this.chatMemory = chatMemory;
+        this.deploymentName = deploymentName;
+        this.temperature = temperature;
     }
 
     /**
@@ -193,21 +209,20 @@ public class AtlasAgentService {
      * Routes to the appropriate agent based on session state and delegation markers.
      * Uses ThreadLocal state tracking to detect competency modifications.
      *
-     * @param message   The user's message
-     * @param courseId  The course ID for context
-     * @param sessionId The session ID for chat memory and agent tracking
-     * @return Result containing the AI response and competency modification flag
+     * @param message   the user's message
+     * @param courseId  the course ID for context
+     * @param sessionId the session ID for chat memory and agent tracking
+     * @return result containing the AI response and competency modification flag
      */
-    public CompletableFuture<AtlasAgentChatResponseDTO> processChatMessage(String message, Long courseId, String sessionId) {
+    public AtlasAgentChatResponseDTO processChatMessage(String message, Long courseId, String sessionId) {
         if (chatClient == null) {
-            return CompletableFuture.completedFuture(
-                    new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null, null, null));
+            return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null, null, null);
         }
 
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
-            CompetencyExpertToolsService.clearAllPreviews();
+            //CompetencyExpertToolsService.clearAllPreviews();
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
@@ -217,65 +232,33 @@ public class AtlasAgentService {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
                 String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
 
-                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
 
                 String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, previews);
 
                 // Replace the last assistant message with the version containing embedded preview data
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
-                if (chatMemory != null && !responseWithEmbeddedData.equals(delegationResponse)) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-                return CompletableFuture
-                        .completedFuture(new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null));
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY) || message.equals(CREATE_APPROVED_COMPETENCY)) {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
                 List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
 
-                // Replace the user message in chat memory with a friendly version
-                if (chatMemory != null && message.equals(CREATE_APPROVED_COMPETENCY)) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.USER) {
-                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new UserMessage("Create the competency"));
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
-
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
-
-                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
-
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
                     clearCachedPendingCompetencyOperations(sessionId);
                 }
 
-                // Update chat memory with embedded preview data
-                if (chatMemory != null && !responseWithEmbeddedData.equals(creationResponse)) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-                return CompletableFuture
-                        .completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null));
+                return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
             }
             else if (response.contains(DELEGATE_TO_COMPETENCY_MAPPER)) {
                 // Extract brief from marker
@@ -296,7 +279,7 @@ public class AtlasAgentService {
                 // Retrieve relation preview data from ThreadLocal
                 SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
                 BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
-                de.tum.cit.aet.artemis.atlas.dto.RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
+                RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
 
                 System.out.println("DEBUG: Single relation preview: " + singleRelationPreview);
                 System.out.println("DEBUG: Batch relation preview: " + batchRelationPreview);
@@ -305,95 +288,46 @@ public class AtlasAgentService {
                 // Embed relation preview data in the response
                 String responseWithEmbeddedData = embedRelationPreviewDataInResponse(delegationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
 
-                // Replace the last assistant message with the version containing embedded preview data
-                if (chatMemory != null && !responseWithEmbeddedData.equals(delegationResponse)) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                        List<Message> updatedMessages = new java.util.ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
                 // Reset to MAIN_AGENT
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
 
                 // Return with relation preview data (convert to unified list)
-                List<de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
-                return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null,
-                        relationPreviews, relationGraphPreview));
-            }
-            else if (response.contains(CREATE_APPROVED_RELATION) || message.equals(CREATE_APPROVED_RELATION) || isRelationApprovalMessage(message)) {
-                // User approved the relation creation
-                sessionAgentMap.put(sessionId, AgentType.COMPETENCY_MAPPER);
-                CompetencyMappingToolsService.setCurrentSessionId(sessionId);
-
-                List<CompetencyMappingToolsService.RelationOperation> cachedData = getCachedRelationData(sessionId);
-
-                // Replace the user message in chat memory with a friendly version
-                if (chatMemory != null && (message.equals(CREATE_APPROVED_RELATION) || isRelationApprovalMessage(message))) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.USER) {
-                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new UserMessage("Map the relation"));
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
-
-                // Construct explicit instruction for the agent to use cached data
-                String saveInstruction = CREATE_APPROVED_RELATION
-                        + "\n\nINSTRUCTION: Call getLastPreviewedRelation() to retrieve the cached relation data, then call saveRelationMappings() with that exact data. Do not create new relations or modify the cached data.";
-                String creationResponse = delegateTheRightAgent(saveInstruction, courseId, sessionId);
-
-                // Remove the marker from the response if it appears
-                creationResponse = creationResponse.replace(CREATE_APPROVED_RELATION, "").trim();
-
-                // Extract relation preview data from ThreadLocal (stored by CompetencyMappingToolsService after save)
-                SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
-                BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
-                RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
-
-                // Convert to unified relation preview list
                 List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
-
-                if (cachedData != null && !cachedData.isEmpty()) {
-                    // Clear the cache after successful save
-                    clearCachedRelationOperations(sessionId);
-                }
-
-                // Reset to MAIN_AGENT
-                sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-
-                // Return success message with preview data for the saved relations
-                return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null,
-                        relationPreviews, relationGraphPreview));
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null,
+                    relationPreviews, relationGraphPreview);
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
+
+                boolean competenciesModified = competencyModifiedInCurrentRequest.get();
+
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
+
+                String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
+
+                // Embed preview data in response for chat memory persistence
+                String responseWithEmbeddedData = embedPreviewDataInResponse(finalResponse, previews);
+
+                // Update chat memory with embedded preview data if previews exist
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
+
+                return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews, null, null);
             }
 
-            boolean competenciesModified = competencyModifiedInCurrentRequest.get();
-
-            List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
-
-            // Use the LLM's natural language response
-            String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
-
-            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews, null, null));
-
+            // Default case: return the response as-is
+            return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null);
         }
         catch (Exception e) {
-            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.",
-                    ZonedDateTime.now(), false, null, null, null));
+            return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false,
+                    null, null, null);
         }
         finally {
-            // Clean up ThreadLocal to prevent memory leaks
             competencyModifiedInCurrentRequest.remove();
             CompetencyExpertToolsService.clearCurrentSessionId();
-            CompetencyExpertToolsService.clearAllPreviews();
+            CompetencyExpertToolsService.getAndClearPreviews();
             CompetencyMappingToolsService.clearCurrentSessionId();
             CompetencyMappingToolsService.clearAllPreviews();
         }
@@ -403,10 +337,10 @@ public class AtlasAgentService {
     /**
      * Process message with the Main Agent (Requirements Engineer/Orchestrator).
      *
-     * @param message   The user's message
-     * @param courseId  The course ID for context
-     * @param sessionId The session ID for chat memory
-     * @return The agent's response
+     * @param message   the user's message
+     * @param courseId  the course ID for context
+     * @param sessionId the session ID for chat memory
+     * @return the agent's response
      */
     private String delegateTheRightAgent(String message, Long courseId, String sessionId) {
         AgentType agentType = sessionAgentMap.getIfPresent(sessionId);
@@ -425,25 +359,26 @@ public class AtlasAgentService {
             resourcePath = "/prompts/atlas/competency_mapper_system_prompt.st";
         }
         else {
-            // Fallback to main agent prompt if unknown type
             resourcePath = "/prompts/atlas/agent_system_prompt.st";
         }
-        // Load agent system prompt
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
-        // Append courseId to system prompt (invisible to conversation history)
+        // Append courseId to system prompt in order for the sub-companions to have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
+
+        // Build chat client with memory advisor for this specific session
+        ChatClient.Builder clientBuilder = chatClient.mutate();
+        // Add memory advisor only for Atlas with conversation-specific session ID
+        if (chatMemory != null) {
+            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+        }
+        ChatClient sessionClient = clientBuilder.build();
 
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
-        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPromptWithContext).user(message).options(options);
+        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
-        if (chatMemory != null) {
-            promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
-        }
-
-        // Add appropriate agent tools based on agent type
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             if (mainAgentToolCallbackProvider != null) {
                 promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
@@ -465,20 +400,38 @@ public class AtlasAgentService {
     }
 
     /**
+     * Updates the last assistant message in chat memory with embedded preview data.
+     * This ensures preview data persists in conversation history.
+     *
+     * @param sessionId                the session ID
+     * @param responseWithEmbeddedData the response text with embedded preview data
+     * @param originalResponse         the original response text without embedded data
+     */
+    private void updateChatMemoryWithEmbeddedData(String sessionId, String responseWithEmbeddedData, String originalResponse) {
+        if (chatMemory != null && !responseWithEmbeddedData.equals(originalResponse)) {
+            List<Message> messages = chatMemory.get(sessionId);
+            if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
+                List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
+                updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
+
+                chatMemory.clear(sessionId);
+                updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
+            }
+        }
+    }
+
+    /**
      * Extract the brief content from the delegation marker.
      * Expected format:
      * %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
      * %%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
      *
-     * @param response The response containing the delegation marker
-     * @return The extracted brief content
+     * @param response the response containing the delegation marker
+     * @return the extracted brief content
      */
     private String extractBriefFromDelegationMarker(String response) {
-        // Try COMPETENCY_EXPERT marker first
-        int startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_EXPERT);
         String marker = DELEGATE_TO_COMPETENCY_EXPERT;
-
-        // If not found, try COMPETENCY_MAPPER marker
+        int startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_EXPERT);
         if (startIndex == -1) {
             startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_MAPPER);
             marker = DELEGATE_TO_COMPETENCY_MAPPER;
@@ -498,7 +451,7 @@ public class AtlasAgentService {
     }
 
     /**
-     * Marks that a competency was created during the current request.
+     * Marks that a competency was modified during the current request.
      * This method is called by tool methods (e.g., createCompetency) to signal
      * that a competency modification occurred during tool execution.
      */
@@ -507,7 +460,7 @@ public class AtlasAgentService {
     }
 
     /**
-     * Check if a competency was created during the current request.
+     * Check if a competency was modified during the current request.
      * Used primarily for testing purposes.
      *
      * @return true if a competency was created/modified during the current request
@@ -517,7 +470,7 @@ public class AtlasAgentService {
     }
 
     /**
-     * Resets the competency created flag.
+     * Resets the competency modified flag.
      * Used primarily for testing purposes to reset state between tests.
      */
     public static void resetCompetencyModifiedFlag() {
@@ -528,8 +481,8 @@ public class AtlasAgentService {
      * Retrieves the conversation history for a given session as DTOs.
      * Filters out internal system messages (delegation markers and briefings) and extracts preview data from messages.
      *
-     * @param sessionId The session/conversation ID
-     * @return List of conversation history messages as DTOs with preview data
+     * @param sessionId the session/conversation ID
+     * @return list of conversation history messages as DTOs with preview data
      */
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
@@ -582,9 +535,9 @@ public class AtlasAgentService {
      * Embed preview data as a JSON marker in the response text.
      * This allows preview data to persist in chat memory and be reconstructed when loading history.
      *
-     * @param response The agent's response text
-     * @param previews Optional list of competency previews
-     * @return The response text with embedded preview data marker
+     * @param response the agent's response text
+     * @param previews optional list of competency previews
+     * @return the response text with embedded preview data marker
      */
     private String embedPreviewDataInResponse(String response, @Nullable List<CompetencyPreviewDTO> previews) {
         if (previews == null || previews.isEmpty()) {
@@ -655,7 +608,6 @@ public class AtlasAgentService {
         // Remove the marker section from the text
         String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
 
-        // Try to parse as competency preview first
         try {
             PreviewDataContainer container = objectMapper.readValue(jsonData, PreviewDataContainer.class);
             return new PreviewDataResult(cleanedText, container.previews(), null, null);
@@ -690,7 +642,7 @@ public class AtlasAgentService {
     /**
      * Container for embedding preview data in message text.
      */
-    record PreviewDataContainer(@Nullable List<CompetencyPreviewDTO> previews) {
+    private record PreviewDataContainer(@Nullable List<CompetencyPreviewDTO> previews) {
     }
 
     /**

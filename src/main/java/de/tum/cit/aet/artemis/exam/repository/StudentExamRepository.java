@@ -373,6 +373,18 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
 
     /**
+     * Deletes all student exams for a given exam (excluding test runs).
+     * Used during exam reset to remove all student participation data.
+     * Note: This operation cascades to related entities through JPA cascade rules.
+     *
+     * @param examId the ID of the exam whose student exams should be deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM StudentExam se WHERE se.exam.id = :examId AND se.testRun = FALSE")
+    void deleteAllByExamId(@Param("examId") long examId);
+
+    /**
      * Return the StudentExam of the participation's user, if possible
      *
      * @param exercise      that is possibly part of an exam

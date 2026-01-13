@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingTab } from 'app/programming/manage/grading/configure/programming-exercise-configure-grading.component';
-import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -19,7 +20,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [FaIconComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
 
     readonly faCopy = faCopy;
     @Input() exercise: ProgrammingExercise;
@@ -32,9 +34,25 @@ export class ProgrammingExerciseGradingTableActionsComponent {
     @Output() onCategoryImport = new EventEmitter<number>();
 
     openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        modalRef.componentInstance.programmingLanguage = this.exercise.programmingLanguage;
-        modalRef.result.then((result: ProgrammingExercise) => this.onCategoryImport.emit(result.id));
+        const dialogData: ExerciseImportDialogData = {
+            exerciseType: ExerciseType.PROGRAMMING,
+            programmingLanguage: this.exercise.programmingLanguage,
+        };
+        const dialogRef = this.dialogService.open(ExerciseImportComponent, {
+            header: this.translateService.instant('artemisApp.programmingExercise.configureGrading.categories.importLabel'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: dialogData,
+        });
+
+        dialogRef?.onClose.subscribe((result: ProgrammingExercise | undefined) => {
+            if (result?.id) {
+                this.onCategoryImport.emit(result.id);
+            }
+        });
     }
 }

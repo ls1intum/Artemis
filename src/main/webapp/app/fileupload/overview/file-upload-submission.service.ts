@@ -46,7 +46,7 @@ export class FileUploadSubmissionService {
         let params = new HttpParams();
         if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
-            params = params.set('resultId', resultId!.toString());
+            params = params.set('resultId', resultId.toString());
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }

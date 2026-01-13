@@ -81,7 +81,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 content: { type: 'string', value: 'Test Content' },
             },
         ];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const compiled = fixture.nativeElement as HTMLElement;
         const informationBoxes = compiled.querySelectorAll('jhi-information-box');
@@ -98,7 +98,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 content: { type: 'difficultyLevel', value: DifficultyLevel.EASY },
             },
         ];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const compiled = fixture.nativeElement as HTMLElement;
         const difficultyLevelComponent = compiled.querySelector('jhi-difficulty-level');
@@ -182,7 +182,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         };
         component.informationBoxItems = [];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         if (component.exercise.startDate && dayjs().isBefore(component.exercise.startDate)) {
             component.informationBoxItems.push(startDateItem);

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/util/ngbTimeStringAdapter';
 
 describe('NgbTimeStringAdapter', () => {

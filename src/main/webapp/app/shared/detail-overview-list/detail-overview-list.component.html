@@ -45,11 +45,6 @@
                             <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                         </dd>
                     }
-                    @case (DetailType.ProgrammingIrisEnabled) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-iris-enabled [exercise]="detail.data.exercise" [course]="detail.data.course" [irisSubSettingsType]="detail.data.subSettingsType" />
-                        </dd>
-                    }
                     @case (DetailType.ModelingEditor) {
                         <dd class="p-3 border" id="detail-value-{{ detail.title }}">
                             @if (!isEmpty(detail.data.umlModel?.elements) && detail.data.diagramType && detail.data.umlModel) {

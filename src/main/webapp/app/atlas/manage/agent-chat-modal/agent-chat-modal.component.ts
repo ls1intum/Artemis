@@ -36,7 +36,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private readonly competencyService = inject(CompetencyService);
     private readonly translateService = inject(TranslateService);
 
-    courseId!: number;
+    courseId = signal<number>(0);
     messages = signal<ChatMessage[]>([]);
     currentMessage = signal('');
     isAgentTyping = signal(false);
@@ -57,7 +57,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     });
 
     ngOnInit(): void {
-        this.agentChatService.getConversationHistory(this.courseId).subscribe({
+        this.agentChatService.getConversationHistory(this.courseId()).subscribe({
             next: (history) => {
                 if (history.length === 0) {
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
@@ -101,7 +101,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.isAgentTyping.set(true);
 
-        this.agentChatService.sendMessage(message, this.courseId).subscribe({
+        this.agentChatService.sendMessage(message, this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
 
@@ -128,9 +128,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
-    onKeyPress(event: KeyboardEvent): void {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
+    onKeyPress(event: Event): void {
+        const keyboardEvent = event as KeyboardEvent;
+        if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
+            keyboardEvent.preventDefault();
             this.sendMessage();
         }
     }
@@ -169,7 +170,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         const promises = competencies.map((competency) => {
             const isUpdate = competency.id !== undefined;
-            const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
+            const operation = isUpdate ? this.competencyService.update(competency, this.courseId()) : this.competencyService.create(competency, this.courseId());
             return firstValueFrom(operation);
         });
 
@@ -180,8 +181,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg)));
 
                 const count = competencies.length;
-                const hasUpdates = competencies.some((comp) => comp.id !== undefined);
-                const hasCreates = competencies.some((comp) => comp.id === undefined);
+                const hasUpdates = message.competencyPreviews!.some((preview) => preview.competencyId !== undefined);
+                const hasCreates = message.competencyPreviews!.some((preview) => preview.competencyId === undefined);
 
                 let successMessage;
                 if (count === 1) {
@@ -262,10 +263,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.addMessage(this.translateService.instant('artemisApp.agent.chat.approvePlan'), false);
         this.isAgentTyping.set(true);
 
-        this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId).subscribe({
+        this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();

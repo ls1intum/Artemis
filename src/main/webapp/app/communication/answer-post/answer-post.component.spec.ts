@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
-import { DebugElement, input, runInInjectionContext } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -11,7 +11,6 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,7 +28,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { AccountService } from '../../core/auth/account.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('AnswerPostComponent', () => {
@@ -44,7 +43,7 @@ describe('AnswerPostComponent', () => {
         document.body.appendChild(mainContainer);
 
         return TestBed.configureTestingModule({
-            imports: [OverlayModule, MockModule(BrowserAnimationsModule), MockDirective(NgbTooltip)],
+            imports: [OverlayModule],
             declarations: [
                 AnswerPostComponent,
                 FaIconComponent,
@@ -55,6 +54,7 @@ describe('AnswerPostComponent', () => {
                 ArtemisDatePipe,
                 ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 provideHttpClient(),
@@ -80,23 +80,19 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain the posting header when isConsecutive is false', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isConsecutive = input<boolean>(false);
-            component.posting = metisResolvingAnswerPostUser1;
-        });
+        fixture.componentRef.setInput('isConsecutive', false);
+        component.posting = metisResolvingAnswerPostUser1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
         expect(header).not.toBeNull();
     });
 
     it('should not contain the posting header when isConsecutive is true', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isConsecutive = input<boolean>(true);
-            component.posting = metisResolvingAnswerPostUser1;
-        });
+        fixture.componentRef.setInput('isConsecutive', true);
+        component.posting = metisResolvingAnswerPostUser1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
         expect(header).toBeNull();
     });
@@ -104,14 +100,14 @@ describe('AnswerPostComponent', () => {
     it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
         component.posting = metisResolvingAnswerPostUser1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.containerRef).not.toBeNull();
     });
 
     it('should contain component to edit answer post', () => {
         component.posting = metisResolvingAnswerPostUser1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const answerPostCreateEditModal = debugElement.query(By.css('jhi-answer-post-create-edit-modal'));
         expect(answerPostCreateEditModal).not.toBeNull();
     });
@@ -119,7 +115,7 @@ describe('AnswerPostComponent', () => {
     it('should contain an answer post reactions bar', () => {
         component.posting = metisResolvingAnswerPostUser1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
         expect(reactionsBar).not.toBeNull();
     });
@@ -127,7 +123,7 @@ describe('AnswerPostComponent', () => {
     it('should have correct content in posting-content component', () => {
         component.posting = metisResolvingAnswerPostUser1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const postingContentDebugElement = debugElement.query(By.directive(PostingContentComponent));
         expect(postingContentDebugElement).not.toBeNull();
         const content = ngMocks.input(postingContentDebugElement, 'content');
@@ -255,7 +251,7 @@ describe('AnswerPostComponent', () => {
         // @ts-ignore method is private
         const spy = jest.spyOn(component, 'assignPostingToAnswerPost');
         component.posting = mockPost;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.posting).toBeInstanceOf(AnswerPost);
         expect(spy).toHaveBeenCalled();
@@ -266,7 +262,7 @@ describe('AnswerPostComponent', () => {
         component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
 
         jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
         const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
@@ -282,7 +278,7 @@ describe('AnswerPostComponent', () => {
         component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
 
         jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const postTimeElement = debugElement.query(By.css('span.post-time'));
         expect(postTimeElement).toBeFalsy();
@@ -292,7 +288,7 @@ describe('AnswerPostComponent', () => {
         const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
         component.showDropdown = true;
         component.posting = post;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
         expect(forwardButton).not.toBeNull();

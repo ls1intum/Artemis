@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ImageComponent } from 'app/shared/image/image.component';
@@ -16,25 +16,30 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     styleUrls: ['./header-course.component.scss'],
     imports: [NgStyle, FaIconComponent, RouterLink, ImageComponent, ArtemisTranslatePipe, TranslateDirective],
 })
-export class HeaderCourseComponent implements OnChanges {
+export class HeaderCourseComponent {
     protected router = inject(Router);
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    @Input() public course: Course;
+    public readonly course = input<Course>(undefined!);
 
-    public courseColor: string;
-    public contentColor: string;
-    public courseDescription?: string;
-    public enableShowMore = false;
-    public longDescriptionShown = false;
+    readonly courseColor = computed(() => this.course()?.color || ARTEMIS_DEFAULT_COLOR);
+    readonly contentColor = computed(() => getContrastingTextColor(this.courseColor()));
+
+    readonly longDescriptionShown = signal(false);
+    readonly enableShowMore = signal(false);
+    readonly courseDescription = signal<string | undefined>(undefined);
 
     faArrowDown = faArrowDown;
 
-    ngOnChanges() {
-        this.courseColor = this.course.color || ARTEMIS_DEFAULT_COLOR;
-        this.contentColor = getContrastingTextColor(this.courseColor);
-        this.adjustCourseDescription();
+    constructor() {
+        effect(() => {
+            // Track course input changes
+            const course = this.course();
+            if (course) {
+                untracked(() => this.adjustCourseDescription());
+            }
+        });
     }
 
     @HostListener('window:resize')
@@ -46,7 +51,7 @@ export class HeaderCourseComponent implements OnChanges {
      * Toggle between showing the long and abbreviated course description
      */
     toggleCourseDescription() {
-        this.longDescriptionShown = !this.longDescriptionShown;
+        this.longDescriptionShown.update((shown) => !shown);
         this.adjustCourseDescription();
     }
 
@@ -54,13 +59,14 @@ export class HeaderCourseComponent implements OnChanges {
      * Adjusts the course description and shows toggle buttons (if it is too long) based on the current window width
      */
     adjustCourseDescription() {
-        const shortDescriptionLength = window.innerWidth / (this.course.courseIconPath ? 3.6 : 3.4);
-        if (this.course && this.course.description) {
-            this.enableShowMore = this.course.description.length > shortDescriptionLength;
-            if (this.enableShowMore && !this.longDescriptionShown) {
-                this.courseDescription = this.course.description.slice(0, shortDescriptionLength) + '…';
+        const shortDescriptionLength = window.innerWidth / (this.course()?.courseIconPath ? 3.6 : 3.4);
+        const course = this.course();
+        if (course && course.description) {
+            this.enableShowMore.set(course.description.length > shortDescriptionLength);
+            if (this.enableShowMore() && !this.longDescriptionShown()) {
+                this.courseDescription.set(course.description.slice(0, shortDescriptionLength) + '...');
             } else {
-                this.courseDescription = this.course.description;
+                this.courseDescription.set(course.description);
             }
         }
     }

@@ -17,7 +17,7 @@ import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface IAccountService {
-    save: (account: any) => Observable<HttpResponse<any>>;
+    save: (account: User) => Observable<HttpResponse<User>>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
@@ -70,11 +70,9 @@ export class AccountService implements IAccountService {
 
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
         if (user) {
-            this.websocketService.enableReconnect();
             this.websocketService.connect();
             this.featureToggleService.subscribeFeatureToggleUpdates();
         } else {
-            this.websocketService.disableReconnect();
             if (this.websocketService.isConnected()) {
                 this.websocketService.disconnect();
             }
@@ -86,8 +84,8 @@ export class AccountService implements IAccountService {
         return this.http.get<User>('api/core/public/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<any>> {
-        return this.http.put('api/core/account', user, { observe: 'response' });
+    save(user: User): Observable<HttpResponse<User>> {
+        return this.http.put<User>('api/core/account', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
