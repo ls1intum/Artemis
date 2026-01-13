@@ -2,9 +2,7 @@
  * Vitest tests for ExamRoomsService.
  * Tests the HTTP service for managing exam rooms.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -12,8 +10,6 @@ import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exa
 import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformationDTO } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 
 describe('ExamRoomsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamRoomsService;
     let httpMock: HttpTestingController;
 
@@ -84,7 +80,7 @@ describe('ExamRoomsService', () => {
 
             const req = httpMock.expectOne('api/exam/admin/exam-rooms/upload');
             expect(req.request.method).toBe('POST');
-            expect(req.request.body instanceof FormData).toBe(true);
+            expect(req.request.body instanceof FormData).toBeTrue();
             expect(req.request.body.get('file')).toBe(mockFile);
             req.flush(mockResponse);
         });

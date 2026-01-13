@@ -1,11 +1,9 @@
 /**
  * Vitest tests for ExamRoomsComponent.
- * Tests the admin view for managing exam room data including file uploads,
+ * Tests the view for managing exam room data including file uploads,
  * room overview, and data deletion functionality.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -28,8 +26,6 @@ import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 describe('ExamRoomsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamRoomsComponent;
     let fixture: ComponentFixture<ExamRoomsComponent>;
     let service: ExamRoomsService;
@@ -52,7 +48,7 @@ describe('ExamRoomsComponent', () => {
         service = TestBed.inject(ExamRoomsService);
 
         // getRoomOverview is called on page load, provide default mock
-        vi.spyOn(service, 'getRoomOverview').mockReturnValue(
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 createHttpResponse({
                     newestUniqueExamRooms: [],
@@ -62,7 +58,7 @@ describe('ExamRoomsComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     /**
@@ -98,7 +94,7 @@ describe('ExamRoomsComponent', () => {
             ],
         } as ExamRoomDTO;
 
-        vi.spyOn(service, 'getRoomOverview').mockReturnValue(
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 createHttpResponse({
                     newestUniqueExamRooms: [examRoom],
@@ -120,7 +116,7 @@ describe('ExamRoomsComponent', () => {
             uploadedRoomNames: ['Audimax'],
         } as ExamRoomUploadInformationDTO;
 
-        vi.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(of(createHttpResponse(uploadData)));
+        jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(of(createHttpResponse(uploadData)));
 
         return uploadData;
     }
@@ -135,10 +131,10 @@ describe('ExamRoomsComponent', () => {
 
         // THEN
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
-        expect(component.hasOverview()).toBe(true);
+        expect(component.hasOverview()).toBeTrue();
         expect(component.numberOfAvailable()!.examRooms).toBe(0);
         expect(component.numberOfAvailable()!.examSeats).toBe(0);
-        expect(component.hasExamRoomData()).toBe(false);
+        expect(component.hasExamRoomData()).toBeFalse();
     });
 
     it('should properly extract values from room overview', () => {
@@ -147,13 +143,13 @@ describe('ExamRoomsComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasOverview()).toBe(true);
+        expect(component.hasOverview()).toBeTrue();
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
 
         expect(component.numberOfAvailable()!.examRooms).toBe(1);
         expect(component.numberOfAvailable()!.examSeats).toBe(50);
 
-        expect(component.hasExamRoomData()).toBe(true);
+        expect(component.hasExamRoomData()).toBeTrue();
         expect(component.examRoomData()).toHaveLength(1);
         expect(component.examRoomData()![0]).toEqual({
             ...uploadedRoom,
@@ -163,18 +159,18 @@ describe('ExamRoomsComponent', () => {
     });
 
     it('should show error message on loadExamRoomOverview fail', () => {
-        vi.spyOn(service, 'getRoomOverview').mockReturnValue(throwError(() => new Error()));
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(throwError(() => new Error()));
 
         fixture.detectChanges();
 
         // THEN
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
-        expect(component.hasOverview()).toBe(false);
+        expect(component.hasOverview()).toBeFalse();
     });
 
     it('should reject non-zip files', () => {
         fixture.detectChanges();
-        const onFileSelectedSpy = vi.spyOn(component, 'onFileSelectedAcceptZip');
+        const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
 
@@ -184,13 +180,13 @@ describe('ExamRoomsComponent', () => {
         fixture.detectChanges();
 
         expect(onFileSelectedSpy).toHaveBeenCalledOnce();
-        expect(component.hasSelectedFile()).toBe(false);
-        expect(uploadButton.disabled).toBe(true);
+        expect(component.hasSelectedFile()).toBeFalse();
+        expect(uploadButton.disabled).toBeTrue();
     });
 
     it('should reject empty input', () => {
         fixture.detectChanges();
-        const onFileSelectedSpy = vi.spyOn(component, 'onFileSelectedAcceptZip');
+        const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
 
@@ -198,13 +194,13 @@ describe('ExamRoomsComponent', () => {
         fixture.detectChanges();
 
         expect(onFileSelectedSpy).toHaveBeenCalledOnce();
-        expect(component.hasSelectedFile()).toBe(false);
-        expect(uploadButton.disabled).toBe(true);
+        expect(component.hasSelectedFile()).toBeFalse();
+        expect(uploadButton.disabled).toBeTrue();
     });
 
     it('should reject files exceeding max size', () => {
         fixture.detectChanges();
-        const onFileSelectedSpy = vi.spyOn(component, 'onFileSelectedAcceptZip');
+        const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
 
@@ -216,8 +212,8 @@ describe('ExamRoomsComponent', () => {
         fixture.detectChanges();
 
         expect(onFileSelectedSpy).toHaveBeenCalledOnce();
-        expect(component.hasSelectedFile()).toBe(false);
-        expect(uploadButton.disabled).toBe(true);
+        expect(component.hasSelectedFile()).toBeFalse();
+        expect(uploadButton.disabled).toBeTrue();
     });
 
     it('should enable upload button on valid file selection', () => {
@@ -230,9 +226,9 @@ describe('ExamRoomsComponent', () => {
         setInputFiles(fileSelectButton, [zipFile]);
         fixture.detectChanges();
 
-        expect(component.hasSelectedFile()).toBe(true);
+        expect(component.hasSelectedFile()).toBeTrue();
         expect(fileSelectLabel.textContent.trim()).toBe('my_file.zip');
-        expect(uploadButton.disabled).toBe(false);
+        expect(uploadButton.disabled).toBeFalse();
     });
 
     it('should make upload service call and refresh overview on valid zip upload', () => {
@@ -249,14 +245,14 @@ describe('ExamRoomsComponent', () => {
 
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
-        expect(component.hasSelectedFile()).toBe(false);
+        expect(component.hasSelectedFile()).toBeFalse();
         // Once from initial load, once from upload button click
         expect(service.getRoomOverview).toHaveBeenCalledTimes(2);
     });
 
     it('should not show upload information on failure', () => {
         fixture.detectChanges();
-        vi.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(throwError(() => new Error()));
+        jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(throwError(() => new Error()));
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
@@ -269,7 +265,7 @@ describe('ExamRoomsComponent', () => {
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
-        expect(component.hasUploadInformation()).toBe(false);
+        expect(component.hasUploadInformation()).toBeFalse();
     });
 
     it('should show upload summary on successful upload', () => {
@@ -284,7 +280,7 @@ describe('ExamRoomsComponent', () => {
         uploadButton.click();
         fixture.detectChanges();
 
-        expect(component.hasUploadInformation()).toBe(true);
+        expect(component.hasUploadInformation()).toBeTrue();
         expect(component.uploadInformation()!.uploadedFileName).toEqual(uploadData.uploadedFileName);
         expect(component.uploadInformation()!.numberOfUploadedRooms).toEqual(uploadData.numberOfUploadedRooms);
         expect(component.uploadInformation()!.numberOfUploadedSeats).toEqual(uploadData.numberOfUploadedSeats);
@@ -293,7 +289,7 @@ describe('ExamRoomsComponent', () => {
 
     it('should call delete outdated and unused service on button click', () => {
         fixture.detectChanges();
-        vi.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
+        jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
             of(
                 createHttpResponse({
                     numberOfDeletedExamRooms: 4,
@@ -312,7 +308,7 @@ describe('ExamRoomsComponent', () => {
 
     it('should not reload overview if deletion fails', () => {
         fixture.detectChanges();
-        vi.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(throwError(() => new Error()));
+        jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(throwError(() => new Error()));
         const deleteButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
 
         deleteButton.click();
@@ -325,7 +321,7 @@ describe('ExamRoomsComponent', () => {
 
     it('should show deletion summary on successful deletion', () => {
         fixture.detectChanges();
-        vi.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
+        jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
             of(
                 createHttpResponse({
                     numberOfDeletedExamRooms: 4,
@@ -337,7 +333,7 @@ describe('ExamRoomsComponent', () => {
         deleteButton.click();
         fixture.detectChanges();
 
-        expect(component.hasDeletionInformation()).toBe(true);
+        expect(component.hasDeletionInformation()).toBeTrue();
         expect(component.deletionInformation()).toBeDefined();
         expect(component.deletionInformation()!.numberOfDeletedExamRooms).toBe(4);
     });
