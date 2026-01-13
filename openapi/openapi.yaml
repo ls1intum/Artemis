@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.6.4
+  version: 8.7.2
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -498,12 +498,19 @@ components:
       required: [issues]
     InlineComment:
       type: object
-      description: Inline comment for targeted refinement of specific lines
+      description: Inline comment for targeted refinement of specific lines or text
+        ranges
       properties:
         startLine: {type: integer, format: int32, description: Start line number (1-indexed),
           maximum: 10000, minimum: 1}
         endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
             inclusive)', maximum: 10000, minimum: 1}
+        startColumn: {type: integer, format: int32, description: 'Start column within
+            start line (1-indexed, optional for character-level targeting)', maximum: 10000,
+          minimum: 1}
+        endColumn: {type: integer, format: int32, description: 'End column within
+            end line (1-indexed, inclusive, optional for character-level targeting)',
+          maximum: 10000, minimum: 1}
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 0}
       required: [endLine, instruction, startLine]
@@ -521,6 +528,7 @@ components:
           items: {$ref: '#/components/schemas/InlineComment'}
           maxItems: 10
           minItems: 0
+        exactlyOneRefinementModeProvided: {type: boolean}
       required: [problemStatementText]
     TutorialGroupDetailSession:
       type: object

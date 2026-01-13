@@ -31,8 +31,21 @@ export class InlineRefinementButtonComponent implements OnInit {
     // Input: The selected text to refine
     selectedText = input.required<string>();
 
-    // Output: Emits when user submits refinement instruction
-    refine = output<{ selectedText: string; instruction: string }>();
+    // Input: Selection position info for character-level targeting
+    startLine = input.required<number>();
+    endLine = input.required<number>();
+    startColumn = input.required<number>();
+    endColumn = input.required<number>();
+
+    // Output: Emits when user submits refinement instruction (includes position info)
+    refine = output<{
+        selectedText: string;
+        instruction: string;
+        startLine: number;
+        endLine: number;
+        startColumn: number;
+        endColumn: number;
+    }>();
 
     // Output: Emits when user closes the button/input
     closeRefinement = output<void>();
@@ -79,6 +92,10 @@ export class InlineRefinementButtonComponent implements OnInit {
         this.refine.emit({
             selectedText: this.selectedText(),
             instruction: text,
+            startLine: this.startLine(),
+            endLine: this.endLine(),
+            startColumn: this.startColumn(),
+            endColumn: this.endColumn(),
         });
     }
 

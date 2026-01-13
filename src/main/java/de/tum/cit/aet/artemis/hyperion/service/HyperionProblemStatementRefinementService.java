@@ -127,7 +127,7 @@ public class HyperionProblemStatementRefinementService {
 
         try {
             // Build a combined prompt from all inline comments
-            String combinedInstructions = buildCombinedInstructions(inlineComments);
+            String combinedInstructions = buildCombinedInstructions(inlineComments, originalProblemStatementText.trim());
 
             // Add line numbers to help the LLM identify exact lines to modify
             String textWithLineNumbers = addLineNumbers(originalProblemStatementText.trim());
@@ -154,13 +154,86 @@ public class HyperionProblemStatementRefinementService {
 
     /**
      * Builds a combined instruction string from multiple inline comments.
-     * Format: "Lines X-Y: instruction\nLines A-B: instruction"
+     * Includes column positions when available for character-level targeting.
+     * Format examples:
+     * - "Line 5: instruction" (whole line)
+     * - "Line 5, columns 10-25: instruction" (partial line)
+     * - "Lines 5-7: instruction" (multiple lines)
      */
-    private String buildCombinedInstructions(List<InlineCommentDTO> inlineComments) {
+    private String buildCombinedInstructions(List<InlineCommentDTO> inlineComments, String originalText) {
+        String[] lines = originalText.split("\n", -1);
         return inlineComments.stream().map(comment -> {
-            String lineRef = comment.startLine().equals(comment.endLine()) ? "Line " + comment.startLine() : "Lines " + comment.startLine() + "-" + comment.endLine();
-            return lineRef + ": " + comment.instruction();
+            String locationRef = buildLocationReference(comment, lines);
+            return locationRef + ": " + comment.instruction();
         }).collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Builds a human-readable location reference for the LLM.
+     * When column positions are provided, quotes the exact text to be modified.
+     */
+    private String buildLocationReference(InlineCommentDTO comment, String[] lines) {
+        boolean singleLine = comment.startLine().equals(comment.endLine());
+
+        if (singleLine) {
+            if (comment.hasColumnRange()) {
+                String selectedText = extractSelectedText(comment, lines);
+                return String.format("Line %d, columns %d-%d (modify ONLY the text: \"%s\")", comment.startLine(), comment.startColumn(), comment.endColumn(), selectedText);
+            }
+            return "Line " + comment.startLine();
+        }
+        else {
+            if (comment.hasColumnRange()) {
+                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d", comment.startLine(), comment.endLine(), comment.startColumn(),
+                        comment.startLine(), comment.endColumn(), comment.endLine());
+            }
+            return "Lines " + comment.startLine() + "-" + comment.endLine();
+        }
+    }
+
+    /**
+     * Extracts the selected text from the original content based on line and column
+     * positions.
+     */
+    private String extractSelectedText(InlineCommentDTO comment, String[] lines) {
+        try {
+            int startLineIdx = comment.startLine() - 1;
+            int endLineIdx = comment.endLine() - 1;
+
+            if (startLineIdx < 0 || endLineIdx >= lines.length) {
+                return "[text]";
+            }
+
+            if (startLineIdx == endLineIdx) {
+                // Single line selection
+                String line = lines[startLineIdx];
+                int startCol = Math.max(0, comment.startColumn() - 1);
+                int endCol = Math.min(line.length(), comment.endColumn());
+                if (startCol < endCol && startCol < line.length()) {
+                    String text = line.substring(startCol, endCol);
+                    // Truncate if too long for the prompt
+                    return text.length() > 100 ? text.substring(0, 97) + "..." : text;
+                }
+            }
+            else {
+                // Multi-line selection - just return first and last parts
+                String firstLine = lines[startLineIdx];
+                String lastLine = lines[endLineIdx];
+                int startCol = Math.max(0, comment.startColumn() - 1);
+                int endCol = Math.min(lastLine.length(), comment.endColumn());
+
+                String startPart = startCol < firstLine.length() ? firstLine.substring(startCol) : "";
+                String endPart = endCol <= lastLine.length() ? lastLine.substring(0, endCol) : lastLine;
+
+                String combined = startPart + "..." + endPart;
+                return combined.length() > 100 ? combined.substring(0, 97) + "..." : combined;
+            }
+        }
+        catch (Exception e) {
+            // Fallback if extraction fails
+            return "[selected text]";
+        }
+        return "[text]";
     }
 
     /**

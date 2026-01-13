@@ -26,5 +26,6 @@ export interface ProblemStatementRefinementRequest {
      * Inline comments for targeted refinement of specific lines
      */
     inlineComments?: Array<InlineComment>;
+    exactlyOneRefinementModeProvided?: boolean;
 }
 

@@ -156,8 +156,17 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     // Inline refinement state
     inlineRefinementPosition: { top: number; left: number } | null = null;
     selectedTextForRefinement = '';
-    /** Emits when user wants to refine selected text */
-    readonly onInlineRefinement = output<{ selectedText: string; instruction: string }>();
+    /** Selection position info for character-level targeting */
+    selectionPositionInfo: { startLine: number; endLine: number; startColumn: number; endColumn: number } | null = null;
+    /** Emits when user wants to refine selected text (includes position info for character-level targeting) */
+    readonly onInlineRefinement = output<{
+        selectedText: string;
+        instruction: string;
+        startLine: number;
+        endLine: number;
+        startColumn: number;
+        endColumn: number;
+    }>();
 
     set participation(participation: Participation) {
         this.participationValue = participation;
@@ -371,11 +380,26 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Handles selection changes from the markdown editor.
      * Shows floating refinement button when text is selected.
      */
-    onEditorSelectionChange(selection: { startLine: number; endLine: number; selectedText: string; screenPosition: { top: number; left: number } } | null): void {
+    onEditorSelectionChange(
+        selection: {
+            startLine: number;
+            endLine: number;
+            startColumn: number;
+            endColumn: number;
+            selectedText: string;
+            screenPosition: { top: number; left: number };
+        } | null,
+    ): void {
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled) {
             this.inlineRefinementPosition = selection.screenPosition;
             this.selectedTextForRefinement = selection.selectedText;
+            this.selectionPositionInfo = {
+                startLine: selection.startLine,
+                endLine: selection.endLine,
+                startColumn: selection.startColumn,
+                endColumn: selection.endColumn,
+            };
         } else {
             this.hideInlineRefinementButton();
         }
@@ -388,13 +412,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     hideInlineRefinementButton(): void {
         this.inlineRefinementPosition = null;
         this.selectedTextForRefinement = '';
+        this.selectionPositionInfo = null;
     }
 
     /**
      * Handles inline refinement submission.
      * Emits the event for parent to process the refinement.
      */
-    onInlineRefine(event: { selectedText: string; instruction: string }): void {
+    onInlineRefine(event: { selectedText: string; instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         this.onInlineRefinement.emit(event);
         this.hideInlineRefinementButton();
     }

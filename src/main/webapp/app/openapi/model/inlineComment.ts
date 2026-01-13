@@ -10,7 +10,7 @@
 
 
 /**
- * Inline comment for targeted refinement of specific lines
+ * Inline comment for targeted refinement of specific lines or text ranges
  */
 export interface InlineComment { 
     /**
@@ -21,6 +21,14 @@ export interface InlineComment {
      * End line number (1-indexed, inclusive)
      */
     endLine: number;
+    /**
+     * Start column within start line (1-indexed, optional for character-level targeting)
+     */
+    startColumn?: number;
+    /**
+     * End column within end line (1-indexed, inclusive, optional for character-level targeting)
+     */
+    endColumn?: number;
     /**
      * Instruction describing what should change
      */
