@@ -165,6 +165,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                 next: (template) => {
                     this.templateProblemStatement.set(template);
                 },
+                error: () => {
+                    // Clear template on error so shouldShowGenerateButton falls back to checking empty content
+                    this.templateProblemStatement.set('');
+                },
             });
         }
     }

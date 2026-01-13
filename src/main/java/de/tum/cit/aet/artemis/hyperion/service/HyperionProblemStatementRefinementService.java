@@ -58,7 +58,8 @@ public class HyperionProblemStatementRefinementService {
      * @param originalProblemStatementText the original problem statement text
      * @param userPrompt                   the user's refinement instructions
      * @return the refinement response
-     * @throws IllegalStateException if the AI chat client is not configured
+     * @throws InternalServerErrorAlertException if the AI chat client is not
+     *                                               configured or refinement fails
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
@@ -110,7 +111,8 @@ public class HyperionProblemStatementRefinementService {
      * @param inlineComments               list of inline comments with line ranges
      *                                         and instructions
      * @return the refinement response
-     * @throws IllegalStateException if the AI chat client is not configured
+     * @throws InternalServerErrorAlertException if the AI chat client is not
+     *                                               configured or refinement fails
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatementWithComments(Course course, String originalProblemStatementText, List<InlineCommentDTO> inlineComments) {
         int commentCount = inlineComments == null ? 0 : inlineComments.size();
@@ -307,6 +309,6 @@ public class HyperionProblemStatementRefinementService {
         log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
                 originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
 
-        throw new InternalServerErrorAlertException("Failed to refine problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementRefinementFailed");
+        throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "problemStatementRefinementFailed");
     }
 }
