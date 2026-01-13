@@ -1,0 +1,49 @@
+---
+id: learning-analytics
+title: Learning Analytics
+sidebar_label: Learning Analytics
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import studentsStatisticsImg from './assets/learning-analytics/students-statistics.png';
+import studentsOverallPointsImg from './assets/learning-analytics/students-overall-points.png';
+import studentsPerformanceInExercisesImg from './assets/learning-analytics/students-performance-in-exercises.png';
+import studentsPointsPerExerciseImg from './assets/learning-analytics/students-points-per-exercise.png';
+
+# Learning Analytics
+
+## Overview
+
+Artemis integrates different statistics for students to compare themselves to the course average.
+It allows instructors to evaluate the average student performance based on exercises and competencies.
+
+---
+
+## Learning Analytics for Students
+
+Students can access their individual learning analytics for a specific course by navigating to the course's <code>Statistics</code> page.
+
+<Image src={studentsStatisticsImg} alt={"students-statistics"} size={ImageSize.large} />
+
+### Overall Points
+
+A donut diagram shows students their overall achieved points in the course.
+
+<Image src={studentsOverallPointsImg} alt={"students-overall-points"} size={ImageSize.large} />
+
+### Performance in Exercises
+
+Students can compare their scores to the best overall score as well as the average score for each individual exercise with the help of a line chart.
+
+<Image src={studentsPerformanceInExercisesImg} alt={"students-performance-in-exercises"} size={ImageSize.large} />
+
+### Points per Exercise
+
+To get a quick overview about the achieved points per exercise, a bar chart shows the achieved points of the student for every exercise grouped by the exercise type.
+
+<Image src={studentsPointsPerExerciseImg} alt={"students-points-per-exercise"} size={ImageSize.large} />
+
+### See Also
+
+For information regarding how learning analytics tie into competencies in Artemis, please refer to the **[Adaptive Learning](./adaptive-learning.mdx)** documentation.

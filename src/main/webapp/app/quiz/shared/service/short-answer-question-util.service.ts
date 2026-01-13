@@ -278,13 +278,25 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * We create now the structure on how to display the text of the question
-     * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
-     * 2. Now each line of the question text will be divided into text before spot tag, spot tag and text after spot tag.
-     * (e.g 'Enter [-spot 1] long [-spot 2] if needed' will be transformed to [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]])
+     * Builds the data structure used to render the question text.
      *
-     * @param questionText
-     * @returns {string[][]}
+     * Processing steps:
+     * 1. The question text is split into “lines”, but fenced code blocks
+     *    (``` … ```) are detected and kept together as a single entry so they
+     *    are not broken apart.
+     * 2. Each non-code-block line is then split into:
+     *      - plain text fragments, and
+     *      - spot tags of the form `[-spot <number>]`.
+     *    The fragments and tags are re-combined in their original order.
+     *
+     * Example:
+     *   "Enter [-spot 1] long [-spot 2] if needed"
+     *   → [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]]
+     *
+     * @param questionText Full question text, possibly containing spot tags
+     *                     and fenced code blocks.
+     * @returns {string[][]} An array of “lines”, where each line is an array
+     *                       of alternating text fragments and spot tags.
      */
     divideQuestionTextIntoTextParts(questionText: string): string[][] {
         const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
@@ -301,7 +313,41 @@ export class ShortAnswerQuestionUtil {
                 : [x, ...interleave(ys, xs)]; // inductive: some x
         }
 
-        return questionText.split(/\n/g).map((line) => {
+        // Detect and preserve code blocks before splitting by lines
+        const lines: string[] = [];
+        const allLines = questionText.split(/\n/g);
+        let inCodeBlock = false;
+        let codeBlockLines: string[] = [];
+
+        for (const line of allLines) {
+            // Check if line contains code block delimiter
+            if (line.trim().startsWith('```')) {
+                if (inCodeBlock) {
+                    // End of code block - add the closing delimiter and merge all lines
+                    codeBlockLines.push(line);
+                    lines.push(codeBlockLines.join('\n'));
+                    codeBlockLines = [];
+                    inCodeBlock = false;
+                } else {
+                    // Start of code block
+                    codeBlockLines.push(line);
+                    inCodeBlock = true;
+                }
+            } else if (inCodeBlock) {
+                // Inside code block - accumulate lines
+                codeBlockLines.push(line);
+            } else {
+                // Regular line - add as is
+                lines.push(line);
+            }
+        }
+
+        // Handle unclosed code block (add remaining lines)
+        if (codeBlockLines.length > 0) {
+            lines.push(codeBlockLines.join('\n'));
+        }
+
+        return lines.map((line) => {
             const spots = line.match(spotRegExpo) || [];
             const texts = line.split(spotRegExpo).map((text) => text.trim());
             return interleave(texts, spots).filter((x) => x.length > 0);

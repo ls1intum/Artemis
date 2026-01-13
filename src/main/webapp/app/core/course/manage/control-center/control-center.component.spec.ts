@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ControlCenterComponent } from './control-center.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
@@ -13,6 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ControlCenterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let componentRef: ComponentRef<ControlCenterComponent>;
     let fixture: ComponentFixture<ControlCenterComponent>;
     let course: Course;
@@ -21,16 +24,25 @@ describe('ControlCenterComponent', () => {
         course = { id: 1, isAtLeastInstructor: true } as Course;
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(TranslateDirective), FaIconComponent],
-            declarations: [ControlCenterComponent, MockComponent(HelpIconComponent), MockComponent(IrisEnabledComponent)],
+            imports: [ControlCenterComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        })
+            .overrideComponent(ControlCenterComponent, {
+                set: {
+                    imports: [MockDirective(TranslateDirective), MockComponent(IrisLogoComponent), MockComponent(HelpIconComponent), MockComponent(IrisEnabledComponent)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ControlCenterComponent);
         componentRef = fixture.componentRef;
         componentRef.setInput('course', course);
         componentRef.setInput('irisEnabled', true);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display the control center card when iris is enabled and the user is at least an instructor', () => {
@@ -49,12 +61,10 @@ describe('ControlCenterComponent', () => {
         const irisEnabledComponent = fixture.debugElement.query(By.directive(IrisEnabledComponent));
         expect(irisEnabledComponent).toBeTruthy();
         expect(irisEnabledComponent.componentInstance.course).toEqual(course);
-        expect(irisEnabledComponent.componentInstance.irisSubSettingsType).toEqual(IrisSubSettingsType.ALL);
-        expect(irisEnabledComponent.componentInstance.showCustomButton).toBeTrue();
     });
 
-    it('should display the robot icon', () => {
-        const faIconComponent = fixture.debugElement.query(By.directive(FaIconComponent));
-        expect(faIconComponent).toBeTruthy();
+    it('should display the iris logo', () => {
+        const irisLogoComponent = fixture.debugElement.query(By.directive(IrisLogoComponent));
+        expect(irisLogoComponent).toBeTruthy();
     });
 });

@@ -51,7 +51,7 @@ describe('AppComponent', () => {
     it('should display footer if there is no exam', () => {
         comp.isExamStarted = false;
         comp.showSkeleton = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const footerElement = fixture.debugElement.query(By.css('jhi-footer'));
 
@@ -61,7 +61,7 @@ describe('AppComponent', () => {
     it('should not display footer during an exam', () => {
         comp.isExamStarted = true;
         comp.showSkeleton = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const footerElement = fixture.debugElement.query(By.css('jhi-footer'));
 

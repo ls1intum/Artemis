@@ -1,8 +1,12 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { IrisLogoComponent, IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 describe('IrisLogoComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: IrisLogoComponent;
     let fixture: ComponentFixture<IrisLogoComponent>;
     let componentRef: ComponentRef<IrisLogoComponent>;
@@ -12,6 +16,10 @@ describe('IrisLogoComponent', () => {
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should have size IrisLogoSize.BIG and look IrisLogoLookDirection.RIGHT if nothing is provided', () => {

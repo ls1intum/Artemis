@@ -22,8 +22,7 @@ describe('PrivacyComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [RouterModule],
-            declarations: [PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
+            imports: [RouterModule, PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 SessionStorageService,
@@ -43,7 +42,7 @@ describe('PrivacyComponent', () => {
         jest.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
         const privacyServiceSpy = jest.spyOn(privacyStatementService, 'getPrivacyStatement');
         component.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(privacyServiceSpy).toHaveBeenCalledOnce();
         expect(privacyServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });

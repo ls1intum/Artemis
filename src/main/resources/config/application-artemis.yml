@@ -72,6 +72,8 @@ artemis:
     build-log:
       file-expiry-days: 30 # The amount of days until build log files can be deleted
       cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build log files
+    build-job:
+      retention-period: 365 # Number of days before build job entries are deleted
   git:
     name: Artemis
     email: artemis@xcit.tum.de
@@ -144,6 +146,19 @@ spring:
             deployment-name: gpt-5-mini
             # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0
+        client:
+          connect-timeout: 30s
+          read-timeout: 5m
+    # Retry/response handling tuning for AI providers
+    retry:
+      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+      on-http-codes: [429]
+      # Conservative defaults; adjust if needed
+      max-attempts: 5
+      backoff:
+        initial-interval: 1000ms
+        multiplier: 2.0
+        max-interval: 30000ms
   # data:
     # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
     # redis:

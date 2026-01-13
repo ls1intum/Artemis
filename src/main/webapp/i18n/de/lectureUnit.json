@@ -1,12 +1,14 @@
 {
     "artemisApp": {
         "lectureUnit": {
-            "deleted": "Vorlesungseinheit gelöscht",
+            "deleted": "Inhalt gelöscht",
+            "retryProcessing": "Verarbeitung wiederholen",
+            "processingRetryStarted": "Verarbeitungswiederholung gestartet",
             "home": {
-                "title": "Vorlesungseinheiten"
+                "title": "Vorlesungsinhalte"
             },
             "unitCreationCard": {
-                "title": "Hinzufügen einer neuen Vorlesungseinheit",
+                "title": "Neuen Inhalt hinzufügen",
                 "text": "Text",
                 "exercise": "Übung",
                 "video": "Video",
@@ -20,48 +22,48 @@
                 "releaseDateSet": "Veröffentlichungsdatum: ",
                 "attachmentVersion": "Dateiversion: "
             },
-            "completedTooltip": "Klicke hier, um die Vorlesungseinheit als unerledigt zu markieren",
-            "uncompletedTooltip": "Klicke hier, um die Vorlesungseinheit als erledigt zu markieren"
+            "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
+            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren"
         },
         "textUnit": {
-            "created": "Eine neue Texteinheit erstellt",
-            "updated": "Texteinheit aktualisiert",
-            "tooltip": "Das ist eine Texteinheit",
+            "created": "Neuer Textinhalt erstellt",
+            "updated": "Textinhalt aktualisiert",
+            "tooltip": "Das ist ein Textinhalt",
             "isolated": "Isoliert öffnen",
             "originalVersion": "Originalversion",
             "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
             "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
-                "title": "Erstelle Texteinheit",
+                "title": "Textinhalt erstellen",
                 "name": "Name",
                 "content": "Inhalt",
-                "namePlaceHolder": "Gib der Texteinheit einen Namen",
+                "namePlaceHolder": "Gib dem Textinhalt einen Namen",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein."
             },
             "editTextUnit": {
-                "title": "Bearbeite Texteinheit"
+                "title": "Textinhalt bearbeiten"
             },
             "delete": {
-                "question": "Willst du wirklich die Texteinheit <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Texteinheit zur Bestätigung ein.",
+                "question": "Willst du wirklich den Textinhalt <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen des Textinhalts zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },
         "onlineUnit": {
-            "created": "Eine neue Onlineeinheit wurde erstellt",
-            "updated": "Onlineeinheit aktualisiert",
-            "tooltip": "Das ist eine Onlineeinheit",
+            "created": "Neuer Online-Inhalt erstellt",
+            "updated": "Online-Inhalt aktualisiert",
+            "tooltip": "Das ist ein Online-Inhalt",
             "description": "Beschreibung",
-            "notReleasedTooltip": "Onlineeinheit nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "notReleasedTooltip": "Online-Inhalt nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "doOpen": "Link öffnen",
             "createOnlineUnit": {
-                "title": "Erstelle Onlineeinheit",
+                "title": "Online-Inhalt erstellen",
                 "name": "Name",
-                "namePlaceHolder": "Gib der Onlineeinheit einen Namen",
+                "namePlaceHolder": "Gib dem Online-Inhalt einen Namen",
                 "description": "Beschreibung",
-                "descriptionPlaceHolder": "Gib der Onlineeinheit eine Beschreibung",
+                "descriptionPlaceHolder": "Gib dem Online-Inhalt eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
@@ -72,17 +74,17 @@
                 "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen"
             },
             "editOnlineUnit": {
-                "title": "Bearbeite eine Onlineeinheit"
+                "title": "Online-Inhalt bearbeiten"
             },
             "delete": {
-                "question": "Willst du wirklich die Onlineeinheit <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Onlineeinheit zur Bestätigung ein.",
+                "question": "Willst du wirklich den Online-Inhalt <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen des Online-Inhalts zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },
         "attachmentVideoUnit": {
-            "created": "Eine neue Dateieinheit wurde erstellt",
-            "updated": "Dateieinheit aktualisiert",
+            "created": "Neuer Datei-/Video-Inhalt erstellt",
+            "updated": "Datei-/Video-Inhalt aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "transcriptAvailable": "Transkription möglich",
             "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
@@ -91,25 +93,40 @@
             "transcriptionProcessing": "Transkription wird verarbeitet",
             "transcriptionFailed": "Transkription fehlgeschlagen",
             "hasTranscription": "Transkription vollständig",
+            "awaitingProcessing": "Wartet auf Verarbeitung",
+            "processingTranscribing": "Transkription läuft",
+            "processingIngesting": "Indizierung läuft",
+            "processingComplete": "Verarbeitung abgeschlossen",
+            "processingFailed": "Verarbeitung fehlgeschlagen",
+            "processing": {
+                "cancelled": "Verarbeitung wurde abgebrochen",
+                "error": {
+                    "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
+                    "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
+                    "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
+                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen"
+                }
+            },
             "createAttachmentVideoUnits": {
                 "informativeText": {
-                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
-                    "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
-                    "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die angehängten Einheiten übermittelt werden."
+                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Inhaltsüberschriften) und unterteilt das PDF in mehrere Dateien.",
+                    "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jedem Inhaltsabschnitt.",
+                    "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die Inhalte übermittelt werden."
                 },
-                "noFile": "Es gibt keine Datei für die automatische Einheitenverarbeitung. Bitte gehe einen Schritt zurück und versuche es erneut.",
-                "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jede Einheit hinzu!",
-                "pageTitle": "Einheiten",
-                "addUnit": "Einheit hinzufügen",
-                "processUnits": "Einheiten festlegen",
-                "processAutomatically": "Automatische Einheitenverarbeitung",
+                "noFile": "Es gibt keine Datei für die automatische Verarbeitung. Bitte gehe einen Schritt zurück und versuche es erneut.",
+                "noUnitDetected": "Es wurde kein Inhalt erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jeden Inhalt hinzu!",
+                "pageTitle": "Inhalte verarbeiten",
+                "addUnit": "Inhalt hinzufügen",
+                "processUnits": "Inhalte festlegen",
+                "processAutomatically": "Automatische Inhaltsverarbeitung",
                 "removeSlides": "Entferne Folien",
                 "removeSlidesInfo": {
                     "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",
                     "secondLine": "Mehrere Schlüsselsätze werden mit einem Komma getrennt, zwischen Groß- und Kleinbuchstaben wird nicht unterschieden.",
                     "thirdLine": "Folgende Folien werden entfernt:"
                 },
-                "timeout": "Zeitüberschreitung während der automatischen Einheitenverarbeitung. Bitte versuche es erneut.",
+                "timeout": "Zeitüberschreitung während der automatischen Inhaltsverarbeitung. Bitte versuche es erneut.",
                 "removeSlidesPlaceholder": "Beispiel: 'Pause, Beispiellösungen'",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
@@ -125,24 +142,24 @@
                 },
                 "split": {
                     "empty": "",
-                    "unit": "Vortragseinheiten",
-                    "unitName": "Einheitenname",
+                    "unit": "Vorlesungsinhalte",
+                    "unitName": "Inhaltsname",
                     "releaseDate": "Veröffentlichungsdatum",
                     "startPage": "Startseite",
                     "endPage": "Letzte Seite"
                 },
-                "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungseinheiten zu aktivieren.",
-                "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Habe bitte etwas Geduld."
+                "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungsinhalten zu aktivieren.",
+                "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld."
             },
             "createAttachmentVideoUnit": {
-                "title": "Dateieinheit erstellen",
+                "title": "Datei-/Video-Inhalt erstellen",
                 "name": "Name",
-                "namePlaceHolder": "Gib der Einheit einen Namen",
+                "namePlaceHolder": "Gib dem Inhalt einen Namen",
                 "description": "Beschreibung",
                 "updateNotificationText": "Update Benachrichtigungstext",
                 "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
                 "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 1000 Zeichen lang sein.",
-                "descriptionPlaceHolder": "Gib der Einheit eine Beschreibung",
+                "descriptionPlaceHolder": "Gib dem Inhalt eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
@@ -165,17 +182,17 @@
                 "generateTranscriptLabel": "Transkript nach dem Speichern erzeugen"
             },
             "editAttachmentVideoUnit": {
-                "title": "Bearbeite Dateieinheit"
+                "title": "Datei-/Video-Inhalt bearbeiten"
             },
             "tooltip": "Das ist eine Datei",
             "uploadDate": "Upload Datum",
             "version": "Version",
             "FileName": "Dateiname",
             "description": "Beschreibung",
-            "download": "Datei herunterladen",
+            "download": "Herunterladen",
             "delete": {
-                "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Datei/Video Unit zur Bestätigung ein.",
+                "question": "Willst du wirklich diesen Inhalt <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen des Inhalts zur Bestätigung ein.",
                 "buttonText": "Löschen"
             },
             "transcription": {
@@ -186,7 +203,11 @@
                 "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
-                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
+                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen.",
+                "cancelButton": "Transkription abbrechen",
+                "cancelSuccess": "Transkription erfolgreich abgebrochen.",
+                "cancelError": "Transkription konnte nicht abgebrochen werden.",
+                "cancelConfirm": "Möchtest du die laufende Transkription wirklich abbrechen?"
             },
             "videoPlayer": {
                 "transcript": "Transkript",
@@ -202,8 +223,8 @@
         "exerciseUnit": {
             "created": "Übung mit Vorlesung verbunden",
             "createExerciseUnit": {
-                "title": "Übungseinheit",
-                "headline": "Verbindung eine Übung mit der Vorlesung",
+                "title": "Übungsinhalt",
+                "headline": "Verbinde eine Übung mit der Vorlesung",
                 "description": "Wähle alle Übungen zur Verbindung mit der Vorlesung aus."
             },
             "delete": {

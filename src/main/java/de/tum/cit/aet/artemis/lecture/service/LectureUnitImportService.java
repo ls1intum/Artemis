@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -10,14 +8,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureUnitImportService {
@@ -43,12 +43,15 @@ public class LectureUnitImportService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
-            Optional<IrisLectureApi> irisLectureApi) {
+            Optional<IrisLectureApi> irisLectureApi, LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.slideSplitterService = slideSplitterService;
         this.irisLectureApi = irisLectureApi;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -70,10 +73,10 @@ public class LectureUnitImportService {
         newLecture.setLectureUnits(lectureUnits);
         lectureUnitRepository.saveAll(lectureUnits);
 
-        // Send lectures to pyris
-        irisLectureApi
-                .ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentVideoUnitsInPyris(lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                        .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(unit -> unit.getAttachment() != null).toList()));
+        // Trigger full content processing for attachment video units
+        // This will check for TUM Live playlist availability, generate transcriptions if possible, and ingest to Pyris
+        lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit)
+                .forEach(contentProcessingApi::triggerProcessing);
     }
 
     /**

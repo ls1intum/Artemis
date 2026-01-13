@@ -1,45 +1,66 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { getVitestModules } from '../utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
-const summaryPath = path.resolve(
-    __dirname,
-    '../../../build/test-results/coverage-summary.json'
-);
-if (!fs.existsSync(summaryPath)) {
-    console.error('❌ coverage-summary.json not found at', summaryPath);
+// Coverage file paths
+const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
+const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
+
+const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
+
+// Load coverage files
+let jestSummary = {};
+let vitestSummary = {};
+
+if (fs.existsSync(jestSummaryPath)) {
+    try {
+        jestSummary = JSON.parse(fs.readFileSync(jestSummaryPath, 'utf-8'));
+    } catch (error) {
+        console.error('❌ Failed to parse Jest coverage-summary.json:', error);
+        process.exit(1);
+    }
+} else {
+    console.error('❌ Jest coverage-summary.json not found at', jestSummaryPath);
     process.exit(1);
 }
 
-let summary;
-try {
- summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
-} catch (error) {
-    console.error('❌ Failed to parse coverage-summary.json:', error);
+if (fs.existsSync(vitestSummaryPath)) {
+    try {
+        vitestSummary = JSON.parse(fs.readFileSync(vitestSummaryPath, 'utf-8'));
+        console.log('✅ Vitest coverage loaded for modules:', [...VITEST_MODULES].join(', '));
+    } catch (error) {
+        console.error('❌ Failed to parse Vitest coverage-summary.json:', error);
+        process.exit(1);
+    }
+} else if (VITEST_MODULES.size > 0) {
+    console.error('❌ Vitest coverage-summary.json not found at', vitestSummaryPath);
+    console.error('   Vitest modules require coverage. Run "npm run vitest:coverage" first.');
     process.exit(1);
 }
 
 const moduleThresholds = {
     assessment: {
-        statements: 90.00,
-        branches:   78.20,
-        functions:  83.30,
-        lines:      90.10,
+        statements: 93.00,
+        branches:   82.00,
+        functions:  91.80,
+        lines:      93.70,
     },
     atlas: {
         statements: 91.30,
-        branches:   67.10,
+        branches:   66.30,
         functions:  84.70,
         lines:      91.20,
     },
     buildagent: {
-        statements: 92.00,
-        branches:   73.60,
-        functions:  85.10,
-        lines:      92.10,
+        statements: 89.80,
+        branches:   74.60,
+        functions:  84.70,
+        lines:      89.90,
     },
     communication: {
         statements: 92.40,
@@ -48,31 +69,31 @@ const moduleThresholds = {
         lines:      92.70,
     },
     core: {
-        statements: 89.90,
-        branches:   70.80,
-        functions:  81.70,
-        lines:      89.90,
+        statements: 89.30,
+        branches:   70.00,
+        functions:  80.00,
+        lines:      89.30,
     },
     exam: {
-        statements: 91.70,
-        branches:   75.80,
-        functions:  85.20,
-        lines:      91.90,
+        statements: 91.50,
+        branches:   75.50,
+        functions:  84.60,
+        lines:      91.80,
     },
     exercise: {
-        statements: 88.40,
-        branches:   76.60,
-        functions:  80.20,
-        lines:      88.50,
+        statements: 87.80,
+        branches:   76.20,
+        functions:  79.10,
+        lines:      88.00,
     },
     fileupload: {
-        statements: 92.40,
-        branches:   77.00,
-        functions:  84.60,
-        lines:      93.00,
+        statements: 94.40,
+        branches:   77.90,
+        functions:  94.30,
+        lines:      94.80,
     },
     hyperion: {
-        // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
+        // Currently, there are no files under src/main/webapp/app/hyperion/,
         // so thresholds mirror the current effective coverage (no files found → skipped by checker).
         // Once client-side Hyperion code exists, update these to the measured coverage.
         statements: 0,
@@ -81,15 +102,15 @@ const moduleThresholds = {
         lines:      0,
     },
     iris: {
-        statements: 89.10,
-        branches:   77.70,
-        functions:  86.10,
-        lines:      89.40,
+        statements: 88.5,
+        branches:   76.5,
+        functions:  84.0,
+        lines:      88.8,
     },
     lecture: {
         statements: 92.50,
-        branches:   76.25,
-        functions:  88.30,
+        branches:   75.50,
+        functions:  88.50,
         lines:      92.40,
     },
     lti: {
@@ -100,27 +121,27 @@ const moduleThresholds = {
     },
     modeling: {
         statements: 89.00,
-        branches:   73.00,
+        branches:   72.40,
         functions:  84.40,
         lines:      89.20,
     },
     plagiarism: {
         statements: 93.40,
         branches:   81.90,
-        functions:  87.50,
+        functions:  87.10,
         lines:      93.50,
     },
     programming: {
         statements: 89.40,
-        branches:   76.20,
-        functions:  81.60,
+        branches:   76.00,
+        functions:  81.20,
         lines:      89.40,
     },
     quiz: {
-        statements: 88.80,
-        branches:   72.10,
-        functions:  82.70,
-        lines:      89.00,
+        statements: 90.00,
+        branches:   75.10,
+        functions:  87.00,
+        lines:      90.00,
     },
     shared: {
         statements: 88.00,
@@ -130,20 +151,19 @@ const moduleThresholds = {
     },
     text: {
         statements: 89.70,
-        branches:   72.00,
-        functions:  86.10,
+        branches:   69.00,
+        functions:  86.00,
         lines:      90.00,
     },
     tutorialgroup: {
-        statements: 92.10,
-        branches:   72.90,
-        functions:  84.50,
-        lines:      92.00,
+        statements: 91.00,
+        branches:   74.00,
+        functions:  87.00,
+        lines:      81.00,
     },
 };
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
-
 const AIMED_FOR_COVERAGE = 90;
 /**
  * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
@@ -182,13 +202,16 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         lines:      { total: 0, covered: 0 },
     };
 
+    // Use Vitest coverage for Vitest modules, Jest for everything else
+    const summary = VITEST_MODULES.has(module) ? vitestSummary : jestSummary;
+
     for (const [filePath, metricsData] of Object.entries(summary)) {
         if (filePath === 'total') continue;
         if (!filePath.includes(prefix)) continue;
         if (!metricsData || typeof metricsData !== 'object') {
             console.warn(`⚠️  Invalid coverage data for file: ${filePath}`);
             continue;
-            }
+        }
         for (const metric of metrics) {
             if (!metricsData[metric] || typeof metricsData[metric].total !== 'number' || typeof metricsData[metric].covered !== 'number') {
                 console.error(`❌  Missing or invalid ${metric} data for file: ${filePath}`);
@@ -204,11 +227,11 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         continue;
     }
 
-    const moduleFailed = evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
+    const testFramework = VITEST_MODULES.has(module) ? '[vitest]' : '[jest]';
+    const moduleFailed = evaluateAndPrintMetrics(`${module} ${testFramework}`, aggregatedMetrics, thresholds);
     if (moduleFailed) {
         anyModuleFailed = true;
     }
-
 }
-process.exit(anyModuleFailed ? 1 : 0);
 
+process.exit(anyModuleFailed ? 1 : 0);

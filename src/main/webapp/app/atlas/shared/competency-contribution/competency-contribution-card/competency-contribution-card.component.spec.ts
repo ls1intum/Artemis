@@ -5,7 +5,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { input } from '@angular/core';
 import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -32,13 +31,11 @@ describe('CompetencyContributionCardComponent', () => {
         fixture = TestBed.createComponent(CompetencyContributionCardComponent);
         component = fixture.componentInstance;
 
-        TestBed.runInInjectionContext(() => {
-            component.courseId = input<number>(1);
-            component.competencyId = input<number>(2);
-            component.title = input<string>('Test Title');
-            component.mastery = input<number>(50);
-            component.weight = input<number>(0.5);
-        });
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('competencyId', 2);
+        fixture.componentRef.setInput('title', 'Test Title');
+        fixture.componentRef.setInput('mastery', 50);
+        fixture.componentRef.setInput('weight', 0.5);
         fixture.detectChanges();
     });
 

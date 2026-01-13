@@ -1,10 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/core/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/shared/service/sort.service';
@@ -22,13 +24,20 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 
 describe('Course LTI Configuration Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseLtiConfigurationComponent;
     let fixture: ComponentFixture<CourseLtiConfigurationComponent>;
     let sortService: SortService;
 
-    let findWithExercisesStub: jest.SpyInstance;
+    let findWithExercisesStub: ReturnType<typeof vi.spyOn>;
 
     const onlineCourseConfiguration = {
         id: 1,
@@ -56,8 +65,7 @@ describe('Course LTI Configuration Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NgbNavModule, MockModule(NgbTooltipModule)],
-            declarations: [CourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
+            imports: [CourseLtiConfigurationComponent],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(SortService),
@@ -71,21 +79,41 @@ describe('Course LTI Configuration Component', () => {
                 ),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseLtiConfigurationComponent, {
+                set: {
+                    imports: [
+                        NgbNavModule,
+                        MockModule(NgbTooltipModule),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockRouterLinkDirective,
+                        MockComponent(FaIconComponent),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(CopyToClipboardButtonComponent),
+                        MockDirective(SortDirective),
+                        MockDirective(SortByDirective),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseLtiConfigurationComponent);
         comp = fixture.componentInstance;
         TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
 
-        findWithExercisesStub = jest.spyOn(TestBed.inject(CourseManagementService), 'findWithExercisesAndLecturesAndCompetencies');
+        findWithExercisesStub = vi
+            .spyOn(TestBed.inject(CourseManagementService), 'findWithExercisesAndLecturesAndCompetencies')
+            .mockReturnValue(of(new HttpResponse({ body: courseWithExercisesAndLectures, status: 200 })));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
+        findWithExercisesStub.mockReturnValue(of(new HttpResponse({ body: courseWithExercisesAndLectures, status: 200 })));
         fixture.detectChanges();
         expect(CourseLtiConfigurationComponent).not.toBeNull();
     });
@@ -102,9 +130,9 @@ describe('Course LTI Configuration Component', () => {
             );
             comp.ngOnInit();
 
-            expect(comp.course).toEqual(course);
-            expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
-            expect(comp.exercises).toEqual(courseWithExercisesAndLectures.exercises);
+            expect(comp.course()).toEqual(course);
+            expect(comp.onlineCourseConfiguration()).toEqual(course.onlineCourseConfiguration);
+            expect(comp.exercises()).toEqual(courseWithExercisesAndLectures.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
         });
     });
@@ -119,7 +147,7 @@ describe('Course LTI Configuration Component', () => {
             ),
         );
         comp.ngOnInit();
-        comp.activeTab = 2;
+        comp.activeTab.set(2);
 
         fixture.detectChanges();
 
@@ -137,7 +165,7 @@ describe('Course LTI Configuration Component', () => {
             ),
         );
         comp.ngOnInit();
-        comp.activeTab = 3;
+        comp.activeTab.set(3);
 
         fixture.detectChanges();
 
@@ -146,7 +174,7 @@ describe('Course LTI Configuration Component', () => {
     });
 
     it('should call sortService when sortRows is called', () => {
-        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+        vi.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
 
         comp.sortRows();
 

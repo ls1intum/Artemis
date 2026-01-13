@@ -5,8 +5,6 @@ export class IrisStageDTO {
     message: string;
     // Internal stages are not shown in the UI and are hidden from the user
     internal: boolean;
-
-    lowerCaseState?: string;
 }
 
 export enum IrisStageStateDTO {

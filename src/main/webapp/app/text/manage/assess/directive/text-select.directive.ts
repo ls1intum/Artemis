@@ -1,4 +1,4 @@
-import { Directive, ElementRef, EventEmitter, NgZone, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Directive, ElementRef, NgZone, OnDestroy, OnInit, inject, output } from '@angular/core';
 
 /**
  * Disclaimer:
@@ -33,8 +33,7 @@ export class TextSelectDirective implements OnInit, OnDestroy {
     private elementRef = inject(ElementRef);
     private zone = inject(NgZone);
 
-    @Output()
-    public jhiTextSelect = new EventEmitter<TextSelectEvent>();
+    public jhiTextSelect = output<TextSelectEvent>();
     private hasSelection = false;
 
     /**

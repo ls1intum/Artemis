@@ -295,12 +295,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         // Use the service to get sidebar items
         const defaultItems = this.sidebarItemService.getStudentDefaultItems(
-            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
+            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisEnabledInCourse,
             currentCourse?.trainingEnabled,
         );
         sidebarItems.push(...defaultItems);
 
-        if (currentCourse?.lectures) {
+        if (this.lectureEnabled && currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
             sidebarItems.splice(-2, 0, lecturesItem);
         }

@@ -6,6 +6,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/shared/util/download.util';
+import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -29,11 +30,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
-            .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -43,8 +42,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    delete(modelingExerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
+    delete(modelingExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
 
     /**
@@ -77,11 +76,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      */
     reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
-            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

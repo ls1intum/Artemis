@@ -16,7 +16,7 @@ import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.c
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
-import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
+import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 

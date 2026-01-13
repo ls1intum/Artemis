@@ -48,7 +48,7 @@ describe('CodeEditorStatusComponent', () => {
     Object.keys(CommitState).forEach((commitState) =>
         it(`should show exactly one status segment for CommitState ${commitState} with an icon and a non-empty description`, () => {
             comp.commitState = commitState as CommitState;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
             showsExactlyOneStatusSegment(commitStateSegment, commitStateToTranslationKey[commitState as keyof typeof commitStateToTranslationKey]);
         }),

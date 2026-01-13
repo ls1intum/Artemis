@@ -169,13 +169,13 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(ExamParticipationComponent).toBeTruthy();
     });
 
     describe('ExamParticipationSummaryComponent for TestRuns', () => {
         it('should initialize and display test run ribbon', () => {
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture).toBeTruthy();
             expect(!!comp.testRunId).toBeTrue();
             const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
@@ -185,7 +185,7 @@ describe('ExamParticipationComponent', () => {
             TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
             comp.exam.id = 2;
             comp.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture).toBeTruthy();
             expect(!!comp.testRunId).toBeFalse();
             const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
@@ -1162,7 +1162,7 @@ describe('ExamParticipationComponent', () => {
         comp.activeExamPage.exercise = exercise1;
         jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeTruthy();
         const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
         expect(examBarDebugElement).toBeTruthy();
@@ -1171,7 +1171,7 @@ describe('ExamParticipationComponent', () => {
     it('should not display exam bar and timer when exam was not submitted', () => {
         jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const examBarDebugElement = fixture.debugElement.query(By.directive(ExamBarComponent));
         expect(examBarDebugElement).toBeFalsy();

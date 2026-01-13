@@ -21,7 +21,7 @@ describe('TaskCountWarningComponent', () => {
     it('should correctly compare the number of tasks', () => {
         component.numOfTasks = 5;
         component.advisedMaxNumOfTasks = 15;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const okayInformation = fixture.nativeElement.querySelector('#instruction_analysis_num-of-tasks-ok');
         expect(okayInformation).toBeDefined();

@@ -1,121 +1,81 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
-import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-@Component({ selector: 'jhi-course-group', template: '' })
-class CourseGroupStubComponent {
-    @Input()
-    allGroupUsers: User[] = [];
-    @Input()
-    isLoadingAllGroupUsers = false;
-    @Input()
-    isAdmin = false;
-    @Input()
-    course: Course;
-    @Input()
-    tutorialGroup: TutorialGroup | undefined = undefined;
-    @Input()
-    courseGroup: CourseGroup;
-    @Input()
-    exportFileName: string;
-    @Input()
-    userSearch: () => Observable<HttpResponse<User[]>>;
-    @Input()
-    addUserToGroup: () => Observable<any> = () => of({});
-    @Input()
-    removeUserFromGroup: () => Observable<any> = () => of({});
-    @Input()
-    handleUsersSizeChange: () => void = () => {};
-
-    @Output()
-    importFinish: EventEmitter<void> = new EventEmitter();
-}
-
 describe('Registered Students Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: RegisteredStudentsComponent;
     let fixture: ComponentFixture<RegisteredStudentsComponent>;
     let tutorialGroup: TutorialGroup;
     let tutorialGroupService: TutorialGroupsService;
-    let getTutorialGroupSpy: jest.SpyInstance;
+    let getTutorialGroupSpy: ReturnType<typeof vi.spyOn>;
     const course = { id: 123, title: 'Example', isAtLeastInstructor: true };
     const tutorialGroupUserOne = new User(1, 'user1');
     const tutorialGroupUserTwo = new User(2, 'user2');
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
-                RegisteredStudentsComponent,
-                LoadingIndicatorContainerStubComponent,
-                CourseGroupStubComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [RegisteredStudentsComponent],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),
-                MockProvider(NgbActiveModal),
                 MockProvider(LocalStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(RegisteredStudentsComponent);
-                comp = fixture.componentInstance;
-                tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                tutorialGroup = new TutorialGroup();
-                tutorialGroup.title = 'Group';
-                tutorialGroup.id = 123;
-                tutorialGroup.course = course;
+        }).compileComponents();
 
-                const registrationOne = new TutorialGroupRegistration();
-                registrationOne.student = tutorialGroupUserOne;
-                registrationOne.tutorialGroup = tutorialGroup;
-                registrationOne.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
+        fixture = TestBed.createComponent(RegisteredStudentsComponent);
+        comp = fixture.componentInstance;
+        tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        tutorialGroup = new TutorialGroup();
+        tutorialGroup.title = 'Group';
+        tutorialGroup.id = 123;
+        tutorialGroup.course = course;
 
-                const registrationTwo = new TutorialGroupRegistration();
-                registrationTwo.student = tutorialGroupUserTwo;
-                registrationTwo.tutorialGroup = tutorialGroup;
-                registrationTwo.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
+        const registrationOne = new TutorialGroupRegistration();
+        registrationOne.student = tutorialGroupUserOne;
+        registrationOne.tutorialGroup = tutorialGroup;
+        registrationOne.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 
-                tutorialGroup.registrations = [registrationOne, registrationTwo];
+        const registrationTwo = new TutorialGroupRegistration();
+        registrationTwo.student = tutorialGroupUserTwo;
+        registrationTwo.tutorialGroup = tutorialGroup;
+        registrationTwo.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 
-                comp.course = course;
-                comp.tutorialGroupId = tutorialGroup.id!;
+        tutorialGroup.registrations = [registrationOne, registrationTwo];
 
-                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroupId', tutorialGroup.id!);
 
-                comp.initialize();
+        getTutorialGroupSpy = vi.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 
-                fixture.detectChanges();
-            });
+        comp.open();
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -124,7 +84,7 @@ describe('Registered Students Component', () => {
 
     describe('OnInit', () => {
         it('should load tutorial group', () => {
-            expect(comp.course).toEqual(course);
+            expect(comp.course()).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();

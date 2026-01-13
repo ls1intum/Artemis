@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -31,6 +31,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PROFILE_LDAP, addPublicFilePrefix } from 'app/app.constants';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -96,6 +98,10 @@ export enum UserStorageKey {
 
 type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter | typeof RegistrationNumberFilter;
 
+/**
+ * Component for managing users in the admin area.
+ * Provides search, filtering, pagination, and user management capabilities.
+ */
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
@@ -119,87 +125,124 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-    private adminUserService = inject(AdminUserService);
-    private alertService = inject(AlertService);
-    private accountService = inject(AccountService);
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
-    private eventManager = inject(EventManager);
-    private localStorageService = inject(LocalStorageService);
-    private modalService = inject(NgbModal);
-    private profileService = inject(ProfileService);
+    private readonly adminUserService = inject(AdminUserService);
+    private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly eventManager = inject(EventManager);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly modalService = inject(NgbModal);
+    private readonly profileService = inject(ProfileService);
 
-    @ViewChild('filterModal') filterModal: TemplateRef<any>;
+    /** Reference to the filter modal template */
+    readonly filterModal = viewChild<TemplateRef<any>>('filterModal');
 
-    search = new Subject<void>();
-    loadingSearchResult = false;
-    currentAccount?: User;
-    users: User[];
-    selectedUsers: User[] = [];
-    userListSubscription?: Subscription;
-    totalItems = 0;
-    itemsPerPage = ITEMS_PER_PAGE;
-    page!: number;
-    predicate!: string;
-    ascending!: boolean;
-    searchTermString = '';
-    searchInvalid = false;
-    isLdapProfileActive: boolean;
+    /** Subject to trigger search */
+    readonly search = new Subject<void>();
 
-    // filters
-    filters: UserFilter = new UserFilter();
-    faFilter = faFilter;
-    authorityKey = UserStorageKey.AUTHORITY;
-    statusKey = UserStorageKey.STATUS;
-    originKey = UserStorageKey.ORIGIN;
-    registrationKey = UserStorageKey.REGISTRATION_NUMBER;
+    /** Whether a search is in progress */
+    readonly loadingSearchResult = signal(false);
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    /** Current logged-in user */
+    readonly currentAccount = signal<User | undefined>(undefined);
+
+    /** List of users displayed in the table */
+    readonly users = signal<User[]>([]);
+
+    /** Selected users for batch operations */
+    readonly selectedUsers = signal<User[]>([]);
+
+    /** Subscription for user list modifications */
+    private userListSubscription?: Subscription;
+
+    /** Total number of items for pagination */
+    readonly totalItems = signal(0);
+
+    /** Items per page for pagination */
+    readonly itemsPerPage = ITEMS_PER_PAGE;
+
+    /** Current page number */
+    readonly page = signal(1);
+
+    /** Sort predicate (field name) */
+    readonly predicate = signal('id');
+
+    /** Sort order (true = ascending) */
+    readonly ascending = signal(true);
+
+    /** Current search term */
+    readonly searchTerm = signal('');
+
+    /** Whether search input is invalid (less than 3 characters) */
+    readonly searchInvalid = signal(false);
+
+    /** Whether LDAP profile is active */
+    readonly isLdapProfileActive = signal(false);
+
+    /** User filters */
+    readonly filters = signal(new UserFilter());
+
+    /** Filter storage keys */
+    protected readonly faFilter = faFilter;
+    protected readonly authorityKey = UserStorageKey.AUTHORITY;
+    protected readonly statusKey = UserStorageKey.STATUS;
+    protected readonly originKey = UserStorageKey.ORIGIN;
+    protected readonly registrationKey = UserStorageKey.REGISTRATION_NUMBER;
+
+    /** Subject for dialog error messages */
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError = this.dialogErrorSource.asObservable();
+
+    /** Search form */
     userSearchForm: FormGroup;
 
-    // Icons
-    faSort = faSort;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
+    /** Icons */
+    protected readonly faSort = faSort;
+    protected readonly faPlus = faPlus;
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
 
-    readonly medium = ButtonSize.MEDIUM;
-    readonly ButtonType = ButtonType;
+    /** Button constants */
+    protected readonly medium = ButtonSize.MEDIUM;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     /**
-     * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
+     * Initializes the component, sets up search subscription, and loads user data.
      */
     ngOnInit(): void {
         this.initFilters();
         this.search
             .pipe(
-                tap(() => (this.loadingSearchResult = true)),
+                tap(() => this.loadingSearchResult.set(true)),
                 switchMap(() =>
                     this.adminUserService.query(
                         {
-                            page: this.page - 1,
+                            page: this.page() - 1,
                             pageSize: this.itemsPerPage,
-                            searchTerm: this.searchTermString,
-                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                            sortedColumn: this.predicate,
-                            filters: this.filters,
+                            searchTerm: this.searchTerm(),
+                            sortingOrder: this.ascending() ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate(),
+                            filters: this.filters(),
                         },
-                        this.filters,
+                        this.filters(),
                     ),
                 ),
             )
             .subscribe({
                 next: (res: HttpResponse<User[]>) => {
-                    this.loadingSearchResult = false;
+                    this.loadingSearchResult.set(false);
                     this.onSuccess(res.body || [], res.headers);
                 },
                 error: (res: HttpErrorResponse) => {
-                    this.loadingSearchResult = false;
+                    this.loadingSearchResult.set(false);
                     onError(this.alertService, res);
                 },
             });
@@ -208,11 +251,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             searchControl: new FormControl('', { updateOn: 'change' }),
         });
         this.accountService.identity().then((user) => {
-            this.currentAccount = user!;
+            this.currentAccount.set(user!);
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.isLdapProfileActive = this.profileService.isProfileActive(PROFILE_LDAP);
+        this.isLdapProfileActive.set(this.profileService.isProfileActive(PROFILE_LDAP));
     }
 
     /**
@@ -229,11 +272,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Inits the available filter and maps the functions.
      */
     initFilters() {
-        this.filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
-        this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
-        this.filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
-        this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
-        this.filters.noAuthority = this.localStorageService.retrieve<boolean>(UserStorageKey.NO_AUTHORITY) ?? false;
+        const filters = this.filters();
+        filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
+        filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
+        filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
+        filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
+        filters.noAuthority = this.localStorageService.retrieve<boolean>(UserStorageKey.NO_AUTHORITY) ?? false;
+        this.filters.set(filters);
     }
 
     /**
@@ -270,7 +315,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove an authority filter and store the selected authority filters in the local store if required.
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
-        this.filters.noAuthority = false;
+        this.filters().noAuthority = false;
         this.updateNoAuthority(false);
         this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
     }
@@ -279,7 +324,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove an origin filter and store the selected origin filters in the local store if required.
      */
     toggleOriginFilter(value?: OriginFilter) {
-        const filter = this.filters.originFilter;
+        const filter = this.filters().originFilter;
         this.deselectFilter<OriginFilter>(filter, this.originKey);
         if (value) {
             this.toggleFilter<OriginFilter>(filter, value, this.originKey);
@@ -290,7 +335,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove a status filter and store the selected status filters in the local store if required.
      */
     toggleStatusFilter(value?: StatusFilter) {
-        const filter = this.filters.statusFilter;
+        const filter = this.filters().statusFilter;
         this.deselectFilter<StatusFilter>(filter, this.statusKey);
         if (value) {
             this.toggleFilter<StatusFilter>(filter, value, this.statusKey);
@@ -303,7 +348,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * When the filter is added, the value is set to the filter. Thus, when the value is present, the filter is toggled.
      */
     toggleRegistrationNumberFilter(registrationNumber?: RegistrationNumberFilter) {
-        const filter = this.filters.registrationNumberFilter;
+        const filter = this.filters().registrationNumberFilter;
         this.deselectFilter<RegistrationNumberFilter>(filter, this.registrationKey);
         if (registrationNumber) {
             this.toggleFilter<RegistrationNumberFilter>(filter, registrationNumber, this.registrationKey);
@@ -350,14 +395,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        this.filters.noAuthority = value;
+        this.filters().noAuthority = value;
     }
 
     /**
      * Deselect all roles
      */
     deselectAllRoles() {
-        this.filters.authorityFilter.clear();
+        this.filters().authorityFilter.clear();
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
         this.updateNoAuthority(false);
     }
@@ -366,7 +411,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        this.filters.authorityFilter.clear();
+        this.filters().authorityFilter.clear();
         this.updateNoAuthority(true);
     }
 
@@ -374,7 +419,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        this.filters.authorityFilter = new Set(this.authorityFilters);
+        this.filters().authorityFilter = new Set(this.authorityFilters);
         this.updateNoAuthority(false);
     }
 
@@ -411,32 +456,33 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     toggleAllUserSelection() {
         const usersWithoutCurrentUser = this.usersWithoutCurrentUser;
-        if (this.selectedUsers.length === usersWithoutCurrentUser.length) {
+        if (this.selectedUsers().length === usersWithoutCurrentUser.length) {
             // Clear all users
-            this.selectedUsers = [];
+            this.selectedUsers.set([]);
         } else {
             // Add all users
-            this.selectedUsers = [...usersWithoutCurrentUser];
+            this.selectedUsers.set([...usersWithoutCurrentUser]);
         }
     }
 
     /**
      * Gets the users without the current user.
      */
-    get usersWithoutCurrentUser() {
-        return this.users.filter((user) => this.currentAccount && this.currentAccount.login !== user.login);
+    get usersWithoutCurrentUser(): User[] {
+        const account = this.currentAccount();
+        return this.users().filter((user) => account && account.login !== user.login);
     }
 
     /**
      * Selects/Unselects a user.
      */
     toggleUser(user: User) {
-        const index = this.selectedUsers.indexOf(user);
+        const currentSelected = this.selectedUsers();
+        const index = currentSelected.indexOf(user);
         if (index > -1) {
-            this.selectedUsers.splice(index, 1);
+            this.selectedUsers.set(currentSelected.filter((u) => u !== user));
         } else {
-            // Add all users
-            this.selectedUsers.push(user);
+            this.selectedUsers.set([...currentSelected, user]);
         }
     }
 
@@ -444,14 +490,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Delete all selected users.
      */
     deleteAllSelectedUsers() {
-        const logins = this.selectedUsers.map((user) => user.login!);
+        const logins = this.selectedUsers().map((user) => user.login!);
         this.adminUserService.deleteUsers(logins).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted users',
                 });
-                this.selectedUsers = [];
+                this.selectedUsers.set([]);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -472,12 +518,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
-        this.searchTerm = this.searchControl.value;
-        if (this.searchTerm.length >= 3 || this.searchTerm.length === 0) {
-            this.searchInvalid = false;
+        this.searchTerm.set(this.searchControl.value);
+        if (this.searchTerm().length >= 3 || this.searchTerm().length === 0) {
+            this.searchInvalid.set(false);
             this.search.next();
         } else {
-            this.searchInvalid = true;
+            this.searchInvalid.set(true);
         }
     }
 
@@ -497,8 +543,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['/admin/user-management'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
-                page: this.page,
-                sort: `${this.predicate},${this.ascending ? ASC : DESC}`,
+                page: this.page(),
+                sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
             },
         });
     }
@@ -508,11 +554,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             data: this.activatedRoute.data,
             params: this.activatedRoute.queryParamMap,
         }).subscribe(({ data, params }) => {
-            const page = params.get('page');
-            this.page = page != undefined ? +page : 1;
+            const pageParam = params.get('page');
+            this.page.set(pageParam != undefined ? +pageParam : 1);
             const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
-            this.predicate = sort[0];
-            this.ascending = sort[1] === ASC;
+            this.predicate.set(sort[0]);
+            this.ascending.set(sort[1] === ASC);
             this.loadAll();
         });
     }
@@ -540,17 +586,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    private onSuccess(users: User[], headers: HttpHeaders) {
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        this.users = users;
-    }
-
-    set searchTerm(searchTerm: string) {
-        this.searchTermString = searchTerm;
-    }
-
-    get searchTerm(): string {
-        return this.searchTermString;
+    /**
+     * Handles successful user load response.
+     * @param users - The loaded users
+     * @param headers - Response headers containing pagination info
+     */
+    private onSuccess(users: User[], headers: HttpHeaders): void {
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
+        this.users.set(users);
     }
 
     get searchControl() {
