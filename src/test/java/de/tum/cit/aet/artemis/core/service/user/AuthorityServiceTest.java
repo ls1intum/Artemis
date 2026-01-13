@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.service.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -42,10 +41,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldPreserveSuperAdminAuthority() {
         // Create a user with SUPER_ADMIN authority
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<Authority> initialAuthorities = new HashSet<>();
-        initialAuthorities.add(Authority.SUPER_ADMIN_AUTHORITY);
-        user.setAuthorities(initialAuthorities);
-        user.setGroups(new HashSet<>());
+        user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        user.setGroups(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -59,10 +56,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldPreserveAdminAuthority() {
         // Create a user with ADMIN authority
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<Authority> initialAuthorities = new HashSet<>();
-        initialAuthorities.add(Authority.ADMIN_AUTHORITY);
-        user.setAuthorities(initialAuthorities);
-        user.setGroups(new HashSet<>());
+        user.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        user.setGroups(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -76,11 +71,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldPreserveBothAdminAndSuperAdminAuthorities() {
         // Create a user with both ADMIN and SUPER_ADMIN authorities
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<Authority> initialAuthorities = new HashSet<>();
-        initialAuthorities.add(Authority.SUPER_ADMIN_AUTHORITY);
-        initialAuthorities.add(Authority.ADMIN_AUTHORITY);
-        user.setAuthorities(initialAuthorities);
-        user.setGroups(new HashSet<>());
+        user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY, Authority.ADMIN_AUTHORITY));
+        user.setGroups(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -95,10 +87,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldAddInstructorAuthorityBasedOnGroup() {
         // Create a user with instructor group
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        Set<String> groups = new HashSet<>();
-        groups.add(course.getInstructorGroupName());
-        user.setGroups(groups);
-        user.setAuthorities(new HashSet<>());
+        user.setGroups(Set.of(course.getInstructorGroupName()));
+        user.setAuthorities(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -112,10 +102,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldAddEditorAuthorityBasedOnGroup() {
         // Create a user with editor group
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<String> groups = new HashSet<>();
-        groups.add(course.getEditorGroupName());
-        user.setGroups(groups);
-        user.setAuthorities(new HashSet<>());
+        user.setGroups(Set.of(course.getEditorGroupName()));
+        user.setAuthorities(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -129,10 +117,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldAddTeachingAssistantAuthorityBasedOnGroup() {
         // Create a user with teaching assistant group
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<String> groups = new HashSet<>();
-        groups.add(course.getTeachingAssistantGroupName());
-        user.setGroups(groups);
-        user.setAuthorities(new HashSet<>());
+        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
+        user.setAuthorities(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -147,7 +133,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // Create a user with null groups
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setGroups(null);
-        user.setAuthorities(new HashSet<>());
+        user.setAuthorities(Set.of());
 
         // Call buildAuthorities - should not throw exception
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -160,12 +146,8 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldCombinePreservedAndGroupBasedAuthorities() {
         // Create a super admin user with instructor group
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        Set<Authority> initialAuthorities = new HashSet<>();
-        initialAuthorities.add(Authority.SUPER_ADMIN_AUTHORITY);
-        user.setAuthorities(initialAuthorities);
-        Set<String> groups = new HashSet<>();
-        groups.add(course.getInstructorGroupName());
-        user.setGroups(groups);
+        user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        user.setGroups(Set.of(course.getInstructorGroupName()));
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
