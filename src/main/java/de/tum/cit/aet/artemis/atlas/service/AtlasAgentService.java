@@ -175,12 +175,6 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
 
-            // Build chat client with memory advisor once per request for this specific session
-            ChatClient.Builder clientBuilder = chatClient.mutate();
-            if (chatMemory != null) {
-                clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
-            }
-
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
