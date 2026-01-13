@@ -73,9 +73,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.visibleToStudents = ExerciseService.isExerciseVisibleToStudents(exercise) || exercise.quizStarted;
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-                    exercise.isEditable = (exercise.isEditable ?? true) && isQuizEditable(exercise);
                     exercise.status = this.quizExerciseService.getStatus(exercise);
                     exercise.quizStarted = exercise.status === QuizStatus.ACTIVE;
+                    exercise.isEditable = (exercise.isEditable ?? true) && isQuizEditable(exercise);
                     if (exercise.quizMode === QuizMode.SYNCHRONIZED) {
                         if (exercise.quizBatches && exercise.quizBatches.length > 0) {
                             exercise.startDate = exercise.quizBatches[0].startTime;
