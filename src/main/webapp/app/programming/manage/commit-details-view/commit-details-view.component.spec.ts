@@ -17,6 +17,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { DiffInformation, FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
 jest.mock('app/programming/shared/utils/diff.utils', () => ({
@@ -231,7 +232,7 @@ describe('CommitDetailsViewComponent', () => {
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockTemplateCommits),
         );
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     }
 
     it('should create', () => {
@@ -276,19 +277,22 @@ describe('CommitDetailsViewComponent', () => {
     });
 
     it('should handle new repository files for commit with template', async () => {
-        setupComponent();
+        fixture = TestBed.createComponent(CommitDetailsViewComponent);
+        component = fixture.componentInstance;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
-        // Set up fresh mocks for this specific test
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
             .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
-        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
+        component.exerciseId = 1;
+        component.repositoryId = 2;
+        component.repositoryType = RepositoryType.USER;
+        component.previousCommit = commit1;
+        component.currentCommit = commit2;
 
-        // Trigger ngOnInit
-        component.ngOnInit();
+        (component as any).fetchParticipationRepoFiles();
 
-        // Wait for async operations to complete
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(component.repositoryDiffInformation).toEqual(mockRepositoryDiffInformation);
@@ -397,7 +401,7 @@ describe('CommitDetailsViewComponent', () => {
             }),
         );
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -433,7 +437,7 @@ describe('CommitDetailsViewComponent', () => {
             }
         });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Trigger ngOnInit
         component.ngOnInit();

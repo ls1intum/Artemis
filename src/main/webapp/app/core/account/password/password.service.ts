@@ -2,17 +2,23 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+/**
+ * Service for managing password changes for authenticated users.
+ * Communicates with the backend to update user passwords.
+ */
 @Injectable({ providedIn: 'root' })
 export class PasswordService {
     private http = inject(HttpClient);
 
     /**
-     * Sets a new password for the current user. Receives an HTTP 400 if the old password is incorrect.
+     * Changes the password for the currently authenticated user.
+     * The current password is required for verification before the change is applied.
      *
-     * @param newPassword The new password
-     * @param currentPassword The old password
+     * @param newPassword - The new password to set
+     * @param currentPassword - The user's current password for verification
+     * @returns Observable that completes on success, or errors with HTTP 400 if current password is incorrect
      */
-    save(newPassword: string, currentPassword: string): Observable<any> {
-        return this.http.post('api/core/account/change-password', { currentPassword, newPassword });
+    changePassword(newPassword: string, currentPassword: string): Observable<void> {
+        return this.http.post<void>('api/core/account/change-password', { currentPassword, newPassword });
     }
 }

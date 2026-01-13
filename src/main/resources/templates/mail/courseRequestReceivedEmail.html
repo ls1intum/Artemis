@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.courseRequest.received.title}">Course request received</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
+    <div class="notification-content">
+        <p th:text="#{email.courseRequest.received.text(${courseRequest.title})}">Your course request has been received.</p>
+        <p th:text="#{email.courseRequest.received.processing}">Your request will be evaluated and processed within the next few working days.</p>
+        <p th:text="#{email.courseRequest.received.notification}">You will receive another email once a decision has been made.</p>
+        <p class="bold-text" th:text="#{email.courseRequest.received.summary}">Summary of your request:</p>
+        <ul>
+            <li>
+                <span class="bold-text" th:text="#{email.courseRequest.label.title}">Title</span>:
+                <span th:text="${courseRequest.title}">Title</span>
+            </li>
+            <li>
+                <span class="bold-text" th:text="#{email.courseRequest.label.shortName}">Short name</span>:
+                <span th:text="${courseRequest.shortName}">short-name</span>
+            </li>
+            <li th:if="${courseRequest.semester != null}">
+                <span class="bold-text" th:text="#{email.courseRequest.label.semester}">Semester</span>:
+                <span th:text="${courseRequest.semester}">Semester</span>
+            </li>
+            <li th:if="${courseRequest.startDate != null}">
+                <span class="bold-text" th:text="#{email.courseRequest.label.startDate}">Start date</span>:
+                <span th:text="${#temporals.format(courseRequest.startDate, 'yyyy-MM-dd HH:mm z')}">2025-03-01</span>
+            </li>
+            <li th:if="${courseRequest.endDate != null}">
+                <span class="bold-text" th:text="#{email.courseRequest.label.endDate}">End date</span>:
+                <span th:text="${#temporals.format(courseRequest.endDate, 'yyyy-MM-dd HH:mm z')}">2025-08-01</span>
+            </li>
+            <li>
+                <span class="bold-text" th:text="#{email.courseRequest.label.testCourse}">Test course</span>:
+                <span th:text="${courseRequest.testCourse} ? #{email.courseRequest.label.yes} : #{email.courseRequest.label.no}">No</span>
+            </li>
+        </ul>
+        <p>
+            <span class="bold-text" th:text="#{email.courseRequest.label.reason}">Reason</span>
+        </p>
+        <div class="bordered-content">
+            <span th:text="${courseRequest.reason}">Reason text</span>
+        </div>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+</body>
+</html>

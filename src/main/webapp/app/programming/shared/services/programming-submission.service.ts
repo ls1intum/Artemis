@@ -85,8 +85,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     // participationId -> topic
     private submissionTopicsSubscribed = new Map<number, string>();
+    private submissionTopicSubscriptions = new Map<string, Subscription>();
     // participationId -> topic
     private submissionProcessingTopicsSubscribed = new Map<number, string>();
+    private submissionProcessingTopicSubscriptions = new Map<string, Subscription>();
 
     // participationId -> exerciseId
     private participationIdToExerciseId = new Map<number, number>();
@@ -117,8 +119,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
-        this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
-        this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.submissionProcessingTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
     get exerciseBuildState() {
@@ -248,10 +250,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             this.participationIdToExerciseId.set(participationId, exerciseId);
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
-            if (!Array.from(this.submissionTopicsSubscribed.values()).includes(newSubmissionTopic)) {
-                this.websocketService.subscribe(newSubmissionTopic);
-                this.websocketService
-                    .receive(newSubmissionTopic)
+            if (!this.submissionTopicSubscriptions.has(newSubmissionTopic)) {
+                const subscription = this.websocketService
+                    .subscribe<ProgrammingSubmission | ProgrammingSubmissionError>(newSubmissionTopic)
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
@@ -278,6 +279,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         }),
                     )
                     .subscribe();
+                this.submissionTopicSubscriptions.set(newSubmissionTopic, subscription);
             }
             this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
@@ -311,11 +313,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
-            const subscriptionOnSameTopicExists = Array.from(this.submissionProcessingTopicsSubscribed.values()).includes(newSubmissionTopic);
-            if (!subscriptionOnSameTopicExists) {
-                this.websocketService.subscribe(newSubmissionTopic);
-                this.websocketService
-                    .receive(newSubmissionTopic)
+            if (!this.submissionProcessingTopicSubscriptions.has(newSubmissionTopic)) {
+                const subscription = this.websocketService
+                    .subscribe<SubmissionProcessingDTO>(newSubmissionTopic)
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
                             const submissionParticipationId = submissionProcessing.participationId!;
@@ -350,6 +350,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         }),
                     )
                     .subscribe();
+                this.submissionProcessingTopicSubscriptions.set(newSubmissionTopic, subscription);
             }
             this.submissionProcessingTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
@@ -856,10 +857,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.resultTimerSubscriptions = {};
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.queueEstimateTimerSubscriptions = {};
-        this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.submissionTopicSubscriptions.clear();
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
-        this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionProcessingTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.submissionProcessingTopicSubscriptions.clear();
         this.submissionProcessingTopicsSubscribed.clear();
         this.submissionSubjects = {};
         this.exerciseBuildStateSubjects.delete(exercise.id!);
@@ -879,7 +882,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             const openSubscriptionsForTopic = [...this.submissionTopicsSubscribed.values()].filter((topic: string) => topic === submissionTopic).length;
             // Only unsubscribe if no other participations are using this topic
             if (openSubscriptionsForTopic === 0) {
-                this.websocketService.unsubscribe(submissionTopic);
+                this.submissionTopicSubscriptions.get(submissionTopic)?.unsubscribe();
+                this.submissionTopicSubscriptions.delete(submissionTopic);
             }
         }
         const submissionProcessingTopic = this.submissionProcessingTopicsSubscribed.get(participationId);
@@ -890,7 +894,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // Only unsubscribe if no other participations are using this topic
             const isParcitipationUsingTopic = openSubscriptionsForTopic !== 0;
             if (!isParcitipationUsingTopic) {
-                this.websocketService.unsubscribe(submissionProcessingTopic);
+                this.submissionProcessingTopicSubscriptions.get(submissionProcessingTopic)?.unsubscribe();
+                this.submissionProcessingTopicSubscriptions.delete(submissionProcessingTopic);
             }
         }
     }

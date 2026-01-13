@@ -12,9 +12,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -95,4 +97,36 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
         }
         return result;
     }
+
+    /**
+     * Deletes all chat sessions for a given course.
+     *
+     * @param courseId The ID of the course.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByCourseId(long courseId);
+
+    /**
+     * Count the number of chat sessions for a given course.
+     *
+     * @param courseId the id of the course
+     * @return the number of chat sessions in the course
+     */
+    long countByCourseId(long courseId);
+
+    /**
+     * Find all chat sessions with messages for a given course, ordered by creation date.
+     *
+     * @param courseId the id of the course
+     * @return list of chat sessions with their messages
+     */
+    @Query("""
+            SELECT DISTINCT s
+            FROM IrisCourseChatSession s
+            LEFT JOIN FETCH s.messages
+            WHERE s.courseId = :courseId
+            ORDER BY s.creationDate ASC
+            """)
+    List<IrisCourseChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
 }

@@ -1,8 +1,13 @@
-<div>
+<div class="row">
     @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
-        <div class="form-group">
+        <div class="form-group col-12" [class.col-lg-6]="isChannelFieldDisplayed()">
             @if (!hideTitleLabel()) {
-                <label [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+                <div>
+                    <label [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+                    @if (titleHelpIconText()) {
+                        <jhi-help-icon [text]="titleHelpIconText()!" />
+                    }
+                </div>
             }
             <input
                 #field_title="ngModel"
@@ -24,15 +29,19 @@
         </div>
     }
     @if (isChannelFieldDisplayed()) {
-        <div class="form-group">
-            <div>
-                <label
-                    [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')"
-                    jhiTranslate="artemisApp.lecture.channelName"
-                    for="field_channel_name"
-                ></label>
-                <jhi-help-icon text="artemisApp.programmingExercise.channelNameTooltip" />
-            </div>
+        <div class="form-group col-lg-6">
+            @if (!hideChannelNameLabel()) {
+                <div>
+                    <label
+                        [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')"
+                        jhiTranslate="artemisApp.lecture.channelName"
+                        for="field_channel_name"
+                    ></label>
+                    @if (channelNameHelpIconText()) {
+                        <jhi-help-icon [text]="channelNameHelpIconText()!" />
+                    }
+                </div>
+            }
             <input
                 #field_channel_name="ngModel"
                 required

@@ -20,12 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -86,13 +81,7 @@ public class IrisChatSessionResource {
 
         irisSessionService.checkHasAccessToIrisSession(irisSession, null);
 
-        boolean enabled = switch (irisSession) {
-            case IrisCourseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.COURSE_CHAT, courseId);
-            case IrisLectureChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.LECTURE_CHAT, courseId);
-            case IrisTextExerciseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.TEXT_EXERCISE_CHAT, courseId);
-            case IrisProgrammingExerciseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, courseId);
-            default -> false;
-        };
+        boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
         if (enabled) {
             return ResponseEntity.ok((IrisChatSession) irisSession);

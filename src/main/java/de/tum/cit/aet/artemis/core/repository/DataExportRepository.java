@@ -4,10 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -70,4 +73,50 @@ public interface DataExportRepository extends ArtemisJpaRepository<DataExport, L
             ORDER BY dataExport.createdDate DESC
             """)
     List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(@Param("userId") long userId);
+
+    /**
+     * Find all data exports with their associated users, ordered by creation date descending.
+     * This is used for the admin overview of all data exports.
+     *
+     * @return a list of all data exports with user information
+     */
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            LEFT JOIN FETCH dataExport.user
+            ORDER BY dataExport.createdDate DESC
+            """)
+    List<DataExport> findAllWithUserOrderByCreatedDateDesc();
+
+    /**
+     * Find all data exports with pagination support, ordered by creation date descending.
+     * This is used for the admin overview of all data exports with pagination.
+     *
+     * @param pageable the pagination information
+     * @return a page of data exports with user information
+     */
+    @Query(value = """
+            SELECT dataExport
+            FROM DataExport dataExport
+            LEFT JOIN FETCH dataExport.user
+            ORDER BY dataExport.createdDate DESC
+            """, countQuery = """
+            SELECT COUNT(dataExport)
+            FROM DataExport dataExport
+            """)
+    Page<DataExport> findAllWithUserOrderByCreatedDateDesc(Pageable pageable);
+
+    /**
+     * Find a data export by id with user information.
+     *
+     * @param dataExportId the id of the data export
+     * @return the data export with user information if found
+     */
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            LEFT JOIN FETCH dataExport.user
+            WHERE dataExport.id = :dataExportId
+            """)
+    Optional<DataExport> findByIdWithUser(@Param("dataExportId") long dataExportId);
 }

@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
@@ -12,15 +12,13 @@ import { provideHttpClient } from '@angular/common/http';
 describe('ExamParticipationLiveEventsService', () => {
     let service: ExamParticipationLiveEventsService;
     let httpMock: HttpTestingController;
-    let mockWebsocketService: WebsocketService;
+    let mockWebsocketService: MockWebsocketService;
     let mockExamParticipationService: ExamParticipationService;
     let mockLocalStorageService: LocalStorageService;
-    let websocketConnectionStateSubject: Subject<ConnectionState>;
     let currentlyLoadedStudentExamSubject: Subject<any>;
 
     beforeEach(() => {
         currentlyLoadedStudentExamSubject = new Subject<any>();
-        websocketConnectionStateSubject = new Subject<ConnectionState>();
         mockExamParticipationService = {
             currentlyLoadedStudentExam: currentlyLoadedStudentExamSubject,
         } as unknown as ExamParticipationService;
@@ -30,9 +28,7 @@ describe('ExamParticipationLiveEventsService', () => {
             retrieve: jest.fn(),
         } as unknown as LocalStorageService;
 
-        const tmpMockWebsocketService = new MockWebsocketService();
-        tmpMockWebsocketService.state = websocketConnectionStateSubject.asObservable();
-        mockWebsocketService = tmpMockWebsocketService as unknown as WebsocketService;
+        mockWebsocketService = new MockWebsocketService();
 
         TestBed.configureTestingModule({
             providers: [
@@ -46,7 +42,8 @@ describe('ExamParticipationLiveEventsService', () => {
 
         service = TestBed.inject(ExamParticipationLiveEventsService);
         httpMock = TestBed.inject(HttpTestingController);
-        mockWebsocketService = TestBed.inject(WebsocketService);
+        // @ts-ignore
+        mockWebsocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
 
         service['studentExamId'] = 1;
         service['examId'] = 1;
@@ -72,7 +69,7 @@ describe('ExamParticipationLiveEventsService', () => {
             tick(6000);
             expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
 
-            websocketConnectionStateSubject.next({ connected, wasEverConnectedBefore } as any as ConnectionState);
+            mockWebsocketService.setConnectionState(new ConnectionState(connected, wasEverConnectedBefore));
 
             const mockEvents: ExamLiveEvent[] = [
                 {
@@ -99,17 +96,23 @@ describe('ExamParticipationLiveEventsService', () => {
     it('should correctly react to a student exam change and refetch events and subscribe to ws', fakeAsync(async () => {
         // @ts-ignore
         const unsubscribeFromExamLiveEventsSpy = jest.spyOn(service, 'unsubscribeFromExamLiveEvents');
-        const websocketSubscribeSpy = jest.spyOn(mockWebsocketService, 'subscribe');
-        const websocketUnsubscribeSpy = jest.spyOn(mockWebsocketService, 'unsubscribe');
+        const unsubscribeSpy = jest.fn();
+        const websocketStreamSubject = new Subject<any>();
+        const websocketSubscribeSpy = jest.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(
+            new Observable((observer) => {
+                const innerSub = websocketStreamSubject.subscribe(observer);
+                return () => {
+                    unsubscribeSpy();
+                    innerSub.unsubscribe();
+                };
+            }),
+        );
 
         // @ts-ignore
         const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents').mockReturnValue(undefined);
 
         // @ts-ignore
         const replayEventsSpy = jest.spyOn(service, 'replayEvents');
-
-        const websocketStreamSubject = new Subject<any>();
-        const websocketReceiveSpy = jest.spyOn(mockWebsocketService, 'receive').mockReturnValue(websocketStreamSubject.asObservable());
 
         const retrieveSpy = jest.spyOn(mockLocalStorageService, 'retrieve').mockReturnValue(
             JSON.stringify({
@@ -133,7 +136,6 @@ describe('ExamParticipationLiveEventsService', () => {
         // Check resets
         expect(service['events']).toEqual([]);
         expect(unsubscribeFromExamLiveEventsSpy).toHaveBeenCalledOnce();
-        expect(websocketUnsubscribeSpy).toHaveBeenCalledTimes(2);
         expect(service['currentWebsocketReceiveSubscriptions']).toBeUndefined();
         expect(service['currentWebsocketChannels']).toBeUndefined();
 
@@ -162,7 +164,6 @@ describe('ExamParticipationLiveEventsService', () => {
 
         // Check subscribe called
         expect(websocketSubscribeSpy).toHaveBeenCalledTimes(2);
-        expect(websocketReceiveSpy).toHaveBeenCalledTimes(2);
 
         // Send event over ws
         const mockEvent: any = {

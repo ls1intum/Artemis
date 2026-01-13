@@ -86,7 +86,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         // WHEN
         comp.course = course;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.ngOnInit();
 
         // THEN
@@ -96,15 +96,7 @@ describe('ProgrammingExercise Management Component', () => {
     });
 
     it('should delete exercise', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                    headers,
-                }),
-            ),
-        );
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         const mockSubscriber = jest.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 
@@ -118,15 +110,7 @@ describe('ProgrammingExercise Management Component', () => {
     });
 
     it('should delete multiple exercises', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                    headers,
-                }),
-            ),
-        );
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         const mockSubscriber = jest.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 

@@ -8,13 +8,18 @@ const sidebars: SidebarsConfig = {
             label: 'Exercises',
             link: {
                 type: 'doc',
-                id: 'exercises/intro'
+                id: 'exercises/intro',
             },
             items: [
+                'exercises/programming-exercise',
+                'exercises/quiz-exercise',
+                'exercises/modeling-exercise',
                 'exercises/textual-exercise',
                 'exercises/file-upload-exercise',
-            ]
+                'exercises/team-exercise',
+            ],
         },
+        'lectures',
         'lecture-series',
         'assessment',
         {
@@ -22,16 +27,22 @@ const sidebars: SidebarsConfig = {
             label: 'Exams',
             link: {
                 type: 'doc',
-                id: 'exams/intro'
+                id: 'exams/intro',
             },
-            items: [
-                'exams/exam-timeline',
-                'exams/participation-checker',
-            ]
+            items: ['exams/exam-timeline', 'exams/participation-checker'],
         },
+        'communication',
         'faq',
         'tutorial-groups',
-        'plagiarism-check'
+        'plagiarism-check',
+        'courses',
+        'exports',
+        'grading',
+        'integrated-code-lifecycle',
+        'learning-analytics',
+        'adaptive-learning',
+        'sharing',
+        'lti-configuration',
     ],
 };
 

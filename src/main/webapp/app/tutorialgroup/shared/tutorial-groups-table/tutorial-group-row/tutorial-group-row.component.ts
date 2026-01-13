@@ -30,7 +30,7 @@ export class TutorialGroupRowComponent {
 
     readonly showChannelColumn = input(false);
 
-    readonly extraColumn = input<TemplateRef<any> | null>(null);
+    readonly extraColumn = input<TemplateRef<any>>();
 
     readonly tutorialGroup = input.required<TutorialGroup>();
 

@@ -6,6 +6,7 @@ import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 import { CourseOverviewGuard } from 'app/core/course/overview/course-overview/course-overview-guard';
+import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 
 export enum CourseOverviewRoutePath {
     DASHBOARD = 'dashboard',
@@ -164,7 +165,7 @@ export const courseRoutes: Routes = [
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService, CourseOverviewGuard],
+                canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
                 children: [
                     {
                         path: ':lectureId',

@@ -49,7 +49,7 @@ describe('OneToOneChatCreateDialogComponent', () => {
         const activeModal = TestBed.inject(NgbActiveModal);
         const closeSpy = jest.spyOn(activeModal, 'close');
         component.onSelectedUsersChange([selectedUser]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledWith(selectedUser);
     });

@@ -89,7 +89,7 @@ describe('Mode Picker Component', () => {
     it('should set mode classes according to the chosen value', () => {
         comp.options = modePickerOptions;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const modes = fixture.debugElement.queryAll(By.css('.btn'));
 
         const actualClassesForNodes = modes.map((node) => node.nativeNode.getAttribute('class').split(' '));
@@ -100,7 +100,7 @@ describe('Mode Picker Component', () => {
         const chosenOption = modePickerOptions[0];
         comp.value = chosenOption.value;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // If a value is chosen, chosen options should have its own btnClass class.
         expect(modes[0].nativeNode.getAttribute('class').split(' ')).toEqual(['btn', chosenOption.btnClass]);
