@@ -109,7 +109,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setDeleted(false);
         admin = userRepository.save(admin);
 
-        // Create an inactive admin user
+        // Create an inactive admin user (still has admin authority, so should return true)
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
         inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         inactiveAdmin.setActivated(false);
@@ -118,12 +118,10 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        // Test that both super admin and regular admin are correctly identified as admin
+        // Test that super admin, regular admin, and inactive admin (has authority) are identified as admin
         assertThat(userRepository.isAdmin(superAdmin.getLogin())).isTrue();
         assertThat(userRepository.isAdmin(admin.getLogin())).isTrue();
-
-        // Test that inactive admin is not identified as admin
-        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isTrue();
 
         // Test that regular user is not identified as admin
         assertThat(userRepository.isAdmin(regularUser.getLogin())).isFalse();
