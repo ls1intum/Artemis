@@ -15,5 +15,10 @@
         <insert tableName="jhi_authority">
             <column name="name" value="ROLE_SUPER_ADMIN"/>
         </insert>
+        <rollback>
+            <delete tableName="jhi_authority">
+                <where>name = 'ROLE_SUPER_ADMIN'</where>
+            </delete>
+        </rollback>
     </changeSet>
 </databaseChangeLog>
