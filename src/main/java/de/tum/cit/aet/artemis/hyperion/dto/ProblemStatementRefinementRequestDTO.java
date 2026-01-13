@@ -21,7 +21,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to refine a problem statement")
-public record ProblemStatementRefinementRequestDTO(@NotBlank @Schema(description = "Original problem statement text to be refined") String problemStatementText,
+public record ProblemStatementRefinementRequestDTO(
+        @NotBlank @Size(max = 50000) @Schema(description = "Original problem statement text to be refined (max 50,000 chars)") String problemStatementText,
 
         @Nullable @Size(max = 1000) @Schema(description = "User prompt for global refinement (optional if inlineComments provided)") String userPrompt,
 
@@ -34,6 +35,7 @@ public record ProblemStatementRefinementRequestDTO(@NotBlank @Schema(description
      * @return true if exactly one of userPrompt or inlineComments is present
      */
     @AssertTrue(message = "Either userPrompt or inlineComments must be provided exclusively")
+    @Schema(hidden = true)
     public boolean isExactlyOneRefinementModeProvided() {
         boolean hasUserPrompt = userPrompt != null && !userPrompt.isBlank();
         boolean hasInlineComments = inlineComments != null && !inlineComments.isEmpty();

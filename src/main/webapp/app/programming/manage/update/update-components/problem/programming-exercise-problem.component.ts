@@ -389,7 +389,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
-    onInlineRefinement(event: { selectedText: string; instruction: string }): void {
+    onInlineRefinement(event: { selectedText: string; instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
 
@@ -398,27 +398,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             return;
         }
 
-        // Find the line range of the selected text
-        const lines = exercise.problemStatement.split('\n');
-        let startLine = 1;
-        let endLine = lines.length;
-        let currentPos = 0;
-        for (let i = 0; i < lines.length; i++) {
-            if (currentPos + lines[i].length >= exercise.problemStatement.indexOf(event.selectedText)) {
-                startLine = i + 1;
-                break;
-            }
-            currentPos += lines[i].length + 1;
-        }
-        // Find end line
-        const selectedLines = event.selectedText.split('\n').length;
-        endLine = startLine + selectedLines - 1;
-
         this.isRefining.set(true);
 
         const apiComment: ApiInlineComment = {
-            startLine,
-            endLine,
+            startLine: event.startLine,
+            endLine: event.endLine,
+            startColumn: event.startColumn,
+            endColumn: event.endColumn,
             instruction: event.instruction,
         };
 

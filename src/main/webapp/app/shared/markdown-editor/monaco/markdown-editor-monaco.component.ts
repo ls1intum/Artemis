@@ -18,7 +18,6 @@ import {
     signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import * as monaco from 'monaco-editor';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -474,14 +473,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             if (selection) {
                 // Get selected text and screen position for inline refinement
                 const model = this.monacoEditor.getModel();
-                const editor = this.monacoEditor['_editor'] as monaco.editor.IStandaloneCodeEditor;
                 const selectedText = model ? model.getValueInRange(selection) : '';
 
                 // Calculate screen position for floating button
                 let screenPosition = { top: 0, left: 0 };
                 const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
-                const coords = editor.getScrolledVisiblePosition(endPosition);
-                const editorDom = editor.getDomNode();
+                const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
+                const editorDom = this.monacoEditor.getDomNode();
                 if (coords && editorDom) {
                     const editorRect = editorDom.getBoundingClientRect();
                     screenPosition = {

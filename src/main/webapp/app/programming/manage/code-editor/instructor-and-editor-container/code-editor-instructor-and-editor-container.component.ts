@@ -448,7 +448,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
-    onInlineRefinement(event: { selectedText: string; instruction: string }): void {
+    onInlineRefinement(event: { selectedText: string; instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
 
         if (!courseId || !this.exercise?.problemStatement?.trim()) {
@@ -456,27 +456,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        // Find the line range of the selected text
-        const lines = this.exercise.problemStatement.split('\n');
-        let startLine = 1;
-        let endLine = lines.length;
-        let currentPos = 0;
-        for (let i = 0; i < lines.length; i++) {
-            if (currentPos + lines[i].length >= this.exercise.problemStatement.indexOf(event.selectedText)) {
-                startLine = i + 1;
-                break;
-            }
-            currentPos += lines[i].length + 1;
-        }
-        // Find end line
-        const selectedLines = event.selectedText.split('\n').length;
-        endLine = startLine + selectedLines - 1;
-
         this.isInlineRefining.set(true);
 
         const apiComment: ApiInlineComment = {
-            startLine,
-            endLine,
+            startLine: event.startLine,
+            endLine: event.endLine,
+            startColumn: event.startColumn,
+            endColumn: event.endColumn,
             instruction: event.instruction,
         };
 
@@ -539,10 +525,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.isInlineRefining.set(true);
         this.showRefinementPrompt.set(false);
 
+        // For global refinement, we do NOT send inlineComments
         const request: ProblemStatementRefinementRequest = {
             problemStatementText: this.exercise.problemStatement,
             userPrompt: prompt,
-            inlineComments: [],
         };
 
         this.currentRefinementSubscription = this.hyperionApiService

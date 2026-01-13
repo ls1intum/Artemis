@@ -69,12 +69,18 @@ public class HyperionProblemStatementRefinementService {
         }
 
         if (chatClient == null) {
-            log.error("Cannot refine problem statement: AI chat client is not configured");
-            throw new IllegalStateException("AI chat client is not configured. Please ensure Hyperion AI service is properly configured.");
+            log.error("AI chat client is not configured for course {}. Please ensure Hyperion AI service is properly configured.", course.getId());
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "chatClientNotConfigured");
         }
 
         try {
-            Map<String, String> templateVariables = Map.of("text", originalProblemStatementText.trim(), "userPrompt",
+            // Validate input length
+            if (originalProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+                log.warn("Original problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), originalProblemStatementText.length());
+                throw new InternalServerErrorAlertException("Original problem statement is too long", "ProblemStatement", "problemStatementTooLong");
+            }
+
+            Map<String, String> templateVariables = Map.of("problemStatement", originalProblemStatementText.trim(), "userPrompt",
                     userPrompt != null ? userPrompt : "Refine a programming exercise problem statement", "courseTitle",
                     course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription",
                     course.getDescription() != null ? course.getDescription() : "A programming course");
@@ -121,8 +127,8 @@ public class HyperionProblemStatementRefinementService {
         }
 
         if (chatClient == null) {
-            log.error("Cannot refine problem statement with comments: AI chat client is not configured");
-            throw new IllegalStateException("AI chat client is not configured. Please ensure Hyperion AI service is properly configured.");
+            log.error("AI chat client is not configured for course {}. Please ensure Hyperion AI service is properly configured.", course.getId());
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "chatClientNotConfigured");
         }
 
         try {
@@ -131,6 +137,13 @@ public class HyperionProblemStatementRefinementService {
 
             // Add line numbers to help the LLM identify exact lines to modify
             String textWithLineNumbers = addLineNumbers(originalProblemStatementText.trim());
+
+            // Validate total input length
+            int totalLength = textWithLineNumbers.length() + combinedInstructions.length();
+            if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
+                log.warn("Combined input for course [{}] exceeds maximum length: {} characters", course.getId(), totalLength);
+                throw new InternalServerErrorAlertException("Input is too long (including instructions)", "ProblemStatement", "problemStatementTooLong");
+            }
 
             Map<String, String> templateVariables = Map.of("textWithLineNumbers", textWithLineNumbers, "targetedInstructions", combinedInstructions, "courseTitle",
                     course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription",

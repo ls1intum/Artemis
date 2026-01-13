@@ -15,7 +15,7 @@ import { InlineComment } from './inlineComment';
  */
 export interface ProblemStatementRefinementRequest { 
     /**
-     * Original problem statement text to be refined
+     * Original problem statement text to be refined (max 50,000 chars)
      */
     problemStatementText: string;
     /**
@@ -26,6 +26,5 @@ export interface ProblemStatementRefinementRequest {
      * Inline comments for targeted refinement of specific lines
      */
     inlineComments?: Array<InlineComment>;
-    exactlyOneRefinementModeProvided?: boolean;
 }
 

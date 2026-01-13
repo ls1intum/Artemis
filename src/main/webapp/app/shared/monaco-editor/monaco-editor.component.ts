@@ -228,6 +228,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return parts.slice(1).join('/') || parts[parts.length - 1] || '';
     }
 
+    getScrolledVisiblePosition(position: EditorPosition): { top: number; left: number; height: number } | null {
+        return this._editor.getScrolledVisiblePosition(position);
+    }
+
+    getDomNode(): HTMLElement | null {
+        return this._editor.getDomNode();
+    }
+
     getPosition(): EditorPosition {
         return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
@@ -487,19 +495,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param listener The callback to invoke when the selection changes.
      * @returns A disposable to remove the listener.
      */
-    onSelectionChange(listener: (selection: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } | null) => void): Disposable {
-        return this._editor.onDidChangeCursorSelection((e) => {
-            const selection = e.selection;
-            if (selection.isEmpty()) {
-                listener(null);
-            } else {
-                listener({
-                    startLineNumber: selection.startLineNumber,
-                    endLineNumber: selection.endLineNumber,
-                    startColumn: selection.startColumn,
-                    endColumn: selection.endColumn,
-                });
-            }
+    onSelectionChange(listener: (selection: EditorRange | null) => void): Disposable {
+        return this.ngZone.runOutsideAngular(() => {
+            return this._editor.onDidChangeCursorSelection((e) => {
+                const selection = e.selection;
+                if (selection.isEmpty()) {
+                    this.ngZone.run(() => listener(null));
+                } else {
+                    this.ngZone.run(() =>
+                        listener({
+                            startLineNumber: selection.startLineNumber,
+                            endLineNumber: selection.endLineNumber,
+                            startColumn: selection.startColumn,
+                            endColumn: selection.endColumn,
+                        }),
+                    );
+                }
+            });
         });
     }
 
@@ -507,7 +519,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Gets the current selection in the editor.
      * @returns The current selection or null if no selection.
      */
-    getSelection(): { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } | null {
+    getSelection(): EditorRange | null {
         const selection = this._editor.getSelection();
         if (!selection || selection.isEmpty()) {
             return null;

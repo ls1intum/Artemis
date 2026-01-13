@@ -37,8 +37,17 @@ public record InlineCommentDTO(@NotNull @Min(1) @Max(10000) @Schema(description 
         if (startLine != null && endLine != null && startLine > endLine) {
             throw new IllegalArgumentException("startLine must be less than or equal to endLine");
         }
-        if (startColumn != null && endColumn != null && startLine != null && endLine != null && startLine.equals(endLine) && startColumn > endColumn) {
+        if ((startColumn == null) != (endColumn == null)) {
+            throw new IllegalArgumentException("startColumn and endColumn must be either both null or both non-null");
+        }
+        if (startColumn != null && startLine != null && endLine != null && startLine.equals(endLine) && startColumn > endColumn) {
             throw new IllegalArgumentException("startColumn must be less than or equal to endColumn on the same line");
+        }
+        if (instruction != null) {
+            instruction = instruction.trim();
+            if (instruction.isEmpty()) {
+                throw new IllegalArgumentException("instruction must not be empty after trimming");
+            }
         }
     }
 

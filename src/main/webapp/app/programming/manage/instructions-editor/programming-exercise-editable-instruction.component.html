@@ -21,7 +21,7 @@
             [markdown]="exercise.problemStatement"
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview"
-            [showVisualButton]="false"
+            [showVisualButton]="!isRefining()"
             [showEditButton]="showPreview"
             [readOnly]="isRefining()"
             [consistencyIssues]="consistencyIssues()"

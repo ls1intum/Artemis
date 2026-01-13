@@ -117,6 +117,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
 
     // Subscriptions and listeners
     listeners: Disposable[] = [];
+    private fullscreenHandler = this.onFullscreenChange.bind(this);
 
     constructor() {
         effect(() => {
@@ -161,7 +162,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
         this.resizeObserver.observe(this.wrapper().nativeElement);
 
         // Listen for fullscreen changes to trigger layout recalculation
-        this.fullElement().nativeElement.addEventListener('fullscreenchange', this.onFullscreenChange.bind(this));
+        this.fullElement().nativeElement.addEventListener('fullscreenchange', this.fullscreenHandler);
     }
 
     /**
@@ -180,6 +181,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
             window.cancelAnimationFrame(this.resizeAnimationFrame);
         }
         this.resizeObserver?.disconnect();
+        this.fullElement().nativeElement.removeEventListener('fullscreenchange', this.fullscreenHandler);
         this.listeners.forEach((listener) => listener.dispose());
     }
 

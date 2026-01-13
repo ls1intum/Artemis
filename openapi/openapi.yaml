@@ -185,44 +185,54 @@ paths:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/refine:
     post:
-      tags: [hyperion-problem-statement]
+      tags:
+      - hyperion-problem-statement
       operationId: refineProblemStatement
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/ProblemStatementRefinementRequest'}
+            schema:
+              $ref: "#/components/schemas/ProblemStatementRefinementRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
+              schema:
+                $ref: "#/components/schemas/ProblemStatementRefinementResponse"
   /api/hyperion/courses/{courseId}/problem-statements/generate:
     post:
-      tags: [hyperion-problem-statement]
+      tags:
+      - hyperion-problem-statement
       operationId: generateProblemStatement
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/ProblemStatementGenerationRequest'}
+            schema:
+              $ref: "#/components/schemas/ProblemStatementGenerationRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}  
+              schema:
+                $ref: "#/components/schemas/ProblemStatementGenerationResponse"  
   /api/hyperion/programming-exercises/{exerciseId}/generate-code:
     post:
       tags: [hyperion-code-generation]
@@ -382,17 +392,23 @@ components:
       type: object
       description: Response containing generated problem statement
       properties:
-        refinedProblemStatement: {type: string, description: Refined problem statement
-            text}
-        originalProblemStatement: {type: string, description: Original problem statement
-            if refinement failed}
+        refinedProblemStatement:
+          type: string
+          description: Refined problem statement text
+        originalProblemStatement:
+          type: string
+          description: Original problem statement if refinement failed
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
       properties:
-        userPrompt: {type: string, description: User prompt describing the problem
-            statement requirements, maxLength: 1000, minLength: 0}
-      required: [userPrompt]
+        userPrompt:
+          type: string
+          description: User prompt describing the problem statement requirements
+          maxLength: 1000
+          minLength: 0
+      required:
+      - userPrompt
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -460,9 +476,12 @@ components:
       type: object
       description: Response containing generated problem statement
       properties:
-        draftProblemStatement: {type: string, description: Draft problem statement
-            text}
-        error: {type: string, description: Error message if generation failed}
+        draftProblemStatement:
+          type: string
+          description: Draft problem statement text
+        error:
+          type: string
+          description: Error message if generation failed
     Student:
       type: object
       properties:
@@ -501,35 +520,66 @@ components:
       description: Inline comment for targeted refinement of specific lines or text
         ranges
       properties:
-        startLine: {type: integer, format: int32, description: Start line number (1-indexed),
-          maximum: 10000, minimum: 1}
-        endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
-            inclusive)', maximum: 10000, minimum: 1}
-        startColumn: {type: integer, format: int32, description: 'Start column within
-            start line (1-indexed, optional for character-level targeting)', maximum: 10000,
-          minimum: 1}
-        endColumn: {type: integer, format: int32, description: 'End column within
-            end line (1-indexed, inclusive, optional for character-level targeting)',
-          maximum: 10000, minimum: 1}
-        instruction: {type: string, description: Instruction describing what should
-            change, maxLength: 500, minLength: 0}
-      required: [endLine, instruction, startLine]
+        startLine:
+          type: integer
+          format: int32
+          description: Start line number (1-indexed)
+          maximum: 10000
+          minimum: 1
+        endLine:
+          type: integer
+          format: int32
+          description: "End line number (1-indexed, inclusive)"
+          maximum: 10000
+          minimum: 1
+        startColumn:
+          type: integer
+          format: int32
+          description: "Start column within start line (1-indexed, optional for character-level\
+            \ targeting)"
+          maximum: 10000
+          minimum: 1
+        endColumn:
+          type: integer
+          format: int32
+          description: "End column within end line (1-indexed, inclusive, optional\
+            \ for character-level targeting)"
+          maximum: 10000
+          minimum: 1
+        instruction:
+          type: string
+          description: Instruction describing what should change
+          maxLength: 500
+          minLength: 0
+      required:
+      - endLine
+      - instruction
+      - startLine
     ProblemStatementRefinementRequest:
       type: object
       description: Request to refine a problem statement
       properties:
-        problemStatementText: {type: string, description: Original problem statement
-            text to be refined, minLength: 1}
-        userPrompt: {type: string, description: User prompt for global refinement
-            (optional if inlineComments provided), maxLength: 1000, minLength: 0}
+        problemStatementText:
+          type: string
+          description: "Original problem statement text to be refined (max 50,000\
+            \ chars)"
+          maxLength: 50000
+          minLength: 0
+        userPrompt:
+          type: string
+          description: User prompt for global refinement (optional if inlineComments
+            provided)
+          maxLength: 1000
+          minLength: 0
         inlineComments:
           type: array
           description: Inline comments for targeted refinement of specific lines
-          items: {$ref: '#/components/schemas/InlineComment'}
+          items:
+            $ref: "#/components/schemas/InlineComment"
           maxItems: 10
           minItems: 0
-        exactlyOneRefinementModeProvided: {type: boolean}
-      required: [problemStatementText]
+      required:
+      - problemStatementText
     TutorialGroupDetailSession:
       type: object
       properties:
