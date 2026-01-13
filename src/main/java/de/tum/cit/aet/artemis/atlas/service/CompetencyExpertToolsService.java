@@ -253,7 +253,7 @@ public class CompetencyExpertToolsService {
         }
 
         List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(competency -> new CompetencyPreviewDTO(competency.getTitle(), competency.getDescription(),
-                competency.getTaxonomy().toString(), competency.getCompetencyId(), viewOnly)).toList();
+                competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : null, competency.getCompetencyId(), viewOnly)).toList();
 
         currentPreviews.set(previewResponses);
 

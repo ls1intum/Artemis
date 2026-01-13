@@ -105,7 +105,6 @@ public class AtlasAgentService {
      * This ensures each request uses a single ChatClient instance with memory configured once,
      * avoiding duplicate memory advisor registrations during multi-agent delegation.
      */
-    private static final ThreadLocal<ChatClient> sessionChatClient = new ThreadLocal<>();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
@@ -181,8 +180,6 @@ public class AtlasAgentService {
             if (chatMemory != null) {
                 clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
             }
-
-            sessionChatClient.set(clientBuilder.build());
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
