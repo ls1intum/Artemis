@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
@@ -17,8 +16,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +42,8 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureService {
@@ -70,7 +70,7 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
+    private final LectureContentProcessingApi contentProcessingApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -83,13 +83,13 @@ public class LectureService {
     private final LectureUnitRepository lectureUnitRepository;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            LectureContentProcessingApi contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
             Optional<CompetencyApi> competencyApi, ExerciseService exerciseService, LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
-        this.irisLectureApi = irisLectureApi;
+        this.contentProcessingApi = contentProcessingApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
         this.competencyApi = competencyApi;
@@ -172,14 +172,13 @@ public class LectureService {
      * @param updateCompetencyProgress whether the competency progress should be updated
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
-        if (irisLectureApi.isPresent()) {
-            Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
-                    .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+        // Clean up external processing resources (cancel Nebula jobs, delete from Pyris)
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+        List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
-            if (!attachmentVideoUnitList.isEmpty()) {
-                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
-            }
+        if (!attachmentVideoUnitList.isEmpty()) {
+            contentProcessingApi.handleUnitsDeletion(attachmentVideoUnitList);
         }
 
         if (updateCompetencyProgress && competencyProgressApi.isPresent()) {
@@ -194,21 +193,6 @@ public class LectureService {
         competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
 
         lectureRepository.deleteById(lecture.getId());
-    }
-
-    /**
-     * Ingest the lectures when triggered by the ingest lectures button
-     *
-     * @param lectures set of lectures to be ingested
-     */
-    public void ingestLecturesInPyris(Set<Lecture> lectures) {
-        if (irisLectureApi.isPresent()) {
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
-                    .map(unit -> (AttachmentVideoUnit) unit).toList();
-            for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
-                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
-            }
-        }
     }
 
     /**

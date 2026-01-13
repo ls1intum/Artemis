@@ -45,19 +45,17 @@ export const courseManagementRoutes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: ':courseId/grading-system',
-                loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
+                path: ':courseId/grading',
+                loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
                 data: {
                     authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
-                loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
             },
             {
                 path: ':courseId/iris-settings',
-                loadComponent: () =>
-                    import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
+                loadComponent: () => import('app/iris/manage/settings/iris-settings-update/iris-settings-update.component').then((m) => m.IrisSettingsUpdateComponent),
                 data: {
                     authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.iris.settings.title.course',

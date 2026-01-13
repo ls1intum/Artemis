@@ -1,48 +1,53 @@
+import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 import { Student } from 'app/openapi/model/student';
 import ErrorEnum = TutorialGroupRegistrationImport.ErrorEnum;
-jest.mock('papaparse', () => {
-    const original = jest.requireActual('papaparse');
+
+vi.mock('papaparse', async () => {
+    const original = await vi.importActual<typeof import('papaparse')>('papaparse');
     return {
         ...original,
-        parse: jest.fn(),
+        parse: vi.fn(),
     };
 });
-const mockedParse = parse as jest.MockedFunction<typeof parse>;
+const mockedParse = parse as unknown as Mock<typeof parse>;
 
 describe('TutorialGroupsRegistrationImportDialog', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TutorialGroupsRegistrationImportDialogComponent;
     let fixture: ComponentFixture<TutorialGroupsRegistrationImportDialogComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
-            declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(TutorialGroupsService), MockProvider(NgbActiveModal)],
+            imports: [TutorialGroupsRegistrationImportDialogComponent, FormsModule, ReactiveFormsModule, FaIconComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService), MockProvider(TutorialGroupsService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsRegistrationImportDialogComponent);
         component = fixture.componentInstance;
         component.selectedFile = generateDummyFile();
+        // Note: We don't call component.open() or set dialogVisible to true to avoid triggering
+        // PrimeNG's dialog animation which causes issues in the jsdom test environment.
+        // The dialog visibility is tested separately, and other tests focus on the component logic.
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should create', () => {
@@ -54,7 +59,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         setExampleState();
         const exampleFile = generateDummyFile('example.csv');
         const event = { target: { files: [exampleFile] } } as unknown as Event;
-        const resetSpy = jest.spyOn(component, 'resetDialog');
+        const resetSpy = vi.spyOn(component, 'resetDialog');
 
         // when
         component.onCSVFileSelected(event);
@@ -71,30 +76,24 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(resetSpy).toHaveBeenCalled();
     });
 
-    it('clear should close the modal with cancel reason', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        // given
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
-
+    it('clear should close the dialog', () => {
         // when
         component.clear();
 
         // then
-        expect(dismissSpy).toHaveBeenCalledOnce();
-        expect(dismissSpy).toHaveBeenCalledWith('cancel');
+        expect(component.dialogVisible()).toBe(false);
     });
 
-    it('onFinish should close the modal', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
+    it('onFinish should close the dialog and emit importCompleted', () => {
         // given
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const importCompletedSpy = vi.spyOn(component.importCompleted, 'emit');
 
         // when
         component.onFinish();
 
         // then
-        expect(closeSpy).toHaveBeenCalledOnce();
-        expect(closeSpy).toHaveBeenCalledWith();
+        expect(importCompletedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('should read registrations from csv string', async () => {
@@ -107,7 +106,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         // then
         expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
         expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBeFalse();
+        expect(component.isCSVParsing).toBe(false);
     });
 
     it('should read registrations without student from csv string', async () => {
@@ -130,7 +129,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(registration.student).toEqual(generateStudentDTO('', '', '', ''));
         expect(registration.title).toBe('group');
         expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBeFalse();
+        expect(component.isCSVParsing).toBe(false);
     });
 
     it('should filter out unconfirmed registrations', async () => {
@@ -147,7 +146,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
         expect(component.registrationsDisplayedInTable).toEqual([exampleOne]);
         expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBeFalse();
+        expect(component.isCSVParsing).toBe(false);
     });
 
     it('should fail csv validation when csv is malformed', async () => {
@@ -229,39 +228,39 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         component.isImportDone = true;
         const failedExample = generateImportDTO();
         failedExample.importSuccessful = false;
-        expect(component.wasImported(failedExample)).toBeFalse();
+        expect(component.wasImported(failedExample)).toBe(false);
     });
 
     it('should reset fixed place inputs when the respective checkbox is switched', () => {
-        const fixedPlaceResetSpy = jest.spyOn(component.fixedPlaceValueControl!, 'reset');
-        const statusHeaderResetSpy = jest.spyOn(component.statusHeaderControl!, 'reset');
+        const fixedPlaceResetSpy = vi.spyOn(component.fixedPlaceValueControl!, 'reset');
+        const statusHeaderResetSpy = vi.spyOn(component.statusHeaderControl!, 'reset');
 
         component.specifyFixedPlaceControl?.setValue(false);
         expect(fixedPlaceResetSpy).toHaveBeenCalledTimes(2);
         expect(statusHeaderResetSpy).toHaveBeenCalledOnce();
-        expect(component.fixedPlaceValueControl?.disabled).toBeTrue();
-        expect(component.statusHeaderControl?.disabled).toBeTrue();
+        expect(component.fixedPlaceValueControl?.disabled).toBe(true);
+        expect(component.statusHeaderControl?.disabled).toBe(true);
 
         fixedPlaceResetSpy.mockClear();
         statusHeaderResetSpy.mockClear();
         component.specifyFixedPlaceControl?.setValue(true);
         expect(fixedPlaceResetSpy).toHaveBeenCalledTimes(2);
         expect(statusHeaderResetSpy).toHaveBeenCalledOnce();
-        expect(component.fixedPlaceValueControl?.disabled).toBeFalse();
-        expect(component.statusHeaderControl?.disabled).toBeFalse();
+        expect(component.fixedPlaceValueControl?.disabled).toBe(false);
+        expect(component.statusHeaderControl?.disabled).toBe(false);
     });
 
     it('should reset fixed place input when fixed place header input is cleared', () => {
-        const fixedPlaceResetSpy = jest.spyOn(component.fixedPlaceValueControl!, 'reset');
+        const fixedPlaceResetSpy = vi.spyOn(component.fixedPlaceValueControl!, 'reset');
 
         component.statusHeaderControl?.setValue('');
         expect(fixedPlaceResetSpy).toHaveBeenCalledOnce();
-        expect(component.fixedPlaceValueControl?.disabled).toBeTrue();
+        expect(component.fixedPlaceValueControl?.disabled).toBe(true);
 
         fixedPlaceResetSpy.mockClear();
         component.statusHeaderControl?.setValue('status');
         expect(fixedPlaceResetSpy).not.toHaveBeenCalled();
-        expect(component.fixedPlaceValueControl?.disabled).toBeFalse();
+        expect(component.fixedPlaceValueControl?.disabled).toBe(false);
     });
 
     it('should call the import service when the import button is clicked', async () => {
@@ -276,14 +275,14 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         const returnedDTOOne = { ...exampleOne, importSuccessful: true };
         const returnedDTOTwo = { ...exampleTwo, importSuccessful: false, errorMessage: 'error' };
 
-        const importSpy = jest.spyOn(tutorialGroupService, 'import').mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
+        const importSpy = vi.spyOn(tutorialGroupService, 'import').mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
 
         component.import();
 
         expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(1, [exampleOne, exampleTwo]);
-        expect(component.isImporting).toBeFalse();
-        expect(component.isImportDone).toBeTrue();
+        expect(component.isImporting).toBe(false);
+        expect(component.isImportDone).toBe(true);
         expect(component.importedRegistrations).toEqual([returnedDTOOne]);
         expect(component.notImportedRegistrations).toEqual([returnedDTOTwo]);
         expect(component.allRegistrations).toEqual([returnedDTOOne, returnedDTOTwo]);
@@ -301,7 +300,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         // then
         expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
         expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBeFalse();
+        expect(component.isCSVParsing).toBe(false);
         expect(component.registrationsDisplayedInTable[0].campus).toBe('Main Campus');
         expect(component.registrationsDisplayedInTable[0].language).toBe('German');
         expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
@@ -319,9 +318,9 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     });
 
     it('should generate and download CSV when generateCSV is called', () => {
-        const createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(document.createElement('a'));
-        const appendChildSpy = jest.spyOn(document.body, 'appendChild');
-        const removeChildSpy = jest.spyOn(document.body, 'removeChild');
+        const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(document.createElement('a'));
+        const appendChildSpy = vi.spyOn(document.body, 'appendChild');
+        const removeChildSpy = vi.spyOn(document.body, 'removeChild');
 
         component.generateCSV(1);
 
@@ -339,7 +338,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     async function validationTest(data: TutorialGroupRegistrationImport[], translationKey: string, errorAddition?: string) {
         // given
         const translateService = TestBed.inject(TranslateService);
-        const instantSpy = jest.spyOn(translateService, 'instant').mockReturnValue('testError:');
+        const instantSpy = vi.spyOn(translateService, 'instant').mockReturnValue('testError:');
 
         mockParserWithDTOs(data, []);
         // when
@@ -353,7 +352,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     function assertStateAfterValidationError(expectedError: string) {
         expect(component.registrationsDisplayedInTable).toEqual([]);
         expect(component.validationErrors).toEqual([expectedError]);
-        expect(component.isCSVParsing).toBeFalse();
+        expect(component.isCSVParsing).toBe(false);
         expect(component.selectedFile).toBeUndefined();
     }
 

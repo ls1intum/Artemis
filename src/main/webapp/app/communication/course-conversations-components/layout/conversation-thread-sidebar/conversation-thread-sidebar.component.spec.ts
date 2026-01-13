@@ -10,7 +10,7 @@ import { post } from 'test/helpers/sample/metis-sample-data';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentRef, runInInjectionContext, signal } from '@angular/core';
+import { ComponentRef, signal } from '@angular/core';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 
 describe('ConversationThreadSidebarComponent', () => {
@@ -20,9 +20,9 @@ describe('ConversationThreadSidebarComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
                 ConversationThreadSidebarComponent,
+                FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(PostComponent),
                 MockComponent(MessageReplyInlineInputComponent),
@@ -75,9 +75,7 @@ describe('ConversationThreadSidebarComponent', () => {
     it('should toggle isExpanded and call close() on expandTooltip signal when toggleExpand() is called', () => {
         const closeMock = jest.fn();
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
-        });
+        component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
 
         expect(component.isExpanded).toBeFalse();
 

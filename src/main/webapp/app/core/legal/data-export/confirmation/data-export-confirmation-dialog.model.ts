@@ -1,4 +1,4 @@
-import { EventEmitter } from '@angular/core';
+import { OutputEmitterRef } from '@angular/core';
 import { Observable } from 'rxjs';
 
 /**
@@ -7,15 +7,15 @@ import { Observable } from 'rxjs';
 export class DataExportConfirmationDialogData {
     // error message emitted from the component delete method, that will be handled by the dialog
     // when delete method succeeded empty message is sent
-    dialogError: Observable<string>;
+    dialogError?: Observable<string>;
 
-    userLogin: string;
+    userLogin?: string;
 
     // true if it is the dialog for an admin with additional options
     adminDialog: boolean;
     // output event passed to the confirmation dialog
-    dataExportRequest: EventEmitter<void>;
+    dataExportRequest: OutputEmitterRef<void>;
 
     //output event passed to the confirmation dialog, emitting the entered login
-    dataExportRequestForAnotherUser: EventEmitter<string>;
+    dataExportRequestForAnotherUser: OutputEmitterRef<string>;
 }

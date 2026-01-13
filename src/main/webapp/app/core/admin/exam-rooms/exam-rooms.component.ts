@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, Signal, WritableSignal, computed, inject, model, signal } from '@angular/core';
 import {
     ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
@@ -19,21 +19,26 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
+/**
+ * Admin component for managing exam rooms.
+ * Allows uploading room data via ZIP files and viewing/deleting exam room configurations.
+ */
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
 })
 export class ExamRoomsComponent implements OnInit {
     private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
 
     protected readonly faSort = faSort;
 
-    private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
-    private sortService: SortService = inject(SortService);
-    private translateService: TranslateService = inject(TranslateService);
-    private alertService: AlertService = inject(AlertService);
+    private readonly examRoomsService = inject(ExamRoomsService);
+    private readonly sortService = inject(SortService);
+    private readonly translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
 
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
@@ -90,8 +95,8 @@ export class ExamRoomsComponent implements OnInit {
     examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Fields for working with SortDirective
-    sortAttribute: 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'name';
-    ascending: boolean = true;
+    readonly sortAttribute = model<'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity'>('name');
+    readonly ascending = model(true);
 
     ngOnInit() {
         this.loadExamRoomOverview();
@@ -195,7 +200,7 @@ export class ExamRoomsComponent implements OnInit {
      */
     sortRows(): void {
         if (!this.hasExamRoomData()) return;
-        this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute, this.ascending);
+        this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute(), this.ascending());
     }
 
     private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {

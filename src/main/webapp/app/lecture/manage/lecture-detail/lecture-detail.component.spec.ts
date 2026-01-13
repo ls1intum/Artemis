@@ -1,26 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/manage/lecture-detail/lecture-detail.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
 const mockLecture = {
     title: 'Test Lecture',
@@ -35,20 +31,19 @@ const mockLecture = {
 } as Lecture;
 
 describe('LectureDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LectureDetailComponent;
     let fixture: ComponentFixture<LectureDetailComponent>;
     let mockActivatedRoute: any;
-    let lectureService: LectureService;
-    let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
 
     beforeEach(async () => {
         mockActivatedRoute = {
-            data: of({ lecture: new Lecture() }), // Mock the ActivatedRoute data observable
+            data: of({ lecture: new Lecture() }),
         };
 
         await TestBed.configureTestingModule({
-            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent],
+            imports: [LectureDetailComponent, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -60,17 +55,18 @@ describe('LectureDetailComponent', () => {
         })
             .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(LectureDetailComponent);
         component = fixture.componentInstance;
-        lectureService = TestBed.inject(LectureService);
-        fixture.detectChanges();
+        await fixture.whenStable();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize lecture when ngOnInit is called', () => {
-        mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
+        mockActivatedRoute.data = of({ lecture: mockLecture });
 
         component.ngOnInit();
 
@@ -96,37 +92,5 @@ describe('LectureDetailComponent', () => {
                 expect(detail).toBeTruthy();
             }
         }
-    });
-    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
-        component.lecture = mockLecture;
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        component.ingestLectureInPyris();
-        expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
-        expect(ingestSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should log error when error occurs', () => {
-        component.lecture = mockLecture;
-        jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
-        component.ingestLectureInPyris();
-    });
-    it('should set lectureIngestionEnabled based on service response', () => {
-        component.lecture = mockLecture;
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
-        mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
-        component.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
-        expect(component.lectureIngestionEnabled).toBeTrue();
     });
 });

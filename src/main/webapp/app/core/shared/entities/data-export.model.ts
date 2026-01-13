@@ -21,3 +21,17 @@ export enum DataExportState {
     DOWNLOADED_DELETED = 'DOWNLOADED_DELETED',
     FAILED = 'FAILED',
 }
+
+/**
+ * DTO for admin data export overview
+ */
+export interface AdminDataExport {
+    id: number;
+    userId?: number;
+    userLogin?: string;
+    userName?: string;
+    dataExportState: DataExportState;
+    createdDate?: dayjs.Dayjs;
+    creationFinishedDate?: dayjs.Dayjs;
+    downloadable: boolean;
+}

@@ -13,8 +13,9 @@
         </div>
         @if (feedbackItem.text) {
             <jhi-feedback-collapse class="d-block mt-3" [feedback]="feedbackItem" />
+        } @else {
+            <p jhiTranslate="artemisApp.result.noFeedback"></p>
         }
-        <p *ngElse jhiTranslate="artemisApp.result.noFeedback"></p>
     </div>
 }
 @if (feedbackItemGroup) {

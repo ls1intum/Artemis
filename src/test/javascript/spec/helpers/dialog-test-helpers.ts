@@ -7,7 +7,7 @@ type RequiredInputs = {
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: RequiredInputs) {
     component.initialize();
-    fixture.detectChanges();
+    fixture.changeDetectorRef.detectChanges();
     expect(component.isInitialized).toBeFalse();
 
     // expect console.err not to be called
@@ -17,6 +17,6 @@ export function initializeDialog(component: AbstractDialogComponent, fixture: Co
     });
 
     component.initialize();
-    fixture.detectChanges();
+    fixture.changeDetectorRef.detectChanges();
     expect(component.isInitialized).toBeTrue();
 }

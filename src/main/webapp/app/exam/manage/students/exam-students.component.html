@@ -187,7 +187,7 @@
                         }
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
+                <ngx-datatable-column prop="" [minWidth]="50" [width]="50">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.seat"></span>
@@ -205,6 +205,15 @@
                                 <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ value.plannedSeat }}</span>
                             </div>
                         }
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="" [minWidth]="130" [width]="130">
+                    <ng-template ngx-datatable-header-template />
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <button class="btn btn-secondary ms-auto" (click)="reseatingDialog.openDialog(value)">
+                            <fa-icon [icon]="faChair" />
+                            <span jhiTranslate="artemisApp.exam.examUsers.changeLocationButton"></span>
+                        </button>
                     </ng-template>
                 </ngx-datatable-column>
                 @if (hasExamEnded) {
@@ -274,4 +283,10 @@
     </jhi-data-table>
 </div>
 
-<jhi-students-room-distribution-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers()" #studentsRoomDistributionDialog />
+<jhi-students-room-distribution-dialog
+    [courseId]="courseId"
+    [exam]="exam"
+    (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()"
+    #studentsRoomDistributionDialog
+/>
+<jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />

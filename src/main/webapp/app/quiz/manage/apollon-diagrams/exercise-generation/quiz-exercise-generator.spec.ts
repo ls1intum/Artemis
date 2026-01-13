@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -23,6 +25,8 @@ import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/clas
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
 describe('QuizExercise Generator', () => {
+    setupTestBed({ zoneless: true });
+
     let quizExerciseService: QuizExerciseService;
 
     const course: Course = { id: 123 } as Course;
@@ -31,9 +35,8 @@ describe('QuizExercise Generator', () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -43,19 +46,17 @@ describe('QuizExercise Generator', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         }).compileComponents();
+
+        configureServices();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
-        // TODO: we should mock this differently without require
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        configureServices();
-        jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
-        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
+        vi.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
@@ -115,7 +116,7 @@ describe('QuizExercise Generator', () => {
     });
 
     it('generateDragAndDropItemForElement', async () => {
-        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
 
         const umlModel: UMLModel = testClassDiagram as unknown as UMLModel;
 
@@ -142,6 +143,92 @@ describe('QuizExercise Generator', () => {
         expect(dragAndDropMapping.dropLocation?.width).toBe(114.5);
         expect(dragAndDropMapping.dropLocation?.height).toBe(30);
 
-        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
+    });
+
+    it('computeDropLocation at origin', () => {
+        const elementLocation = { x: 0, y: 0, width: 100, height: 100 };
+        const totalSize = { width: 200, height: 200 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(0);
+        expect(dropLocation.posY).toBe(0);
+        expect(dropLocation.width).toBe(100);
+        expect(dropLocation.height).toBe(100);
+    });
+
+    it('computeDropLocation for small element', () => {
+        const elementLocation = { x: 5, y: 5, width: 10, height: 10 };
+        const totalSize = { width: 1000, height: 1000 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(1);
+        expect(dropLocation.posY).toBe(1);
+        expect(dropLocation.width).toBe(2);
+        expect(dropLocation.height).toBe(2);
+    });
+
+    it('computeDropLocation for element filling entire canvas', () => {
+        const elementLocation = { x: 0, y: 0, width: 500, height: 400 };
+        const totalSize = { width: 500, height: 400 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(0);
+        expect(dropLocation.posY).toBe(0);
+        expect(dropLocation.width).toBe(200);
+        expect(dropLocation.height).toBe(200);
+    });
+
+    it('computeDropLocation rounds to two decimal places', () => {
+        const elementLocation = { x: 33, y: 17, width: 77, height: 43 };
+        const totalSize = { width: 100, height: 100 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        // Check that values are rounded appropriately
+        expect(dropLocation.posX).toBe(66);
+        expect(dropLocation.posY).toBe(34);
+        expect(dropLocation.width).toBe(154);
+        expect(dropLocation.height).toBe(86);
+    });
+
+    it('generateDragAndDropExercise handles empty interactive elements', async () => {
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
+
+        // Create a model with no interactive elements
+        const emptyModel: UMLModel = {
+            ...testClassDiagram,
+            interactive: {
+                elements: {},
+                relationships: {},
+            },
+        } as unknown as UMLModel;
+
+        const exerciseTitle = 'EmptyInteractiveTest';
+        const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, emptyModel);
+
+        expect(generatedQuestion).toBeTruthy();
+        expect(generatedQuestion.title).toEqual(exerciseTitle);
+        expect(generatedQuestion.dragItems).toHaveLength(0);
+        expect(generatedQuestion.dropLocations).toHaveLength(0);
+        expect(generatedQuestion.correctMappings).toHaveLength(0);
+    });
+
+    it('generateDragAndDropExercise sets default text and scoring', async () => {
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
+
+        const classDiagram: UMLModel = testClassDiagram as unknown as UMLModel;
+        const exerciseTitle = 'DefaultValuesTest';
+
+        const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram);
+
+        expect(generatedQuestion.text).toBe('Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.');
+        expect(generatedQuestion.points).toBe(1);
+        expect(generatedQuestion.backgroundFilePath).toBe('diagram-background.png');
+        expect(generatedQuestion.importedFiles).toBeDefined();
+        expect(generatedQuestion.importedFiles!.has('diagram-background.png')).toBe(true);
     });
 });

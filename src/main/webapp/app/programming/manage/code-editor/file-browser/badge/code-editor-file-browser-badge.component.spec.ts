@@ -35,13 +35,13 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
 
     it('should not have an icon for an unknown badge type', () => {
         component.badge = new FileBadge('unknown' as FileBadgeType, 3);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.icon).toBeUndefined();
     });
 
     it('should not have a tooltip for an unknown badge type', () => {
         component.badge = new FileBadge('unknown' as FileBadgeType, 3);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.tooltip).toBeUndefined();
     });
 });

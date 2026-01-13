@@ -51,7 +51,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         component.exercise = exercise;
         component.participation = {} as Participation;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.correctionRoundIndices).toEqual(expectedIndices);
     });
@@ -61,7 +61,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             component.exercise = { type: ExerciseType.QUIZ } as Exercise;
             component.participation = {} as Participation;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.newManualResultAllowed).toBeFalse();
         });
@@ -70,7 +70,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             component.exercise = programmingExercise;
             component.participation = { testRun: true } as Participation;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.newManualResultAllowed).toBeFalse();
         });
@@ -80,7 +80,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             component.exercise = programmingExercise;
             component.participation = { testRun: true } as Participation;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.newManualResultAllowed).toBeTrue();
         });
@@ -89,7 +89,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             component.exercise = programmingExercise;
             component.participation = { testRun: false } as Participation;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.newManualResultAllowed).toBeTrue();
         });
@@ -102,7 +102,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             component.participation = { submissions: [submission] };
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const correctionRound = component.getCorrectionRoundForAssessmentLink(0);
 
             expect(correctionRound).toBe(1);
@@ -113,7 +113,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             const submission = { id: 1, results: [{ id: 1, hasComplaint: false }] };
             component.participation = { submissions: [submission] };
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const correctionRound = component.getCorrectionRoundForAssessmentLink(0);
 
             expect(correctionRound).toBe(0);

@@ -242,9 +242,8 @@ export class ProgrammingExerciseService {
                         this.reconnectSubmissionAndResult(templateSubmissions);
                         const solutionSubmissions = res.body.solutionParticipation?.submissions;
                         this.reconnectSubmissionAndResult(solutionSubmissions);
-
-                        this.processProgrammingExerciseEntityResponse(res);
                     }
+                    this.processProgrammingExerciseEntityResponse(res);
                     return res;
                 }),
             );
@@ -357,13 +356,13 @@ export class ProgrammingExerciseService {
      * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
      * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
             params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
         }
-        return this.http.delete(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
     }
 
     /**

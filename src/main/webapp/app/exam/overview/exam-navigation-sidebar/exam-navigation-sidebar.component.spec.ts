@@ -212,18 +212,18 @@ describe('ExamNavigationSidebarComponent', () => {
 
     it('should toggle sidebar based on isCollapsed', () => {
         comp.isCollapsed = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.collapsed')).not.toBeNull();
 
         comp.isCollapsed = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.collapsed')).toBeNull();
     });
 
     it('should call toggleCollapseState when clicking on collapse', () => {
         comp.isCollapsed = false;
         const toggleCollapseStateStub = jest.spyOn(comp, 'toggleCollapseState');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const actionItem = fixture.nativeElement.querySelector('#test-collapse');
         actionItem.click();
         expect(toggleCollapseStateStub).toHaveBeenCalled();
@@ -236,7 +236,7 @@ describe('ExamNavigationSidebarComponent', () => {
             ctrlKey: true,
         });
         const toggleCollapseStateSpy = jest.spyOn(comp, 'toggleCollapseState');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         window.dispatchEvent(event);
         expect(toggleCollapseStateSpy).toHaveBeenCalled();
     });
@@ -247,7 +247,7 @@ describe('ExamNavigationSidebarComponent', () => {
             ctrlKey: true,
         });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         window.dispatchEvent(event);
         expect(preventDefaultSpy).toHaveBeenCalled();
     });

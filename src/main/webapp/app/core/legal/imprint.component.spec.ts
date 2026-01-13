@@ -20,7 +20,7 @@ describe('ImprintComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
+            imports: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 SessionStorageService,
@@ -39,7 +39,7 @@ describe('ImprintComponent', () => {
         jest.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
         const imprintServiceSpy = jest.spyOn(legalDocumentService, 'getImprint');
         component.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(imprintServiceSpy).toHaveBeenCalledOnce();
         expect(imprintServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });

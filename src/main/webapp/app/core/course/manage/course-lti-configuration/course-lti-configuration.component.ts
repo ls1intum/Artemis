@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
@@ -47,16 +47,16 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     protected readonly Object = Object;
 
-    course: Course;
-    onlineCourseConfiguration: OnlineCourseConfiguration;
-    exercises: Exercise[];
-    lectures: Lecture[];
+    course = signal<Course | undefined>(undefined);
+    onlineCourseConfiguration = signal<OnlineCourseConfiguration | undefined>(undefined);
+    exercises = signal<Exercise[]>([]);
+    lectures = signal<Lecture[]>([]);
 
-    activeTab = 1;
+    activeTab = signal(1);
 
-    predicate = 'type';
-    reverse = false;
-    showAdvancedSettings = false;
+    predicate = signal('type');
+    reverse = signal(false);
+    showAdvancedSettings = signal(false);
 
     // Icons
     faSort = faSort;
@@ -69,14 +69,14 @@ export class CourseLtiConfigurationComponent implements OnInit {
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {
             if (course) {
-                this.course = course;
-                this.onlineCourseConfiguration = course.onlineCourseConfiguration;
+                this.course.set(course);
+                this.onlineCourseConfiguration.set(course.onlineCourseConfiguration);
                 this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id).subscribe((findWithExercisesAndLecturesResult) => {
                     if (findWithExercisesAndLecturesResult?.body?.exercises) {
-                        this.exercises = findWithExercisesAndLecturesResult.body.exercises;
+                        this.exercises.set(findWithExercisesAndLecturesResult.body.exercises);
                     }
                     if (findWithExercisesAndLecturesResult?.body?.lectures) {
-                        this.lectures = findWithExercisesAndLecturesResult.body.lectures;
+                        this.lectures.set(findWithExercisesAndLecturesResult.body.lectures);
                     }
                 });
             }
@@ -87,25 +87,27 @@ export class CourseLtiConfigurationComponent implements OnInit {
      * Gets the LTI 1.3 launch url for an exercise
      */
     getExerciseLti13LaunchUrl(exercise: Exercise): string {
-        return `${location.origin}/courses/${this.course.id}/exercises/${exercise.id}`; // Needs to match url in Lti13Service
+        return `${location.origin}/courses/${this.course()?.id}/exercises/${exercise.id}`; // Needs to match url in Lti13Service
     }
 
     getLectureLti13LaunchUrl(lecture: Lecture): string {
-        return `${location.origin}/courses/${this.course.id}/lectures/${lecture.id}`;
+        return `${location.origin}/courses/${this.course()?.id}/lectures/${lecture.id}`;
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+        const sortedExercises = [...this.exercises()];
+        this.sortService.sortByProperty(sortedExercises, this.predicate(), this.reverse());
+        this.exercises.set(sortedExercises);
     }
 
     /**
      * Returns true if any required LTI 1.3 fields are missing
      */
     missingLti13ConfigurationField(): boolean {
-        return !this.onlineCourseConfiguration.ltiPlatformConfiguration;
+        return !this.onlineCourseConfiguration()?.ltiPlatformConfiguration;
     }
 
     toggleAdvancedSettings() {
-        this.showAdvancedSettings = !this.showAdvancedSettings;
+        this.showAdvancedSettings.update((value) => !value);
     }
 }

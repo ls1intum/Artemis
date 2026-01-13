@@ -7,30 +7,26 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.ZonedDateTime;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
@@ -38,7 +34,6 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
-import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
@@ -63,8 +58,6 @@ import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
-import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -80,7 +73,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -109,10 +101,6 @@ public class GitService extends AbstractGitService {
     private String artemisGitEmail;
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
-
-    private static final String ANONYMIZED_STUDENT_NAME = "student";
-
-    private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -523,19 +511,26 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Change the remote repository uri to the currently used authentication mechanism (either ssh or https)
+     * Updates the remote URL of a repository to match the currently configured authentication mechanism.
+     * <p>
+     * This method ensures that the "origin" remote URL is synchronized with the repository's
+     * configured remote URI. This is necessary because the authentication mechanism (SSH vs HTTPS)
+     * may change during runtime, and the local repository configuration needs to reflect this change
+     * for subsequent git operations (fetch, pull, push) to work correctly.
+     * </p>
      *
-     * @param repo the git repository for which the remote url should be change
+     * @param repo the git repository for which the remote URL should be updated; if null or without
+     *                 a remote URI configured, the method returns without making changes
      */
-    private void setRemoteUrl(Repository repo) {
+    public void setRemoteUrl(Repository repo) {
         if (repo == null || repo.getRemoteRepositoryUri() == null) {
             log.warn("Cannot set remoteUrl because it is null!");
             return;
         }
-        // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
             var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
             var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUri());
+            // Only update if the URL has actually changed (e.g., switched from HTTPS to SSH or vice versa)
             if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
                 log.info("Replace existing remote url {} with new remote url {}", existingRemoteUrl, newRemoteUrl);
                 repo.getConfig().setString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url", newRemoteUrl);
@@ -568,10 +563,9 @@ public class GitService extends AbstractGitService {
      * Pulls from remote repository.
      *
      * @param repo Local Repository Object.
-     * @return The PullResult which contains FetchResult and MergeResult.
      * @throws GitAPIException if the pull failed.
      */
-    public PullResult pull(Repository repo) throws GitAPIException {
+    private void pull(Repository repo) throws GitAPIException {
         try (Git git = new Git(repo)) {
             log.info("Pull {}", repo.getLocalPath());
             setRemoteUrl(repo);
@@ -580,7 +574,7 @@ public class GitService extends AbstractGitService {
                 throw new WrongRepositoryStateException("Working tree contains uncommited changes that conflict with remote HEAD.");
             }
 
-            return pullCommand(git).call();
+            pullCommand(git).call();
         }
     }
 
@@ -627,7 +621,7 @@ public class GitService extends AbstractGitService {
      * @param repo Local Repository Object.
      * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD
      */
-    public String getOriginHead(Repository repo) throws GitAPIException {
+    private String getOriginHead(Repository repo) throws GitAPIException {
         Ref originHeadRef;
         try (Git git = new Git(repo)) {
             originHeadRef = lsRemoteCommand(git).callAsMap().get(Constants.HEAD);
@@ -665,262 +659,32 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Switch back to the HEAD commit of the default branch.
+     * Removes all remote configurations and their associated tracking branches from a Git repository.
+     * <p>
+     * This method performs a complete cleanup of remote-related data by:
+     * <ol>
+     * <li>Removing each remote configuration (e.g., "origin") from the repository</li>
+     * <li>Deleting all remote tracking branches (refs under "refs/remotes/") for each remote</li>
+     * </ol>
+     * This is particularly useful when anonymizing repositories for export, as remote URLs
+     * may contain sensitive information about the repository's origin or student identity.
+     * </p>
+     * <p>
+     * Note: JGit's {@code remoteRemove()} does not automatically clean up remote tracking branches,
+     * so this method manually deletes them to ensure complete removal.
+     * </p>
      *
-     * @param repository the repository for which we want to switch to the HEAD commit of the default branch
-     * @throws GitAPIException if this operation fails
+     * @param repository the JGit Git instance wrapping the repository to clean
+     * @throws IOException     if an I/O error occurs when accessing the ref database
+     * @throws GitAPIException if a JGit operation fails while listing or removing remotes
      */
-    public void switchBackToDefaultBranchHead(Repository repository) throws GitAPIException {
-        try (Git git = new Git(repository)) {
-            git.checkout().setName(defaultBranch).call();
-        }
-    }
-
-    /**
-     * Stager Task #3: Filter late submissions Filter all commits after exercise due date
-     *
-     * @param repository                Local Repository Object.
-     * @param relevantCommitHash        The relevant commit hash for the submission or null if not present
-     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
-     */
-    public void filterLateSubmissions(Repository repository, @Nullable String relevantCommitHash, ZonedDateTime filterLateSubmissionsDate) {
-        if (filterLateSubmissionsDate == null) {
-            // No date set in client and exercise has no due date
-            return;
-        }
-
-        try (Git git = new Git(repository)) {
-            String commitHash;
-
-            if (relevantCommitHash != null) {
-                log.debug("Last valid commit hash is {}", relevantCommitHash);
-                commitHash = relevantCommitHash;
-            }
-            else {
-                log.debug("Last valid submission is not present for participation");
-                // Get last commit before due date
-                Instant since = Instant.EPOCH;
-                Instant until = filterLateSubmissionsDate.toInstant();
-                RevFilter between = CommitTimeRevFilter.between(since, until);
-                Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-                RevCommit latestCommitBeforeDueDate = commits.iterator().next();
-                commitHash = latestCommitBeforeDueDate.getId().getName();
-            }
-            log.debug("Last commit hash is {}", commitHash);
-
-            reset(repository, commitHash);
-        }
-        catch (GitAPIException ex) {
-            log.warn("Cannot filter the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
-        }
-        finally {
-            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
-        }
-    }
-
-    /**
-     * Stager Task #6: Combine all commits after last instructor commit
-     *
-     * @param repository             Local Repository Object.
-     * @param overwriteDefaultBranch If false keeps the default branch and creates squash commit in separate branch, if true squashes the default branch
-     * @param latestSetupCommit      The latest setup commit in the student repository
-     */
-    public void combineAllStudentCommits(Repository repository, boolean overwriteDefaultBranch, ObjectId latestSetupCommit) {
-        try (Git studentGit = new Git(repository)) {
-            setRemoteUrl(repository);
-
-            if (latestSetupCommit == null) {
-                // Template Repository is somehow empty. Should never happen
-                log.warn("Cannot find the last template commit in the student repo {}", repository.getLocalPath());
-                // Do not throw when this does not work, it is not critical
-                return;
-            }
-
-            // checkout own local "diff" branch to keep main as is
-            if (!overwriteDefaultBranch) {
-                studentGit.checkout().setCreateBranch(true).setName("diff").call();
-            }
-
-            studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestSetupCommit.getName()).call();
-            studentGit.add().addFilepattern(".").call();
-            var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
-            var name = optionalStudent.map(User::getName).orElse(artemisGitName);
-            var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
-            GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
-        }
-        catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
-            log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
-            // Do not throw when this does not work, it is not critical
-        }
-        finally {
-            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
-        }
-    }
-
-    /**
-     * Removes all author information from the commits on the currently active branch.
-     * Also removes all remotes and FETCH_HEAD since they contain data about the student.
-     * Also deletes the .git/logs folder to prevent restoring commits from reflogs
-     *
-     * @param repository        Local Repository Object.
-     * @param latestSetupCommit The latest setup commit in the student repository
-     */
-    public void anonymizeStudentCommits(Repository repository, ObjectId latestSetupCommit) {
-        try (Git studentGit = new Git(repository)) {
-            setRemoteUrl(repository);
-            String copyBranchName = "copy";
-            String headName = "HEAD";
-
-            if (latestSetupCommit == null) {
-                // Template Repository is somehow empty. Should never happen
-                log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
-                throw new GitException("Template repository has no commits; cannot anonymize student commits");
-            }
-
-            // Create copy branch
-            Ref copyBranch = studentGit.branchCreate().setName(copyBranchName).call();
-            // Reset main branch back to template
-            studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestSetupCommit)).call();
-
-            // Get list of all student commits, that is all commits up to the last template commit
-            Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
-            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestSetupCommit))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            // Sort them oldest to newest
-            Collections.reverse(commitList);
-            // Cherry-Pick all commits back into the main branch and immediately commit amend anonymized author information
-            for (RevCommit commit : commitList) {
-                ObjectId head = studentGit.getRepository().resolve(headName);
-                studentGit.cherryPick().include(commit).call();
-                // Only commit amend if head changed; cherry-picking empty commits does nothing
-                if (!head.equals(studentGit.getRepository().resolve(headName))) {
-                    PersonIdent authorIdent = commit.getAuthorIdent();
-                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhenAsInstant(), authorIdent.getZoneId());
-                    GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
-                }
-            }
-            // Delete copy branch
-            studentGit.branchDelete().setBranchNames(copyBranchName).setForce(true).call();
-
-            // Delete all remotes
-            this.removeRemotes(studentGit);
-
-            // Delete .git/logs/ folder to delete git reflogs
-            Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
-            FileUtils.deleteDirectory(logsPath.toFile());
-
-            // Delete FETCH_HEAD containing the url of the last fetch
-            Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
-            Files.deleteIfExists(fetchHeadPath);
-        }
-        catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
-            log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
-            throw new GitException("Failed to anonymize repository: " + ex.getMessage(), ex);
-        }
-        finally {
-            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
-        }
-    }
-
-    /**
-     * Verifies that the repository is anonymized according to expectations.
-     * - All remotes removed and no remote tracking refs exist
-     * - .git/logs directory removed and FETCH_HEAD deleted
-     * - All commits after the template's last commit use anonymized author/committer
-     * - Optionally check that at most one student commit exists after the template (when combinedExpected is true)
-     *
-     * @param repository        the local repository
-     * @param combinedExpected  whether to enforce that there is at most one student commit after the template commit
-     * @param latestSetupCommit The latest setup commit in the student repository
-     * @throws de.tum.cit.aet.artemis.core.exception.GitException if verification fails
-     */
-    public void verifyAnonymizationOrThrow(Repository repository, boolean combinedExpected, ObjectId latestSetupCommit) {
-        try (Git git = new Git(repository)) {
-            // Check remotes removed
-            if (!git.remoteList().call().isEmpty()) {
-                throw new GitException("Anonymization verification failed: repository still has remotes configured");
-            }
-            // Also ensure no remote tracking refs remain
-            try {
-                for (Ref ref : git.getRepository().getRefDatabase().getRefs()) {
-                    if (ref.getName().startsWith("refs/remotes/")) {
-                        throw new GitException("Anonymization verification failed: remote tracking refs remain");
-                    }
-                }
-            }
-            catch (java.io.IOException ioEx) {
-                throw new GitException("Failed to access refs during verification: " + ioEx.getMessage(), ioEx);
-            }
-
-            // Filesystem checks for logs and FETCH_HEAD
-            Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
-            if (Files.exists(logsPath)) {
-                throw new GitException("Anonymization verification failed: .git/logs still present");
-            }
-            Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
-            if (Files.exists(fetchHeadPath)) {
-                throw new GitException("Anonymization verification failed: FETCH_HEAD still present");
-            }
-
-            // Determine last template commit
-            if (latestSetupCommit == null) {
-                throw new GitException("Cannot determine template commit for verification");
-            }
-
-            verifyCommitAnonymizationFromHead(git, latestSetupCommit, combinedExpected);
-        }
-        catch (GitAPIException | JGitInternalException e) {
-            throw new GitException("Failed during anonymization verification: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Verifies commit anonymization on the history reachable from HEAD down to (excluding) the template commit.
-     */
-    private void verifyCommitAnonymizationFromHead(Git git, ObjectId latestSetupCommit, boolean combinedExpected) throws org.eclipse.jgit.api.errors.GitAPIException, GitException {
-        Iterable<RevCommit> commits = git.log().call();
-        int studentCommitCount = 0;
-        boolean foundTemplate = false;
-        for (RevCommit commit : commits) {
-            if (commit.getId().equals(latestSetupCommit)) {
-                foundTemplate = true;
-                break;
-            }
-            PersonIdent author = commit.getAuthorIdent();
-            PersonIdent committer = commit.getCommitterIdent();
-            if (!(ANONYMIZED_STUDENT_NAME.equals(author.getName()) && ANONYMIZED_STUDENT_EMAIL.equals(author.getEmailAddress())
-                    && ANONYMIZED_STUDENT_NAME.equals(committer.getName()) && ANONYMIZED_STUDENT_EMAIL.equals(committer.getEmailAddress()))) {
-                throw new GitException("Anonymization verification failed: found non-anonymized commit");
-            }
-            studentCommitCount++;
-            if (combinedExpected && studentCommitCount > 1) {
-                throw new GitException("Anonymization verification failed: commits not combined into a single commit");
-            }
-        }
-        if (!foundTemplate) {
-            throw new GitException("Anonymization verification failed: template commit not reachable from HEAD");
-        }
-    }
-
-    /**
-     * Removes all remote configurations from the given Git repository.
-     * This includes both the remote configurations and the remote tracking branches.
-     *
-     * @param repository The Git repository from which to remove the remotes.
-     * @throws IOException     If an I/O error occurs when accessing the repository.
-     * @throws GitAPIException If an error occurs in the JGit library while removing the remotes.
-     */
-    private void removeRemotes(Git repository) throws IOException, GitAPIException {
-        // Delete all remotes
+    public void removeRemotes(Git repository) throws IOException, GitAPIException {
         for (RemoteConfig remote : repository.remoteList().call()) {
+            // Remove the remote configuration (e.g., [remote "origin"] section in .git/config)
             repository.remoteRemove().setRemoteName(remote.getName()).call();
-            // Manually delete remote tracking branches since JGit apparently fails to do so
+
+            // JGit does not automatically delete remote tracking branches when removing a remote,
+            // so we must manually find and delete all refs under refs/remotes/<remote-name>/
             for (Ref ref : repository.getRepository().getRefDatabase().getRefs()) {
                 if (ref.getName().startsWith("refs/remotes/" + remote.getName())) {
                     RefUpdate update = repository.getRepository().updateRef(ref.getName());
@@ -932,9 +696,19 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Removes all remotes from a given repository.
+     * Convenience method that removes all remotes from a repository and handles resource cleanup.
+     * <p>
+     * This is a wrapper around {@link #removeRemotes(Git)} that:
+     * <ul>
+     * <li>Creates a Git instance from the repository</li>
+     * <li>Removes all remotes and their tracking branches</li>
+     * <li>Handles exceptions gracefully (logs warnings instead of throwing)</li>
+     * <li>Ensures the repository is properly closed afterward</li>
+     * </ul>
+     * </p>
      *
-     * @param repository The repository whose remotes to delete.
+     * @param repository the repository from which to remove all remotes
+     * @see #removeRemotes(Git)
      */
     public void removeRemotesFromRepository(Repository repository) {
         try (Git gitRepo = new Git(repository)) {
@@ -1252,21 +1026,6 @@ public class GitService extends AbstractGitService {
         return inserter.insert(treeFormatter);
     }
 
-    private static class FileAndDirectoryFilter implements IOFileFilter {
-
-        private static final String GIT_DIRECTORY_NAME = ".git";
-
-        @Override
-        public boolean accept(java.io.File file) {
-            return !GIT_DIRECTORY_NAME.equals(file.getName());
-        }
-
-        @Override
-        public boolean accept(java.io.File directory, String fileName) {
-            return !GIT_DIRECTORY_NAME.equals(directory.getName());
-        }
-    }
-
     /**
      * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
@@ -1278,26 +1037,55 @@ public class GitService extends AbstractGitService {
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
     public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
-        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
-
-        while (itr.hasNext()) {
-            File nextFile = new File(itr.next(), repo);
-            Path nextPath = nextFile.toPath();
-
-            if (Files.isSymbolicLink(nextPath)) {
-                log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
-                continue;
-            }
-
-            if (omitBinaries && nextFile.isFile() && isBinaryFile(nextFile.getName())) {
-                log.debug("Omitting binary file: {}", nextFile);
-                continue;
-            }
-
-            files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
+        Path workingTree = repo.getLocalPath();
+        if (workingTree == null) {
+            log.warn("Working tree path of repository {} is not available", repo.getRemoteRepositoryUri());
+            return files;
         }
+        if (!Files.exists(workingTree)) {
+            log.warn("Working tree {} does not exist for repository {}", workingTree, repo.getRemoteRepositoryUri());
+            return files;
+        }
+
+        try {
+            Files.walkFileTree(workingTree, new SimpleFileVisitor<>() {
+
+                @Override
+                public @NonNull FileVisitResult preVisitDirectory(@NonNull Path dir, @NonNull BasicFileAttributes attrs) {
+                    if (dir.equals(workingTree)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (".git".equals(dir.getFileName().toString())) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    if (Files.isSymbolicLink(dir)) {
+                        log.warn("Found a symlink {} in the git repository {}. Do not allow access!", dir, repo);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    files.put(new File(dir.toFile(), repo), FileType.FOLDER);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public @NonNull FileVisitResult visitFile(@NonNull Path path, @NonNull BasicFileAttributes attrs) {
+                    if (Files.isSymbolicLink(path)) {
+                        log.warn("Found a symlink {} in the git repository {}. Do not allow access!", path, repo);
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (omitBinaries && isBinaryFile(path.getFileName().toString())) {
+                        log.debug("Omitting binary file: {}", path);
+                        return FileVisitResult.CONTINUE;
+                    }
+                    files.put(new File(path.toFile(), repo), FileType.FILE);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        catch (IOException exception) {
+            log.error("Failed to list files for repository {}: {}", repo.getRemoteRepositoryUri(), exception.getMessage());
+        }
+
         return files;
     }
 
@@ -1313,15 +1101,7 @@ public class GitService extends AbstractGitService {
      */
     @NonNull
     public Collection<File> getFiles(Repository repo) {
-        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
-        Collection<File> files = new ArrayList<>();
-
-        while (itr.hasNext()) {
-            files.add(new File(itr.next(), repo));
-        }
-
-        return files;
+        return listFilesAndFolders(repo, false).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
     }
 
     /**
@@ -1355,17 +1135,6 @@ public class GitService extends AbstractGitService {
             Status status = git.status().call();
             return status.isClean();
         }
-    }
-
-    /**
-     * Deletes a local repository folder.
-     *
-     * @param repository Local Repository Object.
-     * @throws IOException if the deletion of the repository failed.
-     */
-    @Override
-    public void deleteLocalRepository(@NonNull Repository repository) throws IOException {
-        super.deleteLocalRepository(repository);
     }
 
     /**
@@ -1413,7 +1182,7 @@ public class GitService extends AbstractGitService {
      * @param repoUri URL of the remote repository.
      * @return True if repo exists on disk
      */
-    public boolean checkedOutRepositoryAlreadyExists(LocalVCRepositoryUri repoUri) {
+    private boolean checkedOutRepositoryAlreadyExists(LocalVCRepositoryUri repoUri) {
         Path localCheckedOutRepoPath = getDefaultLocalCheckOutPathOfRepo(repoUri);
         return Files.exists(localCheckedOutRepoPath);
     }
