@@ -147,13 +147,13 @@
 }
 
 .monaco-review-comment-thread-tag--resolved {
-    background-color: rgba(25, 135, 84, 0.15);
-    color: var(--success);
+    background-color: var(--artemis-alert-success-background);
+    color: var(--artemis-alert-success-color);
 }
 
 .monaco-review-comment-thread-tag--outdated {
-    background-color: rgba(108, 117, 125, 0.15);
-    color: var(--secondary-text-color);
+    background-color: var(--artemis-alert-neutral-background);
+    color: var(--artemis-alert-neutral-color);
 }
 
 .monaco-review-comment-thread-meta--truncate {

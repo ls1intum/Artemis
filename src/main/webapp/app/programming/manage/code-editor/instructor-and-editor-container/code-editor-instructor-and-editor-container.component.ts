@@ -507,6 +507,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 return CommentThreadLocationType.AUXILIARY_REPO;
             default:
                 return CommentThreadLocationType.TEMPLATE_REPO;
+        }
+    }
     /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
