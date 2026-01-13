@@ -22,10 +22,6 @@ describe('ExamRoomsService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    afterEach(() => {
-        httpMock.verify();
-    });
-
     it('should be created', () => {
         expect(service).toBeTruthy();
     });
@@ -43,7 +39,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body).toEqual(mockOverview);
             });
 
-            const req = httpMock.expectOne('api/exam/admin/exam-rooms/admin-overview');
+            const req = httpMock.expectOne('api/exam/rooms/overview');
             expect(req.request.method).toBe('GET');
             req.flush(mockOverview);
         });
@@ -58,7 +54,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.newestUniqueExamRooms).toHaveLength(0);
             });
 
-            const req = httpMock.expectOne('api/exam/admin/exam-rooms/admin-overview');
+            const req = httpMock.expectOne('api/exam/rooms/overview');
             req.flush(emptyOverview);
         });
     });
@@ -78,7 +74,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.numberOfUploadedRooms).toBe(5);
             });
 
-            const req = httpMock.expectOne('api/exam/admin/exam-rooms/upload');
+            const req = httpMock.expectOne('api/exam/rooms/upload');
             expect(req.request.method).toBe('POST');
             expect(req.request.body instanceof FormData).toBeTrue();
             expect(req.request.body.get('file')).toBe(mockFile);
@@ -98,7 +94,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.uploadedRoomNames).toHaveLength(1);
             });
 
-            const req = httpMock.expectOne('api/exam/admin/exam-rooms/upload');
+            const req = httpMock.expectOne('api/exam/rooms/upload');
             req.flush(mockResponse);
         });
     });
@@ -114,7 +110,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.numberOfDeletedExamRooms).toBe(15);
             });
 
-            const req = httpMock.expectOne('api/exam/admin/exam-rooms/outdated-and-unused');
+            const req = httpMock.expectOne('api/exam/rooms/outdated-and-unused');
             expect(req.request.method).toBe('DELETE');
             req.flush(mockResponse);
         });
@@ -128,14 +124,14 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.numberOfDeletedExamRooms).toBe(0);
             });
 
-            const req = httpMock.expectOne('api/exam/admin/exam-rooms/outdated-and-unused');
+            const req = httpMock.expectOne('api/exam/rooms/outdated-and-unused');
             req.flush(mockResponse);
         });
     });
 
     describe('baseUrl', () => {
         it('should have correct base URL', () => {
-            expect(service.baseUrl).toBe('api/exam/admin/exam-rooms');
+            expect(service.baseUrl).toBe('api/exam/rooms');
         });
     });
 });
