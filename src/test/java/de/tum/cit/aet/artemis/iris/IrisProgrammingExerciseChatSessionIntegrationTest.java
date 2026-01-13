@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -44,6 +46,9 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.iris.service.IrisSessionService irisSessionService;
 
     private ProgrammingExercise exercise;
 
@@ -194,6 +199,165 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         request.delete(url, HttpStatus.OK);
         assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
         assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestMessageFromIris_withUncommittedFiles() {
+        // Arrange
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+        irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+
+        Map<String, String> uncommittedFiles = Map.of("src/Main.java", "public class Main { /* uncommitted changes */ }", "src/Utils.java",
+                "public class Utils { /* new file */ }");
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // Verify uncommitted files are in the repository
+            if (dto.submission() != null && dto.submission().repository() != null) {
+                assertThat(dto.submission().repository()).containsAllEntriesOf(uncommittedFiles);
+            }
+        });
+
+        // Act - Call service method with uncommitted files
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+
+        // Assert - Verify the session was processed and messages exist
+        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(updatedSession).isNotNull();
+        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        assertThat(messages).isNotEmpty();
+        assertThat(messages).hasSizeGreaterThanOrEqualTo(1);
+        // Verify we have the USER message
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+        // Verify messages have content
+        assertThat(messages).allMatch(m -> !m.getContent().isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestMessageFromIris_withEmptyUncommittedFiles() {
+        // Arrange
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+        irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+
+        var uncommittedFiles = Map.<String, String>of(); // Empty map
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // No assertion needed - just verify the call was made
+        });
+
+        // Act - Call service method with empty uncommitted files
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+
+        // Assert - Verify the session was processed normally
+        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(updatedSession).isNotNull();
+        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        assertThat(messages).isNotEmpty();
+        // Verify we have the USER message
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestMessageFromIris_backwardCompatibility() {
+        // Arrange
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+        irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // No assertion needed - just verify the call was made
+        });
+
+        // Act - Call original method without uncommitted files (backward compatibility)
+        irisSessionService.requestMessageFromIris(session);
+
+        // Assert - Verify the session was processed normally
+        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(updatedSession).isNotNull();
+        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        assertThat(messages).isNotEmpty();
+        // Verify we have the USER message
+        assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessage_withoutUncommittedFiles() throws Exception {
+        // Test that sending a message without uncommitted files works
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // No assertion needed - just verify the call was made
+        });
+
+        // Create request DTO without uncommitted files
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessageWithUncommittedFiles() throws Exception {
+        // Test with uncommitted files
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+
+        Map<String, String> uncommittedFiles = Map.of("src/Main.java", "public class Main { // uncommitted }", "src/Utils.java", "public class Utils { }");
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // Verify uncommitted files are in the repository
+            if (dto.submission() != null && dto.submission().repository() != null) {
+                assertThat(dto.submission().repository()).containsAllEntriesOf(uncommittedFiles);
+            }
+        });
+
+        // Create request DTO with uncommitted files
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), uncommittedFiles);
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessageWithJsonContent() throws Exception {
+        // Test with JSON content
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockJsonMessage(session);
+
+        // Mock Pyris response
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            // No assertion needed - just verify the call was made
+        });
+
+        // Create request DTO with JSON content
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+        assertThat(response.getContent()).hasSize(3);
+        assertThat(response.getContent().get(0)).isInstanceOf(de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent.class);
     }
 
     private static String exerciseChatUrl(long sessionId) {

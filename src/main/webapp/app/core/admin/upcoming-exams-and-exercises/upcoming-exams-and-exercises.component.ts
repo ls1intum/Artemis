@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -19,7 +19,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
     styles: ['.table {table-layout: fixed}'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
