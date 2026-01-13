@@ -176,8 +176,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg)));
 
                 const count = competencies.length;
-                const hasUpdates = competencies.some((comp) => comp.id !== undefined);
-                const hasCreates = competencies.some((comp) => comp.id === undefined);
+                const hasUpdates = message.competencyPreviews!.some((preview) => preview.competencyId !== undefined);
+                const hasCreates = message.competencyPreviews!.some((preview) => preview.competencyId === undefined);
 
                 let successMessage;
                 if (count === 1) {

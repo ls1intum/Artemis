@@ -81,8 +81,10 @@ public class AtlasAgentToolsService {
         }
 
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
-        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(),
-                exercise.getMaxPoints(), exercise.getReleaseDate().toString(), exercise.getDueDate().toString())).toList();
+        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream()
+                .map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getMaxPoints(),
+                        exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : null, exercise.getDueDate() != null ? exercise.getDueDate().toString() : null))
+                .toList();
 
         record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {
         }

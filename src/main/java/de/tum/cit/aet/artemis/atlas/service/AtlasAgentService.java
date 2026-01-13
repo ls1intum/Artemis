@@ -17,7 +17,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -89,9 +88,9 @@ public class AtlasAgentService {
 
     private final AtlasPromptTemplateService templateService;
 
-    private final ObjectProvider<ToolCallbackProvider> mainAgentToolCallbackProvider;
+    private final ToolCallbackProvider mainAgentToolCallbackProvider;
 
-    private final ObjectProvider<ToolCallbackProvider> competencyExpertToolCallbackProvider;
+    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ChatMemory chatMemory;
 
@@ -147,7 +146,7 @@ public class AtlasAgentService {
     }
 
     public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
-            ObjectProvider<ToolCallbackProvider> mainAgentToolCallbackProvider, ObjectProvider<ToolCallbackProvider> competencyExpertToolCallbackProvider,
+            @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
             @Autowired(required = false) ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
             @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
@@ -292,17 +291,15 @@ public class AtlasAgentService {
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
         ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
-        ToolCallbackProvider mainAgentProvider = mainAgentToolCallbackProvider.getIfAvailable();
-        ToolCallbackProvider competencyExpertProvider = competencyExpertToolCallbackProvider.getIfAvailable();
 
         if (agentType.equals(AgentType.MAIN_AGENT)) {
-            if (mainAgentProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(mainAgentProvider);
+            if (mainAgentToolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
             }
         }
         else {
-            if (competencyExpertProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(competencyExpertProvider);
+            if (competencyExpertToolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(competencyExpertToolCallbackProvider);
             }
         }
 

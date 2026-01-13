@@ -252,8 +252,8 @@ public class CompetencyExpertToolsService {
             return "Error: No competencies provided for preview.";
         }
 
-        List<CompetencyPreviewDTO> previewResponses = competencies.stream()
-                .map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), comp.getCompetencyId(), viewOnly)).toList();
+        List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(competency -> new CompetencyPreviewDTO(competency.getTitle(), competency.getDescription(),
+                competency.getTaxonomy().toString(), competency.getCompetencyId(), viewOnly)).toList();
 
         currentPreviews.set(previewResponses);
 
