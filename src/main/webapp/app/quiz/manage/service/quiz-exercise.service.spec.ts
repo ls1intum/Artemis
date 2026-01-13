@@ -280,6 +280,7 @@ describe('QuizExercise Service', () => {
     it.each([
         [QuizStatus.INVISIBLE, false, false, false],
         [QuizStatus.VISIBLE, true, false, false],
+        [QuizStatus.OPEN_FOR_PRACTICE, true, true, false],
         [QuizStatus.ACTIVE, true, false, true],
         // all other combinations are not valid
     ])('should get status %p', (result, quizStarted, quizEnded, started) => {
