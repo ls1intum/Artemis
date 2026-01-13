@@ -194,7 +194,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             mode: ApollonMode.Exporting,
             model: initialModel,
             type: this.apollonDiagram()!.diagramType,
-            locale: this.translateService.currentLang as Locale,
+            locale: this.translateService.getCurrentLang() as Locale,
         });
 
         await newEditor.nextRender;

@@ -108,7 +108,7 @@ examples.forEach((exampleChannel) => {
         it('should call register user when channel action is register', fakeAsync(() => {
             const channelAction = { channel: channelOne, action: 'register' } as ChannelAction;
             channelItems[0].channelAction.emit(channelAction);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick(501);
             expect(registerUsersToChannelSpy).toHaveBeenCalledWith(course.id, channelOne.id);
             expect(registerUsersToChannelSpy).toHaveBeenCalledOnce();
@@ -118,7 +118,7 @@ examples.forEach((exampleChannel) => {
         it('should call deregister user when channel action is deregister', fakeAsync(() => {
             const channelAction = { channel: channelOne, action: 'deregister' } as ChannelAction;
             channelItems[0].channelAction.emit(channelAction);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick(501);
             expect(deregisterUsersFromChannelSpy).toHaveBeenCalledWith(course.id, channelOne.id);
             expect(deregisterUsersFromChannelSpy).toHaveBeenCalledOnce();
@@ -129,7 +129,7 @@ examples.forEach((exampleChannel) => {
             it('should close modal when channel action view is performed', fakeAsync(() => {
                 const channelAction = { channel: channelOne, action: 'view' } as ChannelAction;
                 channelItems[0].channelAction.emit(channelAction);
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 tick(501);
                 expect(closeSpy).toHaveBeenCalledWith([channelOne, false]);
                 expect(closeSpy).toHaveBeenCalledOnce();
@@ -140,7 +140,7 @@ examples.forEach((exampleChannel) => {
             it('should call create channel function when channel action create is performed', fakeAsync(() => {
                 const channelAction = { channel: new ChannelDTO(), action: 'create' } as ChannelAction;
                 channelItems[0].channelAction.emit(channelAction);
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 tick(501);
                 expect(createChannelFnSpy).toHaveBeenCalledOnce();
                 expect(component.channelModificationPerformed).toBeTrue();

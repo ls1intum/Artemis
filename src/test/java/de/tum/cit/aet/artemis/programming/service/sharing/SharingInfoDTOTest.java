@@ -50,6 +50,9 @@ class SharingInfoDTOTest {
             assertThat(sharingZip.getInputStream()).isNotNull();
             assertThat(sharingZip.isEmpty()).isFalse();
             assertThat(sharingZip.getSize()).isGreaterThan(0);
+            if (!tempPath.toFile().exists()) {
+                tempPath.toFile().mkdirs();
+            }
             File tmpFile = File.createTempFile("zipTest", "zip", tempPath.toFile());
             sharingZip.transferTo(tmpFile);
             assertThat(tmpFile.length()).isGreaterThan(0);

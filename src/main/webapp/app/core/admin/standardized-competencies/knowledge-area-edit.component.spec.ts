@@ -1,21 +1,31 @@
+/**
+ * Vitest tests for KnowledgeAreaEditComponent.
+ * Tests the form editing functionality for knowledge areas including
+ * validation, save, cancel, and circular dependency prevention.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
-import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { By } from '@angular/platform-browser';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';
+import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+
 describe('KnowledgeAreaEditComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
     let component: KnowledgeAreaEditComponent;
+
+    /** Default knowledge area for testing */
     const defaultKnowledgeArea: KnowledgeAreaDTO = {
         id: 1,
         title: 'title',
@@ -23,6 +33,8 @@ describe('KnowledgeAreaEditComponent', () => {
         description: 'description',
         parentId: 1,
     };
+
+    /** New values for form updates */
     const newValues = {
         title: 'new title',
         shortTitle: 'new title',
@@ -30,37 +42,42 @@ describe('KnowledgeAreaEditComponent', () => {
         parentId: 2,
     };
 
+    /** Available knowledge areas for parent selection */
     const defaultKnowledgeAreas: KnowledgeAreaDTO[] = [
         { id: 1, title: 'KA1' },
         { id: 2, title: 'KA2' },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FaIconComponent],
-            declarations: [
-                KnowledgeAreaEditComponent,
-                MockComponent(ButtonComponent),
-                TranslatePipeMock,
-                MockPipe(HtmlForMarkdownPipe),
-                MockComponent(MarkdownEditorMonacoComponent),
-                MockComponent(TaxonomySelectComponent),
-                MockDirective(TranslateDirective),
-                MockDirective(DeleteButtonDirective),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ReactiveFormsModule, KnowledgeAreaEditComponent],
             providers: [],
         })
+            .overrideComponent(KnowledgeAreaEditComponent, {
+                set: {
+                    imports: [
+                        ReactiveFormsModule,
+                        FaIconComponent,
+                        MockComponent(ButtonComponent),
+                        MockPipe(HtmlForMarkdownPipe),
+                        MockComponent(MarkdownEditorMonacoComponent),
+                        MockDirective(TranslateDirective),
+                        MockDirective(DeleteButtonDirective),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(KnowledgeAreaEditComponent);
                 component = componentFixture.componentInstance;
-                component.knowledgeArea = defaultKnowledgeArea;
-                component.knowledgeAreas = defaultKnowledgeAreas;
+                // Use componentRef.setInput() for signal inputs
+                componentFixture.componentRef.setInput('knowledgeArea', defaultKnowledgeArea);
+                componentFixture.componentRef.setInput('knowledgeAreas', defaultKnowledgeAreas);
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should set form values to knowledgeArea', () => {
@@ -69,38 +86,41 @@ describe('KnowledgeAreaEditComponent', () => {
     });
 
     it('should disable/enable when setting edit mode', () => {
-        component.isEditing = false;
+        componentFixture.componentRef.setInput('isEditing', false);
         componentFixture.detectChanges();
-        expect(component.form.disabled).toBeTrue();
+        expect(component.form.disabled).toBe(true);
 
         component.edit();
-        expect(component.form.disabled).toBeFalse();
+        componentFixture.detectChanges();
+        expect(component.form.disabled).toBe(false);
     });
 
     it('should save', () => {
-        component.isEditing = true;
+        componentFixture.componentRef.setInput('isEditing', true);
+        componentFixture.detectChanges();
         component.form.setValue(newValues);
-        const saveSpy = jest.spyOn(component.onSave, 'emit');
+        const saveSpy = vi.spyOn(component.onSave, 'emit');
 
         component.save();
 
         expect(saveSpy).toHaveBeenCalledWith({ ...defaultKnowledgeArea, ...newValues });
-        expect(component.isEditing).toBeFalse();
+        expect(component.isEditing()).toBe(false);
     });
 
     it.each<[KnowledgeAreaDTO, boolean]>([
         [defaultKnowledgeArea, false],
         [{ title: 'new knowledgeArea', shortTitle: 'new ka' } as KnowledgeAreaDTO, true],
     ])('should cancel and close', (knowledgeArea, shouldClose) => {
-        component.knowledgeArea = knowledgeArea;
-        component.isEditing = true;
+        componentFixture.componentRef.setInput('knowledgeArea', knowledgeArea);
+        componentFixture.componentRef.setInput('isEditing', true);
+        componentFixture.detectChanges();
         component.form.setValue(newValues);
-        const closeSpy = jest.spyOn(component.onClose, 'emit');
+        const closeSpy = vi.spyOn(component.onClose, 'emit');
 
         component.cancel();
 
         compareFormValues(component.form.getRawValue(), knowledgeArea);
-        expect(component.isEditing).toBeFalse();
+        expect(component.isEditing()).toBe(false);
         if (shouldClose) {
             expect(closeSpy).toHaveBeenCalled();
         } else {
@@ -109,34 +129,38 @@ describe('KnowledgeAreaEditComponent', () => {
     });
 
     it('should delete', () => {
-        const deleteSpy = jest.spyOn(component.onDelete, 'emit');
+        componentFixture.detectChanges();
+        const deleteSpy = vi.spyOn(component.onDelete, 'emit');
         component.delete();
 
         expect(deleteSpy).toHaveBeenCalled();
     });
 
     it('should close', () => {
-        const closeSpy = jest.spyOn(component.onClose, 'emit');
+        const closeSpy = vi.spyOn(component.onClose, 'emit');
         component.close();
 
         expect(closeSpy).toHaveBeenCalled();
     });
 
     it('should open new knowledge area', () => {
-        const openSpy = jest.spyOn(component.onOpenNewKnowledgeArea, 'emit');
+        componentFixture.detectChanges();
+        const openSpy = vi.spyOn(component.onOpenNewKnowledgeArea, 'emit');
         component.openNewKnowledgeArea();
 
         expect(openSpy).toHaveBeenCalled();
     });
 
     it('should open new competency', () => {
-        const openSpy = jest.spyOn(component.onOpenNewCompetency, 'emit');
+        componentFixture.detectChanges();
+        const openSpy = vi.spyOn(component.onOpenNewCompetency, 'emit');
         component.openNewCompetency();
 
         expect(openSpy).toHaveBeenCalled();
     });
 
     it('should update description', () => {
+        componentFixture.detectChanges();
         component.updateDescriptionControl('new description');
 
         expect(component.form.controls.description.getRawValue()).toBe('new description');
@@ -147,18 +171,18 @@ describe('KnowledgeAreaEditComponent', () => {
         [2, true],
         [3, false],
     ])('should not allow circular dependencies', (newParentId, isInvalid) => {
-        component.isEditing = true;
-        //only the knowledge area 3 is ok because it is not a descendant of knowledge area 1
-        component.knowledgeArea = {
+        // Only knowledge area 3 is ok because it is not a descendant of knowledge area 1
+        componentFixture.componentRef.setInput('knowledgeArea', {
             id: 1,
             title: 'KA1',
             shortTitle: 'title',
             children: [{ id: 2 }],
             parentId: 99,
-        };
-        component.knowledgeAreas = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        });
+        componentFixture.componentRef.setInput('knowledgeAreas', [{ id: 1 }, { id: 2 }, { id: 3 }]);
+        componentFixture.componentRef.setInput('isEditing', true);
         componentFixture.detectChanges();
-        expect(component.form.controls.parentId.invalid).toBeFalse();
+        expect(component.form.controls.parentId.invalid).toBe(false);
 
         const select = componentFixture.debugElement.query(By.css('#knowledge-area-select')).nativeElement;
         select.value = select.options[newParentId].value;
@@ -169,9 +193,12 @@ describe('KnowledgeAreaEditComponent', () => {
         expect(component.form.controls.parentId.invalid).toEqual(isInvalid);
     });
 
+    /**
+     * Helper to compare form values with knowledge area properties.
+     */
     function compareFormValues(formValues: any, knowledgeArea: KnowledgeAreaDTO) {
         for (const key in formValues) {
-            //needed to ensure null becomes undefined
+            // Normalize null to undefined for comparison
             expect(formValues[key] ?? undefined).toEqual(knowledgeArea[key as keyof KnowledgeAreaDTO]);
         }
     }

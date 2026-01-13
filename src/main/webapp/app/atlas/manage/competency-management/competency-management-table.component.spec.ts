@@ -19,6 +19,8 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { Component as NgComponent } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 @NgComponent({
     template: `
@@ -62,6 +64,7 @@ describe('CompetencyManagementTableComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: DialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -87,11 +90,11 @@ describe('CompetencyManagementTableComponent', () => {
 
     it('should initialize values', () => {
         component.competencyType = CourseCompetencyType.COMPETENCY;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(competencyService);
 
         component.competencyType = CourseCompetencyType.PREREQUISITE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(prerequisiteService);
     });
 
@@ -112,7 +115,7 @@ describe('CompetencyManagementTableComponent', () => {
         const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         competencyManagementTableComponent.service = competencyService;
         component.courseCompetencies = [competency1, competency2];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         competencyManagementTableComponent.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();

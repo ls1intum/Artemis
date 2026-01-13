@@ -197,7 +197,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreationAndEnableIris(savedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -292,7 +292,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdateAndEnableIris(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         return savedProgrammingExercise;
     }

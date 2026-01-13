@@ -45,6 +45,9 @@ const Image = ({
         margin: '0',
         padding: '0.5rem', // Internal padding around the image
         display: 'block', // Prevents extra space below the image
+        imageRendering: '-webkit-optimize-contrast' as const, // Improves sharpness when scaling
+        backfaceVisibility: 'hidden' as const, // Prevents blurry rendering in some browsers
+        transform: 'translateZ(0)', // Forces GPU acceleration for sharper rendering
     };
 
     // Custom styles will override default styles if there's a conflict.

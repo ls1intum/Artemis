@@ -45,16 +45,11 @@ You only need to modify them if your specific work or production environments re
                                 # Use the bcrypt benchmark tool to determine an optimal value: https://github.com/ls1intum/bcrypt-Benchmark
 
        user-management:
-           use-external: true
+           use-external: true # enables ldap authentication
            password-reset:
                 links:
                     en: '<link>'
                     de: '<link>'
-           external:
-               url: https://external.ase.in.tum.de
-               user: <username>  # Example: ga12abc
-               password: <password>
-               admin-group-name: tumuser
            ldap:
                url: <url>
                user-dn: <user-dn>
@@ -263,5 +258,5 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 Production setup
 """"""""""""""""
 
-See :ref:`Hyperion Service <hyperion_admin_setup>` in the Administration Guide for instructions on enabling the
+See `Hyperion Service Administration Guide <https://ls1intum.github.io/Artemis/admin/hyperion>`_ for instructions on enabling the
 module in production and configuring LLM credentials.

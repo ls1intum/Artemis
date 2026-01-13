@@ -155,8 +155,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             return null;
         }
         try {
-            var commitHash = gitService.getLastCommitHash(uri);
-            return commitHash == null ? null : commitHash.getName();
+            return gitService.getLastCommitHash(uri);
         }
         catch (Exception e) {
             log.warn("Could not retrieve the last commit hash for repoUri {} in ExerciseSnapshot", uri);

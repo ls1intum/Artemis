@@ -31,12 +31,12 @@ describe('Exercise Update Warning Component Tests', () => {
         const saveExerciseWithoutReevaluationSpy = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
         comp.creditChanged = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#no-reevaluate-button');
         button.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledOnce();
@@ -47,12 +47,12 @@ describe('Exercise Update Warning Component Tests', () => {
         const reEvaluateExerciseSpy = jest.spyOn(comp, 'reEvaluateExercise');
 
         comp.creditChanged = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#reevaluate-button');
         button.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(reEvaluateExerciseSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledOnce();
@@ -65,7 +65,7 @@ describe('Exercise Update Warning Component Tests', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
         button.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(clearSpy).toHaveBeenCalledOnce();
         expect(cancelledEmitSpy).toHaveBeenCalledOnce();
@@ -74,7 +74,7 @@ describe('Exercise Update Warning Component Tests', () => {
     it('should toggle deleteFeedback', () => {
         comp.toggleDeleteFeedback();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.deleteFeedback).toBeTrue();
     });

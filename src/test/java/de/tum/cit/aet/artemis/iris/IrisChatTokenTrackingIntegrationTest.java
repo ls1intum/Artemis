@@ -29,9 +29,9 @@ import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -59,10 +59,10 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     private LLMTokenUsageService llmTokenUsageService;
 
     @Autowired
-    private LLMTokenUsageTraceRepository irisLLMTokenUsageTraceRepository;
+    private LLMTokenUsageTraceTestRepository irisLLMTokenUsageTraceRepository;
 
     @Autowired
-    private LLMTokenUsageRequestRepository irisLLMTokenUsageRequestRepository;
+    private LLMTokenUsageRequestTestRepository irisLLMTokenUsageRequestRepository;
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;

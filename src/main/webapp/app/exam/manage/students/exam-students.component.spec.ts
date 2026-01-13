@@ -1,4 +1,5 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +17,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
@@ -24,6 +24,14 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+// Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
+@Component({
+    selector: 'jhi-user-import-button',
+    template: '',
+    standalone: true,
+})
+class UsersImportButtonStubComponent {}
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -63,10 +71,9 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, FaIconComponent],
+            imports: [NgxDatatableModule, FaIconComponent, UsersImportButtonStubComponent],
             declarations: [
                 ExamStudentsComponent,
-                MockComponent(UsersImportButtonComponent),
                 MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),
                 MockDirective(TranslateDirective),
@@ -107,7 +114,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user1, callbackSpy);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(callbackSpy).toHaveBeenCalledWith(user1);
     });
@@ -122,7 +129,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user3, callbackSpy);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
         expect(examServiceStub).toHaveBeenCalledOnce();
@@ -137,7 +144,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         const search = component.searchAllUsers(of({ text: user2.login!, entities: [user2] }));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
@@ -160,7 +167,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         component.reloadExamWithRegisteredUsers();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam).toEqual(examWithOneUser);
@@ -170,7 +177,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove users from the exam', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse()));
+        const examServiceStub = jest.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -181,7 +188,7 @@ describe('ExamStudentsComponent', () => {
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
             { deleteParticipationsAndSubmission: false },
         );
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
         expect(component.allRegisteredUsers).toEqual([
@@ -210,7 +217,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove all users from the exam', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse()));
+        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -218,14 +225,14 @@ describe('ExamStudentsComponent', () => {
         ] as ExamUser[];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
         expect(component.allRegisteredUsers).toEqual([]);
     });
 
     it('should remove all users from the exam with participaations', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse()));
+        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -233,7 +240,7 @@ describe('ExamStudentsComponent', () => {
         ] as ExamUser[];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: true });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.allRegisteredUsers).toEqual([]);

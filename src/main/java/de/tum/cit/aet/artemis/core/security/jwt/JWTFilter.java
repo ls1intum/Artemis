@@ -201,8 +201,8 @@ public class JWTFilter extends GenericFilterBean {
                 return null;
             }
             // Log the invalid JWT token details to find out how it was created in case of accidental issues
-            log.info("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, user_agent: {}, request_uri: {}, headers: {} }", source, httpServletRequest.getRemoteAddr(),
-                    httpServletRequest.getHeader(HttpHeaders.USER_AGENT), requestUri, compactHeaders(httpServletRequest));
+            log.debug("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, user_agent: {}, request_uri: {}, headers: {} }", source,
+                    httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader(HttpHeaders.USER_AGENT), requestUri, compactHeaders(httpServletRequest));
             return null;
         }
 

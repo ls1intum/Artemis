@@ -1,0 +1,32 @@
+// PrimeNG Dialog handles theming automatically with proper light/dark mode support
+
+.current-step {
+    font-weight: 500;
+}
+
+.status-icon {
+    font-size: 1.25rem;
+}
+
+.progress-container {
+    position: relative;
+}
+
+// Progress bar styling
+::ng-deep .course-operation-progress-dialog {
+    .p-progressbar {
+        .p-progressbar-label {
+            font-weight: 500;
+        }
+    }
+
+    // Success state (completed)
+    .progress-success .p-progressbar-value {
+        background: var(--bs-success, #28a745);
+    }
+
+    // Danger state (failed)
+    .progress-danger .p-progressbar-value {
+        background: var(--bs-danger, #dc3545);
+    }
+}

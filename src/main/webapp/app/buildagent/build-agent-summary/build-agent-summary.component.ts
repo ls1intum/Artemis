@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
@@ -15,12 +15,22 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
+/**
+ * Component that displays a summary of all build agents in the system.
+ * Shows the status of each agent, current build capacity, and allows
+ * administrators to pause/resume agents and clear distributed data.
+ *
+ * Uses OnPush change detection with signals for optimal performance.
+ */
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
@@ -30,99 +40,137 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly modalService = inject(NgbModal);
     private readonly alertService = inject(AlertService);
 
-    buildAgents: BuildAgentInformation[] = [];
-    buildCapacity = 0;
-    currentBuilds = 0;
-    channel: string = '/topic/admin/build-agents';
-    websocketSubscription: Subscription;
-    restSubscription: Subscription;
+    /** Signal containing the list of all build agents with their current status */
+    readonly buildAgents = signal<BuildAgentInformation[]>([]);
+
+    /**
+     * Computed signal that calculates the total build capacity across all active agents.
+     * Excludes paused agents from the calculation since they cannot accept new builds.
+     */
+    readonly buildCapacity = computed(() =>
+        this.buildAgents()
+            .filter((agent) => agent.status !== BuildAgentStatus.PAUSED && agent.status !== BuildAgentStatus.SELF_PAUSED)
+            .reduce((totalCapacity, agent) => totalCapacity + (agent.maxNumberOfConcurrentBuildJobs || 0), 0),
+    );
+
+    /**
+     * Computed signal that calculates the total number of currently running builds
+     * across all agents.
+     */
+    readonly currentBuilds = computed(() => this.buildAgents().reduce((totalBuilds, agent) => totalBuilds + (agent.numberOfCurrentBuildJobs || 0), 0));
+
+    /** WebSocket topic for receiving real-time build agent updates */
+    readonly buildAgentsWebsocketTopic = '/topic/admin/build-agents';
+
+    /**
+     * Subscription for WebSocket updates.
+     * @internal Exposed for testing purposes only.
+     */
+    buildAgentsWebsocketSubscription?: Subscription;
+
+    /**
+     * Subscription for initial REST API load.
+     * @internal Exposed for testing purposes only.
+     */
+    initialLoadSubscription?: Subscription;
+
+    /** Current router URL used for navigation */
     routerLink: string;
 
-    //icons
+    // Font Awesome icons for the UI
     protected readonly faTimes = faTimes;
     protected readonly faPause = faPause;
     protected readonly faPlay = faPlay;
     protected readonly faTrash = faTrash;
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.routerLink = this.router.url;
-        this.load();
-        this.initWebsocketSubscription();
+        this.loadBuildAgents();
+        this.subscribeToWebsocketUpdates();
+    }
+
+    ngOnDestroy(): void {
+        this.buildAgentsWebsocketSubscription?.unsubscribe();
+        this.initialLoadSubscription?.unsubscribe();
     }
 
     /**
-     * This method is used to unsubscribe from the websocket channels when the component is destroyed.
+     * Subscribes to the WebSocket topic to receive real-time updates
+     * when build agent status changes.
      */
-    ngOnDestroy() {
-        this.websocketService.unsubscribe(this.channel);
-        this.websocketSubscription?.unsubscribe();
-        this.restSubscription?.unsubscribe();
-    }
-
-    /**
-     * This method is used to initialize the websocket subscription for the build agents. It subscribes to the channel for the build agents.
-     */
-    initWebsocketSubscription() {
-        this.websocketService.subscribe(this.channel);
-        this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgents) => {
-            this.updateBuildAgents(buildAgents);
+    private subscribeToWebsocketUpdates(): void {
+        this.buildAgentsWebsocketSubscription = this.websocketService.subscribe<BuildAgentInformation[]>(this.buildAgentsWebsocketTopic).subscribe((updatedBuildAgents) => {
+            this.buildAgents.set(updatedBuildAgents);
         });
     }
 
-    private updateBuildAgents(buildAgents: BuildAgentInformation[]) {
-        this.buildAgents = buildAgents;
-        this.buildCapacity = this.buildAgents
-            .filter((agent) => agent.status !== BuildAgentStatus.PAUSED && agent.status !== BuildAgentStatus.SELF_PAUSED)
-            .reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
-        this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
-    }
-
     /**
-     * This method is used to load the build agents.
+     * Loads the initial list of build agents from the REST API.
+     * This provides immediate data while WebSocket connection is established.
      */
-    load() {
-        this.restSubscription = this.buildAgentsService.getBuildAgentSummary().subscribe((buildAgents) => {
-            this.updateBuildAgents(buildAgents);
+    private loadBuildAgents(): void {
+        this.initialLoadSubscription = this.buildAgentsService.getBuildAgentSummary().subscribe((buildAgentsList) => {
+            this.buildAgents.set(buildAgentsList);
         });
     }
 
-    cancelBuildJob(buildJobId: string) {
+    /**
+     * Cancels a specific build job by its ID.
+     * @param buildJobId The unique identifier of the build job to cancel
+     */
+    cancelBuildJob(buildJobId: string): void {
         this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
     }
 
-    cancelAllBuildJobs(buildAgent?: BuildAgent) {
+    /**
+     * Cancels all running build jobs for a specific build agent.
+     * @param buildAgent The build agent whose jobs should be cancelled
+     */
+    cancelAllBuildJobs(buildAgent?: BuildAgent): void {
         if (!buildAgent?.name) {
             return;
         }
 
-        const buildAgentToCancel = this.buildAgents.find((agent) => agent.buildAgent?.name === buildAgent.name);
-        if (buildAgentToCancel?.buildAgent?.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgentToCancel.buildAgent?.name).subscribe();
+        const matchingAgent = this.buildAgents().find((agent) => agent.buildAgent?.name === buildAgent.name);
+        if (matchingAgent?.buildAgent?.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(matchingAgent.buildAgent.name).subscribe();
         }
     }
 
-    displayPauseBuildAgentModal() {
+    /**
+     * Opens a confirmation modal for pausing all build agents.
+     * If confirmed, triggers the pause operation.
+     */
+    displayPauseBuildAgentModal(): void {
         const modalRef: NgbModalRef = this.modalService.open(BuildAgentPauseAllModalComponent as Component);
-        modalRef.result.then((result) => {
-            if (result) {
+        modalRef.result.then((confirmed) => {
+            if (confirmed) {
                 this.pauseAllBuildAgents();
             }
         });
     }
 
-    displayClearDistributedDataModal() {
+    /**
+     * Opens a confirmation modal for clearing distributed data.
+     * If confirmed, triggers the clear operation.
+     */
+    displayClearDistributedDataModal(): void {
         const modalRef: NgbModalRef = this.modalService.open(BuildAgentClearDistributedDataComponent as Component, { size: 'lg' });
-        modalRef.result.then((result) => {
-            if (result) {
+        modalRef.result.then((confirmed) => {
+            if (confirmed) {
                 this.clearDistributedData();
             }
         });
     }
 
-    pauseAllBuildAgents() {
+    /**
+     * Pauses all build agents in the system.
+     * Shows success/error alerts based on the operation result.
+     */
+    pauseAllBuildAgents(): void {
         this.buildAgentsService.pauseAllBuildAgents().subscribe({
             next: () => {
-                this.load();
+                this.loadBuildAgents();
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.buildAgents.alerts.buildAgentsPaused',
@@ -137,10 +185,14 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         });
     }
 
-    resumeAllBuildAgents() {
+    /**
+     * Resumes all paused build agents in the system.
+     * Shows success/error alerts based on the operation result.
+     */
+    resumeAllBuildAgents(): void {
         this.buildAgentsService.resumeAllBuildAgents().subscribe({
             next: () => {
-                this.load();
+                this.loadBuildAgents();
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.buildAgents.alerts.buildAgentsResumed',
@@ -155,7 +207,12 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         });
     }
 
-    clearDistributedData() {
+    /**
+     * Clears all distributed data (caches, queues) across the build agent cluster.
+     * This is a maintenance operation that should be used with caution.
+     * Shows success/error alerts based on the operation result.
+     */
+    clearDistributedData(): void {
         this.buildAgentsService.clearDistributedData().subscribe({
             next: () => {
                 this.alertService.addAlert({

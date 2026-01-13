@@ -63,9 +63,9 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
  * Checks if given participation has results.
  *
  * @param participation
- * @return {boolean}
+ * @return { number } The number of results the participation has.
  */
-export const hasResults = (participation: Participation) => {
+export const hasResults = (participation: Participation): number => {
     return getAllResultsOfAllSubmissions(participation.submissions).length;
 };
 /**
@@ -103,6 +103,7 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
  *
  * @param participation
  * @param showUngradedResults
+ * @param showAthenaPreliminaryFeedback
  */
 export function getLatestResultOfStudentParticipation(
     participation: StudentParticipation | undefined,

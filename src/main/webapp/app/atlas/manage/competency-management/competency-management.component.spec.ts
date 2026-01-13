@@ -19,7 +19,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
@@ -123,7 +123,7 @@ describe('CompetencyManagementComponent', () => {
         } as ProfileInfo;
         getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
 
-        getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
+        getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
@@ -137,15 +137,18 @@ describe('CompetencyManagementComponent', () => {
 
     it('should show generate button if IRIS is enabled', async () => {
         const irisSettingsResponse = {
-            irisCompetencyGenerationSettings: {
+            courseId: 1,
+            settings: {
                 enabled: true,
+                variant: 'default',
+                rateLimit: {},
             },
-        } as IrisCourseSettings;
+        } as IrisCourseSettingsWithRateLimitDTO;
         getIrisSettingsSpy.mockReturnValue(of(irisSettingsResponse));
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getProfileInfoSpy).toHaveBeenCalled();
         expect(getIrisSettingsSpy).toHaveBeenCalled();
@@ -224,11 +227,11 @@ describe('CompetencyManagementComponent', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
         jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
         component.courseCompetencies.set([]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const existingCompetencies = component.competencies().length;
 
         await component.openImportAllModal();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(modalService.open).toHaveBeenCalledExactlyOnceWith(ImportAllCourseCompetenciesModalComponent, {
             size: 'lg',

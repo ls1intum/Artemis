@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { input } from '@angular/core';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 describe('CourseFaqAccordionComponent', () => {
@@ -11,13 +10,13 @@ describe('CourseFaqAccordionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CourseFaqAccordionComponent, MockDirective(TranslateDirective), MockComponent(CustomExerciseCategoryBadgeComponent)],
+            imports: [CourseFaqAccordionComponent, MockDirective(TranslateDirective), MockComponent(CustomExerciseCategoryBadgeComponent)],
         })
             .compileComponents()
             .then(() => {
                 courseFaqAccordionComponentFixture = TestBed.createComponent(CourseFaqAccordionComponent);
                 courseFaqAccordionComponent = courseFaqAccordionComponentFixture.componentInstance;
-                TestBed.runInInjectionContext(() => (courseFaqAccordionComponent.faq = input({ id: 1, questionTitle: 'Title?', questionAnswer: 'Answer', categories: [] })));
+                courseFaqAccordionComponentFixture.componentRef.setInput('faq', { id: 1, questionTitle: 'Title?', questionAnswer: 'Answer', categories: [] });
             });
     });
 

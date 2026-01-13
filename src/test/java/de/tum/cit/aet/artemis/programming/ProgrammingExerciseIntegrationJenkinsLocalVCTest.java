@@ -12,6 +12,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -23,7 +25,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
-class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+// Run tests sequentially to avoid interference with shared LocalVC repositories and temp directories
+@Execution(ExecutionMode.SAME_THREAD)
+class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "progexjenklocalvc";
 
@@ -410,6 +414,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         programmingExercise.setId(null);
         programmingExercise.setTitle("unique-title");
         programmingExercise.setShortName("testuniqueshortname");
+        // Ensure LocalVC does not already have a project folder with this key from previous tests
+        programmingExerciseIntegrationTestService.cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
         assertThatNoException().isThrownBy(() -> programmingExerciseValidationService.checkIfProjectExists(programmingExercise));
@@ -764,14 +770,14 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound();
+    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_exerciseDoesNotExist_notFound();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutoralt1", roles = "TA")
-    void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden();
+    void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_isNotTeachingAssistant_forbidden();
     }
 
     @Test

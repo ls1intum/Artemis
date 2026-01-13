@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,9 +11,12 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.export.CompetencyProgressExportDTO;
+import de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
@@ -24,9 +28,13 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final CompetencyRepository competencyRepository;
 
-    public CompetencyProgressApi(CompetencyProgressService competencyProgressService, CompetencyRepository competencyRepository) {
+    private final CompetencyProgressRepository competencyProgressRepository;
+
+    public CompetencyProgressApi(CompetencyProgressService competencyProgressService, CompetencyRepository competencyRepository,
+            CompetencyProgressRepository competencyProgressRepository) {
         this.competencyProgressService = competencyProgressService;
         this.competencyRepository = competencyRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
     }
 
     public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, Participant participant) {
@@ -53,11 +61,31 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
         competencyProgressService.updateProgressByLearningObjectSync(learningObject, users);
     }
 
-    public long countByCourseId(long courseId) {
-        return competencyRepository.countByCourseId(courseId);
+    public long countCompetencyProgressByCourseId(long courseId) {
+        return competencyProgressRepository.countByCourseId(courseId);
     }
 
     public void deleteAllByCourseId(long courseId) {
         competencyRepository.deleteAllByCourseId(courseId);
+    }
+
+    /**
+     * Find all competency progress records for a course for export.
+     *
+     * @param courseId the id of the course
+     * @return list of competency progress export DTOs
+     */
+    public List<CompetencyProgressExportDTO> findAllForExportByCourseId(long courseId) {
+        return competencyProgressRepository.findAllForExportByCourseId(courseId);
+    }
+
+    /**
+     * Find all competency progress records for a user for GDPR data export.
+     *
+     * @param userId the id of the user
+     * @return list of user competency progress export DTOs with course information
+     */
+    public List<UserCompetencyProgressExportDTO> findAllForExportByUserId(long userId) {
+        return competencyProgressRepository.findAllForExportByUserId(userId);
     }
 }

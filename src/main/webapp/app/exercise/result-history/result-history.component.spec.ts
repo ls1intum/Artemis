@@ -1,9 +1,12 @@
-import { input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { MockPipe } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ResultHistoryComponent', () => {
     let component: ResultHistoryComponent;
@@ -11,7 +14,8 @@ describe('ResultHistoryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
+            imports: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
@@ -25,78 +29,78 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with same rated results', () => {
-        TestBed.runInInjectionContext(() => {
-            component.results = input<Result[]>([
-                { rated: true, id: 1 },
-                { rated: true, id: 2 },
-                { rated: true, id: 3 },
-            ]);
-        });
+        const participation = { id: 1, submissions: [] };
+        fixture.componentRef.setInput('participationInput', participation);
+        fixture.componentRef.setInput('results', [
+            { rated: true, id: 1, participation },
+            { rated: true, id: 2, participation },
+            { rated: true, id: 3, participation },
+        ]);
+        fixture.detectChanges();
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
-            { rated: true, id: 1 },
-            { rated: true, id: 2 },
-            { rated: true, id: 3 },
+            { rated: true, id: 1, participation },
+            { rated: true, id: 2, participation },
+            { rated: true, id: 3, participation },
         ]);
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        TestBed.runInInjectionContext(() => {
-            component.results = input<Result[]>([
-                { rated: false, id: 1 },
-                { rated: false, id: 2 },
-                { rated: false, id: 3 },
-                { rated: false, id: 4 },
-                { rated: false, id: 5 },
-                { rated: false, id: 6 },
-            ]);
-        });
+        fixture.componentRef.setInput('results', [
+            { rated: false, id: 1, participation },
+            { rated: false, id: 2, participation },
+            { rated: false, id: 3, participation },
+            { rated: false, id: 4, participation },
+            { rated: false, id: 5, participation },
+            { rated: false, id: 6, participation },
+        ]);
+        fixture.detectChanges();
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
+            { rated: false, id: 2, participation },
+            { rated: false, id: 3, participation },
+            { rated: false, id: 4, participation },
+            { rated: false, id: 5, participation },
+            { rated: false, id: 6, participation },
         ]);
         expect(component.showPreviousDivider).toBeTrue();
         expect(component.movedLastRatedResult).toBeFalsy();
     });
 
     it('should initialize with mixed rated results', () => {
-        TestBed.runInInjectionContext(() => {
-            component.results = input<Result[]>([
-                { rated: true, id: 1 },
-                { rated: false, id: 2 },
-                { rated: false, id: 3 },
-            ]);
-        });
+        const participation = { id: 1, submissions: [] };
+        fixture.componentRef.setInput('participationInput', participation);
+        fixture.componentRef.setInput('results', [
+            { rated: true, id: 1, participation },
+            { rated: false, id: 2, participation },
+            { rated: false, id: 3, participation },
+        ]);
+        fixture.detectChanges();
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
+            { rated: true, id: 1, participation },
+            { rated: false, id: 2, participation },
+            { rated: false, id: 3, participation },
         ]);
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        TestBed.runInInjectionContext(() => {
-            component.results = input<Result[]>([
-                { rated: true, id: 1 },
-                { rated: false, id: 2 },
-                { rated: false, id: 3 },
-                { rated: false, id: 4 },
-                { rated: false, id: 5 },
-                { rated: false, id: 6 },
-            ]);
-        });
+        fixture.componentRef.setInput('results', [
+            { rated: true, id: 1, participation },
+            { rated: false, id: 2, participation },
+            { rated: false, id: 3, participation },
+            { rated: false, id: 4, participation },
+            { rated: false, id: 5, participation },
+            { rated: false, id: 6, participation },
+        ]);
+        fixture.detectChanges();
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
-            { rated: true, id: 1 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
+            { rated: true, id: 1, participation },
+            { rated: false, id: 3, participation },
+            { rated: false, id: 4, participation },
+            { rated: false, id: 5, participation },
+            { rated: false, id: 6, participation },
         ]);
         expect(component.showPreviousDivider).toBeTrue();
         expect(component.movedLastRatedResult).toBeTrue();
