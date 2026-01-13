@@ -106,9 +106,8 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     attemptDistributeAndCloseDialog(): void {
-        const selectedRoomIds = this.selectedRooms()
-            .map((room) => room.id)
-            .filter((id) => id >= 0);
+        const selectedRoomIds = this.selectedRooms().map((room) => room.id);
+
         this.studentsRoomDistributionService
             .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
             .subscribe({
