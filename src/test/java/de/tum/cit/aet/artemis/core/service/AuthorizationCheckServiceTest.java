@@ -448,7 +448,11 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             course = courseUtilService.addEmptyCourse();
             userUtilService.addSuperAdmin(TEST_PREFIX);
             superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+            // Add student to the course's student group
             student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            student.setGroups(Set.of(course.getStudentGroupName()));
+            userRepository.save(student);
 
             // Add tutor to the course's TA group
             tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
