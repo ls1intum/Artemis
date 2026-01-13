@@ -149,6 +149,7 @@
                             />
                         }
                         @if (assessmentMode && exercise.diagramType) {
+                            <!-- we do not need to send ref.+unref feedback to the child component, since it filters out unreferenced feedbacks anyway-->
                             <jhi-modeling-assessment
                                 class="col-12"
                                 [umlModel]="umlModel"
@@ -185,7 +186,7 @@
                     @if (assessmentMode) {
                         @if (result && result.id) {
                             <jhi-unreferenced-feedback
-                                [(feedbacks)]="unreferencedFeedback"
+                                [feedbacks]="unreferencedFeedback()"
                                 [readOnly]="readOnly"
                                 [addReferenceIdForExampleSubmission]="true"
                                 (feedbacksChange)="onUnReferencedFeedbackChanged($event)"

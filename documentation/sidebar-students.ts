@@ -20,6 +20,7 @@ const sidebars: SidebarsConfig = {
         'exams',
         'calendar',
         'user-experience',
+        'communication',
         'notifications',
         'faq',
         'grading',

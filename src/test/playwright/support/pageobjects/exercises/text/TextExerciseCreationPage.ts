@@ -1,4 +1,3 @@
-import { Locator } from '@playwright/test';
 import { TEXT_EXERCISE_BASE } from '../../../constants';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
@@ -13,7 +12,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async typeProblemStatement(statement: string) {
         const textEditor = this.getTextEditorLocator(this.PROBLEM_STATEMENT_SELECTOR);
-        await this.typeText(textEditor, statement);
+        await this.typeTextInMonaco(textEditor, statement);
     }
 
     async clearProblemStatement() {
@@ -23,7 +22,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async typeExampleSolution(statement: string) {
         const textEditor = this.getTextEditorLocator(this.EXAMPLE_SOLUTION_SELECTOR);
-        await this.typeText(textEditor, statement);
+        await this.typeTextInMonaco(textEditor, statement);
     }
 
     async clearExampleSolution() {
@@ -33,7 +32,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async typeAssessmentInstructions(statement: string) {
         const textEditor = this.getTextEditorLocator(this.ASSESSMENT_INSTRUCTIONS_SELECTOR);
-        await this.typeText(textEditor, statement);
+        await this.typeTextInMonaco(textEditor, statement);
     }
 
     async clearAssessmentInstructions() {
@@ -54,11 +53,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     private getTextEditorLocator(selector: string) {
-        return this.page.locator(selector).locator('.monaco-editor');
-    }
-
-    private async typeText(textEditor: Locator, text: string) {
-        await textEditor.click();
-        await textEditor.pressSequentially(text);
+        // Return just the container - setMonacoEditorContentByLocator will find .monaco-editor inside
+        return this.page.locator(selector);
     }
 }
