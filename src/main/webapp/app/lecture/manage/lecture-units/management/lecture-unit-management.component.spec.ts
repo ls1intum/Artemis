@@ -185,6 +185,26 @@ describe('LectureUnitManagementComponent', () => {
         expect(loadDataSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should handle loadData error and set isStatusLoading to false', () => {
+        findLectureWithDetailsSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        lectureUnitManagementComponent.isStatusLoading.set(true);
+
+        lectureUnitManagementComponent.loadData();
+
+        expect(lectureUnitManagementComponent.isStatusLoading()).toBe(false);
+    });
+
+    it('should handle lecture with no lectureUnits and set isStatusLoading to false', () => {
+        const lectureWithNoUnits = { ...lecture, lectureUnits: undefined };
+        findLectureWithDetailsSpy.mockReturnValue(of(new HttpResponse({ body: lectureWithNoUnits, status: 200 })));
+        lectureUnitManagementComponent.isStatusLoading.set(true);
+
+        lectureUnitManagementComponent.loadData();
+
+        expect(lectureUnitManagementComponent.isStatusLoading()).toBe(false);
+        expect(lectureUnitManagementComponent.lectureUnits()).toEqual([]);
+    });
+
     it('should give the correct delete question translation key', () => {
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
