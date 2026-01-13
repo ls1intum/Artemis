@@ -20,7 +20,7 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(CodeEditorFileBrowserBadgeComponent);
         component = fixture.componentInstance;
-        component.badge = new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3);
+        fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3));
         fixture.detectChanges();
     });
 
@@ -34,14 +34,14 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
     });
 
     it('should not have an icon for an unknown badge type', () => {
-        component.badge = new FileBadge('unknown' as FileBadgeType, 3);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('badge', new FileBadge('unknown' as FileBadgeType, 3));
+        fixture.detectChanges();
         expect(component.icon).toBeUndefined();
     });
 
     it('should not have a tooltip for an unknown badge type', () => {
-        component.badge = new FileBadge('unknown' as FileBadgeType, 3);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('badge', new FileBadge('unknown' as FileBadgeType, 3));
+        fixture.detectChanges();
         expect(component.tooltip).toBeUndefined();
     });
 });

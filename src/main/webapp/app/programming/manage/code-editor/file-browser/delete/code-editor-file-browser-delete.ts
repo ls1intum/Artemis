@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
@@ -21,9 +21,16 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     activeModal = inject(NgbActiveModal);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
 
-    @Input() fileNameToDelete: string;
-    @Input() parent: IFileDeleteDelegate;
-    @Input() fileType: FileType;
+    readonly fileNameToDeleteInput = input<string | undefined>();
+    readonly parentInput = input<IFileDeleteDelegate | undefined>();
+    readonly fileTypeInput = input<FileType | undefined>();
+    readonly fileNameToDeleteOverride = signal<string | undefined>(undefined);
+    readonly parentOverride = signal<IFileDeleteDelegate | undefined>(undefined);
+    readonly fileTypeOverride = signal<FileType | undefined>(undefined);
+
+    fileNameToDelete = computed(() => this.fileNameToDeleteOverride() ?? this.fileNameToDeleteInput());
+    parent = computed(() => this.parentOverride() ?? this.parentInput());
+    fileType = computed(() => this.fileTypeOverride() ?? this.fileTypeInput());
 
     isLoading: boolean;
 
@@ -39,23 +46,32 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = false;
     }
 
+    setInputs({ fileNameToDelete, parent, fileType }: { fileNameToDelete: string; parent: IFileDeleteDelegate; fileType: FileType }) {
+        this.fileNameToDeleteOverride.set(fileNameToDelete);
+        this.parentOverride.set(parent);
+        this.fileTypeOverride.set(fileType);
+    }
+
     /**
      * @function deleteFile
      * @desc Reads the provided fileName and deletes the matching file in the repository
      */
     deleteFile() {
         // Guard against PROBLEM_STATEMENT deletion - it's a pseudo-file, not a real repository file
-        if (this.fileType === FileType.PROBLEM_STATEMENT) {
+        if (this.fileType() === FileType.PROBLEM_STATEMENT) {
             this.closeModal();
             return;
         }
         this.isLoading = true;
         // Make sure we have a filename
-        if (this.fileNameToDelete) {
-            this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe({
+        const fileName = this.fileNameToDelete();
+        const fileType = this.fileType();
+        const parent = this.parent();
+        if (fileName && fileType && parent) {
+            this.repositoryFileService.deleteFile(fileName).subscribe({
                 next: () => {
                     this.closeModal();
-                    this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
+                    parent.onFileDeleted(new DeleteFileChange(fileType, fileName));
                 },
                 error: (err) => {
                     captureException(err);
