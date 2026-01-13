@@ -106,7 +106,25 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
             }
         });
 
-        this.setupChangeEffects();
+        effect(() => {
+            const commitState = this.commitState();
+            const editorState = this.editorState();
+            const selectedFile = this.selectedFile();
+            const shouldInitialize =
+                (this.previousCommitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED) ||
+                (this.previousEditorState !== undefined && this.previousEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN);
+
+            if (shouldInitialize) {
+                this.initializeComponent();
+            } else if (selectedFile && selectedFile !== this.previousSelectedFile) {
+                this.renamingFile = undefined;
+                this.setupTreeview();
+            }
+
+            this.previousCommitState = commitState;
+            this.previousEditorState = editorState;
+            this.previousSelectedFile = selectedFile;
+        });
     }
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
@@ -219,32 +237,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
     ngAfterViewInit(): void {
         this.resizableMinWidth = window.screen.width / 6;
         this.interactResizable = interact('.resizable-filebrowser');
-    }
-
-    /**
-     * When the commitState is undefined, fetch the repository status and load the files if possible.
-     * When this is done, render the file tree.
-     */
-    private setupChangeEffects(): void {
-        effect(() => {
-            const commitState = this.commitState();
-            const editorState = this.editorState();
-            const selectedFile = this.selectedFile();
-            const shouldInitialize =
-                (this.previousCommitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED) ||
-                (this.previousEditorState !== undefined && this.previousEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN);
-
-            if (shouldInitialize) {
-                this.initializeComponent();
-            } else if (selectedFile && selectedFile !== this.previousSelectedFile) {
-                this.renamingFile = undefined;
-                this.setupTreeview();
-            }
-
-            this.previousCommitState = commitState;
-            this.previousEditorState = editorState;
-            this.previousSelectedFile = selectedFile;
-        });
     }
 
     /**

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
@@ -21,16 +21,9 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     activeModal = inject(NgbActiveModal);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
 
-    readonly fileNameToDeleteInput = input<string | undefined>();
-    readonly parentInput = input<IFileDeleteDelegate | undefined>();
-    readonly fileTypeInput = input<FileType | undefined>();
-    readonly fileNameToDeleteOverride = signal<string | undefined>(undefined);
-    readonly parentOverride = signal<IFileDeleteDelegate | undefined>(undefined);
-    readonly fileTypeOverride = signal<FileType | undefined>(undefined);
-
-    fileNameToDelete = computed(() => this.fileNameToDeleteOverride() ?? this.fileNameToDeleteInput());
-    parent = computed(() => this.parentOverride() ?? this.parentInput());
-    fileType = computed(() => this.fileTypeOverride() ?? this.fileTypeInput());
+    readonly fileNameToDelete = signal<string | undefined>(undefined);
+    readonly parent = signal<IFileDeleteDelegate | undefined>(undefined);
+    readonly fileType = signal<FileType | undefined>(undefined);
 
     isLoading: boolean;
 
@@ -47,9 +40,9 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     }
 
     setInputs({ fileNameToDelete, parent, fileType }: { fileNameToDelete: string; parent: IFileDeleteDelegate; fileType: FileType }) {
-        this.fileNameToDeleteOverride.set(fileNameToDelete);
-        this.parentOverride.set(parent);
-        this.fileTypeOverride.set(fileType);
+        this.fileNameToDelete.set(fileNameToDelete);
+        this.parent.set(parent);
+        this.fileType.set(fileType);
     }
 
     /**

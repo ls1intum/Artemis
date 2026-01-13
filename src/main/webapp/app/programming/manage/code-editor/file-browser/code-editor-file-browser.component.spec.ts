@@ -561,8 +561,8 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder/file2': FileType.FILE,
         };
         comp.repositoryFiles = repositoryFiles;
+        fixture.detectChanges();
         fixture.componentRef.setInput('selectedFile', selectedFile);
-        comp.setupTreeview();
         fixture.detectChanges();
         expect(comp.selectedFile()).toEqual(selectedFile);
         const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!.children.find(({ value }) => value === selectedFile)!;

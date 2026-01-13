@@ -245,8 +245,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
         codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
         codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
+        fixture.changeDetectorRef.detectChanges();
         codeEditorFileBrowserComp.selectedFileChange.emit('folder/file1');
-        codeEditorFileBrowserComp.setupTreeview();
         fixture.changeDetectorRef.detectChanges();
         codeEditorFileBrowserComp.isLoadingFiles = false;
         fixture.changeDetectorRef.detectChanges();

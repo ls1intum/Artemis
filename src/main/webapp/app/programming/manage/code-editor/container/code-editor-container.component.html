@@ -72,7 +72,7 @@
                 [selectedFile]="selectedFile"
                 [selectedRepository]="selectedRepository()"
                 [buildAnnotations]="annotations"
-                [sessionId]="participation().id ?? 'test'"
+                [sessionId]="participation()?.id ?? 'test'"
                 [consistencyIssues]="consistencyIssues()"
                 (onFileContentChange)="onFileContentChange($event)"
                 (onUpdateFeedback)="onUpdateFeedback.emit($event)"
