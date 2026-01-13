@@ -5,12 +5,14 @@ import { DocumentationLinkComponent } from 'app/shared/components/documentation-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { SshUserSettingsFingerprintsService } from 'app/core/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
+import { UserSettingsTitleBarActionsDirective } from 'app/core/user/settings/shared/user-settings-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-fingerprints.component.html',
     styleUrls: ['./ssh-user-settings-fingerprints.component.scss', '../ssh-user-settings.component.scss'],
-    imports: [TranslateDirective, DocumentationLinkComponent, RouterLink],
+    imports: [TranslateDirective, DocumentationLinkComponent, RouterLink, UserSettingsTitleBarTitleDirective, UserSettingsTitleBarActionsDirective],
 })
 export class SshUserSettingsFingerprintsComponent implements OnInit {
     readonly sshUserSettingsService = inject(SshUserSettingsFingerprintsService);

@@ -8,6 +8,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';
 import { Ide, ideEquals } from 'app/core/user/settings/ide-preferences/ide.model';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-ide-preferences',
@@ -25,6 +26,7 @@ import { Ide, ideEquals } from 'app/core/user/settings/ide-preferences/ide.model
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgClass,
+        UserSettingsTitleBarTitleDirective,
     ],
 })
 export class IdeSettingsComponent implements OnInit {

@@ -15,12 +15,24 @@ import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
+import { UserSettingsTitleBarActionsDirective } from 'app/core/user/settings/shared/user-settings-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-key-details.component.html',
     styleUrls: ['../../user-settings.scss', '../ssh-user-settings.component.scss'],
-    imports: [TranslateDirective, DocumentationLinkComponent, FormsModule, FormDateTimePickerComponent, ButtonComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        DocumentationLinkComponent,
+        FormsModule,
+        FormDateTimePickerComponent,
+        ButtonComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        UserSettingsTitleBarTitleDirective,
+        UserSettingsTitleBarActionsDirective,
+    ],
 })
 export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     private sshUserSettingsService = inject(SshUserSettingsService);

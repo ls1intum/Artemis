@@ -1,7 +1,11 @@
-<div class="d-flex justify-content-between">
-    <h2 jhiTranslate="artemisApp.userSettings.categories.externalLLMUsage"></h2>
-</div>
-<hr />
+<h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.categories.externalLLMUsage"></h5>
+<ng-template userSettingsTitleBarActions>
+    @if (externalLLMUsageAccepted()) {
+        <button type="button" class="btn btn-secondary btn-sm" (click)="updateExternalLLMUsageConsent(false)" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
+    } @else {
+        <button type="button" class="btn btn-primary btn-sm" (click)="updateExternalLLMUsageConsent(true)" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
+    }
+</ng-template>
 
 <div class="row align-items-center">
     <span jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></span>

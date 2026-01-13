@@ -1,7 +1,16 @@
 {
     "artemisApp": {
         "userSettings": {
+            "title": "Benutzereinstellungen",
             "saveChanges": "Änderungen speichern",
+            "collapseMenu": "Menü einklappen",
+            "expandMenu": "Menü ausklappen",
+            "groups": {
+                "profileAndAccount": "Profil & Konto",
+                "security": "Sicherheit",
+                "preferences": "Einstellungen",
+                "privacy": "Datenschutz"
+            },
             "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
             "userSettings": "Benutzereinstellungen",
             "sshSettings": "SSH",
@@ -89,6 +98,7 @@
                 "addSuccess": "Neues VCS-Zugriffstoken erfolgreich erstellt",
                 "vcsAccessToken": "VCS-Zugriffstoken",
                 "expiryDate": "Ablaufdatum",
+                "invalidExpiryDate": "Bitte wähle ein Datum in der Zukunft und innerhalb eines Jahres ab heute.",
                 "actions": "Aktionen"
             },
             "passkeySettingsPage": {

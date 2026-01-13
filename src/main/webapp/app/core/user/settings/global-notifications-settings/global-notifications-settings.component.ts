@@ -10,6 +10,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
 
 export const GLOBAL_NOTIFICATION_TYPES = {
     NEW_LOGIN: 'NEW_LOGIN',
@@ -28,7 +29,7 @@ interface NotificationTypeLink {
 
 @Component({
     selector: 'jhi-email-notifications-settings',
-    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink, UserSettingsTitleBarTitleDirective],
     templateUrl: './global-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })

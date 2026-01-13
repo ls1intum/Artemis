@@ -14,6 +14,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-account-information',
@@ -31,6 +32,7 @@ import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-
         NgbDropdownButtonItem,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        UserSettingsTitleBarTitleDirective,
     ],
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {

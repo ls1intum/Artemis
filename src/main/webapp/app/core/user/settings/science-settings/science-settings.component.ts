@@ -11,6 +11,8 @@ import { UserSettingsDirective } from 'app/core/user/settings/directive/user-set
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
+import { UserSettingsTitleBarActionsDirective } from 'app/core/user/settings/shared/user-settings-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-science-settings',
@@ -22,6 +24,8 @@ import { ScienceSetting } from 'app/core/user/settings/science-settings/science-
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ArtemisTranslatePipe,
+        UserSettingsTitleBarTitleDirective,
+        UserSettingsTitleBarActionsDirective,
     ],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {

@@ -1,7 +1,16 @@
 {
     "artemisApp": {
         "userSettings": {
+            "title": "User Settings",
             "saveChanges": "Save Changes",
+            "collapseMenu": "Collapse menu",
+            "expandMenu": "Expand menu",
+            "groups": {
+                "profileAndAccount": "Profile & Account",
+                "security": "Security",
+                "preferences": "Preferences",
+                "privacy": "Privacy & Data"
+            },
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
             "sshSettings": "SSH",
@@ -50,7 +59,7 @@
                 "learnMore": "Learn more about SSH keys",
                 "alreadyHaveKey": "Already have a key? Copy your key to the clipboard:",
                 "back": "Back",
-                "keysTablePageTitle": "SSH keys",
+                "keysTablePageTitle": "SSH Keys",
                 "keys": "Keys",
                 "actions": "Actions",
                 "label": "Label",
@@ -89,6 +98,7 @@
                 "addSuccess": "Successfully created a new VCS access token",
                 "vcsAccessToken": "VCS Access Token",
                 "expiryDate": "Expiry Date",
+                "invalidExpiryDate": "Please select a date in the future and within one year from today.",
                 "actions": "Actions"
             },
             "passkeySettingsPage": {

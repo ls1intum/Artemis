@@ -1,67 +1,30 @@
-<div class="container module-bg p-3 mb-5 rounded rounded-3">
-    <div class="row">
-        <div class="col-lg-3 col-sm-12">
-            <!-- profile header -->
-            <div class="d-flex flex-column">
-                @if (currentUser && currentUser.imageUrl) {
-                    <img class="user-settings-container-profile-picture rounded-3" [src]="addPublicFilePrefix(currentUser.imageUrl)" alt="User Profile Picture" />
-                } @else {
-                    <fa-icon id="avatar" size="3x" [icon]="faUser" />
-                }
-                @if (currentUser) {
-                    <div>
-                        @if (currentUser.name) {
-                            <span id="user-header">{{ currentUser.name }}</span>
-                        }
-                        <br />
-                        <span id="login">{{ currentUser.login }}</span>
+<div class="sidebar-wrapper">
+    <div class="vw-100 bg-body">
+        <mat-sidenav-container
+            class="vw-100"
+            [ngClass]="{
+                'container-closed': isNavbarCollapsed(),
+            }"
+        >
+            <mat-sidenav disableClose class="module-bg rounded-3" [opened]="true" mode="side">
+                <jhi-user-settings-sidebar
+                    [isNavbarCollapsed]="isNavbarCollapsed()"
+                    [currentUser]="currentUser"
+                    [isPasskeyEnabled]="isPasskeyEnabled()"
+                    [isAtLeastTutor]="isAtLeastTutor()"
+                    [isUsingExternalLLM]="isUsingExternalLLM()"
+                    (toggleCollapseState)="toggleCollapseState()"
+                />
+            </mat-sidenav>
+
+            <mat-sidenav-content>
+                <div class="settings-content-wrapper ms-2">
+                    <jhi-user-settings-title-bar />
+                    <div class="settings-body-container module-bg rounded-3 scrollable-content p-3">
+                        <router-outlet />
                     </div>
-                }
-            </div>
-            <!-- links to the different settings -->
-            <section id="navigation-bar" class="list-group d-block pt-2">
-                <span class="list-group-item disabled fw-bold" jhiTranslate="artemisApp.userSettings.userSettings"></span>
-                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.accountInformation"></a>
-                @if (isUsingExternalLLM) {
-                    <a
-                        class="list-group-item btn btn-outline-primary"
-                        routerLink="external-data"
-                        routerLinkActive="active"
-                        jhiTranslate="artemisApp.userSettings.externalLLMUsage"
-                    ></a>
-                }
-                <a class="list-group-item btn btn-outline-primary" routerLink="profile" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.learnerProfile"></a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.scienceSettings"></a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="ssh" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
-                @if (isAtLeastTutor) {
-                    <a
-                        class="list-group-item btn btn-outline-primary"
-                        routerLink="vcs-token"
-                        routerLinkActive="active"
-                        jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
-                    >
-                    </a>
-                }
-                @if (isPasskeyEnabled) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="passkeys" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.passkeys"></a>
-                }
-                <a class="list-group-item btn btn-outline-primary" routerLink="ide-preferences" routerLinkActive="active">
-                    <!--Default IDE Settings-->
-                    <span jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></span>
-                </a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">
-                    <span jhiTranslate="artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS"></span>
-                </a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="quiz-training" routerLinkActive="active">
-                    <span jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"></span>
-                </a>
-            </section>
-        </div>
-        <!-- the currently opened settings -->
-        <div class="col-lg-8 col-sm-12">
-            <section id="current-settings">
-                <router-outlet />
-            </section>
-        </div>
+                </div>
+            </mat-sidenav-content>
+        </mat-sidenav-container>
     </div>
 </div>

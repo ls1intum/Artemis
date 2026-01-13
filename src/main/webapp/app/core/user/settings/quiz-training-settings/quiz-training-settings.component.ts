@@ -7,11 +7,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-quiz-training-settings',
     templateUrl: './quiz-training-settings.component.html',
-    imports: [TranslateDirective, FormsModule, TooltipModule, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, TooltipModule, HelpIconComponent, UserSettingsTitleBarTitleDirective],
 })
 export class QuizTrainingSettingsComponent implements OnInit {
     quizService = inject(QuizTrainingSettingsService);

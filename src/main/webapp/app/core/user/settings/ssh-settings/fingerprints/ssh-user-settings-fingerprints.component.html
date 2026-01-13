@@ -1,4 +1,9 @@
-<h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshFingerprints"></h2>
+<h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshFingerprints"></h5>
+<ng-template userSettingsTitleBarActions>
+    <a class="btn rounded-btn btn-secondary btn-sm" [routerLink]="['..']">
+        <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.back"></span>
+    </a>
+</ng-template>
 
 <div class="list-group d-block">
     <!-- Viewing existing key and creating a new key -->

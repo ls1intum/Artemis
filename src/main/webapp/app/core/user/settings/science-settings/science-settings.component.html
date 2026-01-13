@@ -1,27 +1,22 @@
-<div class="d-flex justify-content-between">
-    <div>
-        <h2>
-            <!--UserSettingsCategory-->
-            {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
-        </h2>
-        <div class="d-flex userSettings-info">
-            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-            <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
-        </div>
-        @if (!featureToggleActive) {
-            <div class="d-flex mt-2 userSettings-info">
-                <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-                <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
-            </div>
-        }
-    </div>
+<h5 *userSettingsTitleBarTitle class="mb-0">{{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}</h5>
+<ng-template userSettingsTitleBarActions>
     @if (settingsChanged) {
         <button type="button" class="btn btn-primary btn-sm" (click)="this.saveSettings()">
             <fa-icon [icon]="faSave" />
             <span class="ms-1">{{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}</span>
         </button>
     }
+</ng-template>
+<div class="d-flex userSettings-info">
+    <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
+    <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
 </div>
+@if (!featureToggleActive) {
+    <div class="d-flex mt-2 userSettings-info">
+        <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
+        <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
+    </div>
+}
 @if (userSettings) {
     <div class="list-group d-block">
         @for (settingGroup of userSettings.groups; track settingGroup) {

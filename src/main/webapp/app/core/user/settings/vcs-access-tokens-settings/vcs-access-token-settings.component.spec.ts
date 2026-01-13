@@ -14,6 +14,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/core/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { UserSettingsTitleBarService } from 'app/core/user/settings/shared/user-settings-title-bar.service';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
@@ -40,6 +41,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: DialogService, useClass: MockDialogService },
+                UserSettingsTitleBarService,
                 provideHttpClient(),
             ],
         }).compileComponents();

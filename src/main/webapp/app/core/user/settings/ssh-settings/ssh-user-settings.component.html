@@ -1,4 +1,4 @@
-<h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h2>
+<h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h5>
 @if (!isLoading) {
     <div class="list-group d-block">
         <div class="list-group-item">
@@ -56,25 +56,19 @@
                         }
                     </tbody>
                 </table>
-                <div class="d-flex justify-content-between align-items-center">
+                <div>
                     <a [routerLink]="['fingerprints']" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprints"></a>
-                    <a class="btn btn-primary btn-sm" data-testid="addNewSshKeyButton" [routerLink]="['add']">
-                        <fa-icon [icon]="faPlus" />
-                        <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
-                    </a>
                 </div>
             } @else {
                 <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.noKeysHaveBeenAdded"></div>
             }
         </div>
 
-        @if (keyCount === 0) {
-            <div class="list-group-item">
-                <a class="btn btn-primary btn-sm" data-testid="addNewSshKeyButton" [routerLink]="['add']">
-                    <fa-icon [icon]="faPlus" />
-                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
-                </a>
-            </div>
-        }
+        <div class="list-group-item">
+            <a class="btn btn-primary btn-sm" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+                <fa-icon [icon]="faPlus" />
+                <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
+            </a>
+        </div>
     </div>
 }

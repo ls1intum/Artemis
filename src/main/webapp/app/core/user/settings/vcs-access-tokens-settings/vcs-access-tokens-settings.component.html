@@ -1,4 +1,4 @@
-<h2 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h2>
+<h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h5>
 @if (currentUser) {
     <div class="list-group d-block">
         <div class="list-group-item">
@@ -55,17 +55,15 @@
             </div>
             @if (!this.currentUser?.vcsAccessToken) {
                 <div class="list-group-item">
-                    <div class="btn-group" role="group" aria-label="Actions">
-                        <jhi-button
-                            class="d-flex"
-                            id="add-new-token-button"
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faPlus"
-                            [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
-                            (onClick)="addNewVcsAccessToken()"
-                        />
-                    </div>
+                    <jhi-button
+                        class="d-flex"
+                        id="add-new-token-button"
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faPlus"
+                        [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
+                        (onClick)="addNewVcsAccessToken()"
+                    />
                 </div>
             }
         } @else {
@@ -83,6 +81,9 @@
                             name="expiryDate"
                             id="expiryDate"
                         />
+                        @if (!!expiryDate && !validExpiryDate) {
+                            <div class="text-danger small mt-1" jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.invalidExpiryDate"></div>
+                        }
                     </div>
                 </div>
 

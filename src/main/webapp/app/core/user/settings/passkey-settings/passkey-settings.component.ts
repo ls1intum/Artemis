@@ -19,6 +19,7 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { BadgeModule } from 'primeng/badge';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -38,6 +39,7 @@ export interface DisplayedPasskey extends PasskeyDTO {
         CustomMaxLengthDirective,
         BadgeModule,
         ArtemisTranslatePipe,
+        UserSettingsTitleBarTitleDirective,
     ],
     templateUrl: './passkey-settings.component.html',
     styleUrls: ['../user-settings.scss'],

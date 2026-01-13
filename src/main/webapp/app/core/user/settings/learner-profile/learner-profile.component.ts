@@ -7,12 +7,14 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { captureException } from '@sentry/angular';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InsightsLearnerProfileComponent } from 'app/core/user/settings/learner-profile/insights-learner-profile/insights-learner-profile.component';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learner-profile',
     templateUrl: './learner-profile.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [CourseLearnerProfileComponent, FeedbackLearnerProfileComponent, InsightsLearnerProfileComponent],
+    imports: [CourseLearnerProfileComponent, FeedbackLearnerProfileComponent, InsightsLearnerProfileComponent, UserSettingsTitleBarTitleDirective, TranslateDirective],
 })
 export class LearnerProfileComponent implements OnInit {
     private readonly learnerProfileAPIService = inject(LearnerProfileApiService);

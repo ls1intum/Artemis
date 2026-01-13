@@ -15,12 +15,14 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 import { RouterLink } from '@angular/router';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
+import { UserSettingsTitleBarActionsDirective } from 'app/core/user/settings/shared/user-settings-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe, RouterLink],
+    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe, RouterLink, UserSettingsTitleBarTitleDirective, UserSettingsTitleBarActionsDirective],
 })
 export class AccountInformationComponent {
     protected readonly faPen = faPencil;

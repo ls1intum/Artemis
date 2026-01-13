@@ -4,10 +4,12 @@ import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { UserSettingsTitleBarTitleDirective } from 'app/core/user/settings/shared/user-settings-title-bar-title.directive';
+import { UserSettingsTitleBarActionsDirective } from 'app/core/user/settings/shared/user-settings-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-external-llm-usage-settings',
-    imports: [TranslateDirective, ArtemisDatePipe],
+    imports: [TranslateDirective, ArtemisDatePipe, UserSettingsTitleBarTitleDirective, UserSettingsTitleBarActionsDirective],
     templateUrl: './external-llm-usage-settings.component.html',
 })
 export class ExternalLlmUsageSettingsComponent implements OnInit {

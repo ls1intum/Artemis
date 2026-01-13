@@ -1,4 +1,4 @@
-<h2 jhiTranslate="artemisApp.userSettings.passkeys"></h2>
+<h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.passkeys"></h5>
 @if (currentUser()) {
     <div class="list-group d-block">
         <div class="list-group-item">
@@ -108,17 +108,15 @@
         </div>
 
         <div class="list-group-item">
-            <div class="btn-group" role="group" aria-label="Actions">
-                <jhi-button
-                    class="d-flex"
-                    id="add-new-token-button"
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.SMALL"
-                    [icon]="faPlus"
-                    [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
-                    (onClick)="addPasskey()"
-                />
-            </div>
+            <jhi-button
+                class="d-flex"
+                id="add-new-passkey-button"
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.SMALL"
+                [icon]="faPlus"
+                [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
+                (onClick)="addPasskey()"
+            />
         </div>
     </div>
 }

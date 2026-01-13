@@ -1,11 +1,30 @@
 @if (isLoading) {
-    <h2 jhiTranslate="artemisApp.userSettings.sshSettings"></h2>
+    <h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.sshSettings"></h5>
 } @else {
     @if (!isCreateMode) {
-        <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h2>
+        <h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h5>
     } @else {
-        <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h2>
+        <h5 *userSettingsTitleBarTitle class="mb-0" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h5>
     }
+    <ng-template userSettingsTitleBarActions>
+        @if (isCreateMode) {
+            <jhi-button
+                [disabled]="!(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid) || selectedOption !== 'useExpiration'))"
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.SMALL"
+                [icon]="faSave"
+                [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
+                (onClick)="saveSshKey()"
+                data-testid="saveSshKeyButtonTitleBar"
+            />
+        }
+        <jhi-button
+            [btnType]="ButtonType.SECONDARY"
+            [btnSize]="ButtonSize.SMALL"
+            [title]="isCreateMode ? 'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey' : 'artemisApp.userSettings.sshSettingsPage.back'"
+            (onClick)="goBack()"
+        />
+    </ng-template>
 
     <div class="list-group d-block">
         <!-- Viewing existing key and creating a new key -->
