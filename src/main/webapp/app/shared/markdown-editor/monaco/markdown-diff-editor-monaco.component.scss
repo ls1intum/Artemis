@@ -58,10 +58,28 @@
         flex: 1 1 auto;
         min-height: 0;
         width: 100%;
+        position: relative;
+        overflow: hidden;
 
-        .monaco-editor {
+        /* Ensure the embedded diff editor component fills the container */
+        jhi-monaco-diff-editor {
+            display: block;
             width: 100%;
             height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .diff-editor-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .monaco-editor,
+        .monaco-diff-editor {
+            width: 100% !important;
+            height: 100% !important;
         }
     }
 }

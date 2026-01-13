@@ -81,6 +81,7 @@ import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
+import { MarkdownEditorToolbarService } from 'app/shared/markdown-editor/service/markdown-editor-toolbar.service';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -154,6 +155,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly translateService = inject(TranslateService);
+    private readonly toolbarService = inject(MarkdownEditorToolbarService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -319,18 +321,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         meta: [],
     };
 
-    readonly colorToClassMap = new Map<string, string>([
-        ['#ca2024', 'red'],
-        ['#3ea119', 'green'],
-        ['#ffffff', 'white'],
-        ['#000000', 'black'],
-        ['#fffa5c', 'yellow'],
-        ['#0d3cc2', 'blue'],
-        ['#b05db8', 'lila'],
-        ['#d86b1f', 'orange'],
-    ]);
+    // Use shared service for color configuration
+    get colorToClassMap() {
+        return this.toolbarService.colorToClassMap;
+    }
 
-    colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    colorSignal: Signal<string[]> = computed(() => this.toolbarService.getColors());
     allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = 'editor_edit';
@@ -401,11 +397,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     filterDisplayedActions<T extends TextEditorAction>(actions: T[]): T[] {
-        return actions.filter((action) => !action.hideInEditor);
+        return this.toolbarService.filterDisplayedActions(actions);
     }
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
-        return action?.hideInEditor ? undefined : action;
+        return this.toolbarService.filterDisplayedAction(action);
     }
 
     /**

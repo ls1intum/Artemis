@@ -85,10 +85,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     exerciseTestCases: string[] = [];
 
-    constructor() {
-        // Empty constructor - inline comment effects removed
-    }
-
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new TestCaseAction();
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
@@ -202,10 +198,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
-    /**
-     * Cleanup when component is destroyed.
-     * Closes all active inline comment widgets to prevent stale state.
-     */
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -225,10 +217,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             setTimeout(() => this.generateHtmlSubject.next(), 0);
         }
     }
-
-    /**
-     * Sets up the gutter hover button (+) for adding inline comments.
-     */
 
     /** Save the problem statement on the server.
      * @param event

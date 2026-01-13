@@ -14,6 +14,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
+import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { MarkdownEditorHeight } from './markdown-editor-monaco.component';
 import * as monaco from 'monaco-editor';
 
 describe('MarkdownDiffEditorMonacoComponent', () => {
@@ -22,6 +24,7 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
     let mockDiffEditor: jest.Mocked<monaco.editor.IStandaloneDiffEditor>;
     let mockOriginalEditor: jest.Mocked<monaco.editor.IStandaloneCodeEditor>;
     let mockModifiedEditor: jest.Mocked<monaco.editor.IStandaloneCodeEditor>;
+    let mockDiffEditorComponent: Partial<MonacoDiffEditorComponent>;
 
     beforeEach(() => {
         // Mock ResizeObserver which is not available in Jest environment
@@ -38,6 +41,7 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
             onDidChangeHiddenAreas: jest.fn().mockReturnValue({ dispose: jest.fn() }),
             getContentHeight: jest.fn().mockReturnValue(100),
             getScrollHeight: jest.fn().mockReturnValue(100),
+            getModel: jest.fn().mockReturnValue(null),
         } as any;
 
         mockModifiedEditor = {
@@ -74,6 +78,19 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
             getLineChanges: jest.fn().mockReturnValue([]),
         } as any;
 
+        // Create mock MonacoDiffEditorComponent
+        mockDiffEditorComponent = {
+            setFileContents: jest.fn(),
+            getText: jest.fn().mockReturnValue({ original: '', modified: '' }),
+            getModifiedEditor: jest.fn().mockReturnValue(mockModifiedEditor),
+            getOriginalEditor: jest.fn().mockReturnValue(mockOriginalEditor),
+            getDiffEditor: jest.fn().mockReturnValue(mockDiffEditor),
+            getLineChanges: jest.fn().mockReturnValue([]),
+            fillContainer: jest.fn(),
+            layout: jest.fn(),
+            monacoDiffEditorContainerElement: document.createElement('div'),
+        };
+
         const mockMonacoEditorService = {
             createStandaloneDiffEditor: jest.fn().mockReturnValue(mockDiffEditor),
         };
@@ -86,10 +103,12 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
                 provideHttpClientTesting(),
             ],
             imports: [MarkdownDiffEditorMonacoComponent, DragDropModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
-        }).overrideComponent(MarkdownDiffEditorMonacoComponent, {
-            remove: { imports: [ColorSelectorComponent] },
-            add: { imports: [MockComponent(ColorSelectorComponent)] },
-        });
+        })
+            .overrideComponent(MarkdownDiffEditorMonacoComponent, {
+                remove: { imports: [ColorSelectorComponent, MonacoDiffEditorComponent] },
+                add: { imports: [MockComponent(ColorSelectorComponent), MockComponent(MonacoDiffEditorComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(MarkdownDiffEditorMonacoComponent);
         comp = fixture.componentInstance;
@@ -104,32 +123,36 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
     });
 
     it('should initialize with default values', () => {
-        expect(comp.targetWrapperHeight).toBe(300);
-        expect(comp.minWrapperHeight).toBe(200);
+        // Default is now MarkdownEditorHeight.MEDIUM (500)
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
+        expect(comp.minWrapperHeight).toBe(MarkdownEditorHeight.SMALL);
         expect(comp.isResizing).toBeFalse();
     });
 
-    it('should set file contents and create models', () => {
+    it('should set file contents via embedded component', () => {
         const originalText = '# Original';
         const modifiedText = '# Modified';
         const originalFileName = 'original.md';
         const modifiedFileName = 'modified.md';
 
-        const createModelSpy = jest.spyOn(monaco.editor, 'createModel');
-
         fixture.detectChanges();
+
+        // Mock the diffEditorComponent viewChild
+        jest.spyOn(comp, 'diffEditorComponent').mockReturnValue(mockDiffEditorComponent as MonacoDiffEditorComponent);
+
         comp.setFileContents(originalText, modifiedText, originalFileName, modifiedFileName);
 
-        expect(createModelSpy).toHaveBeenCalledTimes(2);
-        expect(mockDiffEditor.setModel).toHaveBeenCalledWith({
-            original: expect.any(Object),
-            modified: expect.any(Object),
-        });
+        expect(mockDiffEditorComponent.setFileContents).toHaveBeenCalledWith(originalText, modifiedText, originalFileName, modifiedFileName);
     });
 
-    it('should get text from both editors', () => {
-        mockOriginalEditor.getValue.mockReturnValue('original text');
-        mockModifiedEditor.getValue.mockReturnValue('modified text');
+    it('should get text from embedded component', () => {
+        (mockDiffEditorComponent.getText as jest.Mock).mockReturnValue({
+            original: 'original text',
+            modified: 'modified text',
+        });
+
+        fixture.detectChanges();
+        jest.spyOn(comp, 'diffEditorComponent').mockReturnValue(mockDiffEditorComponent as MonacoDiffEditorComponent);
 
         const result = comp.getText();
 
@@ -137,6 +160,15 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
             original: 'original text',
             modified: 'modified text',
         });
+    });
+
+    it('should return empty text when diffEditorComponent is not available', () => {
+        fixture.detectChanges();
+        jest.spyOn(comp, 'diffEditorComponent').mockReturnValue(undefined);
+
+        const result = comp.getText();
+
+        expect(result).toEqual({ original: '', modified: '' });
     });
 
     it('should limit the vertical drag position based on input values', () => {
@@ -153,12 +185,12 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
     it('should adjust wrapper height when resized manually', () => {
         const wrapperTop = 100;
         const dragElemHeight = 20;
-        const pointerY = 300;
+        const pointerY = 400;
         const expectedHeight = pointerY - wrapperTop - dragElemHeight / 2;
 
         fixture.componentRef.setInput('resizableMinHeight', 100);
 
-        comp.targetWrapperHeight = 400;
+        comp.targetWrapperHeight = 500;
 
         const cdkDragMove = {
             source: { reset: jest.fn(), element: { nativeElement: { clientHeight: dragElemHeight } } },
@@ -171,7 +203,6 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         comp.onResizeMoved(cdkDragMove);
 
         expect(comp.targetWrapperHeight).toBe(expectedHeight);
-        expect(mockDiffEditor.layout).toHaveBeenCalled();
         expect(cdkDragMove.source.reset).toHaveBeenCalled();
     });
 
@@ -195,6 +226,8 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         const runSpy = jest.spyOn(action, 'run');
 
         fixture.detectChanges();
+        jest.spyOn(comp, 'diffEditorComponent').mockReturnValue(mockDiffEditorComponent as MonacoDiffEditorComponent);
+
         comp.executeAction(action);
 
         expect(runSpy).toHaveBeenCalledWith(expect.any(Object));
@@ -206,6 +239,8 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         const value = { id: 'test', value: 'Test Case' };
 
         fixture.detectChanges();
+        jest.spyOn(comp, 'diffEditorComponent').mockReturnValue(mockDiffEditorComponent as MonacoDiffEditorComponent);
+
         comp.executeDomainAction(action, value);
 
         expect(runSpy).toHaveBeenCalledWith(expect.any(Object), { selectedItem: value });
@@ -230,11 +265,12 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         fixture.componentRef.setInput('colorAction', colorAction);
 
         fixture.detectChanges();
+        jest.spyOn(comp, 'diffEditorComponent').mockReturnValue(mockDiffEditorComponent as MonacoDiffEditorComponent);
 
         const color = '#ca2024';
         comp.onSelectColor(color);
 
-        expect(runSpy).toHaveBeenCalledWith(expect.any(Object), { color: '#ca2024' });
+        expect(runSpy).toHaveBeenCalledWith(expect.any(Object), { color: 'red' });
     });
 
     it('should pass fullscreen element to fullscreen action', () => {
@@ -246,53 +282,6 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         expect(fullscreenAction.element).toBe(comp.fullElement().nativeElement);
     });
 
-    it('should update editor options when allowSplitView changes', () => {
-        fixture.componentRef.setInput('allowSplitView', false);
-        fixture.detectChanges();
-
-        expect(mockDiffEditor.updateOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                renderSideBySide: false,
-            }),
-        );
-    });
-
-    it('should layout editor after view init', () => {
-        fixture.detectChanges();
-
-        expect(mockDiffEditor.layout).toHaveBeenCalledWith({
-            width: expect.any(Number),
-            height: expect.any(Number),
-        });
-    });
-
-    it('should adjust container height', () => {
-        const newHeight = 500;
-
-        fixture.detectChanges();
-        comp.adjustContainerHeight(newHeight);
-
-        expect(comp.monacoDiffEditorContainerElement.style.height).toBe(`${newHeight}px`);
-        expect(mockDiffEditor.layout).toHaveBeenCalled();
-    });
-
-    it('should get maximum content height from both editors', () => {
-        mockOriginalEditor.getScrollHeight.mockReturnValue(300);
-        mockModifiedEditor.getScrollHeight.mockReturnValue(500);
-
-        const maxHeight = comp.getMaximumContentHeight();
-
-        expect(maxHeight).toBe(500);
-    });
-
-    it('should get content height of specific editor', () => {
-        mockOriginalEditor.getScrollHeight.mockReturnValue(400);
-
-        const height = comp.getContentHeightOfEditor(mockOriginalEditor);
-
-        expect(height).toBe(400);
-    });
-
     it('should dispose listeners on destroy', () => {
         const disposeSpy = jest.fn();
         comp.listeners = [{ dispose: disposeSpy }, { dispose: disposeSpy }];
@@ -302,40 +291,14 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         expect(disposeSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('should not auto-adjust height when resize is enabled', () => {
-        fixture.componentRef.setInput('enableResize', true);
-        fixture.detectChanges();
-
-        const adjustSpy = jest.spyOn(comp, 'adjustContainerHeight');
-
-        // Trigger diff update (which would normally adjust height)
-        const diffCallback = (mockDiffEditor.onDidUpdateDiff as jest.Mock).mock.calls[0][0];
-        diffCallback();
-
-        expect(adjustSpy).not.toHaveBeenCalled();
-    });
-
-    it('should auto-adjust height when resize is disabled', () => {
-        fixture.componentRef.setInput('enableResize', false);
-        fixture.detectChanges();
-
-        const adjustSpy = jest.spyOn(comp, 'adjustContainerHeight');
-
-        // Trigger diff update
-        const diffCallback = (mockDiffEditor.onDidUpdateDiff as jest.Mock).mock.calls[0][0];
-        diffCallback();
-
-        expect(adjustSpy).toHaveBeenCalled();
-    });
-
     it('should update height from input signals in ngAfterViewInit', () => {
-        fixture.componentRef.setInput('initialEditorHeight', 400);
-        fixture.componentRef.setInput('resizableMinHeight', 150);
+        fixture.componentRef.setInput('initialEditorHeight', 600);
+        fixture.componentRef.setInput('resizableMinHeight', 250);
 
         fixture.detectChanges();
 
-        expect(comp.targetWrapperHeight).toBe(400);
-        expect(comp.minWrapperHeight).toBe(150);
+        expect(comp.targetWrapperHeight).toBe(600);
+        expect(comp.minWrapperHeight).toBe(250);
     });
 
     it('should compute element client height', () => {
@@ -358,38 +321,49 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         expect(comp.domainActionsWithOptions()).toContain(actionWithOptions);
     });
 
-    it('should dispose diff editor on destroy', () => {
-        fixture.detectChanges();
+    it('should emit onDiffEditorReady event', () => {
+        const emitSpy = jest.spyOn(comp.onReadyForDisplayChange, 'emit');
+        const event = { ready: true, lineChange: { addedLineCount: 5, removedLineCount: 3 } };
 
-        comp.ngOnDestroy();
+        comp.onDiffEditorReady(event);
 
-        expect(mockDiffEditor.dispose).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledWith(event);
     });
 
-    it('should calculate maximum height based on both editors', () => {
-        mockOriginalEditor.getScrollHeight.mockReturnValue(200);
-        mockModifiedEditor.getScrollHeight.mockReturnValue(300);
-
-        const maxHeight = comp.getMaximumContentHeight();
-
-        expect(maxHeight).toBe(300);
-    });
-
-    it('should return original editor scroll height when higher than modified', () => {
-        mockOriginalEditor.getScrollHeight.mockReturnValue(600);
-        mockModifiedEditor.getScrollHeight.mockReturnValue(400);
-
-        const maxHeight = comp.getMaximumContentHeight();
-
-        expect(maxHeight).toBe(600);
-    });
-
-    it('should call diffEditor dispose even if not initialized', () => {
+    it('should not throw when destroy is called without initialization', () => {
         // Create fresh component without initializing
         const newFixture = TestBed.createComponent(MarkdownDiffEditorMonacoComponent);
         const newComp = newFixture.componentInstance;
 
         // Should not throw when destroy is called without initialization
         expect(() => newComp.ngOnDestroy()).not.toThrow();
+    });
+
+    it('should have correct initial input values', () => {
+        expect(comp.allowSplitView()).toBeTrue();
+        expect(comp.enableResize()).toBeTrue();
+        expect(comp.fillHeight()).toBeFalse();
+        expect(comp.readOnly()).toBeFalse();
+        expect(comp.initialEditorHeight()).toBe(MarkdownEditorHeight.MEDIUM);
+        expect(comp.resizableMinHeight()).toBe(MarkdownEditorHeight.SMALL);
+        expect(comp.resizableMaxHeight()).toBe(MarkdownEditorHeight.LARGE);
+    });
+
+    it('should return correct host bindings when fillHeight is true', () => {
+        fixture.componentRef.setInput('fillHeight', true);
+        fixture.detectChanges();
+
+        expect(comp.hostDisplay).toBe('flex');
+        expect(comp.hostFlexDirection).toBe('column');
+        expect(comp.hostHeight).toBe('100%');
+    });
+
+    it('should return null host bindings when fillHeight is false', () => {
+        fixture.componentRef.setInput('fillHeight', false);
+        fixture.detectChanges();
+
+        expect(comp.hostDisplay).toBeNull();
+        expect(comp.hostFlexDirection).toBeNull();
+        expect(comp.hostHeight).toBeNull();
     });
 });
