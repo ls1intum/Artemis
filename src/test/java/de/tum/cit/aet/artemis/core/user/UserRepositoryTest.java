@@ -54,8 +54,12 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // Should not find administrators
         List<User> unexpected = userRepository.saveAll(
                 userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
+        // Should not find super administrators
+        List<User> superAdmins = userRepository.saveAll(
+                userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
+        unexpected.addAll(superAdmins);
         // Should not find deleted users
-        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 5, 6);
+        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 6, 7);
         deleted.forEach(user -> user.setDeleted(true));
         unexpected.addAll(userRepository.saveAll(deleted));
 
@@ -90,6 +94,81 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Test with non-existent user
         assertThat(userRepository.isSuperAdmin("nonexistentuser")).isFalse();
+    }
+
+    @Test
+    void testIsAdmin() {
+        // Create a super admin user
+        userUtilService.addSuperAdmin(TEST_PREFIX);
+        User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+        // Create a regular admin user
+        User admin = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        admin.setActivated(true);
+        admin.setDeleted(false);
+        admin = userRepository.save(admin);
+
+        // Create an inactive admin user
+        User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
+        inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        inactiveAdmin.setActivated(false);
+        inactiveAdmin = userRepository.save(inactiveAdmin);
+
+        // Create a regular user
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
+
+        // Test that both super admin and regular admin are correctly identified as admin
+        assertThat(userRepository.isAdmin(superAdmin.getLogin())).isTrue();
+        assertThat(userRepository.isAdmin(admin.getLogin())).isTrue();
+
+        // Test that inactive admin is not identified as admin
+        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isFalse();
+
+        // Test that regular user is not identified as admin
+        assertThat(userRepository.isAdmin(regularUser.getLogin())).isFalse();
+
+        // Test with non-existent user
+        assertThat(userRepository.isAdmin("nonexistentuser")).isFalse();
+    }
+
+    @Test
+    void testFindAllActiveAdminLogins() {
+        // Create a super admin user
+        userUtilService.addSuperAdmin(TEST_PREFIX);
+        User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+        // Create regular admin users
+        List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 1,
+                2);
+        admins = userRepository.saveAll(admins);
+
+        // Create an inactive admin user (should not be included)
+        User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
+        inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        inactiveAdmin.setActivated(false);
+        inactiveAdmin = userRepository.save(inactiveAdmin);
+
+        // Create a deleted admin user (should not be included)
+        User deletedAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedadmin");
+        deletedAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        deletedAdmin.setActivated(true);
+        deletedAdmin.setDeleted(true);
+        deletedAdmin = userRepository.save(deletedAdmin);
+
+        // Create a regular user (should not be included)
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
+
+        final Set<String> actual = userRepository.findAllActiveAdminLogins();
+
+        // Should contain both super admin and regular admins
+        assertThat(actual).contains(superAdmin.getLogin());
+        assertThat(actual).containsAll(admins.stream().map(User::getLogin).toList());
+
+        // Should not contain inactive, deleted, or regular users
+        assertThat(actual).doesNotContain(inactiveAdmin.getLogin());
+        assertThat(actual).doesNotContain(deletedAdmin.getLogin());
+        assertThat(actual).doesNotContain(regularUser.getLogin());
     }
 
     @Test
