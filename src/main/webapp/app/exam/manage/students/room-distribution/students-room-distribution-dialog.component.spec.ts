@@ -45,7 +45,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FaIconComponent, FormsModule],
-            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key), MockComponent(HelpIconComponent)],
+            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(HttpClient),
