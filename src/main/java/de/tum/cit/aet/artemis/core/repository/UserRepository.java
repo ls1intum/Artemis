@@ -155,6 +155,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT new de.tum.cit.aet.artemis.core.dto.UserRoleDTO(user.id, user.login,
                    CASE
                        WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
+                       WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
                        WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'
                        WHEN course.editorGroupName MEMBER OF user.groups THEN 'TUTOR'
                        WHEN course.teachingAssistantGroupName MEMBER OF user.groups THEN 'TUTOR'
@@ -772,6 +773,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.groups IS EMPTY AND NOT user.deleted
                 AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
@@ -1119,7 +1121,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
-            WHERE :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            WHERE (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 AND user.activated = TRUE
                 AND user.deleted = FALSE
             """)
@@ -1129,7 +1132,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT COUNT(user) > 0
             FROM User user
             WHERE user.login = :login
-                AND :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAdmin(@Param("login") String login);
 
