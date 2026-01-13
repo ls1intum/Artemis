@@ -577,7 +577,7 @@ public class GitService extends AbstractGitService {
             setRemoteUrl(repo);
 
             if (areLocalAndRemoteBranchesDivergent(repo, git)) {
-                throw new WrongRepositoryStateException("Working tree contains uncommited changes that conflict with remote HEAD.");
+                throw new WrongRepositoryStateException("Working tree contains uncommitted changes that conflict with remote HEAD.");
             }
 
             return pullCommand(git).call();
