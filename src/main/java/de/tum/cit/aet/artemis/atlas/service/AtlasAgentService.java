@@ -104,6 +104,8 @@ public class AtlasAgentService {
      * Thread-local storage for the session-specific ChatClient with memory advisor.
      * This ensures each request uses a single ChatClient instance with memory configured once,
      * avoiding duplicate memory advisor registrations during multi-agent delegation.
+     *
+     * @return the competency modified flag for the current request
      */
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
