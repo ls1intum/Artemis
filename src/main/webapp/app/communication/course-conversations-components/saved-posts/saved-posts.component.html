@@ -15,7 +15,7 @@
         </div>
     }
     <div class="saved-posts-post-container flex-grow">
-        @if (posts && posts.length > 0) {
+        @if (posts && posts.length > 0 && posts.length !== hiddenPosts.length) {
             @for (post of posts; track trackPostFunction($index, post)) {
                 @if (!hiddenPosts.includes(post.id!)) {
                     <jhi-posting-summary
