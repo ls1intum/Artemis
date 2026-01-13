@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.Objects;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -27,7 +23,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
 
     @EmbeddedId
     @JsonIgnore
-    protected CompetencyLectureUnitId id = new CompetencyLectureUnitId();
+    protected CompetencyLectureUnitId id;
 
     @JsonIgnoreProperties("competencyLinks")
     @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
@@ -61,43 +57,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     }
 
     @Embeddable
-    public static class CompetencyLectureUnitId implements Serializable {
+    public record CompetencyLectureUnitId(long lectureUnitId, long competencyId) {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private long lectureUnitId;
-
-        private long competencyId;
-
-        public CompetencyLectureUnitId() {
-            // Empty constructor for Spring
-        }
-
-        public CompetencyLectureUnitId(long lectureUnitId, long competencyId) {
-            this.lectureUnitId = lectureUnitId;
-            this.competencyId = competencyId;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof CompetencyLectureUnitId that)) {
-                return false;
-            }
-            return lectureUnitId == that.lectureUnitId && competencyId == that.competencyId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(lectureUnitId, competencyId);
-        }
-
-        @Override
-        public String toString() {
-            return "CompetencyLectureUnitId{" + "lectureUnitId=" + lectureUnitId + ", competencyId=" + competencyId + '}';
-        }
     }
 }

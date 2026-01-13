@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.domain.ide;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -100,60 +99,7 @@ public class UserIdeMapping {
     }
 
     @Embeddable
-    public static class UserIdeMappingId implements Serializable {
+    public record UserIdeMappingId(Long userId, @Column(name = "programming_language", nullable = false) @Enumerated(EnumType.STRING) ProgrammingLanguage programmingLanguage) {
 
-        private Long userId;
-
-        @Column(name = "programming_language", nullable = false)
-        @Enumerated(EnumType.STRING)
-        private ProgrammingLanguage programmingLanguage;
-
-        public UserIdeMappingId() {
-            // empty constructor for Jackson
-            // public for server tests
-        }
-
-        public UserIdeMappingId(Long userId, ProgrammingLanguage programmingLanguage) {
-            this.userId = userId;
-            this.programmingLanguage = programmingLanguage;
-        }
-
-        public Long getUserId() {
-            return userId;
-        }
-
-        public ProgrammingLanguage getProgrammingLanguage() {
-            return programmingLanguage;
-        }
-
-        public void setProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-            this.programmingLanguage = programmingLanguage;
-        }
-
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(userId, programmingLanguage);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-
-            UserIdeMappingId that = (UserIdeMappingId) obj;
-            if (userId == null || programmingLanguage == null) {
-                return false;
-            }
-
-            return userId.equals(that.userId) && programmingLanguage.equals(that.programmingLanguage);
-        }
     }
 }

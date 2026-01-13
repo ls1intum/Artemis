@@ -322,7 +322,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         plagiarismSubmissionB2.setSubmissionId(submission3.getId());
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
         plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
-        plagiarismComparison2.setMatches(Set.of(new PlagiarismMatch()));
+        plagiarismComparison2.setMatches(Set.of(new PlagiarismMatch(1, 1, 1)));
         return plagiarismComparison2;
     }
 
@@ -339,7 +339,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         plagiarismSubmissionB1.setSubmissionId(submission2.getId());
         plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
         plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
-        plagiarismComparison1.setMatches(Set.of(new PlagiarismMatch()));
+        plagiarismComparison1.setMatches(Set.of(new PlagiarismMatch(2, 2, 2)));
         return plagiarismComparison1;
     }
 

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -31,14 +29,13 @@ public class LectureUnitCompletion {
      */
     @EmbeddedId
     @JsonIgnore
-    private LectureUnitUserId id = new LectureUnitUserId();
+    private LectureUnitUserId id;
 
     @ManyToOne
     @MapsId("userId")
     @JsonIgnore
     private User user;
 
-    // TODO: double check if this could lead to issues when using learning paths
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("lectureUnitId")
     @JsonIgnore
@@ -97,32 +94,6 @@ public class LectureUnitCompletion {
      * See also <a href="https://www.baeldung.com/spring-jpa-embedded-method-parameters">...</a>
      */
     @Embeddable
-    @SuppressWarnings("unused")
-    public static class LectureUnitUserId implements Serializable {
-
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private Long userId;
-
-        private Long lectureUnitId;
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            LectureUnitUserId that = (LectureUnitUserId) obj;
-            return userId.equals(that.userId) && lectureUnitId.equals(that.lectureUnitId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(userId, lectureUnitId);
-        }
+    public record LectureUnitUserId(Long userId, Long lectureUnitId) {
     }
-
 }
