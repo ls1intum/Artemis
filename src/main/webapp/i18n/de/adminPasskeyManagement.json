@@ -10,7 +10,7 @@
             "approved": "Freigegeben",
             "yes": "Ja",
             "no": "Nein",
-            "noPasskeys": "Keine Passkeys im System gefunden.",
+            "noPasskeys": "Keine Passkeys für reguläre Administratoren (nicht Super-Admins) gefunden.",
             "toggleApproval": "Freigabestatus umschalten",
             "errors": {
                 "passkeyNotFound": "Der Passkey wurde nicht gefunden."

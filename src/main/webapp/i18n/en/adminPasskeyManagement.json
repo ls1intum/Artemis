@@ -10,7 +10,7 @@
             "approved": "Approved",
             "yes": "Yes",
             "no": "No",
-            "noPasskeys": "No passkeys found in the system.",
+            "noPasskeys": "No passkeys found for regular administrators (non-super-admins).",
             "toggleApproval": "Toggle approval status",
             "errors": {
                 "passkeyNotFound": "Passkey not found."
