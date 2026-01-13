@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component for displaying system notification details.
@@ -13,8 +14,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-system-notification-management-detail',
     templateUrl: './system-notification-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, AdminTitleBarTitleDirective],
 })
 export class SystemNotificationManagementDetailComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

@@ -4,7 +4,8 @@ import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, waitForExamEnd } from '../../support/utils';
+import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
@@ -49,7 +50,10 @@ test.describe('Exam Results', () => {
                     await login(admin);
 
                     if (testCase.exerciseType === ExerciseType.PROGRAMMING) {
-                        examEndDate = dayjs().add(1, 'minutes').add(30, 'seconds');
+                        // Programming exercises need more time for the build to complete
+                        // Use 60s to leave sufficient margin within the sequential timeout
+                        // and account for potentially slow CI build agents
+                        examEndDate = dayjs().add(60, 'seconds');
                     } else {
                         examEndDate = dayjs().add(30, 'seconds');
                     }
@@ -99,16 +103,17 @@ test.describe('Exam Results', () => {
                 test.beforeEach(
                     'Assess student submission',
                     async ({ page, login, examManagement, examAssessment, courseAssessment, exerciseAssessment, modelingExerciseAssessment, exerciseAPIRequests }) => {
+                        await waitForExamEnd(examEndDate, page);
                         switch (testCase.exerciseType) {
                             case ExerciseType.TEXT:
                                 await login(tutor);
-                                await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+                                await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
                                 await examAssessment.addNewFeedback(7, 'Good job');
                                 await examAssessment.submitTextAssessment();
                                 break;
                             case ExerciseType.MODELING:
                                 await login(tutor);
-                                await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+                                await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
                                 await modelingExerciseAssessment.addNewFeedback(5, 'Good');
                                 await modelingExerciseAssessment.openAssessmentForComponent(0);
                                 await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
@@ -170,8 +175,10 @@ test.describe('Exam Results', () => {
                 );
 
                 if (testCase.exerciseType === ExerciseType.TEXT) {
-                    test('Check exam result overview', async ({ page, login, examAPIRequests, examResultsPage }) => {
+                    // This test needs @slow tag because it runs all beforeEach hooks including assessment
+                    test('Check exam result overview', { tag: '@slow' }, async ({ page, login, examAPIRequests, examResultsPage }) => {
                         await login(studentOne);
+                        await waitForExamEnd(examEndDate, page);
                         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
                         const gradeSummary = await examAPIRequests.getGradeSummary(exam, studentExam);
                         await examResultsPage.checkGradeSummary(gradeSummary);
@@ -200,11 +207,4 @@ async function startAssessing(
     await exerciseAssessment.clickHaveReadInstructionsButton();
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
-}
-
-async function waitForExamEnd(examEndDate: dayjs.Dayjs, page: Page) {
-    if (examEndDate > dayjs()) {
-        const timeToWait = examEndDate.diff(dayjs());
-        await page.waitForTimeout(timeToWait);
-    }
 }

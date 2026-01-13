@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/core/admin/logs/log.model';
 import { LogsService } from 'app/core/admin/logs/logs.service';
@@ -8,6 +8,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, SlicePipe } from '@angular/common';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Component for managing application log levels.
@@ -17,8 +18,7 @@ import { NgClass, SlicePipe } from '@angular/common';
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
     styleUrls: ['./logs.component.scss'],
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe, AdminTitleBarTitleDirective],
 })
 export class LogsComponent implements OnInit {
     private readonly logsService = inject(LogsService);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +9,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Form structure for system notification editing.
@@ -30,8 +31,7 @@ interface SystemNotificationForm {
 @Component({
     selector: 'jhi-system-notification-management-update',
     templateUrl: './system-notification-management-update.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     private readonly systemNotificationService = inject(AdminSystemNotificationService);

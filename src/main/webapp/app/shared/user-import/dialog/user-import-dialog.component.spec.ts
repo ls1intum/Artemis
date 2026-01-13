@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -21,6 +20,7 @@ import { Router } from '@angular/router';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
+import { DialogModule } from 'primeng/dialog';
 
 describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -35,10 +35,8 @@ describe('UsersImportDialogComponent', () => {
     const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'user-import');
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent],
-            declarations: [UsersImportDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
+            imports: [FormsModule, FaIconComponent, UsersImportDialogComponent],
             providers: [
-                MockProvider(NgbActiveModal),
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
                 MockProvider(HttpClient),
@@ -48,19 +46,43 @@ describe('UsersImportDialogComponent', () => {
                 MockProvider(Router),
             ],
         })
+            .overrideComponent(UsersImportDialogComponent, {
+                set: {
+                    imports: [FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent), FaIconComponent, DialogModule],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UsersImportDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
 
-                component.courseId = course.id!;
-                component.exam = exam;
+                fixture.componentRef.setInput('courseId', course.id!);
+                fixture.componentRef.setInput('exam', exam);
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should open and close dialog', () => {
+        expect(component.dialogVisible()).toBeFalse();
+
+        component.open();
+        expect(component.dialogVisible()).toBeTrue();
+
+        component.close();
+        expect(component.dialogVisible()).toBeFalse();
+    });
+
+    it('should emit importCompleted on finish', () => {
+        const emitSpy = jest.spyOn(component.importCompleted, 'emit');
+
+        component.onFinish();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should reset dialog when selecting csv file', async () => {
@@ -105,6 +127,7 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should import students', () => {
+        fixture.componentRef.setInput('examUserMode', false);
         const studentsToImport: ExamUserDTO[] = [
             { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1', email: 'test@mail' },
             { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' },
@@ -179,7 +202,7 @@ describe('UsersImportDialogComponent', () => {
 
     it('should read students from csv with room/seat information', async () => {
         const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'exam-user-import');
-        component.examUserMode = true;
+        fixture.componentRef.setInput('examUserMode', true);
 
         const pathToTestFile = path.join(testDir, 'UserImportWithRoomAndSeatInfo.csv');
         const csv = fs.readFileSync(pathToTestFile, 'utf-8');
@@ -252,6 +275,7 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should import correctly', () => {
+        fixture.componentRef.setInput('examUserMode', false);
         const importedStudents: ExamUserDTO[] = [
             { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1', email: '' },
             { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: '' },
@@ -271,6 +295,7 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should invoke REST call on "Import" but not on "Finish"', () => {
+        fixture.componentRef.setInput('examUserMode', false);
         const studentsToImport: ExamUserDTO[] = [
             { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
             { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: '' },
@@ -280,6 +305,8 @@ describe('UsersImportDialogComponent', () => {
         const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
+        component.open();
+        // Set usersToImport after open() since open() calls resetDialog() which clears the array
         component.usersToImport = studentsToImport;
 
         fixture.detectChanges();

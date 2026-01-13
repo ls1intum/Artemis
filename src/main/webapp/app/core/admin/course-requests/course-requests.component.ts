@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,6 +19,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { getCurrentAndFutureSemesters } from 'app/shared/util/semester-utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Admin component for managing course creation requests.
@@ -27,7 +29,6 @@ import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 @Component({
     selector: 'jhi-course-requests-admin',
     templateUrl: './course-requests.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         NgClass,
         TranslateDirective,
@@ -38,6 +39,8 @@ import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
         ReactiveFormsModule,
         RouterLink,
         FaIconComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
         NgbPagination,
         CourseRequestFormComponent,
     ],
@@ -79,7 +82,7 @@ export class CourseRequestsComponent implements OnInit {
     /** Whether reason is invalid */
     readonly reasonInvalid = signal(false);
     /** Modal reference */
-    modalRef?: NgbModalRef;
+    readonly modalRef = signal<NgbModalRef | undefined>(undefined);
 
     // Edit form
     editForm = this.fb.group({
@@ -154,7 +157,7 @@ export class CourseRequestsComponent implements OnInit {
         this.selectedRequest.set(request);
         this.decisionReason.set('');
         this.reasonInvalid.set(false);
-        this.modalRef = this.modalService.open(content, { size: 'lg' });
+        this.modalRef.set(this.modalService.open(content, { size: 'lg' }));
     }
 
     reject() {
@@ -173,7 +176,7 @@ export class CourseRequestsComponent implements OnInit {
                 this.decidedRequests.update((reqs) => [updated, ...reqs]);
                 this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.rejectSuccess', { title: updated.title });
-                this.modalRef?.close();
+                this.modalRef()?.close();
                 this.reasonInvalid.set(false);
                 this.selectedRequest.set(undefined);
             },
@@ -220,7 +223,7 @@ export class CourseRequestsComponent implements OnInit {
             testCourse: request.testCourse ?? false,
             reason: request.reason,
         });
-        this.modalRef = this.modalService.open(content, { size: 'lg' });
+        this.modalRef.set(this.modalService.open(content, { size: 'lg' }));
     }
 
     saveEdit() {
@@ -262,7 +265,7 @@ export class CourseRequestsComponent implements OnInit {
                     return reqs;
                 });
                 this.alertService.success('artemisApp.courseRequest.admin.editSuccess');
-                this.modalRef?.close();
+                this.modalRef()?.close();
                 this.isSubmittingEdit.set(false);
                 this.selectedRequest.set(undefined);
             },

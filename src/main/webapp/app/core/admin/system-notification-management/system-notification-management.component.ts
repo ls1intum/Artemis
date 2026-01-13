@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -23,6 +23,8 @@ import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Enum representing the state of a system notification.
@@ -40,8 +42,19 @@ enum NotificationState {
 @Component({
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective, ItemCountComponent, NgbPagination, ArtemisDatePipe],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        SortDirective,
+        SortByDirective,
+        DeleteButtonDirective,
+        ItemCountComponent,
+        NgbPagination,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+    ],
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
     private readonly systemNotificationService = inject(SystemNotificationService);
@@ -84,7 +97,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     readonly predicate = signal('notificationDate');
 
     /** Previous page number for change detection */
-    private previousPage = 1;
+    private readonly previousPage = signal(1);
 
     /** Sort order (true = ascending) */
     readonly reverse = signal(false);
@@ -106,7 +119,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
             const pagingParams = data['pagingParams'];
             if (pagingParams) {
                 this.page.set(pagingParams.page);
-                this.previousPage = pagingParams.page;
+                this.previousPage.set(pagingParams.page);
                 this.reverse.set(pagingParams.ascending);
                 this.predicate.set(pagingParams.predicate);
             }
@@ -220,8 +233,8 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param page - The page number to load
      */
     loadPage(page: number): void {
-        if (page !== this.previousPage) {
-            this.previousPage = page;
+        if (page !== this.previousPage()) {
+            this.previousPage.set(page);
             this.page.set(page);
             this.transition();
         }

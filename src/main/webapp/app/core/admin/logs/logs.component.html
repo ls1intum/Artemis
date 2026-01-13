@@ -1,6 +1,6 @@
 @if (loggers()) {
+    <h5 *adminTitleBarTitle id="logs-page-heading" class="mb-0" jhiTranslate="logs.title" data-cy="logsPageHeading"></h5>
     <div class="table-responsive">
-        <h2 id="logs-page-heading" jhiTranslate="logs.title" data-cy="logsPageHeading"></h2>
         <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }">There are {{ loggers().length }} loggers.</p>
         <span jhiTranslate="logs.filter"></span>
         <input type="text" [ngModel]="filter()" (ngModelChange)="updateFilter($event)" class="form-control" />

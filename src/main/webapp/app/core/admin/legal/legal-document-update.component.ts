@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -12,6 +12,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for updating legal documents (privacy statement and imprint).
@@ -21,8 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
 })
 export class LegalDocumentUpdateComponent implements OnInit {
     private readonly legalDocumentService = inject(LegalDocumentService);

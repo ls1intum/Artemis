@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -17,6 +19,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('TutorialGroupSessionForm', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
     let component: TutorialGroupSessionFormComponent;
     const validDate = new Date(Date.UTC(2021, 1, 1));
@@ -29,8 +33,13 @@ describe('TutorialGroupSessionForm', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, TranslateModule.forRoot()],
-            declarations: [
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                NgbTimepickerModule,
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
+                TranslateModule.forRoot(),
                 TutorialGroupSessionFormComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
@@ -57,14 +66,14 @@ describe('TutorialGroupSessionForm', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should correctly set form values in edit mode', () => {
+    it('should correctly set form values in edit mode', async () => {
         fixture.componentRef.setInput('isEditMode', true);
         const formData: TutorialGroupSessionFormData = {
             date: validDate,
@@ -72,7 +81,7 @@ describe('TutorialGroupSessionForm', () => {
             endTime: validEndTime,
         };
         fixture.componentRef.setInput('formData', formData);
-        component.ngOnChanges();
+        await runOnPushChangeDetection(fixture);
 
         const formControlNames = ['date', 'startTime', 'endTime'];
         formControlNames.forEach((control) => {
@@ -80,37 +89,37 @@ describe('TutorialGroupSessionForm', () => {
         });
     });
 
-    it('should submit valid form', fakeAsync(() => {
+    it('should submit valid form', async () => {
         setValidFormValues();
-        runOnPushChangeDetection(fixture);
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        await runOnPushChangeDetection(fixture);
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
 
         clickSubmit(true);
-    }));
+    });
 
-    it('should block submit when time range is invalid', fakeAsync(() => {
+    it('should block submit when time range is invalid', async () => {
         setValidFormValues();
-        runOnPushChangeDetection(fixture);
+        await runOnPushChangeDetection(fixture);
 
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
 
         component.endTimeControl!.setValue('11:00:00');
         component.startTimeControl!.setValue('12:00:00');
-        runOnPushChangeDetection(fixture);
-        expect(component.form.invalid).toBeTrue();
-        expect(component.isSubmitPossible).toBeFalse();
+        await runOnPushChangeDetection(fixture);
+        expect(component.form.invalid).toBe(true);
+        expect(component.isSubmitPossible).toBe(false);
 
         clickSubmit(false);
-    }));
+    });
 
-    it('should block submit when required property is missing', fakeAsync(() => {
+    it('should block submit when required property is missing', () => {
         const requiredControlNames = ['startTime', 'endTime', 'location'];
         for (const controlName of requiredControlNames) {
             testFormIsInvalidOnMissingRequiredProperty(controlName);
         }
-    }));
+    });
 
     // === helper functions ===
 

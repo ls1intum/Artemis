@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
@@ -20,6 +20,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for managing LTI platform configurations.
@@ -28,7 +29,6 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 @Component({
     selector: 'jhi-lti-configuration',
     templateUrl: './lti-configuration.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
@@ -47,6 +47,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
         ItemCountComponent,
         NgbPagination,
         NgbNavOutlet,
+        AdminTitleBarTitleDirective,
     ],
 })
 export class LtiConfigurationComponent implements OnInit {

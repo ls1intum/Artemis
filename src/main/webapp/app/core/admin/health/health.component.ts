@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -11,6 +11,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Component for displaying system health status.
@@ -19,8 +21,16 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-health',
     templateUrl: './health.component.html',
-    imports: [TranslateDirective, FaIconComponent, NgClass, JhiConnectionStatusComponent, KeyValuePipe, ArtemisTranslatePipe],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        NgClass,
+        JhiConnectionStatusComponent,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+    ],
 })
 export class HealthComponent implements OnInit {
     private readonly modalService = inject(NgbModal);
@@ -62,6 +72,6 @@ export class HealthComponent implements OnInit {
 
     showHealth(health: { key: string; value: HealthDetails }): void {
         const modalRef = this.modalService.open(HealthModalComponent);
-        modalRef.componentInstance.health = health;
+        modalRef.componentInstance.health.set(health);
     }
 }

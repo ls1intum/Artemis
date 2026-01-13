@@ -18,6 +18,11 @@ import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 
+export interface ExerciseImportDialogData {
+    exerciseType: ExerciseType;
+    programmingLanguage?: ProgrammingLanguage;
+}
+
 const DEFAULT_SORT_COLUMN = 'ID';
 
 @Component({
@@ -51,6 +56,13 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     ngOnInit(): void {
+        // Get data from DynamicDialogConfig if available (when opened via DialogService)
+        const dialogData = this.dialogConfig?.data as ExerciseImportDialogData | undefined;
+        if (dialogData) {
+            this.exerciseType = dialogData.exerciseType;
+            this.programmingLanguage = dialogData.programmingLanguage;
+        }
+
         if (!this.exerciseType) {
             return;
         }

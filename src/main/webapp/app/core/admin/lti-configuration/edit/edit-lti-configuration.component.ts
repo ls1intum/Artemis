@@ -1,5 +1,5 @@
 import { AlertService } from 'app/shared/service/alert.service';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -9,6 +9,7 @@ import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-co
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for creating and editing LTI platform configurations.
@@ -16,8 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-edit-lti-configuration',
     templateUrl: './edit-lti-configuration.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, AdminTitleBarTitleDirective],
 })
 export class EditLtiConfigurationComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

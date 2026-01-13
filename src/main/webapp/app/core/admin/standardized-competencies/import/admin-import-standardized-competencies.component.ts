@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -16,7 +16,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { NestedTreeControl } from '@angular/cdk/tree';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -25,6 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -40,16 +40,16 @@ interface ImportCount {
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
         FontAwesomeModule,
+        NgbCollapse,
+        NgbTooltipModule,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        HtmlForMarkdownPipe,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        NgbCollapse,
-        HtmlForMarkdownPipe,
-        ArtemisTranslatePipe,
-        NgbTooltipModule,
-        TranslateDirective,
         ButtonComponent,
+        AdminTitleBarTitleDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminImportStandardizedCompetenciesComponent {
     /** Whether import is loading */
@@ -67,7 +67,6 @@ export class AdminImportStandardizedCompetenciesComponent {
     /** Count of knowledge areas and competencies to import */
     protected readonly importCount = signal<ImportCount | undefined>(undefined);
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
     private fileReader: FileReader = new FileReader();
 
     //Icons
