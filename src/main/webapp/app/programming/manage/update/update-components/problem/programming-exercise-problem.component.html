@@ -51,21 +51,21 @@
                     </div>
                 </div>
             }
-            @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
+            @if (programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile) {
                 <ngb-alert [dismissible]="false">
                     <span class="font-weight-bold">
                         {{ 'artemisApp.exercise.import.attention' | artemisTranslate }}
                     </span>
                     <span
                         jhiTranslate="{{
-                            programmingExerciseCreationConfig.isImportFromExistingExercise
+                            programmingExerciseCreationConfig().isImportFromExistingExercise
                                 ? 'artemisApp.exercise.import.markdownWarning'
                                 : 'artemisApp.exercise.import.embeddedFilesWarning'
                         }}"
                     ></span>
                 </ngb-alert>
             }
-            @if (programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
+            @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
                     [participation]="programmingExercise()!.templateParticipation!"
@@ -73,9 +73,9 @@
                 />
             }
             @if (
-                programmingExerciseCreationConfig.problemStatementLoaded &&
-                programmingExerciseCreationConfig.templateParticipationResultLoaded &&
-                !programmingExerciseCreationConfig.isImportFromExistingExercise
+                programmingExerciseCreationConfig().problemStatementLoaded &&
+                programmingExerciseCreationConfig().templateParticipationResultLoaded &&
+                !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
                 @if (showDiff) {
                     <!-- Markdown Diff Editor with formatting toolbar -->
@@ -96,18 +96,18 @@
                         [showStatus]="!!programmingExercise()?.id"
                         [editMode]="!!programmingExercise()?.id"
                         [isRefining]="isRefining() || isGenerating()"
-                        (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
+                        (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                         (instructionChange)="onProblemStatementChange($event)"
                         (exerciseChange)="programmingExerciseChange.emit($event)"
                         (onInlineRefinement)="onInlineRefinement($event)"
-                        [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
+                        [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                         class="form__editable-instructions"
                     />
                 }
             }
         </div>
     }
-    @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
+    @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
         <div class="form-group">
             <jhi-competency-selection
                 id="competencies"

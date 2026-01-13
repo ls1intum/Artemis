@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faBan, faQuestionCircle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -62,10 +62,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
-    @Output() problemStatementChange = new EventEmitter<string>();
+    problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
     // Problem statement generation properties
     userPrompt = '';
@@ -102,7 +102,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     onProblemStatementChange(newProblemStatement: string): void {
         const exercise = this.programmingExercise();
         this.currentProblemStatement.set(newProblemStatement);
-        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
         if (exercise) {
             exercise.problemStatement = newProblemStatement;
             this.programmingExerciseChange.emit(exercise);
@@ -255,7 +255,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                     if (response.draftProblemStatement && exercise) {
                         exercise.problemStatement = response.draftProblemStatement;
                         this.currentProblemStatement.set(response.draftProblemStatement);
-                        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+                        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
                         this.problemStatementChange.emit(response.draftProblemStatement);
                         this.programmingExerciseChange.emit(exercise);
                     }
@@ -264,7 +264,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                     // Show success alert
                     this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
                 },
-                error: (error) => {
+                error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 },
             });
@@ -333,7 +333,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         const exercise = this.programmingExercise();
         if (exercise && this.refinedProblemStatement) {
             exercise.problemStatement = this.refinedProblemStatement;
-            this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.problemStatementChange.emit(this.refinedProblemStatement);
             this.programmingExerciseChange.emit(exercise);
             this.currentProblemStatement.set(this.refinedProblemStatement);

@@ -32,7 +32,7 @@ custom_checkers () {
 
 replace_script_variables () {
   echo '⚙️ executing replace_script_variables'
-  local JAVA_FLAGS="-Djdk.console=java.base"
+  local JAVA_FLAGS=""
   local testfiles_base_path="./testsuite/testfiles"
   local tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
 
