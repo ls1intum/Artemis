@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime, map, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +23,8 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     @Input() taskRegex: RegExp;
 
     @Output() problemStatementAnalysis = new EventEmitter<ProblemStatementAnalysis>();
-    delayedAnalysisSubject = new Subject<void>();
+    // Subject now carries the problem statement for distinctUntilChanged comparison
+    delayedAnalysisSubject = new Subject<string>();
     analysisSubscription: Subscription;
 
     invalidTestCases: string[] = [];
@@ -39,6 +40,8 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
         this.analysisSubscription = this.delayedAnalysisSubject
             .pipe(
                 debounceTime(500),
+                // Skip analysis if problem statement hasn't changed (optimization for rapid edits)
+                distinctUntilChanged(),
                 map(() => {
                     const { completeAnalysis, missingTestCases, invalidTestCases, repeatedTestCases, numOfTasks } = this.analysisService.analyzeProblemStatement(
                         this.problemStatement,
@@ -77,7 +80,8 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
      */
     analyzeTasks() {
         if (this.exerciseTestCases && this.problemStatement && this.taskRegex) {
-            this.delayedAnalysisSubject.next();
+            // Pass problem statement to subject for distinctUntilChanged comparison
+            this.delayedAnalysisSubject.next(this.problemStatement);
         }
     }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil, tap } from 'rxjs/operators';
@@ -7,30 +7,31 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { captureException } from '@sentry/angular';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, CourseGroupComponent],
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, CourseGroupComponent, DialogModule, ArtemisTranslatePipe],
 })
 export class RegisteredStudentsComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
-    @Input() course: Course;
-    @Input() tutorialGroupId: number;
+    readonly dialogVisible = signal<boolean>(false);
+    readonly dialogClosed = output<void>();
+
+    readonly course = input.required<Course>();
+    readonly tutorialGroupId = input.required<number>();
 
     tutorialGroup: TutorialGroup;
     isLoading = false;
@@ -42,7 +43,6 @@ export class RegisteredStudentsComponent implements OnDestroy {
 
     registrationsChanged = false;
 
-    isInitialized = false;
     ngUnsubscribe = new Subject<void>();
 
     get capacityReached(): boolean {
@@ -61,19 +61,22 @@ export class RegisteredStudentsComponent implements OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    initialize() {
-        if (!this.tutorialGroupId || !this.course) {
-            captureException('Error: Component not fully configured');
-        } else {
-            this.isInitialized = true;
-            this.loadAll();
+    open(): void {
+        this.dialogVisible.set(true);
+        this.loadAll();
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
+        if (this.registrationsChanged) {
+            this.dialogClosed.emit();
         }
     }
 
     handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
 
     addToGroup = (login: string) =>
-        this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
+        this.tutorialGroupService.registerStudent(this.course().id!, this.tutorialGroup.id!, login).pipe(
             tap({
                 next: () => {
                     this.registrationsChanged = true;
@@ -83,7 +86,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
         );
 
     removeFromGroup = (login: string) =>
-        this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
+        this.tutorialGroupService.deregisterStudent(this.course().id!, this.tutorialGroup.id!, login).pipe(
             tap({
                 next: () => {
                     this.registrationsChanged = true;
@@ -92,19 +95,20 @@ export class RegisteredStudentsComponent implements OnDestroy {
             }),
         );
 
-    userSearch = (loginOrName: string) => this.courseManagementService.searchStudents(this.course.id!, loginOrName);
+    userSearch = (loginOrName: string) => this.courseManagementService.searchStudents(this.course().id!, loginOrName);
 
     get exportFilename(): string {
-        if (this.course && this.tutorialGroup) {
-            return this.course.title + ' ' + this.tutorialGroup.title;
+        if (this.course() && this.tutorialGroup) {
+            return this.course().title + ' ' + this.tutorialGroup.title;
         } else {
             return 'RegisteredStudents';
         }
     }
 
     loadAll = () => {
+        this.isLoading = true;
         this.tutorialGroupService
-            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
+            .getOneOfCourse(this.course().id!, this.tutorialGroupId())
             .pipe(
                 finalize(() => (this.isLoading = false)),
                 takeUntil(this.ngUnsubscribe),
@@ -125,12 +129,4 @@ export class RegisteredStudentsComponent implements OnDestroy {
             })
             .add(() => this.cdr.detectChanges());
     };
-
-    clear() {
-        if (this.registrationsChanged) {
-            this.activeModal.close();
-        } else {
-            this.activeModal.dismiss();
-        }
-    }
 }

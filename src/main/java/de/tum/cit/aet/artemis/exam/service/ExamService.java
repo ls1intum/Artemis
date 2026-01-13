@@ -1274,6 +1274,7 @@ public class ExamService {
         }
 
         boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         if (isInstructor) {
             // set number of student exams that have been generated
@@ -1305,11 +1306,9 @@ public class ExamService {
 
             return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
                     numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, existsUnassessedQuizzes,
-                    null);
+                    existsUnsubmittedExercises);
 
         }
-
-        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
         return new ExamChecklistDTO(totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);

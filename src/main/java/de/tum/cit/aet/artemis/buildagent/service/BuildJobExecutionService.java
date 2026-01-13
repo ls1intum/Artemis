@@ -15,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
 
@@ -36,9 +35,11 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
@@ -82,6 +83,20 @@ public class BuildJobExecutionService {
     @Value("${artemis.checked-out-repos-path}")
     private String checkedOutReposPath;
 
+    /**
+     * Upper bound for feedback text of a single test case / assertion before truncation.
+     * <p>
+     * In practice, feedback is short (typically &lt; 1k chars). Very large feedback texts
+     * are almost always caused by runaway output (e.g. infinite loops, excessive logging,
+     * repeated stack traces) and do not provide additional value to students.
+     * <p>
+     * This limit prevents excessive network traffic when transmitting build results
+     * from the build agent to the main server, and protects the database from
+     * accidental storage explosions.
+     */
+    @Value("${artemis.feedback.max-feedback-length:20000}")
+    private int maxFeedbackLength;
+
     private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
 
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
@@ -90,6 +105,12 @@ public class BuildJobExecutionService {
         this.buildJobGitService = buildJobGitService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+    }
+
+    @PostConstruct
+    void initParsers() {
+        TestResultXmlParser.setMaxFeedbackLength(maxFeedbackLength);
+        CustomFeedbackParser.setMaxFeedbackLength(maxFeedbackLength);
     }
 
     /**
@@ -106,8 +127,13 @@ public class BuildJobExecutionService {
     }
 
     private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
+        Path reposPath = Path.of(checkedOutReposPath);
+        if (!Files.exists(reposPath)) {
+            log.info("Checked-out repos directory {} does not exist (yet), skipping cleanup", checkedOutReposPath);
+            return;
+        }
         log.debug("Cleaning up temporary directories in {}", checkedOutReposPath);
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(checkedOutReposPath))) {
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(reposPath)) {
             for (Path path : directoryStream) {
                 try {
                     ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), currentTime.getZone());
@@ -172,10 +198,7 @@ public class BuildJobExecutionService {
         String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
-                var commitObjectId = buildJobGitService.getLastCommitHash(assignmentRepoUri);
-                if (commitObjectId != null) {
-                    assignmentCommitHash = commitObjectId.getName();
-                }
+                assignmentCommitHash = buildJobGitService.getLastCommitHash(assignmentRepoUri);
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
@@ -186,10 +209,7 @@ public class BuildJobExecutionService {
         String testCommitHash = buildJob.buildConfig().testCommitHash();
         if (testCommitHash == null) {
             try {
-                var commitObjectId = buildJobGitService.getLastCommitHash(testsRepoUri);
-                if (commitObjectId != null) {
-                    testCommitHash = commitObjectId.getName();
-                }
+                testCommitHash = buildJobGitService.getLastCommitHash(testsRepoUri);
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
@@ -198,22 +218,36 @@ public class BuildJobExecutionService {
             }
         }
 
-        Path assignmentRepositoryPath;
         /*
-         * If the commit hash is null, this means that the latest commit of the default branch should be built.
-         * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
-         * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
+         * REPOSITORY CLONING STRATEGY:
+         * ============================
+         * All repositories for a build job are cloned into an isolated directory structure:
+         * {checkedOutReposPath}/{buildJobId}/{repositoryFolder}
+         * Using the unique buildJobId as the parent folder prevents race conditions that occurred when
+         * multiple concurrent build jobs shared directories based on commit hashes. Previously, if two
+         * build jobs processed the same commit, one job's cleanup could delete files while another job
+         * was still reading them, causing "NoSuchFileException" errors.
+         * The commitHash parameter is ONLY used when checkout=true to checkout a specific commit.
+         * It is NOT used for the directory structure.
+         * Repository types and their checkout behavior:
+         * - Assignment repository: May checkout a specific commit (student's submission)
+         * - Test/Solution/Auxiliary repositories: Always use default branch (checkout=false, commitHash=null)
          */
+        Path assignmentRepositoryPath;
         if (buildJob.buildConfig().assignmentCommitHash() != null && !isPushToTestOrAuxRepository) {
-            // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
+            // Clone and checkout the specific commit hash for the student's submission
             assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, true, buildJob.id());
         }
         else {
-            // Clone the assignment to use the latest commit of the default branch
-            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, false, buildJob.id());
+            // Clone using the latest commit of the default branch (no specific commit checkout needed)
+            // This happens when: (1) no specific commit hash is provided, or (2) the build was triggered
+            // by a push to the test/auxiliary repository (in which case we want the latest assignment code)
+            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, null, false, buildJob.id());
         }
 
-        Path testsRepositoryPath = cloneRepository(testsRepoUri, assignmentCommitHash, false, buildJob.id());
+        // Test, solution, and auxiliary repositories always use the default branch.
+        // They don't have specific commit hashes tracked in BuildConfig, so we pass null for commitHash.
+        Path testsRepositoryPath = cloneRepository(testsRepoUri, null, false, buildJob.id());
 
         LocalVCRepositoryUri solutionRepoUri = null;
         Path solutionRepositoryPath = null;
@@ -224,7 +258,7 @@ public class BuildJobExecutionService {
                 solutionRepositoryPath = assignmentRepositoryPath;
             }
             else {
-                solutionRepositoryPath = cloneRepository(solutionRepoUri, assignmentCommitHash, false, buildJob.id());
+                solutionRepositoryPath = cloneRepository(solutionRepoUri, null, false, buildJob.id());
             }
         }
 
@@ -235,28 +269,19 @@ public class BuildJobExecutionService {
         int index = 0;
         for (String auxiliaryRepositoryUri : auxiliaryRepositoryUriList) {
             auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri);
-            auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], assignmentCommitHash, false, buildJob.id());
+            auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], null, false, buildJob.id());
             index++;
         }
 
-        List<String> envVars = null;
-        boolean isNetworkDisabled = false;
-        int cpuCount = 0;
-        int memory = 0;
-        int memorySwap = 0;
-        if (buildJob.buildConfig().dockerRunConfig() != null) {
-            envVars = buildJob.buildConfig().dockerRunConfig().env();
-            isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
-            cpuCount = buildJob.buildConfig().dockerRunConfig().cpuCount();
-            memory = buildJob.buildConfig().dockerRunConfig().memory();
-            memorySwap = buildJob.buildConfig().dockerRunConfig().memorySwap();
+        BuildConfig buildConfig = buildJob.buildConfig();
+        DockerRunConfig dockerRunConfig = new DockerRunConfig(null, null, 0, 0, 0);
+        if (buildConfig.dockerRunConfig() != null) {
+            dockerRunConfig = buildConfig.dockerRunConfig();
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
-                envVars, cpuCount, memory, memorySwap);
-
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildConfig.dockerImage(), buildConfig.buildScript(), dockerRunConfig);
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
     }
 
     /**
@@ -291,73 +316,78 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, LocalVCRepositoryUri assignmentRepositoryUri,
             LocalVCRepositoryUri testRepositoryUri, @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoriesUris,
             Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
+            @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
-
-        buildJobContainerService.startContainer(containerId);
-
-        String msg = "~~~~~~~~~~~~~~~~~~~~ Started container " + containerName + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-
-        log.info(msg, containerName);
-
-        msg = "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        log.debug(msg);
-        buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
-                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage(), buildJob.buildConfig().assignmentCheckoutPath(),
-                buildJob.buildConfig().testCheckoutPath(), buildJob.buildConfig().solutionCheckoutPath());
-
-        msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        log.debug(msg);
-
-        buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), isNetworkDisabled);
-
-        msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        log.info(msg);
-
-        ZonedDateTime buildCompletedDate = ZonedDateTime.now();
-
-        msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        log.debug(msg);
-
-        buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(),
-                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
-
-        // Get an input stream of the test result files.
-
-        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        log.info(msg);
-
         TarArchiveInputStream testResultsTarInputStream = null;
-
         BuildResult buildResult;
+        String msg;
 
         try {
-            testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
+            buildJobContainerService.startContainer(containerId);
 
-            var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
-            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                    buildJob.id(), buildLogs);
-        }
-        catch (NotFoundException e) {
-            msg = "Could not find test results in container " + containerName;
+            msg = "~~~~~~~~~~~~~~~~~~~~ Started container " + containerName + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            log.error(msg, e);
-            // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-            return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
-        }
-        catch (IOException | IllegalStateException e) {
-            msg = "Error while parsing test results";
+            log.info(msg, containerName);
+
+            // Log repository paths before archiving for diagnosability
+            log.debug("Preparing to populate container {} for build job {} with repositories: assignment={}, test={}, solution={}", containerId, buildJob.id(),
+                    assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath);
+
+            msg = "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
+            log.debug(msg);
+            buildJobContainerService.populateBuildJobContainer(containerId, buildJob.id(), assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath,
+                    auxiliaryRepositoriesPaths, buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage(),
+                    buildJob.buildConfig().assignmentCheckoutPath(), buildJob.buildConfig().testCheckoutPath(), buildJob.buildConfig().solutionCheckoutPath());
+
+            msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            log.debug(msg);
+
+            buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
+
+            msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            log.info(msg);
+
+            ZonedDateTime buildCompletedDate = ZonedDateTime.now();
+
+            msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            log.debug(msg);
+
+            buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(),
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
+
+            // Get an input stream of the test result files.
+            msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            log.info(msg);
+
+            try {
+                testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
+                        buildJob.id());
+
+                var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
+                buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
+                        buildJob.id(), buildLogs);
+            }
+            catch (NotFoundException e) {
+                msg = "Could not find test results in container " + containerName;
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                log.error(msg, e);
+                // If the test results are not found, this means that something went wrong during the build and testing of the submission.
+                return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            }
+            catch (IOException | IllegalStateException e) {
+                msg = "Error while parsing test results";
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                throw new LocalCIException(msg, e);
+            }
         }
         finally {
+            // Ensure cleanup happens even if populateBuildJobContainer or other operations fail
             try {
                 if (testResultsTarInputStream != null) {
                     testResultsTarInputStream.close();
@@ -368,25 +398,41 @@ public class BuildJobExecutionService {
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
                 log.error(msg, e);
             }
-            buildJobContainerService.stopContainer(containerName);
 
-            // Delete the cloned repositories
-            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id(), assignmentRepositoryPath);
-            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id(), testsRepositoryPath);
-            // do not try to delete the temp repository if it does not exist or is the same as the assignment reposity
-            if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
-                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id(), solutionRepositoryPath);
-            }
-
-            for (int i = 0; i < auxiliaryRepositoriesUris.length; i++) {
-                deleteCloneRepo(auxiliaryRepositoriesUris[i], assignmentRepoCommitHash, buildJob.id(), auxiliaryRepositoriesPaths[i]);
-            }
-
+            // Always attempt to stop the container to prevent resource leaks
             try {
-                deleteRepoParentFolder(assignmentRepoCommitHash, assignmentRepositoryPath, testRepoCommitHash, testsRepositoryPath);
+                buildJobContainerService.stopContainer(containerName);
+            }
+            catch (Exception e) {
+                msg = "Could not stop container " + containerName;
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                log.error(msg, e);
+            }
+
+            /*
+             * CLEANUP: Delete all cloned repositories for this build job.
+             * All repositories are stored under {checkedOutReposPath}/{buildJobId}/, which ensures
+             * that this cleanup only affects files belonging to THIS build job and cannot interfere
+             * with concurrent build jobs (each has its own unique buildJobId directory).
+             * We first close each Git repository individually (to release file handles), then
+             * delete the entire buildJobId directory at the end.
+             */
+            deleteCloneRepo(assignmentRepositoryUri, buildJob.id(), assignmentRepositoryPath);
+            deleteCloneRepo(testRepositoryUri, buildJob.id(), testsRepositoryPath);
+            // Skip solution repo deletion if it doesn't exist or shares the same path as assignment repo
+            if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
+                deleteCloneRepo(solutionRepositoryUri, buildJob.id(), solutionRepositoryPath);
+            }
+            for (int i = 0; i < auxiliaryRepositoriesUris.length; i++) {
+                deleteCloneRepo(auxiliaryRepositoriesUris[i], buildJob.id(), auxiliaryRepositoriesPaths[i]);
+            }
+
+            // Finally, delete the entire build job directory (safe because buildJobId is unique per build)
+            try {
+                deleteBuildJobRepositoryFolder(buildJob.id());
             }
             catch (IOException e) {
-                msg = "Could not delete " + checkedOutReposPath + " directory";
+                msg = "Could not delete " + checkedOutReposPath + "/" + buildJob.id() + " directory";
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
                 log.error(msg, e);
             }
@@ -543,16 +589,39 @@ public class BuildJobExecutionService {
                 staticCodeAnalysisReports, true);
     }
 
+    /**
+     * Clones a repository into a build-job-specific directory and optionally checks out a specific commit.
+     * <p>
+     * <b>Directory Isolation Strategy:</b>
+     * Each build job gets its own isolated directory to prevent race conditions between concurrent builds.
+     * The directory structure is: {@code {checkedOutReposPath}/{buildJobId}/{repositoryFolder}}
+     * <p>
+     * <b>IMPORTANT:</b> The {@code buildJobId} is used for directory isolation, NOT the commit hash.
+     * This ensures that concurrent build jobs (even those processing the same commit) cannot interfere
+     * with each other's files during the tar archive creation or cleanup phases.
+     * <p>
+     * <b>Commit Hash Usage:</b>
+     * The {@code commitHash} parameter is ONLY used when {@code checkout=true} to checkout a specific
+     * commit after cloning. For repositories that should use the default branch (test, solution, auxiliary),
+     * pass {@code null} for commitHash and {@code false} for checkout.
+     *
+     * @param repositoryUri the URI of the repository to clone
+     * @param commitHash    the commit hash to checkout after cloning (only used if checkout=true);
+     *                          pass null if the default branch should be used
+     * @param checkout      if true, checkout the specified commitHash after cloning;
+     *                          if false, use the default branch (commitHash is ignored)
+     * @param buildJobId    the unique identifier of the build job, used to create an isolated directory
+     * @return the local path where the repository was cloned
+     * @throws LocalCIException if cloning fails after all retry attempts or if checkout fails
+     */
     private Path cloneRepository(LocalVCRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
         Repository repository = null;
 
         for (int attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
             try {
-                // Generate a random folder name for the repository parent folder if the commit hash is null. This is to avoid conflicts when cloning multiple repositories.
-                String repositoryParentFolder = commitHash != null ? commitHash : UUID.randomUUID().toString();
-                // Clone the assignment repository into a temporary directory
-                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(checkedOutReposPath, repositoryParentFolder, repositoryUri.folderNameForRepositoryUri()));
-
+                // Clone into a build-job-specific directory: {checkedOutReposPath}/{buildJobId}/{repoFolder}
+                // Using buildJobId (not commitHash) ensures complete isolation between concurrent build jobs
+                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(checkedOutReposPath, buildJobId, repositoryUri.folderNameForRepositoryUri()));
                 break;
             }
             catch (GitAPIException | IOException | URISyntaxException e) {
@@ -567,13 +636,14 @@ public class BuildJobExecutionService {
         }
 
         try {
+            // Only checkout a specific commit if explicitly requested (checkout=true) and a commit hash is provided.
+            // For test/solution/auxiliary repos, checkout=false so they use the default branch.
             if (checkout && commitHash != null) {
-                // Checkout the commit hash
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
 
-            // if repository is not closed, it causes weird IO issues when trying to delete the repository later on
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            // Close the repository to release file handles; prevents IO errors during later deletion
+            // (e.g., "java.io.IOException: Unable to delete file: ...\.git\objects\pack\...")
             repository.closeBeforeDelete();
             return repository.getLocalPath();
         }
@@ -584,19 +654,36 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(LocalVCRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
+    /**
+     * Deletes a single cloned repository for a specific build job.
+     * <p>
+     * This method properly closes the Git repository before deletion to release file handles,
+     * which is necessary to avoid IO errors on some platforms (especially Windows).
+     * <p>
+     * The repository path is constructed using the buildJobId to ensure we only delete
+     * repositories belonging to this specific build job, not repositories from other concurrent builds.
+     * <p>
+     * <b>Note:</b> Deletion failures are logged but do not throw exceptions. Any remaining files
+     * will be cleaned up during the next server startup by {@link #cleanUpTempDirectoriesAsync}.
+     *
+     * @param repositoryUri  the URI of the repository to delete
+     * @param buildJobId     the unique identifier of the build job that owns this repository
+     * @param repositoryPath the original path (used only for error logging)
+     */
+    private void deleteCloneRepo(LocalVCRepositoryUri repositoryUri, String buildJobId, Path repositoryPath) {
         String msg;
         try {
-            Path repositoryPathForDeletion = commitHash != null ? Path.of(checkedOutReposPath, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
+            // Construct path using buildJobId to ensure we only affect this build job's files
+            Path repositoryPathForDeletion = Path.of(checkedOutReposPath, buildJobId, repositoryUri.folderNameForRepositoryUri());
             Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
-                msg = "Repository with commit hash " + commitHash + " not found";
+                msg = "Repository for build job " + buildJobId + " not found";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 throw new EntityNotFoundException(msg);
             }
             buildJobGitService.deleteLocalRepository(repository);
         }
-        // Do not throw an exception if deletion fails. If an exception occurs, clean up will happen in the next server start.
+        // Deletion failures are non-fatal; cleanup will happen on next server start via cleanUpTempDirectoriesAsync()
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
@@ -609,14 +696,28 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteRepoParentFolder(String assignmentRepoCommitHash, Path assignmentRepositoryPath, String testRepoCommitHash, Path testsRepositoryPath) throws IOException {
-        Path assignmentRepo = assignmentRepoCommitHash != null ? Path.of(checkedOutReposPath, assignmentRepoCommitHash) : getRepositoryParentFolderPath(assignmentRepositoryPath);
-        FileUtils.deleteDirectory(assignmentRepo.toFile());
-        Path testRepo = testRepoCommitHash != null ? Path.of(checkedOutReposPath, testRepoCommitHash) : getRepositoryParentFolderPath(testsRepositoryPath);
-        FileUtils.deleteDirectory(testRepo.toFile());
-    }
-
-    private Path getRepositoryParentFolderPath(Path repoPath) {
-        return repoPath.getParent().getParent();
+    /**
+     * Deletes the entire directory containing all repositories for a specific build job.
+     * <p>
+     * <b>Directory Structure:</b>
+     * All repositories for a build job are stored under: {@code {checkedOutReposPath}/{buildJobId}/}
+     * This method deletes that entire directory tree in one operation.
+     * <p>
+     * <b>Why buildJobId instead of commitHash?</b>
+     * Using the unique buildJobId as the parent folder ensures complete isolation between concurrent
+     * build jobs. Previously, using commitHash caused race conditions: if two build jobs processed
+     * the same commit, one job's cleanup could delete the shared directory while the other job
+     * was still reading files (causing NoSuchFileException during tar archive creation).
+     * <p>
+     * This method is called in the finally block of {@link #runScriptAndParseResults} to ensure
+     * cleanup happens even if the build fails.
+     *
+     * @param buildJobId the unique identifier of the build job whose repository folder should be deleted
+     * @throws IOException if the directory cannot be deleted
+     * @see #cloneRepository for the directory creation logic
+     */
+    private void deleteBuildJobRepositoryFolder(String buildJobId) throws IOException {
+        Path buildJobRepoFolder = Path.of(checkedOutReposPath, buildJobId);
+        FileUtils.deleteDirectory(buildJobRepoFolder.toFile());
     }
 }

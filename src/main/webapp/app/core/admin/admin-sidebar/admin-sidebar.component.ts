@@ -5,6 +5,7 @@ import {
     faBookOpen,
     faBroom,
     faClipboardList,
+    faDownload,
     faEye,
     faFlag,
     faGears,
@@ -19,7 +20,7 @@ import {
     faToggleOn,
     faUniversity,
     faUser,
-    faUserPlus,
+    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
@@ -52,7 +53,7 @@ export interface AdminSidebarGroup {
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faUserPlus = faUserPlus;
+    protected readonly faUserShield = faUserShield;
 
     isNavbarCollapsed = input<boolean>(false);
     localCIActive = input<boolean>(false);
@@ -77,6 +78,13 @@ export class AdminSidebarComponent {
         groups.push({
             translation: 'global.menu.admin.groups.usersAndOrganizations',
             items: [
+                {
+                    routerLink: '/admin/data-exports',
+                    icon: faDownload,
+                    title: 'Data Exports',
+                    translation: 'global.menu.admin.sidebar.dataExports',
+                    testId: 'admin-data-exports',
+                },
                 {
                     routerLink: '/admin/organization-management',
                     icon: faUniversity,
@@ -226,11 +234,11 @@ export class AdminSidebarComponent {
                 testId: 'admin-cleanup-service',
             },
             {
-                routerLink: '/admin/feature-toggles',
+                routerLink: '/admin/features',
                 icon: faToggleOn,
                 title: 'Features',
                 translation: 'global.menu.admin.sidebar.features',
-                testId: 'admin-feature-toggles',
+                testId: 'admin-features',
             },
             {
                 routerLink: '/admin/imprint',

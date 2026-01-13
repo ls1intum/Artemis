@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
-import { clearTextField } from '../../../utils';
-import { QUIZ_EXERCISE_BASE, QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
+import { setMonacoEditorContentByLocator } from '../../../utils';
+import { QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
@@ -13,10 +13,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#score').fill(points.toString());
 
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
-        const textInputField = this.page.locator('.monaco-editor');
-        await textInputField.click();
-        await clearTextField(textInputField);
-        await textInputField.pressSequentially(fileContent!);
+        // Use specific selector for the multiple choice question editor
+        const textInputField = this.page.locator('.edit-mc-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
     }
 
     /**
@@ -48,9 +47,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#short-answer-question-title').fill(title);
 
         const fileContent = await Fixtures.get('exercise/quiz/short_answer/question.txt');
-        const textInputField = this.page.locator('.monaco-editor');
-        await clearTextField(textInputField);
-        await this.page.locator('.monaco-editor textarea').fill(fileContent!);
+        // Use specific selector for the short answer question editor
+        const textInputField = this.page.locator('.edit-sa-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
         await this.page.locator('#short-answer-show-visual').click();
     }
 
@@ -59,18 +58,33 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#drag-and-drop-question-title').fill(title);
 
         await this.uploadDragAndDropBackground();
+
+        // Wait for the click-layer to be enabled (background image loaded)
+        const clickLayer = this.page.locator('.click-layer:not(.disabled)');
+        await clickLayer.waitFor({ state: 'visible', timeout: 10000 });
+
         const element = this.page.locator('.background-area');
-        const boundingBox = await element?.boundingBox();
+        const boundingBox = await element.boundingBox();
 
         expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
-        await this.page.mouse.move(boundingBox!.x + 600, boundingBox!.y + 10);
+
+        // Use relative coordinates based on element size to ensure we stay within bounds
+        const startX = boundingBox!.x + boundingBox!.width * 0.1;
+        const startY = boundingBox!.y + boundingBox!.height * 0.1;
+        const endX = boundingBox!.x + boundingBox!.width * 0.5;
+        const endY = boundingBox!.y + boundingBox!.height * 0.6;
+
+        await this.page.mouse.move(startX, startY);
         await this.page.mouse.down();
-        await this.page.mouse.move(boundingBox!.x + 1000, boundingBox!.y + 250);
+        await this.page.mouse.move(endX, endY, { steps: 5 });
         await this.page.mouse.up();
+
+        // Wait for drop location to be created after drawing
+        const dropLocator = this.page.locator('#drop-location');
+        await dropLocator.waitFor({ state: 'visible', timeout: 5000 });
 
         await this.createDragAndDropItem('Rick Astley');
         const dragLocator = this.page.locator('#drag-item-0');
-        const dropLocator = this.page.locator('#drop-location');
 
         await dropLocator.scrollIntoViewIfNeeded();
 
@@ -91,9 +105,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.mouse.up();
 
         const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
-        const textInputField = this.page.locator('.monaco-editor');
-        await clearTextField(textInputField);
-        await textInputField.pressSequentially(fileContent!);
+        // Use specific selector for the drag-and-drop question editor
+        const textInputField = this.page.locator('.edit-dnd-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
     }
 
     async createDragAndDropItem(text: string) {
@@ -113,13 +127,17 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     async saveQuiz() {
         const saveButton = this.page.locator('#quiz-save');
         await saveButton.scrollIntoViewIfNeeded();
-        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
+        // Wait for the save button to be enabled before clicking
+        await saveButton.waitFor({ state: 'visible', timeout: 30000 });
+        // Ensure the page has finished any pending operations
+        await this.page.waitForLoadState('networkidle');
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION, { timeout: 60000 });
         await saveButton.click();
         return await responsePromise;
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
         await this.page.locator('#quiz-save').click();
         return await responsePromise;
     }

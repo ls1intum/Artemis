@@ -7,6 +7,7 @@ export class CourseSidebarService {
     public closeSidebar$: EventEmitter<void> = new EventEmitter();
     public openSidebar$: EventEmitter<void> = new EventEmitter();
     public toggleSidebar$: EventEmitter<void> = new EventEmitter();
+    public reloadSidebar$: EventEmitter<void> = new EventEmitter();
 
     public closeSidebar(): void {
         this.closeSidebar$.emit();
@@ -18,5 +19,9 @@ export class CourseSidebarService {
 
     public toggleSidebar(): void {
         this.toggleSidebar$.emit();
+    }
+
+    public reloadSidebar(): void {
+        this.reloadSidebar$.emit();
     }
 }

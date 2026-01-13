@@ -1,9 +1,8 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
@@ -17,6 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { titleRegex } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
+import { DialogModule } from 'primeng/dialog';
 
 /**
  * Each row is a object with the structure
@@ -45,15 +45,17 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, DialogModule],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
     private translateService = inject(TranslateService);
-    private activeModal = inject(NgbActiveModal);
     private alertService = inject(AlertService);
     private tutorialGroupService = inject(TutorialGroupsService);
     private csvDownloadService = inject(CsvDownloadService);
+
+    readonly dialogVisible = signal<boolean>(false);
+    readonly importCompleted = output<void>();
 
     ngUnsubscribe = new Subject<void>();
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
@@ -451,16 +453,27 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         return keys.some((key) => csvRow[key] !== undefined && csvRow[key] !== null && csvRow[key] !== '');
     }
 
+    open(): void {
+        this.resetDialog();
+        this.dialogVisible.set(true);
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
+    }
+
     clear() {
         if (this.isImportDone) {
-            this.activeModal.close();
+            this.close();
+            this.importCompleted.emit();
         } else {
-            this.activeModal.dismiss('cancel');
+            this.close();
         }
     }
 
     onFinish() {
-        this.activeModal.close();
+        this.close();
+        this.importCompleted.emit();
     }
 
     onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImport[]>) {

@@ -6,7 +6,7 @@ import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/da
 export abstract class PostingService<T extends Posting> {
     abstract create(courseId: number, posting: T): Observable<HttpResponse<T>>;
 
-    abstract delete(courseId: number, posting: T): Observable<HttpResponse<any>>;
+    abstract delete(courseId: number, posting: T): Observable<HttpResponse<void>>;
 
     abstract update(courseId: number, posting: T): Observable<HttpResponse<T>>;
 

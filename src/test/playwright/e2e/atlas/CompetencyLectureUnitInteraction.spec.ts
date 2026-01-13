@@ -4,6 +4,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { UnitType } from '../../support/pageobjects/lecture/LectureManagementPage';
+import { setMonacoEditorContentByLocator } from '../../support/utils';
 
 test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
     let course: Course;
@@ -34,8 +35,9 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await competencyManagement.goto(course.id!);
 
             await page.getByRole('link', { name: competencyData.title }).click();
+            await page.waitForLoadState('networkidle');
 
-            await expect(page.getByText('Text Unit 1')).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();
         });
     });
 
@@ -62,10 +64,11 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await competencyManagement.goto(course.id!);
 
             await page.getByRole('link', { name: competencyData.title }).click();
+            await page.waitForLoadState('networkidle');
 
-            await expect(page.getByText('Text Unit 1')).toBeVisible();
-            await expect(page.getByText('Text Unit 2')).toBeVisible();
-            await expect(page.getByText('Text Unit 3')).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Text Unit 2' })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Text Unit 3' })).toBeVisible();
         });
     });
 
@@ -79,20 +82,22 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await lectureManagement.openCreateUnit(UnitType.TEXT);
             await page.fill('#name', 'UI Created Text Unit');
-            await page.locator('.monaco-editor').click();
-            await page.locator('.monaco-editor').pressSequentially('Content created through UI');
+            // Use the specific container for the content Monaco editor (id="content" in text-unit-form.component.html)
+            const contentEditor = page.locator('#content');
+            await setMonacoEditorContentByLocator(page, contentEditor, 'Content created through UI');
 
             await page.getByRole('checkbox', { name: 'UI Link Competency' }).check();
 
             await page.click('#submitButton');
             await page.waitForLoadState('networkidle');
 
-            await expect(page.getByText('UI Created Text Unit')).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'UI Created Text Unit' })).toBeVisible();
 
             await competencyManagement.goto(course.id!);
 
             await page.getByRole('link', { name: 'UI Link Competency' }).click();
-            await expect(page.getByText('UI Created Text Unit')).toBeVisible();
+            await page.waitForLoadState('networkidle');
+            await expect(page.getByRole('heading', { name: 'UI Created Text Unit' })).toBeVisible();
         });
     });
 
@@ -109,7 +114,8 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: 'Comp A' }).click();
-            await expect(page.getByText('Text Unit')).toBeVisible();
+            await page.waitForLoadState('networkidle');
+            await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
             await page.waitForLoadState('networkidle');
@@ -123,11 +129,12 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: 'Comp A' }).click();
             await page.waitForLoadState('networkidle');
-            await expect(page.getByText('Text Unit')).not.toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: 'Comp B' }).click();
-            await expect(page.getByText('Text Unit')).toBeVisible();
+            await page.waitForLoadState('networkidle');
+            await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
         });
     });
 
@@ -143,7 +150,8 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: competencyData.title }).click();
-            await expect(page.getByText('Text Unit')).toBeVisible();
+            await page.waitForLoadState('networkidle');
+            await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
             await page.waitForLoadState('networkidle');
@@ -156,10 +164,11 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: competencyData.title }).click();
             await page.waitForLoadState('networkidle');
-            await expect(page.getByText('Text Unit')).not.toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 
             await page.reload();
-            await expect(page.getByText('Text Unit')).not.toBeVisible();
+            await page.waitForLoadState('networkidle');
+            await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
         });
     });
 });

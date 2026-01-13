@@ -1,13 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
-import { MockComponent } from 'ng-mocks';
+import { Component, Type, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { SidebarCardDirective } from 'app/shared/sidebar/directive/sidebar-card.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
-import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
-import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
+
+/**
+ * Extracts the component name from a createComponent spy.
+ * We avoid importing SidebarCardSmallComponent, SidebarCardMediumComponent, and SidebarCardLargeComponent directly because their heavy dependency chains might
+ * cause out-of-memory errors when running all tests on CI and slow down test execution.
+ */
+function getCreatedComponentName(spy: jest.SpyInstance): string {
+    return (spy.mock.calls[0][0] as Type<unknown>).name;
+}
 
 @Component({
     template: ` <div jhiSidebarCard [size]="size" [itemSelected]="false"></div>`,
@@ -25,13 +30,7 @@ describe('SidebarCardDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                TestHostComponent,
-                SidebarCardDirective,
-                MockComponent(SidebarCardSmallComponent),
-                MockComponent(SidebarCardMediumComponent),
-                MockComponent(SidebarCardLargeComponent),
-            ],
+            imports: [TestHostComponent, SidebarCardDirective],
             providers: [
                 { provide: Router, useValue: router },
                 {
@@ -75,10 +74,11 @@ describe('SidebarCardDirective', () => {
         fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
-        expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardSmallComponent);
+        expect(createComponentSpy).toHaveBeenCalled();
+        expect(getCreatedComponentName(createComponentSpy)).toBe('SidebarCardSmallComponent');
     });
 
-    it('should create SidebarCardSmallComponent when size is "M"', () => {
+    it('should create SidebarCardMediumComponent when size is "M"', () => {
         const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.size = 'M';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'M' };
@@ -86,10 +86,11 @@ describe('SidebarCardDirective', () => {
         fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
-        expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardMediumComponent);
+        expect(createComponentSpy).toHaveBeenCalled();
+        expect(getCreatedComponentName(createComponentSpy)).toBe('SidebarCardMediumComponent');
     });
 
-    it('should create SidebarCardSmallComponent when size is "L"', () => {
+    it('should create SidebarCardLargeComponent when size is "L"', () => {
         const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.size = 'L';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'L' };
@@ -97,7 +98,8 @@ describe('SidebarCardDirective', () => {
         fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
-        expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardLargeComponent);
+        expect(createComponentSpy).toHaveBeenCalled();
+        expect(getCreatedComponentName(createComponentSpy)).toBe('SidebarCardLargeComponent');
     });
 
     it('should remove the correct prefix from the name when groupKey is in channelTypes', () => {

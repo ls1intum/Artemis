@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfDropZoneComponent } from './pdf-drop-zone.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -6,6 +8,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 
 describe('PdfDropZoneComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PdfDropZoneComponent;
     let fixture: ComponentFixture<PdfDropZoneComponent>;
 
@@ -32,13 +36,13 @@ describe('PdfDropZoneComponent', () => {
     describe('drag and drop', () => {
         it('should set isDragOver to true on dragover', () => {
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
             } as unknown as DragEvent;
 
             component.onDragOver(event);
 
-            expect(component.isDragOver()).toBeTrue();
+            expect(component.isDragOver()).toBe(true);
             expect(event.preventDefault).toHaveBeenCalled();
             expect(event.stopPropagation).toHaveBeenCalled();
         });
@@ -46,13 +50,13 @@ describe('PdfDropZoneComponent', () => {
         it('should set isDragOver to false on dragleave', () => {
             component.isDragOver.set(true);
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
             } as unknown as DragEvent;
 
             component.onDragLeave(event);
 
-            expect(component.isDragOver()).toBeFalse();
+            expect(component.isDragOver()).toBe(false);
             expect(event.preventDefault).toHaveBeenCalled();
             expect(event.stopPropagation).toHaveBeenCalled();
         });
@@ -66,16 +70,16 @@ describe('PdfDropZoneComponent', () => {
             } as FileList;
 
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
                 dataTransfer: { files: mockFileList },
             } as unknown as DragEvent;
 
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onDrop(event);
 
-            expect(component.isDragOver()).toBeFalse();
+            expect(component.isDragOver()).toBe(false);
             expect(emitSpy).toHaveBeenCalledWith([pdfFile]);
         });
 
@@ -94,12 +98,12 @@ describe('PdfDropZoneComponent', () => {
             } as FileList;
 
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
                 dataTransfer: { files: mockFileList },
             } as unknown as DragEvent;
 
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onDrop(event);
 
@@ -115,12 +119,12 @@ describe('PdfDropZoneComponent', () => {
             } as FileList;
 
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
                 dataTransfer: { files: mockFileList },
             } as unknown as DragEvent;
 
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onDrop(event);
 
@@ -136,12 +140,12 @@ describe('PdfDropZoneComponent', () => {
             } as FileList;
 
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
                 dataTransfer: { files: mockFileList },
             } as unknown as DragEvent;
 
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onDrop(event);
 
@@ -150,12 +154,12 @@ describe('PdfDropZoneComponent', () => {
 
         it('should handle drop with no dataTransfer', () => {
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
                 dataTransfer: null,
             } as unknown as DragEvent;
 
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onDrop(event);
 
@@ -178,7 +182,7 @@ describe('PdfDropZoneComponent', () => {
             };
 
             const event = { target: input } as unknown as Event;
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onFileInputChange(event);
 
@@ -189,7 +193,7 @@ describe('PdfDropZoneComponent', () => {
         it('should trigger file input click on onClick', () => {
             fixture.detectChanges();
             const fileInput = component.fileInput().nativeElement;
-            const clickSpy = jest.spyOn(fileInput, 'click');
+            const clickSpy = vi.spyOn(fileInput, 'click');
 
             component.onClick();
 
@@ -203,7 +207,7 @@ describe('PdfDropZoneComponent', () => {
             };
 
             const event = { target: input } as unknown as Event;
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onFileInputChange(event);
 
@@ -230,12 +234,12 @@ describe('PdfDropZoneComponent', () => {
             } as FileList;
 
             const event = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
                 dataTransfer: { files: mockFileList },
             } as unknown as DragEvent;
 
-            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
 
             component.onDrop(event);
 
