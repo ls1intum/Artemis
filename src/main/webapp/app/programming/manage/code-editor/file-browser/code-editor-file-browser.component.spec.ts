@@ -1110,6 +1110,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.status).toBeDefined();
 
         comp.displayOnly = false;
+        fixture.changeDetectorRef.detectChanges();
         fixture.detectChanges();
         expect(comp.status).toBeDefined();
     });
