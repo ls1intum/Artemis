@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -274,6 +275,69 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             course.setOnlineCourse(true);
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
+        }
+    }
+
+    @Nested
+    class IsAdminTest {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+        void testIsAdmin_withAdminRole_shouldReturnTrue() {
+            boolean isAdmin = authCheckService.isAdmin();
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsAdmin_withSuperAdminRole_shouldReturnTrue() {
+            boolean isAdmin = authCheckService.isAdmin();
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsAdmin_withStudentRole_shouldReturnFalse() {
+            boolean isAdmin = authCheckService.isAdmin();
+            assertThat(isAdmin).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+        void testIsAdminWithUser_adminUser_shouldReturnTrue() {
+            // Create an admin user by setting authorities manually
+            User admin = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY, Authority.USER_AUTHORITY));
+            admin = userRepository.save(admin);
+
+            boolean isAdmin = authCheckService.isAdmin(admin);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+        void testIsAdminWithUser_superAdminUser_shouldReturnTrue() {
+            userUtilService.addSuperAdmin(TEST_PREFIX);
+            User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
+
+            boolean isAdmin = authCheckService.isAdmin(superAdmin);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsAdminWithUser_regularUser_shouldReturnFalse() {
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+            boolean isAdmin = authCheckService.isAdmin(student);
+            assertThat(isAdmin).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+        void testIsAdminWithUser_nullUser_shouldUseCurrent() {
+            boolean isAdmin = authCheckService.isAdmin((User) null);
+            assertThat(isAdmin).isTrue();
         }
     }
 
