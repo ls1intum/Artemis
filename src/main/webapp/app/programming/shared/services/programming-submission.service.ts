@@ -559,7 +559,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 // This caused existing subscribers to never receive further updates.
                 // We now keep the same BehaviorSubject instance and "clear" it by emitting `undefined`,
                 // ensuring all subscribers stay subscribed.
-                this.getOrResetSubmissionSubject(participationId);
+                this.setOrResetSubmissionSubject(participationId);
                 this.processPendingSubmission(isPendingSubmission ? latestSubmission : undefined, participation.id!, exercise.id!, true).subscribe();
             });
     }
@@ -754,11 +754,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         if (remainingTime > 0) {
                             this.emitBuildingSubmission(participationId, exerciseId, submission, buildTimingInfo);
                             this.startResultWaitingTimer(participationId, remainingTime);
-                            return {
-                                participationId,
-                                submission: submissionToBeProcessed,
-                                submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
-                            };
+                            return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }
                     }
                     // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
@@ -870,12 +866,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Returns the BehaviorSubject for the given participation and resets its cached value.
+     * Creates the BehaviorSubject for the given participation or resets its cached value.
      * Clearing the cache by creating a new Subject leaves older subscribers hanging. They will never receive an update anymore.
      * A better approach is to keep the old subject and just emit the new value once processed and "clear" the cache by emitting undefined first.
      * @param participationId id of the observable participation
      */
-    private getOrResetSubmissionSubject(participationId: number): BehaviorSubject<ProgrammingSubmissionStateObj | undefined> {
+    private setOrResetSubmissionSubject(participationId: number): void {
         if (!this.submissionSubjects[participationId]) {
             // First-time initialization: create the subject
             this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
@@ -883,8 +879,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // Reset cached value without breaking existing subscribers
             this.submissionSubjects[participationId].next(undefined);
         }
-
-        return this.submissionSubjects[participationId];
     }
 
     /**
