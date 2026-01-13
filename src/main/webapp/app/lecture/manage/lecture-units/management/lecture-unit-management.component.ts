@@ -8,7 +8,7 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, from } from 'rxjs';
-import { LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -87,6 +87,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lectureUnits = signal<LectureUnit[]>([]);
     lecture = signal<Lecture | undefined>(undefined);
     isLoading = signal(false);
+    isStatusLoading = signal(true);
     viewButtonAvailable = signal<Record<number, boolean>>({});
     transcriptionStatus = signal<Record<number, TranscriptionStatus>>({});
     processingStatus = signal<Record<number, LectureUnitProcessingStatus>>({});
@@ -118,6 +119,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading.set(true);
+        this.isStatusLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
@@ -136,17 +138,19 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         const viewAvailable: Record<number, boolean> = {};
                         lecture.lectureUnits.forEach((lectureUnit) => {
                             viewAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
-                            if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                                this.loadTranscriptionStatus(lectureUnit.id!);
-                                this.loadProcessingStatus(lectureUnit.id!);
-                            }
                         });
                         this.viewButtonAvailable.set(viewAvailable);
+                        // Load all statuses in a single bulk request
+                        this.loadAllStatuses();
                     } else {
                         this.lectureUnits.set([]);
+                        this.isStatusLoading.set(false);
                     }
                 },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                error: (errorResponse: HttpErrorResponse) => {
+                    onError(this.alertService, errorResponse);
+                    this.isStatusLoading.set(false);
+                },
             });
     }
 
@@ -301,6 +305,44 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Load all processing and transcription statuses for attachment video units in a single bulk request.
+     * This reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
+     */
+    private loadAllStatuses(): void {
+        if (!this.resolvedLectureId) {
+            this.isStatusLoading.set(false);
+            return;
+        }
+
+        this.lectureUnitService.getUnitStatuses(this.resolvedLectureId).subscribe({
+            next: (statuses: LectureUnitCombinedStatus[]) => {
+                const processingMap: Record<number, LectureUnitProcessingStatus> = {};
+                const transcriptionMap: Record<number, TranscriptionStatus> = {};
+
+                for (const status of statuses) {
+                    processingMap[status.lectureUnitId] = {
+                        lectureUnitId: status.lectureUnitId,
+                        phase: status.processingPhase,
+                        retryCount: status.retryCount,
+                        startedAt: status.startedAt,
+                        errorKey: status.processingErrorKey,
+                    };
+                    if (status.transcriptionStatus) {
+                        transcriptionMap[status.lectureUnitId] = status.transcriptionStatus;
+                    }
+                }
+
+                this.processingStatus.set(processingMap);
+                this.transcriptionStatus.set(transcriptionMap);
+                this.isStatusLoading.set(false);
+            },
+            error: () => {
+                this.isStatusLoading.set(false);
+            },
+        });
+    }
+
     hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {
         return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
     }
@@ -375,6 +417,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Check if a lecture unit is awaiting processing (IDLE state and course is active so it will be processed).
      */
     isAwaitingProcessing(lectureUnit: AttachmentVideoUnit): boolean {
+        // Don't show "awaiting" while status is still loading to prevent flash
+        if (this.isStatusLoading()) {
+            return false;
+        }
         const phase = this.processingStatus()[lectureUnit.id!]?.phase;
         // If processing is in progress or done, it's not awaiting
         if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
