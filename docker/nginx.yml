@@ -36,7 +36,7 @@ services:
             - "443"
             - "7921" # Git SSH
         healthcheck:
-            test: service nginx status || exit 1
+            test: wget -q --spider http://127.0.0.1:80 || exit 1
             start_period: 60s
         networks:
             - artemis
