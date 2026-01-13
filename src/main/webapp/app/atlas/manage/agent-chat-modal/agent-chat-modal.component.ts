@@ -221,7 +221,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.isAgentTyping.set(true);
 
         // Trigger relation creation via agent
-        this.agentChatService.sendMessage('[CREATE_APPROVED_RELATION]', this.courseId).subscribe({
+        this.agentChatService.sendMessage('[CREATE_APPROVED_RELATION]', this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
 
