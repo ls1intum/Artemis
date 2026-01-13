@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -14,23 +16,28 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
     let comp: Lti13ExerciseLaunchComponent;
     let route: ActivatedRoute;
     let http: HttpClient;
     let accountService: AccountService;
     let sessionStorageService: SessionStorageService;
-    const mockRouter = {
-        navigate: jest.fn(() => Promise.resolve(true)),
-    } as unknown as Router;
-    const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+    let mockRouter: Router;
+    let navigateSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        mockRouter = {
+            navigate: vi.fn(() => Promise.resolve(true)),
+        } as unknown as Router;
+        navigateSpy = vi.spyOn(mockRouter, 'navigate');
+
         route = {
             snapshot: { queryParamMap: convertToParamMap({ state: 'state', id_token: 'id_token' }) },
         } as ActivatedRoute;
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
+            imports: [Lti13ExerciseLaunchComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -41,66 +48,64 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(Lti13ExerciseLaunchComponent);
-                comp = fixture.componentInstance;
-                accountService = TestBed.inject(AccountService);
-                sessionStorageService = TestBed.inject(SessionStorageService);
-                sessionStorageService.store<string>('state', 'state');
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(Lti13ExerciseLaunchComponent);
+        comp = fixture.componentInstance;
+        accountService = TestBed.inject(AccountService);
+        sessionStorageService = TestBed.inject(SessionStorageService);
+        sessionStorageService.store<string>('state', 'state');
 
         http = TestBed.inject(HttpClient);
     });
 
     afterEach(() => {
         sessionStorageService.clear();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         navigateSpy.mockClear();
     });
 
     it('onInit fail without state', () => {
-        const httpStub = jest.spyOn(http, 'post');
+        const httpStub = vi.spyOn(http, 'post');
 
         route.snapshot = { queryParamMap: convertToParamMap({ id_token: 'id_token' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(comp.isLaunching).toBeFalse();
+        expect(comp.isLaunching).toBe(false);
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit fail without token', () => {
-        const httpStub = jest.spyOn(http, 'post');
+        const httpStub = vi.spyOn(http, 'post');
 
         route.snapshot = { queryParamMap: convertToParamMap({ state: 'state' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(comp.isLaunching).toBeFalse();
+        expect(comp.isLaunching).toBe(false);
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit no targetLinkUri', () => {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
+        const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
-        expect(comp.isLaunching).toBeTrue();
+        expect(comp.isLaunching).toBe(true);
 
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
 
-        expect(comp.isLaunching).toBeFalse();
+        expect(comp.isLaunching).toBe(false);
     });
 
     it('onInit success to call launch endpoint', () => {
-        jest.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation();
+        vi.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation(() => {});
         const targetLink = window.location.host + '/targetLink';
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink, ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
+        const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink, ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
-        expect(comp.isLaunching).toBeTrue();
+        expect(comp.isLaunching).toBe(true);
 
         comp.ngOnInit();
 
@@ -116,81 +121,87 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
 
-        expect(comp.isLaunching).toBeFalse();
+        expect(comp.isLaunching).toBe(false);
     });
 
-    it('should redirect user to login when 401 error occurs', fakeAsync(() => {
-        jest.spyOn(comp, 'authenticateUserThenRedirect');
-        jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
+    it('should redirect user to login when 401 error occurs', async () => {
+        vi.spyOn(comp, 'authenticateUserThenRedirect');
+        vi.spyOn(comp, 'redirectUserToLoginThenTargetLink');
         const httpStub = simulateLtiLaunchError(http, 401);
-        const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
-        const authStateSpy = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(undefined));
+        const identitySpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
+        const authStateSpy = vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(undefined));
 
         comp.ngOnInit();
-        tick(1000);
+        await vi.waitFor(() => {
+            expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
+        });
+        await fixture.whenStable();
 
-        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
         expect(navigateSpy).toHaveBeenCalledWith(['/']);
         expect(authStateSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should redirect user to target link when user is already logged in', fakeAsync(() => {
-        jest.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation();
-        jest.spyOn(comp, 'authenticateUserThenRedirect');
-        jest.spyOn(comp, 'redirectUserToTargetLink');
+    it('should redirect user to target link when user is already logged in', async () => {
+        const replaceWindowSpy = vi.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation(() => {});
+        vi.spyOn(comp, 'authenticateUserThenRedirect');
+        vi.spyOn(comp, 'redirectUserToTargetLink');
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
         const httpStub = simulateLtiLaunchError(http, 401);
-        const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUserUser));
+        const identitySpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUserUser));
 
         comp.ngOnInit();
-        tick(1000);
+        await vi.waitFor(() => {
+            expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
+        });
+        await fixture.whenStable();
 
-        expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
-        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(replaceWindowSpy).toHaveBeenCalled();
         expect(comp.redirectUserToTargetLink).toHaveBeenCalled();
-    }));
+    });
 
-    it('should redirect user to target link after user logged in', fakeAsync(() => {
-        jest.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation();
-        jest.spyOn(comp, 'authenticateUserThenRedirect');
-        jest.spyOn(comp, 'redirectUserToTargetLink');
-        jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
+    it('should redirect user to target link after user logged in', async () => {
+        vi.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation(() => {});
+        vi.spyOn(comp, 'authenticateUserThenRedirect');
+        vi.spyOn(comp, 'redirectUserToTargetLink');
+        vi.spyOn(comp, 'redirectUserToLoginThenTargetLink');
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
         const httpStub = simulateLtiLaunchError(http, 401);
-        const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
-        const authStateSpy = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(loggedInUserUser));
+        const identitySpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
+        const authStateSpy = vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(loggedInUserUser));
 
         comp.ngOnInit();
-        tick(1000);
+        await vi.waitFor(() => {
+            expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
+        });
+        await fixture.whenStable();
 
-        expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(authStateSpy).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(navigateSpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
-    }));
+    });
 
-    function simulateLtiLaunchError(http: HttpClient, status: number, headers: any = {}, error = {}) {
-        return jest.spyOn(http, 'post').mockReturnValue(
+    function simulateLtiLaunchError(http: HttpClient, status: number, headers: Record<string, unknown> = {}, error = {}) {
+        return vi.spyOn(http, 'post').mockReturnValue(
             throwError(() => ({
                 status,
                 headers: { get: () => 'lti_user', ...headers },
-                error: { targetLinkUri: 'mockTargetLinkUri', ...error },
+                error: { targetLinkUri: 'https://example.com/lti/course/1', ...error },
             })),
         );
     }
 
     it('should navigate directly if URL is "/lti/select-course"', () => {
-        const setShownViaLtiSpy = jest.spyOn(comp['ltiService'], 'setShownViaLti');
-        const applyThemeSpy = jest.spyOn(comp['themeService'], 'applyThemePreference');
+        const setShownViaLtiSpy = vi.spyOn(comp['ltiService'], 'setShownViaLti');
+        const applyThemeSpy = vi.spyOn(comp['themeService'], 'applyThemePreference');
 
         comp.replaceWindowLocationWrapper('/lti/select-course');
 
@@ -203,9 +214,9 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     it('should parse URL, detect isMultiLaunch, and navigate with query params', () => {
-        const setShownViaLtiSpy = jest.spyOn(comp['ltiService'], 'setShownViaLti');
-        const setMultiLaunchSpy = jest.spyOn(comp['ltiService'], 'setMultiLaunch');
-        const applyThemeSpy = jest.spyOn(comp['themeService'], 'applyThemePreference');
+        const setShownViaLtiSpy = vi.spyOn(comp['ltiService'], 'setShownViaLti');
+        const setMultiLaunchSpy = vi.spyOn(comp['ltiService'], 'setMultiLaunch');
+        const applyThemeSpy = vi.spyOn(comp['themeService'], 'applyThemePreference');
 
         const testUrl = `https://example.com/some/path?isMultiLaunch=true&foo=bar`;
 
@@ -218,5 +229,70 @@ describe('Lti13ExerciseLaunchComponent', () => {
             queryParams: { isMultiLaunch: 'true', foo: 'bar' },
             replaceUrl: true,
         });
+    });
+
+    it('should handle successful LTI launch', () => {
+        vi.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation(() => {});
+        const targetLink = 'https://example.com/course/1';
+        vi.spyOn(http, 'post').mockReturnValue(
+            of({
+                targetLinkUri: targetLink,
+                ltiIdToken: 'test-token',
+                clientRegistrationId: 'client-123',
+            }),
+        );
+
+        comp.ngOnInit();
+
+        expect(comp.replaceWindowLocationWrapper).toHaveBeenCalledWith(targetLink);
+    });
+
+    it('should store LTI session data correctly', () => {
+        const storeSpy = vi.spyOn(sessionStorageService, 'store');
+
+        comp.storeLtiSessionData('test-lti-token', 'test-client-id');
+
+        expect(storeSpy).toHaveBeenCalledWith('ltiIdToken', 'test-lti-token');
+        expect(storeSpy).toHaveBeenCalledWith('clientRegistrationId', 'test-client-id');
+    });
+
+    it('should not store session data without ltiIdToken', () => {
+        const storeSpy = vi.spyOn(sessionStorageService, 'store');
+
+        comp.storeLtiSessionData('', 'test-client-id');
+
+        expect(storeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not store session data without clientRegistrationId', () => {
+        const storeSpy = vi.spyOn(sessionStorageService, 'store');
+
+        comp.storeLtiSessionData('test-lti-token', '');
+
+        expect(storeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle LTI launch error gracefully', () => {
+        const removeSpy = vi.spyOn(sessionStorageService, 'remove');
+
+        comp.handleLtiLaunchError();
+
+        expect(removeSpy).toHaveBeenCalledWith('state');
+        expect(comp.isLaunching).toBe(false);
+    });
+
+    it('should send request with proper parameters', () => {
+        const httpSpy = vi.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: 'test' }));
+        vi.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation(() => {});
+
+        comp.sendRequest();
+
+        expect(httpSpy).toHaveBeenCalledWith(
+            'api/lti/public/lti13/auth-login',
+            'state=state&id_token=id_token',
+            expect.objectContaining({
+                headers: expect.anything(),
+            }),
+        );
     });
 });

@@ -628,7 +628,8 @@ public class ExerciseService {
                 exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
-                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(),
+                        exercise.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName());
                 var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
                 exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
 
@@ -710,7 +711,7 @@ public class ExerciseService {
         // update the grading criteria to re-calculate the results considering the updated usage limits
         gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {

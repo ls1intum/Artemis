@@ -76,7 +76,7 @@ describe('CourseFaqs', () => {
                         );
                     },
                     delete: () => {
-                        return of(new HttpResponse({ status: 200 }));
+                        return of(new HttpResponse<void>({ status: 200 }));
                     },
                     findAllCategoriesByCourseId: () => {
                         return of(

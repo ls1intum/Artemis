@@ -128,4 +128,8 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     @Modifying
     void deleteByTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule);
 
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteByTutorialGroupId(Long tutorialGroupId);
+
 }

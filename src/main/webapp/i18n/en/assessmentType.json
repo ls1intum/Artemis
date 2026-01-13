@@ -5,6 +5,7 @@
             "null": "",
             "undefined": "",
             "AUTOMATIC": "automatic",
+            "AUTOMATIC_ATHENA": "automatic (Athena)",
             "SEMI_AUTOMATIC": "semi-automatic",
             "MANUAL": "manual",
             "forExerciseHeader": {
@@ -15,6 +16,7 @@
                 "null": "No assessment type set.",
                 "undefined": "No assessment type set.",
                 "AUTOMATIC": "Instructor-created test cases automatically assess your submission to this exercise and provide immediate feedback.",
+                "AUTOMATIC_ATHENA": "This exercise is automatically assessed by Athena, an AI-powered assessment system.",
                 "SEMI_AUTOMATIC": "This exercise is manually graded, but instructor-created test cases help during the assessment and provide immediate feedback.",
                 "MANUAL": "This exercise is graded manually."
             }

@@ -362,14 +362,49 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Updates the assessment due date of a modeling exercise.
+     * Updates the assessment due date of a modeling exercise to end the assessment period.
+     * This method ensures all dates are properly ordered: releaseDate < startDate < dueDate < assessmentDueDate
+     * All dates are set in the past to ensure the assessment period has clearly ended.
      *
      * @param exercise - The modeling exercise to update.
-     * @param due - The new assessment due date (optional, default: current date).
+     * @param due - The reference time (optional, default: current date). Assessment due date will be set to this time.
      */
     async updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = dayjs()) {
-        exercise.assessmentDueDate = due;
-        return await this.updateExercise(exercise, ExerciseType.MODELING);
+        // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        // When setting assessmentDueDate, we need to ensure all dates are properly ordered
+        // The constraint is: releaseDate < startDate (if present) < dueDate < assessmentDueDate
+        // IMPORTANT: The submission must be considered "in time" (submissionDate < dueDate) for the
+        // result to be visible to students. We use a 1-hour window before 'due' to ensure any
+        // submission made during test execution is still within the due date window.
+        // The assessmentDueDate should be clearly in the past so the assessment period is over.
+        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
+        // Ensure dueDate is before the new assessmentDueDate but after any submissions made during the test
+        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
+        // Ensure startDate is before dueDate (use 1 hour buffer for test submissions)
+        const newStartDate = dayjsToString(due.subtract(1, 'hour'));
+        // Ensure releaseDate is before startDate
+        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
+
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            shortName: exercise.shortName,
+            releaseDate: newReleaseDate,
+            startDate: newStartDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            difficulty: exercise.difficulty,
+            problemStatement: exercise.problemStatement,
+            courseId: exercise.course?.id,
+            includedInOverallScore: exercise.includedInOverallScore,
+        };
+        const response = await this.page.request.put(MODELING_EXERCISE_BASE, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update modeling exercise assessment due date: ${response.status()} ${await response.text()}`);
+        }
+        return response;
     }
 
     /**
@@ -404,8 +439,36 @@ export class ExerciseAPIRequests {
      * @param due - The new due date (optional, default: current date).
      */
     async updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
-        exercise.dueDate = due;
-        await this.updateExercise(exercise, ExerciseType.MODELING);
+        // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        // When setting dueDate to the past, all dates must be adjusted to maintain: releaseDate < startDate < dueDate < assessmentDueDate
+        // Use 1 minute spacing to avoid timing edge cases in validation
+        const newDueDate = dayjsToString(due);
+        // Ensure startDate is before dueDate (1 minute before)
+        const newStartDate = dayjsToString(due.subtract(1, 'minute'));
+        // Ensure releaseDate is before startDate (2 minutes before dueDate)
+        const newReleaseDate = dayjsToString(due.subtract(2, 'minutes'));
+        // Ensure assessmentDueDate is after dueDate (1 minute after)
+        const newAssessmentDueDate = dayjsToString(due.add(1, 'minute'));
+
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            shortName: exercise.shortName,
+            releaseDate: newReleaseDate,
+            startDate: newStartDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            difficulty: exercise.difficulty,
+            problemStatement: exercise.problemStatement,
+            courseId: exercise.course?.id,
+            includedInOverallScore: exercise.includedInOverallScore,
+        };
+        const response = await this.page.request.put(MODELING_EXERCISE_BASE, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update modeling exercise due date: ${response.status()} ${await response.text()}`);
+        }
     }
 
     /**
@@ -578,12 +641,28 @@ export class ExerciseAPIRequests {
      */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
         // Use the endpoint that returns all participations for the exercise with latest results
+        // NOTE: This endpoint requires at least tutor permissions
         const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
         const participations = (await response.json()) as StudentParticipation[];
-        if (!participations || participations.length === 0) {
+        if (!Array.isArray(participations) || participations.length === 0) {
             throw new Error(`No participations found for exercise ${exerciseId}`);
         }
         return participations[0];
+    }
+
+    /**
+     * Gets a specific participation with its latest results. This endpoint is accessible by students
+     * who own the participation.
+     *
+     * @param participationId - The ID of the participation to retrieve.
+     * @returns A Promise<StudentParticipation> representing the student participation with latest results.
+     */
+    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipation> {
+        const response = await this.page.request.get(`api/exercise/participations/${participationId}/with-latest-result`);
+        if (!response.ok()) {
+            throw new Error(`Failed to get participation ${participationId}: ${response.status()}`);
+        }
+        return (await response.json()) as StudentParticipation;
     }
 
     /**

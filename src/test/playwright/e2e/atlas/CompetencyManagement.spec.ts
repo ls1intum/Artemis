@@ -4,6 +4,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
+import { setMonacoEditorContent } from '../../support/utils';
 
 async function selectTaxonomy(page: Page, taxonomy: string) {
     const select = page.locator('#taxonomy');
@@ -55,24 +56,7 @@ async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: num
 }
 
 async function setMarkdownDescription(page: Page, text: string) {
-    const monaco = page.locator('jhi-markdown-editor-monaco#description .monaco-editor');
-    if (await monaco.count()) {
-        await monaco.click();
-        await monaco.press('Control+A').catch(() => {});
-        await monaco.press('Meta+A').catch(() => {});
-        await monaco.press('Backspace');
-
-        const monacoWithPressSequentially = monaco as unknown as { pressSequentially?: (value: string) => Promise<void> };
-        if (typeof monacoWithPressSequentially.pressSequentially === 'function') {
-            await monacoWithPressSequentially.pressSequentially(text);
-        } else {
-            await monaco.fill(text);
-        }
-    } else {
-        const fallback = page.getByRole('textbox', { name: 'Editor content' });
-        await fallback.click();
-        await fallback.fill(text);
-    }
+    await setMonacoEditorContent(page, 'jhi-markdown-editor-monaco#description', text);
 }
 
 test.describe('Competency Management', { tag: '@fast' }, () => {
@@ -170,9 +154,10 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
             await row.locator('button[jhideletebutton]').click();
 
-            await expect(page.locator('#delete')).toBeDisabled();
+            const deleteButton = page.getByTestId('delete-dialog-confirm-button');
+            await expect(deleteButton).toBeDisabled();
             await page.locator('#confirm-entity-name').fill(competencyData.title);
-            await page.locator('#delete').click();
+            await deleteButton.click();
 
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) })).toHaveCount(0);
@@ -271,9 +256,10 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await row.locator('button[jhideletebutton]').click();
 
             // Confirm delete modal
-            await expect(page.locator('#delete')).toBeDisabled();
+            const deleteButton = page.getByTestId('delete-dialog-confirm-button');
+            await expect(deleteButton).toBeDisabled();
             await page.locator('#confirm-entity-name').fill(prerequisiteData.title);
-            await page.locator('#delete').click();
+            await deleteButton.click();
 
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: prerequisiteData.title }) })).toHaveCount(0);

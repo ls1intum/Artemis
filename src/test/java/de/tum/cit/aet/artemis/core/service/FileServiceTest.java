@@ -32,6 +32,9 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     private final Path javaPath = Path.of("templates", "java", "java.txt");
 
     // the resource loader allows to load resources from the file system for this prefix
@@ -107,7 +110,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Path createTempTargetDirectory(String prefix) throws IOException {
-        return Files.createTempDirectory(tempPath, prefix);
+        return tempFileUtilService.createTempDirectory(prefix);
     }
 
     @Test

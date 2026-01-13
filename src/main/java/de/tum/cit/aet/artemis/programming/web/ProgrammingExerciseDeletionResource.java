@@ -132,7 +132,7 @@ public class ProgrammingExerciseDeletionResource {
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-            exerciseDeletionService.reset(programmingExercise);
+            exerciseDeletionService.reset(exerciseId);
             exerciseDeletionService.cleanup(exerciseId);
         }
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
