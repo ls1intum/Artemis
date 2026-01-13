@@ -1,6 +1,6 @@
 <div #fullElement class="h-100">
     @if (showMarkdownInfoText()) {
-        <div class="pb-1 text-muted small" [innerHTML]="'artemisApp.markdownEditor.infoText' | artemisTranslate: true"></div>
+        <div class="pb-1 text-muted small" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
     }
     <div
         #wrapper
