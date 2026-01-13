@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -29,7 +29,6 @@ const cssClasses = {
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, RouterLink, DataTableComponent, NgxDatatableModule, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective],
 })
 export class OrganizationManagementDetailComponent implements OnInit {

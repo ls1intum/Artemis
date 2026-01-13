@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { clearTextField, enterDate } from '../../utils';
+import { enterDate, setMonacoEditorContent } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
@@ -150,11 +150,6 @@ export class ExamCreationPage {
     }
 
     private async enterText(selector: string, text: string) {
-        const textField = this.page.locator(selector);
-        const textInput = textField.locator('.monaco-editor');
-        if (text) {
-            await clearTextField(textInput);
-        }
-        await textInput.pressSequentially(text);
+        await setMonacoEditorContent(this.page, selector, text);
     }
 }
