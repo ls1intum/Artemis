@@ -322,6 +322,9 @@
     <!-- ==================== PHASE 13: Drop temporary mapping table ==================== -->
     <!-- This is a temporary migration table that should be dropped immediately -->
     <changeSet id="20260103100000-13" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="example_submission_migration_map"/>
+        </preConditions>
         <dropTable tableName="example_submission_migration_map"/>
     </changeSet>
 

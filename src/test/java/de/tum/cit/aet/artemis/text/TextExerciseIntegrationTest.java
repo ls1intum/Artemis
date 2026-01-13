@@ -212,6 +212,36 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTextExerciseWithCompetency() throws Exception {
+        courseUtilService.enableMessagingForCourse(course);
+
+        // Create a new text exercise (not yet persisted)
+        TextExercise newTextExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
+                course);
+        newTextExercise.setTitle("New Text Exercise With Competency");
+        newTextExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        // Set competency link on the exercise before creation
+        // Note: Set course to null on competency to avoid circular reference during JSON serialization
+        newTextExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newTextExercise, 0.5)));
+        newTextExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        // Create the exercise via POST request
+        TextExercise createdExercise = request.postWithResponseBody("/api/text/text-exercises", newTextExercise, TextExercise.class, HttpStatus.CREATED);
+
+        // Verify the exercise was created with the competency link
+        assertThat(createdExercise).isNotNull();
+        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.getCompetencyLinks()).hasSize(1);
+
+        // Verify the competency link details
+        CompetencyExerciseLink link = createdExercise.getCompetencyLinks().iterator().next();
+        assertThat(link.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(link.getWeight()).isEqualTo(0.5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteExamTextExercise() throws Exception {
         TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
 

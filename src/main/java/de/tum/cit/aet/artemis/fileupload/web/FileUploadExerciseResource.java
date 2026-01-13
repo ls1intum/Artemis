@@ -186,25 +186,35 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(fileUploadExercise);
+
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
+        // Restore competency links with proper exercise reference and save again
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(result, competencyLinks);
+            result = fileUploadExerciseRepository.save(result);
+        }
+
+        FileUploadExercise savedExercise = result;
+        channelService.createExerciseChannel(savedExercise, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedExercise));
 
         // Notify AtlasML about the new exercise
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(savedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
             }
         });
 
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersion(savedExercise);
 
-        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + savedExercise.getId())).body(savedExercise);
     }
 
     /**

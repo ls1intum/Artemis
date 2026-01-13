@@ -183,24 +183,34 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(modelingExercise);
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
-        channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
+        // Restore competency links with proper exercise reference and save again
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(result, competencyLinks);
+            result = modelingExerciseRepository.save(result);
+        }
+
+        ModelingExercise savedExercise = result;
+        channelService.createExerciseChannel(savedExercise, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedExercise));
 
         // Notify AtlasML about the new modeling exercise
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(savedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersion(savedExercise);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + savedExercise.getId())).body(savedExercise);
     }
 
     /**

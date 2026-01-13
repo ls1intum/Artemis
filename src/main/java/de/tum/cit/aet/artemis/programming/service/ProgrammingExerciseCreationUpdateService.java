@@ -154,6 +154,9 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
@@ -195,6 +198,9 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
+
+        // Restore competency links with proper exercise reference before final save
+        exerciseService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }

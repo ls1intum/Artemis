@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -24,13 +23,21 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     @JsonIgnore
     protected CompetencyExerciseId id;
 
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    // Note: We intentionally do NOT use CascadeType.PERSIST here because exercises
+    // are always saved before being linked to competencies. Using cascade would cause
+    // issues when the cascade chain goes back through Exercise.competencyLinks.
+    @ManyToOne(optional = false)
     @MapsId("exerciseId")
     private Exercise exercise;
 
     public CompetencyExerciseLink(CourseCompetency competency, Exercise exercise, double weight) {
         super(competency, weight);
         this.exercise = exercise;
+        // Pre-populate the embedded ID to avoid Hibernate trying to derive it from associations
+        // which can cause cascade issues with detached entities
+        if (competency != null && competency.getId() != null && exercise != null && exercise.getId() != null) {
+            this.id = new CompetencyExerciseId(exercise.getId(), competency.getId());
+        }
     }
 
     public CompetencyExerciseLink() {

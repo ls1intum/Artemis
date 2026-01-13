@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
@@ -44,10 +46,12 @@ public class ProgrammingExerciseDeletionService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ParticipationRepository participationRepository;
+
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExerciseRepository exerciseRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
@@ -55,6 +59,7 @@ public class ProgrammingExerciseDeletionService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.exerciseRepository = exerciseRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -107,9 +112,21 @@ public class ProgrammingExerciseDeletionService {
             participationDeletionService.deleteParticipationById(solutionProgrammingExerciseParticipation.getId());
         }
 
+        // Safety check: Delete any remaining participations that still reference this exercise.
+        // This handles edge cases where participations exist but aren't properly linked from the exercise side
+        // (e.g., template/solution participations where the exercise's FK reference is NULL but the participation
+        // still has exercise_id pointing to this exercise).
+        List<Participation> remainingParticipations = participationRepository.findAllByExerciseId(programmingExerciseId);
+        if (!remainingParticipations.isEmpty()) {
+            log.warn("Found {} remaining participations for exercise {} that weren't deleted through normal flow. Deleting them now.", remainingParticipations.size(),
+                    programmingExerciseId);
+            for (Participation participation : remainingParticipations) {
+                participationDeletionService.deleteParticipationById(participation.getId());
+            }
+        }
+
         // Fetch the exercise fresh with studentParticipations to ensure L2 cache has correct data.
-        // StudentParticipations were already deleted by deleteAllByExercise in ExerciseDeletionService,
-        // so this fetch will return an empty collection and update the L2 cache.
+        // All participations should now be deleted.
         var exerciseToDelete = exerciseRepository.findByIdWithStudentParticipationsElseThrow(programmingExerciseId);
 
         // Delete the programming exercise

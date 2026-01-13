@@ -54,6 +54,21 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
     long countByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
+     * Find all participations (of any type) for a given exercise.
+     * This includes StudentParticipation, TemplateProgrammingExerciseParticipation,
+     * SolutionProgrammingExerciseParticipation, etc.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of all participations referencing the exercise
+     */
+    @Query("""
+            SELECT p
+            FROM Participation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    List<Participation> findAllByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Find all student participations for a course with their latest submission and results.
      * Includes both rated (before due date) and practice (after due date) participations.
      *
@@ -104,6 +119,11 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
     @NonNull
     default Participation findByIdWithSubmissionsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerSubmissionsById(participationId), participationId);
+    }
+
+    @NonNull
+    default Participation findByIdWithSubmissionsResultsElseThrow(long participationId) {
+        return getValueElseThrow(findByIdWithSubmissionsResults(participationId), participationId);
     }
 
     @Query("""

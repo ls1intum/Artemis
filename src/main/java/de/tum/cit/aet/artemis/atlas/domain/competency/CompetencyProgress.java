@@ -78,6 +78,7 @@ public class CompetencyProgress implements Serializable {
 
     public void setUser(User user) {
         this.user = user;
+        updateEmbeddedId();
     }
 
     public CourseCompetency getCompetency() {
@@ -86,6 +87,17 @@ public class CompetencyProgress implements Serializable {
 
     public void setCompetency(CourseCompetency competency) {
         this.competency = competency;
+        updateEmbeddedId();
+    }
+
+    /**
+     * Pre-populates the embedded ID to avoid Hibernate trying to derive it from associations
+     * which can cause cascade issues with detached entities.
+     */
+    private void updateEmbeddedId() {
+        if (this.user != null && this.user.getId() != null && this.competency != null && this.competency.getId() != null) {
+            this.id = new CompetencyUserId(this.user.getId(), this.competency.getId());
+        }
     }
 
     public Double getProgress() {

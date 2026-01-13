@@ -54,6 +54,7 @@ public class LectureUnitCompletion {
 
     public void setUser(User user) {
         this.user = user;
+        updateEmbeddedId();
     }
 
     public LectureUnit getLectureUnit() {
@@ -62,6 +63,17 @@ public class LectureUnitCompletion {
 
     public void setLectureUnit(LectureUnit lectureUnit) {
         this.lectureUnit = lectureUnit;
+        updateEmbeddedId();
+    }
+
+    /**
+     * Pre-populates the embedded ID to avoid Hibernate trying to derive it from associations
+     * which can cause cascade issues with detached entities.
+     */
+    private void updateEmbeddedId() {
+        if (this.user != null && this.user.getId() != null && this.lectureUnit != null && this.lectureUnit.getId() != null) {
+            this.id = new LectureUnitUserId(this.user.getId(), this.lectureUnit.getId());
+        }
     }
 
     public ZonedDateTime getCompletedAt() {

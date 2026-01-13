@@ -915,6 +915,46 @@ public class ExerciseService {
     }
 
     /**
+     * Extracts and clears competency links from an exercise before its initial save.
+     * <p>
+     * This method must be called BEFORE saving a new exercise for the first time.
+     * CompetencyExerciseLink uses a composite ID with @MapsId("exerciseId"), which requires
+     * the exercise to have an ID. Since new exercises don't have an ID yet, we must:
+     * 1. Extract and clear the links before the first save
+     * 2. Save the exercise to get an ID
+     * 3. Call {@link #addCompetencyLinksForCreation} to properly set up and persist the links
+     *
+     * @param exercise the new exercise (not yet saved) from which to extract competency links
+     * @return the extracted competency links (may be empty), to be passed to addCompetencyLinksForCreation
+     */
+    public Set<CompetencyExerciseLink> extractCompetencyLinksForCreation(Exercise exercise) {
+        Set<CompetencyExerciseLink> competencyLinks = new HashSet<>(exercise.getCompetencyLinks());
+        exercise.getCompetencyLinks().clear();
+        return competencyLinks;
+    }
+
+    /**
+     * Restores competency links to a saved exercise and persists them.
+     * <p>
+     * This method must be called AFTER the exercise has been saved and has an ID.
+     * It sets the proper exercise reference on each link (required for @MapsId) and
+     * adds them to the exercise. The caller must save the exercise again after this call
+     * to persist the links via cascade.
+     *
+     * @param exercise        the saved exercise (must have an ID)
+     * @param competencyLinks the links previously extracted via {@link #extractCompetencyLinksForCreation}
+     */
+    public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
+        if (competencyLinks == null || competencyLinks.isEmpty()) {
+            return;
+        }
+        for (CompetencyExerciseLink link : competencyLinks) {
+            link.setExercise(exercise);
+        }
+        exercise.setCompetencyLinks(competencyLinks);
+    }
+
+    /**
      * Update the competency links of an existing exercise based on the provided DTO.
      * Supports removing links, updating weights of existing ones, and adding new links.
      * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.

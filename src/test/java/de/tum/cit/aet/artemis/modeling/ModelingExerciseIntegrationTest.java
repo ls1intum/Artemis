@@ -439,6 +439,33 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateModelingExerciseWithCompetency() throws Exception {
+        // Create a new modeling exercise (not yet persisted)
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setTitle("New Modeling Exercise With Competency");
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        // Set competency link on the exercise before creation
+        // Note: Set course to null on competency to avoid circular reference during JSON serialization
+        modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 0.5)));
+        modelingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        // Create the exercise via POST request
+        ModelingExercise createdExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        // Verify the exercise was created with the competency link
+        assertThat(createdExercise).isNotNull();
+        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.getCompetencyLinks()).hasSize(1);
+
+        // Verify the competency link details
+        CompetencyExerciseLink link = createdExercise.getCompetencyLinks().iterator().next();
+        assertThat(link.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(link.getWeight()).isEqualTo(0.5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExerciseWithChannel() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();

@@ -202,7 +202,10 @@ public class ParticipationDeletionService {
      */
     public void deleteParticipationById(Long participationId) {
         log.debug("Request to delete participation with id : {}", participationId);
-        participationRepository.deleteById(participationId);
+        deleteResultsAndSubmissionsOfParticipation(participationId, true);
+        // Load the participation with (empty submissions and results) to avoid L2 cache issues as described in the delete method's javadoc
+        var participation = participationRepository.findByIdWithSubmissionsResultsElseThrow(participationId);
+        participationRepository.delete(participation);
     }
 
     /**

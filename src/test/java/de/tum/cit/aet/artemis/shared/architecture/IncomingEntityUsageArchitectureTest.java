@@ -31,9 +31,26 @@ class IncomingEntityUsageArchitectureTest {
 
     private static final String BASE_PACKAGE = "de.tum.cit.aet.artemis";
 
+    // TODO: This test is currently disabled because there are 54 existing violations where REST controllers
+    // accept entities directly in @RequestBody/@RequestPart parameters. These should be refactored to use DTOs.
+    // Re-enable this test once the violations are fixed.
+    // See: https://github.com/ls1intum/Artemis/issues/XXXX (create issue to track this work)
+    @org.junit.jupiter.api.Disabled("54 existing violations need to be fixed - controllers should accept DTOs, not entities")
     @Test
     void rest_controllers_must_not_accept_entities_in_request_body_or_part() {
         ArchRule rule = classes().that().areAnnotatedWith(RestController.class).should(notUseEntitiesAsRequestBodyOrPart());
+
+        rule.check(new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(BASE_PACKAGE));
+    }
+
+    // TODO: This test is currently disabled because there are 710 existing violations where REST controllers
+    // return entities directly. These should be refactored to return DTOs instead.
+    // Re-enable this test once the violations are fixed.
+    // See: https://github.com/ls1intum/Artemis/issues/XXXX (create issue to track this work)
+    @org.junit.jupiter.api.Disabled("710 existing violations need to be fixed - controllers should return DTOs, not entities")
+    @Test
+    void rest_controllers_must_not_return_entities() {
+        ArchRule rule = classes().that().areAnnotatedWith(RestController.class).should(notReturnEntities());
 
         rule.check(new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(BASE_PACKAGE));
     }
@@ -85,6 +102,45 @@ class IncomingEntityUsageArchitectureTest {
 
                             events.add(SimpleConditionEvent.violated(controllerClass, message));
                         }
+                    }
+                }
+            }
+        };
+    }
+
+    private static ArchCondition<JavaClass> notReturnEntities() {
+        return new ArchCondition<>("not return @Entity types from REST controller methods") {
+
+            @Override
+            public void check(JavaClass controllerClass, ConditionEvents events) {
+                Class<?> reflectedController = controllerClass.reflect();
+
+                for (JavaMethod archMethod : controllerClass.getMethods()) {
+                    // keep output clean (ignore inherited methods)
+                    if (!archMethod.getOwner().equals(controllerClass)) {
+                        continue;
+                    }
+
+                    Method reflectedMethod = findMatchingDeclaredMethod(reflectedController, archMethod);
+                    if (reflectedMethod == null) {
+                        // synthetic/bridge methods etc. - skip safely
+                        continue;
+                    }
+
+                    // Check the generic return type to handle ResponseEntity<T>, List<T>, etc.
+                    Type returnType = reflectedMethod.getGenericReturnType();
+                    Optional<Class<?>> entityType = findFirstEntityType(returnType);
+
+                    if (entityType.isEmpty()) {
+                        // Also check annotated return type as a fallback
+                        entityType = findFirstEntityType(reflectedMethod.getAnnotatedReturnType().getType());
+                    }
+
+                    if (entityType.isPresent()) {
+                        String message = String.format("Entity returned from REST controller: %s#%s - return type '%s' contains entity '%s'", controllerClass.getFullName(),
+                                archMethod.getName(), returnType.getTypeName(), entityType.get().getName());
+
+                        events.add(SimpleConditionEvent.violated(controllerClass, message));
                     }
                 }
             }

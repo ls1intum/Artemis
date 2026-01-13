@@ -120,7 +120,7 @@ public class QuizExerciseCreationUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true);
+        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true, quizExerciseDTO.competencyLinks());
         exerciseVersionService.createExerciseVersion(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -150,7 +150,7 @@ public class QuizExerciseCreationUpdateResource {
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         quizExercise.setCourse(course);
 
-        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false);
+        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false, quizExerciseDTO.competencyLinks());
 
         // Notify AtlasML about the new quiz exercise
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");

@@ -145,19 +145,29 @@ public class TextExerciseCreationUpdateResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(textExercise);
+
         TextExercise result = textExerciseRepository.save(textExercise);
 
-        channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
-        instanceMessageSendService.sendTextExerciseSchedule(result.getId());
+        // Restore competency links with proper exercise reference and save again
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(result, competencyLinks);
+            result = textExerciseRepository.save(result);
+        }
+
+        TextExercise savedExercise = result;
+        channelService.createExerciseChannel(savedExercise, Optional.ofNullable(textExercise.getChannelName()));
+        instanceMessageSendService.sendTextExerciseSchedule(savedExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedExercise));
 
         // Notify AtlasML about the new text exercise
-        notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
+        notifyAtlasML(savedExercise, OperationTypeDTO.UPDATE, "text exercise creation");
 
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersion(savedExercise);
 
-        return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/text/text-exercises/" + savedExercise.getId())).body(savedExercise);
     }
 
     /**

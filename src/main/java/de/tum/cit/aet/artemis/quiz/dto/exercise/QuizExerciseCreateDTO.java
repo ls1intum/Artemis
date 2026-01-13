@@ -67,7 +67,8 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setDifficulty(difficulty);
         quizExercise.setMode(mode);
         quizExercise.setIncludedInOverallScore(includedInOverallScore);
-        quizExercise.setCompetencyLinks(competencyLinks == null ? new HashSet<>() : new HashSet<>(competencyLinks));
+        // NOTE: Competency links are not set here because they require the exercise ID.
+        // They are handled separately in the service after the exercise is saved.
         quizExercise.setCategories(categories == null ? new HashSet<>() : new HashSet<>(categories));
         quizExercise.setChannelName(channelName);
         quizExercise.setRandomizeQuestionOrder(randomizeQuestionOrder != null ? randomizeQuestionOrder : Boolean.FALSE);

@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -62,11 +63,13 @@ public class LectureUnitService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
+
     private final LectureContentProcessingApi contentProcessingApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
-            Optional<CompetencyRepositoryApi> competencyRepositoryApi, LectureContentProcessingApi contentProcessingApi) {
+            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi, LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -74,6 +77,7 @@ public class LectureUnitService {
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.competencyRelationApi = competencyRelationApi;
         this.contentProcessingApi = contentProcessingApi;
     }
 
@@ -185,18 +189,19 @@ public class LectureUnitService {
     }
 
     /**
-     * Link the competency to a set of lecture units
+     * Link the competency to a set of lecture units.
+     * Note: Since we use CascadeType.REMOVE only (not PERSIST), links must be saved explicitly.
      *
      * @param competency       The competency to be linked
      * @param lectureUnitLinks New set of lecture unit links to associate with the competency
      */
     public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
-        if (courseCompetencyApi.isEmpty()) {
+        if (competencyRelationApi.isEmpty()) {
             return;
         }
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
-        competency.setLectureUnitLinks(lectureUnitLinks);
-        courseCompetencyApi.get().save(competency);
+        // Save links explicitly since cascade does not include PERSIST
+        competencyRelationApi.get().saveAllLectureUnitLinks(lectureUnitLinks);
     }
 
     /**

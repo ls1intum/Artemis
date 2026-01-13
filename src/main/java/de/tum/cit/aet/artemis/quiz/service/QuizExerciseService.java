@@ -39,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -1280,20 +1281,31 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * Creates a new quiz exercise, handling validation, file processing, saving, and related updates.
      *
-     * @param quizExercise the quiz exercise domain object to create
-     * @param files        the files for drag and drop questions (optional)
-     * @param isExam       true if creating for an exam, false for a course
+     * @param quizExercise    the quiz exercise domain object to create (without competency links)
+     * @param files           the files for drag and drop questions (optional)
+     * @param isExam          true if creating for an exam, false for a course
+     * @param competencyLinks the competency links to associate with the exercise (can be null or empty)
      * @return the created and saved quiz exercise
      * @throws IOException if there is an error handling the files
      */
-    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam) throws IOException {
+    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyExerciseLink> competencyLinks) throws IOException {
         resolveQuizQuestionMappings(quizExercise);
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
         quizExercise.validateGeneralSettings();
         handleDndQuizFileCreation(quizExercise, files);
-        QuizExercise result = save(quizExercise);
+
+        // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
+        QuizExercise savedExercise = save(quizExercise);
+
+        // Restore competency links with proper exercise reference and save again
+        if (competencyLinks != null && !competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = save(savedExercise);
+        }
+
+        QuizExercise result = savedExercise;
         if (!isExam) {
             channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
         }

@@ -65,11 +65,14 @@ public abstract class CourseCompetency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies" })
     private StandardizedCompetency linkedStandardizedCompetency;
 
-    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    // Note: We use REMOVE cascade only because links are always saved separately through their
+    // repositories. Using CascadeType.ALL/PERSIST can cause issues with detached entities
+    // when links reference competencies across transaction boundaries.
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties("competency")
     private Set<CompetencyExerciseLink> exerciseLinks = new HashSet<>();
 
-    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties("competency")
     private Set<CompetencyLectureUnitLink> lectureUnitLinks = new HashSet<>();
 

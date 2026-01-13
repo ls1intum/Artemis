@@ -1514,7 +1514,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise created = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
 
         assertThat(created).isNotNull();
-        assertThat(created.getCompetencyLinks()).hasSize(2);
+        assertThat(created.getCompetencyLinks()).hasSize(1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
