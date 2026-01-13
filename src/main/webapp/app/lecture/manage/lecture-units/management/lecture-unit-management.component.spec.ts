@@ -403,6 +403,15 @@ describe('LectureUnitManagementComponent', () => {
             });
             expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.lectureUnit.processing.error.transcriptionFailed');
         });
+
+        it('should handle error when bulk status endpoint fails', () => {
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            lectureUnitManagementComponent.isStatusLoading.set(true);
+            lectureUnitManagementComponent.loadData();
+
+            expect(lectureUnitManagementComponent.isStatusLoading()).toBe(false);
+        });
     });
 
     describe('isAwaitingProcessing', () => {
