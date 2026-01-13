@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, inject, input, output } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -53,10 +53,10 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
-    @Output() problemStatementChange = new EventEmitter<string>();
+    problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
     // Problem statement generation properties
     userPrompt = '';
@@ -132,7 +132,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
 
                     if (response.draftProblemStatement && exercise) {
                         exercise.problemStatement = response.draftProblemStatement;
-                        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+                        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
                         this.problemStatementChange.emit(response.draftProblemStatement);
                         this.programmingExerciseChange.emit(exercise);
                     }
