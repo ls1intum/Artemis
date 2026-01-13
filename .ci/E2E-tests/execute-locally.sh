@@ -6,13 +6,13 @@
 # It builds the Artemis Docker image from a pre-built WAR file and runs tests.
 #
 # Usage: ./execute-locally.sh <configuration> [test-filter]
-#   configuration: mysql-localci (default), mysql, postgres, multi-node
+#   configuration: mysql-localci (default), mysql, postgres, postgres-localci, multi-node
 #   test-filter: optional grep pattern to filter tests (e.g., "Quiz")
 #
 # Prerequisites:
 #   - WAR file must exist in build/libs/
 #   - Docker must be running
-#   - Port 3306 must be free (stop local MySQL if running)
+#   - Port 3306 must be free for MySQL, 5432 for Postgres
 # =============================================================================
 
 set -e
@@ -34,12 +34,15 @@ if [ "$CONFIGURATION" = "mysql" ]; then
 elif [ "$CONFIGURATION" = "postgres" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres.yml"
     DB="postgres"
+elif [ "$CONFIGURATION" = "postgres-localci" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
+    DB="postgres"
 elif [ "$CONFIGURATION" = "mysql-localci" ]; then
     COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
 elif [ "$CONFIGURATION" = "multi-node" ]; then
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
 else
-    echo "Invalid configuration. Choose: mysql, postgres, mysql-localci, or multi-node"
+    echo "Invalid configuration. Choose: mysql, postgres, postgres-localci, mysql-localci, or multi-node"
     exit 1
 fi
 

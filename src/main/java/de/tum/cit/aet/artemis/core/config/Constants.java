@@ -140,12 +140,6 @@ public final class Constants {
      */
     public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
-    /**
-     * Arbitrary limit that is unlikely to be reached by real feedback in practice.
-     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
-     */
-    public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
-
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
@@ -262,6 +256,8 @@ public final class Constants {
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
+    public static final String DOCKER_FLAG_ALLOWED_CUSTOM_NETWORKS = "allowedCustomDockerNetworks";
+
     public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
 
     public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
@@ -366,11 +362,6 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
-     */
-    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
 
     /**
      * Profile combination for one primary node, where LTI AND scheduling is active

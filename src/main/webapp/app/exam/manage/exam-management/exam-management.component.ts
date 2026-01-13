@@ -13,8 +13,9 @@ import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.mo
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -50,7 +51,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private router = inject(Router);
 
     readonly documentationType: DocumentationType = 'Exams';
@@ -161,18 +163,28 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Opens the import module for an exam import
      */
     openImportModal() {
-        const examImportModalRef = this.modalService.open(ExamImportComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        const dialogData: ExamImportDialogData = {
+            subsequentExerciseGroupSelection: false,
+        };
+
+        const dialogRef = this.dialogService.open(ExamImportComponent, {
+            header: this.translateService.instant('artemisApp.examManagement.importExam'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: dialogData,
         });
-        // The Exercise Group selection is performed within the exam-update.component afterwards
-        examImportModalRef.componentInstance.subsequentExerciseGroupSelection.set(false);
 
         const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
 
-        examImportModalRef.result.then((exam: Exam) => {
-            importBaseRoute.push(exam.id);
-            this.router.navigate(importBaseRoute);
+        dialogRef?.onClose.subscribe((exam: Exam | undefined) => {
+            if (exam) {
+                importBaseRoute.push(exam.id);
+                this.router.navigate(importBaseRoute);
+            }
         });
     }
 }

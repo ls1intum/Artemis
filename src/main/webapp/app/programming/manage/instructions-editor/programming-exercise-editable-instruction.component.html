@@ -1,21 +1,40 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
     @if (exercise()) {
+        <!-- showPreview controls whether the preview tab is available in the markdown editor.
+             Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
             [initialEditorHeight]="initialEditorHeight"
+            [externalHeight]="externalHeight"
             [useDefaultMarkdownEditorOptions]="false"
             [enableResize]="enableResize"
             [markdown]="exercise().problemStatement"
             [showDefaultPreview]="false"
-            [showPreviewButton]="false"
-            [showVisualButton]="false"
-            [showEditButton]="false"
+            [showPreviewButton]="showPreview"
+            [showEditButton]="showPreview"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
-        />
+        >
+            <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
+                 of programming-specific syntax (task markers, PlantUML, test case status, etc.).
+                 Uses templateParticipation if available (code editor context), otherwise falls back to participation.
+                 The div wrapper with id="previewMonaco" is projected into the markdown editor's preview slot.
+                 Only renders when showPreview is true AND we have a valid participation to display results. -->
+            <div id="previewMonaco" class="instructions-preview-wrapper">
+                @if (showPreview && (participation() ?? exercise().templateParticipation)) {
+                    <jhi-programming-exercise-instructions
+                        class="instructions-preview"
+                        [exercise]="exercise()"
+                        [participation]="(participation() ?? exercise().templateParticipation)!"
+                        [personalParticipation]="false"
+                        [generateHtmlEvents]="generateHtmlSubject.asObservable()"
+                    />
+                }
+            </div>
+        </jhi-markdown-editor-monaco>
     }
     @if (editMode) {
         <button
@@ -23,7 +42,11 @@
             [disabled]="savingInstructions || !unsavedChangesValue"
             (click)="saveInstructions($event)"
             class="btn editable-instruction-container__save"
-            [ngClass]="savingInstructions || !unsavedChangesValue ? 'btn-light' : 'btn-primary'"
+            [ngClass]="{
+                'btn-light': savingInstructions || !unsavedChangesValue,
+                'btn-primary': !(savingInstructions || !unsavedChangesValue),
+                'btn-sm': externalHeight,
+            }"
         >
             @if (!savingInstructions) {
                 <fa-icon [icon]="faSave" class="me-2" />

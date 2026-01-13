@@ -313,9 +313,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
         tick();
 
+        // Initial render is triggered in ngAfterViewInit when showPreview is true
+        const callCountAfterInit = generateHtmlSubjectStub.mock.calls.length;
+
         forceRenderSubject.next();
 
-        expect(generateHtmlSubjectStub).toHaveBeenCalledOnce();
+        // forceRender should trigger an additional call
+        expect(generateHtmlSubjectStub).toHaveBeenCalledTimes(callCountAfterInit + 1);
 
         fixture.destroy();
         flush();

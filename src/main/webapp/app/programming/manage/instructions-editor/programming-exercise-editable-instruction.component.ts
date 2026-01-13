@@ -21,6 +21,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
@@ -30,13 +31,24 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { editor } from 'monaco-editor';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
+    imports: [
+        MarkdownEditorMonacoComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructionAnalysisComponent,
+        ArtemisTranslatePipe,
+        ProgrammingExerciseInstructionComponent,
+    ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
@@ -90,10 +102,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     @Input() editMode = true;
     @Input() enableResize = true;
-    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight | 'external';
+    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight;
+    /**
+     * If true, the editor height is managed externally by the parent container.
+     * Use this when embedding in a layout that controls height (e.g., code editor view).
+     */
+    @Input() externalHeight = false;
     @Input() showSaveButton = false;
+    /**
+     * Whether to show the preview button and default preview in the markdown editor.
+     * Set to false when using an external preview component (e.g., in the code editor).
+     */
+    @Input() showPreview = true;
     @Input() forceRender: Observable<void>;
 
+    readonly participation = input<Participation>();
     readonly exercise = input.required<ProgrammingExercise>();
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly hasUnsavedChanges = output<boolean>();
@@ -150,6 +173,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRender) {
             this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
         }
+        // Trigger initial preview render after view initialization.
+        // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
+        if (this.showPreview) {
+            // Small delay to allow the instruction component to initialize
+            setTimeout(() => this.generateHtmlSubject.next(), 0);
+        }
     }
 
     /** Save the problem statement on the server.
@@ -195,6 +224,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     updateProblemStatement(problemStatement: string) {
         if (this.exercise().problemStatement !== problemStatement) {
             this.unsavedChanges = true;
+            this.instructionChange.emit(problemStatement);
+            // Trigger preview update when showPreview is enabled
+            this.generateHtmlSubject.next();
         }
         if (!this.isApplyingRemoteUpdate) {
             this.problemStatementSyncService.queueLocalChange(problemStatement);
@@ -269,6 +301,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
         this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
     };
+
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
+    jumpToLine(lineNumber: number) {
+        this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
         return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>

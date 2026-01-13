@@ -98,6 +98,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
+    readonly onEditorLoaded = output<void>();
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
@@ -164,8 +165,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         if (editorWasRefreshed || editorWasReset) {
             this.fileSession.set({});
             this.editor().reset();
+            this.onEditorLoaded.emit();
         }
-        if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
+        if ((changes.selectedFile && this.selectedFile()) || (editorWasRefreshed && this.selectedFile())) {
             const previousFileName: string | undefined = changes.selectedFile?.previousValue;
             // we save the old scrollTop before switching to another file
             if (previousFileName && this.fileSession()[previousFileName]) {
