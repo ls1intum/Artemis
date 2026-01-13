@@ -22,7 +22,6 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
-import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 @Entity
@@ -238,18 +237,5 @@ public class PasskeyCredential extends AbstractAuditingEntity {
      */
     public PasskeyDTO toDto() {
         return new PasskeyDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved);
-    }
-
-    /**
-     * Converts the current {@link PasskeyCredential} entity into an {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO} object.
-     * <p>
-     * This method maps the fields of the {@link PasskeyCredential} entity to an {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO},
-     * which includes user information for administrative purposes.
-     * </p>
-     *
-     * @return An {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO} object.
-     */
-    public PasskeyAdminDTO toAdminDto() {
-        return new PasskeyAdminDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved, user.getId(), user.getLogin(), user.getName());
     }
 }
