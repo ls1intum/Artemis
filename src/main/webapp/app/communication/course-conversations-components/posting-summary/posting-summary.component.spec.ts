@@ -110,12 +110,20 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Event emissions', () => {
+        let mockEvent;
+        beforeEach(() => {
+            mockEvent = {
+                stopPropagation: jest.fn(),
+                target: { closest: jest.fn() },
+            };
+        });
         it('should emit status change', () => {
             const emitSpy = jest.spyOn(component.onChangeSavedPostStatus, 'emit');
             const newStatus = SavedPostStatus.ARCHIVED;
 
-            component['onStatusChangeClick'](newStatus);
+            component['onStatusChangeClick'](mockEvent, newStatus);
 
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalledWith(newStatus);
         });
 
@@ -123,8 +131,9 @@ describe('PostingSummaryComponent', () => {
             const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', mockPost);
 
-            component['onRemoveBookmarkClick']();
+            component['onRemoveBookmarkClick'](mockEvent);
 
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalledWith(mockPost);
         });
 
@@ -132,8 +141,9 @@ describe('PostingSummaryComponent', () => {
             const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', undefined);
 
-            component['onRemoveBookmarkClick']();
+            component['onRemoveBookmarkClick'](mockEvent);
 
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).not.toHaveBeenCalled();
         });
 

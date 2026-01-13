@@ -58,11 +58,13 @@ export class PostingSummaryComponent {
         });
     }
 
-    protected onStatusChangeClick(status: SavedPostStatus) {
+    protected onStatusChangeClick(event: any, status: SavedPostStatus) {
+        event.stopPropagation();
         this.onChangeSavedPostStatus.emit(status);
     }
 
-    protected onRemoveBookmarkClick() {
+    protected onRemoveBookmarkClick(event: any) {
+        event.stopPropagation();
         if (this.post() === undefined) {
             return;
         }

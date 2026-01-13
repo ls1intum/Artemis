@@ -8,11 +8,13 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('SavedPostsComponent', () => {
     let component: SavedPostsComponent;
     let fixture: ComponentFixture<SavedPostsComponent>;
     let savedPostService: jest.Mocked<SavedPostService>;
+    let alertService: jest.Mocked<AlertService>;
 
     const mockPosting: Posting = {
         id: 1,
@@ -29,13 +31,21 @@ describe('SavedPostsComponent', () => {
             removeSavedPost: jest.fn(),
         };
 
+        const mockAlertService = {
+            error: jest.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [FaIconComponent],
             declarations: [SavedPostsComponent, MockDirective(TranslateDirective), MockComponent(PostingSummaryComponent)],
-            providers: [{ provide: SavedPostService, useValue: mockSavedPostService }],
+            providers: [
+                { provide: SavedPostService, useValue: mockSavedPostService },
+                { provide: AlertService, useValue: mockAlertService },
+            ],
         }).compileComponents();
 
         savedPostService = TestBed.inject(SavedPostService) as jest.Mocked<SavedPostService>;
+        alertService = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
         fixture = TestBed.createComponent(SavedPostsComponent);
         component = fixture.componentInstance;
     });
@@ -94,6 +104,16 @@ describe('SavedPostsComponent', () => {
             expect(savedPostService.changeSavedPostStatus).toHaveBeenCalledWith(mockPosting, SavedPostStatus.ARCHIVED);
             expect(component['hiddenPosts']).toContain(mockPosting.id);
         }));
+
+        it('should handle error when changing post status', fakeAsync(() => {
+            const newStatus = SavedPostStatus.ARCHIVED;
+            savedPostService.changeSavedPostStatus.mockReturnValue(throwError(() => new Error('Test error')));
+
+            component['changeSavedPostStatus'](mockPosting, newStatus);
+
+            expect(savedPostService.changeSavedPostStatus).toHaveBeenCalledWith(mockPosting, SavedPostStatus.ARCHIVED);
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.metis.post.changeSavedStatusError');
+        }));
     });
 
     describe('Remove saved post', () => {
@@ -103,6 +123,14 @@ describe('SavedPostsComponent', () => {
 
             expect(savedPostService.removeSavedPost).toHaveBeenCalledWith(mockPosting);
             expect(component['hiddenPosts']).toContain(mockPosting.id);
+        }));
+
+        it('should handle error when removing saved post', fakeAsync(() => {
+            savedPostService.removeSavedPost.mockReturnValue(throwError(() => new Error('Test error')));
+            component['removeSavedPost'](mockPosting);
+
+            expect(savedPostService.removeSavedPost).toHaveBeenCalledWith(mockPosting);
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.metis.post.removeBookmarkError');
         }));
     });
 

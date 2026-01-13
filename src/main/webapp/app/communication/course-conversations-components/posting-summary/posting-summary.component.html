@@ -62,7 +62,7 @@
                         type="button"
                         class="btn btn-outline-secondary"
                         ngbTooltip="{{ 'artemisApp.metis.post.removeBookmarkPost' | artemisTranslate }}"
-                        (click)="onRemoveBookmarkClick()"
+                        (click)="onRemoveBookmarkClick($event)"
                     >
                         <fa-icon [icon]="faBookmark" />
                     </button>
@@ -71,7 +71,7 @@
                         type="button"
                         class="btn btn-outline-secondary"
                         ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostProgress' | artemisTranslate }}"
-                        (click)="onStatusChangeClick(SavedPostStatus.IN_PROGRESS)"
+                        (click)="onStatusChangeClick($event, SavedPostStatus.IN_PROGRESS)"
                     >
                         <fa-icon [icon]="faBarsProgress" />
                     </button>
@@ -80,7 +80,7 @@
                         type="button"
                         class="btn btn-outline-secondary"
                         ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostComplete' | artemisTranslate }}"
-                        (click)="onStatusChangeClick(SavedPostStatus.COMPLETED)"
+                        (click)="onStatusChangeClick($event, SavedPostStatus.COMPLETED)"
                     >
                         <fa-icon [icon]="faCheckSquare" />
                     </button>
@@ -89,7 +89,7 @@
                         type="button"
                         class="btn btn-outline-secondary"
                         ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostArchived' | artemisTranslate }}"
-                        (click)="onStatusChangeClick(SavedPostStatus.ARCHIVED)"
+                        (click)="onStatusChangeClick($event, SavedPostStatus.ARCHIVED)"
                     >
                         <fa-icon [icon]="faBoxArchive" />
                     </button>
