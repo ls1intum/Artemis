@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -30,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -47,6 +47,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private LocalRepository assignmentRepository;
 
@@ -291,7 +294,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             throws Exception {
 
         // Create a second local repository and push a file from there
-        Path tempDirectory = Files.createTempDirectory(tempPath, "tempDirectory");
+        Path tempDirectory = tempFileUtilService.createTempDirectory(tempPath, "tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);

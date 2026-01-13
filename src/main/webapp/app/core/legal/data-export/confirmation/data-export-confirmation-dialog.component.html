@@ -7,9 +7,9 @@
     </div>
     <div class="modal-body">
         <p [jhiTranslate]="'artemisApp.dataExport.confirmationQuestion'">Are you sure you want to request?</p>
-        @if (adminDialog) {
+        @if (adminDialog()) {
             <div>
-                @if (adminDialog) {
+                @if (adminDialog()) {
                     <div class="checkbox">
                         <div class="control-label form-check">
                             <input
@@ -18,37 +18,39 @@
                                 name="checkbox"
                                 class="form-check-input"
                                 (change)="onRequestDataExportForOtherUserChanged($event)"
-                                [(ngModel)]="requestForAnotherUser"
+                                [ngModel]="requestForAnotherUser()"
+                                (ngModelChange)="requestForAnotherUser.set($event)"
                             />
                             <label for="request-for-other-user" class="form-check-label" jhiTranslate="artemisApp.dataExport.requestForAnotherUser"></label>
                         </div>
-                        @if (requestForAnotherUser) {
-                            <jhi-type-ahead-user-search-field [(loginOrName)]="expectedLogin" />
+                        @if (requestForAnotherUser()) {
+                            <jhi-type-ahead-user-search-field [loginOrName]="expectedLogin()" (loginOrNameChange)="onLoginOrNameChange($event)" />
                         }
                     </div>
                 }
             </div>
         }
         <jhi-confirm-entity-name
-            [entityName]="expectedLogin"
-            [confirmationText]="confirmationTextHint"
-            [disabled]="submitDisabled"
-            [(ngModel)]="enteredLogin"
+            [entityName]="expectedLogin()"
+            [confirmationText]="confirmationTextHint()"
+            [disabled]="submitDisabled()"
+            [ngModel]="enteredLogin()"
+            (ngModelChange)="enteredLogin.set($event)"
             name="confirmEntityName"
         />
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button
             id="request"
             type="submit"
             class="btn btn-primary"
-            [style.cursor]="dataExportConfirmationForm.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
-            [disabled]="dataExportConfirmationForm.invalid || submitDisabled"
+            [style.cursor]="dataExportConfirmationForm.invalid || submitDisabled() ? 'not-allowed' : 'pointer'"
+            [disabled]="dataExportConfirmationForm.invalid || submitDisabled()"
         >
-            @if (submitDisabled) {
+            @if (submitDisabled()) {
                 <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
             }
             <fa-icon [icon]="faCheck" />&nbsp;

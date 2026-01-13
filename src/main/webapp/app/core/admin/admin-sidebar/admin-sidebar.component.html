@@ -3,7 +3,7 @@
         <!-- Admin Header -->
         <div id="admin-header" class="d-flex p-3 align-items-center text-decoration-none">
             <div class="admin-icon d-flex align-items-center justify-content-center">
-                <fa-icon [icon]="faUserPlus" />
+                <fa-icon [icon]="faUserShield" />
             </div>
             @if (!isNavbarCollapsed()) {
                 <div class="admin-title h6 mb-0 fw-bold text-body auto-collapse" jhiTranslate="global.menu.admin.main"></div>
@@ -75,7 +75,7 @@
                 class="double-arrow mb-2"
                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
                 tooltipClass="double-arrow-tooltip-collapsed"
-                [ngbTooltip]="'global.menu.admin.sidebar.expandMenu' | artemisTranslate"
+                [ngbTooltip]="'global.menu.admin.expandMenu' | artemisTranslate"
                 (click)="toggleCollapseState.emit()"
                 [attr.aria-expanded]="!isNavbarCollapsed()"
             >

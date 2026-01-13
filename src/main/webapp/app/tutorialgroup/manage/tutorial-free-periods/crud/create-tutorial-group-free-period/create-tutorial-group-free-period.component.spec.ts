@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,51 +16,49 @@ import {
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
     let component: CreateTutorialGroupFreePeriodComponent;
     let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
     const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const configurationId = 1;
-    let activeModal: NgbActiveModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [CreateTutorialGroupFreePeriodComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TutorialGroupFreePeriodService),
                 MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
-        activeModal = TestBed.inject(NgbActiveModal);
         fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('tutorialGroupConfigurationId', configurationId);
         fixture.componentRef.setInput('course', course);
-        component.initialize();
+        component.open();
         tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should send POST request upon form submission and close modal', () => {
+    it('should send POST request upon form submission and close dialog', () => {
         const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
 
@@ -67,8 +67,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
             status: 201,
         });
 
-        const createStub = jest.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const createStub = vi.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
+        const freePeriodCreatedSpy = vi.spyOn(component.freePeriodCreated, 'emit');
 
         const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
@@ -78,7 +78,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(freePeriodCreatedSpy).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('should throw an error when date and alternativeDate are undefined', () => {

@@ -1,8 +1,8 @@
-<div class="module-bg p-3">
-    <h2>
-        <span id="health-page-heading" jhiTranslate="health.title"></span>
-        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="health.refresh.button"></span></button>
-    </h2>
+<div>
+    <h5 *adminTitleBarTitle id="health-page-heading" class="mb-0" jhiTranslate="health.title"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-primary btn-sm" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="health.refresh.button"></span></button>
+    </div>
     <div class="table-responsive">
         <table id="healthCheck" class="table table-striped" aria-describedby="health-page-heading">
             <thead>
@@ -12,9 +12,9 @@
                     <th scope="col" class="text-center" jhiTranslate="health.details.details"></th>
                 </tr>
             </thead>
-            @if (health) {
+            @if (health()) {
                 <tbody>
-                    @for (componentHealth of health.components | keyvalue; track componentHealth) {
+                    @for (componentHealth of health()!.components | keyvalue; track componentHealth) {
                         <tr [id]="componentHealth.key">
                             <td>
                                 {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}

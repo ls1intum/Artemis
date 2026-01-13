@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 
-class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "courselocalvcjenkins";
 
@@ -109,6 +109,24 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testResetCourseWithPermission() throws Exception {
+        courseTestService.testResetCourseWithPermission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testResetCourseWithoutPermission() throws Exception {
+        courseTestService.testResetCourseWithoutPermission();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testResetCourseNotFound() throws Exception {
+        courseTestService.testResetCourseNotFound();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateCourseWithoutPermission() throws Exception {
         courseTestService.testCreateCourseWithoutPermission();
@@ -126,11 +144,8 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         courseTestService.testCreateCourseWithDefaultChannels();
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseIsEmpty() throws Exception {
-        courseTestService.testUpdateCourseIsEmpty();
-    }
+    // Note: testUpdateCourseIsEmpty was removed because with CourseCreateDTO, the ID field is not sent,
+    // so the old test case (sending a non-existent ID to create endpoint) is no longer applicable.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

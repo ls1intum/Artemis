@@ -73,7 +73,7 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Staff',
+                        label: 'Development',
                         path: 'staff'
                     },
                     {
@@ -199,7 +199,7 @@ const config: Config = {
                     ],
                 },
             ],
-            copyright: `© 2025 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
+            copyright: `© 2026 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
         },
         prism: {
             theme: prismThemes.github,

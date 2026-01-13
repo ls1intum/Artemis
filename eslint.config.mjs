@@ -47,6 +47,7 @@ export default tseslint.config(
             'rules/**/*.js',
             'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/main/webapp/app/openapi/**',
+            'src/test/playwright/monocart-report/**',
         ],
     },
     eslint.configs.recommended,
@@ -209,6 +210,29 @@ export default tseslint.config(
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
+        },
+    },
+    {
+        files: ['documentation/src/**/*.js'],
+        languageOptions: {
+            parserOptions: {
+                ecmaVersion: 'latest',
+                sourceType: 'module',
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
+            globals: {
+                console: 'readonly',
+                document: 'readonly',
+                window: 'readonly',
+                Element: 'readonly',
+                URL: 'readonly',
+            },
+        },
+        rules: {
+            'no-undef': 'error',
+            'no-unused-vars': 'error',
         },
     },
 );

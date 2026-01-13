@@ -681,7 +681,7 @@ describe('CourseOverviewService', () => {
             [0.8, 'var(--orange)'],
             [0.7, 'var(--yellow)'],
             [0.6, 'var(--green)'],
-        ])('should assign correct chip color for ratio %.2f', (ratio, expectedColor) => {
+        ])('should assign correct chip color for ratio', (ratio, expectedColor) => {
             const tutorialGroup = new TutorialGroup();
             tutorialGroup.id = 3;
             tutorialGroup.title = 'TG Ratio Test';

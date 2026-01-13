@@ -1,4 +1,4 @@
-import { Component, Signal, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, input, output } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,6 +14,7 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
     styleUrls: ['./chat-history-item.component.scss'],
     standalone: true,
     imports: [DatePipe, NgClass, FaIconComponent, NgbTooltipModule, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatHistoryItemComponent {
     session = input.required<IrisSessionDTO>();

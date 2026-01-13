@@ -204,6 +204,123 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @Cacheable(cacheNames = "courseTitle", key = "#courseId", unless = "#result == null")
     String getCourseTitle(@Param("courseId") long courseId);
 
+    /**
+     * Returns the course icon path of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the course icon path or null if the course does not exist or has no icon
+     */
+    @Query("""
+            SELECT c.courseIcon
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getCourseIconById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the student group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the student group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.studentGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getStudentGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the teaching assistant group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the teaching assistant group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.teachingAssistantGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getTeachingAssistantGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the editor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the editor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.editorGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getEditorGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the instructor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the instructor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.instructorGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getInstructorGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default student group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default student group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-students')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultStudentGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default teaching assistant group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default teaching assistant group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-tutors')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultTeachingAssistantGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default editor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default editor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-editors')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultEditorGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default instructor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default instructor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-instructors')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultInstructorGroupNameById(@Param("courseId") long courseId);
+
     @Query("""
             SELECT DISTINCT c
             FROM Course c
