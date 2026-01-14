@@ -588,15 +588,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
 
-        // Retry exercise creation to handle transient 500 errors in slow CI environments
         exercise = createExerciseWithRetry();
 
         LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
         LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
 
-        // Wait for repositories to be initialized on disk after exercise creation
-        // This actively checks repository existence instead of using a fixed delay
-        // Critical for slow CI environments where background repository initialization may still be running
         waitForRepositoriesToBeInitialized(assignmentUri, testUri);
         Repository assignmentRepository = null;
         Repository testRepository = null;
