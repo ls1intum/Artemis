@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faBan, faQuestionCircle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -28,7 +28,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FileService } from 'app/shared/service/file.service';
-import { MarkdownDiffEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-diff-editor-monaco.component';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
@@ -52,10 +51,9 @@ import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
-        MarkdownDiffEditorMonacoComponent,
     ],
 })
-export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ProjectType = ProjectType;
     protected readonly AssessmentType = AssessmentType;
@@ -120,8 +118,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     showDiff = false;
     originalProblemStatement = '';
     refinedProblemStatement = '';
-    private diffContentSet = false;
-    diffEditor = viewChild<MarkdownDiffEditorMonacoComponent>('diffEditor');
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
     private readonly testCaseAction: TextEditorDomainAction = new TestCaseAction();
@@ -131,21 +127,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     // Injected services
     private fileService = inject(FileService);
 
+    // Template references
+    readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
+
     // Inline comment state
     /** True if any AI operation is in progress (refinement or generation) */
     protected isAnyApplying = computed(() => this.isRefining() || this.isGenerating());
-
-    /**
-     * Lifecycle hook called after every check of the component's view.
-     * Used to set diff editor content when it becomes available.
-     */
-    ngAfterViewChecked(): void {
-        const editor = this.diffEditor();
-        if (this.showDiff && editor && !this.diffContentSet) {
-            editor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
-            this.diffContentSet = true;
-        }
-    }
 
     /**
      * Lifecycle hook to capture the initial problem statement for comparison.
@@ -302,7 +289,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                         // Store original and refined content for diff view
                         this.originalProblemStatement = exercise.problemStatement || '';
                         this.refinedProblemStatement = response.refinedProblemStatement;
-                        this.diffContentSet = false; // Reset flag so content will be set in ngAfterViewChecked
                         this.showDiff = true;
                         this.userPrompt = '';
                     } else if (response.originalProblemStatement) {
@@ -331,12 +317,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
      */
     acceptRefinement(): void {
         const exercise = this.programmingExercise();
-        if (exercise && this.refinedProblemStatement) {
-            exercise.problemStatement = this.refinedProblemStatement;
+        // Get the current text from the editor (captures any edits made in diff mode)
+        const finalStatement = this.editableInstructions()?.markdownEditorMonaco?.markdown ?? this.currentProblemStatement();
+        if (exercise && finalStatement) {
+            exercise.problemStatement = finalStatement;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.problemStatementChange.emit(this.refinedProblemStatement);
+            this.problemStatementChange.emit(finalStatement);
             this.programmingExerciseChange.emit(exercise);
-            this.currentProblemStatement.set(this.refinedProblemStatement);
+            this.currentProblemStatement.set(finalStatement);
             this.closeDiff();
         }
     }
@@ -355,7 +343,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         this.showDiff = false;
         this.originalProblemStatement = '';
         this.refinedProblemStatement = '';
-        this.diffContentSet = false;
     }
 
     /**
@@ -431,7 +418,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                         // Store original and refined content for diff view
                         this.originalProblemStatement = exercise.problemStatement || '';
                         this.refinedProblemStatement = response.refinedProblemStatement;
-                        this.diffContentSet = false;
                         this.showDiff = true;
                         this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {

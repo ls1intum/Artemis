@@ -12,6 +12,9 @@
              Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
+            [mode]="mode()"
+            [originalMarkdown]="originalContent()"
+            [modifiedMarkdown]="modifiedContent()"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
             [initialEditorHeight]="initialEditorHeight"
@@ -21,11 +24,11 @@
             [markdown]="exercise.problemStatement"
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview"
-            [showVisualButton]="!isRefining()"
             [showEditButton]="showPreview"
             [readOnly]="isRefining()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
+            (diffLineChange)="diffLineChange.emit($event)"
             (onSelectionChange)="onEditorSelectionChange($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering

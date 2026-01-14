@@ -17,7 +17,8 @@ import {
     output,
     signal,
 } from '@angular/core';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -270,7 +271,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     showCloseButton = input<boolean>(false);
     /** Whether the editor is read-only */
     readOnly = input<boolean>(false);
+
+    /** Editor mode: 'normal' or 'diff' */
+    mode = input<MonacoEditorMode>('normal');
+
+    /** Original markdown content for diff mode */
+    originalMarkdown = input<string | undefined>();
+
+    /** Modified markdown content for diff mode */
+    modifiedMarkdown = input<string | undefined>();
+
     closeEditor = output<void>();
+
+    /** Emits diff line change information when in diff mode */
+    diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -370,6 +384,29 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         effect(() => {
             this.renderConsistencyIssues();
+        });
+
+        // Handle diff content updates
+        effect(() => {
+            const currentMode = this.mode();
+            if (currentMode === 'diff' && this.monacoEditor) {
+                const original = this.originalMarkdown();
+                const modified = this.modifiedMarkdown();
+                if (original !== undefined && modified !== undefined) {
+                    this.monacoEditor.setDiffContents(original, modified, 'original.md', 'modified.md');
+                    // Update the markdown property to reflect the modified (refined) content
+                    this.markdown = modified;
+                    // Adjust dimensions after diff content is set
+                    // Use RAF + setTimeout to ensure CSS has fully resolved
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            if (this.monacoEditor) {
+                                this.adjustEditorDimensions();
+                            }
+                        }, 50);
+                    });
+                }
+            }
         });
     }
 

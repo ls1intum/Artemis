@@ -16,12 +16,14 @@
                     <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
                         <jhi-monaco-editor
                             class="h-100"
+                            [mode]="mode()"
                             [shrinkToFit]="false"
                             [stickyScroll]="false"
                             [readOnly]="readOnly()"
                             [textChangedEmitDelay]="200"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
+                            (diffChanged)="diffLineChange.emit($event)"
                             (drop)="onFileDrop($event)"
                             (onBlurEditor)="onBlurEditor.emit()"
                         />

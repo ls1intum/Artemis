@@ -31,6 +31,8 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
@@ -138,6 +140,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Whether any refinement is in progress (makes editor read-only) */
     readonly isRefining = input<boolean>(false);
 
+    /** Editor mode: 'normal' or 'diff' for showing diff view */
+    readonly mode = input<MonacoEditorMode>('normal');
+
+    /** Original content for diff mode */
+    readonly originalContent = input<string | undefined>(undefined);
+
+    /** Modified content for diff mode */
+    readonly modifiedContent = input<string | undefined>(undefined);
+
     @Input()
     get exercise() {
         return this.programmingExercise;
@@ -167,6 +178,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         startColumn: number;
         endColumn: number;
     }>();
+
+    /** Emits diff line change information when in diff mode */
+    readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     set participation(participation: Participation) {
         this.participationValue = participation;

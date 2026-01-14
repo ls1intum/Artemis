@@ -271,7 +271,7 @@
                     <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
                 }
             </div>
-            <!-- Editable instructions or Diff view -->
+            <!-- Editable instructions with diff support -->
             <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
                 @if (showDiff()) {
                     <!-- Diff review banner -->
@@ -291,18 +291,8 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Markdown Diff Editor -->
-                    <jhi-markdown-diff-editor-monaco
-                        #diffEditor
-                        class="overflow-hidden flex-grow-1 hide-resize"
-                        [allowSplitView]="false"
-                        [domainActions]="domainActions"
-                        [metaActions]="metaActions"
-                        [enableResize]="false"
-                        [readOnly]="isRefining()"
-                        [fillHeight]="true"
-                    />
-                } @else if (exercise.templateParticipation) {
+                }
+                @if (exercise.templateParticipation) {
                     <jhi-programming-exercise-editable-instructions
                         [(exercise)]="exercise"
                         [(participation)]="selectedParticipation!"
@@ -313,6 +303,9 @@
                         [showPreview]="false"
                         [consistencyIssues]="consistencyIssues()"
                         [isRefining]="isRefining()"
+                        [mode]="showDiff() ? 'diff' : 'normal'"
+                        [originalContent]="showDiff() ? originalProblemStatement() : undefined"
+                        [modifiedContent]="showDiff() ? refinedProblemStatement() : undefined"
                         class="flex-grow-1 overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
                         (onInlineRefinement)="onInlineRefinement($event)"

@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
@@ -51,13 +51,6 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
 import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
-import { MarkdownDiffEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-diff-editor-monaco.component';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
-import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
@@ -88,14 +81,12 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
-        MarkdownDiffEditorMonacoComponent,
         FormsModule,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy, AfterViewChecked {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
-    @ViewChild('diffEditor') diffEditor?: MarkdownDiffEditorMonacoComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
@@ -287,35 +278,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     showDiff = signal(false);
     originalProblemStatement = signal('');
     refinedProblemStatement = signal('');
-    private diffContentSet = false;
-
-    // Domain actions for diff editor toolbar
-    private readonly testCaseAction: TextEditorDomainAction = new TestCaseAction();
-    domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
-    metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     // Full problem statement refinement prompt state
     showRefinementPrompt = signal(false);
     refinementPrompt = '';
     protected readonly faPaperPlane = faPaperPlane;
 
-    /**
-     * Lifecycle hook called after every check of the component's view.
-     * Used to set diff editor content when it becomes available.
-     */
     constructor() {
         super();
-    }
-
-    /**
-     * Sets diff editor content when it becomes available.
-     * ngAfterViewChecked is used because @ViewChild is not available in effect().
-     */
-    ngAfterViewChecked(): void {
-        if (this.showDiff() && this.diffEditor && !this.diffContentSet) {
-            this.diffEditor.setFileContents(this.originalProblemStatement(), this.refinedProblemStatement(), 'original.md', 'refined.md');
-            this.diffContentSet = true;
-        }
     }
 
     /**
@@ -434,14 +404,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.closeDiff();
     }
 
-    /**
-     * Closes the diff view and resets diff state.
-     */
     closeDiff(): void {
         this.showDiff.set(false);
         this.originalProblemStatement.set('');
         this.refinedProblemStatement.set('');
-        this.diffContentSet = false;
     }
 
     /**
@@ -485,7 +451,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         // Store original and refined content for diff view
                         this.originalProblemStatement.set(this.exercise.problemStatement || '');
                         this.refinedProblemStatement.set(response.refinedProblemStatement);
-                        this.diffContentSet = false;
                         this.showDiff.set(true);
                         this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {
@@ -545,7 +510,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         this.originalProblemStatement.set(this.exercise.problemStatement || '');
                         this.refinedProblemStatement.set(response.refinedProblemStatement);
-                        this.diffContentSet = false;
                         this.showDiff.set(true);
                         this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {

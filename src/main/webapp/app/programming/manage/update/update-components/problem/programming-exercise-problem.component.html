@@ -77,33 +77,25 @@
                 programmingExerciseCreationConfig().templateParticipationResultLoaded &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
-                @if (showDiff) {
-                    <!-- Markdown Diff Editor with formatting toolbar -->
-                    <jhi-markdown-diff-editor-monaco
-                        #diffEditor
-                        class="overflow-hidden flex-grow-1"
-                        [allowSplitView]="false"
-                        [domainActions]="domainActions"
-                        [metaActions]="metaActions"
-                        [readOnly]="isAnyApplying()"
-                    />
-                } @else if (programmingExercise()?.templateParticipation) {
-                    <!-- Regular Editable Instructions -->
-                    <jhi-programming-exercise-editable-instructions
-                        [participation]="programmingExercise()!.templateParticipation!"
-                        [exercise]="programmingExercise()!"
-                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                        [showStatus]="!!programmingExercise()?.id"
-                        [editMode]="!!programmingExercise()?.id"
-                        [isRefining]="isRefining() || isGenerating()"
-                        (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
-                        (instructionChange)="onProblemStatementChange($event)"
-                        (exerciseChange)="programmingExerciseChange.emit($event)"
-                        (onInlineRefinement)="onInlineRefinement($event)"
-                        [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
-                        class="form__editable-instructions"
-                    />
-                }
+                <!-- Single Unified Editor - switches between normal and diff modes -->
+                <jhi-programming-exercise-editable-instructions
+                    #editableInstructions
+                    [mode]="showDiff ? 'diff' : 'normal'"
+                    [originalContent]="originalProblemStatement"
+                    [modifiedContent]="refinedProblemStatement"
+                    [participation]="programmingExercise()!.templateParticipation!"
+                    [exercise]="programmingExercise()!"
+                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                    [showStatus]="!!programmingExercise()?.id"
+                    [editMode]="!!programmingExercise()?.id"
+                    [isRefining]="isRefining() || isGenerating()"
+                    (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
+                    (instructionChange)="onProblemStatementChange($event)"
+                    (exerciseChange)="programmingExerciseChange.emit($event)"
+                    (onInlineRefinement)="onInlineRefinement($event)"
+                    [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
+                    class="form__editable-instructions"
+                />
             }
         </div>
     }
