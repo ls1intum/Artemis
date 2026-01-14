@@ -131,12 +131,10 @@ public class HadesService implements StatelessCIService {
     }
 
     private HadesBuildJobDTO convertToHadesBuildJobDTO(BuildTriggerRequestDTO buildTriggerRequestDTO) throws JsonProcessingException {
-        // Build Job Metadata
         var metadata = new HashMap<String, String>();
         var steps = new ArrayList<HadesBuildStepDTO>();
 
         // Create Clone Step
-        // TODO: Add support for ssh authentication
         var cloneMetadata = new HashMap<String, String>();
         cloneMetadata.put("REPOSITORY_DIR", repositoryDir);
         cloneMetadata.put("HADES_TEST_USERNAME", username);
@@ -149,7 +147,6 @@ public class HadesService implements StatelessCIService {
         cloneMetadata.put("HADES_ASSIGNMENT_URL", buildTriggerRequestDTO.exerciseRepository().url());
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentPath);
         cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
-        // TODO: Auxiliary Repository clone is not supported yet
 
         steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, volumeMounts, workingDir, cloneMetadata));
 
@@ -162,7 +159,7 @@ public class HadesService implements StatelessCIService {
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
-        // Job name set as participationId for now
+        // Set Job name as participationId
         return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps);
     }
 }

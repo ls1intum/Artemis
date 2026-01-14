@@ -7,9 +7,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-/*
- * Record for a build step in Hades
- * This record wraps a build step for Hades. It contains the name of the step, the metadata, the docker image and the script.
+/**
+ * This record wraps a build step for Hades. It contains the id and name of a step, volume mounts, working dir, metadata, docker image and a script.
  * The metadata is a hashmap containing key-value pairs for the metadata used by the specific build step.
  * Additional shared metadata (between all steps of one job) can be specified in the HadesBuildJobDTO.
  * The API Specification for Hades can be found here: https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go

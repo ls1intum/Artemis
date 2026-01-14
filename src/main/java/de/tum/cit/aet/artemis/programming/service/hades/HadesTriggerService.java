@@ -33,27 +33,12 @@ import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.Repositor
 @Profile(PROFILE_HADES)
 public class HadesTriggerService implements ContinuousIntegrationTriggerService {
 
-    // @Value("${artemis.continuous-integration.hades.images.result-image}")
-    // private String resultDockerImage;
-    //
-    // // TODO: The value has a very bad naming schema - since this is a breaking change we need to coordinate with artemis users
-    // @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    // private String resultToken;
-    //
-    // @Value("${server.url}")
-    // private URL artemisServerUrl;
-    //
-    // @Value("${server.port}")
-    // private String artemisServerPort;
-
     private static final Logger log = LoggerFactory.getLogger(HadesTriggerService.class);
 
     private final HadesService hadesService;
 
     @Autowired
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    private final String vscAccessToken = "TODO";
 
     public HadesTriggerService(HadesService hadesService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.hadesService = hadesService;
@@ -74,10 +59,10 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             String buildScript = buildConfig.getBuildScript();
 
             // Create the submission repository DTO
-            var exerciseRepository = new RepositoryDTO(participation.getUserIndependentRepositoryUri(), null, null, null);
+            var exerciseRepository = new RepositoryDTO(participation.getUserIndependentRepositoryUri().replace("localhost", "192.168.0.112"), null, null, null);
 
             // Create the test repository DTO based on the corresponding exercise
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, null);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri().replace("localhost", "192.168.0.112"), null, null, null);
 
             // Choose if script is bash or groovy: Hades should use a Bash script
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
@@ -111,54 +96,4 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         log.warn("Triggering with of a specific commitHash is not supported. Triggering build while ignoring option.");
         triggerBuild(participation);
     }
-
-    // private HadesBuildJobDTO createJob(ProgrammingExerciseParticipation participation) throws JsonProcessingException {
-    // // Build Job Metadata
-    // var metadata = new HashMap<String, String>();
-    // var steps = new ArrayList<HadesBuildStepDTO>();
-    //
-    // // Create Clone Step
-    // // TODO: Add support for ssh authentication
-    // var cloneMetadata = new HashMap<String, String>();
-    // cloneMetadata.put("REPOSITORY_DIR", "/shared");
-    // cloneMetadata.put("HADES_TEST_USERNAME", hadesUsername);
-    // cloneMetadata.put("HADES_TEST_PASSWORD", hadesPassword);
-    // cloneMetadata.put("HADES_TEST_URL", participation.getProgrammingExercise().getTestRepositoryUri());
-    // cloneMetadata.put("HADES_TEST_PATH", "./");
-    // cloneMetadata.put("HADES_TEST_ORDER", "1");
-    // cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", hadesUsername);
-    // cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", hadesPassword);
-    // cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getVcsRepositoryUri().toString());
-    // cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
-    // cloneMetadata.put("HADES_ASSIGNMENT_ORDER", "2");
-    // // TODO: Auxiliary Repository clone is not supported yet
-    //
-    // steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, cloneMetadata));
-    //
-    // // Create Execute Step
-    // var image = programmingLanguageConfiguration.getImage(participation.getProgrammingExercise().getProgrammingLanguage(),
-    // Optional.ofNullable(participation.getProgrammingExercise().getProjectType()));
-    // var script = buildScriptGenerationService.getScript(participation.getProgrammingExercise());
-    // steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
-    //
-    // var resultMetadata = getResultMetadata(participation);
-    // steps.add(new HadesBuildStepDTO(3, "Result", resultDockerImage, resultMetadata));
-    //
-    // // Create Hades Job
-    // var timestamp = java.time.Instant.now().toString();
-    // // Job name set as participationId for now
-    // return new HadesBuildJobDTO(participation.getId().toString(), metadata, timestamp, 1, steps);
-    // }
-    //
-    // private HashMap<String, String> getResultMetadata(ProgrammingExerciseParticipation participation) {
-    // var resultMetadata = new HashMap<String, String>();
-    // resultMetadata.put("API_TOKEN", resultToken);
-    // resultMetadata.put("INGEST_DIR", "/shared/build/test-results/test");
-    // resultMetadata.put("API_ENDPOINT", artemisServerUrl.toString() + ":" + artemisServerPort + "/api/public/programming-exercises/new-result");
-    // resultMetadata.put("JOB_NAME", participation.getBuildPlanId());
-    // resultMetadata.put("HADES_TEST_PATH", "./");
-    // resultMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
-    // resultMetadata.put("DEBUG", "true"); // TODO: Remove
-    // return resultMetadata;
-    // }
 }
