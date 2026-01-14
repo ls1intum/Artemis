@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
+import { Component, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -42,7 +42,6 @@ interface StandardizedCompetencyForm {
         TaxonomySelectComponent,
         HtmlForMarkdownPipe,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StandardizedCompetencyEditComponent {
     private readonly formBuilder = inject(FormBuilder);

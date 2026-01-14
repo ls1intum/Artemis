@@ -1,48 +1,58 @@
 import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, Router, RouterStateSnapshot } from '@angular/router';
-import { hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
-import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
+import { LectureUnsavedChangesComponent, hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, firstValueFrom, of } from 'rxjs';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Observable, Subject, firstValueFrom, of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('hasLectureUnsavedChanges', () => {
-    let component: LectureUpdateComponent;
+    setupTestBed({ zoneless: true });
+
+    let component: LectureUnsavedChangesComponent;
     let currentRoute: ActivatedRouteSnapshot;
     let currentState: RouterStateSnapshot;
     let nextState: RouterStateSnapshot;
-    let mockNgbModal: NgbModal;
+    let mockDialogRef: DynamicDialogRef;
+    let dialogCloseSubject: Subject<boolean | undefined>;
 
     beforeEach(() => {
+        dialogCloseSubject = new Subject<boolean | undefined>();
+        mockDialogRef = {
+            onClose: dialogCloseSubject.asObservable(),
+            close: vi.fn(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useClass: MockRouter },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 {
-                    provide: LectureUpdateComponent,
+                    provide: DialogService,
                     useValue: {
-                        shouldDisplayDismissWarning: true,
-                        isShowingWizardMode: false,
-                        isChangeMadeToTitleSection: jest.fn().mockReturnValue(true),
-                        isChangeMadeToPeriodSection: jest.fn().mockReturnValue(true),
-                        isChangeMadeToTitleOrPeriodSection: true,
+                        open: vi.fn().mockReturnValue(mockDialogRef),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        });
 
-        component = TestBed.inject(LectureUpdateComponent);
-        mockNgbModal = TestBed.inject(NgbModal);
-        const mockModalRef = {
-            componentInstance: {},
-            result: Promise.resolve(true),
+        component = {
+            shouldDisplayDismissWarning: true,
+            isChangeMadeToTitleSection: vi.fn().mockReturnValue(true),
+            isChangeMadeToPeriodSection: vi.fn().mockReturnValue(true),
+            isChangeMadeToTitleOrPeriodSection: true,
         };
-        jest.spyOn(mockNgbModal, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
         currentRoute = {} as ActivatedRouteSnapshot;
         currentState = {} as RouterStateSnapshot;
         nextState = {} as RouterStateSnapshot;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should return true if warning is not bypassed by shouldDisplayDismissWarning variable but no changes were made', async () => {
@@ -50,7 +60,7 @@ describe('hasLectureUnsavedChanges', () => {
         component.isChangeMadeToTitleOrPeriodSection = false;
 
         const result = await firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
     });
 
     it('should return true if dismiss warning shall not be displayed', async () => {
@@ -58,33 +68,52 @@ describe('hasLectureUnsavedChanges', () => {
         component.isChangeMadeToTitleOrPeriodSection = true;
 
         const result = await firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
     });
 
-    it('should return result from modal (true, dismiss changes)', async () => {
+    it('should return result from dialog (true, dismiss changes)', async () => {
         component.shouldDisplayDismissWarning = true;
 
-        const result = await TestBed.runInInjectionContext(() => {
+        const resultPromise = TestBed.runInInjectionContext(() => {
             return firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         });
 
-        expect(result).toBeTrue();
+        // Simulate dialog closing with true
+        dialogCloseSubject.next(true);
+        dialogCloseSubject.complete();
+
+        const result = await resultPromise;
+        expect(result).toBe(true);
     });
 
-    it('should return result from modal (false, keep editing)', async () => {
+    it('should return result from dialog (false, keep editing)', async () => {
         component.shouldDisplayDismissWarning = true;
 
-        const mockModalRef = {
-            componentInstance: {},
-            result: Promise.resolve(false),
-        };
-        jest.spyOn(mockNgbModal, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-
-        const result = await TestBed.runInInjectionContext(() => {
+        const resultPromise = TestBed.runInInjectionContext(() => {
             return firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         });
 
-        expect(result).toBeFalse();
+        // Simulate dialog closing with false
+        dialogCloseSubject.next(false);
+        dialogCloseSubject.complete();
+
+        const result = await resultPromise;
+        expect(result).toBe(false);
+    });
+
+    it('should return false when dialog is dismissed without result', async () => {
+        component.shouldDisplayDismissWarning = true;
+
+        const resultPromise = TestBed.runInInjectionContext(() => {
+            return firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
+        });
+
+        // Simulate dialog dismissal (undefined result)
+        dialogCloseSubject.next(undefined);
+        dialogCloseSubject.complete();
+
+        const result = await resultPromise;
+        expect(result).toBe(false);
     });
 
     function getGuardResultAsObservable(guardResult: MaybeAsync<GuardResult>): Observable<GuardResult | Promise<GuardResult>> {

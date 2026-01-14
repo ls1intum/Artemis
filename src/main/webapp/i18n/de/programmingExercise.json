@@ -732,10 +732,12 @@
                 "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
             },
             "dockerFlags": {
-                "disableNetworkAccess": {
-                    "title": "Deaktiviere den Internetzugang beim beim Ausführen der Studierendeneinreichung",
-                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
-                    "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
+                "useCustomNetwork": {
+                    "title": "Eigenes Dockernetzwerk verwenden",
+                    "description": "Aktiviere diese Option, wenn du ein eigenes Docker Netzwerk oder gar keines verwenden willst.",
+                    "defaultOption": "Default (Bridge)",
+                    "noneOption": "None (kein Netzwerk)",
+                    "disableNetworkAccessWarning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
                 },
                 "envVars": {
                     "title": "Umgebungsvariablen",

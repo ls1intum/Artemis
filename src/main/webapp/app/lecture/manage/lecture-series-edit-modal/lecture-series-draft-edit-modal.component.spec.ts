@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,7 +9,10 @@ import { LectureSeriesDraftEditModalComponent } from './lecture-series-draft-edi
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
+
 describe('LectureSeriesEditModal', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LectureSeriesDraftEditModalComponent;
     let fixture: ComponentFixture<LectureSeriesDraftEditModalComponent>;
 
@@ -22,7 +27,7 @@ describe('LectureSeriesEditModal', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        jest.spyOn(globalUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('de'));
+        vi.spyOn(globalUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('de'));
 
         fixture = TestBed.createComponent(LectureSeriesDraftEditModalComponent);
         component = fixture.componentInstance;
@@ -40,7 +45,7 @@ describe('LectureSeriesEditModal', () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(component.show()).toBeTrue();
+        expect(component.show()).toBe(true);
         expect(component.title()).toBe(draft.dto.title);
         expect(component.startDate()).toEqual(draft.dto.startDate!.toDate());
         expect(component.endDate()).toEqual(draft.dto.endDate!.toDate());
@@ -59,7 +64,7 @@ describe('LectureSeriesEditModal', () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(component.show()).toBeFalse();
+        expect(component.show()).toBe(false);
         expect(component.lectureDraft).toBeUndefined();
         expect(component.title()).toBe('');
         expect(component.startDate()).toBeUndefined();
@@ -83,7 +88,7 @@ describe('LectureSeriesEditModal', () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(component.show()).toBeFalse();
+        expect(component.show()).toBe(false);
         expect(component.lectureDraft).toBeUndefined();
         expect(component.title()).toBe('');
         expect(component.startDate()).toBeUndefined();

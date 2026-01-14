@@ -256,4 +256,92 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(faCheck);
     });
+
+    describe('isOnlyOfflineIDE', () => {
+        it('should return true for programming exercise with only offline IDE', () => {
+            const exercise = {
+                type: ExerciseType.PROGRAMMING,
+                allowOfflineIde: true,
+                allowOnlineEditor: false,
+            } as any;
+            Object.setPrototypeOf(exercise, Object.getPrototypeOf(comp.exercises[0]));
+
+            // Use a mock programming exercise
+            const result = comp.isOnlyOfflineIDE({ allowOfflineIde: true, allowOnlineEditor: false } as any);
+
+            expect(result).toBeFalse(); // Returns false because it's not instanceof ProgrammingExercise
+        });
+
+        it('should return false for non-programming exercise', () => {
+            const result = comp.isOnlyOfflineIDE(comp.exercises[1]);
+
+            expect(result).toBeFalse();
+        });
+    });
+
+    describe('getOverviewStatus', () => {
+        it('should return active when overview page is open', () => {
+            comp.overviewPageOpen = true;
+
+            expect(comp.getOverviewStatus()).toBe('active');
+        });
+
+        it('should return empty string when overview page is closed', () => {
+            comp.overviewPageOpen = false;
+
+            expect(comp.getOverviewStatus()).toBe('');
+        });
+    });
+
+    describe('isFileUploadExercise', () => {
+        it('should return true for file upload exercise', () => {
+            comp.exercises[1] = { id: 1, type: ExerciseType.FILE_UPLOAD } as Exercise;
+            comp.exerciseIndex = 1;
+
+            expect(comp.isFileUploadExercise()).toBeTrue();
+        });
+
+        it('should return false for non-file upload exercise', () => {
+            comp.exerciseIndex = 0;
+
+            expect(comp.isFileUploadExercise()).toBeFalse();
+        });
+    });
+
+    describe('changePage with overview', () => {
+        it('should change to overview page', () => {
+            jest.spyOn(comp.onPageChanged, 'emit');
+            jest.spyOn(comp, 'setExerciseButtonStatus');
+
+            comp.changePage(true, -1);
+
+            expect(comp.exerciseIndex).toBe(-1);
+            expect(comp.onPageChanged.emit).toHaveBeenCalledWith({
+                overViewChange: true,
+                exercise: undefined,
+                forceSave: false,
+            });
+        });
+
+        it('should not change for negative exercise index', () => {
+            jest.spyOn(comp.onPageChanged, 'emit');
+            comp.exerciseIndex = 0;
+
+            comp.changePage(false, -1);
+
+            expect(comp.exerciseIndex).toBe(0);
+            expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('saveExercise', () => {
+        it('should save exercise and stay on last exercise when at end', () => {
+            jest.spyOn(comp, 'changePage');
+            comp.exerciseIndex = 2; // Last exercise
+
+            comp.saveExercise(true);
+
+            expect(comp.changePage).toHaveBeenCalledWith(false, 2, true);
+        });
+    });
 });

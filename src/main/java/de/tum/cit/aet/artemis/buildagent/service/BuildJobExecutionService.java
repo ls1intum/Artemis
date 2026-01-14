@@ -35,9 +35,11 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
@@ -81,6 +83,20 @@ public class BuildJobExecutionService {
     @Value("${artemis.checked-out-repos-path}")
     private String checkedOutReposPath;
 
+    /**
+     * Upper bound for feedback text of a single test case / assertion before truncation.
+     * <p>
+     * In practice, feedback is short (typically &lt; 1k chars). Very large feedback texts
+     * are almost always caused by runaway output (e.g. infinite loops, excessive logging,
+     * repeated stack traces) and do not provide additional value to students.
+     * <p>
+     * This limit prevents excessive network traffic when transmitting build results
+     * from the build agent to the main server, and protects the database from
+     * accidental storage explosions.
+     */
+    @Value("${artemis.feedback.max-feedback-length:20000}")
+    private int maxFeedbackLength;
+
     private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
 
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
@@ -89,6 +105,12 @@ public class BuildJobExecutionService {
         this.buildJobGitService = buildJobGitService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+    }
+
+    @PostConstruct
+    void initParsers() {
+        TestResultXmlParser.setMaxFeedbackLength(maxFeedbackLength);
+        CustomFeedbackParser.setMaxFeedbackLength(maxFeedbackLength);
     }
 
     /**
@@ -176,10 +198,7 @@ public class BuildJobExecutionService {
         String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
-                var commitObjectId = buildJobGitService.getLastCommitHash(assignmentRepoUri);
-                if (commitObjectId != null) {
-                    assignmentCommitHash = commitObjectId.getName();
-                }
+                assignmentCommitHash = buildJobGitService.getLastCommitHash(assignmentRepoUri);
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
@@ -190,10 +209,7 @@ public class BuildJobExecutionService {
         String testCommitHash = buildJob.buildConfig().testCommitHash();
         if (testCommitHash == null) {
             try {
-                var commitObjectId = buildJobGitService.getLastCommitHash(testsRepoUri);
-                if (commitObjectId != null) {
-                    testCommitHash = commitObjectId.getName();
-                }
+                testCommitHash = buildJobGitService.getLastCommitHash(testsRepoUri);
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
@@ -257,24 +273,15 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        List<String> envVars = null;
-        boolean isNetworkDisabled = false;
-        int cpuCount = 0;
-        int memory = 0;
-        int memorySwap = 0;
-        if (buildJob.buildConfig().dockerRunConfig() != null) {
-            envVars = buildJob.buildConfig().dockerRunConfig().env();
-            isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
-            cpuCount = buildJob.buildConfig().dockerRunConfig().cpuCount();
-            memory = buildJob.buildConfig().dockerRunConfig().memory();
-            memorySwap = buildJob.buildConfig().dockerRunConfig().memorySwap();
+        BuildConfig buildConfig = buildJob.buildConfig();
+        DockerRunConfig dockerRunConfig = new DockerRunConfig(null, null, 0, 0, 0);
+        if (buildConfig.dockerRunConfig() != null) {
+            dockerRunConfig = buildConfig.dockerRunConfig();
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
-                envVars, cpuCount, memory, memorySwap);
-
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildConfig.dockerImage(), buildConfig.buildScript(), dockerRunConfig);
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
     }
 
     /**
@@ -309,7 +316,7 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, LocalVCRepositoryUri assignmentRepositoryUri,
             LocalVCRepositoryUri testRepositoryUri, @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoriesUris,
             Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
+            @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
         TarArchiveInputStream testResultsTarInputStream = null;
@@ -338,7 +345,7 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.debug(msg);
 
-            buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), isNetworkDisabled);
+            buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
             msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);

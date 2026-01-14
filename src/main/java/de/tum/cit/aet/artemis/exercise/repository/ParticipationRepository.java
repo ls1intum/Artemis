@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,11 +20,59 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
+
+    /**
+     * Count the number of participations for a given set of exercises.
+     *
+     * @param exerciseIds the id of the exercises (e.g. all in a course)
+     * @return the number of participations in these exercises
+     */
+    @Query("""
+            SELECT COUNT(p)
+            FROM Participation p
+            WHERE p.exercise.id IN :exerciseIds
+            """)
+    long countByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
+
+    /**
+     * Count the number of participations for a given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of participations in the exercise
+     */
+    @Query("""
+            SELECT COUNT(p)
+            FROM Participation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Find all student participations for a course with their latest submission and results.
+     * Includes both rated (before due date) and practice (after due date) participations.
+     *
+     * @param courseId the id of the course
+     * @return list of student participations with submissions and results
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH p.exercise e
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+                LEFT JOIN FETCH p.student
+            WHERE e.course.id = :courseId
+            """)
+    List<StudentParticipation> findAllWithLatestSubmissionAndResultByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT p

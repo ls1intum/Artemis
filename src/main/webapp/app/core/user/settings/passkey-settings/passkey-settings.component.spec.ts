@@ -12,6 +12,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -50,6 +52,7 @@ describe('PasskeySettingsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 WebauthnApiService,
