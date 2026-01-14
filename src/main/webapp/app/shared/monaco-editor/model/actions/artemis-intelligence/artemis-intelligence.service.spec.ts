@@ -148,7 +148,6 @@ describe('ArtemisIntelligenceService', () => {
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
-        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {

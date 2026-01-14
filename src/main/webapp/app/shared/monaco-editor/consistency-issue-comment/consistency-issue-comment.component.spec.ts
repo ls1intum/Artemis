@@ -96,7 +96,7 @@ describe('ConsistencyIssueCommentComponent', () => {
 
     it('should update the diff editor when the issue changes', () => {
         const mockDiffEditor = new MockMonacoDiffEditorComponent();
-        (comp as { diffEditor: () => MockMonacoDiffEditorComponent }).diffEditor = () => mockDiffEditor;
+        (comp as unknown as { diffEditor: () => MockMonacoDiffEditorComponent }).diffEditor = () => mockDiffEditor;
         const withDiff = { ...baseIssue, originalText: 'old', modifiedText: 'new' };
         fixture.componentRef.setInput('issue', withDiff);
         fixture.detectChanges();
