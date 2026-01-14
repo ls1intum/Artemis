@@ -27,16 +27,14 @@
             <div class="consistency-issue-comment__diff">
                 <jhi-monaco-diff-editor [allowSplitView]="false" />
             </div>
-            @if (hasDiff()) {
-                <div class="consistency-issue-comment__actions">
-                    @if (applyStatus() === true) {
-                        <span class="text-success me-2">{{ 'artemisApp.hyperion.consistencyCheck.applySuccess' | artemisTranslate }}</span>
-                    } @else if (applyStatus() === false) {
-                        <span class="text-danger me-2">{{ 'artemisApp.hyperion.consistencyCheck.applyFailed' | artemisTranslate }}</span>
-                    }
-                    <button type="button" class="btn btn-sm btn-primary" (click)="applySuggestedChange()">Apply</button>
-                </div>
-            }
+            <div class="consistency-issue-comment__actions">
+                @if (applyStatus() === true) {
+                    <span class="text-success me-2">{{ 'artemisApp.hyperion.consistencyCheck.applySuccess' | artemisTranslate }}</span>
+                } @else if (applyStatus() === false) {
+                    <span class="text-danger me-2">{{ 'artemisApp.hyperion.consistencyCheck.applyFailed' | artemisTranslate }}</span>
+                }
+                <button type="button" class="btn btn-sm btn-primary" (click)="applySuggestedChange()">Apply</button>
+            </div>
         }
     }
 </div>
