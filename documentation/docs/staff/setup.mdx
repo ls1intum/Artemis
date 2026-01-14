@@ -14,7 +14,7 @@ Running Artemis consists of two main steps:
 Artemis is based on [JHipster](https://jhipster.github.io), combining:
 
 - [Spring Boot](http://projects.spring.io/spring-boot) (Java 25) for the application server.
-- [Angular 20](https://angular.dev) (TypeScript) for the web application that serves the user interface.
+- [Angular 21](https://angular.dev) (TypeScript) for the web application that serves the user interface.
 
 To get an overview of the technology stack, visit the [JHipster Technology Stack](https://jhipster.github.io/tech-stack) and refer to other tutorials on the JHipster homepage.
 
@@ -393,7 +393,7 @@ If you have configured `application-artemis.yml` correctly, then you should be a
     In case you encounter any problems regarding JavaScript heap memory leaks when executing `npm run start` or any other scripts from `package.json`, you can adjust a [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user config file (~/.npmrc)](https://docs.npmjs.com/cli/v8/configuring-npm/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the Github build also needs these settings.
 </Callout>
 
-For more information, review [Working with Angular](https://v17.angular.io/start).
+For more information, review [Working with Angular](https://angular.dev/tutorials).
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
 ---
