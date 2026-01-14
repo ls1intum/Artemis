@@ -5,6 +5,7 @@ import {
     ElementRef,
     HostBinding,
     OnDestroy,
+    Renderer2,
     ViewEncapsulation,
     computed,
     effect,
@@ -31,9 +32,22 @@ import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/mode
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { MonacoDiffEditorComponent, MonacoEditorDiffText } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
-import { MarkdownEditorToolbarService } from 'app/shared/markdown-editor/service/markdown-editor-toolbar.service';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
+import * as monaco from 'monaco-editor';
+
+export type MonacoEditorDiffText = { original: string; modified: string };
 
 @Component({
     selector: 'jhi-markdown-diff-editor-monaco',
@@ -53,17 +67,36 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
         ArtemisTranslatePipe,
         ColorSelectorComponent,
         CdkDrag,
-        MonacoDiffEditorComponent,
     ],
 })
 export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestroy {
-    private readonly toolbarService = inject(MarkdownEditorToolbarService);
+    /**
+     * Color mapping from hex codes to CSS class names.
+     */
+    private readonly colorToClassMap = new Map<string, string>([
+        ['#ca2024', 'red'],
+        ['#3ea119', 'green'],
+        ['#ffffff', 'white'],
+        ['#000000', 'black'],
+        ['#fffa5c', 'yellow'],
+        ['#0d3cc2', 'blue'],
+        ['#b05db8', 'lila'],
+        ['#d86b1f', 'orange'],
+    ]);
+
+    // Injected services
+    private readonly renderer = inject(Renderer2);
+    private readonly monacoEditorService = inject(MonacoEditorService);
+
+    // Monaco diff editor instance - created directly in this component
+    private _diffEditor!: monaco.editor.IStandaloneDiffEditor;
+    private diffEditorContainerElement!: HTMLElement;
 
     fullElement = viewChild.required<ElementRef<HTMLDivElement>>('fullElement');
     wrapper = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
+    diffEditorHost = viewChild.required<ElementRef<HTMLDivElement>>('diffEditorHost');
     resizePlaceholder = viewChild<ElementRef<HTMLDivElement>>('resizePlaceholder');
     colorSelector = viewChild<ColorSelectorComponent>(ColorSelectorComponent);
-    diffEditorComponent = viewChild<MonacoDiffEditorComponent>('diffEditor');
 
     // Inputs
     allowSplitView = input<boolean>(true);
@@ -89,19 +122,19 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     // Outputs
     onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
 
-    // Use service to create default actions
-    defaultActions = input<TextEditorAction[]>(this.toolbarService.createDefaultActions());
+    // Create default actions inline
+    defaultActions = input<TextEditorAction[]>(this.createDefaultActions());
     lectureReferenceAction = input<LectureAttachmentReferenceAction | undefined>(undefined);
     colorAction = input<ColorAction | undefined>(new ColorAction());
     domainActions = input<TextEditorDomainAction[]>([]);
-    metaActions = input<TextEditorAction[]>(this.toolbarService.createMetaActions());
+    metaActions = input<TextEditorAction[]>([new FullscreenAction()]);
 
     // Domain actions split by type – used by the template
     domainActionsWithoutOptions = computed(() => this.domainActions().filter((action) => !(action instanceof TextEditorDomainActionWithOptions)));
     domainActionsWithOptions = computed(() => this.domainActions().filter((action) => action instanceof TextEditorDomainActionWithOptions) as TextEditorDomainActionWithOptions[]);
 
-    // Use service for color map
-    colorSignal = signal<string[]>(this.toolbarService.getColors());
+    // Colors for color picker
+    colorSignal = signal<string[]>([...this.colorToClassMap.keys()]);
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
 
@@ -121,15 +154,35 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
 
     constructor() {
         effect(() => {
-            const diffEditor = this.diffEditorComponent();
-            if (diffEditor) {
-                // Configure the diff editor via the embedded component
-                // The MonacoDiffEditorComponent handles allowSplitView via its own input
+            // React to allowSplitView and readOnly input changes
+            if (this._diffEditor) {
+                this._diffEditor.updateOptions({
+                    renderSideBySide: this.allowSplitView(),
+                });
+                this._diffEditor.getModifiedEditor().updateOptions({ readOnly: this.readOnly() });
             }
         });
     }
 
     ngAfterViewInit(): void {
+        // Create the diff editor container and inject it into the host element
+        this.diffEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.diffEditorContainerElement, 'diff-editor-container');
+        this.renderer.appendChild(this.diffEditorHost().nativeElement, this.diffEditorContainerElement);
+
+        // Create the Monaco diff editor directly
+        this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainerElement);
+
+        // Set up diff update listener
+        this.setupDiffListener();
+
+        // Apply initial options
+        this._diffEditor.updateOptions({
+            renderSideBySide: this.allowSplitView(),
+        });
+        this._diffEditor.getModifiedEditor().updateOptions({ readOnly: this.readOnly() });
+
+        // Set up fullscreen actions
         this.metaActions()
             .filter((a) => a instanceof FullscreenAction)
             .forEach((fs) => {
@@ -140,12 +193,8 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
         this.minWrapperHeight = this.resizableMinHeight();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
 
-        // Initialize the embedded diff editor to fill its container
-        const diffEditor = this.diffEditorComponent();
-        if (diffEditor) {
-            // Use setTimeout to ensure DOM is rendered
-            setTimeout(() => diffEditor.fillContainer(), 0);
-        }
+        // Initialize the diff editor to fill its container
+        setTimeout(() => this.fillContainer(), 0);
 
         // Set up resize observer to trigger layout on container size changes
         this.resizeObserver = new ResizeObserver(() => {
@@ -153,10 +202,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
                 window.cancelAnimationFrame(this.resizeAnimationFrame);
             }
             this.resizeAnimationFrame = requestAnimationFrame(() => {
-                const editor = this.diffEditorComponent();
-                if (editor) {
-                    editor.layout();
-                }
+                this.layout();
             });
         });
         this.resizeObserver.observe(this.wrapper().nativeElement);
@@ -166,14 +212,44 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     }
 
     /**
+     * Sets up a listener that responds to changes in the diff.
+     */
+    private setupDiffListener(): void {
+        const diffListener = this._diffEditor.onDidUpdateDiff(() => {
+            const monacoLineChanges = this._diffEditor.getLineChanges() ?? [];
+            this.onReadyForDisplayChange.emit({ ready: true, lineChange: this.convertMonacoLineChanges(monacoLineChanges) });
+        });
+
+        this.listeners.push(diffListener);
+    }
+
+    // Note: We intentionally do NOT auto-size the container to content height.
+    // This allows the Monaco editor to handle scrolling internally within its fixed container.
+
+    /**
+     * Converts Monaco line changes to a LineChange object.
+     */
+    private convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[]): LineChange {
+        const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
+        if (!monacoLineChanges) {
+            return lineChange;
+        }
+
+        for (const change of monacoLineChanges) {
+            const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
+            const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
+            lineChange.addedLineCount += addedLines;
+            lineChange.removedLineCount += removedLines;
+        }
+
+        return lineChange;
+    }
+
+    /**
      * Handles fullscreen change events to recalculate editor layout.
      */
     private onFullscreenChange(): void {
-        const diffEditor = this.diffEditorComponent();
-        if (diffEditor) {
-            // Delay layout to allow fullscreen transition to complete
-            setTimeout(() => diffEditor.layout(), 100);
-        }
+        setTimeout(() => this.layout(), 100);
     }
 
     ngOnDestroy(): void {
@@ -183,13 +259,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
         this.resizeObserver?.disconnect();
         this.fullElement().nativeElement.removeEventListener('fullscreenchange', this.fullscreenHandler);
         this.listeners.forEach((listener) => listener.dispose());
-    }
-
-    /**
-     * Handles the ready event from the embedded diff editor component.
-     */
-    onDiffEditorReady(event: { ready: boolean; lineChange: LineChange }): void {
-        this.onReadyForDisplayChange.emit(event);
+        this._diffEditor?.dispose();
     }
 
     /**
@@ -225,53 +295,85 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     }
 
     /**
+     * Manually triggers a layout recalculation.
+     */
+    layout(): void {
+        const container = this.diffEditorHost()?.nativeElement;
+        if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+            this._diffEditor.layout({ width: container.clientWidth, height: container.clientHeight });
+        }
+    }
+
+    /**
+     * Sets up the editor to fill its container using CSS.
+     */
+    fillContainer(): void {
+        this.diffEditorContainerElement.style.width = '100%';
+        this.diffEditorContainerElement.style.height = '100%';
+        this.layout();
+    }
+
+    /**
      * Sets the file contents for diff comparison.
-     * Delegates to the embedded MonacoDiffEditorComponent.
      */
     setFileContents(original?: string, modified?: string, originalFileName?: string, modifiedFileName?: string): void {
-        const diffEditor = this.diffEditorComponent();
-        if (diffEditor) {
-            diffEditor.setFileContents(original, modified, originalFileName, modifiedFileName);
-        }
+        // Reset ready state when loading new content
+        this.onReadyForDisplayChange.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
+
+        const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._diffEditor.getId()}/${originalFileName ?? 'left'}`);
+        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._diffEditor.getId()}/${modifiedFileName ?? 'right'}`);
+        const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original ?? '', undefined, originalModelUri);
+        const modifiedModel = monaco.editor.getModel(modifiedFileUri) ?? monaco.editor.createModel(modified ?? '', undefined, modifiedFileUri);
+
+        originalModel.setValue(original ?? '');
+        modifiedModel.setValue(modified ?? '');
+
+        monaco.editor.setModelLanguage(originalModel, originalModel.getLanguageId());
+        monaco.editor.setModelLanguage(modifiedModel, modifiedModel.getLanguageId());
+
+        const newModel = {
+            original: originalModel,
+            modified: modifiedModel,
+        };
+
+        this._diffEditor.setModel(newModel);
     }
 
     /**
      * Returns the current text from both editors.
      */
     getText(): MonacoEditorDiffText {
-        const diffEditor = this.diffEditorComponent();
-        if (diffEditor) {
-            return diffEditor.getText();
-        }
-        return { original: '', modified: '' };
+        const original = this._diffEditor.getOriginalEditor().getValue();
+        const modified = this._diffEditor.getModifiedEditor().getValue();
+        return { original, modified };
+    }
+
+    /**
+     * Returns the modified (right) editor instance.
+     */
+    getModifiedEditor(): monaco.editor.IStandaloneCodeEditor {
+        return this._diffEditor.getModifiedEditor();
     }
 
     /**
      * Executes a toolbar action on the modified editor.
      */
     executeAction(action: TextEditorAction): void {
-        const diffEditor = this.diffEditorComponent();
-        if (diffEditor) {
-            const modifiedEditor = diffEditor.getModifiedEditor();
-            const adapter = new MonacoTextEditorAdapter(modifiedEditor);
-            // Handle fullscreen action specially since it needs the fullElement
-            if (action instanceof FullscreenAction) {
-                action.element = this.fullElement().nativeElement;
-            }
-            action.run(adapter);
+        const modifiedEditor = this._diffEditor.getModifiedEditor();
+        const adapter = new MonacoTextEditorAdapter(modifiedEditor);
+        if (action instanceof FullscreenAction) {
+            action.element = this.fullElement().nativeElement;
         }
+        action.run(adapter);
     }
 
     /**
      * Executes a domain action with options.
      */
     executeDomainAction(action: TextEditorDomainActionWithOptions, value: { value: string; id: string }): void {
-        const diffEditor = this.diffEditorComponent();
-        if (diffEditor) {
-            const modifiedEditor = diffEditor.getModifiedEditor();
-            const adapter = new MonacoTextEditorAdapter(modifiedEditor);
-            action.run(adapter, { selectedItem: value });
-        }
+        const modifiedEditor = this._diffEditor.getModifiedEditor();
+        const adapter = new MonacoTextEditorAdapter(modifiedEditor);
+        action.run(adapter, { selectedItem: value });
     }
 
     openColorSelector(event: MouseEvent): void {
@@ -283,14 +385,32 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
 
     onSelectColor(selectedColor: string): void {
         const colorAction = this.colorAction();
-        const diffEditor = this.diffEditorComponent();
-        if (colorAction && diffEditor) {
-            const colorName = this.toolbarService.getColorClass(selectedColor);
+        if (colorAction) {
+            const colorName = this.colorToClassMap.get(selectedColor);
             if (colorName) {
-                const modifiedEditor = diffEditor.getModifiedEditor();
+                const modifiedEditor = this._diffEditor.getModifiedEditor();
                 const adapter = new MonacoTextEditorAdapter(modifiedEditor);
                 colorAction.run(adapter, { color: colorName });
             }
         }
+    }
+
+    /**
+     * Creates a new array of default markdown actions.
+     */
+    private createDefaultActions(): TextEditorAction[] {
+        return [
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new StrikethroughAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction('markdown'),
+            new UrlAction(),
+            new AttachmentAction(),
+            new OrderedListAction(),
+            new BulletedListAction(),
+        ];
     }
 }

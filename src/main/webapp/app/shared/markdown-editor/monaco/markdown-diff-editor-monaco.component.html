@@ -51,16 +51,8 @@
             }
         </div>
 
-        <!-- Embedded Monaco Diff Editor Component -->
-        <div class="markdown-diff-editor-container flex-grow-1">
-            <jhi-monaco-diff-editor
-                #diffEditor
-                [allowSplitView]="allowSplitView()"
-                [readOnly]="readOnly()"
-                [useFixedHeight]="true"
-                (onReadyForDisplayChange)="onDiffEditorReady($event)"
-            />
-        </div>
+        <!-- Monaco Diff Editor Host - Editor is created directly in this element -->
+        <div #diffEditorHost class="markdown-diff-editor-container flex-grow-1"></div>
     </div>
 
     @if (enableResize()) {

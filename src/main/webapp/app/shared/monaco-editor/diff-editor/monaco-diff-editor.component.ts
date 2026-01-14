@@ -18,10 +18,6 @@ export class MonacoDiffEditorComponent implements OnDestroy {
     monacoDiffEditorContainerElement: HTMLElement;
 
     allowSplitView = input<boolean>(true);
-    /** Whether the modified (right) editor should be read-only */
-    readOnly = input<boolean>(false);
-    /** When true, the editor uses a fixed height from its container instead of auto-sizing to content */
-    useFixedHeight = input<boolean>(false);
     onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     /*
@@ -53,8 +49,6 @@ export class MonacoDiffEditorComponent implements OnDestroy {
             this._editor.updateOptions({
                 renderSideBySide: this.allowSplitView(),
             });
-            // Apply readOnly to the modified (right) editor
-            this._editor.getModifiedEditor().updateOptions({ readOnly: this.readOnly() });
         });
     }
 
@@ -109,34 +103,10 @@ export class MonacoDiffEditorComponent implements OnDestroy {
 
     /**
      * Adjusts the height of the editor's container to fit the new content height.
-     * Only adjusts if useFixedHeight is false.
      * @param newContentHeight The new content height of the editor.
      */
     adjustContainerHeight(newContentHeight: number) {
-        if (!this.useFixedHeight()) {
-            this.monacoDiffEditorContainerElement.style.height = newContentHeight + 'px';
-        }
-    }
-
-    /**
-     * Manually triggers a layout recalculation.
-     * Useful when the container size changes (e.g., fullscreen toggle).
-     */
-    layout(): void {
-        const container = this.elementRef.nativeElement;
-        if (container.clientWidth > 0 && container.clientHeight > 0) {
-            this._editor.layout({ width: container.clientWidth, height: container.clientHeight });
-        }
-    }
-
-    /**
-     * Sets up the editor to fill its container using CSS.
-     * Call this after the component is added to a sized container.
-     */
-    fillContainer(): void {
-        this.monacoDiffEditorContainerElement.style.width = '100%';
-        this.monacoDiffEditorContainerElement.style.height = '100%';
-        this.layout();
+        this.monacoDiffEditorContainerElement.style.height = newContentHeight + 'px';
     }
 
     /**
@@ -215,41 +185,5 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         const original = this._editor.getOriginalEditor().getValue();
         const modified = this._editor.getModifiedEditor().getValue();
         return { original, modified };
-    }
-
-    /**
-     * Returns the modified (right) editor instance.
-     * Used for executing toolbar actions on the editable content.
-     */
-    getModifiedEditor(): monaco.editor.IStandaloneCodeEditor {
-        return this._editor.getModifiedEditor();
-    }
-
-    /**
-     * Returns the original (left) editor instance.
-     */
-    getOriginalEditor(): monaco.editor.IStandaloneCodeEditor {
-        return this._editor.getOriginalEditor();
-    }
-
-    /**
-     * Returns the underlying diff editor instance.
-     */
-    getDiffEditor(): monaco.editor.IStandaloneDiffEditor {
-        return this._editor;
-    }
-
-    /**
-     * Returns the current line changes from the diff.
-     */
-    getLineChanges(): monaco.editor.ILineChange[] | null {
-        return this._editor.getLineChanges();
-    }
-
-    /**
-     * Sets whether the modified editor is read-only.
-     */
-    setReadOnly(readOnly: boolean): void {
-        this._editor.getModifiedEditor().updateOptions({ readOnly });
     }
 }
