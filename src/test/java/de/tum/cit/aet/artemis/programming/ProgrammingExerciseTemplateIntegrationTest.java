@@ -397,7 +397,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
     /**
      * Robust directory deletion with retries to handle OS file locks.
-     * Similar to the pattern described in flaky test fix tip #4.
      * Repeatedly attempts to delete the directory until successful or max retries reached.
      *
      * @param directory   the directory to delete
