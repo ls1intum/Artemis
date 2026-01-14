@@ -68,7 +68,7 @@ docker compose -f <docker compose file name> up -d
 
 ## 5. Handle Liquibase Errors (If Necessary)
 
-If the server start fails with Liquibase errors, you can run the following command to reset the database:
+If the server fails to start with Liquibase errors, you can run the following command to reset the database:
 
 <Callout variant={CalloutVariant.danger}>
     This command **deletes all data** in the `artemis` database by dropping it. Make sure you have a backup if you need to preserve existing data.

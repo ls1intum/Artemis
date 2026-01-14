@@ -402,7 +402,7 @@ Go to *Manage Jenkins → Security → Credentials → Jenkins → Global creden
 
 #### Server Notification Token
 
-1. Create a new Jenkins credential containing the token, which gets send by the server notification plugin to Artemis with every build result:
+1. Create a new Jenkins credential containing the token, which gets sent by the server notification plugin to Artemis with every build result:
 
    - **Kind**: Secret text
    - **Scope**: Global
@@ -668,7 +668,7 @@ This guide explains setting up a remote agent on an Ubuntu virtual machine that 
     caption="Add a Jenkins node configuration"
 />
 
-9. Wait for some moments while jenkins installs it's remote agent on the agent's machine. You can track the progress using the `Log` page when selecting the agent. System information should also be available.
+9. Wait for some moments while jenkins installs its remote agent on the agent's machine. You can track the progress using the `Log` page when selecting the agent. System information should also be available.
 
 10. Change the settings of the master node to be used only for specific jobs. This ensures that the docker tasks are not executed on the master agent but on the remote agent.
 

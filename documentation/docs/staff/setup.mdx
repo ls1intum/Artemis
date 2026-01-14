@@ -27,7 +27,7 @@ Before installing Artemis, install and configure the following dependencies:
 ### Required Dependencies
 
 1. **Java JDK 25**
-   Download and install Java, e.g. from [Oracle JDK](https://www.oracle.com/java/technologies/javase-downloads.html).
+   Download and install Java (e.g., from [Oracle JDK](https://www.oracle.com/java/technologies/javase-downloads.html))
 
 2. **Database Server**
    Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
@@ -295,7 +295,8 @@ You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
     - LANGUAGE `en_US.UTF-8`
 
 <Callout variant={CalloutVariant.warning}>
-    **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space. On a *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
+    **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space.
+    On an *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
 </Callout>
 
 #### Debugging with Docker
