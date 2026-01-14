@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
@@ -20,6 +21,7 @@ import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -57,7 +59,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementUpdateComponent implements OnInit {
     private readonly languageHelper = inject(JhiLanguageHelper);
@@ -65,7 +66,8 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly courseAdminService = inject(CourseAdminService);
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
@@ -231,14 +233,20 @@ export class UserManagementUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.organizations = this.user.organizations;
-        modalRef.closed.subscribe((organization) => {
+        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
+            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
+            width: '80vw',
+            modal: true,
+            closable: true,
+            dismissableMask: true,
+            data: {
+                organizations: this.user.organizations,
+            } as OrganizationSelectorDialogData,
+        });
+        dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                if (this.user.organizations === undefined) {
-                    this.user.organizations = [];
-                }
-                this.user.organizations!.push(organization);
+                // Create a new array reference to trigger change detection with OnPush
+                this.user.organizations = [...(this.user.organizations ?? []), organization];
             }
         });
     }

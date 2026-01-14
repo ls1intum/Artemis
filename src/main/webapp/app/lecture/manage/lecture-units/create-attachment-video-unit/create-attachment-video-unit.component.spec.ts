@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -24,10 +26,12 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CreateAttachmentVideoUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let createAttachmentVideoUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AttachmentVideoUnitService),
@@ -74,10 +78,10 @@ describe('CreateAttachmentVideoUnitComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should upload file, send POST for attachment and post for attachment video unit', fakeAsync(() => {
+    it('should upload file, send POST for attachment and post for attachment video unit', async () => {
         const router: Router = TestBed.inject(Router);
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
@@ -125,17 +129,16 @@ describe('CreateAttachmentVideoUnitComponent', () => {
             body: attachmentVideoUnit,
             status: 201,
         });
-        const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
 
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         createAttachmentVideoUnitComponentFixture.detectChanges();
 
         const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
-        createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
-            expect(navigateSpy).toHaveBeenCalledOnce();
-        });
-    }));
+        await createAttachmentVideoUnitComponentFixture.whenStable();
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
+    });
 });

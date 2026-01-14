@@ -7,6 +7,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { provideHttpClient } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('QuizExercise Create Buttons Component', () => {
     setupTestBed({ zoneless: true });
@@ -20,7 +22,7 @@ describe('QuizExercise Create Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizExerciseCreateButtonsComponent);
