@@ -807,7 +807,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @returns The current selection or null if no selection.
      */
     getSelection(): EditorRange | null {
-        const selection = this._editor.getSelection();
+        const selection = this.getActiveEditor().getSelection();
         if (!selection || selection.isEmpty()) {
             return null;
         }

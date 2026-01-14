@@ -179,22 +179,25 @@
                             @if (showRefinementPrompt()) {
                                 <!-- Backdrop for click-outside-to-close -->
                                 <div class="refinement-backdrop" (click)="toggleRefinementPrompt()"></div>
-                                <div class="refinement-prompt-popup">
+                                <div class="refinement-prompt-popup" (keydown.escape)="toggleRefinementPrompt()">
                                     <div class="refinement-prompt-header">
                                         <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
                                         <button type="button" class="btn-close" (click)="toggleRefinementPrompt()" aria-label="Close"></button>
                                     </div>
                                     <div class="refinement-prompt-body">
                                         <textarea
-                                            [(ngModel)]="refinementPrompt"
+                                            [ngModel]="refinementPrompt()"
+                                            (ngModelChange)="refinementPrompt.set($event)"
                                             class="form-control refinement-textarea"
                                             rows="5"
+                                            cdkTrapFocus
+                                            cdkTrapFocusAutoCapture
                                             [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                         >
                                         </textarea>
                                     </div>
                                     <div class="refinement-prompt-footer">
-                                        <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt.trim()" (click)="submitRefinement()">
+                                        <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">
                                             <fa-icon [icon]="faPaperPlane" class="me-1" />
                                             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refine"></span>
                                         </button>

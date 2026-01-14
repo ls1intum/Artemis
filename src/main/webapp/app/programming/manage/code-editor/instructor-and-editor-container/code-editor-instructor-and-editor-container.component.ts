@@ -1,5 +1,6 @@
 import { Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -82,6 +83,7 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
         FormsModule,
+        A11yModule,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
@@ -281,19 +283,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Full problem statement refinement prompt state
     showRefinementPrompt = signal(false);
-    refinementPrompt = '';
+    refinementPrompt = signal('');
     protected readonly faPaperPlane = faPaperPlane;
-
-    constructor() {
-        super();
-    }
-
-    /**
-     * Override applyDomainChange to initialize inline comment service after exercise is loaded.
-     */
-    protected override applyDomainChange(domainType: any, domainValue: any): void {
-        super.applyDomainChange(domainType, domainValue);
-    }
 
     override ngOnDestroy(): void {
         super.ngOnDestroy();
@@ -469,7 +460,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     toggleRefinementPrompt(): void {
         this.showRefinementPrompt.update((value) => !value);
         if (!this.showRefinementPrompt()) {
-            this.refinementPrompt = '';
+            this.refinementPrompt.set('');
         }
     }
 
@@ -478,7 +469,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Uses the user prompt to refine the entire problem statement.
      */
     submitRefinement(): void {
-        const prompt = this.refinementPrompt.trim();
+        const prompt = this.refinementPrompt().trim();
         if (!prompt) return;
 
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
@@ -501,7 +492,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .pipe(
                 finalize(() => {
                     this.isInlineRefining.set(false);
-                    this.refinementPrompt = '';
+                    this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
                 }),
             )

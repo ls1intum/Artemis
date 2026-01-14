@@ -225,6 +225,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
         }
+        if (this.forceRenderSubscription) {
+            this.forceRenderSubscription.unsubscribe();
+        }
     }
 
     ngAfterViewInit() {
@@ -421,7 +424,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     /**
      * Hides the floating inline refinement button.
-     * @param event
      */
     hideInlineRefinementButton(): void {
         this.inlineRefinementPosition = null;

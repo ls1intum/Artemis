@@ -28,12 +28,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FileService } from 'app/shared/service/file.service';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
-import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -120,9 +114,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     refinedProblemStatement = '';
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
-    private readonly testCaseAction: TextEditorDomainAction = new TestCaseAction();
-    domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
-    metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     // Injected services
     private fileService = inject(FileService);
@@ -317,14 +308,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      */
     acceptRefinement(): void {
         const exercise = this.programmingExercise();
-        // Get the current text from the editor (captures any edits made in diff mode)
-        const finalStatement = this.editableInstructions()?.markdownEditorMonaco?.markdown ?? this.currentProblemStatement();
-        if (exercise && finalStatement) {
-            exercise.problemStatement = finalStatement;
+        if (exercise && this.refinedProblemStatement) {
+            exercise.problemStatement = this.refinedProblemStatement;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.problemStatementChange.emit(finalStatement);
+            this.problemStatementChange.emit(this.refinedProblemStatement);
             this.programmingExerciseChange.emit(exercise);
-            this.currentProblemStatement.set(finalStatement);
+            this.currentProblemStatement.set(this.refinedProblemStatement);
             this.closeDiff();
         }
     }

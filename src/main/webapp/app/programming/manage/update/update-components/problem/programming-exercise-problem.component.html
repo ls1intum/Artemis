@@ -40,11 +40,11 @@
                         <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
                     </span>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()">
+                        <button class="btn btn-success btn-sm" type="button" [disabled]="isAnyApplying()" (click)="acceptRefinement()">
                             <fa-icon [icon]="faSave" class="me-1" />
                             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.acceptChanges"></span>
                         </button>
-                        <button class="btn btn-secondary btn-sm" type="button" (click)="rejectRefinement()">
+                        <button class="btn btn-secondary btn-sm" type="button" [disabled]="isAnyApplying()" (click)="rejectRefinement()">
                             <fa-icon [icon]="faBan" class="me-1" />
                             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.rejectChanges"></span>
                         </button>
@@ -65,7 +65,7 @@
                     ></span>
                 </ngb-alert>
             }
-            @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
+            @if (programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
                     [participation]="programmingExercise()!.templateParticipation!"
