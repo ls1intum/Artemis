@@ -24,12 +24,20 @@ In the future Artemis will also directly communicate with Weaviate to offer a gl
 
 ## Quick Start
 
+<Callout variant={CalloutVariant.warning}>
+  All commands in this guide should be run from the `docker` directory.
+</Callout>
+
+  ```bash
+  cd docker
+  ```
+
 ### Starting Weaviate
 
-Navigate to the `docker` directory in the Artemis repository and start the Weaviate service:
+Start the Weaviate service:
 
 ```bash
-cd docker && docker compose -f weaviate.yml up -d
+docker compose -f weaviate.yml up -d
 ```
 
 This will start Weaviate with the following configuration:
@@ -95,7 +103,7 @@ DISK_USE_WARNING_PERCENTAGE=80
 
 ### Data Persistence
 
-By default, Weaviate data is persisted in `docker/.docker-data/weaviate-data`. You can customize this by setting the `WEAVIATE_VOLUME_MOUNT` environment variable:
+By default, Weaviate data is persisted in `.docker-data/weaviate-data`. You can customize this by setting the `WEAVIATE_VOLUME_MOUNT` environment variable:
 
 ```bash
 export WEAVIATE_VOLUME_MOUNT=/path/to/your/data
