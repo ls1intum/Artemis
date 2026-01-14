@@ -133,7 +133,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should not emit remove bookmark event when post is undefined', () => {
-            const mockEvent = { stopPropagation: jest.fn() };
+            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
             const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', undefined);
 
