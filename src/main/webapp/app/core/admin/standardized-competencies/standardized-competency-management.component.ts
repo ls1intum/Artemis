@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -32,12 +32,16 @@ import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standard
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        '(window:beforeunload)': 'unloadNotification($event)',
+    },
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,
@@ -50,6 +54,8 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -58,17 +64,24 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
     private translateService = inject(TranslateService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
 
-    protected isLoading = false;
-    // true if a competency is getting edited in the detail component
-    protected isEditing = false;
-    // the competency displayed in the detail component
-    protected selectedCompetency?: StandardizedCompetencyDTO;
-    // the knowledge area displayed in the detail component
-    protected selectedKnowledgeArea?: KnowledgeAreaDTO;
-    // the list of sources used for the select in the detail component
-    protected sourcesForSelect: Source[] = [];
+    /** Reference to the knowledge area tree component for tree control */
+    private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
+
+    protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return this.knowledgeAreaTree();
+    }
+
+    /** Loading state */
+    protected readonly isLoading = signal(false);
+    /** true if a competency is getting edited in the detail component */
+    protected readonly isEditing = signal(false);
+    /** the competency displayed in the detail component */
+    protected readonly selectedCompetency = signal<StandardizedCompetencyDTO | undefined>(undefined);
+    /** the knowledge area displayed in the detail component */
+    protected readonly selectedKnowledgeArea = signal<KnowledgeAreaDTO | undefined>(undefined);
+    /** the list of sources used for the select in the detail component */
+    protected readonly sourcesForSelect = signal<Source[]>([]);
 
     // observable for the error button
     private dialogErrorSource = new Subject<string>();
@@ -89,24 +102,22 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
 
     ngOnInit() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
         const getSourcesObservable = this.standardizedCompetencyService.getSources();
         forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
             next: ([knowledgeAreasResponse, sourcesResponse]) => {
-                this.sourcesForSelect = sourcesResponse.body!;
+                this.sourcesForSelect.set(sourcesResponse.body!);
 
                 const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForTree;
-                this.treeControl.dataNodes = knowledgeAreasForTree;
                 knowledgeAreasForTree.forEach((knowledgeArea) => {
                     this.addSelfAndDescendantsToMap(knowledgeArea);
                     this.addSelfAndDescendantsToSelectArray(knowledgeArea);
                 });
 
-                this.isLoading = false;
-                this.changeDetectorRef.detectChanges();
+                this.isLoading.set(false);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
@@ -130,7 +141,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     selectKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
-        if (this.selectedKnowledgeArea?.id === knowledgeArea.id) {
+        if (this.selectedKnowledgeArea()?.id === knowledgeArea.id) {
             return;
         }
         this.setSelectedKnowledgeAreaAndEditing(knowledgeArea, false);
@@ -141,18 +152,18 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     deleteKnowledgeArea(id: number) {
-        const deletedKnowledgeArea = this.selectedKnowledgeArea?.id === id ? this.selectedKnowledgeArea : undefined;
+        const currentKnowledgeArea = this.selectedKnowledgeArea();
+        const deletedKnowledgeArea = currentKnowledgeArea?.id === id ? currentKnowledgeArea : undefined;
         this.adminStandardizedCompetencyService.deleteKnowledgeArea(id).subscribe({
             next: () => {
-                this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea?.title });
+                this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: currentKnowledgeArea?.title });
                 this.dialogErrorSource.next('');
                 this.updateAfterDeleteKnowledgeArea(deletedKnowledgeArea);
                 // close the detail component if it is still open
-                if (this.selectedKnowledgeArea?.id === id) {
-                    this.isEditing = false;
-                    this.selectedKnowledgeArea = undefined;
+                if (currentKnowledgeArea?.id === id) {
+                    this.isEditing.set(false);
+                    this.selectedKnowledgeArea.set(undefined);
                 }
-                this.changeDetectorRef.detectChanges();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -172,10 +183,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { title: resultKnowledgeArea.title });
                         this.updateAfterCreateKnowledgeArea(resultKnowledgeArea);
                         // update the detail view if no other was opened
-                        if (!(this.selectedKnowledgeArea?.id || this.selectedCompetency) && !this.isEditing) {
-                            this.selectedKnowledgeArea = resultKnowledgeArea;
+                        if (!(this.selectedKnowledgeArea()?.id || this.selectedCompetency()) && !this.isEditing()) {
+                            this.selectedKnowledgeArea.set(resultKnowledgeArea);
                         }
-                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -188,10 +198,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { title: resultKnowledgeArea.title });
                         this.updateAfterUpdateKnowledgeArea(resultKnowledgeArea);
                         // update the detail view if it is still open
-                        if (resultKnowledgeArea.id === this.selectedKnowledgeArea?.id) {
-                            this.selectedKnowledgeArea = resultKnowledgeArea;
+                        if (resultKnowledgeArea.id === this.selectedKnowledgeArea()?.id) {
+                            this.selectedKnowledgeArea.set(resultKnowledgeArea);
                         }
-                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -208,7 +217,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     selectCompetency(competency: StandardizedCompetencyDTO) {
-        if (this.selectedCompetency?.id === competency.id) {
+        if (this.selectedCompetency()?.id === competency.id) {
             return;
         }
         this.setSelectedCompetencyAndEditing(competency, false);
@@ -219,18 +228,18 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     deleteCompetency(id: number) {
-        const deletedCompetency = this.selectedCompetency?.id === id ? this.selectedCompetency : undefined;
+        const currentCompetency = this.selectedCompetency();
+        const deletedCompetency = currentCompetency?.id === id ? currentCompetency : undefined;
         this.adminStandardizedCompetencyService.deleteStandardizedCompetency(id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.delete', { title: deletedCompetency?.title });
                 this.updateAfterDeleteCompetency(deletedCompetency);
                 this.dialogErrorSource.next('');
                 // close the detail component if it is still open
-                if (id === this.selectedCompetency?.id) {
-                    this.isEditing = false;
-                    this.selectedCompetency = undefined;
+                if (id === currentCompetency?.id) {
+                    this.isEditing.set(false);
+                    this.selectedCompetency.set(undefined);
                 }
-                this.changeDetectorRef.detectChanges();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -250,16 +259,16 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.create', { title: resultCompetency.title });
                         this.updateAfterCreateCompetency(resultCompetency);
                         // update the detail view if no other was opened
-                        if (!(this.selectedCompetency?.id || this.selectedKnowledgeArea) && !this.isEditing) {
-                            this.selectedCompetency = resultCompetency;
+                        if (!(this.selectedCompetency()?.id || this.selectedKnowledgeArea()) && !this.isEditing()) {
+                            this.selectedCompetency.set(resultCompetency);
                         }
-                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
         } else {
             // save the previous competency values to update the tree afterward
-            const previousCompetency = this.selectedCompetency?.id === competency.id ? this.selectedCompetency : undefined;
+            const currentCompetency = this.selectedCompetency();
+            const previousCompetency = currentCompetency?.id === competency.id ? currentCompetency : undefined;
             this.adminStandardizedCompetencyService
                 .updateStandardizedCompetency(competency)
                 .pipe(map((response) => response.body!))
@@ -268,10 +277,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         this.alertService.success('artemisApp.standardizedCompetency.manage.successAlerts.update', { title: resultCompetency.title });
                         this.updateAfterUpdateCompetency(resultCompetency, previousCompetency);
                         // update the detail view if it is still open
-                        if (resultCompetency.id === this.selectedCompetency?.id) {
-                            this.selectedCompetency = resultCompetency;
+                        if (resultCompetency.id === this.selectedCompetency()?.id) {
+                            this.selectedCompetency.set(resultCompetency);
                         }
-                        this.changeDetectorRef.detectChanges();
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -290,7 +298,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.dataSource.data.filter((ka) => ka.id !== knowledgeArea.id);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
         const descendantIds = this.getIdsOfSelfAndAllDescendants(knowledgeArea);
         descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
@@ -312,7 +319,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.insertBasedOnTitle(knowledgeAreaForTree, this.dataSource.data);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
@@ -359,7 +365,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
         this.knowledgeAreasForSelect = [];
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
-        this.treeControl.dataNodes = this.dataSource.data;
 
         // refresh tree if dataSource.data was not modified directly
         if (previousParent || parent) {
@@ -568,18 +573,20 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
      * @private
      */
     private setSelectedObjectsAndEditing(competency: StandardizedCompetencyDTO | undefined, knowledgeArea: KnowledgeAreaDTO | undefined, isEditing: boolean) {
-        if ((this.selectedCompetency || this.selectedKnowledgeArea) && this.isEditing) {
-            const title = this.selectedCompetency?.title ?? this.selectedKnowledgeArea?.title ?? '';
-            const entityType = this.selectedCompetency ? 'standardizedCompetency' : 'knowledgeArea';
+        const currentCompetency = this.selectedCompetency();
+        const currentKnowledgeArea = this.selectedKnowledgeArea();
+        if ((currentCompetency || currentKnowledgeArea) && this.isEditing()) {
+            const title = currentCompetency?.title ?? currentKnowledgeArea?.title ?? '';
+            const entityType = currentCompetency ? 'standardizedCompetency' : 'knowledgeArea';
             this.openCancelModal(title, entityType, () => {
-                this.isEditing = isEditing;
-                this.selectedCompetency = competency;
-                this.selectedKnowledgeArea = knowledgeArea;
+                this.isEditing.set(isEditing);
+                this.selectedCompetency.set(competency);
+                this.selectedKnowledgeArea.set(knowledgeArea);
             });
         } else {
-            this.isEditing = isEditing;
-            this.selectedCompetency = competency;
-            this.selectedKnowledgeArea = knowledgeArea;
+            this.isEditing.set(isEditing);
+            this.selectedCompetency.set(competency);
+            this.selectedKnowledgeArea.set(knowledgeArea);
         }
     }
 
@@ -589,7 +596,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate() {
-        return !this.isEditing;
+        return !this.isEditing();
     }
 
     get canDeactivateWarning(): string {
@@ -601,7 +608,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
      * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
      * @param event the beforeunload event
      */
-    @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
         if (!this.canDeactivate()) {
             event.preventDefault();

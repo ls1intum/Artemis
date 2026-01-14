@@ -150,6 +150,7 @@ public class DataExportService {
 
     /**
      * Deletes the given data export and sets the state to DELETED or DOWNLOADED_DELETED depending on whether the export has been downloaded or not.
+     * Also sets the filePath to null so that the UI knows the file is no longer available.
      *
      * @param dataExport the data export to delete
      */
@@ -164,6 +165,7 @@ public class DataExportService {
         else {
             dataExport.setDataExportState(DataExportState.DELETED);
         }
+        dataExport.setFilePath(null);
         dataExportRepository.save(dataExport);
     }
 

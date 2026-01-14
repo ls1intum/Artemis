@@ -1,7 +1,7 @@
 <form>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="dismiss()"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
@@ -85,7 +85,16 @@
             }
         }
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)" />
+            <ngb-pagination
+                [maxSize]="5"
+                [rotate]="true"
+                [ellipses]="true"
+                [boundaryLinks]="true"
+                [collectionSize]="total"
+                [(page)]="state.page"
+                [pageSize]="state.pageSize"
+                (pageChange)="onPageChange($event)"
+            />
         </div>
     </div>
 </form>

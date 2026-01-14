@@ -1,20 +1,43 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from './pdf-upload-target-dialog.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { Subject } from 'rxjs';
 
 describe('PdfUploadTargetDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PdfUploadTargetDialogComponent;
     let fixture: ComponentFixture<PdfUploadTargetDialogComponent>;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         await TestBed.configureTestingModule({
             imports: [PdfUploadTargetDialogComponent],
-            providers: [MockProvider(NgbActiveModal)],
+            providers: [
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                {
+                    provide: DynamicDialogConfig,
+                    useValue: {
+                        data: {
+                            lectures: [],
+                            uploadedFiles: [],
+                        },
+                    },
+                },
+            ],
         })
             .overrideComponent(PdfUploadTargetDialogComponent, {
                 remove: { imports: [ArtemisTranslatePipe, TranslateDirective] },
@@ -24,12 +47,11 @@ describe('PdfUploadTargetDialogComponent', () => {
 
         fixture = TestBed.createComponent(PdfUploadTargetDialogComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
-        fixture.detectChanges();
+        await fixture.whenStable();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('initialization', () => {
@@ -38,8 +60,8 @@ describe('PdfUploadTargetDialogComponent', () => {
             expect(component.targetType()).toBe('new');
             expect(component.selectedLectureId()).toBeUndefined();
             expect(component.newLectureTitle()).toBe('');
-            expect(component.lectures).toEqual([]);
-            expect(component.uploadedFiles).toEqual([]);
+            expect(component.lectures()).toEqual([]);
+            expect(component.uploadedFiles()).toEqual([]);
         });
     });
 
@@ -47,32 +69,32 @@ describe('PdfUploadTargetDialogComponent', () => {
         it('should set uploaded files and derive title from first filename', () => {
             const files = [new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' })];
 
-            component.initializeWithFiles(files);
+            (component as any).initializeWithFiles(files);
 
-            expect(component.uploadedFiles).toEqual(files);
+            expect(component.uploadedFiles()).toEqual(files);
             expect(component.newLectureTitle()).toBe('Chapter 01 Introduction');
         });
 
         it('should handle multiple files and use first filename for title', () => {
             const files = [new File(['content1'], 'First_File.pdf', { type: 'application/pdf' }), new File(['content2'], 'Second_File.pdf', { type: 'application/pdf' })];
 
-            component.initializeWithFiles(files);
+            (component as any).initializeWithFiles(files);
 
-            expect(component.uploadedFiles).toHaveLength(2);
+            expect(component.uploadedFiles()).toHaveLength(2);
             expect(component.newLectureTitle()).toBe('First File');
         });
 
         it('should not set title when no files provided', () => {
-            component.initializeWithFiles([]);
+            (component as any).initializeWithFiles([]);
 
-            expect(component.uploadedFiles).toEqual([]);
+            expect(component.uploadedFiles()).toEqual([]);
             expect(component.newLectureTitle()).toBe('');
         });
 
         it('should clean up filename with dashes', () => {
             const files = [new File(['content'], 'lecture-notes-week-5.pdf', { type: 'application/pdf' })];
 
-            component.initializeWithFiles(files);
+            (component as any).initializeWithFiles(files);
 
             expect(component.newLectureTitle()).toBe('lecture notes week 5');
         });
@@ -80,7 +102,7 @@ describe('PdfUploadTargetDialogComponent', () => {
         it('should handle uppercase PDF extension', () => {
             const files = [new File(['content'], 'MyLecture.PDF', { type: 'application/pdf' })];
 
-            component.initializeWithFiles(files);
+            (component as any).initializeWithFiles(files);
 
             expect(component.newLectureTitle()).toBe('MyLecture');
         });
@@ -88,7 +110,7 @@ describe('PdfUploadTargetDialogComponent', () => {
         it('should trim whitespace from derived title', () => {
             const files = [new File(['content'], '  spaced_name  .pdf', { type: 'application/pdf' })];
 
-            component.initializeWithFiles(files);
+            (component as any).initializeWithFiles(files);
 
             expect(component.newLectureTitle()).toBe('spaced name');
         });
@@ -96,7 +118,7 @@ describe('PdfUploadTargetDialogComponent', () => {
         it('should collapse multiple spaces in derived title', () => {
             const files = [new File(['content'], 'file__with___many_spaces.pdf', { type: 'application/pdf' })];
 
-            component.initializeWithFiles(files);
+            (component as any).initializeWithFiles(files);
 
             expect(component.newLectureTitle()).toBe('file with many spaces');
         });
@@ -150,19 +172,19 @@ describe('PdfUploadTargetDialogComponent', () => {
             it('should return true when title is not empty', () => {
                 component.newLectureTitle.set('My Lecture');
 
-                expect(component.isValid()).toBeTrue();
+                expect(component.isValid()).toBe(true);
             });
 
             it('should return false when title is empty', () => {
                 component.newLectureTitle.set('');
 
-                expect(component.isValid()).toBeFalse();
+                expect(component.isValid()).toBe(false);
             });
 
             it('should return false when title contains only whitespace', () => {
                 component.newLectureTitle.set('   ');
 
-                expect(component.isValid()).toBeFalse();
+                expect(component.isValid()).toBe(false);
             });
         });
 
@@ -174,87 +196,80 @@ describe('PdfUploadTargetDialogComponent', () => {
             it('should return true when lecture is selected', () => {
                 component.selectedLectureId.set(42);
 
-                expect(component.isValid()).toBeTrue();
+                expect(component.isValid()).toBe(true);
             });
 
             it('should return false when no lecture is selected', () => {
-                expect(component.isValid()).toBeFalse();
+                expect(component.isValid()).toBe(false);
             });
         });
     });
 
     describe('confirm', () => {
-        it('should close modal with new lecture result when valid', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
+        it('should close dialog with new lecture result when valid', () => {
             component.onTargetTypeChange('new');
             component.newLectureTitle.set('My New Lecture');
 
             component.confirm();
 
-            expect(closeSpy).toHaveBeenCalledOnce();
-            const result = closeSpy.mock.calls[0][0] as PdfUploadTarget;
+            expect(dialogRefCloseSpy).toHaveBeenCalledTimes(1);
+            const result = dialogRefCloseSpy.mock.calls[0][0] as PdfUploadTarget;
             expect(result.targetType).toBe('new');
             expect(result.newLectureTitle).toBe('My New Lecture');
             expect(result.lectureId).toBeUndefined();
         });
 
-        it('should close modal with existing lecture result when valid', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
+        it('should close dialog with existing lecture result when valid', () => {
             component.onTargetTypeChange('existing');
             component.selectedLectureId.set(99);
 
             component.confirm();
 
-            expect(closeSpy).toHaveBeenCalledOnce();
-            const result = closeSpy.mock.calls[0][0] as PdfUploadTarget;
+            expect(dialogRefCloseSpy).toHaveBeenCalledTimes(1);
+            const result = dialogRefCloseSpy.mock.calls[0][0] as PdfUploadTarget;
             expect(result.targetType).toBe('existing');
             expect(result.lectureId).toBe(99);
             expect(result.newLectureTitle).toBeUndefined();
         });
 
         it('should trim lecture title in result', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
             component.onTargetTypeChange('new');
             component.newLectureTitle.set('  Trimmed Title  ');
 
             component.confirm();
 
-            const result = closeSpy.mock.calls[0][0] as PdfUploadTarget;
+            const result = dialogRefCloseSpy.mock.calls[0][0] as PdfUploadTarget;
             expect(result.newLectureTitle).toBe('Trimmed Title');
         });
 
-        it('should not close modal when invalid', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
+        it('should not close dialog when invalid', () => {
             component.onTargetTypeChange('new');
             component.newLectureTitle.set('');
 
             component.confirm();
 
-            expect(closeSpy).not.toHaveBeenCalled();
+            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         });
 
-        it('should not close modal when existing type but no lecture selected', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
+        it('should not close dialog when existing type but no lecture selected', () => {
             component.onTargetTypeChange('existing');
 
             component.confirm();
 
-            expect(closeSpy).not.toHaveBeenCalled();
+            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         });
     });
 
     describe('cancel', () => {
-        it('should dismiss modal with cancel reason', () => {
-            const dismissSpy = jest.spyOn(activeModal, 'dismiss');
-
+        it('should close dialog without result', () => {
             component.cancel();
 
-            expect(dismissSpy).toHaveBeenCalledOnce();
-            expect(dismissSpy).toHaveBeenCalledWith('cancel');
+            expect(dialogRefCloseSpy).toHaveBeenCalledTimes(1);
+            expect(dialogRefCloseSpy).toHaveBeenCalledWith();
         });
     });
 
-    describe('lectures property', () => {
+    describe('lectures signal', () => {
         it('should allow setting lectures array', () => {
             const lecture1 = new Lecture();
             lecture1.id = 1;
@@ -263,11 +278,11 @@ describe('PdfUploadTargetDialogComponent', () => {
             lecture2.id = 2;
             lecture2.title = 'Lecture 2';
 
-            component.lectures = [lecture1, lecture2];
+            component.lectures.set([lecture1, lecture2]);
 
-            expect(component.lectures).toHaveLength(2);
-            expect(component.lectures[0].title).toBe('Lecture 1');
-            expect(component.lectures[1].title).toBe('Lecture 2');
+            expect(component.lectures()).toHaveLength(2);
+            expect(component.lectures()[0].title).toBe('Lecture 1');
+            expect(component.lectures()[1].title).toBe('Lecture 2');
         });
     });
 });

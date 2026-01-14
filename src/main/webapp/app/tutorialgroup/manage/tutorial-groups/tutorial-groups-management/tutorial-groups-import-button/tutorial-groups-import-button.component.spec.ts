@@ -1,26 +1,21 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TutorialGroupsImportButtonComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupsImportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TutorialGroupsImportButtonComponent;
     let fixture: ComponentFixture<TutorialGroupsImportButtonComponent>;
     const exampleCourseId = 1;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TutorialGroupsImportButtonComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            imports: [TutorialGroupsImportButtonComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsImportButtonComponent);
@@ -30,36 +25,42 @@ describe('TutorialGroupsImportButtonComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should open the import dialog when the button is clicked', fakeAsync(() => {
-        // given
-        const modalService = TestBed.inject(NgbModal);
-        const mockModalRef = {
-            componentInstance: { courseId: undefined as any },
-            result: Promise.resolve(),
-        };
-        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-        const openDialogSpy = jest.spyOn(component, 'openTutorialGroupImportDialog');
+    it('should open the import dialog when the button is clicked', () => {
+        const importDialog = component.importDialog();
+        expect(importDialog).toBeDefined();
+        const openSpy = vi.spyOn(importDialog!, 'open');
+        const openDialogSpy = vi.spyOn(component, 'openTutorialGroupImportDialog');
 
-        const importFinishSpy = jest.spyOn(component.importFinished, 'emit');
+        const importButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
+        importButton.click();
 
-        const cancelButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
-        // when
-        cancelButton.click();
+        fixture.detectChanges();
+        expect(openDialogSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
 
-        // then
-        fixture.whenStable().then(() => {
-            expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledTimes(2);
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
-            expect(mockModalRef.componentInstance.courseId()).toEqual(exampleCourseId);
-            expect(importFinishSpy).toHaveBeenCalledOnce();
-        });
-    }));
+    it('should show warning dialog when import is completed', () => {
+        // Test the component method directly without rendering the dialog
+        expect(component.warningDialogVisible()).toBe(false);
+        component.onImportCompleted();
+        expect(component.warningDialogVisible()).toBe(true);
+    });
+
+    it('should close warning dialog and emit importFinished when closeWarningDialog is called', () => {
+        const importFinishedSpy = vi.spyOn(component.importFinished, 'emit');
+        // Set the signal directly without triggering dialog render
+        (component as any).warningDialogVisible.set(true);
+
+        component.closeWarningDialog();
+
+        expect(component.warningDialogVisible()).toBe(false);
+        expect(importFinishedSpy).toHaveBeenCalledOnce();
+    });
 });
