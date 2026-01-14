@@ -30,10 +30,6 @@ export interface ArtifactLocation {
      */
     endLine: number;
     /**
-     * Original text snippet for suggested change
-     */
-    originalText?: string;
-    /**
      * Modified text snippet for suggested change
      */
     modifiedText?: string;

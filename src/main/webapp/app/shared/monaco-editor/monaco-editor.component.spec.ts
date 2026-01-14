@@ -199,7 +199,7 @@ describe('MonacoEditorComponent', () => {
         comp.setLineDecorationsHoverButton('testClass', jest.fn());
         comp.highlightLines(1, 1);
         const disposeAnnotationSpy = jest.spyOn(comp.buildAnnotations[0], 'dispose');
-        const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
+        const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0].widget, 'dispose');
         const disposeHoverButtonSpy = jest.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
         const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
         comp.ngOnDestroy();

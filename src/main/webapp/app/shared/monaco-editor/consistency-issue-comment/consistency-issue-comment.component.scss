@@ -1,0 +1,31 @@
+.consistency-issue-comment {
+    margin-bottom: 0;
+
+    .consistency-issue-comment__heading {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    .consistency-issue-comment__meta {
+        font-size: 0.8125rem;
+    }
+
+    .consistency-issue-comment__line {
+        font-size: 0.875rem;
+    }
+
+    .consistency-issue-comment__diff {
+        margin-top: 0.5rem;
+    }
+
+    .consistency-issue-comment__actions {
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .diff-editor-container {
+        width: 100%;
+    }
+}

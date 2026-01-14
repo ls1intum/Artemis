@@ -1,0 +1,31 @@
+<div class="alert alert-warning alert-dismissible text-start fade show consistency-issue-comment">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="consistency-issue-comment__heading">
+            <h5 class="alert-heading mb-0" jhiTranslate="artemisApp.hyperion.consistencyCheck.issueHeading"></h5>
+            <div class="consistency-issue-comment__meta text-muted">
+                <span>{{ issue().severity }}</span>
+                <span>•</span>
+                <span>{{ issue().category }}</span>
+            </div>
+        </div>
+        @if (lineLabel()) {
+            <span class="consistency-issue-comment__line text-muted">({{ lineLabel() }})</span>
+        }
+    </div>
+    @if (descriptionHtml()) {
+        <div class="consistency-issue-comment__description" [innerHTML]="descriptionHtml()"></div>
+    }
+    @if (suggestedFixHtml()) {
+        <div class="consistency-issue-comment__suggested-fix" [innerHTML]="suggestedFixHtml()"></div>
+    }
+    @if (hasDiff()) {
+        <div class="consistency-issue-comment__diff">
+            <jhi-monaco-diff-editor [allowSplitView]="false" />
+        </div>
+        @if (canApply()) {
+            <div class="consistency-issue-comment__actions">
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="applySuggestedChange()">Apply</button>
+            </div>
+        }
+    }
+</div>

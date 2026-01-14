@@ -1,7 +1,9 @@
 import {
+    ApplicationRef,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    EnvironmentInjector,
     NgZone,
     OnChanges,
     OnDestroy,
@@ -36,8 +38,9 @@ import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programmin
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { InlineConsistencyIssue, addCommentBoxes, applySuggestedChangeToModel } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/shared/service/alert.service';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -72,6 +75,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly fileTypeService = inject(FileTypeService);
     private readonly translateService = inject(TranslateService);
     private readonly ngZone = inject(NgZone);
+    private readonly alertService = inject(AlertService);
+    private readonly appRef = inject(ApplicationRef);
+    private readonly environmentInjector = inject(EnvironmentInjector);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -432,10 +438,27 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     }
 
                     // Readd inconsistency issue comments, because all widgets got removed
-                    addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
+                    addCommentBoxes(
+                        this.editor(),
+                        issues,
+                        this.selectedFile(),
+                        this.selectedRepository(),
+                        this.translateService,
+                        this.appRef,
+                        this.environmentInjector,
+                        this.applySuggestedChange.bind(this),
+                    );
                 });
             }),
         );
+    }
+
+    private applySuggestedChange(issue: InlineConsistencyIssue): void {
+        const model = this.editor().getModel();
+        if (!model) {
+            return;
+        }
+        applySuggestedChangeToModel(model, issue, this.alertService, this.translateService);
     }
 
     /**

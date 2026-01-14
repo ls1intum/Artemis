@@ -161,7 +161,6 @@ Analysis: Same entity with different names - students cannot map requirements to
       "filePath": "exact/path/to/file.java",
       "startLine": 1,
       "endLine": 10,
-      "originalText": "existing code or text for this location",
       "modifiedText": "suggested replacement for this location"
         },
         {
@@ -169,7 +168,6 @@ Analysis: Same entity with different names - students cannot map requirements to
       "filePath": "related/file/path.java",
       "startLine": 5,
       "endLine": 8,
-      "originalText": "existing code or text for this location",
       "modifiedText": "suggested replacement for this location"
         }
       ],
@@ -180,7 +178,7 @@ Analysis: Same entity with different names - students cannot map requirements to
 ```
 
 # IMPORTANT
-If no concrete text change is needed for a location, omit `originalText` and `modifiedText`.
+Return only the minimal necessary changes. Preserve existing code comments unless a change is required by the fix. If you include `modifiedText`, it must fully replace the referenced line range (startLine..endLine) without leaving any line in that range unchanged. For problem statement changes, treat the text as student-facing and apply only minimal, clarity-preserving edits. If no concrete text change is needed for a location, omit `modifiedText`.
 
 # EXECUTION
 Analyze the provided artifacts for semantic naming inconsistencies that would create cognitive mapping barriers for students.

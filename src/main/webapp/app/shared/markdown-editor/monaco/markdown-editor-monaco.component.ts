@@ -1,9 +1,11 @@
 import {
     AfterContentInit,
     AfterViewInit,
+    ApplicationRef,
     ChangeDetectionStrategy,
     Component,
     ElementRef,
+    EnvironmentInjector,
     EventEmitter,
     Input,
     OnDestroy,
@@ -78,7 +80,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { InlineConsistencyIssue, addCommentBoxes, applySuggestedChangeToModel } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 
 export enum MarkdownEditorHeight {
@@ -153,6 +155,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly translateService = inject(TranslateService);
+    private readonly appRef = inject(ApplicationRef);
+    private readonly environmentInjector = inject(EnvironmentInjector);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -368,7 +372,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
 
         this.monacoEditor.disposeWidgets();
-        addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT', this.translateService);
+        addCommentBoxes(
+            this.monacoEditor,
+            issues,
+            'problem_statement.md',
+            'PROBLEM_STATEMENT',
+            this.translateService,
+            this.appRef,
+            this.environmentInjector,
+            this.applySuggestedChange.bind(this),
+        );
+    }
+
+    private applySuggestedChange(issue: InlineConsistencyIssue): void {
+        const model = this.monacoEditor.getModel();
+        if (!model) {
+            return;
+        }
+        applySuggestedChangeToModel(model, issue, this.alertService, this.translateService);
     }
 
     ngAfterContentInit(): void {

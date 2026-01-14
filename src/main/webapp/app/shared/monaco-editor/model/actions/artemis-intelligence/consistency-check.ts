@@ -1,9 +1,13 @@
+import { ApplicationRef, EnvironmentInjector, createComponent } from '@angular/core';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
+import { ConsistencyIssueCommentComponent } from 'app/shared/monaco-editor/consistency-issue-comment/consistency-issue-comment.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import * as monaco from 'monaco-editor';
 
 export type InlineConsistencyIssue = {
     filePath: string;
@@ -32,9 +36,13 @@ export function addCommentBoxes(
     selectedFile: string | undefined,
     selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
     translateService: TranslateService,
+    appRef?: ApplicationRef,
+    environmentInjector?: EnvironmentInjector,
+    onApply?: (issue: InlineConsistencyIssue) => void,
 ) {
     for (const [index, issue] of issuesForSelectedFile(selectedFile, selectedRepo, issues).entries()) {
-        addCommentBox(editor, issue, index, translateService);
+        const resolvedIssue = withDerivedOriginalText(editor, issue);
+        addCommentBox(editor, resolvedIssue, index, translateService, appRef, environmentInjector, onApply);
     }
 }
 
@@ -45,16 +53,43 @@ export function addCommentBoxes(
  * @param id     The unique identifier for this comment.
  * @param translateService  Service to translate text in the comments.
  */
-export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number, translateService: TranslateService) {
-    const headingText = translateService.instant('artemisApp.hyperion.consistencyCheck.issueHeading');
-    const node = document.createElement('div');
-    node.className = 'alert alert-warning alert-dismissible text-start fade show';
-    node.innerHTML = `
+export function addCommentBox(
+    editor: MonacoEditorComponent,
+    issue: InlineConsistencyIssue,
+    id: number,
+    translateService: TranslateService,
+    appRef?: ApplicationRef,
+    environmentInjector?: EnvironmentInjector,
+    onApply?: (issue: InlineConsistencyIssue) => void,
+) {
+    if (!appRef || !environmentInjector) {
+        const headingText = translateService.instant('artemisApp.hyperion.consistencyCheck.issueHeading');
+        const node = document.createElement('div');
+        node.className = 'alert alert-warning alert-dismissible text-start fade show';
+        node.innerHTML = `
       <h5 class='alert-heading'>${headingText}</h5>
       <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>
     `;
+        editor.addLineWidget(issue.endLine, `comment-${id}`, node);
+        return;
+    }
 
-    editor.addLineWidget(issue.endLine, `comment-${id}`, node);
+    const node = document.createElement('div');
+    const componentRef = createComponent(ConsistencyIssueCommentComponent, {
+        hostElement: node,
+        environmentInjector,
+    });
+    componentRef.setInput('issue', issue);
+    if (onApply) {
+        componentRef.setInput('onApply', onApply);
+    }
+    appRef.attachView(componentRef.hostView);
+    componentRef.changeDetectorRef.detectChanges();
+
+    editor.addLineWidget(issue.endLine, `comment-${id}`, node, () => {
+        appRef.detachView(componentRef.hostView);
+        componentRef.destroy();
+    });
 }
 
 /**
@@ -97,7 +132,6 @@ export function issuesForSelectedFile(
                 suggestedFix: issue.suggestedFix,
                 category: issue.category,
                 severity: issue.severity,
-                originalText: loc.originalText,
                 modifiedText: loc.modifiedText,
             });
         }
@@ -191,6 +225,64 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
     md += `\n`;
 
     return md;
+}
+
+function withDerivedOriginalText(editor: MonacoEditorComponent, issue: InlineConsistencyIssue): InlineConsistencyIssue {
+    if (issue.originalText !== undefined || issue.modifiedText === undefined) {
+        return issue;
+    }
+    const model = editor.getModel();
+    if (!model || !issue.startLine || !issue.endLine) {
+        return issue;
+    }
+    const endLineContent = model.getLineContent(issue.endLine);
+    const range = {
+        startLineNumber: issue.startLine,
+        startColumn: 1,
+        endLineNumber: issue.endLine,
+        endColumn: endLineContent.length + 1,
+    };
+    const originalText = model.getValueInRange(range);
+    return { ...issue, originalText };
+}
+
+export function applySuggestedChangeToModel(model: monaco.editor.ITextModel, issue: InlineConsistencyIssue, alertService: AlertService, translateService: TranslateService): void {
+    if (issue.originalText === undefined || issue.modifiedText === undefined) {
+        return;
+    }
+
+    const startLine = issue.startLine;
+    const endLine = issue.endLine;
+    const endLineContent = endLine ? model.getLineContent(endLine) : '';
+    const range =
+        startLine && endLine
+            ? {
+                  startLineNumber: startLine,
+                  startColumn: 1,
+                  endLineNumber: endLine,
+                  endColumn: endLineContent.length + 1,
+              }
+            : undefined;
+
+    if (range) {
+        const currentText = model.getValueInRange(range);
+        if (currentText === issue.originalText) {
+            model.pushEditOperations([], [{ range, text: issue.modifiedText }], () => null);
+            return;
+        }
+    }
+
+    const matches = model.findMatches(issue.originalText, false, false, false, null, true);
+    if (matches.length === 0) {
+        alertService.error(translateService.instant('artemisApp.hyperion.consistencyCheck.applyNotFound'));
+        return;
+    }
+    if (matches.length > 1) {
+        alertService.error(translateService.instant('artemisApp.hyperion.consistencyCheck.applyAmbiguous'));
+        return;
+    }
+
+    model.pushEditOperations([], [{ range: matches[0].range, text: issue.modifiedText }], () => null);
 }
 
 /**

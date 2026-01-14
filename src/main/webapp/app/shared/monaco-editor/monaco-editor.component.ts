@@ -42,7 +42,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Elements, models, and actions of the editor.
      */
     models: MonacoEditorTextModel[] = [];
-    lineWidgets: MonacoEditorLineWidget[] = [];
+    lineWidgets: { widget: MonacoEditorLineWidget; onDispose?: () => void }[] = [];
     buildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: TextEditorAction[] = [];
@@ -359,8 +359,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeWidgets() {
-        this.lineWidgets.forEach((i) => {
-            i.dispose();
+        this.lineWidgets.forEach((entry) => {
+            entry.onDispose?.();
+            entry.widget.dispose();
         });
         this.lineWidgets = [];
     }
@@ -429,10 +430,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param id The ID to use for the widget.
      * @param domNode The content to display in the editor.
      */
-    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
+    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement, onDispose?: () => void) {
         const lineWidget = new MonacoEditorLineWidget(this._editor, id, domNode, lineNumber);
         lineWidget.addToEditor();
-        this.lineWidgets.push(lineWidget);
+        this.lineWidgets.push({ widget: lineWidget, onDispose });
     }
 
     /**

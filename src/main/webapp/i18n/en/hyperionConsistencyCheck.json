@@ -8,6 +8,9 @@
                 "checkFailedAlert": "The consistency check failed",
                 "issueHeading": "Consistency Issue Found",
                 "navigationFailed": "Failed to jump to the inconsistency",
+                "applyMismatch": "Cannot apply suggestion because the file content has changed",
+                "applyNotFound": "Cannot apply suggestion because the original text was not found in the file",
+                "applyAmbiguous": "Cannot apply suggestion because the original text appears multiple times",
                 "category": {
                     "METHOD_RETURN_TYPE_MISMATCH": "Method return type mismatch",
                     "METHOD_PARAMETER_MISMATCH": "Method parameter mismatch",
