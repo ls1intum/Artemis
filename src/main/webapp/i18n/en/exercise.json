@@ -235,21 +235,21 @@
             },
             "form": {
                 "title": {
-                    "undefined": "There has to be a title set!",
+                    "undefined": "You need to specify a title.",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!",
                     "disallowedValue": "The title is already used for another exercise!"
                 },
                 "channelName": {
-                    "empty": "There has to be a channel name set!"
+                    "empty": "You need to specify a channel name."
                 },
                 "shortName": {
-                    "undefined": "There has to be a short name set!",
+                    "undefined": "You need to specify a short name.",
                     "pattern": "The short name must begin with a letter and must not contain any special characters!",
                     "minlength": "The short name must be at least 3 characters long!",
                     "disallowedValue": "The short name is already used for another exercise!"
                 },
                 "packageName": {
-                    "undefined": "There has to be a package name set!",
+                    "undefined": "You need to specify a package name.",
                     "pattern": {
                         "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!",
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
@@ -260,12 +260,12 @@
                     }
                 },
                 "points": {
-                    "undefined": "There has to be a value for the points set!",
+                    "undefined": "You need to specify the points.",
                     "customMin": "The number of points must be at least 1!",
                     "customMax": "The number of points may not exceed 9999!"
                 },
                 "bonusPoints": {
-                    "undefined": "There has to be a value for the bonus points set!",
+                    "undefined": "You need to specify the bonus points.",
                     "customMin": "The number of bonus points must be at least 0!",
                     "customMax": "The number of bonus points may not exceed 9999!"
                 },

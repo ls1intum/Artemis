@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { Subscription } from 'rxjs';
@@ -25,52 +25,48 @@ import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-titl
         CourseTitleBarTitleComponent,
     ],
 })
-export class CourseManagementStatisticsComponent implements OnInit {
+export class CourseManagementStatisticsComponent implements OnDestroy {
     private service = inject(StatisticsService);
     private route = inject(ActivatedRoute);
 
     readonly documentationType: DocumentationType = 'Statistics';
     // html properties
-    SpanType = SpanType;
-    graph = Graphs;
-    graphTypes: Graphs[];
-    currentSpan: SpanType = SpanType.WEEK;
-    statisticsView: StatisticsView = StatisticsView.COURSE;
-    paramSub: Subscription;
-    courseId: number;
-    course: Course;
+    readonly SpanType = SpanType;
+    readonly graph = Graphs;
 
-    defaultTitle = 'Course';
+    readonly currentSpan = signal<SpanType>(SpanType.WEEK);
+    readonly statisticsView = signal<StatisticsView>(StatisticsView.COURSE);
+
+    private paramSub: Subscription;
+    private dataSub: Subscription;
+    private statisticsSub: Subscription;
+
+    readonly courseId = signal<number | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
+
+    readonly defaultTitle = 'Course';
+
     // Average Score
-    selectedValueAverageScore: string;
-    currentAverageScore = 0;
-    currentAbsolutePoints = 0;
-    currentMaxPoints = 1;
-    exerciseTitles: string[];
+    readonly selectedValueAverageScore = signal<string | undefined>(undefined);
+    readonly currentAverageScore = signal<number>(0);
+    readonly currentAbsolutePoints = signal<number>(0);
+    readonly currentMaxPoints = signal<number>(1);
+    readonly exerciseTitles = signal<string[] | undefined>(undefined);
 
     // Average Rating
-    selectedValueAverageRating: string;
-    currentAverageRating = 0;
-    currentAverageRatingInPercent = 0;
-    tutorNames: string[];
+    readonly selectedValueAverageRating = signal<string | undefined>(undefined);
+    readonly currentAverageRating = signal<number>(0);
+    readonly currentAverageRatingInPercent = signal<number>(0);
+    readonly tutorNames = signal<string[] | undefined>(undefined);
 
-    courseStatistics: CourseManagementStatisticsDTO;
+    readonly courseStatistics = signal<CourseManagementStatisticsDTO | undefined>(undefined);
 
-    ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.courseId = params['courseId'];
-        });
-        this.route.data.subscribe(({ course }) => {
-            this.course = course;
-            this.initializeGraphTypes();
-        });
-        this.service.getCourseStatistics(this.courseId).subscribe((res: CourseManagementStatisticsDTO) => {
-            this.courseStatistics = res;
-        });
-    }
-
-    initializeGraphTypes(): void {
-        this.graphTypes = [
+    readonly graphTypes = computed<Graphs[]>(() => {
+        const currentCourse = this.course();
+        if (!currentCourse) {
+            return [];
+        }
+        return [
             Graphs.SUBMISSIONS,
             Graphs.ACTIVE_USERS,
             Graphs.RELEASED_EXERCISES,
@@ -78,15 +74,41 @@ export class CourseManagementStatisticsComponent implements OnInit {
             Graphs.ACTIVE_TUTORS,
             Graphs.CREATED_RESULTS,
             Graphs.CREATED_FEEDBACKS,
-            isCommunicationEnabled(this.course) && Graphs.POSTS,
-            isCommunicationEnabled(this.course) && Graphs.RESOLVED_POSTS,
+            isCommunicationEnabled(currentCourse) && Graphs.POSTS,
+            isCommunicationEnabled(currentCourse) && Graphs.RESOLVED_POSTS,
             Graphs.CONDUCTED_EXAMS,
             Graphs.EXAM_PARTICIPATIONS,
             Graphs.EXAM_REGISTRATIONS,
         ].filter(Boolean) as Graphs[];
+    });
+
+    constructor() {
+        this.paramSub = this.route.params.subscribe((params) => {
+            this.courseId.set(params['courseId']);
+        });
+        this.dataSub = this.route.data.subscribe(({ course }) => {
+            this.course.set(course);
+        });
+
+        // Effect to fetch statistics when courseId changes
+        effect(() => {
+            const id = this.courseId();
+            if (id) {
+                this.statisticsSub?.unsubscribe();
+                this.statisticsSub = this.service.getCourseStatistics(id).subscribe((res: CourseManagementStatisticsDTO) => {
+                    this.courseStatistics.set(res);
+                });
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.paramSub?.unsubscribe();
+        this.dataSub?.unsubscribe();
+        this.statisticsSub?.unsubscribe();
     }
 
     onTabChanged(span: SpanType): void {
-        this.currentSpan = span;
+        this.currentSpan.set(span);
     }
 }

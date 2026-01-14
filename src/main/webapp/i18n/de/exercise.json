@@ -235,21 +235,21 @@
             },
             "form": {
                 "title": {
-                    "undefined": "Der Titel wurde nicht ausgefüllt!",
+                    "undefined": "Du musst einen Titel angeben.",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!",
                     "disallowedValue": "Der Titel wird bereits für eine andere Aufgabe genutzt!"
                 },
                 "channelName": {
-                    "empty": "Der Kanalname wurde nicht ausgefüllt!"
+                    "empty": "Du musst einen Kanalnamen angeben."
                 },
                 "shortName": {
-                    "undefined": "Der Kurzname wurde nicht ausgefüllt!",
+                    "undefined": "Du musst einen Kurznamen angeben.",
                     "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!",
                     "disallowedValue": "Der Kurzname wird bereits für eine andere Aufgabe genutzt!"
                 },
                 "packageName": {
-                    "undefined": "Der Package-Name wurde nicht ausgefüllt!",
+                    "undefined": "Du musst einen Package-Namen angeben.",
                     "pattern": {
                         "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
                         "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
@@ -260,12 +260,12 @@
                     }
                 },
                 "points": {
-                    "undefined": "Die Punkte wurden nicht ausgefüllt!",
+                    "undefined": "Du musst die Punkte angeben.",
                     "customMin": "Die Punkte müssen mindestens 1 betragen!",
                     "customMax": "Die Punkte dürfen höchstens 9999 betragen!"
                 },
                 "bonusPoints": {
-                    "undefined": "Die Bonuspunkte wurden nicht ausgefüllt!",
+                    "undefined": "Du musst die Bonuspunkte angeben.",
                     "customMin": "Die Bonuspunkte müssen mindestens 0 betragen!",
                     "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen!"
                 },

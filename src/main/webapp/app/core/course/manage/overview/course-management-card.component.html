@@ -1,202 +1,207 @@
-<div class="card mb-4 hover-effect" id="course-{{ course.id }}">
-    <div id="course-card-header" class="card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor, '--content-color': contentColor }">
-        <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
+<div class="card mb-4 hover-effect" id="course-{{ course().id }}">
+    <div id="course-card-header" class="card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor(), '--content-color': contentColor() }">
+        <a class="stretched-link" [routerLink]="['/course-management', course().id]"></a>
         <div class="card-header-left">
-            @if (course.courseIconPath) {
-                <jhi-image class="header-item" [src]="course.courseIconPath" />
+            @if (course().courseIconPath) {
+                <jhi-image class="header-item" [src]="course().courseIconPath!" />
             }
             <div class="card-date">
-                @if (course.startDate && course.endDate) {
-                    <div>{{ course.startDate | artemisDate: 'long-date' }} - {{ course.endDate | artemisDate: 'long-date' }}</div>
+                @if (course().startDate && course().endDate) {
+                    <div>{{ course().startDate | artemisDate: 'long-date' }} - {{ course().endDate | artemisDate: 'long-date' }}</div>
                 }
-                @if (course.startDate && !course.endDate) {
-                    <div><span jhiTranslate="artemisApp.course.startDate"></span>: {{ course.startDate | artemisDate: 'long-date' }}</div>
+                @if (course().startDate && !course().endDate) {
+                    <div><span jhiTranslate="artemisApp.course.startDate"></span>: {{ course().startDate | artemisDate: 'long-date' }}</div>
                 }
-                @if (!course.startDate && course.endDate) {
-                    <div><span jhiTranslate="artemisApp.course.endDate"></span>: {{ course.endDate | artemisDate: 'long-date' }}</div>
+                @if (!course().startDate && course().endDate) {
+                    <div><span jhiTranslate="artemisApp.course.endDate"></span>: {{ course().endDate | artemisDate: 'long-date' }}</div>
                 }
             </div>
         </div>
-        <div class="container container-padding title-container" [routerLink]="['/course-management', course.id]">
-            <h3 class="card-title text-center fw-medium course-title">{{ course.title }} ({{ course.shortName }})</h3>
-            @if (course.description && course.description !== '') {
+        <div class="container container-padding title-container" [routerLink]="['/course-management', course().id]">
+            <h3 class="card-title text-center fw-medium course-title">{{ course().title }} ({{ course().shortName }})</h3>
+            @if (course().description && course().description !== '') {
                 <div class="text-center course-description">
-                    {{ course.description }}
+                    {{ course().description }}
                 </div>
             }
         </div>
-        @if (courseWithUsers && course.isAtLeastInstructor) {
-            <div class="float-end card-groups">
-                <div>
-                    <div id="open-student-management-{{ course.id }}">
-                        @if (courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents === 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']">
-                                {{ courseWithUsers.numberOfStudents }} {{ 'artemisApp.course.student' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents !== 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']">
-                                {{ courseWithUsers.numberOfStudents }} {{ 'artemisApp.course.students' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfStudents === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" jhiTranslate="artemisApp.course.students"></a>
-                        }
+        @if (courseWithUsers(); as courseUsers) {
+            @if (course().isAtLeastInstructor) {
+                <div class="float-end card-groups">
+                    <div>
+                        <div id="open-student-management-{{ course().id }}">
+                            @if (courseUsers.numberOfStudents !== undefined && courseUsers.numberOfStudents === 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'students']">
+                                    {{ courseUsers.numberOfStudents }} {{ 'artemisApp.course.student' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfStudents !== undefined && courseUsers.numberOfStudents !== 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'students']">
+                                    {{ courseUsers.numberOfStudents }} {{ 'artemisApp.course.students' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfStudents === undefined) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'students']" jhiTranslate="artemisApp.course.students"></a>
+                            }
+                        </div>
+                        <div>
+                            @if (courseUsers.numberOfTeachingAssistants !== undefined && courseUsers.numberOfTeachingAssistants === 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'tutors']">
+                                    {{ courseUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutor' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfTeachingAssistants !== undefined && courseUsers.numberOfTeachingAssistants !== 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'tutors']">
+                                    {{ courseUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutors' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfTeachingAssistants === undefined) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'tutors']" jhiTranslate="artemisApp.course.tutors"></a>
+                            }
+                        </div>
                     </div>
                     <div>
-                        @if (courseWithUsers.numberOfTeachingAssistants !== undefined && courseWithUsers.numberOfTeachingAssistants === 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
-                                {{ courseWithUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutor' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfTeachingAssistants !== undefined && courseWithUsers.numberOfTeachingAssistants !== 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
-                                {{ courseWithUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutors' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfTeachingAssistants === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" jhiTranslate="artemisApp.course.tutors"></a>
-                        }
+                        <div>
+                            @if (courseUsers.numberOfEditors !== undefined && courseUsers.numberOfEditors === 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'editors']">
+                                    {{ courseUsers.numberOfEditors }} {{ 'artemisApp.course.editor' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfEditors !== undefined && courseUsers.numberOfEditors !== 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'editors']">
+                                    {{ courseUsers.numberOfEditors }} {{ 'artemisApp.course.editors' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfEditors === undefined) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'editors']" jhiTranslate="artemisApp.course.editors"></a>
+                            }
+                        </div>
+                        <div>
+                            @if (courseUsers.numberOfInstructors !== undefined && courseUsers.numberOfInstructors === 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'instructors']">
+                                    {{ courseUsers.numberOfInstructors }} {{ 'artemisApp.course.instructor' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfInstructors !== undefined && courseUsers.numberOfInstructors !== 1) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'instructors']">
+                                    {{ courseUsers.numberOfInstructors }} {{ 'artemisApp.course.instructors' | artemisTranslate }}
+                                </a>
+                            }
+                            @if (courseUsers.numberOfInstructors === undefined) {
+                                <a [routerLink]="['/course-management', course().id, 'groups', 'instructors']" jhiTranslate="artemisApp.course.instructors"></a>
+                            }
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <div>
-                        @if (courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors === 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']">
-                                {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editor' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors !== 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']">
-                                {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editors' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfEditors === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" jhiTranslate="artemisApp.course.editors"></a>
-                        }
-                    </div>
-                    <div>
-                        @if (courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors === 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']">
-                                {{ courseWithUsers.numberOfInstructors }} {{ 'artemisApp.course.instructor' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors !== 1) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']">
-                                {{ courseWithUsers.numberOfInstructors }} {{ 'artemisApp.course.instructors' | artemisTranslate }}
-                            </a>
-                        }
-                        @if (courseWithUsers.numberOfInstructors === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" jhiTranslate="artemisApp.course.instructors"></a>
-                        }
-                    </div>
-                </div>
-            </div>
+            }
         }
     </div>
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card p-0">
-                @if (!courseWithExercises) {
+                @if (!courseWithExercises()) {
                     <div class="loading-spinner">
                         <fa-icon [icon]="faSpinner" animation="spin" />
                     </div>
                 }
-                @if (courseWithExercises) {
+                @if (courseWithExercises()) {
                     <div class="section-content px-3 py-1">
-                        @if (futureExercises && futureExercises.length > 0) {
+                        @if (futureExercises().length > 0) {
                             <div>
-                                <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
-                                    <fa-icon class="control-icon" [icon]="showFutureExercises ? faAngleDown : faAngleUp" />
+                                <div class="control-label" (click)="showFutureExercises.set(!showFutureExercises())">
+                                    <fa-icon class="control-icon" [icon]="showFutureExercises() ? faAngleDown : faAngleUp" />
                                     <strong jhiTranslate="artemisApp.course.releasedSoon"></strong>
                                 </div>
-                                @if (showFutureExercises) {
+                                @if (showFutureExercises()) {
                                     <div>
-                                        @for (exercise of futureExercises; track exercise) {
+                                        @for (exercise of futureExercises(); track exercise) {
                                             <jhi-course-management-exercise-row
-                                                [course]="course"
+                                                [course]="course()"
                                                 [rowType]="exerciseRowType.FUTURE"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
+                                                [statistic]="statisticsPerExercise().get(exercise.id!)"
                                             />
                                         }
                                     </div>
                                 }
-                                @if (!showFutureExercises) {
+                                @if (!showFutureExercises()) {
                                     <div class="collapsed"></div>
                                 }
                             </div>
                         }
-                        @if (currentExercises && currentExercises.length > 0) {
+                        @if (currentExercises().length > 0) {
                             <div>
-                                <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
-                                    <fa-icon class="control-icon" [icon]="showCurrentExercises ? faAngleDown : faAngleUp" />
+                                <div class="control-label" (click)="showCurrentExercises.set(!showCurrentExercises())">
+                                    <fa-icon class="control-icon" [icon]="showCurrentExercises() ? faAngleDown : faAngleUp" />
                                     <strong jhiTranslate="artemisApp.course.currentWorking"></strong>
                                 </div>
-                                @if (showCurrentExercises) {
+                                @if (showCurrentExercises()) {
                                     <div>
-                                        @for (exercise of currentExercises; track exercise) {
+                                        @for (exercise of currentExercises(); track exercise) {
                                             <jhi-course-management-exercise-row
-                                                [course]="course"
+                                                [course]="course()"
                                                 [rowType]="exerciseRowType.CURRENT"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
+                                                [statistic]="statisticsPerExercise().get(exercise.id!)"
                                             />
                                         }
                                     </div>
                                 }
-                                @if (!showCurrentExercises) {
+                                @if (!showCurrentExercises()) {
                                     <div class="collapsed"></div>
                                 }
                             </div>
                         }
-                        @if (exercisesInAssessment && exercisesInAssessment.length > 0) {
+                        @if (exercisesInAssessment().length > 0) {
                             <div>
-                                <div class="control-label" (click)="showExercisesInAssessment = !showExercisesInAssessment">
-                                    <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? faAngleDown : faAngleUp" />
+                                <div class="control-label" (click)="showExercisesInAssessment.set(!showExercisesInAssessment())">
+                                    <fa-icon class="control-icon" [icon]="showExercisesInAssessment() ? faAngleDown : faAngleUp" />
                                     <strong jhiTranslate="artemisApp.course.inAssessment"></strong>
                                 </div>
-                                @if (showExercisesInAssessment) {
+                                @if (showExercisesInAssessment()) {
                                     <div>
-                                        @for (exercise of exercisesInAssessment; track exercise) {
+                                        @for (exercise of exercisesInAssessment(); track exercise) {
                                             <jhi-course-management-exercise-row
-                                                [course]="course"
+                                                [course]="course()"
                                                 [rowType]="exerciseRowType.ASSESSING"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
+                                                [statistic]="statisticsPerExercise().get(exercise.id!)"
                                             />
                                         }
                                     </div>
                                 }
-                                @if (!showExercisesInAssessment) {
+                                @if (!showExercisesInAssessment()) {
                                     <div class="collapsed"></div>
                                 }
                             </div>
                         }
-                        @if (pastExercises && pastExercises.length > 0) {
+                        @if (pastExercises().length > 0) {
                             <div>
-                                <div class="control-label" (click)="showPastExercises = !showPastExercises">
-                                    <fa-icon class="control-icon" [icon]="showPastExercises ? faAngleDown : faAngleUp" />
-                                    <strong jhiTranslate="artemisApp.course.pastExercises" [translateValues]="{ amount: pastExercises.length, total: pastExerciseCount }"></strong>
+                                <div class="control-label" (click)="showPastExercises.set(!showPastExercises())">
+                                    <fa-icon class="control-icon" [icon]="showPastExercises() ? faAngleDown : faAngleUp" />
+                                    <strong
+                                        jhiTranslate="artemisApp.course.pastExercises"
+                                        [translateValues]="{ amount: pastExercises().length, total: pastExerciseCount() }"
+                                    ></strong>
                                 </div>
-                                @if (showPastExercises) {
+                                @if (showPastExercises()) {
                                     <div>
-                                        @for (exercise of pastExercises; track exercise) {
+                                        @for (exercise of pastExercises(); track exercise) {
                                             <jhi-course-management-exercise-row
-                                                [course]="course"
+                                                [course]="course()"
                                                 [rowType]="exerciseRowType.PAST"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
+                                                [statistic]="statisticsPerExercise().get(exercise.id!)"
                                             />
                                         }
                                     </div>
                                 }
-                                @if (!showPastExercises) {
+                                @if (!showPastExercises()) {
                                     <div class="collapsed"></div>
                                 }
                             </div>
                         }
-                        @if ((futureExercises?.length || 0) + (currentExercises?.length || 0) + (exercisesInAssessment?.length || 0) + (pastExercises?.length || 0) === 0) {
+                        @if (futureExercises().length + currentExercises().length + exercisesInAssessment().length + pastExercises().length === 0) {
                             <div>
                                 <h4 class="text-center no-exercises mt-3 fw-medium" jhiTranslate="artemisApp.course.noExercises"></h4>
                             </div>
@@ -206,15 +211,15 @@
             </div>
             <div class="col-4 statistics-card align-center">
                 <div class="align-center w-100 h-100">
-                    @if (courseStatistics) {
+                    @if (courseStatistics()) {
                         <jhi-course-management-overview-statistics
                             class="statistics-chart"
-                            [initialStats]="courseStatistics?.activeStudents"
-                            [amountOfStudentsInCourse]="!!courseWithUsers && courseWithUsers.numberOfStudents ? courseWithUsers.numberOfStudents : 0"
-                            [course]="course"
+                            [initialStats]="courseStatistics()?.activeStudents"
+                            [amountOfStudentsInCourse]="courseWithUsers()?.numberOfStudents ?? 0"
+                            [course]="course()"
                         />
                     }
-                    @if (!courseStatistics) {
+                    @if (!courseStatistics()) {
                         <div class="loading-spinner">
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         </div>
@@ -224,10 +229,10 @@
         </div>
     </div>
     <div class="card-footer">
-        @if (course.isAtLeastTutor) {
+        @if (course().isAtLeastTutor) {
             <jhi-feature-overlay [enabled]="examEnabled" placement="right">
                 <a
-                    [routerLink]="['/course-management', course.id, 'exams']"
+                    [routerLink]="['/course-management', course().id, 'exams']"
                     class="btn btn-primary me-1 mb-1"
                     [ngbTooltip]="'entity.action.exams' | artemisTranslate"
                     id="course-card-open-exams"
@@ -237,9 +242,9 @@
                 </a>
             </jhi-feature-overlay>
         }
-        @if (course.isAtLeastTutor) {
+        @if (course().isAtLeastTutor) {
             <a
-                [routerLink]="['/course-management', course.id, 'exercises']"
+                [routerLink]="['/course-management', course().id, 'exercises']"
                 class="btn btn-primary me-1 mb-1"
                 [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
                 id="course-card-open-exercises"
@@ -248,10 +253,10 @@
                 <span class="d-none d-xl-inline" jhiTranslate="entity.action.exercise"></span>
             </a>
         }
-        @if (course.isAtLeastEditor) {
+        @if (course().isAtLeastEditor) {
             <jhi-feature-overlay [enabled]="lectureEnabled" placement="right">
                 <a
-                    [routerLink]="['/course-management', course.id, 'lectures']"
+                    [routerLink]="['/course-management', course().id, 'lectures']"
                     class="btn btn-primary me-1 mb-1"
                     [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
                     id="course-card-open-lectures"
@@ -261,9 +266,9 @@
                 </a>
             </jhi-feature-overlay>
         }
-        @if (course.isAtLeastTutor) {
+        @if (course().isAtLeastTutor) {
             <a
-                [routerLink]="['/course-management', course.id, 'course-statistics']"
+                [routerLink]="['/course-management', course().id, 'course-statistics']"
                 class="btn btn-info me-1 mb-1 hidden-if-mobile"
                 [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
                 id="course-card-open-open-statistics"
@@ -272,9 +277,9 @@
                 <span class="d-none d-xl-inline" jhiTranslate="artemisApp.courseStatistics.statistics"></span>
             </a>
         }
-        @if (isCommunicationEnabled(course) && course.isAtLeastTutor) {
+        @if (isCommunicationEnabled(course()) && course().isAtLeastTutor) {
             <a
-                [routerLink]="['/courses', course.id, 'communication']"
+                [routerLink]="['/courses', course().id, 'communication']"
                 class="btn btn-primary me-1 mb-1"
                 [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
             >
@@ -282,10 +287,10 @@
                 <span class="d-none d-xl-inline" jhiTranslate="artemisApp.metis.communication.label"></span>
             </a>
         }
-        @if (course.timeZone || course.isAtLeastInstructor) {
+        @if (course().timeZone || course().isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
                 <a
-                    [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                    [routerLink]="['/course-management', course().id, 'tutorial-groups']"
                     class="btn btn-primary me-1 mb-1 hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
                     id="course-card-open-tutorial-groups"
@@ -295,10 +300,10 @@
                 </a>
             </jhi-feature-overlay>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (course().isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="atlasEnabled">
                 <a
-                    [routerLink]="['/course-management', course.id, 'competency-management']"
+                    [routerLink]="['/course-management', course().id, 'competency-management']"
                     class="btn btn-primary me-1 mb-1 hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.competency.competencyButton' | artemisTranslate"
                     id="course-card-open-competencies"
@@ -308,11 +313,11 @@
                 </a>
             </jhi-feature-overlay>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (course().isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="atlasEnabled">
                 <a
                     [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
-                    [routerLink]="['/course-management', course.id, 'learning-path-management']"
+                    [routerLink]="['/course-management', course().id, 'learning-path-management']"
                     class="btn btn-primary me-1 mb-1 hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.learningPath.learningPathButton' | artemisTranslate"
                     id="course-card-open-learning-paths"
@@ -322,9 +327,9 @@
                 </a>
             </jhi-feature-overlay>
         }
-        @if (course.isAtLeastTutor) {
+        @if (course().isAtLeastTutor) {
             <a
-                [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
+                [routerLink]="['/course-management', course().id, 'assessment-dashboard']"
                 class="btn btn-info me-1 mb-1"
                 [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
                 id="course-card-open-assessment-dashboard"
@@ -333,9 +338,9 @@
                 <span class="d-none d-xl-inline" jhiTranslate="entity.action.assessmentDashboard"></span>
             </a>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (course().isAtLeastInstructor) {
             <a
-                [routerLink]="['/course-management', course.id, 'scores']"
+                [routerLink]="['/course-management', course().id, 'scores']"
                 class="btn btn-info me-1 mb-1"
                 [ngbTooltip]="'entity.action.scores' | artemisTranslate"
                 id="course-card-open-scores"
@@ -345,9 +350,9 @@
             </a>
         }
 
-        @if (course.isAtLeastTutor && course.faqEnabled) {
+        @if (course().isAtLeastTutor && course().faqEnabled) {
             <a
-                [routerLink]="['/course-management', course.id, 'faqs']"
+                [routerLink]="['/course-management', course().id, 'faqs']"
                 class="btn btn-info me-1 mb-1"
                 [ngbTooltip]="'entity.action.faq' | artemisTranslate"
                 id="course-card-open-faq"
