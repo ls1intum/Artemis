@@ -1,28 +1,106 @@
 .consistency-issue-comment {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    background-color: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
     margin-bottom: 0;
 
-    .consistency-issue-comment__heading {
+    .consistency-issue-comment__header {
         display: flex;
-        flex-direction: column;
-        gap: 0.125rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .consistency-issue-comment__header--collapsed {
+        margin-bottom: 0;
+    }
+
+    .consistency-issue-comment__title {
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        min-width: 0;
+        font-weight: 600;
+    }
+
+    .consistency-issue-comment__title-text {
+        flex: 0 0 auto;
     }
 
     .consistency-issue-comment__meta {
-        font-size: 0.8125rem;
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--secondary-text-color);
+        opacity: 0.75;
     }
 
-    .consistency-issue-comment__line {
-        font-size: 0.875rem;
+    .consistency-issue-comment__toggle {
+        border: 0;
+        background: none;
+        padding: 0;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .consistency-issue-comment__toggle:focus,
+    .consistency-issue-comment__toggle:focus-visible,
+    .consistency-issue-comment__toggle:active {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .consistency-issue-comment__toggle-icon {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 7px solid currentColor;
+        transition: transform 0.15s ease;
+    }
+
+    .consistency-issue-comment__toggle-icon--collapsed {
+        transform: rotate(90deg);
+    }
+
+    .consistency-issue-comment__divider {
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 0.75rem;
+    }
+
+    .consistency-issue-comment__text {
+        width: 100%;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: inherit;
+    }
+
+    .consistency-issue-comment__text--secondary {
+        margin-top: 0.5rem;
+        color: var(--secondary-text-color);
     }
 
     .consistency-issue-comment__diff {
         margin-top: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.25rem;
+        padding: 0.25rem;
     }
 
     .consistency-issue-comment__actions {
         margin-top: 0.5rem;
         display: flex;
         justify-content: flex-end;
+        gap: 0.5rem;
+        align-items: center;
     }
 
     .diff-editor-container {

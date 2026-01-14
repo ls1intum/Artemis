@@ -80,7 +80,12 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { InlineConsistencyIssue, addCommentBoxes, applySuggestedChangeToModel } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import {
+    ApplySuggestedChangeResult,
+    InlineConsistencyIssue,
+    addCommentBoxes,
+    applySuggestedChangeToModel,
+} from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 
 export enum MarkdownEditorHeight {
@@ -378,18 +383,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             'problem_statement.md',
             'PROBLEM_STATEMENT',
             this.translateService,
+            this.applySuggestedChange.bind(this),
             this.appRef,
             this.environmentInjector,
-            this.applySuggestedChange.bind(this),
         );
     }
 
-    private applySuggestedChange(issue: InlineConsistencyIssue): void {
+    private applySuggestedChange(issue: InlineConsistencyIssue): ApplySuggestedChangeResult {
         const model = this.monacoEditor.getModel();
         if (!model) {
-            return;
+            return { ok: false, reason: 'notFound' };
         }
-        applySuggestedChangeToModel(model, issue, this.alertService, this.translateService);
+        return applySuggestedChangeToModel(model, issue);
     }
 
     ngAfterContentInit(): void {

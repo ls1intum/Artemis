@@ -1,31 +1,42 @@
-<div class="alert alert-warning alert-dismissible text-start fade show consistency-issue-comment">
-    <div class="d-flex align-items-center justify-content-between">
-        <div class="consistency-issue-comment__heading">
-            <h5 class="alert-heading mb-0" jhiTranslate="artemisApp.hyperion.consistencyCheck.issueHeading"></h5>
-            <div class="consistency-issue-comment__meta text-muted">
-                <span>{{ issue().severity }}</span>
-                <span>•</span>
-                <span>{{ issue().category }}</span>
-            </div>
+<div class="consistency-issue-comment monaco-review-comment-widget text-start">
+    <div class="consistency-issue-comment__header" [class.consistency-issue-comment__header--collapsed]="!showDetails()">
+        <div class="consistency-issue-comment__title">
+            <span class="consistency-issue-comment__title-text" jhiTranslate="artemisApp.hyperion.consistencyCheck.issueHeading"></span>
+            @if (lineLabel()) {
+                <span class="consistency-issue-comment__meta">({{ lineLabel() }})</span>
+            }
+            <span class="consistency-issue-comment__meta">{{ issue().severity }}</span>
+            <span class="consistency-issue-comment__meta">•</span>
+            <span class="consistency-issue-comment__meta">
+                {{ 'artemisApp.hyperion.consistencyCheck.category.' + issue().category | artemisTranslate }}
+            </span>
         </div>
-        @if (lineLabel()) {
-            <span class="consistency-issue-comment__line text-muted">({{ lineLabel() }})</span>
-        }
+        <button type="button" class="consistency-issue-comment__toggle" (click)="toggleDetails()">
+            <span class="consistency-issue-comment__toggle-icon" [class.consistency-issue-comment__toggle-icon--collapsed]="!showDetails()"></span>
+        </button>
     </div>
-    @if (descriptionHtml()) {
-        <div class="consistency-issue-comment__description" [innerHTML]="descriptionHtml()"></div>
-    }
-    @if (suggestedFixHtml()) {
-        <div class="consistency-issue-comment__suggested-fix" [innerHTML]="suggestedFixHtml()"></div>
-    }
-    @if (hasDiff()) {
-        <div class="consistency-issue-comment__diff">
-            <jhi-monaco-diff-editor [allowSplitView]="false" />
-        </div>
-        @if (canApply()) {
-            <div class="consistency-issue-comment__actions">
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="applySuggestedChange()">Apply</button>
+    @if (showDetails()) {
+        <div class="consistency-issue-comment__divider"></div>
+        @if (descriptionHtml()) {
+            <div class="consistency-issue-comment__text" [innerHTML]="descriptionHtml()"></div>
+        }
+        @if (suggestedFixHtml()) {
+            <div class="consistency-issue-comment__text consistency-issue-comment__text--secondary" [innerHTML]="suggestedFixHtml()"></div>
+        }
+        @if (hasDiff()) {
+            <div class="consistency-issue-comment__diff">
+                <jhi-monaco-diff-editor [allowSplitView]="false" />
             </div>
+            @if (canApply()) {
+                <div class="consistency-issue-comment__actions">
+                    @if (applyStatus() === true) {
+                        <span class="text-success me-2">{{ 'artemisApp.hyperion.consistencyCheck.applySuccess' | artemisTranslate }}</span>
+                    } @else if (applyStatus() === false) {
+                        <span class="text-danger me-2">{{ 'artemisApp.hyperion.consistencyCheck.applyFailed' | artemisTranslate }}</span>
+                    }
+                    <button type="button" class="btn btn-sm btn-primary" (click)="applySuggestedChange()">Apply</button>
+                </div>
+            }
         }
     }
 </div>

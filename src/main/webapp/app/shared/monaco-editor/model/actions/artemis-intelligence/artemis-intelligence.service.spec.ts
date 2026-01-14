@@ -386,7 +386,7 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('addCommentBoxes calls correct functions', () => {
-            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT', translateService);
+            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT', translateService, () => true);
             expect(monacoEditorComponent.addLineWidget).toHaveBeenCalledOnce();
         });
     });

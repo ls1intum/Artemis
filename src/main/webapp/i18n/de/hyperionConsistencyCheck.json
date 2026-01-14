@@ -8,8 +8,8 @@
                 "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
                 "issueHeading": "Konsistenzfehler gefunden",
                 "navigationFailed": "Es konnte nicht zur Inkonsistenz gesprungen werden",
-                "applyNotFound": "Vorschlag kann nicht angewendet werden, da der Originaltext nicht gefunden wurde",
-                "applyAmbiguous": "Vorschlag kann nicht angewendet werden, da der Originaltext mehrfach vorkommt",
+                "applySuccess": "Angewendet!",
+                "applyFailed": "Konnte nicht angewendet werden! Code stimmt nicht!",
                 "category": {
                     "METHOD_RETURN_TYPE_MISMATCH": "Rückgabetyp der Methode stimmt nicht überein",
                     "METHOD_PARAMETER_MISMATCH": "Methodenparameter stimmen nicht überein",
