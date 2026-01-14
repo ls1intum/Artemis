@@ -1653,8 +1653,6 @@ public class ProgrammingExerciseTestService {
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
 
-        // Wait for the file to be fully written to disk before attempting to extract it
-        // This is crucial for slow CI environments where file I/O may be delayed
         waitForZipFileToBeComplete(zipFile);
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
@@ -1762,8 +1760,6 @@ public class ProgrammingExerciseTestService {
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
 
-        // Wait for the file to be fully written to disk before attempting to extract it
-        // This is crucial for slow CI environments where file I/O may be delayed
         waitForZipFileToBeComplete(zipFile);
 
         // Recursively unzip the exported file, to make sure there is no erroneous content
