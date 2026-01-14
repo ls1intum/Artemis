@@ -72,11 +72,11 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
     }
 
     private void mockConsistencyNoIssues() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}"))))).when(chatModel).call(any(Prompt.class));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}"))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     private void mockRewriteImproved() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(chatModel).call(any(Prompt.class));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     @Test

@@ -7,8 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -89,7 +88,7 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
      * @return A list of text exercise chat sessions.
      * @throws EntityNotFoundException if no sessions are found.
      */
-    @NotNull
+    @NonNull
     default List<IrisTextExerciseChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {

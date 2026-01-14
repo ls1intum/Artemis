@@ -29,6 +29,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -108,7 +109,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentStatus.IDLE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
@@ -413,10 +414,10 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.clear();
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentStatus.PAUSED);
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentStatus.IDLE);
     }
 
     @Test
@@ -428,13 +429,13 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
         await().until(() -> {
             var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+            return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
         });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
         await().until(() -> {
             var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+            return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
         });
     }
 
@@ -465,7 +466,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.add(job4);
         queuedJobs.add(job5);
 
-        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentStatus.ACTIVE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
         buildAgentInformation.put(buildAgent.memberAddress(), agent1);
 

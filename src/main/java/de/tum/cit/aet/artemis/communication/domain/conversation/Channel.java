@@ -3,15 +3,16 @@ package de.tum.cit.aet.artemis.communication.domain.conversation;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -79,7 +80,7 @@ public class Channel extends Conversation {
      * A conversation_participant entry will be created on the fly for these channels as soon as an entry is needed.
      */
     @Column(name = "is_course_wide")
-    @NotNull
+    @NonNull
     private boolean isCourseWide = false;
 
     @OneToOne

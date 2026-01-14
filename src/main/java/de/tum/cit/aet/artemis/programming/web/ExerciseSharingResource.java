@@ -9,12 +9,12 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.UriBuilder;
 
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -66,7 +66,7 @@ public class ExerciseSharingResource {
 
         private final Path path;
 
-        private AutoDeletingFileInputStream(@NotNull Path path) throws IOException {
+        private AutoDeletingFileInputStream(@NonNull Path path) throws IOException {
             super(Files.newInputStream(path));
             this.path = path;
         }

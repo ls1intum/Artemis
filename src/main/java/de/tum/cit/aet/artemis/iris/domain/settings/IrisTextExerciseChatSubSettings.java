@@ -5,11 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTI
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

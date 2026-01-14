@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Persistence;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -126,7 +126,7 @@ public class ConversationDTOService {
      * @param channel        the channel to create the DTO from
      * @return the created ChannelDTO
      */
-    @NotNull
+    @NonNull
     public ChannelDTO convertChannelToDTO(User requestingUser, Channel channel) {
         var channelDTO = new ChannelDTO(channel);
         channelDTO.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), requestingUser.getId()));
@@ -155,7 +155,7 @@ public class ConversationDTOService {
      * @param channelSummary additional data about the channel
      * @return the created ChannelDTO
      */
-    @NotNull
+    @NonNull
     private ChannelDTO convertChannelToDTO(User requestingUser, Channel channel, ConversationSummary channelSummary) {
         var channelDTO = new ChannelDTO(channel);
         this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
@@ -185,7 +185,7 @@ public class ConversationDTOService {
      * @param oneToOneChat   the one to one chat to create the DTO from
      * @return the created OneToOneChatDTO
      */
-    @NotNull
+    @NonNull
     public OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat) {
         var course = oneToOneChat.getCourse();
         Set<ConversationParticipant> conversationParticipants = getConversationParticipants(oneToOneChat);
@@ -208,7 +208,7 @@ public class ConversationDTOService {
      * @param oneToOneChatSummary additional data about the oneToOneChat
      * @return the created OneToOneChatDTO
      */
-    @NotNull
+    @NonNull
     private OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat, ConversationSummary oneToOneChatSummary) {
         var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
         this.fillGeneralConversationDtoFields(oneToOneChatDTO, requestingUser, oneToOneChatSummary);
@@ -226,7 +226,7 @@ public class ConversationDTOService {
      * @param groupChat      the group chat to create the DTO from
      * @return the created GroupChatDTO
      */
-    @NotNull
+    @NonNull
     public GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat) {
         var course = groupChat.getCourse();
         Set<ConversationParticipant> conversationParticipants = getConversationParticipants(groupChat);
@@ -249,7 +249,7 @@ public class ConversationDTOService {
      * @param groupChatSummary additional data about the groupChat
      * @return the created GroupChatDTO
      */
-    @NotNull
+    @NonNull
     private GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat, ConversationSummary groupChatSummary) {
         var groupChatDTO = new GroupChatDTO(groupChat);
         this.fillGeneralConversationDtoFields(groupChatDTO, requestingUser, groupChatSummary);
@@ -260,7 +260,7 @@ public class ConversationDTOService {
         return groupChatDTO;
     }
 
-    @NotNull
+    @NonNull
     private Set<ConversationParticipant> getConversationParticipants(Conversation conversation) {
         Set<ConversationParticipant> conversationParticipants;
         var participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, "conversationParticipants") && conversation.getConversationParticipants() != null
@@ -274,7 +274,7 @@ public class ConversationDTOService {
         return conversationParticipants;
     }
 
-    @NotNull
+    @NonNull
     private Set<ConversationUserDTO> getChatParticipantDTOs(User requestingUser, Course course, Set<ConversationParticipant> conversationParticipants) {
         return conversationParticipants.stream().map(ConversationParticipant::getUser).map(user -> {
             var userDTO = new ConversationUserDTO(user);

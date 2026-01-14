@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -115,7 +114,7 @@ public class ParticipationAuthorizationCheckService {
      * @param participation Some participation.
      * @return True, if the current user is allowed to access the participation; false otherwise.
      */
-    public boolean canAccessParticipation(@NotNull final ParticipationInterface participation) {
+    public boolean canAccessParticipation(@NonNull final ParticipationInterface participation) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         return canAccessParticipation(participation, user);
     }
@@ -127,7 +126,7 @@ public class ParticipationAuthorizationCheckService {
      * @param user          The user that wants to access the participation.
      * @return True, if the user is allowed to access the participation; false otherwise.
      */
-    public boolean canAccessParticipation(@NotNull final ParticipationInterface participation, final User user) {
+    public boolean canAccessParticipation(@NonNull final ParticipationInterface participation, final User user) {
         if (participation instanceof StudentParticipation studentParticipation && studentParticipation.getParticipant() instanceof Team team) {
             // eager load the team with students so their information can be used for the access check below
             studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));

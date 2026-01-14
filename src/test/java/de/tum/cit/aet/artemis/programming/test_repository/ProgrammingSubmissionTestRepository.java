@@ -5,8 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -71,7 +70,7 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    @NotNull
+    @NonNull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
         return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
     }

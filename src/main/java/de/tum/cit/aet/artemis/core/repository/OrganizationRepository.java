@@ -8,8 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -117,7 +116,7 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * @param userEmail the email of the user to match
      * @return a set of all matching organizations
      */
-    @NotNull
+    @NonNull
     default Set<Organization> getAllMatchingOrganizationsByUserEmail(String userEmail) {
         Set<Organization> matchingOrganizations = new HashSet<>();
         // TODO: we should avoid findAll() and instead try to filter this directly in the database
@@ -137,7 +136,7 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * @param organizationId the id of the organization to retrieve
      * @return the organization with the given id containing eagerly loaded list of users and courses
      */
-    @NotNull
+    @NonNull
     default Organization findByIdWithEagerUsersAndCoursesElseThrow(long organizationId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithEagerUsersAndCourses(organizationId), organizationId);
     }

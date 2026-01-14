@@ -2,8 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service.atlasml;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -267,7 +266,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveCompetencies(List<Competency> competencies, @NotNull OperationTypeDTO operationType) {
+    public boolean saveCompetencies(List<Competency> competencies, @NonNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("competencies save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
@@ -300,7 +299,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, @NotNull OperationTypeDTO operationType) {
+    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, @NonNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("exercise save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
@@ -324,7 +323,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExerciseWithCompetencies(Exercise exercise, @NotNull OperationTypeDTO operationType) {
+    public boolean saveExerciseWithCompetencies(Exercise exercise, @NonNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("exercise with competencies save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
@@ -374,7 +373,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExerciseWithCompetenciesById(Long exerciseId, @NotNull OperationTypeDTO operationType) {
+    public boolean saveExerciseWithCompetenciesById(Long exerciseId, @NonNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("exercise with competencies save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }

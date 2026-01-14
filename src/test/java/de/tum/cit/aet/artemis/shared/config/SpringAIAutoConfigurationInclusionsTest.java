@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.shared.config;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiChatAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -17,6 +17,6 @@ class SpringAIAutoConfigurationInclusionsTest extends AbstractSpringIntegrationL
 
     @Test
     void testSpringAIAutoConfigurationsIncluded() {
-        assertThatNoException().isThrownBy(() -> applicationContext.getBean(AzureOpenAiChatAutoConfiguration.class));
+        assertThatNoException().isThrownBy(() -> applicationContext.getBean(OpenAiChatAutoConfiguration.class));
     }
 }

@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HttpResponse } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 
 describe('StudentsRoomDistributionService', () => {
     let service: StudentsRoomDistributionService;
@@ -12,8 +15,7 @@ describe('StudentsRoomDistributionService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [StudentsRoomDistributionService],
+            providers: [StudentsRoomDistributionService, provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(StudentsRoomDistributionService);

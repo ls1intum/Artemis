@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -20,6 +18,7 @@ import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NotNull User user) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
     }

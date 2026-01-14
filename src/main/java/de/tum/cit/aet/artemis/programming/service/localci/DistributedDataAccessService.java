@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
@@ -360,7 +360,7 @@ public class DistributedDataAccessService {
      * @return the status of the local build agent, or {@code null} if the local member is not registered as a build agent
      */
     @Nullable
-    public BuildAgentInformation.BuildAgentStatus getLocalBuildAgentStatus() {
+    public BuildAgentStatus getLocalBuildAgentStatus() {
         BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
         if (localAgentInfo == null) {
             return null;

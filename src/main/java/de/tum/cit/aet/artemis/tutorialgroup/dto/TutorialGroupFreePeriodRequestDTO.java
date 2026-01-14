@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
 import java.time.LocalDateTime;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

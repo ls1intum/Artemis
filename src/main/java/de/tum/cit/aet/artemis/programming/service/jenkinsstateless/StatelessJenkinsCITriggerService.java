@@ -7,13 +7,15 @@ import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.RepositoryDTO;
@@ -34,8 +36,13 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
 
     private final String vscAccessToken = "TODO";
 
-    public StatelessJenkinsCITriggerService(StatelessJenkinsCIService statelessJenkinsCIService, BuildPlanRepository buildPlanRepository) {
+    @Autowired
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    public StatelessJenkinsCITriggerService(StatelessJenkinsCIService statelessJenkinsCIService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.statelessJenkinsCIService = statelessJenkinsCIService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -48,18 +55,19 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
         try {
             log.debug("Triggering build for participation {} via external CI connector", participation.getId());
 
-            // Generate build script using existing Artemis templates
-            String buildScript = getBuildScriptFor(participation);
-
             // Prepare the build trigger request DTO
             Long exerciseID = participation.getProgrammingExercise().getId();
             Long participationID = participation.getId();
+
+            // Get Build Script
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
+            String buildScript = buildConfig.getBuildScript();
 
             // Create the submission repository DTO
             var exerciseRepository = new RepositoryDTO(participation.getUserIndependentRepositoryUri(), commitHash, null, vscAccessToken);
 
             // Create the test repository DTO based on the corresponding exercise
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTemplateRepositoryUri().toString(), null, null, vscAccessToken);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri().toString(), null, null, vscAccessToken);
 
             // Choose if script is bash or groovy
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
@@ -79,13 +87,5 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
             log.error("Failed to trigger build for participation {}", participation.getId(), e);
             throw new ContinuousIntegrationException("Failed to trigger build via external CI connector", e);
         }
-    }
-
-    private String getBuildScriptFor(ProgrammingExerciseParticipation participation) {
-        // Note: Not sure if this is the correct way to retrieve the build script.
-        var buildConfig = participation.getProgrammingExercise().getBuildConfig().getBuildScript();
-
-        return buildConfig != null ? buildConfig : "";
-
     }
 }

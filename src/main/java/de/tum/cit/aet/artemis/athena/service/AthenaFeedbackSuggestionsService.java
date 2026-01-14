@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -108,7 +107,7 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(@NotNull ExerciseBaseDTO exercise, @NotNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NotNull boolean isGraded,
+    private record RequestDTO(@NonNull ExerciseBaseDTO exercise, @NonNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NonNull boolean isGraded,
             @Nullable SubmissionBaseDTO latestSubmission, @Nullable List<CourseCompetencyDTO> competencies) {
     }
 

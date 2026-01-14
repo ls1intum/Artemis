@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -49,7 +48,7 @@ class AthenaConnector<RequestType, ResponseType> {
      * @return response body from Athena
      * @throws NetworkingException exception in case of unsuccessful responses or responses without a body.
      */
-    private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingException {
+    private ResponseType invoke(@NonNull String url, @NonNull RequestType requestObject) throws NetworkingException {
         long start = System.nanoTime();
         log.debug("Calling Athena.");
 
@@ -90,7 +89,7 @@ class AthenaConnector<RequestType, ResponseType> {
      * @return response body from Athena
      * @throws NetworkingException exception in case of unsuccessful responses or responses without a body.
      */
-    ResponseType invokeWithRetry(@NotNull String url, @NotNull RequestType requestObject, int maxRetries) throws NetworkingException {
+    ResponseType invokeWithRetry(@NonNull String url, @NonNull RequestType requestObject, int maxRetries) throws NetworkingException {
         for (int retries = 0;; retries++) {
             try {
                 return invoke(url, requestObject);

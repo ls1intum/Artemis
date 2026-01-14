@@ -47,8 +47,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
@@ -56,6 +54,7 @@ import org.eclipse.jgit.api.errors.EmptyCommitException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -1420,7 +1419,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
     }
 
-    @NotNull
+    @NonNull
     private String getDefaultAPIEndpointForExportRepos() {
         return "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/1,2,3";
     }

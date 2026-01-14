@@ -15,10 +15,10 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -102,7 +102,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.weight = weight;
     }
 
-    @NotNull
+    @NonNull
     public Double getBonusMultiplier() {
         return bonusMultiplier != null ? bonusMultiplier : 1.0;
     }
@@ -116,7 +116,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.bonusMultiplier = bonusMultiplier;
     }
 
-    @NotNull
+    @NonNull
     public Double getBonusPoints() {
         return bonusPoints != null ? bonusPoints : 0.0;
     }

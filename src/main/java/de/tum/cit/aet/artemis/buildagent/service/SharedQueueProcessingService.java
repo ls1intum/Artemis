@@ -86,6 +86,8 @@ public class SharedQueueProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
 
+    private static final Duration BUILD_CHECK_AVAILABILITY_INTERVAL = Duration.ofSeconds(5);
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobManagementService buildJobManagementService;
@@ -189,12 +191,12 @@ public class SharedQueueProcessingService {
         this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
 
         /*
-         * Check every 10 seconds whether the node has at least one thread available for a new build job.
+         * Check every 5 seconds whether the node has at least one thread available for a new build job.
          * If so, process the next build job.
          * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
          * node otherwise stopped checking for build jobs in the queue.
          */
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
 
         distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
             if (buildAgentShortName.equals(buildAgentName)) {
@@ -228,10 +230,10 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Wait 1 minute after startup and then every 1 minute update the build agent information of the local hazelcast member.
+     * Wait 10 seconds after startup and then every 10 seconds update the build agent information of the local hazelcast member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
-    @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
+    @Scheduled(initialDelay = 10_000, fixedRate = 10_000) // 10 seconds initial delay, 10 seconds fixed rate
     public void updateBuildAgentInformation() {
         if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
@@ -579,7 +581,7 @@ public class SharedQueueProcessingService {
             removeListenerAndCancelScheduledFuture();
             log.info("Re-adding item listener to distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
-            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
 
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }

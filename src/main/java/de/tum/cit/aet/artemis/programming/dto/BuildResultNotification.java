@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

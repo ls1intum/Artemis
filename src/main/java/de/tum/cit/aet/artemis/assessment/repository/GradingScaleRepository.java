@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -83,7 +82,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * @param courseId the course to which the grading scale belongs
      * @return the found grading scale
      */
-    @NotNull
+    @NonNull
     default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
             return getValueElseThrow(findByCourseId(courseId));
@@ -110,7 +109,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * @param examId the exam to which the grading scale belongs
      * @return the found grading scale
      */
-    @NotNull
+    @NonNull
     default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
             return getValueElseThrow(findByExamId(examId));

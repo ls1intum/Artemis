@@ -11,14 +11,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import jakarta.annotation.Nullable;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ArchiveCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.lib.ObjectId;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;

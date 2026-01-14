@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

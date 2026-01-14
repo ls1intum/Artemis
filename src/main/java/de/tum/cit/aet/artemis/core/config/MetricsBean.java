@@ -37,6 +37,7 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -345,10 +346,8 @@ public class MetricsBean {
     }
 
     private static int extractMaxConcurrentBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
-        return localCIDistributedDataAccessService.map(
-                dataManagementService -> dataManagementService.getBuildAgentInformation().stream().filter(agent -> agent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED)
-                        .map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum))
-                .orElse(0);
+        return localCIDistributedDataAccessService.map(dataManagementService -> dataManagementService.getBuildAgentInformation().stream()
+                .filter(agent -> agent.status() != BuildAgentStatus.PAUSED).map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum)).orElse(0);
     }
 
     private static int extractResultsInQueue(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {

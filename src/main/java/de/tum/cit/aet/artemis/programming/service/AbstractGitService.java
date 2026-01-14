@@ -9,9 +9,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -26,6 +23,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,7 +79,7 @@ public abstract class AbstractGitService {
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
      */
-    @NotNull
+    @NonNull
     public static Repository linkRepositoryForExistingGit(Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare, boolean writeAccess)
             throws IOException, InvalidRefNameException {
         // Open the repository from the filesystem
@@ -137,7 +136,7 @@ public abstract class AbstractGitService {
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
      */
-    @NotNull
+    @NonNull
     public static Repository getExistingBareRepository(Path localPath, LocalVCRepositoryUri bareRepositoryUri, String defaultBranch) throws IOException, InvalidRefNameException {
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -150,7 +149,7 @@ public abstract class AbstractGitService {
         }
     }
 
-    @NotNull
+    @NonNull
     protected static Repository openCheckedOutRepositoryFromFileSystem(Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch)
             throws IOException, InvalidRefNameException {
 

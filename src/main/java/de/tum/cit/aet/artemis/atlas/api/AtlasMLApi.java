@@ -2,8 +2,7 @@ package de.tum.cit.aet.artemis.atlas.api;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -39,7 +38,7 @@ public class AtlasMLApi extends AbstractAtlasApi {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if successful, false otherwise
      */
-    public boolean saveCompetencies(List<Competency> competencies, @NotNull OperationTypeDTO operationType) {
+    public boolean saveCompetencies(List<Competency> competencies, @NonNull OperationTypeDTO operationType) {
         return atlasMLService.saveCompetencies(competencies, operationType);
     }
 
@@ -50,7 +49,7 @@ public class AtlasMLApi extends AbstractAtlasApi {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if successful, false otherwise
      */
-    public boolean saveExerciseWithCompetencies(Exercise exercise, @NotNull OperationTypeDTO operationType) {
+    public boolean saveExerciseWithCompetencies(Exercise exercise, @NonNull OperationTypeDTO operationType) {
         return atlasMLService.saveExerciseWithCompetencies(exercise, operationType);
     }
 

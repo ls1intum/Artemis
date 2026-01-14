@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.List;
 
 import jakarta.persistence.criteria.JoinType;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -28,7 +28,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @param id            the id of the entity to find
      * @return the entity with the given id
      */
-    @NotNull
+    @NonNull
     T findOneByIdElseThrow(final Specification<T> specification, ID id);
 
     /**
@@ -39,7 +39,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @param fetchOptions a collection of fetch options specifying the entities to fetch dynamically.
      * @return the entity with the specified ID and the associated entities fetched according to the provided options.
      */
-    @NotNull
+    @NonNull
     default T findByIdWithDynamicFetchElseThrow(ID id, F... fetchOptions) {
         return findByIdWithDynamicFetchElseThrow(id, List.of(fetchOptions));
     }
@@ -52,7 +52,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @param fetchOptions a collection of fetch options specifying the entities to fetch dynamically.
      * @return the entity with the specified ID and the associated entities fetched according to the provided options.
      */
-    @NotNull
+    @NonNull
     default T findByIdWithDynamicFetchElseThrow(ID id, Collection<F> fetchOptions) {
         var specification = getDynamicSpecification(fetchOptions);
         return findOneByIdElseThrow(specification, id);
@@ -64,7 +64,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @param fetchOptions a collection of fetch options specifying the entities to fetch dynamically
      * @return a specification for dynamic fetching based on the provided fetch options
      */
-    @NotNull
+    @NonNull
     default Specification<T> getDynamicSpecification(Collection<F> fetchOptions) {
         return (root, query, criteriaBuilder) -> {
             for (var option : fetchOptions) {

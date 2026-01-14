@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;

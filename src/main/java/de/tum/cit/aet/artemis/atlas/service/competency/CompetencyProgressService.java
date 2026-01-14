@@ -10,8 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -93,7 +92,7 @@ public class CompetencyProgressService {
      * @param participant    The participant (user or team) for which to update the progress
      */
     @Async
-    public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NotNull Participant participant) {
+    public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NonNull Participant participant) {
         SecurityUtils.setAuthorizationObject(); // Required for async
         updateProgressByLearningObjectSync(learningObject, participant.getParticipants());
     }
@@ -315,7 +314,7 @@ public class CompetencyProgressService {
      * @param participantScores the participant scores for the exercises linked to the competency
      * @return The recency confidence heuristic
      */
-    private double calculateRecencyConfidenceHeuristic(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
+    private double calculateRecencyConfidenceHeuristic(@NonNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
         if (participantScores.size() < MIN_EXERCISES_RECENCY_CONFIDENCE) {
             return 0;
         }
@@ -344,8 +343,8 @@ public class CompetencyProgressService {
      * @param exerciseInfos     The information about the exercises linked to the competency
      * @return The difficulty confidence heuristic
      */
-    private double calculateDifficultyConfidenceHeuristic(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores,
-            @NotNull Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos) {
+    private double calculateDifficultyConfidenceHeuristic(@NonNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores,
+            @NonNull Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos) {
         if (participantScores.isEmpty()) {
             return 0;
         }
@@ -376,8 +375,8 @@ public class CompetencyProgressService {
      * @param difficultyLevel    the difficulty level to calculate the confidence for
      * @return the difficulty confidence heuristic for the given difficulty
      */
-    private double calculateDifficultyConfidenceHeuristicForDifficulty(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores,
-            @NotNull Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, double achievedPoints, double pointsInCompetency, DifficultyLevel difficultyLevel) {
+    private double calculateDifficultyConfidenceHeuristicForDifficulty(@NonNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores,
+            @NonNull Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, double achievedPoints, double pointsInCompetency, DifficultyLevel difficultyLevel) {
 
         double achievedPointsInDifficulty = participantScores.stream().filter(info -> info.difficulty() == difficultyLevel)
                 .mapToDouble(CompetencyExerciseMasteryCalculationDTO::lastPoints).sum();
@@ -397,7 +396,7 @@ public class CompetencyProgressService {
      * @param participantScores the participant scores for the exercises linked to the competency
      * @return The quick solve confidence heuristic
      */
-    private double calculateQuickSolveConfidenceHeuristic(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
+    private double calculateQuickSolveConfidenceHeuristic(@NonNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
         Set<CompetencyExerciseMasteryCalculationDTO> programmingParticipationScores = participantScores.stream()
                 .filter(CompetencyExerciseMasteryCalculationDTO::isProgrammingExercise).collect(Collectors.toSet());
 
@@ -510,7 +509,7 @@ public class CompetencyProgressService {
      * @param competencyProgress The user's progress
      * @return The mastery level
      */
-    public static double getMastery(@NotNull CompetencyProgress competencyProgress) {
+    public static double getMastery(@NonNull CompetencyProgress competencyProgress) {
         return Math.clamp(competencyProgress.getProgress() * competencyProgress.getConfidence(), 0, 100);
     }
 
@@ -520,7 +519,7 @@ public class CompetencyProgressService {
      * @param competencyProgress The user's progress
      * @return The progress to the mastery between 0 and 1
      */
-    public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
+    public static double getMasteryProgress(@NonNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
         return Math.clamp(mastery / competencyProgress.getCompetency().getMasteryThreshold(), 0, 1);
     }
@@ -531,7 +530,7 @@ public class CompetencyProgressService {
      * @param competencyProgress The user's progress
      * @return True if the user mastered the competency, false otherwise
      */
-    public static boolean isMastered(@NotNull CompetencyProgress competencyProgress) {
+    public static boolean isMastered(@NonNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();
     }
@@ -542,7 +541,7 @@ public class CompetencyProgressService {
      * @param competency the competency to check
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
-    public static boolean canBeMasteredWithoutExercises(@NotNull CourseCompetency competency) {
+    public static boolean canBeMasteredWithoutExercises(@NonNull CourseCompetency competency) {
         double numberOfLectureUnits = competency.getLectureUnitLinks().size();
         double numberOfLearningObjects = numberOfLectureUnits + competency.getExerciseLinks().size();
         if (numberOfLearningObjects == 0) {
@@ -570,7 +569,7 @@ public class CompetencyProgressService {
      * @param course     The course for which to get the progress
      * @return The progress for the course
      */
-    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull CourseCompetency competency, @NotNull Course course) {
+    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NonNull CourseCompetency competency, @NonNull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndMastered(competency.getId(), competency.getMasteryThreshold());
         Set<Exercise> exercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).collect(Collectors.toSet());

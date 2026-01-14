@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -84,10 +87,14 @@ public class StatelessJenkinsCIService implements StatelessCIService {
         try {
             log.info("Triggering build via Jenkins connector for exercise {} and participation {}", buildTriggerRequestDTO.exerciseId(), buildTriggerRequestDTO.participationId());
 
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<BuildTriggerRequestDTO> request = new HttpEntity<>(buildTriggerRequestDTO, headers);
+
             String buildApiUrl = connectorBaseUrl + "/api/v1/build";
 
             // POST the DTO to the Jenkins connector's build API
-            restTemplate.postForObject(buildApiUrl, buildTriggerRequestDTO, Void.class);
+            restTemplate.postForObject(buildApiUrl, request, Void.class);
 
             // Generate a UUID for this build request
             UUID buildId = UUID.randomUUID();

@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -908,7 +908,7 @@ public class ExamResource {
         return ResponseEntity.ok().body(studentExams);
     }
 
-    @NotNull
+    @NonNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 

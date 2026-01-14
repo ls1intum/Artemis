@@ -13,10 +13,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -171,7 +171,7 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
     }
 
     @Override
-    public int compareTo(@NotNull PlagiarismComparison otherComparison) {
+    public int compareTo(@NonNull PlagiarismComparison otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
     }
 

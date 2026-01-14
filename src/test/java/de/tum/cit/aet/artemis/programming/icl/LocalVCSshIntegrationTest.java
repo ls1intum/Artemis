@@ -18,8 +18,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.future.ConnectFuture;
@@ -29,6 +27,7 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +87,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }
     }
 
-    @NotNull
+    @NonNull
     private ClientSession connect(SshClient client, User user, KeyPair keyPair) throws IOException {
         try {
             // avoid using any local host config which could confuse the test

@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -98,22 +97,22 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
         return allExercises.stream().findFirst();
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }

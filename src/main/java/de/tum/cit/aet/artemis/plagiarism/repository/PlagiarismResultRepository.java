@@ -4,8 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;

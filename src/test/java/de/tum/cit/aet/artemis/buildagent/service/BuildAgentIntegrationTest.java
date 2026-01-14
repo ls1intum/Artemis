@@ -31,6 +31,7 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -287,7 +288,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
-            return buildAgent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED;
+            return buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
         var queueItem = createBaseBuildJobQueueItemForTrigger();
@@ -303,7 +304,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
-            return buildAgent.status() == BuildAgentInformation.BuildAgentStatus.ACTIVE;
+            return buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         await().until(() -> {
@@ -328,14 +329,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.ACTIVE;
+            return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED;
+            return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
         await().until(() -> {
@@ -407,14 +408,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+            return buildAgent != null && buildAgent.status() == BuildAgentStatus.SELF_PAUSED;
         });
 
         // resume and wait for unpause not interfere with other tests
         resumeBuildAgentTopic.publish(buildAgentShortName);
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
-            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+            return buildAgent.status() != BuildAgentStatus.SELF_PAUSED;
         });
     }
 

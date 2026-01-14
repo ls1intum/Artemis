@@ -12,8 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -22,6 +20,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -175,7 +174,7 @@ public abstract class PushNotificationService {
      * @param initializationVector the initialization vector needed for CBC
      * @return the ciphertext
      */
-    private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
+    private static Optional<String> encrypt(@NonNull String payload, SecretKey key, byte[] initializationVector) {
         try {
             // We need to get a fresh instance here for every notification to avoid a race condition between tasks
             var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);

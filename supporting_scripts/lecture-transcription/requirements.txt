@@ -1,1 +1,2 @@
 openai-whisper==20250625
+torch==2.9.1

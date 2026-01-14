@@ -3,8 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import java.util.EnumMap;
 import java.util.Map;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.info.Info;

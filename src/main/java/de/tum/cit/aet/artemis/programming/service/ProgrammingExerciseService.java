@@ -15,8 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -197,7 +196,7 @@ public class ProgrammingExerciseService {
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    @NotNull
+    @NonNull
     public ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);

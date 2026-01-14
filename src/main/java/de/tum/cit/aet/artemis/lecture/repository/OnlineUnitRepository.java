@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -32,7 +31,7 @@ public interface OnlineUnitRepository extends ArtemisJpaRepository<OnlineUnit, L
             """)
     Optional<OnlineUnit> findByIdWithCompetencies(@Param("onlineUnitId") long onlineUnitId);
 
-    @NotNull
+    @NonNull
     default OnlineUnit findByIdWithCompetenciesElseThrow(long onlineUnitId) {
         return getValueElseThrow(findByIdWithCompetencies(onlineUnitId), onlineUnitId);
     }

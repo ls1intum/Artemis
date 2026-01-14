@@ -3,15 +3,15 @@ package de.tum.cit.aet.artemis.core.exception;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAllowedException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,7 +60,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
      * Post-process the Problem payload to add the message key for the front-end if needed.
      */
     @Override
-    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
+    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NonNull NativeWebRequest request) {
         if (entity == null) {
             return null;
         }
@@ -85,7 +85,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @Override
-    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NotNull NativeWebRequest request) {
+    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NonNull NativeWebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
                 .toList();

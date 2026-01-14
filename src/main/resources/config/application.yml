@@ -136,7 +136,7 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
-    # Default security configuration for internal endpoints accessed by other Artemis components 
+    # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
     security:
         internal:
@@ -195,7 +195,15 @@ management:
                 requests:
                     name: http.server.requests
 
-spring:
+spring: #disabled by default, you must enable it
+    ai:
+        model:
+            chat: none # possible values: openai, azure-openai, none
+            audio.speech: none
+            audio.transcription: none
+            embedding: none
+            image: none
+            moderation:  none
     application:
         name: Artemis
     jmx:

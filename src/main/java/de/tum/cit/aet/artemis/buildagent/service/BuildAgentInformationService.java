@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -98,14 +99,14 @@ public class BuildAgentInformationService {
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
-        BuildAgentInformation.BuildAgentStatus status;
+        BuildAgentStatus status;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
         if (isPaused) {
-            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
-            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
+            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
+            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
         }
         else {
-            status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
+            status = hasJobs ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
         }
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
