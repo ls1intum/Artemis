@@ -122,7 +122,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should emit remove bookmark event', () => {
-            const mockEvent = { stopPropagation: jest.fn() };
+            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
             const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', mockPost);
 
