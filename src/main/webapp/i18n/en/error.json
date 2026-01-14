@@ -208,6 +208,7 @@
         },
         "PlagiarismPost": {
             "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
-        }
+        },
+        "courseInformationSharingDisabled": "Posting is disabled for this course."
     }
 }

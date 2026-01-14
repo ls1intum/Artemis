@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.validation.Valid;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -52,15 +55,15 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
+     * Checks course, user, and post-validity,
      * determines the post's author, persists the post,
      * and sends a notification to affected user groups
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param post     post to create
-     * @return created post that was persisted
+     * @return created a post that was persisted
      */
-    public Post createPost(Long courseId, Post post) {
+    public Post createPost(Long courseId, @Valid Post post) {
         // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
@@ -72,6 +75,9 @@ public class PlagiarismPostService extends PostingService {
 
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getCourseInformationSharingConfiguration().equals(CourseInformationSharingConfiguration.DISABLED)) {
+            throw new BadRequestAlertException("Posting is disabled for this course.", METIS_POST_ENTITY_NAME, "courseInformationSharingDisabled");
+        }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 

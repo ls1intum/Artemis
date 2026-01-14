@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
@@ -83,7 +85,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         List<Post> existingExercisePosts = existingPostsAndConversationPosts.stream()
                 .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
-        // filter existing posts with first exercise context
+        // filter existing posts with the first exercise context
         exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
         exercise = exerciseChannel.getExercise();
         postsBelongingToExercise = existingExercisePosts.stream().filter(post -> (post.getConversation().getId().equals(exerciseChannel.getId()))).toList();
@@ -93,15 +95,15 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         course = courseRepository.saveAndFlush(course);
-        assertThat(course.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
+        assertThat(course.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
         courseId = course.getId();
 
         plagiarismCaseId = existingPlagiarismPosts.getFirst().getPlagiarismCase().getId();
 
-        // We do not need the stub and it leads to flakyness
+        // We do not need the stub, and it leads to flakyness
         reset(javaMailSender);
     }
 
@@ -202,21 +204,20 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreatePostWithoutPlagiarismCase_badRequest() throws Exception {
-        Course course = conversationUtilService.createCourseWithPostsDisabled();
-        courseId = course.getId();
-        Post postToSave = createPostWithoutContext();
-
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), PlagiarismPostCreationResponseDTO.class,
-                HttpStatus.BAD_REQUEST);
+    void testValidatePostContextConstraintViolation() throws Exception {
+        var invalidDto = new PlagiarismPostCreationDTO(null, "Content Post", "Title Post", true, false, null);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", invalidDto, PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testValidatePostContextConstraintViolation() throws Exception {
-        Post invalidPost = createPostWithoutContext();
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(invalidPost), PlagiarismPostCreationResponseDTO.class,
-                HttpStatus.BAD_REQUEST);
+    void testCreatePostWithoutPlagiarismCase_FailFast() {
+        Course course = conversationUtilService.createCourseWithPostsDisabled();
+        courseId = course.getId();
+        Post postToSave = createPostWithoutContext();
+
+        assertThatThrownBy(() -> PlagiarismPostCreationDTO.of(postToSave)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("The post must be associated with a plagiarism case.");
     }
 
     // UPDATE
@@ -278,7 +279,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
         List<Post> returnedPosts = getPosts(params);
-        // get amount of posts with certain plagiarism context
+        // get number of posts with a certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
         assertThat(returnedPosts.getFirst().getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
     }

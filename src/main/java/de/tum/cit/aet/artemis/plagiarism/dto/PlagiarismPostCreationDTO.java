@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
  * DTO for creating a PlagiarismPost with only the necessary fields.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismPostCreationDTO(String content, String title, Boolean visibleForStudents, Boolean hasForwardedMessages, Long plagiarismCaseId) {
+public record PlagiarismPostCreationDTO(Long id, String content, String title, Boolean visibleForStudents, Boolean hasForwardedMessages, Long plagiarismCaseId) {
 
     /**
      * Converts this DTO to a PlagiarismPost entity.
@@ -21,6 +21,7 @@ public record PlagiarismPostCreationDTO(String content, String title, Boolean vi
      */
     public Post toEntity() {
         Post post = new Post();
+        post.setId(id);
         post.setContent(content);
         post.setTitle(title);
         post.setVisibleForStudents(visibleForStudents);
@@ -37,10 +38,11 @@ public record PlagiarismPostCreationDTO(String content, String title, Boolean vi
      * @param post the post-entity
      * @return a DTO containing the data required to create a plagiarism post
      */
-    public static PlagiarismPostCreationDTO of(@NonNull Post post) {
+    public static PlagiarismPostCreationDTO of(@Valid Post post) {
         if (post.getPlagiarismCase() == null || post.getPlagiarismCase().getId() == null) {
             throw new BadRequestAlertException("The post must be associated with a plagiarism case.", "PlagiarismPost", "plagiarismCaseMissing");
         }
-        return new PlagiarismPostCreationDTO(post.getContent(), post.getTitle(), post.isVisibleForStudents(), post.getHasForwardedMessages(), post.getPlagiarismCase().getId());
+        return new PlagiarismPostCreationDTO(post.getId(), post.getContent(), post.getTitle(), post.isVisibleForStudents(), post.getHasForwardedMessages(),
+                post.getPlagiarismCase().getId());
     }
 }

@@ -208,6 +208,7 @@
         },
         "PlagiarismPost": {
             "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
-        }
+        },
+        "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert."
     }
 }

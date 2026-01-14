@@ -4,8 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import jakarta.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,8 +67,7 @@ public class PlagiarismPostResource {
      */
     @PostMapping("courses/{courseId}/posts")
     @EnforceAtLeastInstructor
-    public ResponseEntity<PlagiarismPostCreationResponseDTO> createPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismPostCreationDTO postDto)
-            throws URISyntaxException {
+    public ResponseEntity<PlagiarismPostCreationResponseDTO> createPost(@PathVariable Long courseId, @RequestBody PlagiarismPostCreationDTO postDto) throws URISyntaxException {
         log.debug("POST createPost invoked for course {} with post {}", courseId, postDto.content());
         long start = System.nanoTime();
         Post createdPost = plagiarismPostService.createPost(courseId, postDto.toEntity());
