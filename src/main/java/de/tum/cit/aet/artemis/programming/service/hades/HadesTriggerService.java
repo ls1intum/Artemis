@@ -59,10 +59,10 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             String buildScript = buildConfig.getBuildScript();
 
             // Create the submission repository DTO
-            var exerciseRepository = new RepositoryDTO(participation.getUserIndependentRepositoryUri().replace("localhost", "192.168.0.112"), null, null, null);
+            var exerciseRepository = new RepositoryDTO(participation.getUserIndependentRepositoryUri(), null, null, null);
 
             // Create the test repository DTO based on the corresponding exercise
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri().replace("localhost", "192.168.0.112"), null, null, null);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, null);
 
             // Choose if script is bash or groovy: Hades should use a Bash script
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();

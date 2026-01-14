@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis Server (Dev, Hades)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="dev,artemis,localvc,scheduling,core,ldap,hades,local" />
+    <option name="ACTIVE_PROFILES" value="dev,artemis,localvc,core,hades,local" />
     <option name="ALTERNATIVE_JRE_PATH" value="openjdk-25" />
     <module name="Artemis.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.cit.aet.artemis.ArtemisApp" />
