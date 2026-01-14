@@ -77,7 +77,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
             // Delegate to Hades service
             hadesService.build(buildTriggerRequest);
-
         }
         catch (Exception e) {
             log.error("Failed to trigger build for participation {}", participation.getId(), e);

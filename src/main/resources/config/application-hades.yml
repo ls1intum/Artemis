@@ -10,4 +10,3 @@ artemis:
     hades:
       images:
         clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
-        result-image: ghcr.io/mtze/hades-junit-result-parser:latest

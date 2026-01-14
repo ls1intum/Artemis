@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
  */
 @Lazy
 @Service
-@Profile("aeolus | localci | hades")
+@Profile("aeolus | localci")
 public class BuildScriptProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildScriptProviderService.class);

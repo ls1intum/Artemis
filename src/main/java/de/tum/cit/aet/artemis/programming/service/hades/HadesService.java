@@ -159,7 +159,6 @@ public class HadesService implements StatelessCIService {
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
-        // Set Job name as participationId
         return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps);
     }
 }

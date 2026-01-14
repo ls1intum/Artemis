@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 /**
  * Service for generating build scripts for programming exercises
  */
-@Profile("!aeolus & (localci | hades)")
+@Profile("!aeolus & localci")
 @Lazy
 @Service
 public class GenericBuildScriptGenerationService extends BuildScriptGenerationService {
