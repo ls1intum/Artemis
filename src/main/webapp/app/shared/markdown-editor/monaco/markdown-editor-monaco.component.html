@@ -18,6 +18,7 @@
                             class="h-100"
                             [shrinkToFit]="false"
                             [stickyScroll]="false"
+                            [textChangedEmitDelay]="200"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (drop)="onFileDrop($event)"
@@ -75,7 +76,7 @@
                 }
                 <ng-template ngbNavContent>
                     <div class="mt-1 mb-2 mx-2 overflow-auto">
-                        <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
+                        <ng-content class="overflow-auto p-1" select="#previewMonaco">
                             @if (showDefaultPreview) {
                                 <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
                             }
