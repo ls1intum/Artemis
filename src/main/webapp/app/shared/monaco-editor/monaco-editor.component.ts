@@ -79,6 +79,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private resizeObserver?: ResizeObserver;
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
+    private diffEditorFocusListener?: Disposable;
 
     /*
      * Injected services and elements.
@@ -215,6 +216,17 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 this.ngZone.run(() => this.emitTextChangeEvent());
             });
         });
+
+        // Set up focus listener for custom backspace in diff editor
+        this.ngZone.runOutsideAngular(() => {
+            this.diffEditorFocusListener = this._diffEditor!.getModifiedEditor().onDidFocusEditorText(() => {
+                this.ngZone.run(() => this.registerCustomBackspaceAction(this._diffEditor!.getModifiedEditor()));
+            });
+        });
+        this.registerCustomBackspaceAction(this._diffEditor.getModifiedEditor());
+
+        // Re-register all actions with the new adapter for diff mode
+        this.reRegisterActions();
     }
 
     /**
@@ -229,6 +241,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Clean up diff editor listeners
         this.diffUpdateListener?.dispose();
         this.diffUpdateListener = undefined;
+        this.diffEditorFocusListener?.dispose();
+        this.diffEditorFocusListener = undefined;
 
         if (this.resizeObserver && this.diffEditorContainer) {
             this.resizeObserver.unobserve(this.diffEditorContainer);
@@ -258,6 +272,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 this.ngZone.run(() => this.emitTextChangeEvent());
             });
         });
+
+        // Re-register all actions with the restored adapter for normal mode
+        this.reRegisterActions();
 
         // Emit text change to notify parent of mode switch
         this.emitTextChangeEvent();
@@ -414,6 +431,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener?.dispose();
         this.focusEditorTextListener?.dispose();
         this.diffUpdateListener?.dispose();
+        this.diffEditorFocusListener?.dispose();
         this.resizeObserver?.disconnect();
 
         // Clean up all per-model debounce timeouts
@@ -744,6 +762,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     registerAction(action: TextEditorAction): void {
         action.register(this.textEditorAdapter, this.translateService);
         this.actions.push(action);
+    }
+
+    /**
+     * Re-registers all actions with the current text editor adapter.
+     * This is needed when switching between normal and diff mode to ensure
+     * toolbar actions work correctly with the active editor.
+     * @private
+     */
+    private reRegisterActions(): void {
+        for (const action of this.actions) {
+            action.dispose();
+            action.register(this.textEditorAdapter, this.translateService);
+        }
     }
 
     /**
