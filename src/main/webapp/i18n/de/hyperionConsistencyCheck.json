@@ -8,7 +8,6 @@
                 "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
                 "issueHeading": "Konsistenzfehler gefunden",
                 "navigationFailed": "Es konnte nicht zur Inkonsistenz gesprungen werden",
-                "applyMismatch": "Vorschlag kann nicht angewendet werden, da sich der Dateiinhalt geändert hat",
                 "applyNotFound": "Vorschlag kann nicht angewendet werden, da der Originaltext nicht gefunden wurde",
                 "applyAmbiguous": "Vorschlag kann nicht angewendet werden, da der Originaltext mehrfach vorkommt",
                 "category": {

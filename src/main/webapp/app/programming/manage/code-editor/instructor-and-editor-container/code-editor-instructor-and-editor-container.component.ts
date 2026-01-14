@@ -453,6 +453,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;
+            this.fileToJumpOn = undefined;
         }
     }
 }
