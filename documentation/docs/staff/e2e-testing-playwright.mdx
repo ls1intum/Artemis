@@ -372,105 +372,173 @@ should be updated every month to make sure that the latest Playwright image is u
 
 ## Functionalities Covered
 
-<details>
-<summary>Courses</summary>
-
-- **Course Management**: Creating, editing, deleting courses; adding/removing students from a course
-- **Course Exercise**: Tests filtering exercises based on their title
-- **Course Communication**: Messaging within courses, including channel creation, student participation, and message interactions
-
-</details>
-
-<details>
-<summary>Exams</summary>
-
-- **Exam Management**: Manage exam students and exercise groups
-- **Exam Creation & Deletion**: Creating, editing, and deleting exams
-- **Exam Participation**: Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements
-- **Exam Assessment**: Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling
-- **Exam Checklists**: Exam setup checks, including student registration, exercise groups, and exam publication
-- **Exam Date Verification**: Exams appear/disappear based on visibility dates
-- **Exam Results**: Exam result overviews for text, quiz, modeling, and programming exercises
-- **Exam Test Runs**: Creating, managing, and deleting exam test runs
-- **Exam Statistics**: Exam statistics is displayed correctly
-
-</details>
-
-<details>
-<summary>Exercises</summary>
-
-- **Exercise Import**: Importing text, quiz, modeling & programming exercises
-
-</details>
-
-<details>
-<summary>File Upload Exercises</summary>
-
-- **Management**: Creating and deleting file upload exercises
-- **Participation**: Students can participate in a file upload exercise
-- **Assessment & Feedback**: Assessing submissions, student feedback visibility, and complaint handling
-
-</details>
-
-<details>
-<summary>Modeling Exercises</summary>
-
-- **Management**: Creating, editing, and deleting modeling exercises
-- **Visibility Controls**: Students can access released/unreleased exercises
-- **Participation**: Students can start and submit models
-- **Assessment & Complaints**: Instructor and tutor assessments, student feedback, and complaint resolution
-
-</details>
-
-<details>
-<summary>Programming Exercises</summary>
-
-- **Management**: Creating and deleting programming exercises
-- **Team Management**: Forming and managing exercise teams
-- **Assessment**: Assessing programming exercise submissions
-- **Participation**: Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation
-- **Static Code Analysis**: Configuring SCA grading and handling submissions with SCA errors
-
-</details>
-
-<details>
-<summary>Quiz Exercises</summary>
-
-- **Management**: Covers creating quizzes with multiple-choice, short-answer, and drag-and-drop questions
-- **Deletion & Export**: Ensures quizzes can be deleted and exported
-- **Participation**: Tests student participation in hidden, scheduled, and batch-based quizzes
-- **Assessment**: Verifies automatic assessment for multiple-choice and short-answer quizzes
-- **Drag-and-Drop Mechanics**: Ensures correct placement of draggable quiz elements
-
-</details>
-
-<details>
-<summary>Text Exercises</summary>
-
-- **Management**: Covers creating and deleting text exercises
-- **Participation**: Ensures students can submit text exercises
-- **Assessment & Complaints**: Tests instructor assessments, feedback visibility, and complaint handling
-
-</details>
-
-<details>
-<summary>Lectures</summary>
-
-- **Lecture Management**: Creating and deleting lectures, managing existing lectures
-
-</details>
-
-<details>
-<summary>Authentication</summary>
-
-- **Logging in**: Logging in via UI and programmatically, login failures
-- **Logging out**: Logging out successfully and canceling logout
-
-</details>
-
-<details>
-<summary>System Status</summary>
-
-- **System status indicators**: Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks
-
-</details>
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Functionality</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>Courses</strong></td>
+      <td>Course Management</td>
+      <td>Creating, editing, deleting courses; adding/removing students from a course</td>
+    </tr>
+    <tr>
+      <td>Course Exercise</td>
+      <td>Tests filtering exercises based on their title</td>
+    </tr>
+    <tr>
+      <td>Course Communication</td>
+      <td>Messaging within courses, including channel creation, student participation, and message interactions</td>
+    </tr>
+    <tr>
+      <td rowspan="9"><strong>Exams</strong></td>
+      <td>Exam Management</td>
+      <td>Manage exam students and exercise groups</td>
+    </tr>
+    <tr>
+      <td>Exam Creation & Deletion</td>
+      <td>Creating, editing, and deleting exams</td>
+    </tr>
+    <tr>
+      <td>Exam Participation</td>
+      <td>Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements</td>
+    </tr>
+    <tr>
+      <td>Exam Assessment</td>
+      <td>Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling</td>
+    </tr>
+    <tr>
+      <td>Exam Checklists</td>
+      <td>Exam setup checks, including student registration, exercise groups, and exam publication</td>
+    </tr>
+    <tr>
+      <td>Exam Date Verification</td>
+      <td>Exams appear/disappear based on visibility dates</td>
+    </tr>
+    <tr>
+      <td>Exam Results</td>
+      <td>Exam result overviews for text, quiz, modeling, and programming exercises</td>
+    </tr>
+    <tr>
+      <td>Exam Test Runs</td>
+      <td>Creating, managing, and deleting exam test runs</td>
+    </tr>
+    <tr>
+      <td>Exam Statistics</td>
+      <td>Exam statistics is displayed correctly</td>
+    </tr>
+    <tr>
+      <td><strong>Exercises</strong></td>
+      <td>Exercise Import</td>
+      <td>Importing text, quiz, modeling & programming exercises</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>File Upload Exercises</strong></td>
+      <td>Management</td>
+      <td>Creating and deleting file upload exercises</td>
+    </tr>
+    <tr>
+      <td>Participation</td>
+      <td>Students can participate in a file upload exercise</td>
+    </tr>
+    <tr>
+      <td>Assessment & Feedback</td>
+      <td>Assessing submissions, student feedback visibility, and complaint handling</td>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>Modeling Exercises</strong></td>
+      <td>Management</td>
+      <td>Creating, editing, and deleting modeling exercises</td>
+    </tr>
+    <tr>
+      <td>Visibility Controls</td>
+      <td>Students can access released/unreleased exercises</td>
+    </tr>
+    <tr>
+      <td>Participation</td>
+      <td>Students can start and submit models</td>
+    </tr>
+    <tr>
+      <td>Assessment & Complaints</td>
+      <td>Instructor and tutor assessments, student feedback, and complaint resolution</td>
+    </tr>
+    <tr>
+      <td rowspan="5"><strong>Programming Exercises</strong></td>
+      <td>Management</td>
+      <td>Creating and deleting programming exercises</td>
+    </tr>
+    <tr>
+      <td>Team Management</td>
+      <td>Forming and managing exercise teams</td>
+    </tr>
+    <tr>
+      <td>Assessment</td>
+      <td>Assessing programming exercise submissions</td>
+    </tr>
+    <tr>
+      <td>Participation</td>
+      <td>Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation</td>
+    </tr>
+    <tr>
+      <td>Static Code Analysis</td>
+      <td>Configuring SCA grading and handling submissions with SCA errors</td>
+    </tr>
+    <tr>
+      <td rowspan="5"><strong>Quiz Exercises</strong></td>
+      <td>Management</td>
+      <td>Creating quizzes with multiple-choice, short-answer, and drag-and-drop questions</td>
+    </tr>
+    <tr>
+      <td>Deletion & Export</td>
+      <td>Ensures quizzes can be deleted and exported</td>
+    </tr>
+    <tr>
+      <td>Participation</td>
+      <td>Tests student participation in hidden, scheduled, and batch-based quizzes</td>
+    </tr>
+    <tr>
+      <td>Assessment</td>
+      <td>Verifies automatic assessment for multiple-choice and short-answer quizzes</td>
+    </tr>
+    <tr>
+      <td>Drag-and-Drop Mechanics</td>
+      <td>Ensures correct placement of draggable quiz elements</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>Text Exercises</strong></td>
+      <td>Management</td>
+      <td>Creating and deleting text exercises</td>
+    </tr>
+    <tr>
+      <td>Participation</td>
+      <td>Ensures students can submit text exercises</td>
+    </tr>
+    <tr>
+      <td>Assessment & Complaints</td>
+      <td>Tests instructor assessments, feedback visibility, and complaint handling</td>
+    </tr>
+    <tr>
+      <td><strong>Lectures</strong></td>
+      <td>Lecture Management</td>
+      <td>Creating and deleting lectures, managing existing lectures</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>Authentication</strong></td>
+      <td>Logging in</td>
+      <td>Logging in via UI and programmatically, login failures</td>
+    </tr>
+    <tr>
+      <td>Logging out</td>
+      <td>Logging out successfully and canceling logout</td>
+    </tr>
+    <tr>
+      <td><strong>System Status</strong></td>
+      <td>System status indicators</td>
+      <td>Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks</td>
+    </tr>
+  </tbody>
+</table>
