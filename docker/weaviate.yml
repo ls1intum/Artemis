@@ -1,0 +1,22 @@
+---
+services:
+  weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+      - --scheme
+      - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.32.2
+    expose:
+      - 8001
+      - 50051
+    ports:
+      - "8001:8001"
+      - "50051:50051"
+    volumes:
+      - ${WEAVIATE_VOLUME_MOUNT:-./.docker-data/weaviate-data}:/var/lib/weaviate
+    restart: on-failure:3
+    env_file:
+      - ./weaviate/default.env
