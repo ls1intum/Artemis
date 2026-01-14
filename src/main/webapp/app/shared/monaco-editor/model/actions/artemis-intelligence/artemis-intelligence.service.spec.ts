@@ -1,3 +1,4 @@
+import { createComponent } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -11,10 +12,18 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { InlineConsistencyIssue, applySuggestedChangeToModel, isMatchingRepository, issuesForSelectedFile } from './consistency-check';
+import { InlineConsistencyIssue, addCommentBox, addCommentBoxes, applySuggestedChangeToModel, isMatchingRepository, issuesForSelectedFile } from './consistency-check';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+
+jest.mock('@angular/core', () => {
+    const actual = jest.requireActual('@angular/core');
+    return {
+        ...actual,
+        createComponent: jest.fn(),
+    };
+});
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
@@ -399,6 +408,102 @@ describe('ArtemisIntelligenceService', () => {
             const result = applySuggestedChangeToModel(model as any, issue);
             expect(result).toBeFalse();
             expect(model.pushEditOperations).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('addCommentBox', () => {
+        it('should create a comment widget and dispose it on cleanup', () => {
+            const componentRef = {
+                setInput: jest.fn(),
+                changeDetectorRef: { detectChanges: jest.fn() },
+                hostView: {},
+                destroy: jest.fn(),
+            };
+            (createComponent as jest.Mock).mockReturnValue(componentRef as any);
+
+            const appRef = {
+                attachView: jest.fn(),
+                detachView: jest.fn(),
+            };
+            const editor = {
+                addLineWidget: jest.fn(),
+            };
+            const issue: InlineConsistencyIssue = {
+                filePath: 'path',
+                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                startLine: 1,
+                endLine: 2,
+                description: 'desc',
+                suggestedFix: 'fix',
+                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                severity: ConsistencyIssue.SeverityEnum.Medium,
+            };
+
+            addCommentBox(editor as any, issue, 1, jest.fn(), appRef as any, {} as any);
+
+            expect(componentRef.setInput).toHaveBeenCalledWith('issue', issue);
+            expect(componentRef.setInput).toHaveBeenCalledWith('onApply', expect.any(Function));
+            expect(appRef.attachView).toHaveBeenCalledWith(componentRef.hostView);
+            expect(editor.addLineWidget).toHaveBeenCalledWith(issue.endLine, 'comment-1', expect.any(HTMLElement), expect.any(Function));
+
+            const onDispose = (editor.addLineWidget as jest.Mock).mock.calls[0][3];
+            onDispose();
+
+            expect(appRef.detachView).toHaveBeenCalledWith(componentRef.hostView);
+            expect(componentRef.destroy).toHaveBeenCalled();
+        });
+    });
+
+    describe('addCommentBoxes', () => {
+        it('should derive original text when rendering issue comments', () => {
+            const componentRef = {
+                setInput: jest.fn(),
+                changeDetectorRef: { detectChanges: jest.fn() },
+                hostView: {},
+                destroy: jest.fn(),
+            };
+            (createComponent as jest.Mock).mockReturnValue(componentRef as any);
+            const editor = {
+                getModel: () => ({
+                    getLineContent: () => 'old text',
+                    getValueInRange: () => 'old text',
+                }),
+                addLineWidget: jest.fn(),
+            };
+            const issues: ConsistencyIssue[] = [
+                {
+                    severity: ConsistencyIssue.SeverityEnum.Medium,
+                    category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                    description: 'desc',
+                    suggestedFix: 'fix',
+                    relatedLocations: [
+                        {
+                            type: ArtifactLocation.TypeEnum.TemplateRepository,
+                            filePath: 'template_repository/src/Class1.java',
+                            startLine: 1,
+                            endLine: 1,
+                            modifiedText: 'new text',
+                        },
+                    ],
+                },
+            ];
+            const appRef = {
+                attachView: jest.fn(),
+                detachView: jest.fn(),
+            };
+
+            const onApply = jest.fn();
+            const environmentInjector = {} as any;
+
+            addCommentBoxes(editor as any, issues, 'src/Class1.java', RepositoryType.TEMPLATE, onApply, appRef as any, environmentInjector);
+
+            expect(componentRef.setInput).toHaveBeenCalledWith(
+                'issue',
+                expect.objectContaining({
+                    originalText: 'old text',
+                    modifiedText: 'new text',
+                }),
+            );
         });
     });
 });

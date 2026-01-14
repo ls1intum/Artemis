@@ -114,6 +114,55 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.editor().isReadOnly()).toBeFalse();
     });
 
+    it('should apply suggested change to the code editor model', () => {
+        const originalText = 'Original text';
+        const modifiedText = 'Updated text';
+        const model = {
+            getLineContent: () => originalText,
+            getValueInRange: () => originalText,
+            findMatches: () => [],
+            pushEditOperations: jest.fn(),
+        };
+        fixture.detectChanges();
+        jest.spyOn(comp.editor(), 'getModel').mockReturnValue(model as any);
+
+        const result = (comp as any).applySuggestedChange({
+            filePath: 'file.java',
+            type: 'TEMPLATE_REPOSITORY',
+            startLine: 1,
+            endLine: 1,
+            description: 'desc',
+            suggestedFix: 'fix',
+            category: 'METHOD_PARAMETER_MISMATCH',
+            severity: 'MEDIUM',
+            originalText,
+            modifiedText,
+        });
+
+        expect(result).toBeTrue();
+        expect(model.pushEditOperations).toHaveBeenCalledOnce();
+    });
+
+    it('should return false when no model is available for applySuggestedChange', () => {
+        fixture.detectChanges();
+        jest.spyOn(comp.editor(), 'getModel').mockReturnValue(undefined as any);
+
+        const result = (comp as any).applySuggestedChange({
+            filePath: 'file.java',
+            type: 'TEMPLATE_REPOSITORY',
+            startLine: 1,
+            endLine: 1,
+            description: 'desc',
+            suggestedFix: 'fix',
+            category: 'METHOD_PARAMETER_MISMATCH',
+            severity: 'MEDIUM',
+            originalText: 'Original text',
+            modifiedText: 'Updated text',
+        });
+
+        expect(result).toBeFalse();
+    });
+
     it.each([
         [() => {}, false],
         [() => fixture.componentRef.setInput('isTutorAssessment', true), true],

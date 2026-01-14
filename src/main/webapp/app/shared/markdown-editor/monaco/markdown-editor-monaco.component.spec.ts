@@ -390,6 +390,53 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<blockquote>');
     });
 
+    it('should apply suggested change to the problem statement model', () => {
+        const originalText = 'Original text';
+        const modifiedText = 'Updated text';
+        const model = {
+            getLineContent: () => originalText,
+            getValueInRange: () => originalText,
+            findMatches: () => [],
+            pushEditOperations: jest.fn(),
+        };
+        (comp as any).monacoEditor = { getModel: () => model };
+
+        const result = (comp as any).applySuggestedChange({
+            filePath: 'problem_statement.md',
+            type: 'PROBLEM_STATEMENT',
+            startLine: 1,
+            endLine: 1,
+            description: 'desc',
+            suggestedFix: 'fix',
+            category: 'METHOD_PARAMETER_MISMATCH',
+            severity: 'MEDIUM',
+            originalText,
+            modifiedText,
+        });
+
+        expect(result).toBeTrue();
+        expect(model.pushEditOperations).toHaveBeenCalledOnce();
+    });
+
+    it('should return false when no model is available for applySuggestedChange', () => {
+        (comp as any).monacoEditor = { getModel: () => undefined };
+
+        const result = (comp as any).applySuggestedChange({
+            filePath: 'problem_statement.md',
+            type: 'PROBLEM_STATEMENT',
+            startLine: 1,
+            endLine: 1,
+            description: 'desc',
+            suggestedFix: 'fix',
+            category: 'METHOD_PARAMETER_MISMATCH',
+            severity: 'MEDIUM',
+            originalText: 'Original text',
+            modifiedText: 'Updated text',
+        });
+
+        expect(result).toBeFalse();
+    });
+
     it('should render nested content within callouts', () => {
         comp._markdown = `
 > [!NOTE]
