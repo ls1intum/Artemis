@@ -1697,7 +1697,7 @@ public class ProgrammingExerciseTestService {
 
     /**
      * Waits for a zip file to be fully written to disk by validating its structure.
-     * This is critical for slow CI environments where the file might exist but still be in the process of being written.
+     * <b>This is critical for slow CI environments where the file might exist but still be in the process of being written.</b>
      * The method validates the ZIP by attempting to open it, which checks for the End of Central Directory Record (EOCD)
      * that is written last in ZIP files.
      *
