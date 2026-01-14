@@ -541,6 +541,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     /**
      * Checks out a repository with retry logic to handle timing issues in slow CI environments.
      * Repository checkout may fail if the repository is not fully initialized on disk yet.
+     * <p>
+     * Git repository initialization is not atomic: directories, objects, and refs are written
+     * sequentially. In CI environments with slower I/O or high concurrency, the repository
+     * creation may return before all files are fully flushed to disk. Waiting allows pending
+     * file system operations to complete, making subsequent checkout attempts succeed.
      *
      * @param repositoryUri the URI of the repository to checkout
      * @param description   description for logging
