@@ -14,6 +14,8 @@ export type InlineConsistencyIssue = {
     suggestedFix: string;
     category: ConsistencyIssue.CategoryEnum;
     severity: ConsistencyIssue.SeverityEnum;
+    originalText?: string;
+    modifiedText?: string;
 };
 
 /**
@@ -95,6 +97,8 @@ export function issuesForSelectedFile(
                 suggestedFix: issue.suggestedFix,
                 category: issue.category,
                 severity: issue.severity,
+                originalText: loc.originalText,
+                modifiedText: loc.modifiedText,
             });
         }
     }
@@ -172,6 +176,16 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
         // Does not need to be localized, as the LLM output is english. Only and it
         // is planed to store the content on the server in the future.
         md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
+    }
+
+    if (issue.originalText !== undefined && issue.modifiedText !== undefined) {
+        md += `**Suggested change:**\n\n`;
+        if (issue.originalText) {
+            md += `**Original:**\n\n\`\`\`\n${issue.originalText}\n\`\`\`\n\n`;
+        }
+        if (issue.modifiedText) {
+            md += `**Modified:**\n\n\`\`\`\n${issue.modifiedText}\n\`\`\`\n\n`;
+        }
     }
 
     md += `\n`;

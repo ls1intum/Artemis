@@ -160,13 +160,17 @@ Analysis: Same entity with different names - students cannot map requirements to
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
       "filePath": "exact/path/to/file.java",
       "startLine": 1,
-      "endLine": 10
+      "endLine": 10,
+      "originalText": "existing code or text for this location",
+      "modifiedText": "suggested replacement for this location"
         },
         {
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
       "filePath": "related/file/path.java",
       "startLine": 5,
-      "endLine": 8
+      "endLine": 8,
+      "originalText": "existing code or text for this location",
+      "modifiedText": "suggested replacement for this location"
         }
       ],
     "suggestedFix": "Specific naming correction that aligns conceptual entities while preserving educational intent"
@@ -174,6 +178,9 @@ Analysis: Same entity with different names - students cannot map requirements to
   ]
 }
 ```
+
+# IMPORTANT
+If no concrete text change is needed for a location, omit `originalText` and `modifiedText`.
 
 # EXECUTION
 Analyze the provided artifacts for semantic naming inconsistencies that would create cognitive mapping barriers for students.

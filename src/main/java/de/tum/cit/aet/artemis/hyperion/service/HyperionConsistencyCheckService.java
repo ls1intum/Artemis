@@ -214,9 +214,8 @@ public class HyperionConsistencyCheckService {
             default -> Severity.MEDIUM;
         };
         List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
-                : issue.relatedLocations().stream()
-                        .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
-                        .toList();
+                : issue.relatedLocations().stream().map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(),
+                        loc.startLine(), loc.endLine(), loc.originalText(), loc.modifiedText())).toList();
         ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }
@@ -286,7 +285,7 @@ public class HyperionConsistencyCheckService {
                 List<ArtifactLocation> relatedLocations) {
         }
 
-        private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
+        private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine, String originalText, String modifiedText) {
         }
     }
 }

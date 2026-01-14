@@ -20,5 +20,9 @@ public record ArtifactLocationDTO(
 
         @NotNull @Schema(description = "Start line number (1-based)") Integer startLine,
 
-        @NotNull @Schema(description = "End line number (1-based)") Integer endLine) {
+        @NotNull @Schema(description = "End line number (1-based)") Integer endLine,
+
+        @Schema(description = "Original text snippet for suggested change") String originalText,
+
+        @Schema(description = "Modified text snippet for suggested change") String modifiedText) {
 }
