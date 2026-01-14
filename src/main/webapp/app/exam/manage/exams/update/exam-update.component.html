@@ -139,13 +139,20 @@
                             [(ngModel)]="workingTimeInMinutes"
                             (focusin)="roundWorkingTime()"
                             (focusout)="roundWorkingTime()"
+                            #workingTimeInput="ngModel"
                         />
+                        @if (workingTimeInput.errors?.['max'] || workingTimeInMinutes > 14400) {
+                            <div class="alert alert-danger" jhiTranslate="error.examWorkingTimeTooHigh"></div>
+                        }
                     }
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
                     <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
-                    <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
+                    <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" max="3600" [(ngModel)]="exam.gracePeriod" #gracePeriodInput="ngModel" />
+                    @if (gracePeriodInput.errors?.['max']) {
+                        <div class="alert alert-danger" jhiTranslate="error.examGracePeriodTooHigh"></div>
+                    }
                 </div>
             </div>
             <hr />
@@ -155,14 +162,20 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title"></label>
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}" />
-                    <input id="examMaxPoints" name="examMaxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.examMaxPoints" />
+                    <input id="examMaxPoints" name="examMaxPoints" class="form-control" type="number" min="1" max="9999" [(ngModel)]="exam.examMaxPoints" #examMaxPointsInput="ngModel" />
+                    @if (examMaxPointsInput.errors?.['max']) {
+                        <div class="alert alert-danger" jhiTranslate="error.examMaxPointsTooHigh"></div>
+                    }
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
                         >Number of Exercises in Exam</label
                     >
                     <jhi-help-icon [text]="'artemisApp.examManagement.numberOfExercisesInExamTooltip'" />
-                    <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="1" [(ngModel)]="exam.numberOfExercisesInExam" />
+                    <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="1" max="100" [(ngModel)]="exam.numberOfExercisesInExam" #numberOfExercisesInput="ngModel" />
+                    @if (numberOfExercisesInput.errors?.['max']) {
+                        <div class="alert alert-danger" jhiTranslate="error.examNumberOfExercisesTooHigh"></div>
+                    }
                 </div>
             </div>
             <div class="form-check mb-3">

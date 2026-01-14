@@ -531,6 +531,74 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithExamMaxPointsTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examMaxPointsTest");
+        exam.setExamMaxPoints(10000); // Max allowed is 9999
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithGracePeriodTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examGracePeriodTest");
+        exam.setGracePeriod(3601); // Max allowed is 3600 seconds
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examNumberOfExercisesTest");
+        exam.setNumberOfExercisesInExam(101); // Max allowed is 100
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
+        exam.setWorkingTime(864001); // Max allowed is 864000 seconds (10 days)
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithExamMaxPointsTooHigh() throws Exception {
+        exam1.setExamMaxPoints(10000); // Max allowed is 9999
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithGracePeriodTooHigh() throws Exception {
+        exam1.setGracePeriod(3601); // Max allowed is 3600 seconds
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
+        exam1.setNumberOfExercisesInExam(101); // Max allowed is 100
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        exam1.setWorkingTime(864001); // Max allowed is 864000 seconds (10 days)
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_createsExamWithoutId() throws Exception {
         // Create instead of update if no id was set
         Exam exam = ExamFactory.generateExam(course1, "exam1");

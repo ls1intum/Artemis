@@ -410,6 +410,7 @@ public class ExamResource {
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
         checkExamForDatesConflictsElseThrow(exam);
+        checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
 
@@ -429,6 +430,38 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Validates numeric field limits for exam configuration.
+     * Maximum values:
+     * - Working time: 864000 seconds (10 days)
+     * - Grace period: 3600 seconds (1 hour)
+     * - Exam max points: 9999
+     * - Number of exercises: 100
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
+        // Max working time: 10 days = 864000 seconds
+        if (exam.getWorkingTime() > 864000) {
+            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 10 days (864000 seconds).", ENTITY_NAME, "examWorkingTimeTooHigh");
+        }
+
+        // Grace period: max 1 hour = 3600 seconds
+        if (exam.getGracePeriod() != null && exam.getGracePeriod() > 3600) {
+            throw new BadRequestAlertException("The grace period is too long. Maximum allowed is 3600 seconds.", ENTITY_NAME, "examGracePeriodTooHigh");
+        }
+
+        // Max points: max 9999
+        if (exam.getExamMaxPoints() > 9999) {
+            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is 9999.", ENTITY_NAME, "examMaxPointsTooHigh");
+        }
+
+        // Number of exercises: max 100
+        if (exam.getNumberOfExercisesInExam() != null && exam.getNumberOfExercisesInExam() > 100) {
+            throw new BadRequestAlertException("The number of exercises is too high. Maximum allowed is 100.", ENTITY_NAME, "examNumberOfExercisesTooHigh");
         }
     }
 

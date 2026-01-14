@@ -352,6 +352,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
+        const examValidGracePeriod = this.isValidGracePeriod;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
@@ -359,18 +360,22 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             examMaxPointsValid &&
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
-            examValidNumberOfExercises
+            examValidNumberOfExercises &&
+            examValidGracePeriod
         );
     }
 
     /**
      * Returns a boolean indicating whether the exam's number of exercises is valid.
-     * The number of exercises is valid if it's not set, or if it's at least 1.
+     * The number of exercises is valid if it's not set, or if it's between 1 and 100.
      *
      * @returns {boolean} `true` if the exam's number of exercises is valid, `false` otherwise.
      */
     get isValidNumberOfExercises(): boolean {
-        return this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null || this.exam.numberOfExercisesInExam! >= 1;
+        if (this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null) {
+            return true;
+        }
+        return this.exam.numberOfExercisesInExam >= 1 && this.exam.numberOfExercisesInExam <= 100;
     }
 
     /**
@@ -401,7 +406,20 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidMaxPoints(): boolean {
-        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0;
+        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0 && this.exam?.examMaxPoints <= 9999;
+    }
+
+    /**
+     * Returns a boolean indicating whether the exam's grace period is valid.
+     * The grace period is valid if it's not set, or if it's between 0 and 3600 seconds.
+     *
+     * @returns {boolean} `true` if the exam's grace period is valid, `false` otherwise.
+     */
+    get isValidGracePeriod(): boolean {
+        if (this.exam.gracePeriod === undefined || this.exam.gracePeriod === null) {
+            return true;
+        }
+        return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
     }
 
     /**
@@ -468,12 +486,21 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     /**
      * Validates the WorkingTime.
-     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window
-     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
+     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
+     * and must not exceed 10 days (864000 seconds).
+     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
+     * and must not exceed 10 days (864000 seconds).
      */
     get validateWorkingTime(): boolean {
+        // Maximum working time is 10 days = 864000 seconds
+        const maxWorkingTimeSeconds = 864000;
+
         if (this.exam.testExam) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
+                return false;
+            }
+            // Check 10-day limit
+            if (this.exam.workingTime > maxWorkingTimeSeconds) {
                 return false;
             }
             if (this.exam.startDate && this.exam.endDate) {
@@ -482,6 +509,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return false;
         }
         if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
+            // Check 10-day limit for real exams as well
+            if (this.exam.workingTime > maxWorkingTimeSeconds) {
+                return false;
+            }
             return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
         }
         return false;
