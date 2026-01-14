@@ -5,8 +5,8 @@ const sidebars: SidebarsConfig = {
         'intro',
         'setup',
         'e2e-testing-playwright',
-        'local-moodle-setup-for-lti',
-        'spring-ai'
+        'spring-ai',
+        'local-moodle-setup-for-lti'
     ],
 };
 
