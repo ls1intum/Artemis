@@ -80,12 +80,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import {
-    ApplySuggestedChangeResult,
-    InlineConsistencyIssue,
-    addCommentBoxes,
-    applySuggestedChangeToModel,
-} from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { InlineConsistencyIssue, addCommentBoxes, applySuggestedChangeToModel } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 
 export enum MarkdownEditorHeight {
@@ -389,10 +384,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         );
     }
 
-    private applySuggestedChange(issue: InlineConsistencyIssue): ApplySuggestedChangeResult {
+    /**
+     * Applies a suggested consistency change to the problem statement model.
+     *
+     * @param issue Inline issue describing the suggested change.
+     * @returns True if the change was applied, otherwise false.
+     */
+    private applySuggestedChange(issue: InlineConsistencyIssue): boolean {
         const model = this.monacoEditor.getModel();
         if (!model) {
-            return { ok: false, reason: 'notFound' };
+            return false;
         }
         return applySuggestedChangeToModel(model, issue);
     }

@@ -8,8 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ConsistencyIssueCommentComponent } from 'app/shared/monaco-editor/consistency-issue-comment/consistency-issue-comment.component';
 import * as monaco from 'monaco-editor';
 
-export type ApplySuggestedChangeResult = { ok: true } | { ok: false; reason: 'notFound' | 'ambiguous' };
-
 export type InlineConsistencyIssue = {
     filePath: string;
     type: ArtifactLocation.TypeEnum;
@@ -31,13 +29,25 @@ export type InlineConsistencyIssue = {
  * @param selectedRepo      The currently selected repository.
  * @param translateService  Service to translate text in the comments.
  */
+/**
+ * Renders consistency issue comments for the currently selected file/repo.
+ *
+ * @param editor Monaco editor instance.
+ * @param issues Raw consistency issues.
+ * @param selectedFile Currently selected file path.
+ * @param selectedRepo Currently selected repository scope.
+ * @param translateService Translate service instance.
+ * @param onApply Callback invoked when applying a suggestion.
+ * @param appRef ApplicationRef for dynamic component creation.
+ * @param environmentInjector Injector for dynamic component creation.
+ */
 export function addCommentBoxes(
     editor: MonacoEditorComponent,
     issues: ConsistencyIssue[],
     selectedFile: string | undefined,
     selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
     translateService: TranslateService,
-    onApply: (issue: InlineConsistencyIssue) => ApplySuggestedChangeResult,
+    onApply: (issue: InlineConsistencyIssue) => boolean,
     appRef?: ApplicationRef,
     environmentInjector?: EnvironmentInjector,
 ) {
@@ -54,12 +64,24 @@ export function addCommentBoxes(
  * @param id     The unique identifier for this comment.
  * @param translateService  Service to translate text in the comments.
  */
+/**
+ * Creates a single consistency issue comment widget at the given line.
+ *
+ * @param editor Monaco editor instance.
+ * @param issue Inline issue to render.
+ * @param id Unique widget id.
+ * @param translateService Translate service instance.
+ * @param onApply Callback invoked when applying a suggestion.
+ * @param appRef ApplicationRef for dynamic component creation.
+ * @param environmentInjector Injector for dynamic component creation.
+ * @returns void
+ */
 export function addCommentBox(
     editor: MonacoEditorComponent,
     issue: InlineConsistencyIssue,
     id: number,
     translateService: TranslateService,
-    onApply: (issue: InlineConsistencyIssue) => ApplySuggestedChangeResult,
+    onApply: (issue: InlineConsistencyIssue) => boolean,
     appRef?: ApplicationRef,
     environmentInjector?: EnvironmentInjector,
 ) {
@@ -226,6 +248,13 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
     return md;
 }
 
+/**
+ * Derives the current text for the referenced line range and attaches it as originalText.
+ *
+ * @param editor Monaco editor instance.
+ * @param issue Inline issue to enrich.
+ * @returns Inline issue with derived original text, if available.
+ */
 function withDerivedOriginalText(editor: MonacoEditorComponent, issue: InlineConsistencyIssue): InlineConsistencyIssue {
     if (issue.originalText !== undefined || issue.modifiedText === undefined) {
         return issue;
@@ -245,9 +274,16 @@ function withDerivedOriginalText(editor: MonacoEditorComponent, issue: InlineCon
     return { ...issue, originalText };
 }
 
-export function applySuggestedChangeToModel(model: monaco.editor.ITextModel, issue: InlineConsistencyIssue): ApplySuggestedChangeResult {
+/**
+ * Applies a suggested change to a Monaco model.
+ *
+ * @param model Monaco text model.
+ * @param issue Inline issue containing the suggested change.
+ * @returns True if the change was applied, otherwise false.
+ */
+export function applySuggestedChangeToModel(model: monaco.editor.ITextModel, issue: InlineConsistencyIssue): boolean {
     if (issue.originalText === undefined || issue.modifiedText === undefined) {
-        return { ok: false, reason: 'notFound' };
+        return false;
     }
 
     const startLine = issue.startLine;
@@ -267,20 +303,17 @@ export function applySuggestedChangeToModel(model: monaco.editor.ITextModel, iss
         const currentText = model.getValueInRange(range);
         if (currentText === issue.originalText) {
             model.pushEditOperations([], [{ range, text: issue.modifiedText }], () => null);
-            return { ok: true };
+            return true;
         }
     }
 
     const matches = model.findMatches(issue.originalText, false, false, false, null, true);
-    if (matches.length === 0) {
-        return { ok: false, reason: 'notFound' };
-    }
-    if (matches.length > 1) {
-        return { ok: false, reason: 'ambiguous' };
+    if (matches.length !== 1) {
+        return false;
     }
 
     model.pushEditOperations([], [{ range: matches[0].range, text: issue.modifiedText }], () => null);
-    return { ok: true };
+    return true;
 }
 
 /**

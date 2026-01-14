@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { ApplySuggestedChangeResult, InlineConsistencyIssue } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { InlineConsistencyIssue } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 @Component({
     selector: 'jhi-consistency-issue-comment',
@@ -16,7 +16,7 @@ export class ConsistencyIssueCommentComponent {
     readonly diffEditor = viewChild(MonacoDiffEditorComponent);
 
     readonly issue = input.required<InlineConsistencyIssue>();
-    readonly onApply = input.required<(issue: InlineConsistencyIssue) => ApplySuggestedChangeResult>();
+    readonly onApply = input.required<(issue: InlineConsistencyIssue) => boolean>();
     readonly showDetails = signal(true);
     readonly applyStatus = signal<boolean | undefined>(undefined);
 
@@ -36,13 +36,8 @@ export class ConsistencyIssueCommentComponent {
         const issue = this.issue();
         return issue.originalText !== undefined && issue.modifiedText !== undefined && issue.originalText !== issue.modifiedText;
     });
-    readonly canApply = computed(() => this.hasDiff());
 
     constructor() {
-        effect(() => {
-            this.issue();
-            this.applyStatus.set(undefined);
-        });
         effect(() => {
             if (!this.hasDiff() || !this.showDetails()) {
                 return;
@@ -56,11 +51,17 @@ export class ConsistencyIssueCommentComponent {
         });
     }
 
+    /**
+     * Applies the suggested change and updates the status indicator.
+     */
     applySuggestedChange(): void {
         const result = this.onApply()(this.issue());
-        this.applyStatus.set(result.ok);
+        this.applyStatus.set(result);
     }
 
+    /**
+     * Toggles the visibility of the comment details.
+     */
     toggleDetails(): void {
         this.showDetails.update((current) => !current);
     }

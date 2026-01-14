@@ -27,7 +27,7 @@
             <div class="consistency-issue-comment__diff">
                 <jhi-monaco-diff-editor [allowSplitView]="false" />
             </div>
-            @if (canApply()) {
+            @if (hasDiff()) {
                 <div class="consistency-issue-comment__actions">
                     @if (applyStatus() === true) {
                         <span class="text-success me-2">{{ 'artemisApp.hyperion.consistencyCheck.applySuccess' | artemisTranslate }}</span>
