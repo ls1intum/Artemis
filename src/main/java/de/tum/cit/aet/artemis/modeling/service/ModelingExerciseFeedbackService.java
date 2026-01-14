@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,8 +9,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -31,10 +30,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Service
 public class ModelingExerciseFeedbackService {
@@ -144,6 +144,9 @@ public class ModelingExerciseFeedbackService {
      */
     private Result createInitialResult(Submission submission) {
         Result result = new Result();
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            result.setExerciseId(submission.getParticipation().getExercise().getId());
+        }
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result.setRated(true);
         result.setScore(0.0);

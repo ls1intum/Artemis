@@ -31,7 +31,8 @@
             "ssl": "SSL",
             "hermes": "Hermes Push Notifications",
             "sharing": "Sharing Plattform Connector",
-            "redis": "Redis"
+            "redis": "Redis",
+            "reactiveDiscoveryClients": "Reactive Discovery Clients"
         },
         "table": {
             "service": "Dienst Name",

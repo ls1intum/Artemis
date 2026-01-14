@@ -12,7 +12,7 @@ describe('ConnectionWarning', () => {
     let subject: BehaviorSubject<ConnectionState>;
 
     beforeEach(() => {
-        subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
+        subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true));
         TestBed.configureTestingModule({
             providers: [
                 {
@@ -45,8 +45,8 @@ describe('ConnectionWarning', () => {
         expect(warningDiv).not.toBeNull();
         expect(warningDiv.classes).not.toContainEntry(['disconnected', true]);
 
-        subject.next(new ConnectionState(false, true, false));
-        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.disconnected).toBeTrue();
         expect(warningDiv.classes).toContainEntry(['disconnected', true]);
@@ -54,8 +54,8 @@ describe('ConnectionWarning', () => {
         tick(500);
         expect(component.popover.isOpen()).toBeTrue();
 
-        subject.next(new ConnectionState(true, true, false));
-        fixture.detectChanges();
+        subject.next(new ConnectionState(true, true));
+        fixture.changeDetectorRef.detectChanges();
 
         tick(100);
         expect(component.disconnected).toBeFalse();

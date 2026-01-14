@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementResolve implements Resolve<Course> {
-    private service = inject(CourseManagementService);
+    private courseManagementService = inject(CourseManagementService);
 
     /**
      * Resolves the route by extracting the courseId and returns the course with that Id if it exists
@@ -16,7 +16,7 @@ export class CourseManagementResolve implements Resolve<Course> {
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
         if (route.params['courseId']) {
-            return this.service.find(route.params['courseId']).pipe(
+            return this.courseManagementService.find(route.params['courseId']).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
                 map((course: HttpResponse<Course>) => course.body!),
             );

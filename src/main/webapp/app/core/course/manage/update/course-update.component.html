@@ -407,7 +407,7 @@
                         type="checkbox"
                         [(ngModel)]="communicationEnabled"
                         [ngModelOptions]="{ standalone: true }"
-                        (change)="disableMessaging()"
+                        (change)="changeCommunicationEnabled()"
                     />
                     <label for="field_communicationEnabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></label>
                     <fa-icon

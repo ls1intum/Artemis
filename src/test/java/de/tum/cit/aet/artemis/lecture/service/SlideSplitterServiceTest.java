@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -58,14 +59,18 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     private AttachmentVideoUnit testAttachmentVideoUnit;
 
     private PDDocument testDocument;
 
     @BeforeEach
     void initTestCase() {
+        var lecture = lectureUtilService.createCourseWithLecture(true);
         // Create a test attachment video unit with a PDF file
-        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(3, true);
+        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 3, true);
 
         // Create a real PDF document for tests
         testDocument = new PDDocument();
@@ -132,7 +137,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             ImageIO.write(image, "png", slidePath.toFile());
 
             Slide slide = new Slide();
-            slide.setId((long) i);
             slide.setSlideNumber(i);
             slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
 
@@ -181,7 +185,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         ImageIO.write(image1, "png", slidePath1.toFile());
 
         Slide slide1 = new Slide();
-        slide1.setId(1L);
         slide1.setSlideNumber(1);
         slide1.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide1.setSlideImagePath("temp/slide1.png");
@@ -193,7 +196,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         ImageIO.write(image3, "png", slidePath3.toFile());
 
         Slide slide3 = new Slide();
-        slide3.setId(3L);
         slide3.setSlideNumber(3);
         slide3.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide3.setSlideImagePath("temp/slide3.png");
@@ -218,35 +220,44 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
 
-        // Only include 2 of the 3 slides in page order
-        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1), new SlideOrderDTO("2", 2));
-
         // Clear any existing slides first
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
-        // Get a proper temp path for slides
-        Path tempFilePath = FilePathConverter.getTempFilePath();
-        Files.createDirectories(tempFilePath);
+        // Get the proper attachment directory for slides
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Path slideImagesDir = attachmentDirectory.resolve("slide");
+        Files.createDirectories(slideImagesDir);
 
-        // Create existing slides (all 3) with known IDs and valid paths
+        // Create existing slides (all 3) and store their IDs
+        List<Long> slideIds = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
-            // Create a real file in the temp directory
-            Path slidePath = tempFilePath.resolve("slide" + i + ".png");
+            Slide slide = new Slide();
+            slide.setSlideNumber(i);
+            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+            // Set a dummy path first as it cannot be null
+            slide.setSlideImagePath("dummy");
+
+            // Save the slide to get an ID
+            Slide savedSlide = slideRepository.save(slide);
+            slideIds.add(savedSlide.getId());
+
+            // Create the proper directory structure for the slide
+            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            Files.createDirectories(slideDir);
+            Path slidePath = slideDir.resolve("slide" + i + ".png");
 
             // Create a simple image file (1x1 pixel)
             BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            Slide slide = new Slide();
-            slide.setId((long) i);
-            slide.setSlideNumber(i);
-            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
-
-            // The path is relative to the base path and should match what's expected
-            slide.setSlideImagePath("temp/slide" + i + ".png");
-            slideRepository.save(slide);
+            // Update the slide with the proper path format
+            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            slideRepository.save(savedSlide);
         }
+
+        // Only include 2 of the 3 slides in page order - use actual IDs
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO(slideIds.get(0).toString(), 1), new SlideOrderDTO(slideIds.get(1).toString(), 2));
 
         // Act
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
@@ -256,13 +267,14 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
-        // Check if slide 3 exists but is detached
-        Slide slide3 = slideRepository.findById(3L).orElse(null);
+        // Check if slide 3 exists but is detached - use actual ID
+        Long thirdSlideId = slideIds.get(2);
+        Slide slide3 = slideRepository.findById(thirdSlideId).orElse(null);
 
         // If slide3 is null, the service is completely removing it rather than detaching
         if (slide3 == null) {
             // Test that it was removed instead
-            assertThat(slideRepository.existsById(3L)).isFalse();
+            assertThat(slideRepository.existsById(thirdSlideId)).isFalse();
         }
         else {
             // Test that it was detached
@@ -302,7 +314,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Create existing slide with different hidden status
         Slide slide = new Slide();
-        slide.setId(1L);
         slide.setSlideNumber(1);
         slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide.setSlideImagePath("temp/slide1.png");
@@ -644,7 +655,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
+        Path tempDir = tempFileUtilService.createTempDirectory("test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             // Add 3 pages to the document
@@ -771,7 +782,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file
-        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
+        Path tempDir = tempFileUtilService.createTempDirectory("test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             doc.addPage(new PDPage());
@@ -820,7 +831,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
+        Path tempDir = tempFileUtilService.createTempDirectory("test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             // Add 3 pages to the document

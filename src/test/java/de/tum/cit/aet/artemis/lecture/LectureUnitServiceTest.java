@@ -45,8 +45,8 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void init() {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
-        unit1 = lectureUtilService.createAttachmentVideoUnit(false);
-        unit2 = lectureUtilService.createTextUnit();
+        unit1 = lectureUtilService.createAttachmentVideoUnit(lecture, false);
+        unit2 = lectureUtilService.createTextUnit(lecture);
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit1, unit2));
         student1 = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
     }

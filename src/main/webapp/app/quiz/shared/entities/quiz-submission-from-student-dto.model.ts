@@ -1,0 +1,110 @@
+import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
+import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
+import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+
+export interface QuizSubmissionFromStudentDTO {
+    submittedAnswers: SubmittedAnswerFromStudentDTO[];
+}
+
+type SubmittedAnswerFromStudentDTO = MultipleChoiceSubmittedAnswerFromStudentDTO | DragAndDropSubmittedAnswerFromStudentDTO | ShortAnswerSubmittedAnswerFromStudentDTO;
+
+interface MultipleChoiceSubmittedAnswerFromStudentDTO {
+    type: 'multiple-choice';
+    questionId?: number;
+    selectedOptions: number[];
+}
+
+interface DragAndDropSubmittedAnswerFromStudentDTO {
+    type: 'drag-and-drop';
+    questionId?: number;
+    mappings: DragAndDropMapping[];
+}
+
+interface DragAndDropMapping {
+    dragItemId: number;
+    dropLocationId: number;
+}
+
+interface ShortAnswerSubmittedAnswerFromStudentDTO {
+    type: 'short-answer';
+    questionId?: number;
+    submittedTexts: ShortAnswerSubmittedText[];
+}
+
+interface ShortAnswerSubmittedText {
+    text: string;
+    spotId: number;
+}
+
+function createMultipleChoiceSubmittedAnswerFromStudentDTO(submittedAnswer: MultipleChoiceSubmittedAnswer): MultipleChoiceSubmittedAnswerFromStudentDTO {
+    return {
+        type: 'multiple-choice',
+        questionId: submittedAnswer.quizQuestion?.id,
+        selectedOptions: submittedAnswer.selectedOptions?.map((option) => option.id!) ?? [],
+    };
+}
+
+function createDragAndDropSubmittedAnswerFromStudentDTO(submittedAnswer: DragAndDropSubmittedAnswer): DragAndDropSubmittedAnswerFromStudentDTO {
+    return {
+        type: 'drag-and-drop',
+        questionId: submittedAnswer.quizQuestion?.id,
+        mappings:
+            submittedAnswer.mappings?.reduce<DragAndDropMapping[]>((collectedMappings, mapping) => {
+                const dragItemId = mapping.dragItem?.id;
+                const dropLocationId = mapping.dropLocation?.id;
+
+                if (dragItemId !== undefined && dropLocationId !== undefined) {
+                    collectedMappings.push({ dragItemId, dropLocationId });
+                }
+
+                return collectedMappings;
+            }, []) ?? [],
+    };
+}
+
+function createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer: ShortAnswerSubmittedAnswer): ShortAnswerSubmittedAnswerFromStudentDTO {
+    return {
+        type: 'short-answer',
+        questionId: submittedAnswer.quizQuestion?.id,
+        submittedTexts:
+            submittedAnswer.submittedTexts?.reduce<ShortAnswerSubmittedText[]>((texts, submittedText) => {
+                const text = submittedText.text;
+                const spotId = submittedText.spot?.id;
+
+                if (text !== undefined && spotId !== undefined) {
+                    texts.push({ text, spotId });
+                }
+
+                return texts;
+            }, []) ?? [],
+    };
+}
+
+function createSubmittedAnswerFromStudentDTO(submittedAnswer: SubmittedAnswer): SubmittedAnswerFromStudentDTO {
+    if (submittedAnswer.type === 'multiple-choice') {
+        return createMultipleChoiceSubmittedAnswerFromStudentDTO(submittedAnswer as MultipleChoiceSubmittedAnswer);
+    } else if (submittedAnswer.type === 'drag-and-drop') {
+        return createDragAndDropSubmittedAnswerFromStudentDTO(submittedAnswer as DragAndDropSubmittedAnswer);
+    } else if (submittedAnswer.type === 'short-answer') {
+        return createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer as ShortAnswerSubmittedAnswer);
+    }
+    throw new Error('Unknown submitted answer type: ' + submittedAnswer.type);
+}
+
+/**
+ * Creates a serializable DTO representation of a `QuizSubmission` that only contains
+ * the information submitted by the student. It converts all concrete `SubmittedAnswer`
+ * instances (multiple-choice, drag-and-drop, short-answer) into lightweight
+ * `SubmittedAnswerFromStudentDTO` objects, removing unnecessary server-side details.
+ *
+ * \@param submission The quiz submission domain object containing the student's answers.
+ * \@returns A `QuizSubmissionFromStudentDTO` with normalized submitted answers ready
+ *          to be sent to the server or stored on the client.
+ */
+export function createQuizSubmissionFromStudentDTO(submission: QuizSubmission): QuizSubmissionFromStudentDTO {
+    return {
+        submittedAnswers: submission.submittedAnswers?.map((submittedAnswer) => createSubmittedAnswerFromStudentDTO(submittedAnswer)) ?? [],
+    };
+}

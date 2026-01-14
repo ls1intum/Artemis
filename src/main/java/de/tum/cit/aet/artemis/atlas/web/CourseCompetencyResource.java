@@ -55,7 +55,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
@@ -215,7 +214,7 @@ public class CourseCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with the course competency course performance in the body
      */
     @GetMapping("courses/{courseId}/course-competencies/{competencyId}/course-progress")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -248,7 +247,7 @@ public class CourseCompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/course-competencies/import-all")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to all course competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
@@ -278,7 +277,7 @@ public class CourseCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with a list of relations for the course
      */
     @GetMapping("courses/{courseId}/course-competencies/relations")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<CompetencyRelationDTO>> getCompetencyRelations(@PathVariable long courseId) {
         log.debug("REST request to get relations for course: {}", courseId);
 
@@ -296,7 +295,7 @@ public class CourseCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/course-competencies/relations")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<CompetencyRelationDTO> createCompetencyRelation(@PathVariable long courseId, @RequestBody CompetencyRelationDTO relation) {
         var tailId = relation.tailCompetencyId();
         var headId = relation.headCompetencyId();
@@ -321,7 +320,7 @@ public class CourseCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId) {
         log.info("REST request to remove a competency relation: {}", competencyRelationId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -366,7 +365,7 @@ public class CourseCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PatchMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId,
             @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
         log.info("REST request to update a competency relation: {}", competencyRelationId);

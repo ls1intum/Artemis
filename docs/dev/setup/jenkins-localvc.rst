@@ -776,4 +776,4 @@ Caching
 ^^^^^^^
 
 You can configure caching for e.g. Maven repositories.
-See :ref:`this section in the administration documentation <programming_exercises>` for more details.
+See `this section in the administration documentation <https://ls1intum.github.io/Artemis/admin/production-setup/programming-exercise-adjustments#caching-sonatype-nexus>` for more details.

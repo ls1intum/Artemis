@@ -29,7 +29,7 @@ export class TextUnitComponent extends LectureUnitDirective<TextUnit> {
     handleIsolatedView() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        const newWindow = window.open('', '_blank', 'noopener,noreferrer')!;
+        const newWindow = window.open('', '_blank')!;
         const apply = () => {
             const document = newWindow.document;
 

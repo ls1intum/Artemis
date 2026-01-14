@@ -137,7 +137,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         courseId = course.getId();
 
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
+        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lecture);
         lecture = lectureUtilService.addLectureUnitsToLecture(lecture, List.of(exerciseUnit));
         idOfExerciseUnit = lecture.getLectureUnits().getFirst().getId();
 

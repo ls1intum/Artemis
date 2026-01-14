@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -10,11 +10,13 @@ import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 
 let pageType: PageType;
 
 export class MockMetisService {
     currentConversation = undefined;
+    private faqsSubject = new BehaviorSubject<Faq[]>([]);
 
     get tags(): Observable<string[]> {
         return of(metisTags);
@@ -30,6 +32,14 @@ export class MockMetisService {
 
     getCourse(): Course {
         return metisCourse;
+    }
+
+    getFaqs(): Observable<Faq[]> {
+        return this.faqsSubject.asObservable();
+    }
+
+    setFaqs(faqs: Faq[]): void {
+        this.faqsSubject.next(faqs);
     }
 
     getPageType(): PageType {

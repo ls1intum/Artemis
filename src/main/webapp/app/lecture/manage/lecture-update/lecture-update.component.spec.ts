@@ -1,5 +1,7 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -22,7 +24,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
@@ -36,8 +38,13 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('LectureUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let lectureService: LectureService;
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
@@ -46,6 +53,8 @@ describe('LectureUpdateComponent', () => {
     let pastLecture: Lecture;
 
     beforeEach(() => {
+        // Mock scrollIntoView which is not available in the test environment
+        HTMLElement.prototype.scrollIntoView = vi.fn();
         const yesterday = dayjs().subtract(1, 'day');
 
         pastLecture = new Lecture();
@@ -54,15 +63,19 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), FontAwesomeTestingModule],
-            declarations: [
+            imports: [
+                FormsModule,
+                MockModule(NgbTooltipModule),
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
+                FontAwesomeTestingModule,
                 LectureUpdateComponent,
-                LectureTitleChannelNameComponent,
-                TitleChannelNameComponent,
-                FormDateTimePickerComponent,
-                LectureAttachmentsComponent,
-                LectureUpdateUnitsComponent,
-                LectureUpdatePeriodComponent,
+                MockComponent(LectureTitleChannelNameComponent),
+                MockComponent(TitleChannelNameComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(LectureAttachmentsComponent),
+                MockComponent(LectureUpdateUnitsComponent),
+                MockComponent(LectureUpdatePeriodComponent),
                 MockComponent(LectureUnitManagementComponent),
                 MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
@@ -73,6 +86,7 @@ describe('LectureUpdateComponent', () => {
                 MockRouterLinkDirective,
                 MockComponent(UnitCreationCardComponent),
                 MockDirective(CustomNotIncludedInValidatorDirective),
+                MockComponent(PdfDropZoneComponent),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -81,12 +95,17 @@ describe('LectureUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        // Destroy the fixture to prevent NG0953 warnings from outputs emitting after destruction
+        if (lectureUpdateComponentFixture) {
+            lectureUpdateComponentFixture.destroy();
+        }
+        vi.restoreAllMocks();
     });
 
     async function configureActiveRouteMockAndCompileComponents(parentData: any = { course: { id: 1 } }) {
@@ -94,11 +113,15 @@ describe('LectureUpdateComponent', () => {
             parent: {
                 data: of(parentData),
                 paramMap: of(convertToParamMap({ courseId: '1' })),
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: '1' }),
+                },
             },
             queryParams: of({}),
             snapshot: {
                 paramMap: convertToParamMap({ courseId: '1' }),
             },
+            data: of(parentData),
         };
 
         TestBed.overrideProvider(ActivatedRoute, { useValue: activatedRouteMock });
@@ -110,7 +133,7 @@ describe('LectureUpdateComponent', () => {
 
         lectureService = TestBed.inject(LectureService);
         router = TestBed.inject(Router);
-        jest.spyOn(router, 'currentNavigation').mockReturnValue({
+        vi.spyOn(router, 'currentNavigation').mockReturnValue({
             extras: { state: { existingLectures: [] } },
         } as any);
         TestBed.inject(ActivatedRoute);
@@ -120,7 +143,7 @@ describe('LectureUpdateComponent', () => {
         await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
 
-        const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
+        const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {
@@ -134,24 +157,24 @@ describe('LectureUpdateComponent', () => {
             ),
         );
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+        const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
         lectureUpdateComponent.save();
-        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
 
-        expect(createSpy).toHaveBeenCalledOnce();
+        expect(createSpy).toHaveBeenCalledTimes(1);
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
-        expect(refreshSpy).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should edit a lecture', async () => {
         await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
-        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
         lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated', channelName: 'test1Updated' } as Lecture);
 
-        const updateSpy = jest.spyOn(lectureService, 'update').mockReturnValue(
+        const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(
             of<HttpResponse<Lecture>>(
                 new HttpResponse({
                     body: {
@@ -165,52 +188,58 @@ describe('LectureUpdateComponent', () => {
             ),
         );
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+        const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
         lectureUpdateComponent.save();
-        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
 
         const expectedPath = ['course-management', 1, 'lectures', 6];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
-        expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
-        expect(refreshSpy).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated', isTutorialLecture: false });
+        expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should select process units checkbox', async () => {
         await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.processUnitMode = false;
-        const selectProcessUnit = jest.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
+        const selectProcessUnit = vi.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
         lectureUpdateComponent.onSelectProcessUnit();
-        expect(selectProcessUnit).toHaveBeenCalledOnce();
-        expect(lectureUpdateComponent.processUnitMode).toBeTrue();
+        expect(selectProcessUnit).toHaveBeenCalledTimes(1);
+        expect(lectureUpdateComponent.processUnitMode).toBe(true);
     });
 
     it('should navigate to previous state', async () => {
         await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: '', course: { id: 1 } } });
 
         lectureUpdateComponent.ngOnInit();
-        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
 
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        const previousState = jest.spyOn(lectureUpdateComponent, 'previousState');
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const previousState = vi.spyOn(lectureUpdateComponent, 'previousState');
         lectureUpdateComponent.previousState();
 
-        expect(previousState).toHaveBeenCalledOnce();
+        expect(previousState).toHaveBeenCalledTimes(1);
 
         const expectedPath = ['course-management', '1', 'lectures', '6'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
     });
 
-    it('should create a lecture and then redirect to unit split', fakeAsync(() => {
+    it('should create a lecture and then redirect to unit split', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        // Ensure ngOnInit runs first (which sets processUnitMode = false)
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+
         lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
         lectureUpdateComponent.fileName = 'testFile';
+        // Set processUnitMode after initialization to prevent ngOnInit from resetting it
         lectureUpdateComponent.processUnitMode = true;
-        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1', isTutorialLecture: false } as Lecture);
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
-        const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
+        const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(
             of<HttpResponse<Lecture>>(
                 new HttpResponse({
                     body: {
@@ -224,45 +253,46 @@ describe('LectureUpdateComponent', () => {
             ),
         );
 
-        const proceedToUnitSplitSpy = jest.spyOn(lectureUpdateComponent, 'proceedToUnitSplit');
+        const proceedToUnitSplitSpy = vi.spyOn(lectureUpdateComponent, 'proceedToUnitSplit');
         lectureUpdateComponent.proceedToUnitSplit();
-        tick();
+        await lectureUpdateComponentFixture.whenStable();
 
-        expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
-        expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
-        expect(lectureUpdateComponent.processUnitMode).toBeTrue();
+        expect(createSpy).toHaveBeenCalledTimes(1);
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1', isTutorialLecture: false });
+        expect(proceedToUnitSplitSpy).toHaveBeenCalledTimes(1);
+        expect(lectureUpdateComponent.processUnitMode).toBe(true);
 
         const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
-    }));
+    });
 
     it('should call onFileChange on changed file', async () => {
         await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.processUnitMode = false;
-        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
 
-        const onFileChangeStub = jest.spyOn(lectureUpdateComponent, 'onFileChange');
+        const onFileChangeStub = vi.spyOn(lectureUpdateComponent, 'onFileChange');
 
         const processUnit = lectureUpdateComponentFixture.debugElement.query(By.css('input[name="processUnit"]')).nativeElement;
-        processUnit.click();
-        expect(processUnit.checked).toBeTruthy();
+        processUnit.checked = true;
+        processUnit.dispatchEvent(new Event('change'));
+        lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.processUnitMode = true;
         lectureUpdateComponentFixture.autoDetectChanges();
         const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledOnce();
+        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
     it('should set lecture visible date, start date and end date correctly', async () => {
         await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
 
-        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
         lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated' } as Lecture);
 
-        const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
+        const setDatesSpy = vi.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
         lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(3).date(7);
         lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(3).date(5);
@@ -270,11 +300,10 @@ describe('LectureUpdateComponent', () => {
 
         lectureUpdateComponent.onDatesValuesChanged();
 
-        expect(setDatesSpy).toHaveBeenCalledOnce();
+        expect(setDatesSpy).toHaveBeenCalledTimes(1);
         expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().endDate);
         expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().visibleDate);
 
-        lectureUpdateComponentFixture.detectChanges();
         await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.lecture().startDate = undefined;
@@ -288,7 +317,6 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
         expect(lectureUpdateComponent.lecture().visibleDate).toBeUndefined();
 
-        lectureUpdateComponentFixture.detectChanges();
         await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(1).date(1);
@@ -299,13 +327,13 @@ describe('LectureUpdateComponent', () => {
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
         if (lectureUpdateComponent.lecture().visibleDate && lectureUpdateComponent.lecture().startDate) {
-            expect(lectureUpdateComponent.lecture().visibleDate!.toDate()).toBeBefore(lectureUpdateComponent.lecture().startDate!.toDate());
+            expect(lectureUpdateComponent.lecture().visibleDate!.toDate() < lectureUpdateComponent.lecture().startDate!.toDate()).toBe(true);
         } else {
             throw new Error('visibleDate and startDate should not be undefined');
         }
 
         if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
-            expect(lectureUpdateComponent.lecture().startDate!.toDate()).toBeBefore(lectureUpdateComponent.lecture().endDate!.toDate());
+            expect(lectureUpdateComponent.lecture().startDate!.toDate() < lectureUpdateComponent.lecture().endDate!.toDate()).toBe(true);
         } else {
             throw new Error('startDate and endDate should not be undefined');
         }
@@ -316,28 +344,28 @@ describe('LectureUpdateComponent', () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
             lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: 'old description' } as Lecture;
-            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
                 title: lectureUpdateComponent.lectureOnInit.title,
                 channelName: lectureUpdateComponent.lectureOnInit.channelName,
                 description: lectureUpdateComponent.lectureOnInit.description,
             } as Lecture);
-            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBe(false);
         });
 
         it('should handle undefined from description properly', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
             lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: undefined } as Lecture;
-            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
                 title: lectureUpdateComponent.lectureOnInit.title,
                 channelName: lectureUpdateComponent.lectureOnInit.channelName,
-                description: '', // will be an empty string if the user clears the input, but was loaded with undefined in that case
+                description: '',
             } as Lecture);
-            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBe(false);
         });
     });
 
@@ -346,28 +374,28 @@ describe('LectureUpdateComponent', () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
             lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
-            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
                 visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
                 startDate: lectureUpdateComponent.lectureOnInit.startDate,
                 endDate: lectureUpdateComponent.lectureOnInit.endDate,
             } as Lecture);
-            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(false);
         });
 
         it('should not consider resetting an undefined date as a change', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
             lectureUpdateComponent.lectureOnInit = { visibleDate: undefined, startDate: undefined, endDate: undefined } as Lecture;
-            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
                 visibleDate: dayjs('undefined'),
                 startDate: dayjs('undefined'),
                 endDate: dayjs('undefined'),
             } as Lecture);
-            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(false);
         });
     });
 

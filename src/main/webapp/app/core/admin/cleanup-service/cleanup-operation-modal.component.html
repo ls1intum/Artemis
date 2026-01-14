@@ -23,12 +23,12 @@
     <div>
         <p jhiTranslate="cleanupService.modal.affectedEntities"></p>
         <ul>
-            @for (key of cleanupKeys; track key) {
+            @for (key of cleanupKeys(); track key) {
                 <li>
                     <span [jhiTranslate]="'cleanupService.entities.' + key"></span>
-                    : {{ counts[key] }}
-                    @if (operationExecuted) {
-                        @if (counts[key] > 0) {
+                    : {{ counts()[key] }}
+                    @if (operationExecuted()) {
+                        @if (counts()[key] > 0) {
                             <fa-icon [icon]="faTimes" class="text-danger" />
                         } @else {
                             <fa-icon [icon]="faCheckCircle" class="text-success" />
@@ -37,12 +37,12 @@
                 </li>
             }
         </ul>
-        @if (!hasEntriesToDelete) {
+        @if (!hasEntriesToDelete()) {
             <p class="text-muted" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
         }
     </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
-    <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
+    <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
 </div>

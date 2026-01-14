@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
@@ -88,13 +89,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT DISTINCT c
+            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO(c.id, c.title, c.shortName, c.semester, COUNT(DISTINCT u))
             FROM Course c
+                JOIN User u ON u.deleted = FALSE AND c.studentGroupName MEMBER OF u.groups
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
+            GROUP BY c.id, c.title, c.shortName, c.semester
             """)
-    List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
+    Set<ActiveCourseDTO> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT DISTINCT c
@@ -125,9 +128,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      */
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
-    Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
@@ -188,6 +188,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     List<Course> findAllByShortName(String shortName);
 
+    boolean existsByShortNameIgnoreCase(String shortName);
+
     /**
      * Returns the title of the course with the given id.
      *
@@ -201,6 +203,123 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     @Cacheable(cacheNames = "courseTitle", key = "#courseId", unless = "#result == null")
     String getCourseTitle(@Param("courseId") long courseId);
+
+    /**
+     * Returns the course icon path of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the course icon path or null if the course does not exist or has no icon
+     */
+    @Query("""
+            SELECT c.courseIcon
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getCourseIconById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the student group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the student group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.studentGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getStudentGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the teaching assistant group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the teaching assistant group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.teachingAssistantGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getTeachingAssistantGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the editor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the editor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.editorGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getEditorGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the instructor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the instructor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.instructorGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getInstructorGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default student group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default student group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-students')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultStudentGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default teaching assistant group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default teaching assistant group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-tutors')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultTeachingAssistantGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default editor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default editor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-editors')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultEditorGroupNameById(@Param("courseId") long courseId);
+
+    /**
+     * Returns the default instructor group name of the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the default instructor group name or null if the course does not exist
+     */
+    @Query("""
+            SELECT CONCAT('artemis-', c.shortName, '-instructors')
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getDefaultInstructorGroupNameById(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT c
@@ -430,11 +549,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NonNull
-    default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLecturesAndLectureUnitsById(courseId), courseId);
-    }
-
-    @NonNull
     default Course findByIdForUpdateElseThrow(long courseId) {
         return getValueElseThrow(findForUpdateById(courseId), courseId);
     }
@@ -545,4 +659,17 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 WHERE course.id = :courseId
             """)
     Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
+
+    /**
+     * Counts the number of courses where the user is an instructor based on their group memberships.
+     *
+     * @param userGroups the groups the user belongs to
+     * @return the count of courses where the user is an instructor
+     */
+    @Query("""
+            SELECT COUNT(c)
+            FROM Course c
+            WHERE c.instructorGroupName IN :userGroups
+            """)
+    long countCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups);
 }

@@ -43,12 +43,6 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
-                    HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
-        }
-
-        private void testAllPreAuthorizeInstructor() throws Exception {
             request.put("/api/atlas/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
@@ -58,27 +52,21 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
                     HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/import", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void shouldFailAsTutor() throws Exception {
-            this.testAllPreAuthorizeInstructor();
             this.testAllPreAuthorizeEditor();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldFailAsStudent() throws Exception {
-            this.testAllPreAuthorizeInstructor();
             this.testAllPreAuthorizeEditor();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-        void shouldFailAsEditor() throws Exception {
-            this.testAllPreAuthorizeInstructor();
-            // do not call testAllPreAuthorizeEditor, as these methods should succeed
         }
     }
 
@@ -137,13 +125,13 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldDeleteCompetencyWhenInstructor() throws Exception {
-        super.shouldDeleteCompetencyWhenInstructor();
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldDeleteCompetencyWhenEditor() throws Exception {
+        super.shouldDeleteCompetencyWhenEditor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldDeleteCompetencyAndRelations() throws Exception {
         super.shouldDeleteCompetencyAndRelations(competencyUtilService.createCompetency(course));
     }
@@ -177,7 +165,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldUpdateCompetency() throws Exception {
         super.shouldUpdateCompetency();
     }
@@ -200,7 +188,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateValidCompetency() throws Exception {
         super.shouldCreateValidCompetency(new Competency());
     }
@@ -234,19 +222,19 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportCompetency() throws Exception {
         super.shouldImportCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportExerciseAndLectureWithCompetencyAndChangeDates();
     }
@@ -262,7 +250,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateCompetencies() throws Exception {
         super.shouldCreateCompetencies(new Competency(), new Competency());
     }
@@ -296,25 +284,25 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportAllCompetencies() throws Exception {
         super.shouldImportAllCompetencies(competencyUtilService::createCompetency);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportAllCompetenciesWithSomeExisting() throws Exception {
         shouldImportAllCompetenciesWithSomeExisting(Competency::new, 3);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
     }
@@ -358,19 +346,19 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportCompetencies() throws Exception {
         super.shouldImportCompetencies(competencyUtilService::createCompetency);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
     }
@@ -412,7 +400,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void shouldReturnMockedSuggestedRelationsWhenFeatureEnabled() throws Exception {
             featureToggleService.enableFeature(Feature.AtlasML);
 

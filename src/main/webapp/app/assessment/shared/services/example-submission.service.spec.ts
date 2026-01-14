@@ -1,11 +1,14 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmission, ExampleSubmissionDTO, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -15,6 +18,7 @@ import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.se
 import { MockProvider } from 'ng-mocks';
 
 describe('Example Submission Service', () => {
+    setupTestBed({ zoneless: true });
     let httpMock: HttpTestingController;
     let service: ExampleSubmissionService;
     let expectedResult: any;
@@ -65,11 +69,11 @@ describe('Example Submission Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Service methods', () => {
-        it('should create an example submission', fakeAsync(() => {
+        it('should create an example submission', () => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
@@ -79,11 +83,11 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-            expect(expectedResult.body).toEqual(expected);
-        }));
 
-        it('should update an example submission', fakeAsync(() => {
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should update an example submission', () => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -93,21 +97,21 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-            expect(expectedResult.body).toEqual(expected);
-        }));
 
-        it('should delete an example submission', fakeAsync(() => {
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should delete an example submission', () => {
             const exampleSubmissionId = 1;
             service.delete(exampleSubmissionId).subscribe((resp) => (expectedResult = resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-            expect(expectedResult).toBeTrue();
-        }));
 
-        it('should return an example submission', fakeAsync(() => {
+            expect(expectedResult).toBe(true);
+        });
+
+        it('should return an example submission', () => {
             const exampleSubmissionId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -117,11 +121,11 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-            expect(expectedResult.body).toEqual(expected);
-        }));
 
-        it('should import an example submission', fakeAsync(() => {
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should import an example submission', () => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -131,9 +135,75 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
+
             expect(expectedResult.body).toEqual(expected);
-        }));
+        });
+
+        it('should prepare for assessment', () => {
+            const exerciseId = 1;
+            const exampleSubmissionId = 2;
+            service
+                .prepareForAssessment(exerciseId, exampleSubmissionId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp.ok));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush({});
+
+            expect(expectedResult).toBe(true);
+        });
+    });
+
+    describe('getSubmissionSize', () => {
+        it('should return word count for text submission', () => {
+            const textExercise = { type: ExerciseType.TEXT } as Exercise;
+            const textSubmission = { text: 'hello world test' } as TextSubmission;
+            const stringCountService = TestBed.inject(StringCountService);
+            vi.spyOn(stringCountService, 'countWords').mockReturnValue(3);
+
+            const result = service.getSubmissionSize(textSubmission, textExercise);
+
+            expect(stringCountService.countWords).toHaveBeenCalledWith('hello world test');
+            expect(result).toBe(3);
+        });
+
+        it('should return element count for modeling submission', () => {
+            const modelingExercise = { type: ExerciseType.MODELING } as Exercise;
+            const modelingSubmission = {
+                model: JSON.stringify({
+                    elements: [{ id: 1 }, { id: 2 }],
+                    relationships: [{ id: 3 }],
+                }),
+            } as ModelingSubmission;
+
+            const result = service.getSubmissionSize(modelingSubmission, modelingExercise);
+
+            expect(result).toBe(3);
+        });
+
+        it('should return 0 when submission is undefined', () => {
+            const exercise = { type: ExerciseType.TEXT } as Exercise;
+
+            const result = service.getSubmissionSize(undefined, exercise);
+
+            expect(result).toBe(0);
+        });
+
+        it('should return 0 when exercise is undefined', () => {
+            const submission = { text: 'test' } as TextSubmission;
+
+            const result = service.getSubmissionSize(submission, undefined);
+
+            expect(result).toBe(0);
+        });
+
+        it('should return 0 for unsupported exercise types', () => {
+            const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+            const submission = {} as Submission;
+
+            const result = service.getSubmissionSize(submission, exercise);
+
+            expect(result).toBe(0);
+        });
     });
 
     describe('ExampleSubmission model & DTO', () => {
@@ -161,7 +231,7 @@ describe('Example Submission Service', () => {
                 };
 
                 expect(ex.id).toBe(42);
-                expect(ex.usedForTutorial).toBeFalse();
+                expect(ex.usedForTutorial).toBe(false);
                 expect(ex.assessmentExplanation).toBe('why');
                 expect((ex.exercise as any).id).toBe(99);
                 expect((ex.submission as any).id).toBe(7);
@@ -174,7 +244,7 @@ describe('Example Submission Service', () => {
                 const dto = new ExampleSubmissionDTO(1, true, 777, 'note');
 
                 expect(dto.id).toBe(1);
-                expect(dto.usedForTutorial).toBeTrue();
+                expect(dto.usedForTutorial).toBe(true);
                 expect(dto.submissionId).toBe(777);
                 expect(dto.assessmentExplanation).toBe('note');
             });
@@ -183,7 +253,7 @@ describe('Example Submission Service', () => {
                 const dto = new ExampleSubmissionDTO(2, false, 888);
 
                 expect(dto.id).toBe(2);
-                expect(dto.usedForTutorial).toBeFalse();
+                expect(dto.usedForTutorial).toBe(false);
                 expect(dto.submissionId).toBe(888);
                 expect(dto.assessmentExplanation).toBeUndefined();
             });

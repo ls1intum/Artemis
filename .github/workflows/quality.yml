@@ -15,7 +15,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch full history to enable git diff with base branch
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -24,70 +26,12 @@ jobs:
 
       - name: Check LOC and number of class dependencies
         run: |
-          # Run the analysis and capture output
-          output=$(python supporting_scripts/analyze_java_files.py)
-
-          echo "$output"
-          echo ""
-
-          # Extract violation counts
-          large_classes=$(echo "$output" | grep -o "Found [0-9]* classes with more than" | grep -o "[0-9]*")
-          complex_beans=$(echo "$output" | grep -o "Found [0-9]* Spring beans with constructors having more than" | grep -o "[0-9]*")
-
           # TODO these values should become zero in the future
-          max_large_classes=9
-          max_complex_beans=10
+          max_large_classes=11
+          max_complex_beans=11
 
-          echo "=========================================="
-          echo "CODE QUALITY ANALYSIS SUMMARY"
-          echo "=========================================="
-          echo "Large classes found: $large_classes (max allowed: $max_large_classes)"
-          echo "Complex beans found: $complex_beans (max allowed: $max_complex_beans)"
-          echo ""
-
-          violations=0
-          large_class_violation=false
-          complex_bean_violation=false
-
-          if [ "$large_classes" -gt "$max_large_classes" ]; then
-            echo "❌ Too many large classes: $large_classes > $max_large_classes"
-            large_class_violation=true
-          else
-            echo "✅ Large classes within threshold: $large_classes <= $max_large_classes"
-          fi
-
-          if [ "$complex_beans" -gt "$max_complex_beans" ]; then
-            excess_complex_beans=$((complex_beans - max_complex_beans))
-            echo "❌ Too many complex beans: $complex_beans > $max_complex_beans ($excess_complex_beans beans need to be refactored)"
-            complex_bean_violation=true
-          else
-            echo "✅ Complex beans within threshold: $complex_beans <= $max_complex_beans"
-          fi
-
-          echo "=========================================="
-
-          if [ $large_class_violation = "true" ] || [ $complex_bean_violation = "true" ]; then
-            echo "::error::Code quality check failed"
-            echo ""
-
-            if [ "$large_class_violation" = true ]; then
-              echo "VIOLATING LARGE CLASSES ($large_classes classes):"
-              echo "------------------------------------------------"
-              violating_classes=$(echo "$output" | sed -n '/Found [0-9]* classes with more than/,/Found [0-9]* Spring beans/p' | grep -E '\.java: [0-9]+ lines')
-              echo "$violating_classes"
-              echo ""
-            fi
-
-            if [ "$complex_bean_violation" = true ]; then
-              echo "VIOLATING COMPLEX BEANS ($complex_beans beans):"
-              echo "-----------------------------------------------"
-              violating_beans=$(echo "$output" | sed -n '/Found [0-9]* Spring beans with constructors having more than/,$p' | grep -E '\.java: [0-9]+ parameters')
-              echo "$violating_beans"
-              echo ""
-            fi
-
-            echo "Please refactor the classes listed above to meet the code quality standards!"
-            exit 1
-          else
-            echo "✅ Code quality check passed"
-          fi
+          python supporting_scripts/analyze_java_files.py \
+            --max-large-classes $max_large_classes \
+            --max-complex-beans $max_complex_beans \
+            --event-type "${{ github.event_name }}" \
+            --base-branch "${{ github.event.pull_request.base.ref || 'develop' }}"

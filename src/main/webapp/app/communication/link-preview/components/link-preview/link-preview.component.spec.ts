@@ -47,7 +47,7 @@ describe('LinkPreviewComponent', () => {
             url: 'https://example.com',
             shouldPreviewBeShown: true,
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const previewContainer = fixture.nativeElement.querySelector('.preview-container');
         const previewCard = fixture.nativeElement.querySelector('.preview-card');
@@ -71,7 +71,7 @@ describe('LinkPreviewComponent', () => {
             shouldPreviewBeShown: true,
         };
         component.multiple = true; // this indicates that there are multiple links in the message
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const previewContainer = fixture.nativeElement.querySelector('.preview-container');
         const previewImage = fixture.nativeElement.querySelector('.preview-image img');
@@ -88,7 +88,7 @@ describe('LinkPreviewComponent', () => {
 
     it('should render loading spinner when linkPreview is not loaded and showLoadingsProgress is true', () => {
         component.showLoadingsProgress = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const loadingContainer = fixture.nativeElement.querySelector('.loading-container');
         const loadingSpinner = fixture.nativeElement.querySelector('.loading-spinner');
@@ -99,7 +99,7 @@ describe('LinkPreviewComponent', () => {
 
     it('should not render loading spinner when linkPreview is loaded', () => {
         component.loaded = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const loadingContainer = fixture.nativeElement.querySelector('.loading-container');
 
@@ -108,7 +108,7 @@ describe('LinkPreviewComponent', () => {
 
     it('should not render loading spinner when showLoadingsProgress is false', () => {
         component.showLoadingsProgress = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const loadingContainer = fixture.nativeElement.querySelector('.loading-container');
 
@@ -117,7 +117,7 @@ describe('LinkPreviewComponent', () => {
 
     it('should not render error message when hasError is false', () => {
         component.hasError = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const errorContainer = fixture.nativeElement.querySelector('.error-container');
 

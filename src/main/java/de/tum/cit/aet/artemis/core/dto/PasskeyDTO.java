@@ -12,5 +12,5 @@ import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
  * DTO for passkey information.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PasskeyDTO(@NotNull @Base64Url String credentialId, String label, Instant created, Instant lastUsed) {
+public record PasskeyDTO(@NotNull @Base64Url String credentialId, String label, Instant created, Instant lastUsed, boolean isSuperAdminApproved) {
 }

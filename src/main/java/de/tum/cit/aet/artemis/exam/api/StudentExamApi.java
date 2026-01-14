@@ -56,10 +56,6 @@ public class StudentExamApi extends AbstractExamApi {
         studentExamRepository.save(studentExam);
     }
 
-    public long countByExamId(long examId) {
-        return studentExamRepository.countByExamId(examId);
-    }
-
     public Map<Course, List<StudentExam>> findStudentExamsByCourseForUserId(long userId) {
         return studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));

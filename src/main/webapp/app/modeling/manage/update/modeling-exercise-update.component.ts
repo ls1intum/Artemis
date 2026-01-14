@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -47,7 +47,6 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
@@ -81,21 +80,20 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly eventManager = inject(EventManager);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly calendarService = inject(CalendarService);
 
-    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
-    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
+    readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
+    readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
+    readonly modelingEditor = viewChild(ModelingEditorComponent);
 
-    @ViewChild('bonusPoints') bonusPoints?: NgModel;
-    @ViewChild('points') points?: NgModel;
-    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
-    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
-    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
-    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
-    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-    @ViewChild('editForm', { read: ElementRef }) editFormEl?: ElementRef<HTMLFormElement>;
+    readonly bonusPoints = viewChild<NgModel>('bonusPoints');
+    readonly points = viewChild<NgModel>('points');
+    readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
+    readonly releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
+    readonly startDateField = viewChild<FormDateTimePickerComponent>('startDate');
+    readonly dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
+    readonly assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
+    readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
@@ -132,9 +130,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     ngAfterViewInit() {
-        this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent()?.formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
     }
 
     constructor() {
@@ -147,7 +145,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // triggers effect on change
+        // Guard against viewChild not being available yet (before view init)
+        const titleComponent = this.exerciseTitleChannelNameComponent?.();
+        if (titleComponent?.titleChannelNameComponent) {
+            titleComponent.titleChannelNameComponent().isValid(); // triggers effect on change
+        }
 
         this.calculateFormSectionStatus().then();
     }
@@ -234,35 +236,35 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        await this.modelingEditor?.apollonEditor?.nextRender;
+        await this.modelingEditor()?.apollonEditor?.nextRender;
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
+                valid: this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid() ?? true,
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
+            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent()?.formValid) },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
+                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
                 empty:
-                    isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
+                    isEmpty(this.modelingEditor()?.getCurrentModel()?.elements) ||
                     (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.points?.valid &&
-                        this.bonusPoints?.valid &&
+                    (this.points()?.valid ?? true) &&
+                        (this.bonusPoints()?.valid ?? true) &&
                         (this.isExamMode ||
                             (!this.modelingExercise.startDateError &&
                                 !this.modelingExercise.dueDateError &&
                                 !this.modelingExercise.assessmentDueDateError &&
-                                this.releaseDateField?.dateInput.valid &&
-                                this.startDateField?.dateInput.valid &&
-                                this.dueDateField?.dateInput.valid &&
-                                this.assessmentDateField?.dateInput.valid)),
+                                (this.releaseDateField()?.dateInput?.valid ?? true) &&
+                                (this.startDateField()?.dateInput?.valid ?? true) &&
+                                (this.dueDateField()?.dateInput?.valid ?? true) &&
+                                (this.assessmentDateField()?.dateInput?.valid ?? true))),
                 ),
                 empty:
                     !this.isExamMode &&
@@ -273,9 +275,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         !this.modelingExercise.releaseDate?.isValid()),
             },
         ];
-
-        // otherwise, the change detection does not work on the initial load
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
@@ -304,7 +303,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             return;
         }
 
-        const formRoot = this.editFormEl?.nativeElement as HTMLElement | undefined;
+        const formRoot = this.editFormEl()?.nativeElement as HTMLElement | undefined;
         if (!formRoot) {
             return;
         }
@@ -327,7 +326,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     save() {
-        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)

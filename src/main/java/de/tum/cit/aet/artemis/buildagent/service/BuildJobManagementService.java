@@ -109,12 +109,24 @@ public class BuildJobManagementService {
      */
     private final ReentrantLock jobLifecycleLock = new ReentrantLock();
 
+    /**
+     * Maximum allowed timeout for build jobs in seconds. Individual jobs can specify a lower timeout,
+     * but not higher than this value. Default is 240 seconds (4 minutes).
+     */
     @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int timeoutSeconds;
 
+    /**
+     * Whether to run build jobs asynchronously (true) or synchronously (false).
+     * Synchronous mode is primarily used for testing to ensure deterministic behavior.
+     */
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    /**
+     * Prefix for Docker container names. Each build job's container is named "{prefix}{buildJobId}".
+     * This allows easy identification and management of build containers.
+     */
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
@@ -271,10 +283,27 @@ public class BuildJobManagementService {
         buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
     }
 
+    /**
+     * Returns a snapshot of all currently running build job IDs on this node.
+     * <p>
+     * This is useful for monitoring and debugging purposes. The returned set is a copy,
+     * so modifications won't affect the internal state.
+     *
+     * @return an immutable set of build job IDs currently being executed on this node
+     */
     Set<String> getRunningBuildJobIds() {
         return Set.copyOf(runningFutures.keySet());
     }
 
+    /**
+     * Returns the public-facing CompletableFuture wrapper for a running build job.
+     * <p>
+     * This wrapper is used by REST/websocket layers to observe build completion and stream logs.
+     * Returns null if no build job with the given ID is currently running on this node.
+     *
+     * @param buildJobId the ID of the build job
+     * @return the CompletableFuture wrapper, or null if not found
+     */
     CompletableFuture<BuildResult> getRunningBuildJobFutureWrapper(String buildJobId) {
         return runningFuturesWrapper.get(buildJobId);
     }
@@ -307,6 +336,8 @@ public class BuildJobManagementService {
 
     /**
      * Finish the build job if an exception occurred while building and testing the repository.
+     * This method logs the error, provides user-friendly messaging for infrastructure issues,
+     * and ensures the container is properly stopped.
      *
      * @param buildJobId    The id of the build job that failed.
      * @param containerName The name of the Docker container that was used to execute the build job.
@@ -315,15 +346,47 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
-        log.error(msg, exception);
 
-        log.info("Getting ID of running container {}", containerName);
+        // Check if this is a tar archive failure (infrastructure issue)
+        boolean isTarFailure = isTarArchiveFailure(exception);
+        if (isTarFailure) {
+            String userFriendlyMsg = "Build failed due to a temporary infrastructure issue while preparing the build environment. "
+                    + "This is not caused by your code. Please try rerunning your build.";
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), userFriendlyMsg));
+            log.error("Tar archive failure for build job {}: {}", buildJobId, exception.getMessage(), exception);
+        }
+        else {
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
+            log.error(msg, exception);
+        }
+
+        log.info("Getting ID of running container {} for cleanup after build job {} failure", containerName, buildJobId);
         String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
-        log.info("Stopping unresponsive container with ID {}", containerId);
         if (containerId != null) {
+            log.info("Stopping container with ID {} after build job {} failed", containerId, buildJobId);
             buildJobContainerService.stopUnresponsiveContainer(containerId);
         }
+        else {
+            log.debug("No running container found with name {} for build job {}", containerName, buildJobId);
+        }
+    }
+
+    /**
+     * Checks if the exception is related to a tar archive operation failure.
+     *
+     * @param exception the exception to check
+     * @return true if the exception is related to tar archive operations
+     */
+    private boolean isTarArchiveFailure(Exception exception) {
+        String message = exception.getMessage();
+        if (message == null) {
+            return false;
+        }
+
+        // Check for tar-related error messages
+        return message.contains("tar archive") || message.contains("Could not copy to container") || message.contains("Could not create tar")
+                || message.contains("Failed to retrieve archive") || (exception.getCause() != null && exception.getCause().getMessage() != null
+                        && (exception.getCause().getMessage().contains("tar") || exception.getCause().getMessage().contains("IOException")));
     }
 
     /**
@@ -362,6 +425,14 @@ public class BuildJobManagementService {
         cancelledBuildJobs.remove(buildJobId);
     }
 
+    /**
+     * Converts an exception's stack trace to a string for logging purposes.
+     * <p>
+     * This is useful for including full stack traces in build logs to help with debugging.
+     *
+     * @param e the throwable whose stack trace should be converted
+     * @return the stack trace as a string
+     */
     private String stackTraceToString(Throwable e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);

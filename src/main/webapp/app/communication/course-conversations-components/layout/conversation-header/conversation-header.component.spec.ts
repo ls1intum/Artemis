@@ -23,7 +23,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { SimpleChanges, input, runInInjectionContext } from '@angular/core';
+import { SimpleChanges } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -91,11 +91,11 @@ examples.forEach((activeConversation) => {
 
         it('should open the add users dialog', fakeAsync(() => {
             canAddUsers.mockReturnValue(false);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.debugElement.nativeElement.querySelector('.addUsers')).toBeFalsy();
 
             canAddUsers.mockReturnValue(true);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
@@ -105,7 +105,7 @@ examples.forEach((activeConversation) => {
                 result: Promise.resolve(),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             addUsersButton.click();
             fixture.whenStable().then(() => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
@@ -171,59 +171,56 @@ examples.forEach((activeConversation) => {
 
         it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
             component.showPinnedMessages = true;
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.pinnedMessageCount = input<number>(3);
+            fixture.componentRef.setInput('pinnedMessageCount', 3);
+            fixture.changeDetectorRef.detectChanges();
 
-                const changes: SimpleChanges = {
-                    pinnedMessageCount: {
-                        currentValue: 0,
-                        previousValue: 3,
-                        firstChange: false,
-                        isFirstChange: () => false,
-                    },
-                };
+            const changes: SimpleChanges = {
+                pinnedMessageCount: {
+                    currentValue: 0,
+                    previousValue: 3,
+                    firstChange: false,
+                    isFirstChange: () => false,
+                },
+            };
 
-                component.ngOnChanges(changes);
-                expect(component.showPinnedMessages).toBeFalse();
-            });
+            component.ngOnChanges(changes);
+            expect(component.showPinnedMessages).toBeFalse();
         });
 
         it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
             component.showPinnedMessages = true;
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.pinnedMessageCount = input<number>(3);
+            fixture.componentRef.setInput('pinnedMessageCount', 3);
+            fixture.changeDetectorRef.detectChanges();
 
-                const changes: SimpleChanges = {
-                    pinnedMessageCount: {
-                        currentValue: 5,
-                        previousValue: 3,
-                        firstChange: false,
-                        isFirstChange: () => false,
-                    },
-                };
+            const changes: SimpleChanges = {
+                pinnedMessageCount: {
+                    currentValue: 5,
+                    previousValue: 3,
+                    firstChange: false,
+                    isFirstChange: () => false,
+                },
+            };
 
-                component.ngOnChanges(changes);
-                expect(component.showPinnedMessages).toBeTrue();
-            });
+            component.ngOnChanges(changes);
+            expect(component.showPinnedMessages).toBeTrue();
         });
 
         it('should correctly handle first change of pinnedMessageCount', () => {
             component.showPinnedMessages = false;
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.pinnedMessageCount = input<number>(2);
+            fixture.componentRef.setInput('pinnedMessageCount', 2);
+            fixture.changeDetectorRef.detectChanges();
 
-                const changes: SimpleChanges = {
-                    pinnedMessageCount: {
-                        currentValue: 2,
-                        previousValue: undefined,
-                        firstChange: true,
-                        isFirstChange: () => true,
-                    },
-                };
+            const changes: SimpleChanges = {
+                pinnedMessageCount: {
+                    currentValue: 2,
+                    previousValue: undefined,
+                    firstChange: true,
+                    isFirstChange: () => true,
+                },
+            };
 
-                component.ngOnChanges(changes);
-                expect(component.showPinnedMessages).toBeFalse();
-            });
+            component.ngOnChanges(changes);
+            expect(component.showPinnedMessages).toBeFalse();
         });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
@@ -371,7 +368,7 @@ examples.forEach((activeConversation) => {
                 result: Promise.resolve(),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             detailButton.click();
             fixture.whenStable().then(() => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();

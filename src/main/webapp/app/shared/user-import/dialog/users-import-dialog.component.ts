@@ -1,7 +1,7 @@
-import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, ViewChild, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
+import { DialogModule } from 'primeng/dialog';
 import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { cleanString } from 'app/shared/util/utils';
@@ -15,11 +15,13 @@ import { parse } from 'papaparse';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { Student } from 'app/openapi/model/student';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PrimeTemplate } from 'primeng/api';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -38,10 +40,9 @@ interface CsvUser {
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate],
 })
 export class UsersImportDialogComponent implements OnDestroy {
-    private activeModal = inject(NgbActiveModal);
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
     private courseManagementService = inject(CourseManagementService);
@@ -49,15 +50,17 @@ export class UsersImportDialogComponent implements OnDestroy {
     private tutorialGroupService = inject(TutorialGroupsService);
 
     readonly ActionType = ActionType;
+    readonly dialogVisible = signal<boolean>(false);
+    readonly importCompleted = output<void>();
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
 
-    @Input() courseId: number;
-    @Input() courseGroup: string;
-    @Input() exam: Exam | undefined;
-    @Input() tutorialGroup: TutorialGroup | undefined;
-    @Input() examUserMode: boolean;
-    @Input() adminUserMode: boolean;
+    courseId = input<number>();
+    courseGroup = input<string>();
+    exam = input<Exam | undefined>();
+    tutorialGroup = input<TutorialGroup | undefined>();
+    examUserMode = input<boolean>(false);
+    adminUserMode = input<boolean>(false);
 
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
@@ -94,7 +97,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             this.resetDialog();
-            if (this.examUserMode) {
+            if (this.examUserMode()) {
                 this.examUsersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
             } else {
                 this.usersToImport = await this.readUsersFromCSVFile(event, event.target.files[0]);
@@ -140,7 +143,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         const roomHeader = usedHeaders.find((value) => POSSIBLE_ROOM_HEADERS.includes(value)) || '';
         const seatHeader = usedHeaders.find((value) => POSSIBLE_SEAT_HEADERS.includes(value)) || '';
 
-        if (this.examUserMode) {
+        if (this.examUserMode()) {
             return csvUsers.map(
                 (user: CsvUser) =>
                     ({
@@ -230,36 +233,40 @@ export class UsersImportDialogComponent implements OnDestroy {
      */
     importUsers() {
         this.isImporting = true;
-        if (this.tutorialGroup) {
-            this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
+        const tutorialGroup = this.tutorialGroup();
+        const courseGroup = this.courseGroup();
+        const exam = this.exam();
+        const courseId = this.courseId();
+
+        if (tutorialGroup) {
+            this.tutorialGroupService.registerMultipleStudents(courseId!, tutorialGroup.id!, this.usersToImport).subscribe({
                 next: (res: HttpResponse<Array<Student>>) => {
-                    const convertedHttpResponse = this.convertGeneratedDtoToNonGenerated(res);
-                    this.onSaveSuccess(convertedHttpResponse);
+                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
+                    this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),
             });
-        } else if (this.courseGroup && !this.exam) {
-            this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe({
-                next: (res) => this.onSaveSuccess(res),
+        } else if (courseGroup && !exam) {
+            this.courseManagementService.addUsersToGroupInCourse(courseId!, this.usersToImport, courseGroup).subscribe({
+                next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });
-        } else if (!this.courseGroup && this.exam) {
-            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.examUsersToImport).subscribe({
-                next: (res) => this.onSaveSuccess(res),
+        } else if (!courseGroup && exam) {
+            this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport).subscribe({
+                next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });
-        } else if (this.adminUserMode) {
+        } else if (this.adminUserMode()) {
             // convert StudentDTO to User
             const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
             this.adminUserService.importAll(artemisUsers).subscribe({
                 next: (res) => {
-                    const convertedRes = new HttpResponse({
-                        body: res.body?.map((user) => ({
+                    const convertedStudents =
+                        res.body?.map((user) => ({
                             ...user,
                             registrationNumber: user.visibleRegistrationNumber,
-                        })),
-                    });
-                    this.onSaveSuccess(convertedRes);
+                        })) || [];
+                    this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),
             });
@@ -271,12 +278,12 @@ export class UsersImportDialogComponent implements OnDestroy {
     /**
      * Helper method to convert the generated Student DTOs to non-generated StudentDTOs
      * This is needed as long as not all methods in this component are converted to use the generated Student DTO.
-     * @param response The HttpResponse containing the DTOs converted to @link{StudentDTO}
+     * @param response DTOs converted to @link{StudentDTO}
      */
-    private convertGeneratedDtoToNonGenerated(response: HttpResponse<Array<Student>>): HttpResponse<Partial<StudentDTO>[]> {
+    private convertGeneratedDtoToNonGenerated(response: Array<Student>): Partial<StudentDTO>[] {
         const nonGeneratedDtos: Partial<StudentDTO>[] = [];
-        if (response.body) {
-            for (const student of response.body) {
+        if (response) {
+            for (const student of response) {
                 nonGeneratedDtos.push({
                     login: student.login,
                     firstName: student.firstName,
@@ -286,13 +293,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 });
             }
         }
-        return new HttpResponse<Partial<StudentDTO>[]>({
-            body: nonGeneratedDtos,
-            headers: response.headers,
-            status: response.status,
-            statusText: response.statusText,
-            url: response.url ?? undefined,
-        });
+        return nonGeneratedDtos;
     }
 
     /**
@@ -331,7 +332,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     get numberOfUsersImported(): number {
         return !this.hasImported
             ? 0
-            : this.examUserMode
+            : this.examUserMode()
               ? this.examUsersToImport.length - this.numberOfUsersNotImported
               : this.usersToImport.length - this.numberOfUsersNotImported;
     }
@@ -344,17 +345,17 @@ export class UsersImportDialogComponent implements OnDestroy {
     }
 
     get isSubmitDisabled(): boolean {
-        return this.examUserMode ? this.isImporting || !this.examUsersToImport?.length : this.isImporting || !this.usersToImport?.length;
+        return this.examUserMode() ? this.isImporting || !this.examUsersToImport?.length : this.isImporting || !this.usersToImport?.length;
     }
 
     /**
      * Callback method that is called when the import request was successful
-     * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
+     * @param notFoundUsers - List of users that could NOT be imported since they were not found
      */
-    onSaveSuccess(notFoundUsers: HttpResponse<Partial<StudentDTO>[]>) {
+    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[]) {
         this.isImporting = false;
         this.hasImported = true;
-        this.notFoundUsers = notFoundUsers.body! || [];
+        this.notFoundUsers = notFoundUsers || [];
     }
 
     /**
@@ -365,11 +366,21 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.isImporting = false;
     }
 
+    open(): void {
+        this.resetDialog();
+        this.dialogVisible.set(true);
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
+    }
+
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.close();
     }
 
     onFinish() {
-        this.activeModal.close();
+        this.close();
+        this.importCompleted.emit();
     }
 }

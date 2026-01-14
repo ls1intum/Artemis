@@ -178,7 +178,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * @param referencedUserLogin login of the referenced user
      */
     onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.course;
+        const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage) {
                 this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
@@ -204,7 +204,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
         const referencedUserId = this.posting.author?.id;
 
-        const course = this.metisService.course;
+        const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage) {
                 this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();

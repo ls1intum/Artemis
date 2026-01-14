@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -18,8 +20,41 @@ import { provideHttpClient } from '@angular/common/http';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
+
+// Mock monaco-editor module
+vi.mock('monaco-editor', () => ({
+    editor: {
+        EditorOption: {
+            lineHeight: 'lineHeight',
+        },
+        EndOfLineSequence: {
+            LF: 0,
+        },
+        createModel: vi.fn().mockReturnValue({
+            setValue: vi.fn(),
+            getValue: vi.fn().mockReturnValue(''),
+            dispose: vi.fn(),
+            setEOL: vi.fn(),
+        }),
+        getModel: vi.fn().mockReturnValue(null),
+        setModelLanguage: vi.fn(),
+        create: vi.fn(),
+        createDiffEditor: vi.fn(),
+    },
+    KeyCode: {},
+    KeyMod: {
+        CtrlCmd: 2048,
+    },
+    Uri: {
+        parse: vi.fn().mockReturnValue({ toString: () => 'mock://uri' }),
+        file: vi.fn().mockReturnValue({ toString: () => 'file://mock' }),
+    },
+}));
 
 describe('MultipleChoiceQuestionEditComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
     let modalService: NgbModal;
@@ -39,30 +74,88 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     };
 
     beforeEach(async () => {
+        const mockDisposable = { dispose: vi.fn() };
+        const mockModel = {
+            setEOL: vi.fn(),
+            getValue: vi.fn().mockReturnValue(''),
+            setValue: vi.fn(),
+            onDidChangeContent: vi.fn(),
+            getLineContent: vi.fn().mockReturnValue(''),
+        };
+        const mockEditor = {
+            getModel: vi.fn().mockReturnValue(mockModel),
+            setModel: vi.fn(),
+            updateOptions: vi.fn(),
+            layout: vi.fn(),
+            onDidChangeModelContent: vi.fn().mockReturnValue(mockDisposable),
+            onDidContentSizeChange: vi.fn().mockReturnValue(mockDisposable),
+            onDidBlurEditorWidget: vi.fn().mockReturnValue(mockDisposable),
+            onDidFocusEditorText: vi.fn().mockReturnValue(mockDisposable),
+            onDidBlurEditorText: vi.fn().mockReturnValue(mockDisposable),
+            onDidPaste: vi.fn().mockReturnValue(mockDisposable),
+            onDidChangeCursorPosition: vi.fn().mockReturnValue(mockDisposable),
+            onKeyDown: vi.fn().mockReturnValue(mockDisposable),
+            onKeyUp: vi.fn().mockReturnValue(mockDisposable),
+            getOption: vi.fn().mockReturnValue(16),
+            getContentHeight: vi.fn().mockReturnValue(100),
+            getContentWidth: vi.fn().mockReturnValue(500),
+            addCommand: vi.fn(),
+            addAction: vi.fn().mockReturnValue(mockDisposable),
+            dispose: vi.fn(),
+            getValue: vi.fn().mockReturnValue(''),
+            setValue: vi.fn(),
+            getId: vi.fn().mockReturnValue('mock-editor-id'),
+            getPosition: vi.fn().mockReturnValue({ lineNumber: 1, column: 1 }),
+            setPosition: vi.fn(),
+            getSelection: vi.fn().mockReturnValue({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }),
+            setSelection: vi.fn(),
+            executeEdits: vi.fn().mockReturnValue(true),
+            focus: vi.fn(),
+            trigger: vi.fn(),
+            deltaDecorations: vi.fn().mockReturnValue([]),
+            getContribution: vi.fn().mockReturnValue(null),
+            createDecorationsCollection: vi.fn().mockReturnValue({ clear: vi.fn(), set: vi.fn() }),
+            getContainerDomNode: vi.fn().mockReturnValue(document.createElement('div')),
+            getDomNode: vi.fn().mockReturnValue(document.createElement('div')),
+            revealLine: vi.fn(),
+            revealLineInCenter: vi.fn(),
+            revealRangeInCenter: vi.fn(),
+            getScrollHeight: vi.fn().mockReturnValue(100),
+            getScrollWidth: vi.fn().mockReturnValue(500),
+            getScrollTop: vi.fn().mockReturnValue(0),
+            getScrollLeft: vi.fn().mockReturnValue(0),
+            setScrollTop: vi.fn(),
+            setScrollPosition: vi.fn(),
+            onDidScrollChange: vi.fn().mockReturnValue(mockDisposable),
+        };
+
+        const mockMonacoEditorService = {
+            createStandaloneCodeEditor: vi.fn().mockReturnValue(mockEditor),
+        };
+
         await TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: MonacoEditorService, useValue: mockMonacoEditorService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
 
+        globalThis.ResizeObserver = MockResizeObserver as any;
+
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
-        fixture.componentRef.setInput('question', question);
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize with question markdown text', () => {
@@ -132,7 +225,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should parse answer options with question titles', () => {
@@ -173,7 +266,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should parse question titles', () => {
@@ -192,18 +285,18 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should find no domain actions', () => {
         component.domainActionsFound([]);
 
         expectCleanupQuestion();
-        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
+        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
     });
 
     it('should detect changes in markdown', () => {
-        const spy = jest.spyOn(component.questionUpdated, 'emit');
+        const spy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.changesInMarkdown();
 
@@ -220,7 +313,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     }
 
     it('should trigger delete button', () => {
-        const spy = jest.spyOn(component, 'deleteQuestion');
+        const spy = vi.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
         deleteButton.nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
@@ -228,7 +321,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse markdown when preparing for save in edit mode', () => {
         component.markdownEditor()!.inVisualMode = false;
-        const parseMarkdownSpy = jest.spyOn(component.markdownEditor()!, 'parseMarkdown');
+        const parseMarkdownSpy = vi.spyOn(component.markdownEditor()!, 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
@@ -237,10 +330,10 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.markdownEditor()!.inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
         component.markdownEditor()!['monacoEditor'] = {
-            setText: jest.fn(),
+            setText: vi.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
 
-        const parseQuestionStub = jest.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
+        const parseQuestionStub = vi.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
         expect(component.markdownEditor()!['_markdown']).toBe('parsed-question');
@@ -248,7 +341,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should open modal', () => {
         const content = {};
-        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+        const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
 
         component.open(content);
 
@@ -256,8 +349,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should detect changes in visual mode', () => {
-        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
-        const detectChangesSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
+        const detectChangesSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
 
         component.changesInVisualMode();
 
@@ -266,7 +359,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should move up', () => {
-        const emitSpy = jest.spyOn(component.questionMoveUp, 'emit');
+        const emitSpy = vi.spyOn(component.questionMoveUp, 'emit');
 
         component.moveUp();
 
@@ -274,7 +367,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should move down', () => {
-        const emitSpy = jest.spyOn(component.questionMoveDown, 'emit');
+        const emitSpy = vi.spyOn(component.questionMoveDown, 'emit');
 
         component.moveDown();
 
@@ -295,7 +388,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.backupQuestion = backup;
         component.question().title = 'current-title';
         component.question().text = 'current-text';
-        const detectChangesSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+        const detectChangesSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
 
         component.resetQuestion();
 

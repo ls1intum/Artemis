@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 
 /**
@@ -64,7 +64,7 @@ public class ModelingExerciseUtilService {
     private CourseTestRepository courseRepo;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private ResultTestRepository resultRepo;
@@ -252,6 +252,7 @@ public class ModelingExerciseUtilService {
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         studentParticipationRepo.save(participation);
@@ -316,6 +317,7 @@ public class ModelingExerciseUtilService {
         result.setAssessmentType(AssessmentType.MANUAL);
         submission = modelingSubmissionRepo.save(submission);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         result = resultRepo.save(result);

@@ -1,3 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import type { MockInstance } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
@@ -14,37 +17,32 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
-    let component: EditAttachmentVideoUnitComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
-    let lectureTranscriptionService: LectureTranscriptionService;
-    let accountService: AccountService;
     let router: Router;
-    let navigateSpy: jest.SpyInstance;
-    let updateAttachmentVideoUnitSpy: jest.SpyInstance;
+    let navigateSpy: MockInstance<Router['navigate']>;
+    let updateAttachmentVideoUnitSpy: MockInstance<AttachmentVideoUnitService['update']>;
     let attachment: Attachment;
     let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
     let fakeFile: File;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
-                MockProvider(LectureTranscriptionService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 {
@@ -76,17 +74,13 @@ describe('EditAttachmentVideoUnitComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(EditAttachmentVideoUnitComponent);
-        component = fixture.componentInstance;
         router = TestBed.inject(Router);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        accountService = TestBed.inject(AccountService);
 
         attachment = new Attachment();
         attachment.id = 1;
@@ -113,7 +107,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         baseFormData.append('attachment', objectToJsonBlob(attachment));
         baseFormData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitForBlob));
 
-        jest.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
             of(
                 new HttpResponse({
                     body: attachmentVideoUnit,
@@ -121,14 +115,12 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 }),
             ),
         );
-        updateAttachmentVideoUnitSpy = jest.spyOn(attachmentVideoUnitService, 'update');
-        navigateSpy = jest.spyOn(router, 'navigate');
-
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        updateAttachmentVideoUnitSpy = vi.spyOn(attachmentVideoUnitService, 'update');
+        navigateSpy = vi.spyOn(router, 'navigate');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should set form data correctly', async () => {
@@ -170,12 +162,12 @@ describe('EditAttachmentVideoUnitComponent', () => {
             },
         };
 
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should update attachment video unit with file change with notification', async () => {
@@ -200,12 +192,12 @@ describe('EditAttachmentVideoUnitComponent', () => {
             },
         };
 
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), notification);
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should update attachment video unit without file change without notification', async () => {
@@ -229,58 +221,11 @@ describe('EditAttachmentVideoUnitComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitForBlob));
 
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should fetch transcription when user is admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-        const transcription = { id: 1, videoUnitId: 1, language: 'en', content: 'test' };
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcription as any));
-
-        fixture.detectChanges();
-
-        expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-        expect(component.formData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
-    });
-
-    it('should not fetch transcription when user is not admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
-
-        fixture.detectChanges();
-
-        expect(getTranscriptionSpy).not.toHaveBeenCalled();
-    });
-
-    it('should create transcription when form is submitted with transcription properties', () => {
-        fixture.detectChanges();
-        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-
-        const transcription = { language: 'en', lectureUnitId: 1, content: 'test transcription' };
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                videoSource: attachmentVideoUnit.videoSource,
-                version: 1,
-            },
-            fileProperties: {},
-            transcriptionProperties: {
-                videoTranscription: JSON.stringify(transcription),
-            },
-        };
-
-        const createTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(of(true));
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
-        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-        fixture.detectChanges();
-
-        expect(createTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, transcription);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 });

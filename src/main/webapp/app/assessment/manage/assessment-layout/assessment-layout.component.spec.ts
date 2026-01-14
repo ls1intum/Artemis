@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
@@ -19,15 +21,19 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Result } from '../../../exercise/shared/entities/result/result.model';
 import { AssessmentNote } from '../../shared/entities/assessment-note.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('AssessmentLayoutComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: AssessmentLayoutComponent;
     let fixture: ComponentFixture<AssessmentLayoutComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent), FaIconComponent],
-            declarations: [
+            imports: [
+                MockModule(NgbTooltipModule),
+                MockComponent(ComplaintsForTutorComponent),
+                FaIconComponent,
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
                 AssessmentNoteComponent,
@@ -71,9 +77,20 @@ describe('AssessmentLayoutComponent', () => {
         expect(assessmentComplaintAlertComponent).toBeTruthy();
     });
 
-    it('should include jhi-assessment-note', () => {
+    it('should include jhi-assessment-note when submission exists', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.changeDetectorRef.detectChanges();
+
         const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
         expect(assessmentNoteComponent).not.toBeNull();
+    });
+
+    it('should not include jhi-assessment-note when no submission exists', () => {
+        fixture.componentRef.setInput('submission', undefined);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
     });
 
     it('should include jhi-complaints-for-tutor-form', () => {
@@ -81,7 +98,7 @@ describe('AssessmentLayoutComponent', () => {
         expect(complaintsForTutorComponent).toBeFalsy();
 
         fixture.componentRef.setInput('complaint', new Complaint());
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
     });
@@ -90,7 +107,7 @@ describe('AssessmentLayoutComponent', () => {
         const mockResult = new Result();
         const mockAssessmentNote = { note: 'Test assessment note' } as AssessmentNote;
         fixture.componentRef.setInput('result', () => mockResult);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.setAssessmentNoteForResult(mockAssessmentNote);
         expect(component.result()!.assessmentNote).toBe(mockAssessmentNote);

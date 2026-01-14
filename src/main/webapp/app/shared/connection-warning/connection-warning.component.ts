@@ -5,7 +5,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NavigationEnd, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CloseCircleComponent } from '../close-circle/close-circle.component';
 import { NgClass } from '@angular/common';
 
@@ -41,7 +41,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
+            this.disconnected = !status.connected && status.wasEverConnectedBefore;
 
             if (this.disconnected) {
                 this.openTimeout = setTimeout(() => this.popover?.open(), 300);

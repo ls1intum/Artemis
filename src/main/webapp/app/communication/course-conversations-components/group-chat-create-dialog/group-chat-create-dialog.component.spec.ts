@@ -40,7 +40,7 @@ describe('GroupChatCreateDialogComponent', () => {
         const closeSpy = jest.spyOn(activeModal, 'close');
         const selectedUsers = [{ id: 1 }, { id: 2 }];
         component.selectedUsersControl!.setValue(selectedUsers);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
         expect(closeSpy).toHaveBeenCalledOnce();

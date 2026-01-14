@@ -2,11 +2,12 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { of } from 'rxjs';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 
@@ -16,7 +17,6 @@ type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 export class AttachmentVideoUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
-    private alertService = inject(AlertService);
 
     private resourceURL = 'api/lecture';
 
@@ -97,26 +97,47 @@ export class AttachmentVideoUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    startTranscription(lectureId: number, lectureUnitId: number, videoUrl: string): Observable<void> {
-        const body = {
-            videoUrl,
-            lectureId,
-            lectureUnitId,
-        };
+    /**
+     * Resolves a video page URL to its underlying playlist URL (e.g., .m3u8).
+     * This is used for video platforms that require an API call to get the actual playable URL.
+     *
+     * @param pageUrl - The public page URL of the video
+     * @returns Observable<string | undefined> - The playlist URL if found, undefined otherwise
+     */
+    getPlaylistUrl(pageUrl: string): Observable<string | undefined> {
+        const params = new HttpParams().set('url', pageUrl);
+        return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(undefined)));
+    }
 
-        return this.httpClient
-            .post(`/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`, body, {
-                observe: 'response',
-                responseType: 'text',
-            })
-            .pipe(
-                map(() => {
-                    this.alertService.success('artemisApp.attachmentVideoUnit.transcription.started');
-                }),
-                catchError((error: any) => {
-                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.error');
-                    return of();
-                }),
-            );
+    /**
+     * Creates an attachment video unit from a PDF file.
+     * Derives the unit name from the filename and sets release date to 15 minutes in the future.
+     *
+     * @param lectureId - The ID of the lecture to add the unit to
+     * @param file - The PDF file to create the attachment unit from
+     * @returns Observable of the HTTP response containing the created AttachmentVideoUnit
+     */
+    createAttachmentVideoUnitFromFile(lectureId: number, file: File): Observable<EntityResponseType> {
+        const unitName = file.name
+            .replace(/\.pdf$/i, '')
+            .replace(/[_-]/g, ' ')
+            .trim();
+        const releaseDate = dayjs().add(15, 'minutes');
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.name = unitName;
+        attachmentVideoUnit.releaseDate = releaseDate;
+
+        const attachment = new Attachment();
+        attachment.name = unitName;
+        attachment.releaseDate = releaseDate;
+        attachment.attachmentType = AttachmentType.FILE;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
+        formData.append('attachment', objectToJsonBlob(attachment));
+
+        return this.create(formData, lectureId);
     }
 }

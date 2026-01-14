@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
@@ -11,13 +11,13 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [],
 })
 export class Saml2LoginComponent implements OnInit {
-    private loginService = inject(LoginService);
-    private eventManager = inject(EventManager);
-    private alertService = inject(AlertService);
+    private readonly loginService = inject(LoginService);
+    private readonly eventManager = inject(EventManager);
+    private readonly alertService = inject(AlertService);
 
-    @Input() rememberMe = true;
-    @Input() acceptedTerms = false;
-    @Input() saml2Profile: Saml2Config;
+    readonly rememberMe = input(true);
+    readonly acceptedTerms = input(false);
+    readonly saml2Profile = input.required<Saml2Config>();
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
@@ -30,7 +30,7 @@ export class Saml2LoginComponent implements OnInit {
 
     loginSAML2() {
         this.loginService
-            .loginSAML2(this.rememberMe)
+            .loginSAML2(this.rememberMe())
             .then(() => {
                 this.eventManager.broadcast({
                     name: 'authenticationSuccess',

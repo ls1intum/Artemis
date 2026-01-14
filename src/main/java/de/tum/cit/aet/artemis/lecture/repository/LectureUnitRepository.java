@@ -1,25 +1,24 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.NonUniqueResultException;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
 /**
  * Spring Data JPA repository for the Lecture Unit entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit, Long> {
@@ -43,34 +42,6 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findWithCompetenciesAndSlidesById(@Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency c
-                LEFT JOIN FETCH c.lectureUnitLinks lul
-                LEFT JOIN FETCH lul.lectureUnit
-                LEFT JOIN FETCH lu.exercise e
-                LEFT JOIN FETCH e.competencyLinks ecl
-                LEFT JOIN FETCH ecl.competency
-            WHERE lu.id = :lectureUnitId
-            """)
-    Optional<LectureUnit> findByIdWithCompetenciesBidirectional(@Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency c
-                LEFT JOIN FETCH c.lectureUnitLinks lul
-                LEFT JOIN FETCH lul.lectureUnit
-                LEFT JOIN FETCH lu.exercise e
-                LEFT JOIN FETCH e.competencyLinks ecl
-                LEFT JOIN FETCH ecl.competency
-            WHERE lu.id IN :lectureUnitIds
-            """)
-    Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
     @Query("""
             SELECT lu
@@ -115,15 +86,25 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
     }
 
-    default LectureUnit findByIdWithCompetenciesBidirectionalElseThrow(long lectureUnitId) {
-        return getValueElseThrow(findByIdWithCompetenciesBidirectional(lectureUnitId), lectureUnitId);
-    }
-
     default LectureUnit findByIdWithCompetenciesAndSlidesElseThrow(long lectureUnitId) {
         return getValueElseThrow(findWithCompetenciesAndSlidesById(lectureUnitId), lectureUnitId);
     }
 
     default LectureUnit findByIdElseThrow(long lectureUnitId) {
         return getValueElseThrow(findById(lectureUnitId), lectureUnitId);
+    }
+
+    /**
+     * Reconnects the competency links to the lecture unit to avoid issues with JPA cascading operations.
+     *
+     * @param lectureUnit the lecture unit whose competency links need to be reconnected
+     */
+    default void reconnectCompetencyLinks(LectureUnit lectureUnit) {
+        if (lectureUnit.getCompetencyLinks() != null && !lectureUnit.getCompetencyLinks().isEmpty()) {
+            for (var competencyLink : lectureUnit.getCompetencyLinks()) {
+                // reconnect to avoid: JpaSystemException: attempted to assign id from null one-to-one property
+                competencyLink.setLectureUnit(lectureUnit);
+            }
+        }
     }
 }

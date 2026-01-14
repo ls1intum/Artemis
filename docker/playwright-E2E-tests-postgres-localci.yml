@@ -1,0 +1,74 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Playwright Setup Local (Postgres)
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    postgres:
+        extends:
+            file: ./postgres.yml
+            service: postgres
+
+    artemis-app:
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG}
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        user: 0:0
+        depends_on:
+            postgres:
+                condition: service_healthy
+        ports:
+          - "8080:8080"
+        env_file:
+            - ./artemis/config/postgres.env
+            - ./artemis/config/playwright.env
+            - ./artemis/config/playwright-local.env
+        environment:
+            # Pass through ARM64 architecture setting from host (for Apple Silicon Macs)
+            - ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE=${ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE:-amd64}
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+    nginx:
+        extends:
+            file: ./nginx.yml
+            service: nginx
+        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        depends_on:
+            artemis-app:
+                condition: service_started
+        volumes:
+            - ./nginx/artemis-nginx-playwright.conf:/etc/nginx/conf.d/artemis-nginx-playwright.conf:ro
+        ports:
+            - '80:80'
+            - '443:443'
+            # see comments in artemis/config/playwright.env why this port is necessary
+            - '54321:54321'
+
+    artemis-playwright:
+        extends:
+            file: ./playwright.yml
+            service: artemis-playwright
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            PLAYWRIGHT_DB_TYPE: 'Postgres'
+            # Pass through configurable timeouts from host (defaults are CI values)
+            BUILD_RESULT_TIMEOUT_MS: ${BUILD_RESULT_TIMEOUT_MS:-90000}
+            BUILD_FINISH_TIMEOUT_MS: ${BUILD_FINISH_TIMEOUT_MS:-60000}
+            EXAM_DASHBOARD_TIMEOUT_MS: ${EXAM_DASHBOARD_TIMEOUT_MS:-60000}
+            # Pass through Playwright test timeouts
+            TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-300}
+            FAST_TEST_TIMEOUT_SECONDS: ${FAST_TEST_TIMEOUT_SECONDS:-60}
+        network_mode: service:artemis-app
+
+networks:
+    artemis:
+        driver: 'bridge'
+        name: artemis
+volumes:
+    artemis-postgres-data:
+        name: artemis-postgres-data
+    artemis-data:
+        name: artemis-data

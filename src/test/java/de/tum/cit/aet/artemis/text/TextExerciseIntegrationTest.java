@@ -331,6 +331,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
+        atlasMLRequestMockProvider.reset();
         atlasMLRequestMockProvider.enableMockingOfRequests();
         atlasMLRequestMockProvider.mockSaveCompetenciesAny();
         // Create
@@ -458,7 +459,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
-        verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
+        verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
     }
 
@@ -552,7 +553,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
         verify(examLiveEventsService, timeout(2000).times(1)).createAndSendProblemStatementUpdateEvent(any(), any());
-        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
+        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -645,7 +646,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(manualTextBlock, automaticTextBlock), (TextSubmission) exampleSubmission.getSubmission());
 
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
                 HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSubmissions()).hasSize(1);
@@ -1224,7 +1225,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<ExampleSubmission> exampleSubmissionSet = new HashSet<>();
         var exampleSubmission = participationUtilService.generateExampleSubmission("text", textExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL,
+                textExercise.getId());
         textSubmission.setExampleSubmission(true);
         Result result = textSubmission.getLatestResult();
         result.setExampleResult(true);
@@ -1356,7 +1358,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Create example submission
         var exampleSubmission = participationUtilService.generateExampleSubmission("text", textExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         var submission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(exampleSubmission.getSubmission().getId());
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();

@@ -1,16 +1,16 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 /**
  * API for managing lecture/exercise units.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Controller
 @Lazy
 public class LectureUnitApi extends AbstractLectureApi {
@@ -41,7 +41,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
-    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NonNull User user, boolean completed) {
+    public <T extends LectureUnit> void setCompletedForAllLectureUnits(List<T> lectureUnits, @NonNull User user, boolean completed) {
         lectureUnitService.setCompletedForAllLectureUnits(lectureUnits, user, completed);
     }
 
@@ -56,7 +56,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         }
     }
 
-    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit) {
-        return lectureUnitImportService.importLectureUnit(sourceLectureUnit);
+    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit, Lecture newLecture) {
+        return lectureUnitImportService.importLectureUnit(sourceLectureUnit, newLecture);
     }
 }

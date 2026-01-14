@@ -12,15 +12,12 @@ artemis:
     file-upload-path: ./local/server-integration-test/uploads
     submission-export-path: ./local/server-integration-test/exports
     checked-out-repos-path: ./local/server-integration-test/checked-out-repos
+    version-control.local-vcs-repo-path: ./local/server-integration-test/local-vcs-repos
+    version-control.ssh-private-key-folder-path: ./local/server-integration-test/ssh-keys
     temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
-        use-external: true
-        external:
-            url: https://user-management.fake.fake
-            user: fake-username-um
-            password: fake-password
-            admin-group-name: admins
+        use-external: true # enables ldap authentication
         ldap:
             url: https://ldap.fake.fake
             user-dn: fake-username-ldap
@@ -37,7 +34,6 @@ artemis:
         course-registration:
             allowed-username-pattern: .*
         password-reset:
-            credential-provider: <provider>
             links:
                 en: '<link>'
                 de: '<link>'

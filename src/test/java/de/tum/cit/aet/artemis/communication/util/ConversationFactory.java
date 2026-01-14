@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.communication.util;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -51,11 +49,6 @@ public class ConversationFactory {
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(author);
         post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
-        String tag = String.format("Tag %s", (index + 1));
-        Set<String> tags = new HashSet<>();
-        tags.add(tag);
-        post.setTags(tags);
-
         dayCount = (dayCount % 25) + 1;
         return post;
     }

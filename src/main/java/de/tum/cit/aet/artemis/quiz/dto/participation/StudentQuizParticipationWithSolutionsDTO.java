@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.quiz.dto.participation;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -30,6 +32,10 @@ public record StudentQuizParticipationWithSolutionsDTO(@JsonUnwrapped StudentQui
         if (!(participationExercise instanceof QuizExercise quizExercise)) {
             // Return null if the exercise is not a QuizExercise
             return null;
+        }
+
+        if (!Hibernate.isInitialized(submissions) || submissions == null) {
+            submissions = Set.of();
         }
         submissions = submissions.stream().filter(submission -> submission instanceof QuizSubmission).collect(Collectors.toSet());
 

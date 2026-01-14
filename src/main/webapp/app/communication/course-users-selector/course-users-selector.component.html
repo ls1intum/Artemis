@@ -1,13 +1,14 @@
 <div (focusout)="onTouched()">
     <div class="form-group">
         @if (label) {
-            <label [for]="id + '-user-input'">{{ label }}</label>
+            <label [for]="id + '-search-input'">{{ label }}</label>
         }
         <input
             #searchInput
             [disabled]="disabled"
             (selectItem)="onSelectItem($event)"
-            [id]="id + '-user-input'"
+            [id]="id + '-search-input'"
+            name="search-filter"
             type="text"
             class="form-control"
             [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
@@ -19,6 +20,12 @@
             (input)="onInputChange($event)"
             placement="bottom-start"
             #instance="ngbTypeahead"
+            autocomplete="nope"
+            role="searchbox"
+            aria-autocomplete="list"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-form-type="other"
         />
         <ng-template #resultTemplate let-user="result">
             <div class="d-flex align-items-center">

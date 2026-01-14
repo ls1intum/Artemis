@@ -210,7 +210,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
-        request.get("/api/core/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+        request.get("/api/core/public/activate", HttpStatus.BAD_REQUEST, String.class, params);
     }
 
     @Test
@@ -233,6 +233,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
         assertThat(account.getAskToSetupPasskey()).isTrue();
+        assertThat(account.isLoggedInWithPasskey()).isFalse();
+        assertThat(account.isPasskeySuperAdminApproved()).isFalse();
     }
 
     @Test
@@ -297,13 +299,33 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountRegistrationDisabled() throws Throwable {
+    void saveAccountRegistrationDisabledExternalUser() throws Throwable {
         testWithRegistrationDisabled(() -> {
+            // Create an external user (non-internal users should be forbidden)
             User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            user.setInternal(false);
+            userTestRepository.save(user);
             String updatedFirstName = "UpdatedFirstName";
             user.setFirstName(updatedFirstName);
 
             request.put("/api/core/account", new UserDTO(user), HttpStatus.FORBIDDEN);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountRegistrationDisabledInternalUser() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            // Internal users should be allowed to save even when registration is disabled
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            String updatedFirstName = "UpdatedFirstName";
+            user.setFirstName(updatedFirstName);
+
+            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+
+            Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+            assertThat(updatedUser).isPresent();
+            assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
         });
     }
 
@@ -322,7 +344,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         String updatedPassword = "12345678";
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);

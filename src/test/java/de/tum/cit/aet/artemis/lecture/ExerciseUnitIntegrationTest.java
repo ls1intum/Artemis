@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -40,7 +40,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -144,16 +144,16 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExerciseUnit_notExistingLectureId_shouldReturnNotFound() throws Exception {
+    void createExerciseUnit_notExistingLectureId_shouldReturnForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lecture/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/lecture/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

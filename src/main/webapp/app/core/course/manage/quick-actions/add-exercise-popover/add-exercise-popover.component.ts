@@ -1,4 +1,4 @@
-import { Component, input, viewChild } from '@angular/core';
+import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -9,6 +9,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 interface ExerciseModalRow {
     type: ExerciseType;
@@ -29,7 +31,10 @@ export class AddExercisePopoverComponent {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
     protected readonly faTimes = faTimes;
-    protected readonly exerciseTypes: ExerciseModalRow[] = [
+
+    private readonly profileService = inject(ProfileService);
+
+    private readonly allExerciseTypes: ExerciseModalRow[] = [
         {
             type: ExerciseType.PROGRAMMING,
             translationKey: 'global.menu.entities.exerciseTypes.programming',
@@ -52,6 +57,22 @@ export class AddExercisePopoverComponent {
             translationKey: 'global.menu.entities.exerciseTypes.fileUpload',
         },
     ];
+
+    protected readonly exerciseTypes = computed(() => {
+        return this.allExerciseTypes.filter((exerciseType) => {
+            switch (exerciseType.type) {
+                case ExerciseType.TEXT:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+                case ExerciseType.MODELING:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
+                case ExerciseType.FILE_UPLOAD:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
+                default:
+                    return true;
+            }
+        });
+    });
+
     course = input.required<Course>();
 
     addExercisePopover = viewChild<Popover>('addExercisePopover');

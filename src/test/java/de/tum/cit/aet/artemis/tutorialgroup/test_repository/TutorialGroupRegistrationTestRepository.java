@@ -20,7 +20,7 @@ public interface TutorialGroupRegistrationTestRepository extends TutorialGroupRe
     @Modifying
     void deleteAllByStudent(User student);
 
-    @Transactional  // ok because of delete
+    @Transactional // ok because of delete
     @Modifying
     void deleteById(@NonNull Long tutorialGroupRegistrationId);
 

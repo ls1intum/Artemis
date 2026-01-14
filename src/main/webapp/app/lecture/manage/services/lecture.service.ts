@@ -2,12 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture, LectureSeriesCreateLectureDTO, SimpleLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
@@ -21,10 +19,11 @@ export class LectureService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/lecture/lectures';
+    currentTutorialLectureId: number | undefined = undefined;
 
     create(lecture: Lecture): Observable<EntityResponseType> {
-        const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        const dto = this.convertLectureToSimpleDTO(lecture);
+        return this.http.post<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     createSeries(lectures: LectureSeriesCreateLectureDTO[], courseId: number): Observable<void> {
@@ -32,15 +31,15 @@ export class LectureService {
     }
 
     update(lecture: Lecture): Observable<EntityResponseType> {
-        const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.put<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        const dto = this.convertLectureToSimpleDTO(lecture);
+        return this.http.put<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
         return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
+                this.setAccessRightsLecture(res.body || undefined);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
@@ -57,26 +56,24 @@ export class LectureService {
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
+                this.setAccessRightsLecture(res.body || undefined);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
         );
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http.get<Lecture[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
+    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
 
-    findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
-        const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
+    findAllTutorialLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
-                params,
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/tutorial-lectures`, {
                 observe: 'response',
             })
             .pipe(
@@ -86,6 +83,7 @@ export class LectureService {
             );
     }
 
+    // only loads attachment units, no other units
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-with-slides`, {
@@ -98,30 +96,6 @@ export class LectureService {
             );
     }
 
-    /**
-     * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
-     *
-     * @param courseId Course containing the lecture(s)
-     * @param lectureId The lecture to be ingested in pyris
-     */
-    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<void>> {
-        let params = new HttpParams();
-        if (lectureId !== undefined) {
-            params = params.set('lectureId', lectureId.toString());
-        }
-        return this.http.post<void>(`api/lecture/courses/${courseId}/ingest`, null, {
-            params: params,
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Fetch the ingestion state of all the lectures inside the course specified
-     * @param courseId
-     */
-    getIngestionState(courseId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
-        return this.http.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
-    }
     /**
      * Clones and imports the lecture to the course
      *
@@ -138,15 +112,15 @@ export class LectureService {
             .pipe(
                 map((res: EntityResponseType) => {
                     this.convertLectureResponseDatesFromServer(res);
-                    this.setAccessRightsLecture(res.body);
+                    this.setAccessRightsLecture(res.body || undefined);
                     this.sendTitlesToEntityTitleService(res?.body);
                     return res;
                 }),
             );
     }
 
-    delete(lectureId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
+    delete(lectureId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
@@ -202,7 +176,7 @@ export class LectureService {
      * @param lecture for which the access rights shall be set
      * @return lecture that with set access rights if the course was set
      */
-    private setAccessRightsLecture(lecture: Lecture | null) {
+    private setAccessRightsLecture(lecture: Lecture | undefined) {
         if (lecture) {
             if (lecture.course) {
                 this.accountService.setAccessRightsForCourse(lecture.course);
@@ -235,5 +209,22 @@ export class LectureService {
 
     private sendTitlesToEntityTitleService(lecture: Lecture | undefined | null) {
         this.entityTitleService.setTitle(EntityType.LECTURE, [lecture?.id], lecture?.title);
+    }
+
+    /**
+     * Converts a Lecture object to SimpleLectureDTO for POST/PUT requests.
+     * The server expects this simplified DTO format.
+     */
+    private convertLectureToSimpleDTO(lecture: Lecture): SimpleLectureDTO {
+        return {
+            id: lecture.id,
+            title: lecture.title,
+            description: lecture.description,
+            startDate: convertDateFromClient(lecture.startDate),
+            endDate: convertDateFromClient(lecture.endDate),
+            isTutorialLecture: lecture.isTutorialLecture ?? false,
+            channelName: lecture.channelName,
+            course: lecture.course?.id ? { id: lecture.course.id } : undefined,
+        };
     }
 }

@@ -91,7 +91,7 @@ public class CourseLoadService {
         }
         Set<Competency> competencies = new HashSet<>();
         if (competencyRepositoryApi.isPresent()) {
-            competencies = competencyRepositoryApi.orElseThrow().findAllByCourseId(courseId);
+            competencies = competencyRepositoryApi.orElseThrow().findAllCompetenciesByCourseId(courseId);
         }
         Set<Prerequisite> prerequisites = new HashSet<>();
         if (prerequisitesApi.isPresent()) {

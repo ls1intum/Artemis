@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HeaderCourseComponent } from 'app/core/course/manage/header-course/header-course.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -5,10 +7,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { ComponentRef } from '@angular/core';
 
 describe('Header Course Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<HeaderCourseComponent>;
     let component: HeaderCourseComponent;
+    let componentRef: ComponentRef<HeaderCourseComponent>;
 
     const courseWithLongDescription: Course = {
         id: 123,
@@ -35,58 +41,63 @@ describe('Header Course Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(HeaderCourseComponent);
                 component = fixture.componentInstance;
+                componentRef = fixture.componentRef;
             });
         window['innerWidth'] = 1920;
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should toggle long course description', () => {
-        component.course = courseWithLongDescription;
+        componentRef.setInput('course', courseWithLongDescription);
+        fixture.detectChanges();
 
-        component.ngOnChanges();
-        expect(component.enableShowMore).toBeTrue();
-        expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe('a'.repeat(564) + '…');
-
-        component.toggleCourseDescription();
-
-        expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(courseWithLongDescription.description);
+        expect(component.enableShowMore()).toBe(true);
+        expect(component.longDescriptionShown()).toBe(false);
+        expect(component.courseDescription()).toBe('a'.repeat(564) + '...');
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe('a'.repeat(564) + '…');
+        expect(component.longDescriptionShown()).toBe(true);
+        expect(component.courseDescription()).toBe(courseWithLongDescription.description);
+
+        component.toggleCourseDescription();
+
+        expect(component.longDescriptionShown()).toBe(false);
+        expect(component.courseDescription()).toBe('a'.repeat(564) + '...');
     });
 
     it('should not enable show more for course with short description', () => {
-        component.course = courseWithShortDescription;
+        componentRef.setInput('course', courseWithShortDescription);
+        fixture.detectChanges();
 
-        component.ngOnChanges();
-        expect(component.enableShowMore).toBeFalse();
-        expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe(courseWithShortDescription.description);
+        expect(component.enableShowMore()).toBe(false);
+        expect(component.longDescriptionShown()).toBe(false);
+        expect(component.courseDescription()).toBe(courseWithShortDescription.description);
 
         window['innerWidth'] = 100;
         component.onResize();
-        expect(component.enableShowMore).toBeTrue();
-        expect(component.courseDescription).toBe('a'.repeat(29) + '…');
+        expect(component.enableShowMore()).toBe(true);
+        expect(component.courseDescription()).toBe('a'.repeat(29) + '...');
 
         component.toggleCourseDescription();
-        expect(component.enableShowMore).toBeTrue();
-        expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(courseWithShortDescription.description);
+        expect(component.enableShowMore()).toBe(true);
+        expect(component.longDescriptionShown()).toBe(true);
+        expect(component.courseDescription()).toBe(courseWithShortDescription.description);
 
         window['innerWidth'] = 1920;
         component.onResize();
-        expect(component.enableShowMore).toBeFalse();
-        expect(component.courseDescription).toBe(courseWithShortDescription.description);
+        expect(component.enableShowMore()).toBe(false);
+        expect(component.courseDescription()).toBe(courseWithShortDescription.description);
     });
 
     it('should not display manage button but go to student view button in course management', () => {
-        component.course = courseWithShortDescription;
-        component.course!.isAtLeastTutor = true;
+        const courseWithTutor = { ...courseWithShortDescription, isAtLeastTutor: true };
+        componentRef.setInput('course', courseWithTutor);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageButton = fixture.nativeElement.querySelector('#manage-button');
         expect(manageButton).toBeNull();
@@ -98,10 +109,10 @@ describe('Header Course Component', () => {
     });
 
     it('should not display manage button to student', () => {
-        component.course = courseWithShortDescription;
-        component.course!.isAtLeastTutor = false;
+        const courseWithStudent = { ...courseWithShortDescription, isAtLeastTutor: false };
+        componentRef.setInput('course', courseWithStudent);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageButton = fixture.nativeElement.querySelector('#manage-button');
         expect(manageButton).toBeNull();

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
@@ -9,19 +7,19 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureImportService {
@@ -52,25 +50,24 @@ public class LectureImportService {
      * @param importLectureUnits Whether to import the lecture units of the lecture
      * @return The lecture in the new course
      */
-    @Transactional // TODO: NOT OK -- remove @Transactional (old comment: required to circumvent errors with ordered collection of lecture units)
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {
         log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 
         // Copy the lecture itself to the new course
-        Lecture lecture = new Lecture();
-        lecture.setTitle(importedLecture.getTitle());
-        lecture.setDescription(importedLecture.getDescription());
-        lecture.setStartDate(importedLecture.getStartDate());
-        lecture.setEndDate(importedLecture.getEndDate());
+        Lecture newLecture = new Lecture();
+        newLecture.setTitle(importedLecture.getTitle());
+        newLecture.setDescription(importedLecture.getDescription());
+        newLecture.setStartDate(importedLecture.getStartDate());
+        newLecture.setEndDate(importedLecture.getEndDate());
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR comment back in */
         // lecture.setVisibleDate(importedLecture.getVisibleDate());
-        lecture.setCourse(course);
+        newLecture.setCourse(course);
 
-        lecture = lectureRepository.save(lecture);
+        newLecture = lectureRepository.save(newLecture);
 
         if (importLectureUnits) {
-            lectureUnitImportService.importLectureUnits(importedLecture, lecture);
+            lectureUnitImportService.importLectureUnits(importedLecture, newLecture);
         }
         else {
             importedLecture.setLectureUnits(new ArrayList<>());
@@ -79,15 +76,15 @@ public class LectureImportService {
         log.debug("Importing attachments from lecture");
         Set<Attachment> attachments = new HashSet<>();
         for (Attachment attachment : importedLecture.getAttachments()) {
-            Attachment clonedAttachment = lectureUnitImportService.importAttachment(lecture.getId(), attachment);
-            clonedAttachment.setLecture(lecture);
+            Attachment clonedAttachment = lectureUnitImportService.importAttachment(newLecture.getId(), attachment);
+            clonedAttachment.setLecture(newLecture);
             attachments.add(clonedAttachment);
         }
-        lecture.setAttachments(attachments);
+        newLecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship
-        Lecture savedLecture = lectureRepository.save(lecture);
+        Lecture savedLecture = lectureRepository.save(newLecture);
 
         channelService.createLectureChannel(savedLecture, Optional.empty());
 

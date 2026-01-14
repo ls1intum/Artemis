@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -136,4 +138,48 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE roomPartition.rowNumber = 1
             """)
     Set<ExamRoomForDistributionDTO> findAllCurrentExamRoomsForDistribution();
+
+    @Query("""
+            SELECT er
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            WHERE erea.exam.id = :examId
+            """)
+    Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
+
+    /**
+     * Finds the exam room connected to the given exam ID with the specified room number, including its layout strategies.
+     *
+     * @param examId     The exam id
+     * @param roomNumber The room number
+     * @return The exam room with layout eagerly loaded layout strategies if it exists, empty otherwise
+     */
+    @Query("""
+            SELECT er
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            LEFT JOIN FETCH er.layoutStrategies
+            WHERE erea.exam.id = :examId
+                AND er.roomNumber = :roomNumber
+            """)
+    Optional<ExamRoom> findByExamIdAndRoomNumberWithLayoutStrategies(@Param("examId") long examId, @Param("roomNumber") String roomNumber);
+
+    /**
+     * Checks whether a room with the given room number is connected to the specified exam.
+     *
+     * @param roomNumber The room number
+     * @param examId     The exam id
+     * @return {@code true} if such a room exists and is connected to the exam, {@code false} otherwise
+     */
+    @Query("""
+            SELECT COUNT(*) > 0
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            WHERE erea.exam.id = :examId
+                AND er.roomNumber = :roomNumber
+            """)
+    boolean existsByRoomNumberAndIsConnectedToExam(@Param("roomNumber") String roomNumber, @Param("examId") long examId);
 }

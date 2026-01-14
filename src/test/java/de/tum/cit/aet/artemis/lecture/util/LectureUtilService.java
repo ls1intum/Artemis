@@ -178,7 +178,9 @@ public class LectureUtilService {
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
         Lecture existingLecture = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
-            existingLecture.addLectureUnit(lectureUnit);
+            if (!existingLecture.getLectureUnits().contains(lectureUnit)) {
+                existingLecture.addLectureUnit(lectureUnit);
+            }
         }
         return lectureRepo.save(existingLecture);
     }
@@ -201,9 +203,10 @@ public class LectureUtilService {
      * @param exercise The Exercise the ExerciseUnit belongs to
      * @return The created ExerciseUnit
      */
-    public ExerciseUnit createExerciseUnit(Exercise exercise) {
+    public ExerciseUnit createExerciseUnit(Exercise exercise, Lecture lecture) {
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
+        exerciseUnit.setLecture(lecture);
         return exerciseUnitRepository.save(exerciseUnit);
     }
 
@@ -212,31 +215,33 @@ public class LectureUtilService {
      *
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithoutAttachment() {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithoutAttachment(Lecture lecture) {
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         attachmentVideoUnit.setVideoSource("http://video.fake");
+        attachmentVideoUnit.setLecture(lecture);
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
      * Creates and saves an AttachmentVideoUnit with an Attachment. The Attachment can be created with or without a link to an image file.
      *
+     * @param lecture  the Lecture the AttachmentVideoUnit belongs to
      * @param withFile True, if the Attachment should link to a file
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnit(Boolean withFile) {
+    public AttachmentVideoUnit createAttachmentVideoUnit(Lecture lecture, boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
-        Attachment attachmentOfAttachmentVideoUnit = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true)
-                : LectureFactory.generateAttachment(started);
-        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
-        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
-        attachmentVideoUnit.setName(attachmentOfAttachmentVideoUnit.getName());
-        attachmentVideoUnit.setReleaseDate(attachmentOfAttachmentVideoUnit.getReleaseDate());
+        Attachment attachment = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true) : LectureFactory.generateAttachment(started);
+        attachment.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachment = attachmentRepository.save(attachment);
+        attachmentVideoUnit.setAttachment(attachment);
+        attachmentVideoUnit.setName(attachment.getName());
+        attachmentVideoUnit.setReleaseDate(attachment.getReleaseDate());
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
@@ -244,14 +249,16 @@ public class LectureUtilService {
      * Creates and saves an AttachmentVideoUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentVideoUnit.
      * The Slides link to image files.
      *
+     * @param lecture        The lecture the unit belongs to. If {@code null}, a placeholder lecture is persisted.
      * @param numberOfSlides The number of Slides to create
      * @param shouldBePdf    if true file will be pdf, else image
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithSlidesAndFile(Lecture lecture, int numberOfSlides, boolean shouldBePdf) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
         Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
                 : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
@@ -291,11 +298,12 @@ public class LectureUtilService {
      * @param numberOfSlides The number of Slides to create
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithSlides(int numberOfSlides) {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithSlides(Lecture lecture, int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         Attachment attachmentOfAttachmentVideoUnit = LectureFactory.generateAttachment(started);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
@@ -322,8 +330,9 @@ public class LectureUtilService {
      *
      * @return The created TextUnit
      */
-    public TextUnit createTextUnit() {
+    public TextUnit createTextUnit(Lecture lecture) {
         TextUnit textUnit = new TextUnit();
+        textUnit.setLecture(lecture);
         textUnit.setName("Name Lorem Ipsum");
         textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
@@ -334,8 +343,9 @@ public class LectureUtilService {
      *
      * @return The created OnlineUnit
      */
-    public OnlineUnit createOnlineUnit() {
+    public OnlineUnit createOnlineUnit(Lecture lecture) {
         OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setLecture(lecture);
         onlineUnit.setDescription("Lorem Ipsum");
         onlineUnit.setSource("http://video.fake");
         return onlineUnitRepository.save(onlineUnit);
@@ -346,9 +356,8 @@ public class LectureUtilService {
      *
      * @param lectureUnit The LectureUnit that has been completed
      * @param user        The User that completed the LectureUnit
-     * @return The completed LectureUnit
      */
-    public LectureUnit completeLectureUnitForUser(LectureUnit lectureUnit, User user) {
+    public void completeLectureUnitForUser(LectureUnit lectureUnit, User user) {
         var lectureUnitCompletion = new LectureUnitCompletion();
         lectureUnitCompletion.setLectureUnit(lectureUnit);
         lectureUnitCompletion.setUser(user);
@@ -359,6 +368,5 @@ public class LectureUtilService {
             lectureUnit.getCompletedUsers().add(lectureUnitCompletion);
         }
 
-        return lectureUnitCompletion.getLectureUnit();
     }
 }

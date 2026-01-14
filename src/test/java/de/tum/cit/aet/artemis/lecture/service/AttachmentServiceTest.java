@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -41,15 +42,15 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void initTestCase() {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         // AttachmentVideoUnit with no hidden slides
-        AttachmentVideoUnit testAttachmentVideoUnit1 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        AttachmentVideoUnit testAttachmentVideoUnit1 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testAttachment1 = testAttachmentVideoUnit1.getAttachment();
-        testAttachment1.setStudentVersion("attachments/attachment-unit/" + testAttachmentVideoUnit1.getId() + "/student/example.pdf"); // Set an existing student version to verify
-                                                                                                                                       // it
+        testAttachment1.setStudentVersion("attachments/attachment-unit/" + testAttachmentVideoUnit1.getId() + "/student/example.pdf"); // Set an existing version to verify it
         // gets removed
 
         // AttachmentVideoUnit with hidden slides
-        AttachmentVideoUnit testAttachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        AttachmentVideoUnit testAttachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testAttachment2 = testAttachmentVideoUnit2.getAttachment();
         List<Slide> testSlides2 = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit2.getId());
 
@@ -101,9 +102,6 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testGenerateStudentVersionPdf() throws Exception {
-        // Create a test PDF file
-        Path testPdfPath = Path.of(testAttachment2.getLink());
-
         // Get hidden slides
         List<Slide> hiddenSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachment2.getAttachmentVideoUnit().getId());
 

@@ -77,7 +77,7 @@ describe('UserRouteAccessService', () => {
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
         snapshot.queryParams = { ['ltiSuccessLoginRequired']: 'username' };
-        snapshot.data = { authorities: [Authority.USER] };
+        snapshot.data = { authorities: [Authority.STUDENT] };
 
         service.canActivate(snapshot, routeStateMock);
         expect(alertServiceStub).toHaveBeenCalledOnce();
@@ -93,7 +93,7 @@ describe('UserRouteAccessService', () => {
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
         snapshot.queryParams = {};
-        snapshot.data = { authorities: [Authority.USER] };
+        snapshot.data = { authorities: [Authority.STUDENT] };
 
         service.canActivate(snapshot, routeStateMock);
         expect(alertServiceStub).not.toHaveBeenCalled();

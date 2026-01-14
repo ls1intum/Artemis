@@ -46,12 +46,6 @@
                     <fa-icon [icon]="faTrash" />
                 </button>
             }
-            @if (initialLecture.isLongerThanRecommended()) {
-                <div class="long-lecture-warning">
-                    <fa-icon [icon]="faTriangleExclamation" />
-                    <span class="warning-text" jhiTranslate="artemisApp.lecture.longLectureWarning"></span>
-                </div>
-            }
         </div>
         @if ($last) {
             <div class="input-row">

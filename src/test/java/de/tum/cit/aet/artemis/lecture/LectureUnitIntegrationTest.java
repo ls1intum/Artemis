@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -24,10 +25,13 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -47,6 +51,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     @Autowired
+    private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -62,28 +69,31 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-        this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
+        var sortedLectures = course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getId)).toList();
+        this.lecture1 = sortedLectures.getFirst();
+        var lecture2 = sortedLectures.get(1);
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
-        this.textUnit = lectureUtilService.createTextUnit();
-        this.textUnit2 = lectureUtilService.createTextUnit();
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(false);
-        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
-        // textUnit3 is not one of the lecture units connected to the lecture
-        this.textUnit3 = lectureUtilService.createTextUnit();
+        this.textUnit = lectureUtilService.createTextUnit(lecture1);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
+        this.textUnit2 = lectureUtilService.createTextUnit(lecture2);
+        // textUnit3 belongs to a different lecture to test invalid lecture-unit combinations
+        this.textUnit3 = lectureUtilService.createTextUnit(lecture2);
 
-        lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().orElseThrow(), List.of(textUnit2));
+        lectureUtilService.addLectureUnitsToLecture(lecture2, List.of(textUnit2, textUnit3));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
+        this.textUnit3 = textUnitRepository.findById(textUnit3.getId()).orElseThrow();
     }
 
     @Test
@@ -207,8 +217,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnNotFound() throws Exception {
-        request.put("/api/lecture/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.NOT_FOUND);
+    void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnForbidden() throws Exception {
+        request.put("/api/lecture/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -250,9 +260,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void setLectureUnitCompletion_withoutLecture_shouldReturnForbidden() throws Exception {
+    void setLectureUnitCompletion_withoutLecture_shouldReturnBadRequest() throws Exception {
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null,
-                HttpStatus.FORBIDDEN, null);
+                HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -284,5 +294,80 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetLectureUnitForLearningPathNodeDetailsAsStudentNotInCourse() throws Exception {
         request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getProcessingStatus_asEditor_shouldSucceed() throws Exception {
+        // Get processing status for an attachment video unit
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+        // The endpoint exists but may return 403 if processing service is not available
+        // This tests the endpoint is accessible to editors
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/processing-status", HttpStatus.OK, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getProcessingStatus_asStudent_shouldBeForbidden() throws Exception {
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/processing-status", HttpStatus.FORBIDDEN, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryProcessing_wrongUnitType_shouldReturnBadRequest() throws Exception {
+        // Try to retry processing for a text unit (not attachment video unit)
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + textUnit.getId() + "/retry-processing", null, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void retryProcessing_asStudent_shouldBeForbidden() throws Exception {
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null, HttpStatus.FORBIDDEN,
+                null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryProcessing_whenInFailedState_shouldSucceed() throws Exception {
+        // Get the attachment video unit
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state with FAILED phase
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.FAILED);
+        processingState.setRetryCount(3);
+        processingState.setErrorKey("artemisApp.processing.error.transcriptionFailed");
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the retry processing endpoint - it should succeed (return 200)
+        // Note: The processing itself may not actually change the state if the unit has no video/PDF to process
+        // but the endpoint should still return OK for a unit in FAILED state
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null, HttpStatus.OK, null);
+
+        // The endpoint returns OK if the unit was in FAILED state
+        // The actual processing behavior depends on the unit's content (video/PDF)
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryProcessing_whenNotInFailedState_shouldReturnBadRequest() throws Exception {
+        // Get the attachment video unit
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state with TRANSCRIBING phase (not FAILED)
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.TRANSCRIBING);
+        processingState.setRetryCount(0);
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the retry processing endpoint - should return BAD_REQUEST
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null,
+                HttpStatus.BAD_REQUEST, null);
+
+        // Verify the processing state was not changed
+        var unchangedState = lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).orElseThrow();
+        assertThat(unchangedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
     }
 }

@@ -12,10 +12,12 @@ import { createCredentialOptions } from 'app/core/user/settings/passkey-settings
 import { getOS } from 'app/shared/util/os-detector.util';
 import { UserAbortedPasskeyCreationError } from 'app/core/user/settings/passkey-settings/entities/errors/user-aborted-passkey-creation.error';
 import { InvalidStateError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-state.error';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
     private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
     private readonly webauthnApiService = inject(WebauthnApiService);
 
     async getCredential(): Promise<PublicKeyCredential | undefined> {
@@ -66,6 +68,12 @@ export class WebauthnService {
                     label: `${user.email} - ${getOS()}`,
                 },
             });
+
+            this.accountService.userIdentity.set({
+                ...this.accountService.userIdentity(),
+                askToSetupPasskey: false,
+                internal: this.accountService.userIdentity()?.internal ?? false,
+            });
         } catch (error) {
             const userPressedCancelInPasskeyCreationDialog = error.name === UserAbortedPasskeyCreationError.name && error.code === UserAbortedPasskeyCreationError.code;
             if (userPressedCancelInPasskeyCreationDialog) {
@@ -106,6 +114,7 @@ export class WebauthnService {
             }
 
             await this.webauthnApiService.loginWithPasskey(credential);
+            await this.accountService.identity(true);
         } catch (error) {
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');

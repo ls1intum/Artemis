@@ -250,6 +250,7 @@ public class ExamResource {
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
+    // TODO: use a DTO here
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
 
@@ -274,6 +275,7 @@ public class ExamResource {
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
+        updatedExam.setExamRoomAssignments(originalExam.getExamRoomAssignments());
 
         Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
@@ -296,8 +298,8 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
-            int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
@@ -512,14 +514,42 @@ public class ExamResource {
     }
 
     /**
-     * GET /exams/active : Find all active exams the user is allowed to access.
-     * Exams that are active have visibilityDate for the previous and upcoming seven days.
+     * GET /exams/active : Returns all currently active exams the user is allowed to access.
      *
-     * @param pageable pageable parameters
-     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     * <p>
+     * <b>Usage:</b> This endpoint is exclusively used by the exam attendance check app
+     * (mobile/tablet). It is not used by the Artemis web client.
+     * </p>
+     *
+     * <p>
+     * <b>Visibility rules:</b> An exam is considered <i>active</i> if its {@code visibleDate}
+     * lies within a specific time window relative to the current time. The window depends
+     * on the user’s role <b>in the corresponding course</b>:
+     * <ul>
+     * <li><b>Instructors</b> see exams visible from <i>now − 7 days</i> to <i>now + 7 days</i>.</li>
+     * <li><b>Editors and tutors</b> see exams visible from <i>now</i> to <i>now + 7 days</i>.</li>
+     * </ul>
+     * These role-dependent windows ensure that instructors retain broader operational visibility,
+     * while tutors and editors see only upcoming exams.
+     * </p>
+     *
+     * @param pageable pagination parameters supplied by the client (page number, size, sort)
+     * @return a {@link ResponseEntity} with status 200 (OK) and the list of visible active exams;
+     *         the list may be empty if no active exams exist
      */
     @GetMapping("exams/active")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
+    // TODO use a DTO/DAO record in the future, this could be directly instantiated in the database to avoid fetching additional data:
+    // ActiveExamDTO {
+    // id: long
+    // title: String
+    // startDate: ZonedDateTime
+    // endDate: ZonedDateTime
+    // course: {
+    // id: long
+    // title: String},
+    // testExam: boolean
+    // }
     public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);

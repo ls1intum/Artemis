@@ -79,6 +79,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -90,10 +91,13 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
-import de.tum.cit.aet.artemis.core.config.PublicResourcesConfiguration;
+import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -320,7 +324,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
                 "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
-                "IrisTutorSuggestionIntegrationTest" };
+                "IrisTutorSuggestionIntegrationTest", "HyperionCodeGenerationResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -338,7 +342,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
-        final var exceptions = new Class[] { PublicResourcesConfiguration.class };
+        final var exceptions = new Class[] { StaticResourcesConfiguration.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
@@ -350,7 +354,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
         String identifyingPackage = "authorization";
 
-        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+        // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
@@ -413,7 +418,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreLazyAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class)
+                // JacksonConfiguration must NOT be lazy because Jackson modules must be available when the ObjectMapper is created
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.config.JacksonConfiguration")
+                // RequestUtilService must NOT be lazy because it needs the ObjectMapper to be fully configured with Jackson modules
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.RequestUtilService").should().beAnnotatedWith(Lazy.class)
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);
@@ -526,4 +535,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
+    @Test
+    void ensureOnlyLectureClassIsUpdatingUnitOrder() {
+        ArchRule rule = methods().that().haveName("setLectureUnitOrder").and().areDeclaredIn(LectureUnit.class).should(onlyBeCalledBy(Lecture.class))
+                .because("Only Lecture class should manage the order of lecture units");
+
+        rule.check(allClasses);
+    }
+
+    private ArchCondition<JavaMethod> onlyBeCalledBy(Class<?> allowedCaller) {
+        return new ArchCondition<>("only be called by " + allowedCaller.getSimpleName()) {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                Set<JavaMethodCall> calls = method.getCallsOfSelf();
+                for (JavaMethodCall call : calls) {
+                    JavaClass caller = call.getOriginOwner();
+                    if (!caller.isAssignableTo(allowedCaller)) {
+                        events.add(violated(call,
+                                String.format("%s calls %s, but only %s should call this method", caller.getName(), method.getFullName(), allowedCaller.getSimpleName())));
+                    }
+                }
+            }
+        };
+    }
 }

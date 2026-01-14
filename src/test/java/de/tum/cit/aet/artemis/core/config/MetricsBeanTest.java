@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -50,9 +50,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -193,10 +190,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private long countActiveCourses() {
-        final List<Course> activeCourses = courseRepository.findAllActive(ZonedDateTime.now());
-        // the test courses are only filtered for the metrics since for instructors/tutors/editors using Artemis
-        // test courses count as active, but they never contain active students/exams relevant for the metrics
-        return activeCourses.stream().filter(course -> !course.isTestCourse()).count();
+        final Set<ActiveCourseDTO> activeCourses = courseRepository.findAllActiveWithoutTestCourses(ZonedDateTime.now());
+        return activeCourses.size();
     }
 
     @Test

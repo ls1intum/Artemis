@@ -36,13 +36,13 @@
         [disabled]="isSaved || (titleField() && titleField()?.invalid)"
         jhiTranslate="artemisApp.apollonDiagram.detail.save"
     ></button>
-    <div [ngbTooltip]="!hasInteractive ? ('artemisApp.apollonDiagram.create.validationError' | artemisTranslate) : undefined">
+    <div [ngbTooltip]="!hasInteractive() ? ('artemisApp.apollonDiagram.create.validationError' | artemisTranslate) : undefined">
         <button
             id="generate-quiz-exercise"
             class="btn btn-primary"
             (click)="generateExercise()"
             [hidden]="!apollonDiagram()"
-            [disabled]="!hasInteractive"
+            [disabled]="!hasInteractive()"
             jhiTranslate="artemisApp.apollonDiagram.detail.createLabel"
         ></button>
     </div>

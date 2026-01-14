@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -10,14 +8,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureUnitImportService {
@@ -43,51 +43,56 @@ public class LectureUnitImportService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
-            Optional<IrisLectureApi> irisLectureApi) {
+            Optional<IrisLectureApi> irisLectureApi, LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.slideSplitterService = slideSplitterService;
         this.irisLectureApi = irisLectureApi;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
      * This function imports the lecture units from the {@code importedLecture} and appends them to the {@code lecture}
      *
      * @param importedLecture The original lecture to be copied
-     * @param lecture         The new lecture to which the lecture units are appended
+     * @param newLecture      The new lecture to which the lecture units are appended
      */
-    public void importLectureUnits(Lecture importedLecture, Lecture lecture) {
+    public void importLectureUnits(Lecture importedLecture, Lecture newLecture) {
         log.debug("Importing lecture units from lecture with Id {}", importedLecture.getId());
         List<LectureUnit> lectureUnits = new ArrayList<>();
         for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
-            LectureUnit clonedLectureUnit = importLectureUnit(lectureUnit);
+            LectureUnit clonedLectureUnit = importLectureUnit(lectureUnit, newLecture);
             if (clonedLectureUnit != null) {
-                clonedLectureUnit.setLecture(lecture);
+                clonedLectureUnit.setLecture(newLecture);
                 lectureUnits.add(clonedLectureUnit);
             }
         }
-        lecture.setLectureUnits(lectureUnits);
+        newLecture.setLectureUnits(lectureUnits);
         lectureUnitRepository.saveAll(lectureUnits);
 
-        // Send lectures to pyris
-        irisLectureApi
-                .ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentVideoUnitsInPyris(lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                        .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(unit -> unit.getAttachment() != null).toList()));
+        // Trigger full content processing for attachment video units
+        // This will check for TUM Live playlist availability, generate transcriptions if possible, and ingest to Pyris
+        lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit)
+                .forEach(contentProcessingApi::triggerProcessing);
     }
 
     /**
      * This function imports the {@code importedLectureUnit} and returns it
      *
      * @param importedLectureUnit The original lecture unit to be copied
+     * @param newLecture          The new lecture to which the lecture unit is appended
      * @return The imported lecture unit
      */
-    public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit) {
+    public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit, Lecture newLecture) {
         log.debug("Creating a new LectureUnit from lecture unit {}", importedLectureUnit);
 
         switch (importedLectureUnit) {
             case TextUnit importedTextUnit -> {
                 TextUnit textUnit = new TextUnit();
+                textUnit.setLecture(newLecture);
                 textUnit.setName(importedTextUnit.getName());
                 textUnit.setReleaseDate(importedTextUnit.getReleaseDate());
                 textUnit.setContent(importedTextUnit.getContent());
@@ -97,6 +102,7 @@ public class LectureUnitImportService {
             case AttachmentVideoUnit importedAttachmentVideoUnit -> {
                 // Create and save the attachment video unit, then the attachment itself, as the id is needed for file handling
                 AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setLecture(newLecture);
                 attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
                 attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
                 attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
@@ -117,6 +123,7 @@ public class LectureUnitImportService {
             }
             case OnlineUnit importedOnlineUnit -> {
                 OnlineUnit onlineUnit = new OnlineUnit();
+                onlineUnit.setLecture(newLecture);
                 onlineUnit.setName(importedOnlineUnit.getName());
                 onlineUnit.setReleaseDate(importedOnlineUnit.getReleaseDate());
                 onlineUnit.setDescription(importedOnlineUnit.getDescription());

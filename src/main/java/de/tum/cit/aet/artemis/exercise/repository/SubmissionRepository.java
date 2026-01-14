@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +44,32 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Repository
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
+
+    /**
+     * Count the number of submissions for a given set of exercises.
+     *
+     * @param exerciseIds the ids of the exercises (e.g. all in a course)
+     * @return the number of submissions in the exercises
+     */
+    @Query("""
+            SELECT COUNT(s)
+            FROM Submission s
+            WHERE s.participation.exercise.id IN :exerciseIds
+            """)
+    long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Count the number of submissions for a given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of submissions in the exercise
+     */
+    @Query("""
+            SELECT COUNT(s)
+            FROM Submission s
+            WHERE s.participation.exercise.id = :exerciseId
+            """)
+    long countByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Load submission with eager Results
@@ -143,8 +170,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
-     * @param userId the id of the user
-     * @param examId the id of the exam
+     * @param userId      the id of the user
+     * @param exerciseIds the ids of the exercises
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -153,15 +180,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN s.results r
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+                AND s.participation.exercise.id IN :exerciseIds
             """)
-    long countLockedSubmissionsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+    long countLockedSubmissionsByUserIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
      * assessments.
      *
-     * @param examId the id of the exam
+     * @param exerciseIds the id of the exercises
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -170,9 +197,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN s.results r
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+                AND s.participation.exercise.id IN :exerciseIds
             """)
-    long countLockedSubmissionsByExamId(@Param("examId") Long examId);
+    long countLockedSubmissionsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
@@ -259,7 +286,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     /**
      * Count the number of in-time submissions for an exam. Only submissions for Text, Modeling and File Upload exercises are included.
      *
-     * @param examId - the exam id we are interested in
+     * @param exerciseIds - the exercise ids for which the submissions should be counted
      * @return the number of submissions belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
@@ -267,11 +294,11 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             SELECT COUNT(DISTINCT submission)
             FROM Submission submission
             WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND submission.participation.exercise.exerciseGroup.exam.id = :examId
+                AND submission.participation.exercise.id IN :exerciseIds
                 AND submission.submitted = TRUE
                 AND submission.participation.testRun = FALSE
             """)
-    long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
+    long countByExerciseIdsSubmittedSubmissionsIgnoreTestRuns(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
@@ -351,22 +378,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             GROUP BY p.exercise.id
             """)
     List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    /**
-     * Calculate the number of submissions for the given exercise by the given student.
-     *
-     * @param exerciseId   the exercise id we are interested in
-     * @param studentLogin the login of the student we are interested in
-     * @return the number of submissions belonging to the exercise and student id
-     */
-    @Query("""
-            SELECT COUNT(DISTINCT s)
-            FROM StudentParticipation p
-                JOIN p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :studentLogin
-            """)
-    int countByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("studentLogin") String studentLogin);
 
     /**
      * @param exerciseIds the exercise ids we are interested in
@@ -588,7 +599,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
               FROM Submission s2
               WHERE s2.participation.id = :participationId
                  )
-             """)
+            """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
-
 }

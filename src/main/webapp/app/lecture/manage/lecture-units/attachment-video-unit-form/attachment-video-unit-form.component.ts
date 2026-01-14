@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -13,14 +13,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { HttpClient } from '@angular/common/http';
-import { AccountService } from 'app/core/auth/account.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
-    playlistUrl?: string;
-    transcriptionProperties?: TranscriptionProperties;
 }
 
 // matches structure of the reactive form
@@ -33,18 +29,12 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
-    generateTranscript?: boolean;
-    videoTranscription?: string;
 }
 
 // file input is a special case and is not included in the reactive form structure
 export interface FileProperties {
     file?: File;
     fileName?: string;
-}
-
-export interface TranscriptionProperties {
-    videoTranscription?: string;
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -92,35 +82,18 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     return { invalidVideoUrl: true };
 }
 
-function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
-    if (value === undefined || value === null || value === '') {
-        return null;
-    }
-    try {
-        JSON.parse(value);
-        return null;
-    } catch {
-        return { invalidJson: true };
-    }
-}
-
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
-export class AttachmentVideoUnitFormComponent implements OnChanges {
+export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
-
-    private readonly http = inject(HttpClient);
-    canGenerateTranscript = signal(false);
-    playlistUrl = signal<string | undefined>(undefined);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -133,8 +106,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     // have to handle the file input as a special case at is not part of the reactive form
-    @ViewChild('fileInput', { static: false })
-    fileInput: ElementRef;
+    fileInput = viewChild<ElementRef>('fileInput');
     file: File;
     fileInputTouched = false;
 
@@ -145,9 +117,15 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
-    private readonly accountService = inject(AccountService);
 
-    readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
+    constructor() {
+        effect(() => {
+            const formData = this.formData();
+            if (this.isEditMode() && formData) {
+                this.setFormValues(formData);
+            }
+        });
+    }
 
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
@@ -158,24 +136,14 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
-        videoTranscription: [undefined as string | undefined, [validJsonOrEmpty]],
-        generateTranscript: [false],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
-    readonly shouldShowTranscriptCheckbox = computed(() => !!this.playlistUrl());
-
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
-
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-        }
-    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -222,55 +190,17 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.form.get('urlHelper');
     }
 
-    get videoTranscriptionControl() {
-        return this.form.get('videoTranscription');
-    }
-
-    checkTumLivePlaylist(originalUrl: string): void {
-        const parsedUrl = new URL(originalUrl);
-
-        if (parsedUrl.host === 'live.rbg.tum.de') {
-            this.http
-                .get('api/nebula/video-utils/tum-live-playlist', {
-                    params: { url: originalUrl },
-                    responseType: 'text',
-                })
-                .subscribe({
-                    next: (playlist) => {
-                        this.canGenerateTranscript.set(true);
-                        this.playlistUrl.set(playlist);
-                    },
-                    error: (error) => {
-                        this.canGenerateTranscript.set(false);
-                        this.playlistUrl.set(undefined);
-                        this.form.get('generateTranscript')?.setValue(false);
-                    },
-                });
-        } else {
-            this.canGenerateTranscript.set(false);
-            this.playlistUrl.set(undefined);
-            this.form.get('generateTranscript')?.setValue(false);
-        }
-    }
-
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
-
-        formProperties.videoTranscription = undefined;
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),
-        };
-        const transcriptionProperties: TranscriptionProperties = {
-            videoTranscription: formValue.videoTranscription,
         };
 
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
-            transcriptionProperties,
-            playlistUrl: this.playlistUrl(),
         });
     }
 
@@ -283,9 +213,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         }
         if (formData?.fileProperties?.fileName) {
             this.fileName.set(formData?.fileProperties?.fileName);
-        }
-        if (formData?.transcriptionProperties) {
-            this.form.patchValue(formData.transcriptionProperties);
         }
     }
 
@@ -303,8 +230,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         const originalUrl = this.urlHelperControl!.value;
         const embeddedUrl = this.extractEmbeddedUrl(originalUrl);
         this.videoSourceControl!.setValue(embeddedUrl);
-
-        this.checkTumLivePlaylist(originalUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {
@@ -313,8 +238,12 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             url.searchParams.set('video_only', '1');
             return url.toString();
         }
+        const videoInfo = urlParser.parse(videoUrl);
+        if (!videoInfo) {
+            return videoUrl;
+        }
         return urlParser.create({
-            videoInfo: urlParser.parse(videoUrl)!,
+            videoInfo,
             format: 'embed',
         });
     }

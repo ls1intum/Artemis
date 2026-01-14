@@ -506,8 +506,8 @@ $exercise-group-header-background: $neutral-dark-l-5;
 $exercise-group-header-badge-color: $warning;
 
 // Grading system
-$base-grading-system-input-color: white;
-$base-grading-system-input-background: $form-control-focus-background;
+$base-grading-input-color: white;
+$base-grading-input-background: $form-control-focus-background;
 
 // Exam students
 $exam-students-dropdown-item-active: $success;
@@ -662,6 +662,10 @@ $pastel-blue: lighten($blue, 5%);
 $pastel-purple: lighten($purple, 20%);
 $pastel-teal: lighten($teal, 15%);
 $calendar-loading-overlay-background: transparentize($module-bg, 0.5);
+
+// Video Player
+$transcript-active-bg: darken($primary, 20%);
+$transcript-active-text: $white;
 $calendar-day-badge-selected: $gray-700;
 
 // Quiz Training

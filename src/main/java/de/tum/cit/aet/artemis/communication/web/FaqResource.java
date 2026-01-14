@@ -5,10 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -180,17 +180,19 @@ public class FaqResource {
 
     /**
      * GET /courses/:courseId/faqs : get all the faqs of a course
+     * Students only see accepted faqs, while tutors and instructors can see all faqs.
      *
      * @param courseId the courseId of the course for which all faqs should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
     @GetMapping("courses/{courseId}/faqs")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
-        Set<Faq> faqs = authCheckService.isAtLeastTeachingAssistantInCourse(courseId) ? faqRepository.findAllByCourseId(courseId)
-                : faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED);
-        Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
+        List<Faq> faqs = authCheckService.isAtLeastTeachingAssistantInCourse(courseId) ? faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId) // TAs and Instructors see
+                                                                                                                                                         // all FAQs
+                : faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, FaqState.ACCEPTED); // Students see only accepted FAQs
+        List<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).toList();
         return ResponseEntity.ok().body(faqDTOS);
     }
 
@@ -203,11 +205,11 @@ public class FaqResource {
      */
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
+    public ResponseEntity<List<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faqs for the course with id {} and status {}", courseId, faqState);
         checkShouldAccessNotAccepted(faqState, courseId);
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, faqState);
-        Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
+        List<Faq> faqs = faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, faqState);
+        List<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).toList();
         return ResponseEntity.ok().body(faqDTOS);
     }
 

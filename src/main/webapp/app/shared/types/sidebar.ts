@@ -8,7 +8,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test' | 'attempt';
-export type TutorialGroupCategory = 'all' | 'registered' | 'further';
+export type TutorialGroupCategory = 'allGroups' | 'registeredGroups' | 'furtherGroups' | 'allTutorialLectures' | 'currentTutorialLecture' | 'furtherTutorialLectures';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<
     TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
@@ -60,6 +60,10 @@ export interface SidebarCardElement {
      * Defines the item's id that will be used to search for selected
      */
     id: string | number;
+    /**
+     * The subroute under which the component should be rendered that is opened once this sidebar card element is clicked
+     */
+    targetComponentSubRoute?: string;
     /**
      * If set to true, the icons for quick actions will be displayed on the top right
      */

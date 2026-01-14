@@ -135,9 +135,198 @@ export function base64StringToBlob(base64: string, type?: string): Blob {
     return new Blob([buffer], { type });
 }
 
-export async function clearTextField(textField: Locator) {
-    await textField.click({ clickCount: 4, force: true });
-    await textField.press('Backspace');
+export async function clearTextField(textField: Locator, page?: Page) {
+    // Check if this is a Monaco editor
+    const isMonaco = (await textField.locator('.monaco-editor').count()) > 0 || (await textField.evaluate((el) => el.classList.contains('monaco-editor')));
+
+    if (isMonaco) {
+        // Wait for editor to be visible
+        await textField.waitFor({ state: 'visible' });
+        // Click directly on the Monaco editor to focus it
+        await textField.click();
+    } else {
+        await textField.click({ force: true });
+    }
+
+    // Small delay to ensure focus
+    if (page) {
+        await page.waitForTimeout(300);
+    }
+
+    // Use platform-appropriate select all shortcut
+    const isMac = process.platform === 'darwin';
+    const selectAllKey = isMac ? 'Meta+a' : 'Control+a';
+    if (page) {
+        // Use page.keyboard for consistency
+        await page.keyboard.press(selectAllKey);
+        await page.waitForTimeout(100);
+        await page.keyboard.press('Backspace');
+    } else {
+        await textField.press(selectAllKey);
+        await textField.press('Backspace');
+    }
+}
+
+/**
+ * Sets the content of a Monaco editor directly using Monaco's API.
+ * This approach identifies the editor by its DOM element position to reliably find the correct editor
+ * when multiple editors exist on the page.
+ * @param page - Playwright Page instance
+ * @param containerSelector - CSS selector for the container element that contains the Monaco editor
+ * @param text - The text to set in the editor
+ */
+export async function setMonacoEditorContent(page: Page, containerSelector: string, text: string) {
+    // Wait for the Monaco editor to be visible
+    const container = page.locator(containerSelector);
+    await container.waitFor({ state: 'visible' });
+    const monacoEditor = container.locator('.monaco-editor').first();
+    await monacoEditor.waitFor({ state: 'visible' });
+
+    // Wait for Monaco to be available on window (exposed by MonacoEditorService)
+    await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
+
+    // Get the bounding box of the target Monaco editor element
+    const boundingBox = await monacoEditor.boundingBox();
+    if (!boundingBox) {
+        throw new Error('Could not get bounding box of Monaco editor');
+    }
+
+    // Click on the editor to ensure it's initialized
+    await monacoEditor.click();
+    await page.waitForTimeout(100);
+
+    // Use JavaScript to find the editor by matching its DOM element position
+    const success = await page.evaluate(
+        ({ newText, targetBox }) => {
+            const monaco = (window as any).monaco;
+            if (!monaco || !monaco.editor) {
+                return { success: false, error: 'Monaco not available' };
+            }
+
+            const editors = monaco.editor.getEditors();
+            if (editors.length === 0) {
+                return { success: false, error: 'No Monaco editors registered' };
+            }
+
+            // Find the editor whose DOM node matches the target position
+            let targetEditor = null;
+            for (const editor of editors) {
+                const domNode = editor.getDomNode();
+                if (domNode) {
+                    const rect = domNode.getBoundingClientRect();
+                    // Check if this editor's position matches our target (within a small tolerance)
+                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
+                        targetEditor = editor;
+                        break;
+                    }
+                }
+            }
+
+            // Fallback: try focused editor or last editor
+            if (!targetEditor) {
+                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
+            }
+            if (!targetEditor) {
+                targetEditor = editors[editors.length - 1];
+            }
+
+            if (!targetEditor) {
+                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+            }
+
+            targetEditor.setValue(newText);
+            return { success: true };
+        },
+        { newText: text, targetBox: boundingBox },
+    );
+
+    if (!success.success) {
+        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
+    }
+
+    // Wait for Angular change detection to process the update
+    await page.waitForTimeout(300);
+}
+
+/**
+ * Sets the content of a Monaco editor directly using Monaco's API.
+ * This variant works with a Locator that contains the Monaco editor.
+ * It identifies the editor by its DOM element position to reliably find the correct editor
+ * when multiple editors exist on the page.
+ * @param page - Playwright Page instance
+ * @param containerLocator - Locator for the container element that contains the Monaco editor
+ * @param text - The text to set in the editor
+ */
+export async function setMonacoEditorContentByLocator(page: Page, containerLocator: Locator, text: string) {
+    // Wait for the Monaco editor to be visible
+    await containerLocator.waitFor({ state: 'visible' });
+    const monacoEditor = containerLocator.locator('.monaco-editor').first();
+    await monacoEditor.waitFor({ state: 'visible' });
+
+    // Wait for Monaco to be available on window (exposed by MonacoEditorService)
+    await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
+
+    // Get the bounding box of the target Monaco editor element
+    const boundingBox = await monacoEditor.boundingBox();
+    if (!boundingBox) {
+        throw new Error('Could not get bounding box of Monaco editor');
+    }
+
+    // Click on the editor to ensure it's initialized
+    await monacoEditor.click();
+    await page.waitForTimeout(100);
+
+    // Use JavaScript to find the editor by matching its DOM element position
+    const success = await page.evaluate(
+        ({ newText, targetBox }) => {
+            const monaco = (window as any).monaco;
+            if (!monaco || !monaco.editor) {
+                return { success: false, error: 'Monaco not available' };
+            }
+
+            const editors = monaco.editor.getEditors();
+            if (editors.length === 0) {
+                return { success: false, error: 'No Monaco editors registered' };
+            }
+
+            // Find the editor whose DOM node matches the target position
+            let targetEditor = null;
+            for (const editor of editors) {
+                const domNode = editor.getDomNode();
+                if (domNode) {
+                    const rect = domNode.getBoundingClientRect();
+                    // Check if this editor's position matches our target (within a small tolerance)
+                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
+                        targetEditor = editor;
+                        break;
+                    }
+                }
+            }
+
+            // Fallback: try focused editor or last editor
+            if (!targetEditor) {
+                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
+            }
+            if (!targetEditor) {
+                targetEditor = editors[editors.length - 1];
+            }
+
+            if (!targetEditor) {
+                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+            }
+
+            targetEditor.setValue(newText);
+            return { success: true };
+        },
+        { newText: text, targetBox: boundingBox },
+    );
+
+    if (!success.success) {
+        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
+    }
+
+    // Wait for Angular change detection to process the update
+    await page.waitForTimeout(300);
 }
 
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
@@ -277,6 +466,20 @@ export async function makeExamSubmission(
     await page.waitForTimeout(2000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
+}
+
+/**
+ * Waits for the exam to end if it hasn't already.
+ * This is necessary because the assessment dashboard button only appears after the exam ends.
+ * @param examEnd - The exam end date
+ * @param page - The Playwright page object (used for waitForTimeout)
+ */
+export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
+    if (examEnd.isAfter(dayjs())) {
+        const timeToWait = examEnd.diff(dayjs()) + 1000; // Add 1 second buffer
+        console.log(`Waiting ${timeToWait}ms for exam to end...`);
+        await page.waitForTimeout(timeToWait);
+    }
 }
 
 export async function startAssessing(

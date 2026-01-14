@@ -1,35 +1,38 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, model, signal, viewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
-import { LectureService } from '../services/lecture.service';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { getCurrentLocaleSignal, onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBan, faCircleInfo, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { captureException } from '@sentry/angular';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
-import dayjs, { Dayjs } from 'dayjs/esm';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
-import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { captureException } from '@sentry/angular';
+import { getCurrentLocaleSignal, onError } from 'app/shared/util/global.utils';
+import dayjs, { Dayjs } from 'dayjs/esm';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
 import { TranslateService } from '@ngx-translate/core';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { LectureService } from '../services/lecture.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -59,16 +62,21 @@ interface CreateLectureOption {
         ArtemisTranslatePipe,
         SelectButtonModule,
         LectureSeriesCreateComponent,
+        CheckboxModule,
+        TooltipModule,
+        CourseTitleBarTitleDirective,
     ],
 })
-export class LectureUpdateComponent implements OnInit, OnDestroy {
+export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsavedChangesComponent {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
+    protected readonly faCircleInfo = faCircleInfo;
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     private readonly alertService = inject(AlertService);
     private readonly lectureService = inject(LectureService);
@@ -85,7 +93,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
-    courseTitle = model<string>('');
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
@@ -106,6 +113,8 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
     selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
     isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
+    isTutorialLecture = signal(false);
+    tutorialLectureTooltip = computed<string>(() => this.computeTutorialLectureTooltip());
 
     constructor() {
         effect(() => {
@@ -153,30 +162,36 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 this.subscriptions = new Subscription();
             }
         });
+
+        effect(() => {
+            this.lecture().isTutorialLecture = this.isTutorialLecture();
+            this.updateIsChangesMadeToTitleOrPeriodSection();
+        });
     }
 
     ngOnInit() {
         this.isSaving = false;
         this.processUnitMode = false;
         this.isProcessing = false;
-        this.activatedRoute.parent!.data.subscribe((data) => {
+        this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
-            const lecture = data['lecture'];
-            this.lecture.set(lecture ?? new Lecture());
+            const lecture = data['lecture'] as Lecture;
+            const newLecture = lecture ?? new Lecture();
             const course = data['course'];
             if (course) {
-                this.lecture().course = course;
+                newLecture.course = course;
+            }
+            this.lecture.set(newLecture);
+            if (lecture) {
+                this.isTutorialLecture.set(lecture.isTutorialLecture ?? false);
             }
         });
 
-        this.activatedRoute.parent!.paramMap.subscribe((parameterMap) => {
-            const courseIdAsString = parameterMap.get('courseId');
-            this.courseId.set(courseIdAsString ? Number(courseIdAsString) : undefined);
-        });
+        const paramMap = this.activatedRoute.parent!.snapshot.paramMap;
+        this.courseId.set(Number(paramMap.get('courseId')));
 
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
-        this.courseTitle.set(this.lecture().course?.title ?? '');
 
         const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
         this.existingLectures.set(existingLectures);
@@ -214,7 +229,8 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         return (
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
-            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '')
+            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '') ||
+            this.lecture().isTutorialLecture !== this.lectureOnInit.isTutorialLecture
         );
     }
 
@@ -319,13 +335,14 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         } else if (this.isEditMode()) {
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
-            // after create we stay on the edit page, as now attachments and lecture units are available (we need the lecture id to save them)
+            // after create we stay on the edit page, as now lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
             this.isEditMode.set(true);
             this.lectureOnInit = cloneDeep(lecture);
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
-            window.history.replaceState({}, '', `course-management/${lecture.course.id}/lectures/${lecture.id}/edit`);
+
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
             this.shouldDisplayDismissWarning = true;
         }
 
@@ -346,7 +363,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
-    onDatesValuesChanged() {
+    onDatesValuesChanged = () => {
         const startDate = this.lecture().startDate;
         const endDate = this.lecture().endDate;
         const visibleDate = this.lecture().visibleDate;
@@ -360,6 +377,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (visibleDate && startDate?.isBefore(visibleDate)) {
             this.lecture().visibleDate = startDate.clone();
         }
+    };
+
+    onLectureChange(updatedLecture: Lecture): void {
+        this.lecture.set(updatedLecture);
     }
 
     private computeAreSectionsValid(): boolean {
@@ -382,5 +403,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             { label: this.translateService.instant('artemisApp.lecture.creationMode.singleLectureLabel'), mode: LectureCreationMode.SINGLE },
             { label: this.translateService.instant('artemisApp.lecture.creationMode.lectureSeriesLabel'), mode: LectureCreationMode.SERIES },
         ];
+    }
+
+    private computeTutorialLectureTooltip(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.lecture.tutorialLecture.tutorialLectureTooltip');
     }
 }

@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, EventEmitter, Input, OnDestroy, OnInit, Output, Type, ViewContainerRef, inject } from '@angular/core';
+import { ComponentRef, Directive, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, Type, ViewContainerRef, inject } from '@angular/core';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
@@ -7,7 +7,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
 @Directive({
     selector: '[jhiSidebarCard]',
 })
-export class SidebarCardDirective implements OnInit, OnDestroy {
+export class SidebarCardDirective implements OnInit, OnChanges, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);
 
     @Input() size = 'M';
@@ -30,6 +30,12 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         const cardType = cards[this.size];
         if (cardType) {
             this.componentRef = this.viewContainerRef.createComponent(cardType);
+            this.assignAttributes();
+        }
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (this.componentRef) {
             this.assignAttributes();
         }
     }

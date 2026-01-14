@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.assessment.util;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.time.ZonedDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -67,6 +69,7 @@ public class ComplaintUtilService {
                 ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? userPrefix + "tutor5" : currentUser.getLogin(), complaint);
                 complaintResponse.getComplaint().setAccepted(true);
                 complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
+                complaintResponse.setSubmittedTime(ZonedDateTime.now().minusSeconds(1));
                 complaintResponseRepo.save(complaintResponse);
                 complaint.setComplaintResponse(complaintResponse);
                 complaintRepo.save(complaint);
@@ -101,6 +104,7 @@ public class ComplaintUtilService {
     public void addComplaints(String studentLogin, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().submission(submission);
+            dummyResult.setExerciseId(submission.getParticipation().getExercise().getId());
             dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
@@ -135,6 +139,7 @@ public class ComplaintUtilService {
     public void addTeamComplaints(Team team, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().submission(submission);
+            dummyResult.setExerciseId(submission.getParticipation().getExercise().getId());
             dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);

@@ -73,7 +73,7 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Staff',
+                        label: 'Development',
                         path: 'staff'
                     },
                     {
@@ -92,7 +92,7 @@ const config: Config = {
             {
                 path: 'docs/student',
                 routeBasePath: 'student',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-students.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -103,7 +103,7 @@ const config: Config = {
                 id: 'instructor',
                 path: 'docs/instructor',
                 routeBasePath: 'instructor',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-instructors.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -114,7 +114,7 @@ const config: Config = {
                 id: 'staff',
                 path: 'docs/staff',
                 routeBasePath: 'staff',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-staff.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -125,7 +125,7 @@ const config: Config = {
                 id: 'admin',
                 path: 'docs/admin',
                 routeBasePath: 'admin',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-admin.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -199,7 +199,7 @@ const config: Config = {
                     ],
                 },
             ],
-            copyright: `© 2025 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
+            copyright: `© 2026 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
         },
         prism: {
             theme: prismThemes.github,
