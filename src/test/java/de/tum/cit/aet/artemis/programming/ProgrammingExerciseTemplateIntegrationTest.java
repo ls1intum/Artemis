@@ -207,7 +207,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
                     gitServiceSpy.deleteLocalRepository(uri);
 
-                    // This handles OS file locks that prevent complete deletion
                     deleteDirectoryWithRetries(repoPath, type.toString());
                 }
                 catch (Exception e) {
