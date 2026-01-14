@@ -15,5 +15,5 @@ import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PasskeyAdminDTO(@NotNull @Base64Url String credentialId, String label, @NotNull Instant created, Instant lastUsed, boolean isSuperAdminApproved, @NotNull Long userId,
-        @NotNull @NotBlank String userLogin, @NotNull String userName) {
+        @NotBlank String userLogin, @NotNull String userName) {
 }
