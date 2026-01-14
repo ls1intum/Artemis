@@ -4,6 +4,8 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
+        'e2e-testing-playwright',
+        'local-moodle-setup-for-lti',
         'spring-ai'
     ],
 };
