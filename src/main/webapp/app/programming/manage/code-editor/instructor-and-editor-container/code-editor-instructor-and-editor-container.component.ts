@@ -435,11 +435,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             // File already loaded, file load event will not fire
             if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
                 this.onFileLoad(this.fileToJumpOn!);
+                this.fileToJumpOn = undefined;
                 return;
             }
 
             // Will load file and signal to fileLoad when finished loading
             this.codeEditorContainer.selectedFile = this.fileToJumpOn;
+            this.fileToJumpOn = undefined;
         }
     }
 
@@ -453,7 +455,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;
-            this.fileToJumpOn = undefined;
         }
     }
 }
