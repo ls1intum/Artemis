@@ -110,14 +110,8 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Event emissions', () => {
-        let mockEvent;
-        beforeEach(() => {
-            mockEvent = {
-                stopPropagation: jest.fn(),
-                target: { closest: jest.fn() },
-            };
-        });
         it('should emit status change', () => {
+            const mockEvent = { stopPropagation: jest.fn() };
             const emitSpy = jest.spyOn(component.onChangeSavedPostStatus, 'emit');
             const newStatus = SavedPostStatus.ARCHIVED;
 
@@ -128,6 +122,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should emit remove bookmark event', () => {
+            const mockEvent = { stopPropagation: jest.fn() };
             const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', mockPost);
 
@@ -138,6 +133,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should not emit remove bookmark event when post is undefined', () => {
+            const mockEvent = { stopPropagation: jest.fn() };
             const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', undefined);
 

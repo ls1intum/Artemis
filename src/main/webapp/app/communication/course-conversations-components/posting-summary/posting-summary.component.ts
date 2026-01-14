@@ -58,12 +58,12 @@ export class PostingSummaryComponent {
         });
     }
 
-    protected onStatusChangeClick(event: any, status: SavedPostStatus) {
+    protected onStatusChangeClick(event: MouseEvent, status: SavedPostStatus) {
         event.stopPropagation();
         this.onChangeSavedPostStatus.emit(status);
     }
 
-    protected onRemoveBookmarkClick(event: any) {
+    protected onRemoveBookmarkClick(event: MouseEvent) {
         event.stopPropagation();
         if (this.post() === undefined) {
             return;
