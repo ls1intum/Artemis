@@ -22,7 +22,7 @@ export class SidebarCardMediumComponent {
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
-    @Output() pageChange = new EventEmitter<number>();
+    @Output() pageChange = new EventEmitter<string | number>();
     /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
 
@@ -50,6 +50,6 @@ export class SidebarCardMediumComponent {
     }
 
     onExamCardClicked() {
-        this.pageChange.emit();
+        this.pageChange.emit(this.sidebarItem.id);
     }
 }
