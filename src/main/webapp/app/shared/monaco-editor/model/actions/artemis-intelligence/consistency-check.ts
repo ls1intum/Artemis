@@ -2,9 +2,7 @@ import { ApplicationRef, EnvironmentInjector, createComponent } from '@angular/c
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { TranslateService } from '@ngx-translate/core';
 import { ConsistencyIssueCommentComponent } from 'app/shared/monaco-editor/consistency-issue-comment/consistency-issue-comment.component';
 import * as monaco from 'monaco-editor';
 
@@ -22,21 +20,12 @@ export type InlineConsistencyIssue = {
 };
 
 /**
- * Adds a comment boxes below code lines in Monaco based on the issues.
- * @param editor            Monaco editor wrapper component.
- * @param issues            Issues to render.
- * @param selectedFile      The currently selected file in the repo.
- * @param selectedRepo      The currently selected repository.
- * @param translateService  Service to translate text in the comments.
- */
-/**
  * Renders consistency issue comments for the currently selected file/repo.
  *
  * @param editor Monaco editor instance.
  * @param issues Raw consistency issues.
  * @param selectedFile Currently selected file path.
  * @param selectedRepo Currently selected repository scope.
- * @param translateService Translate service instance.
  * @param onApply Callback invoked when applying a suggestion.
  * @param appRef ApplicationRef for dynamic component creation.
  * @param environmentInjector Injector for dynamic component creation.
@@ -46,54 +35,35 @@ export function addCommentBoxes(
     issues: ConsistencyIssue[],
     selectedFile: string | undefined,
     selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
-    translateService: TranslateService,
     onApply: (issue: InlineConsistencyIssue) => boolean,
     appRef?: ApplicationRef,
     environmentInjector?: EnvironmentInjector,
 ) {
     for (const [index, issue] of issuesForSelectedFile(selectedFile, selectedRepo, issues).entries()) {
         const resolvedIssue = withDerivedOriginalText(editor, issue);
-        addCommentBox(editor, resolvedIssue, index, translateService, onApply, appRef, environmentInjector);
+        addCommentBox(editor, resolvedIssue, index, onApply, appRef, environmentInjector);
     }
 }
 
-/**
- * Adds a comment box below a code line in Monaco.
- * @param editor Monaco editor wrapper component.
- * @param issue  Issue to render.
- * @param id     The unique identifier for this comment.
- * @param translateService  Service to translate text in the comments.
- */
 /**
  * Creates a single consistency issue comment widget at the given line.
  *
  * @param editor Monaco editor instance.
  * @param issue Inline issue to render.
  * @param id Unique widget id.
- * @param translateService Translate service instance.
  * @param onApply Callback invoked when applying a suggestion.
  * @param appRef ApplicationRef for dynamic component creation.
  * @param environmentInjector Injector for dynamic component creation.
- * @returns void
  */
 export function addCommentBox(
     editor: MonacoEditorComponent,
     issue: InlineConsistencyIssue,
     id: number,
-    translateService: TranslateService,
     onApply: (issue: InlineConsistencyIssue) => boolean,
     appRef?: ApplicationRef,
     environmentInjector?: EnvironmentInjector,
 ) {
     if (!appRef || !environmentInjector) {
-        const headingText = translateService.instant('artemisApp.hyperion.consistencyCheck.issueHeading');
-        const node = document.createElement('div');
-        node.className = 'alert alert-warning alert-dismissible text-start fade show';
-        node.innerHTML = `
-      <h5 class='alert-heading'>${headingText}</h5>
-      <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>
-    `;
-        editor.addLineWidget(issue.endLine, `comment-${id}`, node);
         return;
     }
 
@@ -209,46 +179,6 @@ export function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: Re
 }
 
 /**
- * Formats a single inline issue as Markdown (title, description, fix, and location).
- * @param issue Inline issue to format.
- * @returns Markdown string.
- */
-export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): string {
-    let md = '';
-
-    let linePart = '';
-    if (issue.startLine && issue.endLine) {
-        linePart = issue.startLine === issue.endLine ? `(L${issue.startLine})` : `(L${issue.startLine}-${issue.endLine})`;
-    } else if (issue.startLine) {
-        linePart = `(L${issue.startLine})`;
-    }
-
-    const categoryRaw = issue.category || 'GENERAL';
-    const category = humanizeCategory(categoryRaw);
-    md += `**[${severityToString(issue.severity)}] ${category} ${linePart}**\n\n`;
-    md += `${issue.description}\n\n`;
-    if (issue.suggestedFix) {
-        // Does not need to be localized, as the LLM output is english. Only and it
-        // is planed to store the content on the server in the future.
-        md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
-    }
-
-    if (issue.originalText !== undefined && issue.modifiedText !== undefined) {
-        md += `**Suggested change:**\n\n`;
-        if (issue.originalText) {
-            md += `**Original:**\n\n\`\`\`\n${issue.originalText}\n\`\`\`\n\n`;
-        }
-        if (issue.modifiedText) {
-            md += `**Modified:**\n\n\`\`\`\n${issue.modifiedText}\n\`\`\`\n\n`;
-        }
-    }
-
-    md += `\n`;
-
-    return md;
-}
-
-/**
  * Derives the current text for the referenced line range and attaches it as originalText.
  *
  * @param editor Monaco editor instance.
@@ -314,61 +244,4 @@ export function applySuggestedChangeToModel(model: monaco.editor.ITextModel, iss
 
     model.pushEditOperations([], [{ range: matches[0].range, text: issue.modifiedText }], () => null);
     return true;
-}
-
-/**
- * Converts ENUM_STYLE text (e.g., IDENTIFIER_NAMING_INCONSISTENCY) to Title Case.
- * @param category Enum-style category string.
- * @returns Human-friendly title string.
- */
-export function humanizeCategory(category: string): string {
-    // Does not need to be localized, as the LLM output is english. Only and it
-    // is planed to store the content on the server in the future.
-    return category
-        .split('_')
-        .filter((p) => p.length > 0)
-        .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
-        .join(' ');
-}
-
-/**
- * Maps severity enum to a display string.
- * @param severity Severity enum.
- * @returns Display label for severity.
- */
-export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
-    // Does not need to be localized, as the LLM output is english. Only and it
-    // is planed to store the content on the server in the future.
-    switch (severity) {
-        case ConsistencyIssue.SeverityEnum.High:
-            return 'HIGH';
-        case ConsistencyIssue.SeverityEnum.Medium:
-            return 'MEDIUM';
-        case ConsistencyIssue.SeverityEnum.Low:
-            return 'LOW';
-        default:
-            return 'UNKNOWN';
-    }
-}
-
-/**
- * Maps artifact type enum to a human-readable label.
- * @param type Artifact location type.
- * @returns Display label for artifact domain.
- */
-export function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
-    // Does not need to be localized, as the LLM output is english. Only and it
-    // is planed to store the content on the server in the future.
-    switch (type) {
-        case ArtifactLocation.TypeEnum.ProblemStatement:
-            return 'Problem Statement';
-        case ArtifactLocation.TypeEnum.TemplateRepository:
-            return 'Template';
-        case ArtifactLocation.TypeEnum.SolutionRepository:
-            return 'Solution';
-        case ArtifactLocation.TypeEnum.TestsRepository:
-            return 'Tests';
-        default:
-            return 'Other';
-    }
 }

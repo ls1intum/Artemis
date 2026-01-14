@@ -11,31 +11,16 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import {
-    InlineConsistencyIssue,
-    addCommentBoxes,
-    formatArtifactType,
-    formatConsistencyCheckResults,
-    humanizeCategory,
-    isMatchingRepository,
-    issuesForSelectedFile,
-    severityToString,
-} from './consistency-check';
+import { InlineConsistencyIssue, applySuggestedChangeToModel, isMatchingRepository, issuesForSelectedFile } from './consistency-check';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
-    let translateService: TranslateService;
-
-    const monacoEditorComponent = {
-        addLineWidget: jest.fn(),
-    } as unknown as MonacoEditorComponent;
 
     const mockWebsocketService = {
         subscribe: jest.fn().mockReturnValue(
@@ -125,6 +110,18 @@ describe('ArtemisIntelligenceService', () => {
             ],
         },
     ];
+
+    const createModel = (content: string) => ({
+        getLineContent: (lineNumber: number) => content.split('\n')[lineNumber - 1] ?? '',
+        getValueInRange: (_range: any) => content,
+        findMatches: (searchText: string) => {
+            if (!content.includes(searchText)) {
+                return [];
+            }
+            return [{ range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: searchText.length + 1 } }];
+        },
+        pushEditOperations: jest.fn(),
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -285,28 +282,6 @@ describe('ArtemisIntelligenceService', () => {
             expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TESTS)).toBeTruthy();
         });
 
-        it('severity to string correct', () => {
-            expect(severityToString(ConsistencyIssue.SeverityEnum.Medium)).toBe('MEDIUM');
-            expect(severityToString(ConsistencyIssue.SeverityEnum.Low)).toBe('LOW');
-            expect(severityToString(ConsistencyIssue.SeverityEnum.High)).toBe('HIGH');
-            expect(severityToString(undefined as any)).toBe('UNKNOWN');
-        });
-
-        it('humanized category correctly', () => {
-            expect(humanizeCategory('IDENTIFIER_NAMING_INCONSISTENCY')).toBe('Identifier Naming Inconsistency');
-            expect(humanizeCategory('VISIBILITY_MISMATCH')).toBe('Visibility Mismatch');
-            expect(humanizeCategory('METHOD_PARAMETER_MISMATCH')).toBe('Method Parameter Mismatch');
-            expect(humanizeCategory('GENERAL')).toBe('General');
-        });
-
-        it('format artifact type correctly', () => {
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.TestsRepository)).toBe('Tests');
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.ProblemStatement)).toBe('Problem Statement');
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.SolutionRepository)).toBe('Solution');
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.TemplateRepository)).toBe('Template');
-            expect(formatArtifactType(undefined as any)).toBe('Other');
-        });
-
         it('correct issues for selected files: problem statement', () => {
             const res = issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', mockIssues);
             expect(res).toHaveLength(1);
@@ -362,33 +337,6 @@ describe('ArtemisIntelligenceService', () => {
             const res2 = issuesForSelectedFile('template_repository/src/Class2.java', undefined, mockIssues);
             expect(res2).toHaveLength(0);
         });
-
-        it('format contains necessary information', () => {
-            const mockIssue: InlineConsistencyIssue = {
-                filePath: 'path',
-                type: ArtifactLocation.TypeEnum.TemplateRepository,
-                startLine: 1,
-                endLine: 3,
-                description: 'Example description',
-                suggestedFix: 'Example fix',
-                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
-                severity: ConsistencyIssue.SeverityEnum.Medium,
-            };
-
-            const res = formatConsistencyCheckResults(mockIssue);
-
-            expect(res).toContain(mockIssue.description);
-            expect(res).toContain(mockIssue.suggestedFix);
-            expect(res).toContain(humanizeCategory(mockIssue.category));
-            expect(res).toContain(severityToString(mockIssue.severity));
-            expect(res).toContain(String(mockIssue.startLine));
-            expect(res).toContain(String(mockIssue.endLine));
-        });
-
-        it('addCommentBoxes calls correct functions', () => {
-            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT', translateService, () => true);
-            expect(monacoEditorComponent.addLineWidget).toHaveBeenCalledOnce();
-        });
     });
 
     describe('isLoading', () => {
@@ -409,6 +357,48 @@ describe('ArtemisIntelligenceService', () => {
             expect(service.isLoading()).toBeFalsy();
             service.consistencyCheck(42).subscribe((res) => expect(res.issues).toEqual([]));
             expect(service.isLoading()).toBeFalsy(); // Should be false after synchronous completion
+        });
+    });
+
+    describe('applySuggestedChangeToModel', () => {
+        it('returns true when the range matches and applies the change', () => {
+            const model = createModel('original');
+            const issue: InlineConsistencyIssue = {
+                filePath: 'path',
+                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                startLine: 1,
+                endLine: 1,
+                description: 'desc',
+                suggestedFix: 'fix',
+                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                severity: ConsistencyIssue.SeverityEnum.Medium,
+                originalText: 'original',
+                modifiedText: 'updated',
+            };
+
+            const result = applySuggestedChangeToModel(model as any, issue);
+            expect(result).toBeTrue();
+            expect(model.pushEditOperations).toHaveBeenCalledOnce();
+        });
+
+        it('returns false when no match is found', () => {
+            const model = createModel('some content');
+            const issue: InlineConsistencyIssue = {
+                filePath: 'path',
+                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                startLine: 1,
+                endLine: 1,
+                description: 'desc',
+                suggestedFix: 'fix',
+                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                severity: ConsistencyIssue.SeverityEnum.Medium,
+                originalText: 'missing',
+                modifiedText: 'updated',
+            };
+
+            const result = applySuggestedChangeToModel(model as any, issue);
+            expect(result).toBeFalse();
+            expect(model.pushEditOperations).not.toHaveBeenCalled();
         });
     });
 });

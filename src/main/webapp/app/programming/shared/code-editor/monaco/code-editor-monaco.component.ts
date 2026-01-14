@@ -39,7 +39,6 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChang
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { InlineConsistencyIssue, addCommentBoxes, applySuggestedChangeToModel } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { TranslateService } from '@ngx-translate/core';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -72,7 +71,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
-    private readonly translateService = inject(TranslateService);
     private readonly ngZone = inject(NgZone);
     private readonly appRef = inject(ApplicationRef);
     private readonly environmentInjector = inject(EnvironmentInjector);
@@ -441,7 +439,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                         issues,
                         this.selectedFile(),
                         this.selectedRepository(),
-                        this.translateService,
                         this.applySuggestedChange.bind(this),
                         this.appRef,
                         this.environmentInjector,

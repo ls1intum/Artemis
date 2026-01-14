@@ -81,7 +81,6 @@ import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { InlineConsistencyIssue, addCommentBoxes, applySuggestedChangeToModel } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { TranslateService } from '@ngx-translate/core';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -154,7 +153,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly translateService = inject(TranslateService);
     private readonly appRef = inject(ApplicationRef);
     private readonly environmentInjector = inject(EnvironmentInjector);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
@@ -372,16 +370,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
 
         this.monacoEditor.disposeWidgets();
-        addCommentBoxes(
-            this.monacoEditor,
-            issues,
-            'problem_statement.md',
-            'PROBLEM_STATEMENT',
-            this.translateService,
-            this.applySuggestedChange.bind(this),
-            this.appRef,
-            this.environmentInjector,
-        );
+        addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT', this.applySuggestedChange.bind(this), this.appRef, this.environmentInjector);
     }
 
     /**
