@@ -111,7 +111,7 @@ describe('PostingSummaryComponent', () => {
 
     describe('Event emissions', () => {
         it('should emit status change', () => {
-            const mockEvent = { stopPropagation: jest.fn() };
+            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
             const emitSpy = jest.spyOn(component.onChangeSavedPostStatus, 'emit');
             const newStatus = SavedPostStatus.ARCHIVED;
 
