@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -1695,9 +1696,10 @@ public class ProgrammingExerciseTestService {
     }
 
     /**
-     * Waits for a zip file to be fully written to disk.
+     * Waits for a zip file to be fully written to disk by validating its structure.
      * This is critical for slow CI environments where the file might exist but still be in the process of being written.
-     * The method waits until the file size stabilizes and the zip file can be successfully opened.
+     * The method validates the ZIP by attempting to open it, which checks for the End of Central Directory Record (EOCD)
+     * that is written last in ZIP files.
      *
      * @param zipFile the zip file to wait for
      * @throws InterruptedException if the thread is interrupted while waiting
@@ -1705,9 +1707,6 @@ public class ProgrammingExerciseTestService {
     private void waitForZipFileToBeComplete(File zipFile) throws InterruptedException {
         int maxAttempts = 20;
         int waitTimeMs = 500;
-        long previousSize = -1;
-        int stableSizeCount = 0;
-        int requiredStableChecks = 3; // Require size to be stable for 3 consecutive checks
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             if (!zipFile.exists()) {
@@ -1716,34 +1715,18 @@ public class ProgrammingExerciseTestService {
                 continue;
             }
 
-            long currentSize = zipFile.length();
-
-            // Check if size has stabilized (not growing)
-            if (currentSize == previousSize && currentSize > 0) {
-                stableSizeCount++;
-                log.debug("Zip file size stable at {} bytes (stable count: {}/{})", currentSize, stableSizeCount, requiredStableChecks);
-
-                if (stableSizeCount >= requiredStableChecks) {
-                    // Additional check: Try to verify zip file is valid by checking for END header
-                    // Zip files must end with the END of central directory record (signature: 0x06054b50)
-                    // For a complete zip, the file should at least have the minimum zip structure (~22 bytes)
-                    if (currentSize >= 22) {
-                        log.info("Zip file appears complete after {} attempts (size: {} bytes)", attempt, currentSize);
-                        return;
-                    }
-                }
+            // Try to open the ZIP file - this validates the complete structure including EOCD
+            try (var ignored = new ZipFile(zipFile)) {
+                log.info("Zip file is valid and complete after {} attempts (size: {} bytes)", attempt, zipFile.length());
+                return;
             }
-            else {
-                stableSizeCount = 0;
-                log.debug("Zip file size changed from {} to {} bytes", previousSize, currentSize);
+            catch (IOException exception) {
+                log.debug("Zip file not yet valid (attempt {}/{}): {}", attempt, maxAttempts, exception.getMessage());
+                Thread.sleep(waitTimeMs);
             }
-
-            previousSize = currentSize;
-            Thread.sleep(waitTimeMs);
         }
 
-        log.warn("Zip file may not be complete after {} attempts (final size: {} bytes, stable count: {})", maxAttempts, previousSize, stableSizeCount);
-        // Continue anyway - the extraction will fail with a clear error if the file is actually incomplete
+        log.warn("Zip file may not be complete after {} attempts (final size: {} bytes)", maxAttempts, zipFile.length());
     }
 
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
