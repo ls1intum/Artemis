@@ -1,9 +1,0 @@
-{
-  "version": "1",
-  "name": "Jenkins Connector API Tests",
-  "type": "collection",
-  "ignore": [
-    "node_modules",
-    ".git"
-  ]
-}
