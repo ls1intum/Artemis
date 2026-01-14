@@ -202,6 +202,12 @@
             "idMissing": "The modeling exercise must be saved before it can be converted.",
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
+        },
+        "PlagiarismCase": {
+            "studentMissing": "The plagiarism case is not associated with a student."
+        },
+        "PlagiarismPost": {
+            "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
         }
     }
 }

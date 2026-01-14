@@ -202,6 +202,12 @@
             "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
+        },
+        "PlagiarismCase": {
+            "studentMissing": "Der Plagiatsfall ist keinem Studierenden zugeordnet."
+        },
+        "PlagiarismPost": {
+            "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
         }
     }
 }

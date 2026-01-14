@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -61,18 +63,19 @@ public class PlagiarismPostResource {
      * POST /courses/{courseId}/posts : Create a new post
      *
      * @param courseId id of the course the post belongs to
-     * @param post     post to create
+     * @param postDto  post to create
      * @return ResponseEntity with status 201 (Created) containing the created post in the response body,
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/posts")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        log.debug("POST createPost invoked for course {} with post {}", courseId, post.getContent());
+    public ResponseEntity<PlagiarismPostCreationResponseDTO> createPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismPostCreationDTO postDto)
+            throws URISyntaxException {
+        log.debug("POST createPost invoked for course {} with post {}", courseId, postDto.content());
         long start = System.nanoTime();
-        Post createdPost = plagiarismPostService.createPost(courseId, post);
+        Post createdPost = plagiarismPostService.createPost(courseId, postDto.toEntity());
         log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
+        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.getId())).body(PlagiarismPostCreationResponseDTO.of(createdPost));
     }
 
     /**

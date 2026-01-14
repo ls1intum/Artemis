@@ -35,6 +35,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -114,8 +116,14 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         Post postToSave = createPostWithoutContext();
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        postToSave.setPlagiarismCase(plagiarismCase);
 
-        Post notCreatedPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+        PlagiarismPostCreationResponseDTO notCreatedPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave),
+                PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
         long[] conversationIds = new long[] { exerciseChannel.getId() };
@@ -144,15 +152,20 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         postToSave.setContent(userMention);
 
         if (!isUserMentionValid) {
-            request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), PlagiarismPostCreationResponseDTO.class,
+                    HttpStatus.BAD_REQUEST);
             return;
         }
 
-        Post createdPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdPost);
-        checkCreatedPost(postToSave, createdPost);
+        PlagiarismPostCreationResponseDTO createdPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave),
+                PlagiarismPostCreationResponseDTO.class, HttpStatus.CREATED);
 
-        List<Post> plagiarismPosts = postRepository.findPostsByPlagiarismCaseId(createdPost.getPlagiarismCase().getId());
+        Post persistedPost = postRepository.findByIdElseThrow(createdPost.id());
+
+        conversationUtilService.assertSensitiveInformationHidden(persistedPost);
+        checkCreatedPost(postToSave, persistedPost);
+
+        List<Post> plagiarismPosts = postRepository.findPostsByPlagiarismCaseId(persistedPost.getPlagiarismCase().getId());
         assertThat(plagiarismPosts).hasSize(1);
     }
 
@@ -167,7 +180,8 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         postToSave.setPlagiarismCase(plagiarismCase);
 
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), PlagiarismPostCreationResponseDTO.class,
+                HttpStatus.CREATED);
 
         List<Post> updatedPlagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(plagiarismCase.getId());
         assertThat(updatedPlagiarismCasePosts).hasSize(1);
@@ -181,7 +195,8 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         var sizeBefore = postRepository.findAll().size();
 
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(existingPostToSave), PlagiarismPostCreationResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
         assertThat(postRepository.findAll()).hasSize(sizeBefore);
     }
 
@@ -192,14 +207,16 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         courseId = course.getId();
         Post postToSave = createPostWithoutContext();
 
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), PlagiarismPostCreationResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testValidatePostContextConstraintViolation() throws Exception {
         Post invalidPost = createPostWithoutContext();
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(invalidPost), PlagiarismPostCreationResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     // UPDATE
