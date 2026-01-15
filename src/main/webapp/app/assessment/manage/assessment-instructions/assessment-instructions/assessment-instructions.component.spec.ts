@@ -17,6 +17,35 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { Component, input, output } from '@angular/core';
+
+// Stub for ModelingEditorComponent
+@Component({
+    selector: 'jhi-modeling-editor',
+    template: '',
+    standalone: true,
+})
+export class StubModelingEditorComponent {
+    umlModel = input<unknown>();
+    diagramType = input<unknown>();
+    readOnly = input<boolean>(false);
+    resizeOptions = input<unknown>();
+    withExplanation = input<boolean>(false);
+
+    onModelChanged = output<unknown>();
+
+    apollonEditor = {
+        nextRender: Promise.resolve(),
+    };
+
+    getCurrentModel() {
+        return {
+            elements: {},
+            relationships: {},
+            version: '3.0.0',
+        };
+    }
+}
 
 describe('AssessmentInstructionsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -48,7 +77,7 @@ describe('AssessmentInstructionsComponent', () => {
                         MockDirective(SecureLinkDirective),
                         MockComponent(ButtonComponent),
                         MockDirective(TranslateDirective),
-                        MockComponent(ModelingEditorComponent),
+                        StubModelingEditorComponent,
                     ],
                 },
             })
