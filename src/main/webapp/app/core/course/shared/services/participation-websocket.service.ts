@@ -374,8 +374,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Appends a synthetic submission for a result whose submission is not yet
      * present in the cached participation.
      *
-     * Uses `result.submission` as a base, fixes the participation reference, and
-     * ensures the new result appears exactly once in the submission's `results` array.
+     * Uses result.submission as a base, fixes the participation reference, and
+     * ensures the new result appears exactly once in the submission's results array.
      *
      * @param submissions Current list of submissions for the participation
      * @param result The new result to apply
@@ -393,35 +393,48 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
             matchedExistingSubmission = true;
 
-            const existingResults = (submission.results ?? []).filter((r) => r.id !== result.id);
-            const mergedResults = [...existingResults, result];
+            const existingResults = (submission.results ?? []).filter((existingResult) => existingResult.id !== result.id);
+            // we do not mutate the mergedResults, hence concat is fine
+            const mergedResults = existingResults.concat(result);
 
-            return {
-                ...submission,
-                results: mergedResults,
-            };
+            const submissionToUpdate = deepClone(submission);
+            submissionToUpdate.results = mergedResults;
+
+            return submissionToUpdate;
         });
 
         return { updatedSubmissions: submissionsAfterUpdate, hasMatchingSubmission: matchedExistingSubmission };
     }
 
+    /**
+     * Creates and appends a new submission for a result whose submission
+     * is not yet present on the cached participation.
+     *
+     * The new submission is based on result.submission and linked to the given participation, and
+     * contains a deduplicated results list that includes the incoming result.
+     *
+     * @param submissions existing submissions of the participation
+     * @param participation participation to which the new submission belongs
+     * @param result incoming result that triggered creation of the submission
+     */
     private appendNewSubmission(submissions: Submission[], participation: StudentParticipation, result: Result): Submission[] {
         const baseResults = result.submission?.results ?? [];
-        const mergedResults = [...baseResults, result];
+        // we do not mutate the mergedResults, hence concat is fine
+        const mergedResults = baseResults.concat(result);
 
-        const deduplicatedResults = mergedResults.filter((r, index, existing) => {
-            if (r.id == null) {
+        const deduplicatedResults = mergedResults.filter((mergedResult, index, allResults) => {
+            if (mergedResult.id == null) {
                 // For results without an ID, we keep all of them
                 return true;
             }
-            return existing.findIndex((result) => result.id === r.id) === index;
+            return allResults.findIndex((result) => result.id === mergedResult.id) === index;
         });
 
         const newSubmission = deepClone(result.submission as Submission);
         newSubmission.participation = participation;
         newSubmission.results = deduplicatedResults;
-
-        return [...submissions, newSubmission];
+        // We only need to append the new submission to the submissions array, hence no deepClone required
+        return submissions.concat(newSubmission);
     }
 
     /**
