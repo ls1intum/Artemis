@@ -33,7 +33,6 @@ import * as _ from 'lodash-es';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
@@ -57,7 +56,6 @@ import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectio
         FaIconComponent,
         NgbTooltip,
         TranslateDirective,
-        ChatStatusBarComponent,
         FormsModule,
         ButtonComponent,
         ArtemisTranslatePipe,
@@ -75,6 +73,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
     protected llmModalService = inject(LLMSelectionModalService);
+    protected modalService = inject(NgbModal);
 
     // Icons
     protected readonly faTrash = faTrash;
@@ -377,13 +376,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     /**
      * Clear session and start a new conversation.
      */
-    onClearSession(content: any) {
-        this.modalService.open(content).result.then((result: string) => {
+    async onClearSession(content: any) {
+        try {
+            const result = await this.modalService.open(content).result;
             if (result === 'confirm') {
                 this.isLoading = false;
                 this.chatService.clearChat();
             }
-        });
+        } catch {
+            /* empty */
+        }
     }
 
     /**

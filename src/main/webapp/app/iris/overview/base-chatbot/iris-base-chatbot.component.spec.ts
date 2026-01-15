@@ -34,7 +34,6 @@ import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisBaseChatbotComponent', () => {
-
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
@@ -403,7 +402,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('ignores sessions with null title when searching', () => {
             component.setSearchValue('anything');
             const res = component.getSessionsBetween(0, 7);
-            expect(res.some((s) => s.id === 3)).toBe(false);
+            expect(res.some((s) => s.id === 3)).toBeFalse();
         });
 
         it('returns all sessions again when search is cleared', () => {
@@ -1398,7 +1397,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('onClearSession', () => {
         let modalRef: any;
-        let llmModalService : NgbModal;
+        let llmModalService: NgbModal;
 
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
