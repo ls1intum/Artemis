@@ -26,13 +26,10 @@ public class ConsistencyCheckService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    // private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ConsistencyCheckService(Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.versionControlService = versionControlService;
-        // this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -62,10 +59,7 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(ProgrammingExercise programmingExercise) {
-        List<ConsistencyErrorDTO> result = new ArrayList<>();
-        result.addAll(checkVCSConsistency(programmingExercise));
-        // result.addAll(checkCIConsistency(programmingExercise));
-        return result;
+        return new ArrayList<>(checkVCSConsistency(programmingExercise));
     }
 
     /**
@@ -100,26 +94,4 @@ public class ConsistencyCheckService {
         }
         return result;
     }
-
-    // /**
-    // * Checks if build plans (TEMPLATE, SOLUTION) exist in the CI for a given
-    // * programming exercise.
-    // *
-    // * @param programmingExercise to check
-    // * @return List containing the resulting errors, if any.
-    // */
-    // private List<ConsistencyErrorDTO> checkCIConsistency(ProgrammingExercise programmingExercise) {
-    // List<ConsistencyErrorDTO> result = new ArrayList<>();
-    //
-    // ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-    // if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {
-    // result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
-    // }
-    // if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())) {
-    // result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
-    // }
-    //
-    // return result;
-    // }
-
 }

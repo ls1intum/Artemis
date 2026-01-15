@@ -29,8 +29,6 @@ public class ProgrammingExerciseBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildPlanService.class);
 
-    // private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
@@ -47,7 +45,6 @@ public class ProgrammingExerciseBuildPlanService {
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
-        // this.continuousIntegrationService = continuousIntegrationService;
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
@@ -67,18 +64,6 @@ public class ProgrammingExerciseBuildPlanService {
      *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        // Get URLs for repos
-        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
-        var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
-        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
-
-        // ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-        // continuousIntegration.createProjectForExercise(programmingExercise);
-        // // template build plan
-        // continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
-        // // solution build plan
-        // continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
-
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
@@ -128,9 +113,6 @@ public class ProgrammingExerciseBuildPlanService {
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
-                // continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-                // continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-                // continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
             // For Aeolus, we have to regenerate the build script based on the new Windfile of the exercise.

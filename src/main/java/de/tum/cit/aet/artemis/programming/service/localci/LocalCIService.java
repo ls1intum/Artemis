@@ -21,10 +21,8 @@ import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
- * Implementation of ContinuousIntegrationService for local CI. Contains methods
- * for communication with the local CI system.
- * Note: Because the ContinuousIntegrationSystem was designed with Jenkins
- * integration in mind, some methods here are not
+ * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
+ * Note: Because the ContinuousIntegrationSystem was designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
 @Lazy
@@ -34,45 +32,12 @@ public class LocalCIService implements StatelessCIService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final BuildScriptProviderService buildScriptProviderService;
-
-    private final AeolusTemplateService aeolusTemplateService;
-
     private final DistributedDataAccessService distributedDataAccessService;
-
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
             DistributedDataAccessService distributedDataAccessService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.buildScriptProviderService = buildScriptProviderService;
-        this.aeolusTemplateService = aeolusTemplateService;
         this.distributedDataAccessService = distributedDataAccessService;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
-
-    // /**
-    // * Fetches the default build plan configuration for the given exercise and the
-    // windfile for its metadata (docker image etc.).
-    // *
-    // * @param exercise for which the build plans should be recreated
-    // */
-    // public void recreateBuildPlansForExercise(ProgrammingExercise exercise)
-    // throws JsonProcessingException {
-    // // TODO: implement this differently for LocalCI in the future
-    // if (exercise == null) {
-    // return;
-    // }
-    // log.debug("Recreating build plans for exercise {}", exercise.getTitle());
-    // String script = buildScriptProviderService.getScriptFor(exercise);
-    // Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-    // ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-    // buildConfig.setBuildScript(script);
-    // buildConfig.setBuildPlanConfiguration(new
-    // ObjectMapper().writeValueAsString(windfile));
-    // // recreating the build plans for the exercise means we need to store the
-    // updated build config in the database
-    // programmingExerciseBuildConfigRepository.save(buildConfig);
-    // }
 
     /**
      * Get the current status of the build for the given participation, i.e.

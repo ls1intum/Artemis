@@ -104,25 +104,6 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         assertThat(health.isUp()).isTrue();
     }
 
-    // @Test
-    // void testRecreateBuildPlanForExercise() throws IOException {
-    // String script = "echo 'Hello, World!'";
-    // Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-    // ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-    // exercise.getBuildConfig().setBuildScript(script);
-    // exercise.getBuildConfig().setBuildPlanConfiguration(null);
-    // continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-    // script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-    // exercise.getBuildConfig().hasSequentialTestRuns());
-    // Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-    // String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
-    // String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
-    // assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
-    // assertThat(exercise.getBuildConfig().getBuildScript()).isEqualTo(script);
-    // // test that the method does not throw an exception when the exercise is null
-    // continuousIntegrationService.recreateBuildPlansForExercise(null);
-    // }
-
     @Test
     void testGetScriptForWithoutCache() {
         ReflectionTestUtils.setField(buildScriptProviderService, "scriptCache", new ConcurrentHashMap<>());

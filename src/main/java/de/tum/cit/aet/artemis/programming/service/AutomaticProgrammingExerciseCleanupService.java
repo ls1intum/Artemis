@@ -260,7 +260,7 @@ public class AutomaticProgrammingExerciseCleanupService {
             }
         }
         else {
-            // 3rd case: delete the build plan after 1 days in case the latest result is successful
+            // 3rd case: delete the build plan after 1 day in case the latest result is successful
             if (result.isSuccessful()) {
                 if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(1).isBefore(now())) {
                     participationsWithBuildPlanToDelete.add(participation);

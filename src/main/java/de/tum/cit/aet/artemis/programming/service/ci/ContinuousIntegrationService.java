@@ -35,8 +35,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with
      *                                  checkoutSolutionRepository=true. Otherwise, ignored.
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only
-    // implemented by the Jenkins subsystem
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri);
 
@@ -45,8 +44,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      *
      * @param exercise for which the build plans should be recreated
      */
-    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only
-    // implemented by the Jenkins subsystem
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
 
     /**
@@ -137,8 +135,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
     void enablePlan(String projectKey, String planKey);
 
     /**
-     * Updates the configured exercise repository for a given build plan to the
-     * given repository, this is a key method in the Artemis system structure.
+     * Updates the configured exercise repository for a given build plan to the given repository, this is a key method in the Artemis system structure.
      *
      * @param buildProjectKey The key of the build project, e.g. 'EIST16W1', which is normally the programming exercise project key.
      * @param buildPlanKey    The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
@@ -150,15 +147,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri, String newBranch);
-
-    /**
-     * Set Build Plan Permissions for admins, instructors and teaching assistants.
-     *
-     * @param programmingExercise a programming exercise with the required information to set the needed build plan permissions
-     * @param planName            The name of the source plan
-     */
-    // TODO: Move to a new ContinuousIntegrationPermissionService that is only implemented by the Jenkins subsystem
-    // void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
 
     /**
      * Checks if the underlying CI server is up and running and gives some additional information about the running

@@ -103,25 +103,4 @@ public class ParticipationDeletionResource {
         participationDeletionService.delete(participation.getId(), true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
-
-    // /**
-    // * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
-    // * This only works for programming exercises.
-    // *
-    // * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
-    // * @param principal The identity of the user accessing this resource
-    // * @return the ResponseEntity with status 200 (OK)
-    // */
-    // @PutMapping("participations/{participationId}/cleanup-build-plan")
-    // @EnforceAtLeastInstructor
-    // @FeatureToggle(Feature.ProgrammingExercises)
-    // public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
-    // ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
-    // User user = userRepository.getUserWithGroupsAndAuthorities();
-    // participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
-    // log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
-    // participationDeletionService.cleanupBuildPlan(participation);
-    // return ResponseEntity.ok().body(participation);
-    // }
-
 }
