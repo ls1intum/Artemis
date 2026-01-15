@@ -25,7 +25,7 @@ For programming exercises, the application server connects to a version control 
 a continuous integration system (CIS).
 Authentication is handled by an external user management system (UMS).
 
-<Image src={topLevelDesign} alt="Top-Level Design" size={ImageSize.large} />
+<Image src={topLevelDesign} caption="Top-Level Design" alt="Top-Level Design" size={ImageSize.large} />
 
 ## Deployment
 
@@ -36,7 +36,7 @@ being displayed in the browser.
 The Continuous Integration Server typically delegates the build jobs to local build agents within
 the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
 
-<Image src={deploymentOverview} alt="Deployment Overview" size={ImageSize.large} />
+<Image src={deploymentOverview} caption="Deployment Overview" alt="Deployment Overview" size={ImageSize.large} />
 
 ## Data Model
 
@@ -52,7 +52,7 @@ The continuous integration server automatically tests each submission, and notif
 when a new result exists.
 In addition, teaching assistants can assess student solutions and "manually" create results.
 
-<Image src={dataModel} alt="Data Model" size={ImageSize.large} />
+<Image src={dataModel} caption="Data Model" alt="Data Model" size={ImageSize.large} />
 
 <Callout variant={CalloutVariant.info}>
     <p>
@@ -67,7 +67,7 @@ In addition, teaching assistants can assess student solutions and "manually" cre
 The following UML component diagram shows more details of the Artemis application server architecture and its
 REST interfaces to the application client.
 
-<Image src={serverArchitecture} alt="Server Architecture" size={ImageSize.large} />
+<Image src={serverArchitecture} caption="Server Architecture" alt="Server Architecture" size={ImageSize.large} />
 
 ## Integrated Code Lifecycle
 
@@ -75,7 +75,7 @@ Artemis supports an integrated version control system (VCS) and continuous integ
 If you use Integrated Code Lifecycle, the architecture differs from the architecture with external VC and CI systems.
 An exemplary deployment with Integrated Code Lifecycle (without using an external user management system), consisting of one main application server and three build agent servers, looks like this:
 
-<Image src={iclDeployment} alt="Integrated Code Lifecycle Deployment" size={ImageSize.large} />
+<Image src={iclDeployment} caption="Integrated Code Lifecycle Deployment" alt="Integrated Code Lifecycle Deployment" size={ImageSize.large} />
 
 Employing the Integrated Code Lifecycle, administrators and developers can set the Artemis application up without the need for dedicated VCS and CIS installations.
 This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
@@ -86,7 +86,7 @@ See Integrated Code Lifecycle Setup on how to set up a single-node environment f
 
 The following diagram shows an overview of the components in the version control subsystem:
 
-<Image src={iclVCSubsystem} alt="Version Control Subsystem" size={ImageSize.large} />
+<Image src={iclVCSubsystem} caption="Version Control Subsystem" alt="Version Control Subsystem" size={ImageSize.large} />
 
 The `Local VC Service` implements the `VersionControlService` interface and thus contains methods that the exercise management subsystem and the exercise participation subsystem need to interact with the VC system.
 E.g. the `createRepository()` method creates a repository on the file system.
@@ -109,7 +109,7 @@ Using the integrated VCS, Artemis merely needs to communicate with the host file
 
 The following diagram shows an overview of the components in the integrated continuous integration subsystem:
 
-<Image src={iclCISubsystem} alt="Continuous Integration Subsystem" size={ImageSize.large} />
+<Image src={iclCISubsystem} caption="Continuous Integration Subsystem" alt="Continuous Integration Subsystem" size={ImageSize.large} />
 
 The integrated CIS consists of two further subsystems: the CI Management and the Build Agent. Both systems are decoupled and can be deployed on separate servers if necessary (not obligatory). This allows for a flexible scaling of the system, as we can deploy multiple build agent instances to handle a high number of build jobs.
 
@@ -117,7 +117,7 @@ The integrated CIS consists of two further subsystems: the CI Management and the
 
 The following diagram shows an overview of the components in the CI Management subsystem:
 
-<Image src={iclCIMSubsystem} alt="CI Management Subsystem" size={ImageSize.large} />
+<Image src={iclCIMSubsystem} caption="CI Management Subsystem" alt="CI Management Subsystem" size={ImageSize.large} />
 
 The CI Management prepares information for build jobs and add them to the distributed Hazelcast queue. It has complete access to the distributed data structures related to the CI system.
 It provides endpoints so users can interact with these datastructures, such as viewing and cancelling build jobs. It also receives the build job results, grades them, and notifies the user.
@@ -127,7 +127,7 @@ The CI Management subsystem implements the `ContinuousIntegrationTriggerService`
 When the `triggerBuild` method is called, all information necessary to execute the build job is prepared and used to create a `BuildJobQueueItem` object. The object contains, among other things, repository URIs, the build configuration, a user-defined build script (prepared by the `LocalCIScriptService`) and a priority value (more details in the Priority Calculation section).
 The exercise due date is also taken into account. This object is then added to the job queue where it will be retrieved by a build agent to execute the build job. The following diagram shows the structure of the `BuildJobQueueItem`:
 
-<Image src={iclBuildJobItem} alt="BuildJobQueueItem" size={ImageSize.large} />
+<Image src={iclBuildJobItem} caption="BuildJobQueueItem" alt="BuildJobQueueItem" size={ImageSize.large} />
 
 The CI Management subsystem consists of two additional services: The `SharedQueueManagementService` and the `Local CI Result Processing Service`.
 The `SharedQueueManagementService` has direct access to the job queue as well as to other Hazelcast data structures, a map for currently running build jobs, a map for build agent information and a topic for cancelled build jobs.
@@ -160,7 +160,7 @@ The priority calculation is implemented in the `LocalCITriggerService`.
 
 The following diagram shows an overview of the components in the Build Agent subsystem:
 
-<Image src={iclBuildAgent} alt="Build Agent Subsystem" size={ImageSize.large} />
+<Image src={iclBuildAgent} caption="Build Agent Subsystem" alt="Build Agent Subsystem" size={ImageSize.large} />
 
 The build agent is a separate subsystem that is responsible for executing build jobs. It can be run as a standalone application or as part of the main Artemis application.
 The build agent implements multiple services responsible for retrieving queued build jobs and executing them.
@@ -236,7 +236,7 @@ The build job cancellation mechanism is a crucial feature of the CI system.
 It allows users to cancel build jobs that are taking too long or are no longer needed.
 The following diagram shows an overview of the components in the build job cancellation mechanism:
 
-<Image src={iclCancellationClass} alt="Build Job Cancellation Class Diagram" size={ImageSize.large} />
+<Image src={iclCancellationClass} caption="Build Job Cancellation Class Diagram" alt="Build Job Cancellation Class Diagram" size={ImageSize.large} />
 
 The build job cancellation mechanism is implemented using Hazelcast's distributed data structures.
 As shown in the Build Job Cancellation Class Diagram we have services such as the `SharedQueueManagementService` that run on the core Artemis node and are responsible for managing Hazelcast's distributed datatypes.
@@ -251,7 +251,7 @@ Upon creating the new future, it is added to a local `Map<String, Future<LocalCI
 This future is then processed, with outcomes such as completion, failure, or cancellation being sent back and managed within the `processBuild(...)` method.
 This includes removing the build job from the `processingJobs` and initiating a new cycle by calling `checkAvailabilityAndProcessNextBuild()`.
 
-<Image src={iclCancellationComm} alt="Build Job Cancellation Communication Diagram for a Processing Build Job" size={ImageSize.large} />
+<Image src={iclCancellationComm} caption="Build Job Cancellation Communication Diagram for a Processing Build Job" alt="Build Job Cancellation Communication Diagram for a Processing Build Job" size={ImageSize.large} />
 
 The above Communication Diagram sets the stage for understanding the cancellation mechanism.
 Upon receiving a cancellation request through the `@DeleteMapping("cancel-job/{buildJobId}")` endpoint in either the `AdminBuildJobQueueResource` or `BuildJobQueueResource`,
