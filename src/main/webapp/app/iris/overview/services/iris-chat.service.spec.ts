@@ -159,7 +159,7 @@ describe('IrisChatService', () => {
 
             expect(closeSpy).toHaveBeenCalled();
             expect(wsStub).toHaveBeenCalledWith(newSession.id);
-        });
+        }));
 
         it('should switch if user has just accepted LLM usage', fakeAsync(() => {
             accountService.userIdentity.set({ selectedLLMUsageTimestamp: undefined } as User);
@@ -182,7 +182,7 @@ describe('IrisChatService', () => {
 
             expect(closeSpy).toHaveBeenCalled();
             expect(wsStub).toHaveBeenCalledWith(newSession.id);
-        });
+        }));
     });
 
     describe('loadChatSessions', () => {
