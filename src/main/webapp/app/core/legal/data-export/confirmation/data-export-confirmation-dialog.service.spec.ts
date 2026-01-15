@@ -1,12 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { EventEmitter } from '@angular/core';
+import { OutputEmitterRef, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DataExportConfirmationDialogData } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.model';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
+
+// Helper to create a mock OutputEmitterRef
+function createMockOutputEmitterRef<T>(): OutputEmitterRef<T> {
+    return {
+        emit: jest.fn(),
+        subscribe: jest.fn(),
+        destroyed: false,
+        listeners: new Set(),
+        errorHandler: undefined,
+    } as unknown as OutputEmitterRef<T>;
+}
 
 describe('DataExportConfirmationDialogService', () => {
     let service: DataExportConfirmationDialogService;
@@ -29,11 +40,19 @@ describe('DataExportConfirmationDialogService', () => {
         const data: DataExportConfirmationDialogData = {
             dialogError: new Observable<string>(),
             userLogin: 'userLogin',
-            dataExportRequest: new EventEmitter<any>(),
-            dataExportRequestForAnotherUser: new EventEmitter<string>(),
+            dataExportRequest: createMockOutputEmitterRef<void>(),
+            dataExportRequestForAnotherUser: createMockOutputEmitterRef<string>(),
             adminDialog: false,
         };
-        const componentInstance = {};
+        // Create mock componentInstance with signal-like properties
+        const componentInstance = {
+            expectedLogin: signal(''),
+            adminDialog: signal(false),
+            expectedLoginOfOtherUser: signal(''),
+            dataExportRequest: undefined as unknown,
+            dataExportRequestForAnotherUser: undefined as unknown,
+            dialogError: undefined as unknown,
+        };
         const result = new Promise((resolve) => resolve({}));
         const openModalStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,

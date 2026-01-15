@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 import { JvmMetrics } from 'app/core/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -8,7 +8,6 @@ import { DecimalPipe, KeyValuePipe } from '@angular/common';
 @Component({
     selector: 'jhi-jvm-memory',
     templateUrl: './jvm-memory.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe, KeyValuePipe],
 })
 export class JvmMemoryComponent {

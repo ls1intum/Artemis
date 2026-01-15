@@ -1,25 +1,23 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { of } from 'rxjs';
-import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CourseManagementStatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
     let component: CourseManagementStatisticsComponent;
     let service: StatisticsService;
@@ -34,22 +32,14 @@ describe('CourseManagementStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
-            declarations: [
-                CourseManagementStatisticsComponent,
-                MockComponent(StatisticsGraphComponent),
-                MockComponent(StatisticsAverageScoreGraphComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockDirective(MockHasAnyAuthorityDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-            ],
+            imports: [RouterModule.forRoot([]), CourseManagementStatisticsComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
                 provideHttpClient(),
+                provideNoopAnimationsForTests(),
             ],
         })
             .compileComponents()
@@ -61,25 +51,25 @@ describe('CourseManagementStatisticsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const statisticsService = jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
+        const statisticsService = vi.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         fixture.detectChanges();
         expect(statisticsService).toHaveBeenCalledOnce();
     });
 
-    it('should trigger when tab changed', fakeAsync(() => {
-        jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
-        const tabSpy = jest.spyOn(component, 'onTabChanged');
+    it('should trigger when tab changed', async () => {
+        vi.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
+        const tabSpy = vi.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#option3');
         button.click();
 
-        tick();
+        await fixture.whenStable();
         expect(tabSpy).toHaveBeenCalledOnce();
-        expect(component.currentSpan).toBe(SpanType.MONTH);
-    }));
+        expect(component.currentSpan()).toBe(SpanType.MONTH);
+    });
 });
