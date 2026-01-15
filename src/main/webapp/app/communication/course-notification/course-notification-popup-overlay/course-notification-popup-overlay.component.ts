@@ -5,11 +5,11 @@ import { CourseNotificationComponent } from 'app/communication/course-notificati
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 /**
  * Component that displays real-time notification popups.
@@ -29,6 +29,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     private readonly courseNotificationService = inject(CourseNotificationService);
 
     private readonly route = inject(ActivatedRoute);
+    private readonly communicationState = inject(ConversationSelectionState);
 
     protected notifications: CourseNotification[] = [];
     protected isExpanded: boolean = false;
@@ -118,7 +119,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
                 }
 
                 // Replies in currently open thread
-                const threadId = CourseConversationsComponent.openPostId;
+                const threadId = this.communicationState.openPostId();
                 if (notification.notificationType === 'newAnswerNotification' && 'postId' in notificationParams && threadId == notificationParams['postId']) {
                     return false;
                 }

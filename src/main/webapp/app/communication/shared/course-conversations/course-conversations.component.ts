@@ -63,6 +63,7 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -148,6 +149,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     protected readonly faComments = faComments;
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
+    private readonly selectionState = inject(ConversationSelectionState);
     private metisConversationService = inject(MetisConversationService);
     private metisService = inject(MetisService);
     private faqService = inject(FaqService);
@@ -686,10 +688,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Public variable is needed, passing data via query param resets the UI
-    public static openPostId: number | undefined;
     openThread(postToOpen: Post | undefined) {
-        CourseConversationsComponent.openPostId = postToOpen?.id;
+        this.selectionState.setOpenPostId(postToOpen?.id);
         this.postInThread = postToOpen;
     }
 
