@@ -588,10 +588,13 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(authenticatorWithIncrementedCount, authChallenge, origin, rpId, userHandle);
 
             // Step 4: Submit authentication (using the same session that has the challenge stored)
+            // We need to set the requestedSessionId so the server can retrieve the stored challenge
             String authRequestBody = objectMapper.writeValueAsString(authResponse);
             MockHttpServletResponse loginResponse = request
-                    .performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).session(authSession)).andExpect(status().isOk())
-                    .andReturn().getResponse();
+                    .performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).session(authSession).with(mockRequest -> {
+                        mockRequest.setRequestedSessionId(authSession.getId());
+                        return mockRequest;
+                    })).andExpect(status().isOk()).andReturn().getResponse();
 
             // Step 5: Verify successful authentication
             String responseBody = loginResponse.getContentAsString();
@@ -624,9 +627,12 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(unregisteredAuthenticator, (String) authOptions.get("challenge"), origin,
                     rpId, "dummyUserHandle");
 
-            // Authentication should fail (using same session)
-            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).session(authSession))
-                    .andExpect(status().isUnauthorized());
+            // Authentication should fail (using same session with requestedSessionId set)
+            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).session(authSession)
+                    .with(mockRequest -> {
+                        mockRequest.setRequestedSessionId(authSession.getId());
+                        return mockRequest;
+                    })).andExpect(status().isUnauthorized());
         }
     }
 }
