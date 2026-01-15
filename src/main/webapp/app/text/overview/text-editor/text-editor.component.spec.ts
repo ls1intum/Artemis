@@ -1,9 +1,14 @@
+/**
+ * Test suite for TextEditorComponent.
+ * Tests text submission, participation management, and editor functionality.
+ */
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
@@ -45,19 +50,53 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { FormsModule } from '@angular/forms';
+import { Component, input } from '@angular/core';
+
+// Mock components to avoid complex dependencies
+@Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
+class MockHeaderParticipationPageComponent {
+    exercise = input<any>();
+    participation = input<any>();
+}
+
+@Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
+class MockRequestFeedbackButtonComponent {
+    exercise = input<any>();
+    pendingChanges = input<any>();
+    hasAthenaResultForLatestSubmission = input<any>();
+    isGeneratingFeedback = input<any>();
+    isSubmitted = input<any>();
+}
+
+@Component({ selector: 'jhi-result-history', template: '', standalone: true })
+class MockResultHistoryComponent {
+    results = input<any>();
+    exercise = input<any>();
+    participationInput = input<any>();
+    selectedResultId = input<any>();
+}
+
+@Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
+class MockIrisExerciseChatbotButtonComponent {
+    mode = input<any>();
+}
 
 describe('TextEditorComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
-    let getTextForParticipationStub: jest.SpyInstance;
+    let getTextForParticipationStub: any;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
 
@@ -73,10 +112,11 @@ describe('TextEditorComponent', () => {
         result.id = 1;
     });
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([textEditorRoute[0]]), FaIconComponent],
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                RouterModule.forRoot([textEditorRoute[0]]),
+                FaIconComponent,
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
@@ -85,7 +125,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(HeaderParticipationPageComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
@@ -108,32 +147,42 @@ describe('TextEditorComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextEditorComponent);
-                comp = fixture.componentInstance;
-                textService = TestBed.inject(TextEditorService);
-                textSubmissionService = TestBed.inject(TextSubmissionService);
-                profileService = TestBed.inject(ProfileService);
-                irisSettingsService = TestBed.inject(IrisSettingsService);
-                getTextForParticipationStub = jest.spyOn(textService, 'get');
-            });
+            .overrideComponent(TextEditorComponent, {
+                remove: {
+                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, ResultHistoryComponent, IrisExerciseChatbotButtonComponent],
+                },
+                add: {
+                    imports: [
+                        MockHeaderParticipationPageComponent,
+                        MockRequestFeedbackButtonComponent,
+                        MockResultHistoryComponent,
+                        MockIrisExerciseChatbotButtonComponent,
+                        FormsModule,
+                    ],
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(TextEditorComponent);
+        comp = fixture.componentInstance;
+        textService = TestBed.inject(TextEditorService);
+        textSubmissionService = TestBed.inject(TextSubmissionService);
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        getTextForParticipationStub = vi.spyOn(textService, 'get');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should use inputValues if present instead of loading new details', fakeAsync(() => {
-        TestBed.runInInjectionContext(() => {
-            comp.inputExercise = input<TextExercise>(textExercise);
-            comp.inputParticipation = input<StudentParticipation>(participation);
-            comp.inputSubmission = input<TextSubmission>({ id: 1, text: 'test' });
-        });
+    it('should use inputValues if present instead of loading new details', async () => {
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
         // @ts-ignore updateParticipation is private
-        const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
-        const setupComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
+        const setupComponentWithInputValuesSpy = vi.spyOn(comp, 'setupComponentWithInputValues');
 
         fixture.detectChanges();
 
@@ -141,117 +190,105 @@ describe('TextEditorComponent', () => {
         expect(updateParticipationSpy).not.toHaveBeenCalled();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
         expect(comp.answer).toBeDefined();
-    }));
+    });
 
-    it('should not allow to submit after the due date if there is no due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if there is no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
         expect(comp.isAlwaysActive).toBeTruthy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should not allow to submit after the due date if the initialization date is before the due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', async () => {
         participation.initializationDate = dayjs();
         textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should allow to submit after the due date if the initialization date is after the due date', fakeAsync(() => {
+    it('should allow to submit after the due date if the initialization date is after the due date', async () => {
         participation.initializationDate = dayjs().add(1, 'days');
         textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeTruthy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should not be always active if there is a result and no due date', fakeAsync(() => {
+    it('should not be always active if there is a result and no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.result = result;
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isAlwaysActive).toBeFalsy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {
+    it('should be always active if there is no result and the initialization date is after the due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
         comp.textExercise.dueDate = dayjs();
         participation.initializationDate = dayjs().add(1, 'days');
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isAlwaysActive).toBeTruthy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
+    it('should get inactive as soon as the due date passes the current date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         textExercise.dueDate = dayjs().add(1, 'days');
         participation.initializationDate = dayjs();
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isActive).toBeTruthy();
 
         comp.textExercise.dueDate = dayjs().subtract(1, 'days');
 
-        fixture.detectChanges();
-        tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isActive).toBeFalsy();
 
-        tick();
         fixture.destroy();
-        flush();
-    }));
+    });
 
     it('should not submit while saving', () => {
         comp.isSaving = true;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
@@ -259,7 +296,7 @@ describe('TextEditorComponent', () => {
     it('should not submit without submission', () => {
         // @ts-ignore
         delete comp.submission;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
@@ -269,7 +306,7 @@ describe('TextEditorComponent', () => {
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving).toBeFalsy();
@@ -277,13 +314,13 @@ describe('TextEditorComponent', () => {
 
     it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'success');
+        const alertServiceSpy = vi.spyOn(alertService, 'success');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
         comp.isAllowedToSubmitAfterDueDate = false;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -291,20 +328,20 @@ describe('TextEditorComponent', () => {
 
     it('should warn alert on submit if submitDueDateMissedAlert', () => {
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        const alertServiceSpy = vi.spyOn(alertService, 'warning');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
         comp.isAllowedToSubmitAfterDueDate = true;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should return submission for answer', () => {
-        jest.spyOn(textService, 'predictLanguage');
+        vi.spyOn(textService, 'predictLanguage');
         const submissionForAnswer = comp['submissionForAnswer']('abc');
         expect(submissionForAnswer.text).toBe('abc');
         expect(submissionForAnswer.language).toEqual(Language.ENGLISH);
@@ -341,7 +378,7 @@ describe('TextEditorComponent', () => {
             text: 'abc',
         } as TextSubmission;
         // @ts-ignore
-        jest.spyOn(comp, 'updateParticipation');
+        vi.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('abc');
@@ -362,7 +399,7 @@ describe('TextEditorComponent', () => {
             } as Participation,
         } as TextSubmission;
         // @ts-ignore
-        jest.spyOn(comp, 'updateParticipation');
+        vi.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('');
@@ -434,7 +471,7 @@ describe('TextEditorComponent', () => {
     it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
         comp.isReadOnlyWithShowResult = true;
         comp.textExercise = textExercise;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const submitButton = fixture.debugElement.query(By.css('#submit'));
         expect(submitButton).toBeFalsy();
@@ -447,7 +484,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise = textExercise;
         comp.submission = { id: 5, submitted: true };
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const submitButton = fixture.debugElement.query(By.css('#submit'));
         expect(submitButton).toBeTruthy();
@@ -457,7 +494,7 @@ describe('TextEditorComponent', () => {
         comp.submission = { text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
@@ -466,69 +503,68 @@ describe('TextEditorComponent', () => {
         comp.submission = { id: 1, text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
-        jest.spyOn(textSubmissionService, 'update');
+        vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
-    it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
-        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+    it('should load Iris settings when Iris profile is active and not in exam mode', async () => {
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
-        const mockIrisSettings = { id: 123 } as IrisSettings;
-        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(mockIrisSettings));
+        // Set up course with ID
+        comp.course = { id: 123 } as any;
+
+        const mockIrisSettings = {
+            courseId: 123,
+            settings: {
+                enabled: true,
+                customInstructions: '',
+                variant: 'default',
+                rateLimit: { requests: 100, timeframeHours: 24 },
+            },
+            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+        } as IrisCourseSettingsWithRateLimitDTO;
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockIrisSettings));
 
         route.params = of({ exerciseId: '456' });
 
         comp.examMode = false;
 
         comp['loadIrisSettings']();
-        tick();
+        await fixture.whenStable();
 
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedExerciseSettings).toHaveBeenCalledWith('456');
+        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(123);
         expect(comp.irisSettings).toEqual(mockIrisSettings);
+    });
 
-        flush();
-    }));
+    it('should not load Iris settings when in exam mode', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
-    it('should not load Iris settings when in exam mode', fakeAsync(() => {
-        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-
-        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
-
-        route.params = of({ exerciseId: '456' });
-
+        // Set up exercise and exam mode
+        comp.textExercise = textExercise;
         comp.examMode = true;
 
         comp['loadIrisSettings']();
-        tick();
 
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedExerciseSettings).not.toHaveBeenCalled();
+        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
+    });
 
-        flush();
-    }));
+    it('should not load Iris settings when Iris profile is not active', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
-    it('should not load Iris settings when Iris profile is not active', fakeAsync(() => {
-        const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-
-        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
-
-        route.params = of({ exerciseId: '456' });
-
+        comp.textExercise = textExercise;
         comp.examMode = false;
 
         comp['loadIrisSettings']();
-        tick();
 
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedExerciseSettings).not.toHaveBeenCalled();
+        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
-
-        flush();
-    }));
+    });
 });

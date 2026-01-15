@@ -9,7 +9,6 @@ import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
@@ -18,6 +17,9 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
 import dayjs from 'dayjs/esm';
+import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
+import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
+import { randomInt } from 'app/shared/util/utils';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -177,26 +179,27 @@ export class IrisChatService implements OnDestroy {
     /**
      * Sends a message to the server and returns the created message.
      * @param message to be created
+     * @param uncommittedFiles optional map of uncommitted file changes (path to content)
      */
-    public sendMessage(message: string): Observable<undefined> {
+    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}): Observable<undefined> {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
-        this.suggestions.next([]);
 
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const newMessage = new IrisUserMessage();
-        newMessage.content = [new IrisTextMessageContent(message)];
-        return this.irisChatHttpService.createMessage(this.sessionId, newMessage).pipe(
-            tap((m) => {
-                this.replaceOrAddMessage(m.body!);
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
+
+        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
+            tap((response: HttpResponse<IrisUserMessage>) => {
+                this.suggestions.next([]);
+                this.replaceOrAddMessage(response.body!);
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
-                return of();
+                return of(undefined);
             }),
         );
     }
@@ -212,7 +215,7 @@ export class IrisChatService implements OnDestroy {
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
-                return of();
+                return of(undefined);
             }),
         );
     }
@@ -270,7 +273,7 @@ export class IrisChatService implements OnDestroy {
             map(() => undefined),
             catchError(() => {
                 this.error.next(IrisErrorMessageKey.RATE_MESSAGE_FAILED);
-                return of();
+                return of(undefined);
             }),
         );
     }
@@ -610,6 +613,9 @@ export class IrisChatService implements OnDestroy {
     public setCourseId(courseId: number | undefined): void {
         // eslint-disable-next-line @typescript-eslint/no-deprecated -- usage in setter is okay
         this.courseId = courseId;
+        if (courseId) {
+            this.irisStatusService.setCurrentCourse(courseId);
+        }
     }
 
     public currentNumNewMessages(): Observable<number> {

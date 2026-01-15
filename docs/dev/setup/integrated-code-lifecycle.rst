@@ -39,7 +39,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
 
        artemis:
            user-management:
-               use-external: false # set to true if you want to use an external user management system. For development, this should be false for easy setup.
+               use-external: false # set to true if you want to use ldap as external user management system. For development, this should be false for easy setup.
            version-control:
                url: http://localhost:8080
                # order and supported authentication mechanisms:
@@ -56,7 +56,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                fetch-registry: false
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
-The ``repository-authentication-mechanisms`` field configures the :ref:`Repository Authentication Mechanisms<authentication-mechanisms>`.
+The ``repository-authentication-mechanisms`` field configures the repository authentication mechanisms (password, token, or SSH).
 
 If you are running Artemis on Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri``
 with the value ``tcp://localhost:2375`` as shown above.

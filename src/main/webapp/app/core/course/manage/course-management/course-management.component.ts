@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -7,59 +7,55 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faBook, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from '../overview/course-management-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
     styleUrls: ['./course-management.component.scss'],
-    imports: [
-        TranslateDirective,
-        DocumentationButtonComponent,
-        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
-        HasAnyAuthorityDirective,
-        RouterLink,
-        FaIconComponent,
-        CourseManagementCardComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [TranslateDirective, DocumentationButtonComponent, RouterLink, FaIconComponent, CourseManagementCardComponent, ArtemisTranslatePipe],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
     private courseAccessStorageService = inject(CourseAccessStorageService);
+    private accountService = inject(AccountService);
 
-    showOnlyActive = true;
+    readonly showOnlyActive = signal(true);
 
-    courses: Course[];
-    statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
-    coursesWithExercises = new Map<number, Course>();
-    coursesWithUsers = new Map<number, Course>();
-    courseSemesters: string[];
-    semesterCollapsed: { [key: string]: boolean };
-    coursesBySemester: { [key: string]: Course[] };
-    eventSubscriber: Subscription;
+    readonly courses = signal<Course[] | undefined>(undefined);
+    readonly statistics = signal(new Map<number, CourseManagementOverviewStatisticsDto>());
+    readonly coursesWithExercises = signal(new Map<number, Course>());
+    readonly coursesWithUsers = signal(new Map<number, Course>());
+    readonly courseSemesters = signal<string[]>([]);
+    readonly semesterCollapsed = signal<{ [key: string]: boolean }>({});
+    readonly coursesBySemester = signal<{ [key: string]: Course[] }>({});
+
+    private eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     readonly documentationType: DocumentationType = 'Course';
     // Icons
-    faPlus = faPlus;
-    faAngleDown = faAngleDown;
-    faAngleUp = faAngleUp;
+    readonly faPlus = faPlus;
+    readonly faAngleDown = faAngleDown;
+    readonly faAngleUp = faAngleUp;
+    readonly faBook = faBook;
+    protected readonly isAdmin = computed(() => this.accountService.isAdmin());
+    protected readonly isAuthenticated = this.accountService.authenticated;
 
     /**
      * loads all courses and subscribes to courseListModification
@@ -81,11 +77,12 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe({
+        this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive() }).subscribe({
             next: (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                const sortedCourses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                this.courses.set(sortedCourses);
 
-                this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);
+                this.courseSemesters.set(this.getUniqueSemesterNamesSorted(sortedCourses));
                 this.sortCoursesIntoSemesters();
 
                 // Set the course icons for each course
@@ -144,9 +141,12 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * Sets the public course icon path for the specific course (by prepending the REST-path prefix).
      */
     private setCourseIcons(): void {
-        this.courses.forEach((course) => {
-            course.courseIconPath = addPublicFilePrefix(course.courseIcon);
-        });
+        const currentCourses = this.courses();
+        if (currentCourses) {
+            currentCourses.forEach((course) => {
+                course.courseIconPath = addPublicFilePrefix(course.courseIcon);
+            });
+        }
     }
 
     /**
@@ -155,51 +155,60 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * The first semester group, the test courses and the recently accessed courses are expanded by default.
      */
     private sortCoursesIntoSemesters(): void {
-        this.semesterCollapsed = {};
-        this.coursesBySemester = {};
+        const newSemesterCollapsed: { [key: string]: boolean } = {};
+        const newCoursesBySemester: { [key: string]: Course[] } = {};
+        const currentCourses = this.courses() ?? [];
+        const currentSemesters = this.courseSemesters();
 
         // Get last accessed courses
         const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);
-        const recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+        const recentlyAccessedCourses = currentCourses.filter((course) => lastAccessedCourseIds.includes(course.id!));
 
         let firstExpanded = false;
-        for (const semester of this.courseSemesters) {
-            this.semesterCollapsed[semester] = firstExpanded;
+        const updatedSemesters = [...currentSemesters];
+        for (const semester of currentSemesters) {
+            newSemesterCollapsed[semester] = firstExpanded;
             firstExpanded = true;
-            this.coursesBySemester[semester] = this.courses.filter(
+            newCoursesBySemester[semester] = currentCourses.filter(
                 (course) => !course.testCourse && !lastAccessedCourseIds.includes(course.id!) && (course.semester ?? '') === semester,
             );
         }
 
         // Add a new category "recent"
-        this.courseSemesters.unshift('recent');
-        this.semesterCollapsed['recent'] = false;
-        this.coursesBySemester['recent'] = recentlyAccessedCourses;
+        updatedSemesters.unshift('recent');
+        newSemesterCollapsed['recent'] = false;
+        newCoursesBySemester['recent'] = recentlyAccessedCourses;
 
         // Add an extra category for test courses
-        const testCourses = this.courses.filter((course) => course.testCourse && !lastAccessedCourseIds.includes(course.id!));
+        const testCourses = currentCourses.filter((course) => course.testCourse && !lastAccessedCourseIds.includes(course.id!));
         if (testCourses.length > 0) {
-            this.courseSemesters[this.courseSemesters.length] = 'test';
-            this.semesterCollapsed['test'] = false;
-            this.coursesBySemester['test'] = testCourses;
+            updatedSemesters.push('test');
+            newSemesterCollapsed['test'] = false;
+            newCoursesBySemester['test'] = testCourses;
         }
 
         // Remove all semesters that have no courses
-        this.courseSemesters = this.courseSemesters.filter((semester) => this.coursesBySemester[semester].length > 0);
+        const filteredSemesters = updatedSemesters.filter((semester) => newCoursesBySemester[semester].length > 0);
+
+        this.courseSemesters.set(filteredSemesters);
+        this.semesterCollapsed.set(newSemesterCollapsed);
+        this.coursesBySemester.set(newCoursesBySemester);
     }
 
     /**
      * Gets the exercises to display from the server and sorts them into coursesWithExercises by course id
      */
     private fetchExercises(): void {
-        this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe({
+        this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive()).subscribe({
             next: (result: HttpResponse<Course[]>) => {
                 // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
+                const newCoursesWithExercises = new Map<number, Course>();
                 result.body!.forEach((course) => {
                     if (course.id) {
-                        this.coursesWithExercises.set(course.id, course);
+                        newCoursesWithExercises.set(course.id, course);
                     }
                 });
+                this.coursesWithExercises.set(newCoursesWithExercises);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -209,13 +218,15 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * Gets the exercise statistics to display from the server and sorts them into the statistics map by course id
      */
     private fetchExerciseStats(): void {
-        this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive).subscribe({
+        this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive()).subscribe({
             next: (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
+                const newStatistics = new Map<number, CourseManagementOverviewStatisticsDto>();
                 result.body!.forEach((statisticsDTO) => {
                     if (statisticsDTO.courseId) {
-                        this.statistics.set(statisticsDTO.courseId, statisticsDTO);
+                        newStatistics.set(statisticsDTO.courseId, statisticsDTO);
                     }
                 });
+                this.statistics.set(newStatistics);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -225,14 +236,16 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * Gets the amount of users in the user groups to display and sorts them into coursesWithUsers by course id
      */
     private fetchUserStats(): void {
-        this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe({
+        this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive() }).subscribe({
             next: (result: HttpResponse<Course[]>) => {
                 // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
+                const newCoursesWithUsers = new Map<number, Course>();
                 result.body!.forEach((course) => {
                     if (course.id) {
-                        this.coursesWithUsers.set(course.id, course);
+                        newCoursesWithUsers.set(course.id, course);
                     }
                 });
+                this.coursesWithUsers.set(newCoursesWithUsers);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -249,7 +262,17 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * toggles the attribute showOnlyActive and reloads all courses
      */
     toggleShowOnlyActive() {
-        this.showOnlyActive = !this.showOnlyActive;
+        this.showOnlyActive.update((value) => !value);
         this.loadAll();
+    }
+
+    /**
+     * Toggles the collapsed state of a semester section
+     */
+    toggleSemesterCollapsed(semester: string) {
+        this.semesterCollapsed.update((collapsed) => ({
+            ...collapsed,
+            [semester]: !collapsed[semester],
+        }));
     }
 }

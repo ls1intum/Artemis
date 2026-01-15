@@ -29,7 +29,7 @@ describe('TitleChannelNameComponent', () => {
         fixture.componentRef.setInput('title', 'Test');
         fixture.componentRef.setInput('channelName', 'test');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         fixture.whenStable().then(() => {
@@ -45,7 +45,7 @@ describe('TitleChannelNameComponent', () => {
 
     it('should only display title input field if channel name is hidden', () => {
         fixture.componentRef.setInput('hideChannelName', true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const titleInput = fixture.debugElement.query(By.css('#field_title'));
         expect(titleInput).not.toBeNull();
@@ -57,14 +57,14 @@ describe('TitleChannelNameComponent', () => {
     it('should update channel name on title change', () => {
         fixture.componentRef.setInput('title', 'test');
         fixture.componentRef.setInput('channelName', 'test');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const newTitle = 'New 0123 @()[]{} !?.-_ $%& too long name that is more than 30 characters';
         const titleInput = fixture.debugElement.query(By.css('#field_title'));
         titleInput.nativeElement.value = newTitle;
         titleInput.nativeElement.dispatchEvent(new Event('input'));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.title()).toBe(newTitle);
         expect(component.channelName()).toBe('new-0123-too-long-name-that-is');

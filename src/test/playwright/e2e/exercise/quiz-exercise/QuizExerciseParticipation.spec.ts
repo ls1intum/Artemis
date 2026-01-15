@@ -125,7 +125,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await expect(courseOverview.getOpenRunningExerciseButton(quizExercise.id!)).not.toBeVisible();
         });
 
-        test('Instructor release ended exercise for practice and student practices', async ({
+        test('Instructor ends exercise and student participates in practice mode', async ({
             login,
             navigationBar,
             courseManagement,
@@ -137,7 +137,6 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
-            await courseManagementExercises.getExercise(quizExercise.id!).locator('button', { hasText: 'Release For Practice' }).click();
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.practiceExercise();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();

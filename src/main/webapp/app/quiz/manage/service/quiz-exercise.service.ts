@@ -228,8 +228,8 @@ export class QuizExerciseService {
      * Delete a quiz exercise
      * @param quizExerciseId the id of the quiz exercise that should be deleted
      */
-    delete(quizExerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
+    delete(quizExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
     }
 
     join(quizExerciseId: number, password: string): Observable<HttpResponse<QuizBatch>> {
@@ -332,7 +332,7 @@ export class QuizExerciseService {
             return QuizStatus.INVISIBLE;
         }
         if (quizExercise.quizEnded) {
-            return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
+            return QuizStatus.OPEN_FOR_PRACTICE;
         }
         if (quizExercise.quizBatches && quizExercise.quizBatches.some((batch) => batch.started)) {
             return QuizStatus.ACTIVE;

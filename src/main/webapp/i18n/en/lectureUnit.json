@@ -1,12 +1,14 @@
 {
     "artemisApp": {
         "lectureUnit": {
-            "deleted": "Lecture unit deleted",
+            "deleted": "Content deleted",
+            "retryProcessing": "Retry processing",
+            "processingRetryStarted": "Processing retry started",
             "home": {
-                "title": "Lecture Units"
+                "title": "Lecture Content"
             },
             "unitCreationCard": {
-                "title": "Add a new Lecture Unit",
+                "title": "Add new content",
                 "text": "Text",
                 "exercise": "Exercise",
                 "video": "Video",
@@ -20,48 +22,48 @@
                 "releaseDateSet": "Release date: ",
                 "attachmentVersion": "Attachment version: "
             },
-            "completedTooltip": "Click to mark this lecture unit as uncompleted",
-            "uncompletedTooltip": "Click to mark this lecture unit as completed"
+            "completedTooltip": "Click to mark this content as uncompleted",
+            "uncompletedTooltip": "Click to mark this content as completed"
         },
         "textUnit": {
-            "created": "New text unit created",
-            "updated": "Text unit updated",
-            "tooltip": "This is a text unit",
+            "created": "New text content created",
+            "updated": "Text content updated",
+            "tooltip": "This is text content",
             "isolated": "View Isolated",
             "originalVersion": "Original Version",
             "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
             "markdownHelp": "You can enter Markdown here. More information: ",
             "cachedMarkdown": "Artemis found some unsaved markdown in the local storage. Do you want to load it? Save Date:",
             "createTextUnit": {
-                "title": "Create Text Unit",
+                "title": "Create Text Content",
                 "name": "Name",
                 "content": "Content",
-                "namePlaceHolder": "Give the text unit a name",
+                "namePlaceHolder": "Give the text content a name",
                 "nameRequiredValidationError": "Name is required.",
                 "nameMaxLengthValidationError": "Name can be max 255 characters long."
             },
             "editTextUnit": {
-                "title": "Edit Text Unit"
+                "title": "Edit Text Content"
             },
             "delete": {
-                "question": "Do you really want to delete the text unit <strong>{{ title }}</strong>? You can not undo this action!",
-                "typeNameToConfirm": "Please enter the name of the text unit for confirmation.",
+                "question": "Do you really want to delete the text content <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the text content for confirmation.",
                 "buttonText": "Delete"
             }
         },
         "onlineUnit": {
-            "created": "New online unit created",
-            "updated": "Online unit updated",
-            "tooltip": "This is an online unit",
+            "created": "New online content created",
+            "updated": "Online content updated",
+            "tooltip": "This is online content",
             "description": "Description",
-            "notReleasedTooltip": "Online unit only visible to teaching assistants and instructors. Release date:",
+            "notReleasedTooltip": "Online content only visible to teaching assistants and instructors. Release date:",
             "doOpen": "Open link",
             "createOnlineUnit": {
-                "title": "Create Online Unit",
+                "title": "Create Online Content",
                 "name": "Name",
-                "namePlaceHolder": "Give the online unit a name",
+                "namePlaceHolder": "Give the online content a name",
                 "description": "Description",
-                "descriptionPlaceHolder": "Give the online unit a description",
+                "descriptionPlaceHolder": "Give the online content a description",
                 "nameRequiredValidationError": "Name is required.",
                 "nameMaxLengthValidationError": "Name can be max 255 characters long.",
                 "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
@@ -72,17 +74,17 @@
                 "urlHelperPlaceholder": "Name and description will be loaded from the metadata of the link"
             },
             "editOnlineUnit": {
-                "title": "Edit Online Unit"
+                "title": "Edit Online Content"
             },
             "delete": {
-                "question": "Do you really want to delete the online unit <strong>{{ title }}</strong>? You can not undo this action!",
-                "typeNameToConfirm": "Please enter the name of the online unit for confirmation.",
+                "question": "Do you really want to delete the online content <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the online content for confirmation.",
                 "buttonText": "Delete"
             }
         },
         "attachmentVideoUnit": {
-            "created": "New attachment unit created",
-            "updated": "Attachment unit updated",
+            "created": "New file/video content created",
+            "updated": "File/video content updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
             "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
@@ -91,31 +93,46 @@
             "transcriptionProcessing": "Transcription Processing",
             "transcriptionFailed": "Transcription Failed",
             "hasTranscription": "Transcription complete",
+            "awaitingProcessing": "Awaiting Processing",
+            "processingTranscribing": "Transcribing",
+            "processingIngesting": "Indexing",
+            "processingComplete": "Processing complete",
+            "processingFailed": "Processing Failed",
+            "processing": {
+                "cancelled": "Processing was cancelled",
+                "error": {
+                    "invalidUnitType": "Invalid lecture unit type for processing",
+                    "transcriptionFailed": "Transcription generation failed after multiple attempts",
+                    "ingestionFailed": "Content indexing failed after multiple attempts",
+                    "noPlaylist": "Video playlist is no longer available",
+                    "timeout": "Processing timed out after multiple attempts"
+                }
+            },
             "createAttachmentVideoUnits": {
                 "informativeText": {
-                    "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
-                    "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
-                    "note": "Note: You will have the option to edit the information before finally submitting the attachment units."
+                    "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with content headings) to split the PDF into content.",
+                    "secondLine": "Artemis expects a repetition of the Outline slide at the start of every content section.",
+                    "note": "Note: You will have the option to edit the information before finally submitting the content."
                 },
-                "noFile": "There is no file for the automatic unit processing. Please go back and try again.",
-                "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
-                "pageTitle": "Process units",
-                "addUnit": "Add unit",
-                "lectureFileToolTip": "Please select to enable the automatic separation of lecture units.",
-                "processUnits": "Process units",
-                "processAutomatically": "Automatic unit processing",
+                "noFile": "There is no file for automatic processing. Please go back and try again.",
+                "noUnitDetected": "No content was detected and could not split automatically. Please add information for each content section!",
+                "pageTitle": "Process content",
+                "addUnit": "Add content",
+                "lectureFileToolTip": "Please select to enable automatic separation of lecture content.",
+                "processUnits": "Process content",
+                "processAutomatically": "Automatic content processing",
                 "removeSlides": "Remove slides",
                 "removeSlidesInfo": {
-                    "firstLine": "All slides that contain any of the following key phrases will be removed from all units.",
+                    "firstLine": "All slides that contain any of the following key phrases will be removed from all content.",
                     "secondLine": "Multiple key phrases are comma-separated, key phrases are not case-sensitive.",
                     "thirdLine": "The following slides will be removed:"
                 },
-                "timeout": "Timed out during automatic unit processing. Please try again.",
+                "timeout": "Timed out during automatic content processing. Please try again.",
                 "removeSlidesPlaceholder": "Example: 'Break, Solution slides'",
                 "validation": {
                     "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
                     "empty": {
-                        "unitName": "Unit name can not be empty.",
+                        "unitName": "Content name can not be empty.",
                         "startPage": "Start page can not be empty.",
                         "endPage": "End page can not be empty."
                     },
@@ -126,23 +143,23 @@
                 },
                 "split": {
                     "empty": "",
-                    "unit": "Lecture Units",
-                    "unitName": "Unit Name",
+                    "unit": "Lecture Content",
+                    "unitName": "Content Name",
                     "releaseDate": "Release Date",
                     "startPage": "Start Page",
                     "endPage": "End Page"
                 },
-                "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
+                "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient."
             },
             "createAttachmentVideoUnit": {
-                "title": "Create Attachment Unit",
+                "title": "Create File/Video Content",
                 "name": "Name",
-                "namePlaceHolder": "Give the unit a name",
+                "namePlaceHolder": "Give the content a name",
                 "description": "Description",
                 "updateNotificationText": "Update Notification Text",
                 "updateNotificationTextPlaceholder": "Optional notification text for students about changes.",
                 "updateNotificationTextMaxLengthValidationError": "The notification text can be max 1000 characters long.",
-                "descriptionPlaceHolder": "Give the unit a description",
+                "descriptionPlaceHolder": "Give the content a description",
                 "nameRequiredValidationError": "Name is required.",
                 "nameMaxLengthValidationError": "Name can be max 255 characters long.",
                 "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
@@ -165,17 +182,17 @@
                 "generateTranscriptLabel": "Generate transcript after saving"
             },
             "editAttachmentVideoUnit": {
-                "title": "Edit Attachment Unit"
+                "title": "Edit File/Video Content"
             },
             "tooltip": "This is a lecture attachment",
             "uploadDate": "Upload Date",
             "version": "Version",
             "FileName": "Filename",
             "description": "Description",
-            "download": "Download attachment",
+            "download": "Download",
             "delete": {
-                "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
-                "typeNameToConfirm": "Please enter the name of the attachment/video unit for confirmation.",
+                "question": "Do you really want to delete this content <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the content for confirmation.",
                 "buttonText": "Delete"
             },
             "transcription": {
@@ -186,7 +203,11 @@
                 "statusProcessing": "Please check the status of the transcription later",
                 "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
                 "editStatusProcessing": "A transcription is currently being generated for this video.",
-                "editStatusFailed": "The previous transcription generation failed for this video."
+                "editStatusFailed": "The previous transcription generation failed for this video.",
+                "cancelButton": "Cancel Transcription",
+                "cancelSuccess": "Transcription cancelled successfully.",
+                "cancelError": "Failed to cancel transcription.",
+                "cancelConfirm": "Are you sure you want to cancel the ongoing transcription?"
             },
             "videoPlayer": {
                 "transcript": "Transcript",
@@ -202,7 +223,7 @@
         "exerciseUnit": {
             "created": "Exercise connected with lecture",
             "createExerciseUnit": {
-                "title": "Exercise Unit",
+                "title": "Exercise Content",
                 "headline": "Connect an Exercise with the Lecture",
                 "description": "Select all the Exercises to connect with the Lecture."
             },

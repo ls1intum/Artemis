@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
-import { DebugElement, Injector, input, runInInjectionContext } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
@@ -18,7 +18,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -30,7 +29,6 @@ describe('PostingHeaderComponent', () => {
     let component: PostingHeaderComponent;
     let fixture: ComponentFixture<PostingHeaderComponent>;
     let debugElement: DebugElement;
-    let injector: Injector;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -56,7 +54,6 @@ describe('PostingHeaderComponent', () => {
         fixture = TestBed.createComponent(PostingHeaderComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        injector = fixture.debugElement.injector;
     });
 
     afterEach(() => {
@@ -64,49 +61,41 @@ describe('PostingHeaderComponent', () => {
     });
 
     it('should set date information correctly for post of today', () => {
-        runInInjectionContext(injector, () => {
-            component.posting = input<Posting>(metisPostLectureUser1);
-            component.ngOnInit();
-            fixture.detectChanges();
+        fixture.componentRef.setInput('posting', metisPostLectureUser1);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(getElement(debugElement, '#today-flag')).toBeDefined();
-        });
+        expect(getElement(debugElement, '#today-flag')).toBeDefined();
     });
 
     it('should not set today flag for posts not created today', () => {
-        runInInjectionContext(injector, () => {
-            const pastDatePost = {
-                ...metisPostLectureUser1,
-                creationDate: dayjs().subtract(1, 'day').toDate(),
-            } as unknown as Post;
-            component.posting = input<Posting>(pastDatePost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const pastDatePost = {
+            ...metisPostLectureUser1,
+            creationDate: dayjs().subtract(1, 'day').toDate(),
+        } as unknown as Post;
+        fixture.componentRef.setInput('posting', pastDatePost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(getElement(debugElement, '#today-flag')).toBeNull();
-        });
+        expect(getElement(debugElement, '#today-flag')).toBeNull();
     });
 
     it('should display resolved icon on resolved post header', () => {
-        runInInjectionContext(injector, () => {
-            const resolvedPost = { ...metisPostExerciseUser1, resolved: true } as Post;
-            component.posting = input<Posting>(resolvedPost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const resolvedPost = { ...metisPostExerciseUser1, resolved: true } as Post;
+        fixture.componentRef.setInput('posting', resolvedPost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(getElement(debugElement, '.resolved')).not.toBeNull();
-        });
+        expect(getElement(debugElement, '.resolved')).not.toBeNull();
     });
 
     it('should not display resolved icon on unresolved post header', () => {
-        runInInjectionContext(injector, () => {
-            const unresolvedPost = { ...metisPostExerciseUser1, resolved: false } as Post;
-            component.posting = input<Posting>(unresolvedPost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const unresolvedPost = { ...metisPostExerciseUser1, resolved: false } as Post;
+        fixture.componentRef.setInput('posting', unresolvedPost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(getElement(debugElement, '.resolved')).toBeNull();
-        });
+        expect(getElement(debugElement, '.resolved')).toBeNull();
     });
 
     it.each`
@@ -115,16 +104,14 @@ describe('PostingHeaderComponent', () => {
         ${UserRole.TUTOR}      | ${'post-authority-icon-tutor'}
         ${UserRole.USER}       | ${'post-authority-icon-student'}
     `('should display relevant icon and tooltip for author authority $input', (param: { input: UserRole; expectClass: string }) => {
-        runInInjectionContext(injector, () => {
-            const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
-            component.posting = input<Posting>(rolePost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
+        fixture.componentRef.setInput('posting', rolePost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            const badge = getElement(debugElement, '#role-badge');
-            expect(badge).not.toBeNull();
-            expect(badge.classList.contains(param.expectClass)).toBeTrue();
-        });
+        const badge = getElement(debugElement, '#role-badge');
+        expect(badge).not.toBeNull();
+        expect(badge.classList.contains(param.expectClass)).toBeTrue();
     });
 
     it.each`
@@ -133,14 +120,12 @@ describe('PostingHeaderComponent', () => {
         ${UserRole.INSTRUCTOR} | ${faUserGraduate}
         ${UserRole.TUTOR}      | ${faUserCheck}
     `('should set userAuthorityIcon correctly for role $input', (param: { input: UserRole; expectedIcon: IconProp }) => {
-        runInInjectionContext(injector, () => {
-            const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
-            component.posting = input<Posting>(rolePost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
+        fixture.componentRef.setInput('posting', rolePost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(component.userAuthorityIcon).toEqual(param.expectedIcon);
-        });
+        expect(component.userAuthorityIcon).toEqual(param.expectedIcon);
     });
 
     it.each`
@@ -149,62 +134,52 @@ describe('PostingHeaderComponent', () => {
         ${UserRole.INSTRUCTOR} | ${'artemisApp.metis.userAuthorityTooltips.instructor'}
         ${UserRole.TUTOR}      | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
     `('should set userAuthorityTooltip correctly for role $input', (param: { input: UserRole; expectedTooltip: string }) => {
-        runInInjectionContext(injector, () => {
-            const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
-            component.posting = input<Posting>(rolePost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
+        fixture.componentRef.setInput('posting', rolePost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(component.userAuthorityTooltip).toEqual(param.expectedTooltip);
-        });
+        expect(component.userAuthorityTooltip).toEqual(param.expectedTooltip);
     });
 
     it('should set isAuthorOfPosting correctly when user is the author', () => {
-        runInInjectionContext(injector, () => {
-            const authorPost = { ...metisPostLectureUser1, author: component.currentUser } as Post;
-            component.posting = input<Posting>(authorPost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        const authorPost = { ...metisPostLectureUser1, author: component.currentUser } as Post;
+        fixture.componentRef.setInput('posting', authorPost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(component.isAuthorOfPosting).toBeTrue();
-        });
+        expect(component.isAuthorOfPosting).toBeTrue();
     });
 
     it('should handle undefined posting gracefully', () => {
-        runInInjectionContext(injector, () => {
-            component.posting = input<Posting>();
-            component.ngOnInit();
-            fixture.detectChanges();
+        fixture.componentRef.setInput('posting', undefined);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(component.isPostResolved()).toBeFalse();
-            expect(getElement(debugElement, '.resolved')).toBeNull();
-        });
+        expect(component.isPostResolved()).toBeFalse();
+        expect(getElement(debugElement, '.resolved')).toBeNull();
     });
 
     it('should set date information correctly for post of yesterday', () => {
-        runInInjectionContext(injector, () => {
-            const yesterday = dayjs().subtract(1, 'day').toDate();
+        const yesterday = dayjs().subtract(1, 'day').toDate();
 
-            const yesterdayPost: Post = {
-                ...metisPostLectureUser1,
-                creationDate: yesterday,
-            } as unknown as Post;
+        const yesterdayPost: Post = {
+            ...metisPostLectureUser1,
+            creationDate: yesterday,
+        } as unknown as Post;
 
-            component.posting = input<Posting>(yesterdayPost);
-            component.ngOnInit();
-            fixture.detectChanges();
+        fixture.componentRef.setInput('posting', yesterdayPost);
+        fixture.detectChanges();
+        component.ngOnInit();
 
-            expect(getElement(debugElement, '#today-flag')).toBeNull();
-        });
+        expect(getElement(debugElement, '#today-flag')).toBeNull();
     });
 
     it('should set author information correctly', () => {
-        runInInjectionContext(injector, () => {
-            component.posting = input<Posting>(metisResolvingAnswerPostUser1);
-            const headerAuthorAndDate = getElement(debugElement, '#header-author-date');
-            fixture.detectChanges();
-            expect(headerAuthorAndDate).not.toBeNull();
-            expect(headerAuthorAndDate.innerHTML).toContain(metisUser1.name);
-        });
+        fixture.componentRef.setInput('posting', metisResolvingAnswerPostUser1);
+        fixture.detectChanges();
+        const headerAuthorAndDate = getElement(debugElement, '#header-author-date');
+        expect(headerAuthorAndDate).not.toBeNull();
+        expect(headerAuthorAndDate.innerHTML).toContain(metisUser1.name);
     });
 });

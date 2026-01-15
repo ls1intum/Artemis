@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
         <div class="text-center text-primary me-2">{{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}:</div>
         <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
-            @if (!this.emitEvents) {
+            @if (!emitEvents()) {
                 <a type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'text-units', 'create']">
                     <fa-icon [icon]="faScroll" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text"></span>
                 </a>
