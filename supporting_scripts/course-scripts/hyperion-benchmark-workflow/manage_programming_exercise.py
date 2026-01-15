@@ -12,8 +12,13 @@ from requests import Session
 
 def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
     """
-    Sanitize the exercise name to create a valid short name.
+    Sanitizes the exercise name to create a valid short name.
+
     Example: "H01E01 - Lectures" -> "H01E01Lectures1"
+
+    :param exercise_name: The original name of the exercise.
+    :param short_name_index: The index to append to the short name to ensure uniqueness.
+    :return: The sanitized short name.
     """
     valid_short_name = re.sub(r'[^a-zA-Z0-9]', '', exercise_name)
     if not valid_short_name or not valid_short_name[0].isalpha():
@@ -23,6 +28,9 @@ def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
 def read_problem_statement(file_path: str) -> str:
     """
     Reads a markdown file and returns its content as a single string.
+
+    :param file_path: The path to the markdown file.
+    :return: The content of the file as a string.
     """
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
@@ -31,23 +39,28 @@ def read_problem_statement(file_path: str) -> str:
 
 def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     """
-    Convert the programming exercise located at variant_path into a ZIP file.
+    Converts the programming exercise located at ``variant_path`` into a ZIP file.
 
-    variant_path: ../../pecv-bench/data/{course}/{exercise}/variants/{variant_id}
+    The function renames ``template`` to ``exercise`` and overwrites exercise ID, course ID, title, and shortName in the configuration file.
+    It stores the final ZIP file in the same directory as the variant with the following structure:
 
-    Renames template to exercise and overwrites exercise ID, course ID, title and shortName in the config file.
-    It stores the final ZIP file in the same directory as the variant with following structure:
-    variants:
-    |-- 001:
-        |-- solution/
-        |-- template/
-        |-- tests/
-        |-- Exercise-Details.json
-        |-- 001-FullExercise.zip
-            |-- 001-solution.zip
-            |-- 001-exercise.zip
-            |-- 001-tests.zip
-            |-- exercise-details.json
+    .. code-block:: text
+
+        variants:
+        |-- 001:
+            |-- solution/
+            |-- template/
+            |-- tests/
+            |-- Exercise-Details.json
+            |-- 001-FullExercise.zip
+                |-- 001-solution.zip
+                |-- 001-exercise.zip
+                |-- 001-tests.zip
+                |-- exercise-details.json
+
+    :param variant_path: The path to the variant directory (e.g., ``../../pecv-bench/data/{course}/{exercise}/variants/{variant_id}``).
+    :param course_id: The ID of the course to which the exercise belongs.
+    :return: ``True`` if the ZIP file creation was successful, ``False`` otherwise.
     """
 
     REPO_TYPES: List[str] = ["solution", "template", "tests"]
@@ -148,7 +161,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
     return True
 
-def import_programming_exercise(session: Session, course_id: int, server_url: str, variant_folder_path: str) -> requests.Response:
+def import_programming_exercise_request(session: Session, course_id: int, server_url: str, variant_folder_path: str) -> requests.Response:
     """
     Imports a programming exercise to the Artemis server using a multipart/form-data request.
 
@@ -156,7 +169,11 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     1. 'programmingExercise': The configuration JSON (metadata).
     2. 'file': The exercise content as a ZIP archive.
 
-    Returns the JSON response from the server (the newly created exercise object).
+    :param session: The active requests Session object.
+    :param course_id: The ID of the course where the exercise will be imported.
+    :param server_url: The base URL of the Artemis server.
+    :param variant_folder_path: The path to the folder containing the exercise variant.
+    :return: The JSON response from the server representing the newly created exercise object, or ``None`` if the import failed.
     """
     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
 
@@ -213,12 +230,17 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
         return None
 
-def check_exercise_consistency(session: Session, exercise_server_id: int, server_url: str, exercise_variant_local_id: str):
-    """Check the consistency of the programming exercise with Hyperion System.
-
-    returns the consistency issues as a list of dictionaries along with the programming exercise ID.
+def consistency_check_request(session: Session, exercise_server_id: int, server_url: str, exercise_variant_local_id: str) -> Dict[str, Any]:
     """
-    logging.info(f"[{exercise_variant_local_id}] \t\tStarting consistency check for programming exercise ID: {exercise_server_id}")
+    Server request, to check the consistency of the programming exercise with Hyperion System.
+
+    :param session: The active requests Session object.
+    :param exercise_server_id: The ID of the programming exercise on the server.
+    :param server_url: The base URL of the Artemis server.
+    :param exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
+    :return: A dictionary containing consistency issues, or ``None`` if the request failed.
+    """
+    logging.info(f"[{exercise_variant_local_id}] 		Starting consistency check for programming exercise ID: {exercise_server_id}")
 
     url: str = f"{server_url}/hyperion/programming-exercises/{exercise_server_id}/consistency-check"
 
@@ -231,26 +253,33 @@ def check_exercise_consistency(session: Session, exercise_server_id: int, server
         logging.error(f"Failed to check consistency for programming exercise ID {exercise_server_id}; Status code: {response.status_code}\nResponse content: {response.text}")
         return None
 
-def process_variant_consistency_check(session: Session, server_url: str, exercise_variant_local_id: str, exercise_server_id: int, results_dir: str, course: str, run_id: str) -> str:
+def consistency_check_variant_io(session: Session, server_url: str, exercise_variant_local_id: str, exercise_server_id: int, results_dir: str, course: str, run_id: str) -> str:
     """
-    Worker function to check consistency and save result for a single variant.
-    exercise_variant_local_id: 'H01E01-Lectures:001'
+    Worker function that triggers ``consistency_check_request`` and saves the result for a SINGLE variant.
+
+    :param session: The active requests Session object.
+    :param server_url: The base URL of the Artemis server.
+    :param exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
+    :param exercise_server_id: The ID of the programming exercise on the server.
+    :param results_dir: The directory where the result JSON file will be saved.
+    :param course: The course identifier.
+    :param run_id: The identifier for the current run.
+    :return: A status string indicating success ('success') or failure ('error', 'Skipped ...').
     """
     if exercise_server_id is None:
         logging.error(f"Skipping consistency check for variant {exercise_variant_local_id} due to missing exercise ID.")
         return f"Skipped {exercise_variant_local_id} due to missing exercise ID"
 
-    # 1. Network Request
-    consistency_issue = check_exercise_consistency(session=session, exercise_server_id=exercise_server_id, server_url=server_url, exercise_variant_local_id=exercise_variant_local_id)
+    consistency_issue = consistency_check_request(session=session, exercise_server_id=exercise_server_id, server_url=server_url, exercise_variant_local_id=exercise_variant_local_id)
 
     exercise = exercise_variant_local_id.split(":")[0]
     variant = exercise_variant_local_id.split(":")[1]
-    # 2. Data Enrichment
+    # Data Enrichment
     if consistency_issue is not None:
         consistency_issue["case_id"] = f"{course}/{exercise}/{variant}"
         consistency_issue["run_id"] = run_id
 
-    # 3. File Write (I/O), different threads writing to different files is thread-safe
+    # File Write (I/O)
     file_path = os.path.join(results_dir, exercise, f"{variant}.json")
     try:
         with open(file_path, "w") as file:
