@@ -365,6 +365,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.lineWidgets = [];
     }
 
+    /**
+     * Dispose all line widgets whose IDs start with the given prefix.
+     * This allows selective widget updates without clearing unrelated widgets.
+     */
+    disposeWidgetsByPrefix(prefix: string): void {
+        const remaining: MonacoEditorLineWidget[] = [];
+        for (const widget of this.lineWidgets) {
+            if (widget.getId().startsWith(prefix)) {
+                widget.dispose();
+            } else {
+                remaining.push(widget);
+            }
+        }
+        this.lineWidgets = remaining;
+    }
+
     disposeAnnotations() {
         this.buildAnnotations.forEach((o) => {
             o.dispose();
@@ -453,6 +469,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.updateOptions({
             folding: false,
             lineDecorationsWidth: MonacoEditorComponent.DEFAULT_LINE_DECORATION_BUTTON_WIDTH,
+        });
+    }
+
+    /**
+     * Removes the line decorations hover button and restores default options.
+     */
+    clearLineDecorationsHoverButton(): void {
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = undefined;
+        this._editor.updateOptions({
+            folding: true,
+            lineDecorationsWidth: 0,
         });
     }
 

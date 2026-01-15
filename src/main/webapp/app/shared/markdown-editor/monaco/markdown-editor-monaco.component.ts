@@ -10,6 +10,7 @@ import {
     Output,
     Signal,
     ViewChild,
+    ViewContainerRef,
     computed,
     effect,
     inject,
@@ -80,6 +81,8 @@ import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
+import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -113,6 +116,8 @@ export type TextWithDomainAction = { text: string; action?: TextEditorDomainActi
  */
 const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
+const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
+const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
 
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -154,6 +159,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
+    private readonly viewContainerRef = inject(ViewContainerRef);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -257,6 +263,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly reviewCommentThreads = input<CommentThread[]>([]);
 
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
@@ -290,6 +298,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
+
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onDeleteReviewComment = output<number>();
+    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
 
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
@@ -347,19 +362,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
     readonly EditType = PostingEditType;
+    private reviewCommentManager?: ReviewCommentWidgetManager;
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
 
         effect(() => {
-            this.renderConsistencyIssues();
+            this.renderEditorWidgets();
+        });
+
+        effect(() => {
+            this.enableExerciseReviewComments();
+            this.reviewCommentThreads();
+            this.renderEditorWidgets();
+            this.updateReviewCommentButton();
         });
     }
 
     /**
      * Renders consistency issues inside the editor.
      */
-    protected renderConsistencyIssues() {
+    protected renderEditorWidgets() {
         const issues = this.consistencyIssues();
 
         // Bail out until the editor is ready
@@ -368,7 +391,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
 
         this.monacoEditor.disposeWidgets();
-        addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT', this.translateService);
+        addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
+        this.getReviewCommentManager()?.renderWidgets();
     }
 
     ngAfterContentInit(): void {
@@ -456,7 +480,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        this.renderConsistencyIssues();
+        this.renderEditorWidgets();
+        this.updateReviewCommentButton();
     }
 
     /**
@@ -476,6 +501,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.reviewCommentManager?.disposeAll();
+        this.monacoEditor?.clearLineDecorationsHoverButton();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -559,6 +586,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         } else if (this.inPreviewMode) {
             this.onPreviewSelect.emit();
         }
+        this.updateReviewCommentButton();
 
         // Some components need to know when the user leaves the visual tab, as it might make changes to the underlying data.
         if (event.activeId === this.TAB_VISUAL) {
@@ -708,5 +736,37 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
+    }
+
+    private updateReviewCommentButton(): void {
+        this.getReviewCommentManager()?.updateHoverButton();
+    }
+
+    private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        if (!this.monacoEditor) {
+            return undefined;
+        }
+        if (!this.reviewCommentManager) {
+            this.reviewCommentManager = new ReviewCommentWidgetManager(this.monacoEditor, this.viewContainerRef, {
+                hoverButtonClass: REVIEW_COMMENT_HOVER_BUTTON_CLASS,
+                shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.inEditMode,
+                getDraftFileName: () => PROBLEM_STATEMENT_FILE_PATH,
+                getThreads: () => this.reviewCommentThreads(),
+                filterThread: (thread) => this.isProblemStatementThread(thread),
+                getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
+                onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onSubmit: (payload) => this.onSubmitReviewComment.emit(payload),
+                onDelete: (commentId) => this.onDeleteReviewComment.emit(commentId),
+                onReply: (payload) => this.onReplyReviewComment.emit(payload),
+                onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),
+                onToggleResolved: (payload) => this.onToggleResolveReviewThread.emit(payload),
+                requestRender: () => this.renderEditorWidgets(),
+            });
+        }
+        return this.reviewCommentManager;
+    }
+
+    private isProblemStatementThread(thread: CommentThread): boolean {
+        return thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
     }
 }

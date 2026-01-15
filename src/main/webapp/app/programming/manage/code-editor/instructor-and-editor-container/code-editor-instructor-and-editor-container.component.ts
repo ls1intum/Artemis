@@ -35,7 +35,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Subscription, catchError, of, take } from 'rxjs';
+import { Observable, Subscription, catchError, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -45,6 +45,12 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
+import { CommentThread, CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentType, CreateComment } from 'app/exercise/shared/entities/review/comment.model';
+import { UserCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+
+const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 const SEVERITY_ORDER = {
@@ -85,11 +91,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
+    readonly reviewCommentThreads = signal<CommentThread[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -123,6 +131,25 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
+
+    override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        return super.loadExercise(exerciseId).pipe(
+            tap((exercise) => {
+                if (exercise.id) {
+                    this.loadReviewCommentThreads(exercise.id);
+                }
+            }),
+        );
+    }
+
+    onCommit(): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+        this.reviewCommentThreads.set([]);
+        this.loadReviewCommentThreads(exerciseId);
+    }
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -320,6 +347,168 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    onSubmitReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
+        const targetType = this.mapRepositoryToThreadLocationType(this.selectedRepository);
+        const auxiliaryRepositoryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+        this.createThreadWithInitialComment(targetType, event.fileName, event.lineNumber, event.text, auxiliaryRepositoryId);
+    }
+
+    onSubmitProblemStatementReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
+        this.createThreadWithInitialComment(CommentThreadLocationType.PROBLEM_STATEMENT, PROBLEM_STATEMENT_FILE_PATH, event.lineNumber, event.text);
+    }
+
+    onDeleteReviewComment(commentId: number): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        this.exerciseReviewCommentService
+            .deleteComment(exerciseId, commentId)
+            .pipe(
+                tap(() => {
+                    this.reviewCommentThreads.update((threads) =>
+                        threads
+                            .map((thread) => {
+                                if (!thread.comments) {
+                                    return thread;
+                                }
+                                const remainingComments = thread.comments.filter((comment) => comment.id !== commentId);
+                                if (remainingComments.length === thread.comments.length) {
+                                    return thread;
+                                }
+                                return { ...thread, comments: remainingComments };
+                            })
+                            .filter((thread) => !thread.comments || thread.comments.length > 0),
+                    );
+                }),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.deleteFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
+    onReplyReviewComment(event: { threadId: number; text: string }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
+        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
+
+        this.exerciseReviewCommentService
+            .createComment(exerciseId, event.threadId, createComment)
+            .pipe(
+                tap((response) => {
+                    const createdComment = response.body;
+                    if (!createdComment?.threadId) {
+                        return;
+                    }
+                    this.reviewCommentThreads.update((threads) =>
+                        threads.map((thread) => {
+                            if (thread.id !== createdComment.threadId) {
+                                return thread;
+                            }
+                            const comments = thread.comments ?? [];
+                            return { ...thread, comments: [...comments, createdComment] };
+                        }),
+                    );
+                }),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.saveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
+    onUpdateReviewComment(event: { commentId: number; text: string }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
+        this.exerciseReviewCommentService
+            .updateCommentContent(exerciseId, event.commentId, { content: commentContent })
+            .pipe(
+                tap((response) => {
+                    const updatedComment = response.body;
+                    if (!updatedComment?.id || !updatedComment.threadId) {
+                        return;
+                    }
+                    this.reviewCommentThreads.update((threads) =>
+                        threads.map((thread) => {
+                            if (thread.id !== updatedComment.threadId || !thread.comments) {
+                                return thread;
+                            }
+                            return {
+                                ...thread,
+                                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? { ...comment, ...updatedComment } : comment)),
+                            };
+                        }),
+                    );
+                }),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.saveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
+    onToggleResolveReviewThread(event: { threadId: number; resolved: boolean }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        this.exerciseReviewCommentService
+            .updateThreadResolvedState(exerciseId, event.threadId, event.resolved)
+            .pipe(
+                tap((response) => {
+                    const updatedThread = response.body;
+                    if (!updatedThread?.id) {
+                        return;
+                    }
+                    this.reviewCommentThreads.update((threads) => threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread)));
+                }),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.resolveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
+    private loadReviewCommentThreads(exerciseId: number): void {
+        this.exerciseReviewCommentService
+            .getThreads(exerciseId)
+            .pipe(
+                map((response) => response.body ?? []),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.loadFailed');
+                    return of([] as CommentThread[]);
+                }),
+            )
+            .subscribe((threads) => this.reviewCommentThreads.set(threads));
+    }
+
+    private mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType {
+        switch (repositoryType) {
+            case RepositoryType.SOLUTION:
+                return CommentThreadLocationType.SOLUTION_REPO;
+            case RepositoryType.TESTS:
+                return CommentThreadLocationType.TEST_REPO;
+            case RepositoryType.AUXILIARY:
+                return CommentThreadLocationType.AUXILIARY_REPO;
+            default:
+                return CommentThreadLocationType.TEMPLATE_REPO;
+        }
+    }
     /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
@@ -454,5 +643,47 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;
         }
+    }
+
+    private createThreadWithInitialComment(targetType: CommentThreadLocationType, filePath: string, lineNumber: number, text: string, auxiliaryRepositoryId?: number): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        const createThread: CreateCommentThread = {
+            targetType,
+            filePath,
+            initialFilePath: filePath,
+            lineNumber,
+            initialLineNumber: lineNumber,
+            auxiliaryRepositoryId,
+        };
+        const commentContent: UserCommentContent = { contentType: 'USER', text };
+        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
+
+        this.exerciseReviewCommentService
+            .createThread(exerciseId, createThread)
+            .pipe(
+                map((response) => response.body),
+                switchMap((thread) => {
+                    if (!thread?.id) {
+                        return throwError(() => new Error('missingThreadId'));
+                    }
+                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
+                }),
+                tap(({ thread, comment }) => {
+                    if (!thread?.id || !comment) {
+                        return;
+                    }
+                    const newThread: CommentThread = { ...thread, comments: [comment] };
+                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
+                }),
+                catchError(() => {
+                    this.alertService.error('artemisApp.review.saveFailed');
+                    return of(null);
+                }),
+            )
+            .subscribe();
     }
 }
