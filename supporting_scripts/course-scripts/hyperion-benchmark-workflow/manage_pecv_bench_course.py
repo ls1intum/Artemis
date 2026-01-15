@@ -6,6 +6,14 @@ import re
 import time
 from logging_config import logging
 from requests import Session
+from typing import Dict, Any, Union, List
+
+"""
+DISCLAIMER: Execution Context Sensitivity
+This script relies on 'config.ini' being present in the current working directory.
+It uses module-level global variables loaded from this configuration.
+Ensure this script is executed from the directory containing 'config.ini'.
+"""
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -23,16 +31,28 @@ SERVER_URL: str = config.get('Settings', 'server_url')
 ADMIN_USER: str = config.get('Settings', 'admin_user')
 ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
 
-# POST /core/public/authenticate
 def login_as_admin(session: requests.Session) -> None:
-    """Authenticate as an admin using the provided session.
+    """
+    Authenticate as an admin using the provided session.
 
     POST /core/public/authenticate
+
+    :param requests.Session session: The session to authenticate.
+    :return: None
     """
     authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
 
-def authenticate_user(username: str, password: str, session: requests.Session = requests.Session()) -> requests.Response:
-    """Authenticate a user and return the session response."""
+def authenticate_user(username: str, password: str, session: requests.Session) -> requests.Response:
+    """
+    Authenticate a user and return the session response.
+
+    :param str username: The username for authentication.
+    :param str password: The password for authentication.
+    :param requests.Session session: The session object to use for the request.
+    :return: The response object from the authentication request.
+    :rtype: requests.Response
+    :raises Exception: If authentication fails (status code other than 200).
+    """
     url: str = f"{SERVER_URL}/core/public/authenticate"
     headers: Dict[str, str] = {
         "Content-Type": "application/json"
@@ -56,7 +76,12 @@ def authenticate_user(username: str, password: str, session: requests.Session = 
 # ========================================================
 
 def parse_course_name_to_short_name() -> str:
-    """Parse course name to create a short name, removing special characters."""
+    """
+    Parse course name to create a short name, removing special characters.
+
+    :return: The parsed short name for the course.
+    :rtype: str
+    """
     short_name = COURSE_NAME.strip()
     short_name = re.sub(SPECIAL_CHARACTERS_REGEX, '', short_name.replace(' ', ''))
 
@@ -65,10 +90,16 @@ def parse_course_name_to_short_name() -> str:
 
     return short_name
 
-def create_pecv_bench_course(session: Session) -> requests.Response:
-    """Create a course using the given session.
+def create_pecv_bench_course_request(session: Session) -> requests.Response:
+    """
+    Create a course using the given session.
 
     POST /core/admin/courses
+
+    :param Session session: The active requests Session object.
+    :return: The JSON response containing the created course details, such as ID etc.
+    :rtype: requests.Response
+    :raises Exception: If course creation fails or if the course cannot be deleted before recreation.
     """
     url = f"{SERVER_URL}/core/admin/courses"
     course_short_name = parse_course_name_to_short_name()
@@ -128,7 +159,8 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     if response.status_code == 400:
         logging.error(f"Course with shortName {course_short_name} already exists")
 
-        course_is_deleted = delete_pecv_bench_course(session, course_short_name)
+        # Try to delete existing course with retry logic
+        course_is_deleted = delete_pecv_bench_course_request(session, course_short_name)
 
         if course_is_deleted:
             logging.info(f"Waiting 2 seconds for server cleanup before recreation")
@@ -149,13 +181,20 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
                 f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
                 f"Response content: {response.text}")
 
-def delete_pecv_bench_course(session: Session, course_short_name: str, max_retries: int = 3) -> bool:
-    """Delete a course with retry logic using the given session and course ID.
+def delete_pecv_bench_course_request(session: Session, course_short_name: str, max_retries: int = 3) -> bool:
+    """
+    Delete a course with retry logic using the given session and course ID.
 
     DELETE /core/admin/courses/{courseId}
 
     Sometimes it takes multiple scripts reruns to successfully delete a course.
     This approach fixes this.
+
+    :param Session session: The active requests Session object.
+    :param str course_short_name: The short name of the course to delete.
+    :param int max_retries: Maximum number of deletion attempts. Defaults to 3.
+    :return: True if the course was successfully deleted, False otherwise.
+    :rtype: bool
     """
 
     logging.info(f"Attempting to delete course with shortName {course_short_name}")
@@ -195,10 +234,16 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
     logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
     return False
 
-def get_pecv_bench_course_id(session: Session) -> int:
-    """Get the course ID for the given course name using the provided session.
+def get_pecv_bench_course_id_request(session: Session) -> int:
+    """
+    Get the course ID for the given course name using the provided session.
 
     GET /core/courses
+
+    :param Session session: The active requests Session object.
+    :return: The ID of the course.
+    :rtype: int
+    :raises Exception: If the course with the generated short name is not found.
     """
     course_short_name = parse_course_name_to_short_name()
     courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
@@ -209,12 +254,14 @@ def get_pecv_bench_course_id(session: Session) -> int:
             return course["id"]
     raise Exception(f"Course with shortName {course_short_name} not found")
 
-def get_exercise_ids_from_pecv_bench(session: Session, course_id: int) -> int:
-    """Get the exercise ID for the given exercise title in the specified course using the provided session."""
+def get_exercise_ids_from_pecv_bench_request(session: Session, course_id: int) -> Dict[str, int]:
     """
     Retrieves programming exercises for a specific course and extracts IDs and Titles.
 
+    :param Session session: The active requests Session object.
+    :param int course_id: The ID of the course to retrieve exercises from.
     :return: A list of dictionaries containing 'title' as key and 'id' as value.
+    :rtype: Dict[str, int]
     """
     url = f"{SERVER_URL}/programming/courses/{course_id}/programming-exercises"
 
@@ -232,7 +279,7 @@ def get_exercise_ids_from_pecv_bench(session: Session, course_id: int) -> int:
 
             if title is not None and ex_id is not None:
                 exercises_map[title] = ex_id
-        return transform_exercise_keys(exercises_map)
+        return transform_exercise_json_keys(exercises_map)
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
@@ -241,8 +288,14 @@ def get_exercise_ids_from_pecv_bench(session: Session, course_id: int) -> int:
         print(f"Error parsing JSON: {e}")
         return {}
 
+def transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:
+    """
+    Transforms the keys of the input dictionary into a new format.
 
-def transform_exercise_keys(input_dict):
+    :param Dict[str, int] input_dict: The dictionary with original keys.
+    :return: A dictionary with transformed keys.
+    :rtype: Dict[str, int]
+    """
     transformed_dict = {}
 
     # Regex to capture: (Number) - (ShortCode) (Optional Hyphen) (Description)
@@ -272,6 +325,3 @@ def transform_exercise_keys(input_dict):
             transformed_dict[original_key] = value
 
     return transformed_dict
-
-
-

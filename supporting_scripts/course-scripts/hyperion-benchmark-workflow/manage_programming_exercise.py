@@ -16,9 +16,10 @@ def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
 
     Example: "H01E01 - Lectures" -> "H01E01Lectures1"
 
-    :param exercise_name: The original name of the exercise.
-    :param short_name_index: The index to append to the short name to ensure uniqueness.
+    :param str exercise_name: The original name of the exercise.
+    :param int short_name_index: The index to append to the short name to ensure uniqueness.
     :return: The sanitized short name.
+    :rtype: str
     """
     valid_short_name = re.sub(r'[^a-zA-Z0-9]', '', exercise_name)
     if not valid_short_name or not valid_short_name[0].isalpha():
@@ -29,8 +30,9 @@ def read_problem_statement(file_path: str) -> str:
     """
     Reads a markdown file and returns its content as a single string.
 
-    :param file_path: The path to the markdown file.
+    :param str file_path: The path to the markdown file.
     :return: The content of the file as a string.
+    :rtype: str
     """
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
@@ -58,9 +60,10 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
                 |-- 001-tests.zip
                 |-- exercise-details.json
 
-    :param variant_path: The path to the variant directory (e.g., ``../../pecv-bench/data/{course}/{exercise}/variants/{variant_id}``).
-    :param course_id: The ID of the course to which the exercise belongs.
+    :param str variant_path: The path to the variant directory (e.g., ``../../pecv-bench/data/{course}/{exercise}/variants/{variant_id}``).
+    :param int course_id: The ID of the course to which the exercise belongs.
     :return: ``True`` if the ZIP file creation was successful, ``False`` otherwise.
+    :rtype: bool
     """
 
     REPO_TYPES: List[str] = ["solution", "template", "tests"]
@@ -169,11 +172,12 @@ def import_programming_exercise_request(session: Session, course_id: int, server
     1. 'programmingExercise': The configuration JSON (metadata).
     2. 'file': The exercise content as a ZIP archive.
 
-    :param session: The active requests Session object.
-    :param course_id: The ID of the course where the exercise will be imported.
-    :param server_url: The base URL of the Artemis server.
-    :param variant_folder_path: The path to the folder containing the exercise variant.
+    :param Session session: The active requests Session object.
+    :param int course_id: The ID of the course where the exercise will be imported.
+    :param str server_url: The base URL of the Artemis server.
+    :param str variant_folder_path: The path to the folder containing the exercise variant.
     :return: The JSON response from the server representing the newly created exercise object, or ``None`` if the import failed.
+    :rtype: requests.Response or None
     """
     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
 
@@ -234,11 +238,12 @@ def consistency_check_request(session: Session, exercise_server_id: int, server_
     """
     Server request, to check the consistency of the programming exercise with Hyperion System.
 
-    :param session: The active requests Session object.
-    :param exercise_server_id: The ID of the programming exercise on the server.
-    :param server_url: The base URL of the Artemis server.
-    :param exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
+    :param Session session: The active requests Session object.
+    :param int exercise_server_id: The ID of the programming exercise on the server.
+    :param str server_url: The base URL of the Artemis server.
+    :param str exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
     :return: A dictionary containing consistency issues, or ``None`` if the request failed.
+    :rtype: Dict[str, Any] or None
     """
     logging.info(f"[{exercise_variant_local_id}] 		Starting consistency check for programming exercise ID: {exercise_server_id}")
 
@@ -257,14 +262,15 @@ def consistency_check_variant_io(session: Session, server_url: str, exercise_var
     """
     Worker function that triggers ``consistency_check_request`` and saves the result for a SINGLE variant.
 
-    :param session: The active requests Session object.
-    :param server_url: The base URL of the Artemis server.
-    :param exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
-    :param exercise_server_id: The ID of the programming exercise on the server.
-    :param results_dir: The directory where the result JSON file will be saved.
-    :param course: The course identifier.
-    :param run_id: The identifier for the current run.
+    :param Session session: The active requests Session object.
+    :param str server_url: The base URL of the Artemis server.
+    :param str exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
+    :param int exercise_server_id: The ID of the programming exercise on the server.
+    :param str results_dir: The directory where the result JSON file will be saved.
+    :param str course: The course identifier.
+    :param str run_id: The identifier for the current run.
     :return: A status string indicating success ('success') or failure ('error', 'Skipped ...').
+    :rtype: str
     """
     if exercise_server_id is None:
         logging.error(f"Skipping consistency check for variant {exercise_variant_local_id} due to missing exercise ID.")
