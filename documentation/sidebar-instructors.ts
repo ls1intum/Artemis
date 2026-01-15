@@ -31,6 +31,7 @@ const sidebars: SidebarsConfig = {
             },
             items: ['exams/exam-timeline', 'exams/participation-checker'],
         },
+        'communication',
         'faq',
         'tutorial-groups',
         'plagiarism-check',
