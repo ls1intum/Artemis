@@ -170,7 +170,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         when(userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
 
         // Execute & Verify
-        assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(UserNotActivatedException.class).hasMessageContaining("was not activated");
+        assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(UserNotActivatedException.class).hasMessageContaining("is not activated");
     }
 
     @Test
