@@ -155,8 +155,20 @@ spring:
 
 ## Server Setup
 
+<Callout variant={CalloutVariant.info}>
+    **First-time deployment checklist:**
+
+    Before starting the Artemis server for the first time:
+
+    1. **Database**: Ensure a database is running. See [Database Setup](#database-setup) for instructions.
+    2. **Configuration**: Create `application-local.yml` in `src/main/resources/config` (see [Configuration Setup](#configuration-setup) below).
+    3. **Deployment**: We recommend deploying **Artemis (Server, LocalVC & LocalCI)** for local development.
+</Callout>
+
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
 Make sure to install the **Spring Boot** plugins for IntelliJ IDEA, this will make it easier to run the server.
+
+As an alternative, you may consider running the entire Artemis application using the Helios application. See [Setup with Helios](#setup-with-helios) for more details.
 
 Before starting the application, update the required configuration settings.
 
@@ -234,11 +246,13 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot module replacement in the client.
 
 - **Artemis (Client):** Will execute `npm install` and `npm run start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
-- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap,local`.
-- **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,atlas,local`.
-- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with `athena` profile and Local VC / CI enabled.
-- **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with `theia` profile and Local VC / CI enabled.
+- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local`.
+- **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
+- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local`.
+- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
+- **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with the profiles `theia,dev,localci,localvc,artemis,scheduling,buildagent,core,ldap,local`.
 - **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+- **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,ldap,localvc,localci,scheduling,local`. This configuration is used for production-like testing.
 
 <details>
 <summary>Deprecated Options</summary>
@@ -619,6 +633,24 @@ Artemis allows extension with several additional services, such as:
 - And more...
 
 The setup for these additional services is described as part of the [Extension Service Setup](/admin).
+
+---
+
+## Setup with Helios
+
+[Helios](https://helios.aet.cit.tum.de/) is an application that provides a well-designed UI for deploying various services the AET is building using GitHub Actions.
+You can use Helios to deploy an Artemis test server without needing to set up the server and client manually.
+
+This is particularly useful for:
+- Quick deployment of test environments
+- Deploying Artemis without local development setup
+- Testing pull request branches in isolated environments
+
+For detailed instructions on setting up Artemis with Helios, refer to the official [Helios User Guide](https://ls1intum.github.io/Helios/user_guide/deployments/testserver/).
+
+<Callout variant={CalloutVariant.info}>
+    If the above link is unavailable, go to the [Helios documentation homepage](https://ls1intum.github.io/Helios/) and navigate to **User Guide → Helios User Guide**.
+</Callout>
 
 ---
 
