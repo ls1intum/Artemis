@@ -8,7 +8,11 @@ import requests
 from typing import Dict, List, Tuple
 from logging_config import logging
 from manage_pecv_bench_course import create_pecv_bench_course_request, get_exercise_ids_from_pecv_bench_request, get_pecv_bench_course_id_request, login_as_admin, SERVER_URL
-from manage_programming_exercise import convert_variant_to_zip, convert_base_exercise_to_zip, import_programming_exercise_request, consistency_check_variant_io
+from manage_programming_exercise import (
+    convert_variant_to_zip,
+    import_programming_exercise_request,
+    consistency_check_variant_io
+)
 
 """
 DISCLAIMER: Execution Context Sensitivity
@@ -219,38 +223,6 @@ def process_single_variant_import(session: requests.Session,
             return (dict_key, exercise_id)
         else:
             logging.error(f"Failed to import programming exercise for {dict_key}. Moving to next variant.")
-            return (dict_key, None)
-    except Exception as e:
-        logging.exception(f"Exception during import of {dict_key}: {e}")
-        return (dict_key, None)
-
-def process_single_base_exercise_import(session: requests.Session,
-                                       server_url: str,
-                                       course_id: int,
-                                       exercise_name: str,
-                                       exercise_path: str) -> Tuple[str, int]:
-    """
-    Worker function to zip and import a single base exercise.
-    """
-    dict_key = f"{exercise_name}:base"
-
-    random_id = convert_base_exercise_to_zip(exercise_path, course_id)
-    if not random_id:
-        logging.error(f"Failed to create zip for {dict_key}. Skipping import.")
-        return (dict_key, None)
-
-    try:
-        response_data = import_programming_exercise_request(session = session,
-                                    course_id = course_id,
-                                    server_url = server_url,
-                                    variant_folder_path = exercise_path,
-                                    variant_id = random_id
-                                    )
-        exercise_id = response_data.get("id") if response_data else None
-        if exercise_id is not None:
-            return (dict_key, exercise_id)
-        else:
-            logging.error(f"Failed to import programming exercise for {dict_key}.")
             return (dict_key, None)
     except Exception as e:
         logging.exception(f"Exception during import of {dict_key}: {e}")

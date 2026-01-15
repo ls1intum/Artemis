@@ -5,6 +5,8 @@ import requests
 import zipfile
 import shutil
 import urllib3
+import random
+import string
 from logging_config import logging
 from typing import Dict, Any, List
 from requests import Session
@@ -294,3 +296,76 @@ def consistency_check_variant_io(session: Session, server_url: str, exercise_var
     except Exception as e:
         logging.exception(f"Failed to write file for {exercise_variant_local_id}: {e}")
         return f"[{exercise_variant_local_id}] error"
+
+def convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> str:
+    """
+    Converts a base programming exercise (no variants) into a ZIP file using a random unique ID.
+    """
+    random_id = ''.join(random.choices(string.digits, k=3))
+
+    repo_types: List[str] = ["solution", "template", "tests"]
+    config_file: str = "exercise-details.json"
+    variant_id = random_id
+    exercise_zip_filename = f"{variant_id}-FullExercise.zip"
+    exercise_zip_path = os.path.join(exercise_path, exercise_zip_filename)
+
+    logging.info(f"Final zip file: {exercise_zip_filename} will be created at {exercise_zip_path}")
+
+    zip_files = []
+    try:
+        for repo_type in repo_types:
+            repo_name = f"{variant_id}-{repo_type}"
+            base_name = os.path.join(exercise_path, repo_name)
+            repo_path = os.path.join(exercise_path, repo_type)
+            if not os.path.exists(repo_path):
+                logging.error(f"Required folder {repo_type} does not exist in {exercise_path}.")
+                continue
+            zip_folder_path = shutil.make_archive(base_name = base_name, format = 'zip', root_dir = repo_path)
+            zip_files.append(zip_folder_path)
+    except Exception as e:
+        logging.exception(f"Error while creating intermediate zip files: {e}")
+        return None
+
+    problem_statement_file_path = os.path.join(exercise_path, "problem-statement.md")
+    problem_statement_content = None
+    if os.path.exists(problem_statement_file_path):
+        problem_statement_content = read_problem_statement(problem_statement_file_path)
+
+    config_file_path = os.path.join(exercise_path, config_file)
+    try:
+        with open(config_file_path, 'r') as cf:
+            exercise_details: Dict[str, Any] = json.load(cf)
+            exercise_details['id'] = None
+            if problem_statement_content is not None:
+                exercise_details['problemStatement'] = problem_statement_content
+            course_name = ""
+            if 'course' in exercise_details:
+                exercise_details['course']['id'] = course_id
+                course_name = exercise_details['course'].get('shortName', '')
+            exercise_name = exercise_details.get('title', 'Untitled')
+            exercise_details['title'] = f"{variant_id} - {exercise_name}"
+            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
+            exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
+        with open(config_file_path, 'w') as cf:
+            json.dump(exercise_details, cf, indent=4)
+    except Exception as e:
+        logging.error(f"Failed to update config file: {e}")
+        return None
+    zip_files.append(config_file_path)
+
+    with zipfile.ZipFile(exercise_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file in zip_files:
+            if 'template' in file:
+                new_name = os.path.join(exercise_path, f"{variant_id}-exercise.zip")
+                os.rename(file, new_name)
+                zipf.write(new_name, arcname=f"{variant_id}-exercise.zip")
+                continue
+            arcname = "Exercise-Details.json" if os.path.basename(file).lower() == config_file.lower() else os.path.basename(file)
+            zipf.write(file, arcname=arcname)
+
+    zip_files.append(os.path.join(exercise_path, f"{variant_id}-exercise.zip"))
+    for temp_zip in zip_files:
+        if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
+            os.remove(temp_zip)
+
+    return random_id
