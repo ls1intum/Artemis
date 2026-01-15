@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, input, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +14,7 @@ import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -44,6 +44,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
 
     @Output()
     closePostThread = new EventEmitter<void>();
+    private readonly conversationSelectionState = inject(ConversationSelectionState);
 
     post?: Post;
     createdAnswerPost: AnswerPost;
@@ -90,7 +91,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
      */
     closeThread() {
         this.closePostThread.emit();
-        CourseConversationsComponent.openPostId = undefined;
+        this.conversationSelectionState.setOpenPostId(undefined);
     }
 
     /**
