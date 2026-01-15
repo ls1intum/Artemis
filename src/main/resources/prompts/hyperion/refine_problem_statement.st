@@ -34,18 +34,18 @@ Maintain existing task annotations unless changes are explicitly requested. Use 
 ### UML Refinement Guidelines:
 - Only modify diagrams if explicitly requested
 - Preserve original class relationships unless changes are needed
-- Apply theme-aware styling:
+- Use neutral styling that works in both light and dark themes:
 ```
 @startuml
 !theme plain
 skinparam backgroundColor transparent
-skinparam classBackgroundColor #F8F9FA
-skinparam classBorderColor #6C757D
-skinparam classArrowColor #495057
-skinparam classFontColor #212529
+skinparam classBackgroundColor transparent
+skinparam classBorderColor gray
+skinparam classArrowColor gray
+skinparam classFontColor gray
 skinparam classFontSize 12
-skinparam classAttributeFontColor #495057
-skinparam classStereotypeFontColor #6C757D
+skinparam classAttributeFontColor gray
+skinparam classStereotypeFontColor gray
 
 class ExampleClass {
   +method()

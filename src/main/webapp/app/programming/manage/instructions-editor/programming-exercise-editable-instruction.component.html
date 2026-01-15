@@ -50,15 +50,15 @@
         </jhi-markdown-editor-monaco>
 
         <!-- Floating inline refinement button - hidden during active refinement -->
-        @if (inlineRefinementPosition && hyperionEnabled && !isRefining() && selectionPositionInfo) {
+        @if (inlineRefinementPosition() && hyperionEnabled && !isRefining() && selectionPositionInfo()) {
             <jhi-inline-refinement-button
-                [top]="inlineRefinementPosition.top"
-                [left]="inlineRefinementPosition.left"
-                [selectedText]="selectedTextForRefinement"
-                [startLine]="selectionPositionInfo.startLine"
-                [endLine]="selectionPositionInfo.endLine"
-                [startColumn]="selectionPositionInfo.startColumn"
-                [endColumn]="selectionPositionInfo.endColumn"
+                [top]="inlineRefinementPosition()!.top"
+                [left]="inlineRefinementPosition()!.left"
+                [selectedText]="selectedTextForRefinement()"
+                [startLine]="selectionPositionInfo()!.startLine"
+                [endLine]="selectionPositionInfo()!.endLine"
+                [startColumn]="selectionPositionInfo()!.startColumn"
+                [endColumn]="selectionPositionInfo()!.endColumn"
                 [isLoading]="isRefining()"
                 (refine)="onInlineRefine($event)"
                 (closeRefinement)="hideInlineRefinementButton()"

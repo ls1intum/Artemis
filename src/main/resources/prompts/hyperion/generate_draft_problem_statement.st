@@ -46,18 +46,18 @@ When creating UML diagrams, use these styling guidelines:
 - Apply proper contrast for text readability
 - Use skinparam settings for consistent appearance
 
-### Example UML with Theme-Aware Styling:
+### Example UML with Neutral Styling:
 ```
 @startuml
 !theme plain
 skinparam backgroundColor transparent
-skinparam classBackgroundColor #F8F9FA
-skinparam classBorderColor #6C757D
-skinparam classArrowColor #495057
-skinparam classFontColor #212529
+skinparam classBackgroundColor transparent
+skinparam classBorderColor gray
+skinparam classArrowColor gray
+skinparam classFontColor gray
 skinparam classFontSize 12
-skinparam classAttributeFontColor #495057
-skinparam classStereotypeFontColor #6C757D
+skinparam classAttributeFontColor gray
+skinparam classStereotypeFontColor gray
 
 class ExampleClass {
   +method()

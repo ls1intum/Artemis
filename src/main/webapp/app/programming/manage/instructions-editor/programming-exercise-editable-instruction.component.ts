@@ -165,10 +165,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     // Inline refinement state
-    inlineRefinementPosition: { top: number; left: number } | null = null;
-    selectedTextForRefinement = '';
+    inlineRefinementPosition = signal<{ top: number; left: number } | null>(null);
+    selectedTextForRefinement = signal('');
     /** Selection position info for character-level targeting */
-    selectionPositionInfo: { startLine: number; endLine: number; startColumn: number; endColumn: number } | null = null;
+    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | null>(null);
     /** Emits when user wants to refine selected text (includes position info for character-level targeting) */
     readonly onInlineRefinement = output<{
         instruction: string;
@@ -425,14 +425,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ): void {
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled) {
-            this.inlineRefinementPosition = selection.screenPosition;
-            this.selectedTextForRefinement = selection.selectedText;
-            this.selectionPositionInfo = {
+            this.inlineRefinementPosition.set(selection.screenPosition);
+            this.selectedTextForRefinement.set(selection.selectedText);
+            this.selectionPositionInfo.set({
                 startLine: selection.startLine,
                 endLine: selection.endLine,
                 startColumn: selection.startColumn,
                 endColumn: selection.endColumn,
-            };
+            });
         } else {
             this.hideInlineRefinementButton();
         }
@@ -442,9 +442,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Hides the floating inline refinement button.
      */
     hideInlineRefinementButton(): void {
-        this.inlineRefinementPosition = null;
-        this.selectedTextForRefinement = '';
-        this.selectionPositionInfo = null;
+        this.inlineRefinementPosition.set(null);
+        this.selectedTextForRefinement.set('');
+        this.selectionPositionInfo.set(null);
     }
 
     /**
