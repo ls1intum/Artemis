@@ -199,7 +199,7 @@ has failed.
 
 ### Use Similar Test Setups
 
-Avoid using different setups for each test suit. For example, always check
+Avoid using different setups for each test suite. For example, always check
 for the same HTTP response when deleting a course.
 
 ### Do Not Ignore Failing Tests
@@ -245,7 +245,9 @@ desired instance as an argument of `use()` function as below:
 
 ```typescript
 export const test = base.extend<ArtemisPageObjects>({
-    loginPage: async ({ page }) => new LoginPage(page)
+    loginPage: async ({ page }, use) => {
+      await use(new LoginPage(page));
+    }
 });
 ```
 
@@ -304,15 +306,15 @@ await page.waitForLoadState('load');
     the page - use <code>waitFor()</code> function of a locator instead.</p>
 </Callout>
 
-## Artemis Deployment on Github Runner
+## Artemis Deployment on GitHub Runner
 
 Every execution of the Playwright test suite requires the Artemis server and client to be deployed and started.
-The easiest way to accomplish this is to deploy Artemis locally on the Github runner, which executes the Playwright tests.
+The easiest way to accomplish this is to deploy Artemis locally on the GitHub runner, which executes the Playwright tests.
 Using `docker compose` the runner can start a MySQL database and the Artemis server (potentially as multi-node deployment) and the client locally.
 
-<Image src={playwrightBambooDeployment} alt="Artemis Deployment on Github runner for Playwright" size={ImageSize.large} caption="Artemis Deployment on Github runner for Playwright" />
+<Image src={playwrightBambooDeployment} alt="Artemis Deployment on GitHub runner for Playwright" size={ImageSize.large} caption="Artemis Deployment on GitHub runner for Playwright" />
 
-In total there are three Docker containers started on the Github runner:
+In total there are three Docker containers started on the GitHub runner:
 
 ### 1. MySQL
 
