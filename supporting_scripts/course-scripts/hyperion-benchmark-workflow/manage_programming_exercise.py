@@ -66,19 +66,19 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     :rtype: bool
     """
 
-    REPO_TYPES: List[str] = ["solution", "template", "tests"]
-    CONFIG_FILE: str = "exercise-details.json"
-    VARIANT_ID = os.path.basename(variant_path)  # 001
-    EXERCISE_ZIP_FILENAME = f"{VARIANT_ID}-FullExercise.zip" #001-Exercise.zip
-    EXERCISE_ZIP_PATH = os.path.join(variant_path, EXERCISE_ZIP_FILENAME) #...001/001-FullExercise.zip
+    repo_types: List[str] = ["solution", "template", "tests"]
+    config_file: str = "exercise-details.json"
+    variant_id = os.path.basename(variant_path)  # 001
+    exercise_zip_filename = f"{variant_id}-FullExercise.zip"
+    exercise_zip_path = os.path.join(variant_path, exercise_zip_filename) #...001/001-FullExercise.zip
 
-    logging.info(f"Final zip file: {EXERCISE_ZIP_FILENAME} will be created at {EXERCISE_ZIP_PATH}")
+    logging.info(f"Final zip file: {exercise_zip_filename} will be created at {exercise_zip_path}")
 
     # Create intermediate zip files for solution, template and tests
     zip_files = []
     try:
-        for repo_type in REPO_TYPES:
-            repo_name = f"{VARIANT_ID}-{repo_type}"  #001-solution
+        for repo_type in repo_types:
+            repo_name = f"{variant_id}-{repo_type}"  #001-solution
             base_name = os.path.join(variant_path, repo_name)
 
             repo_path = os.path.join(variant_path, repo_type) #001/solution
@@ -98,7 +98,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     if os.path.exists(problem_statement_file_path):
         problem_statement_content = read_problem_statement(problem_statement_file_path)
 
-    config_file_path = os.path.join(variant_path, CONFIG_FILE)
+    config_file_path = os.path.join(variant_path, config_file)
     try:
         logging.info("Overwriting problem statement, exercise ID, course ID, title and shortName in the config file.")
         with open(config_file_path, 'r') as cf:
@@ -119,10 +119,10 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
                     course_name = exercise_details['exerciseGroup']['exam']['course'].get('shortName', '')
 
             exercise_name = exercise_details.get('title', 'Untitled')
-            exercise_details['title'] = f"{VARIANT_ID} - {exercise_details.get('title', 'Untitled')}"
+            exercise_details['title'] = f"{variant_id} - {exercise_details.get('title', 'Untitled')}"
 
-            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(VARIANT_ID))
-            exercise_details["projectKey"] = f"{VARIANT_ID}{course_name}{exercise_details['shortName']}"
+            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
+            exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
 
 
         with open(config_file_path, 'w') as cf:
@@ -134,10 +134,10 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     zip_files.append(config_file_path)
 
     # Create the final zip file containing all parts
-    with zipfile.ZipFile(EXERCISE_ZIP_PATH, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(exercise_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in zip_files:
             if 'template' in file: # Rename template zip to exercise zip
-                new_name = os.path.join(variant_path, f"{VARIANT_ID}-exercise.zip")
+                new_name = os.path.join(variant_path, f"{variant_id}-exercise.zip")
                 os.rename(file, new_name)
                 logging.info(f"Renamed {os.path.basename(file)} to {os.path.basename(new_name)}")
                 arcname = os.path.basename(new_name)
@@ -145,7 +145,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
                 logging.info(f"Added {os.path.basename(new_name)} to final zip as {arcname}.")
                 continue
 
-            if os.path.basename(file).lower() == CONFIG_FILE.lower(): # rename exercise-details.json to Exercise-Details.json
+            if os.path.basename(file).lower() == config_file.lower(): # rename exercise-details.json to Exercise-Details.json
                 arcname = "Exercise-Details.json"
                 zipf.write(file, arcname=arcname)
                 logging.info(f"Added {os.path.basename(file)} as {arcname} in final zip.")
@@ -154,8 +154,8 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             arcname = os.path.basename(file)
             zipf.write(file, arcname=arcname)
             logging.info(f"Added {os.path.basename(file)} to final zip as {arcname}.")
-    logging.info(f"Zip file created at {EXERCISE_ZIP_PATH}")
-    zip_files.append(os.path.join(variant_path, f"{VARIANT_ID}-exercise.zip"))
+    logging.info(f"Zip file created at {exercise_zip_path}")
+    zip_files.append(os.path.join(variant_path, f"{variant_id}-exercise.zip"))
 
     logging.info("Cleaning up intermediate zip files...")
     for temp_zip in zip_files:
