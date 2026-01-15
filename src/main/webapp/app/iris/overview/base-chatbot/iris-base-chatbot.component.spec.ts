@@ -1,5 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -35,7 +34,6 @@ import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisBaseChatbotComponent', () => {
-    setupTestBed({ zoneless: true });
 
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
@@ -44,10 +42,10 @@ describe('IrisBaseChatbotComponent', () => {
     let accountService: AccountService;
 
     const statusMock = {
-        currentRatelimitInfo: vi.fn().mockReturnValue(of({})),
-        handleRateLimitInfo: vi.fn(),
-        getActiveStatus: vi.fn().mockReturnValue(of({})),
-        setCurrentCourse: vi.fn(),
+        currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
+        handleRateLimitInfo: jest.fn(),
+        getActiveStatus: jest.fn().mockReturnValue(of({})),
+        setCurrentCourse: jest.fn(),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: jest.fn(),
@@ -81,10 +79,10 @@ describe('IrisBaseChatbotComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                vi.spyOn(console, 'error').mockImplementation(() => {});
+                jest.spyOn(console, 'error').mockImplementation(() => {});
                 global.window ??= window;
-                window.scroll = vi.fn();
-                window.HTMLElement.prototype.scrollTo = vi.fn();
+                window.scroll = jest.fn();
+                window.HTMLElement.prototype.scrollTo = jest.fn();
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
@@ -101,7 +99,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -127,7 +125,7 @@ describe('IrisBaseChatbotComponent', () => {
         component.active = true;
         component.isLoading = true;
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
-        vi.spyOn(component, 'onSend');
+        jest.spyOn(component, 'onSend');
 
         component.handleKey(event);
 
@@ -142,7 +140,7 @@ describe('IrisBaseChatbotComponent', () => {
         textAreaElement.value = 'Sample text';
         textAreaElement.selectionStart = selectionStart;
         textAreaElement.selectionEnd = selectionEnd;
-        vi.spyOn(event, 'target', 'get').mockReturnValue(textAreaElement);
+        jest.spyOn(event, 'target', 'get').mockReturnValue(textAreaElement);
 
         component.handleKey(event);
 
@@ -324,7 +322,7 @@ describe('IrisBaseChatbotComponent', () => {
             entityId: 1,
             entityName: 'Course 1',
         };
-        const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
+        const switchToSessionSpy = jest.spyOn(chatService, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(mockSession);
 
@@ -344,7 +342,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should call chatService.clearChat when openNewSession is executed', () => {
-        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+        const clearChatSpy = jest.spyOn(chatService, 'clearChat').mockReturnValue();
         component.openNewSession();
         expect(clearChatSpy).toHaveBeenCalledOnce();
     });
@@ -378,12 +376,12 @@ describe('IrisBaseChatbotComponent', () => {
         const sortedSessions = [sessionToday, sessionYesterday, sessionNoTitle];
 
         beforeAll(() => {
-            vi.useFakeTimers();
-            vi.setSystemTime(mockDate);
+            jest.useFakeTimers();
+            jest.setSystemTime(mockDate);
         });
 
         afterAll(() => {
-            vi.useRealTimers();
+            jest.useRealTimers();
         });
 
         beforeEach(() => {
@@ -458,12 +456,12 @@ describe('IrisBaseChatbotComponent', () => {
         const sortedSessions = [sessionToday, sessionYesterday, session7DaysAgo, session8DaysAgo, session30DaysAgo];
 
         beforeAll(() => {
-            vi.useFakeTimers();
-            vi.setSystemTime(mockDate);
+            jest.useFakeTimers();
+            jest.setSystemTime(mockDate);
         });
 
         afterAll(() => {
-            vi.useRealTimers();
+            jest.useRealTimers();
         });
 
         beforeEach(() => {
@@ -1400,13 +1398,13 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('onClearSession', () => {
         let modalRef: any;
-        let modalService: NgbModal;
+        let llmModalService : NgbModal;
 
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
             fixture.changeDetectorRef.detectChanges();
 
-            modalService = TestBed.inject(NgbModal);
+            llmModalService = TestBed.inject(NgbModal);
 
             modalRef = {
                 result: Promise.resolve('confirm'),
@@ -1414,7 +1412,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should open modal with provided content', () => {
-            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+            const openSpy = jest.spyOn(llmModalService, 'open').mockReturnValue(modalRef);
             const content = { template: 'test' };
 
             component.onClearSession(content);
@@ -1424,7 +1422,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not call clearChat when result is not confirm', fakeAsync(() => {
             modalRef.result = Promise.resolve('cancel');
-            jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+            jest.spyOn(llmModalService, 'open').mockReturnValue(modalRef);
             const clearChatSpy = jest.spyOn(chatService, 'clearChat');
 
             component.onClearSession({});
@@ -1435,7 +1433,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not set isLoading to false when result is not confirm', fakeAsync(() => {
             modalRef.result = Promise.resolve('cancel');
-            jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+            jest.spyOn(llmModalService, 'open').mockReturnValue(modalRef);
             component.isLoading = true;
 
             component.onClearSession({});
