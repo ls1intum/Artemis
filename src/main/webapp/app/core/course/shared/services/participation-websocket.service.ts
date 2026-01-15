@@ -146,10 +146,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     private getNotifyAllSubscribersPipe = () => {
         return pipe(
-            tap(this.notifyResultSubscribers), // update latest-result streams
-            tap(this.updateCachedParticipationWithResult), // mutate cachedParticipations by appending the uptodate results
-            switchMap(this.getParticipationForResult), // read updated participation to include latest result
-            tap(this.notifyParticipationSubscribers), // emit updated participation with result
+            tap(this.notifyResultSubscribers),
+            tap(this.updateCachedParticipationWithResult),
+            switchMap(this.getParticipationForResult),
+            tap(this.notifyParticipationSubscribers),
         );
     };
 
