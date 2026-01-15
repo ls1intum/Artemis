@@ -131,7 +131,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
         flush();
-    }));
+    });
 
     it('should subscribe to route.params and call chatService.switchTo with text exercise mode', async () => {
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
@@ -150,7 +150,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
         flush();
-    }));
+    });
 
     it('should close the dialog when destroying the object', () => {
         // given
@@ -202,7 +202,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
         flush();
-    }));
+    });
 
     it('should not open the chatbot if no irisQuestion is provided in the queryParams', fakeAsync(() => {
         // given
