@@ -109,9 +109,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     isRefining = signal(false);
 
     // Diff mode properties
-    showDiff = false;
-    originalProblemStatement = '';
-    refinedProblemStatement = '';
+    showDiff = signal(false);
+    originalProblemStatement = signal('');
+    refinedProblemStatement = signal('');
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
 
@@ -278,9 +278,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     // Check if refinement was successful
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         // Store original and refined content for diff view
-                        this.originalProblemStatement = exercise.problemStatement || '';
-                        this.refinedProblemStatement = response.refinedProblemStatement;
-                        this.showDiff = true;
+                        this.originalProblemStatement.set(exercise.problemStatement || '');
+                        this.refinedProblemStatement.set(response.refinedProblemStatement);
+                        this.showDiff.set(true);
                         this.userPrompt = '';
                     } else if (response.originalProblemStatement) {
                         // Refinement failed: keep the original problem statement
@@ -301,12 +301,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      */
     acceptRefinement(): void {
         const exercise = this.programmingExercise();
-        if (exercise && this.refinedProblemStatement) {
-            exercise.problemStatement = this.refinedProblemStatement;
+        const refined = this.refinedProblemStatement();
+        if (exercise && refined) {
+            exercise.problemStatement = refined;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.problemStatementChange.emit(this.refinedProblemStatement);
+            this.problemStatementChange.emit(refined);
             this.programmingExerciseChange.emit(exercise);
-            this.currentProblemStatement.set(this.refinedProblemStatement);
+            this.currentProblemStatement.set(refined);
             this.closeDiff();
         }
     }
@@ -322,9 +323,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Closes the diff view and resets diff state
      */
     closeDiff(): void {
-        this.showDiff = false;
-        this.originalProblemStatement = '';
-        this.refinedProblemStatement = '';
+        this.showDiff.set(false);
+        this.originalProblemStatement.set('');
+        this.refinedProblemStatement.set('');
     }
 
     /**
@@ -362,7 +363,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
-    onInlineRefinement(event: { selectedText: string; instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+    onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
 
@@ -398,9 +399,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 next: (response) => {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         // Store original and refined content for diff view
-                        this.originalProblemStatement = exercise.problemStatement || '';
-                        this.refinedProblemStatement = response.refinedProblemStatement;
-                        this.showDiff = true;
+                        this.originalProblemStatement.set(exercise.problemStatement || '');
+                        this.refinedProblemStatement.set(response.refinedProblemStatement);
+                        this.showDiff.set(true);
                         this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {
                         this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');

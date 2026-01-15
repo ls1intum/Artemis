@@ -39,7 +39,6 @@ export class InlineRefinementButtonComponent implements OnInit {
 
     // Output: Emits when user submits refinement instruction (includes position info)
     refine = output<{
-        selectedText: string;
         instruction: string;
         startLine: number;
         endLine: number;
@@ -53,7 +52,8 @@ export class InlineRefinementButtonComponent implements OnInit {
     // State
     isExpanded = signal(false);
     instruction = '';
-    isSubmitting = signal(false);
+    // Input: Whether submission is in progress
+    isLoading = input<boolean>(false);
 
     // Icons
     readonly facArtemisIntelligence = facArtemisIntelligence;
@@ -86,11 +86,9 @@ export class InlineRefinementButtonComponent implements OnInit {
      */
     submit(): void {
         const text = this.instruction.trim();
-        if (!text || this.isSubmitting()) return;
+        if (!text || this.isLoading()) return;
 
-        this.isSubmitting.set(true);
         this.refine.emit({
-            selectedText: this.selectedText(),
             instruction: text,
             startLine: this.startLine(),
             endLine: this.endLine(),
@@ -103,6 +101,7 @@ export class InlineRefinementButtonComponent implements OnInit {
      * Handles Enter key to submit.
      */
     onKeydown(event: KeyboardEvent): void {
+        event.stopPropagation();
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.submit();

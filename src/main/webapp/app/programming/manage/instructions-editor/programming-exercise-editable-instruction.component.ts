@@ -171,7 +171,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     selectionPositionInfo: { startLine: number; endLine: number; startColumn: number; endColumn: number } | null = null;
     /** Emits when user wants to refine selected text (includes position info for character-level targeting) */
     readonly onInlineRefinement = output<{
-        selectedText: string;
         instruction: string;
         startLine: number;
         endLine: number;
@@ -435,7 +434,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Handles inline refinement submission.
      * Emits the event for parent to process the refinement.
      */
-    onInlineRefine(event: { selectedText: string; instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+    onInlineRefine(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         this.onInlineRefinement.emit(event);
         this.hideInlineRefinementButton();
     }

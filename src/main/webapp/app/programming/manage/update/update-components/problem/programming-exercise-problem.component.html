@@ -33,7 +33,7 @@
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-            @if (showDiff) {
+            @if (showDiff()) {
                 <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
                     <span>
                         <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
@@ -68,7 +68,7 @@
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()!.templateParticipation!"
+                    [participation]="programmingExercise()?.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
@@ -80,9 +80,9 @@
                 <!-- Single Unified Editor - switches between normal and diff modes -->
                 <jhi-programming-exercise-editable-instructions
                     #editableInstructions
-                    [mode]="showDiff ? 'diff' : 'normal'"
-                    [originalContent]="originalProblemStatement"
-                    [modifiedContent]="refinedProblemStatement"
+                    [mode]="showDiff() ? 'diff' : 'normal'"
+                    [originalContent]="originalProblemStatement()"
+                    [modifiedContent]="refinedProblemStatement()"
                     [participation]="programmingExercise()!.templateParticipation!"
                     [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"

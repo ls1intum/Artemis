@@ -405,7 +405,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
-    onInlineRefinement(event: { selectedText: string; instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+    onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
 
         if (!courseId || !this.exercise?.problemStatement?.trim()) {

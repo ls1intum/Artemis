@@ -233,12 +233,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Disposes the diff editor and shows the normal editor.
+     * Transfers the modified content from the diff editor to the normal editor before disposing.
      * @private
      */
     private disposeDiffEditor(): void {
         if (!this._diffEditor) {
             return;
         }
+
+        // Get the modified content from the diff editor BEFORE disposing it
+        const modifiedContent = this._diffEditor.getModifiedEditor().getValue();
 
         // Clean up diff editor listeners
         this.diffUpdateListener?.dispose();
@@ -253,6 +257,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Show the normal editor FIRST to prevent parent collapse
         // The dimensions are already set on the container from layoutWithFixedSize
         this.renderer.setStyle(this.monacoEditorContainerElement, 'display', 'block');
+
+        // Transfer the modified content to the normal editor
+        this._editor.setValue(modifiedContent);
 
         // Restore the text editor adapter
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
@@ -317,8 +324,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._diffEditor.getId()}/${originalFileName}`);
         const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._diffEditor.getId()}/${modifiedFileName}`);
-        const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original, 'markdown', originalModelUri);
-        const modifiedModel = monaco.editor.getModel(modifiedFileUri) ?? monaco.editor.createModel(modified, 'markdown', modifiedFileUri);
+
+        // Check if models exist or need to be created, and track newly created models for disposal
+        let originalModel = monaco.editor.getModel(originalModelUri);
+        if (!originalModel) {
+            originalModel = monaco.editor.createModel(original, 'markdown', originalModelUri);
+            if (!this.models.includes(originalModel)) {
+                this.models.push(originalModel);
+            }
+        }
+
+        let modifiedModel = monaco.editor.getModel(modifiedFileUri);
+        if (!modifiedModel) {
+            modifiedModel = monaco.editor.createModel(modified, 'markdown', modifiedFileUri);
+            if (!this.models.includes(modifiedModel)) {
+                this.models.push(modifiedModel);
+            }
+        }
 
         originalModel.setValue(original);
         modifiedModel.setValue(modified);
