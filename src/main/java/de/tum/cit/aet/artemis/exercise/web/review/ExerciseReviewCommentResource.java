@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/communication/")
+@RequestMapping("api/exercise/")
 public class ExerciseReviewCommentResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseReviewCommentResource.class);
