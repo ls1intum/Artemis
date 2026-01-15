@@ -201,24 +201,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
                 switch (event.type) {
-                    case 'STARTED':
-                        // spinner already on; just log
-                        break;
-
-                    case 'PROGRESS':
-                        break;
-
                     case 'FILE_UPDATED':
                     case 'NEW_FILE':
                         this.repoService
                             .pull()
                             .pipe(
                                 take(1),
-                                catchError(() => {
-                                    return of(void 0);
-                                }),
+                                catchError(() => of(void 0)),
                             )
-                            .subscribe(() => {});
+                            .subscribe();
                         break;
 
                     case 'DONE':
@@ -350,9 +341,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /**
      * Accepts the refined problem statement and applies the changes.
+     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
      */
     acceptRefinement(): void {
-        const refined = this.refinedProblemStatement();
+        // Get the actual content from the editor - this captures any user edits made in diff mode
+        const editorContent = this.editableInstructions?.getCurrentContent();
+        // Fall back to the signal value if editor content is not available
+        const refined = editorContent ?? this.refinedProblemStatement();
         if (refined?.trim()) {
             this.exercise.problemStatement = refined;
             this.editableInstructions?.updateProblemStatement(refined);

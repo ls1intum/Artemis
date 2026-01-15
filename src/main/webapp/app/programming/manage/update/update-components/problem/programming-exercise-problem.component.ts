@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { faBan, faQuestionCircle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -21,7 +20,7 @@ import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStat
 import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
 import { Subscription, finalize } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -48,11 +47,7 @@ import { FileService } from 'app/shared/service/file.service';
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
-    protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly ProjectType = ProjectType;
-    protected readonly AssessmentType = AssessmentType;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-    protected readonly faQuestionCircle = faQuestionCircle;
 
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
@@ -292,11 +287,15 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Accepts the refined problem statement and applies the changes
+     * Accepts the refined problem statement and applies the changes.
+     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
      */
     acceptRefinement(): void {
         const exercise = this.programmingExercise();
-        const refined = this.refinedProblemStatement();
+        // Get the actual content from the editor - this captures any user edits made in diff mode
+        const editorContent = this.editableInstructions()?.getCurrentContent();
+        // Fall back to the signal value if editor content is not available
+        const refined = editorContent ?? this.refinedProblemStatement();
         if (exercise && refined) {
             exercise.problemStatement = refined;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
@@ -333,8 +332,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.refineProblemStatement();
         }
     }
-
-    protected readonly ButtonSize = ButtonSize;
 
     /**
      * Get the translated example placeholder text for the input field

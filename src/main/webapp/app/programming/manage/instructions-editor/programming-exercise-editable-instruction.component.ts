@@ -362,6 +362,29 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     /**
+     * Gets the current content from the editor.
+     * In diff mode, returns the modified (right) side content.
+     * In normal mode, returns the current editor content.
+     *
+     * @returns The current editor content, or undefined if editor is not available.
+     */
+    getCurrentContent(): string | undefined {
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        if (!monacoEditor) {
+            return undefined;
+        }
+
+        // In diff mode, get the modified content
+        const diffText = monacoEditor.getDiffText();
+        if (diffText) {
+            return diffText.modified;
+        }
+
+        // In normal mode, get the current text
+        return monacoEditor.getText();
+    }
+
+    /**
      * Scrolls the Monaco editor to the specified line immediately.
      *
      * @param {number} lineNumber
