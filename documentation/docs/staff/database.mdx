@@ -8,7 +8,7 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 ### Weekly Database Meeting
 
 We hold a weekly, in-person, cross-functional meeting involving database, infrastructure, and operations teams. Attendance is required whenever changes to the database, configurations, or related operations are proposed.
-Please prepare for the meeting and enter your PR and a short description of the changes in the [meeting agenda](https://confluence.aet.cit.tum.de/x/SaC5Bw).
+Please prepare for the meeting and enter your PR and a short description of the changes in the [meeting agenda](https://outline.aet.cit.tum.de/doc/meetings-stDhTnsRvf).
 
 ### Approval Process
 
@@ -105,9 +105,7 @@ private Set<Exercise> exercises = new HashSet<>();
 ```
 
 <Callout variant={CalloutVariant.danger}>
-    <p>
-        For <strong>OneToMany</strong>, <strong>ManyToOne</strong>, and <strong>ManyToMany</strong> relationships you must not forget to mark the associated elements with <code>@JsonIgnoreProperties()</code>. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: <a href="https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype">Jackson and JsonIgnoreType</a>.
-    </p>
+  For <strong>OneToMany</strong>, <strong>ManyToOne</strong>, and <strong>ManyToMany</strong> relationships you must not forget to mark the associated elements with <code>@JsonIgnoreProperties()</code>. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: <a href="https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype">Jackson and JsonIgnoreType</a>.
 </Callout>
 
 ### Lazy Relationships
@@ -179,9 +177,7 @@ private Result result;
 If the source entity is refreshed, it cascades the refresh to the target of the association. This is used to refresh the data in the object and its associations. This is useful for cases where there is a change which needs to be synchronized FROM the database.
 
 <Callout variant={CalloutVariant.info}>
-    <p>
-        This cascade type is not used in Artemis yet.
-    </p>
+  This cascade type is not used in Artemis yet.
 </Callout>
 
 ## Dynamic Fetching
@@ -444,9 +440,7 @@ There is a problem with the way you save the associated objects. You must follow
 4. Always use the returned value after saving the entity, see: `feedback = feedbackRepository.save(feedback);`
 
 <Callout variant={CalloutVariant.info}>
-    <p>
-        For more information see the ordered collections section above.
-    </p>
+  For more information see the ordered collections section above.
 </Callout>
 
 ### Null Values in Ordered Collections
