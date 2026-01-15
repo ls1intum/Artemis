@@ -1,6 +1,6 @@
 MAIN_CLASS = "notFound" // default value, will be replaced in Build stage
 OUT_DIR = "target/surefire-reports"
-javaFlags = "-Djdk.console=java.base"
+javaFlags = ""
 mavenFlags = "-B"
 
 testfiles_base_path = "./testsuite/testfiles"
