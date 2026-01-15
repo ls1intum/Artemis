@@ -8,7 +8,7 @@ services:
       - "8001"
       - --scheme
       - http
-    image: cr.weaviate.io/semitechnologies/weaviate:1.32.2
+    image: cr.weaviate.io/semitechnologies/weaviate:1.33.0
     expose:
       - 8001
       - 50051

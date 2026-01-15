@@ -383,6 +383,9 @@ dependencies {
     // Helios push-based status updates
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"
 
+    // Weaviate vector database client for semantic search
+    implementation "io.weaviate:client6:${weaviate_client_version}"
+
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
 

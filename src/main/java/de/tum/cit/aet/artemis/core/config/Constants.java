@@ -374,6 +374,11 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * The name of the Spring profile used for Weaviate vector database integration.
+     */
+    public static final String PROFILE_WEAVIATE = "weaviate";
+
+    /**
      * The name of the profile for integration independent tests
      */
     public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";

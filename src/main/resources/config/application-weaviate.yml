@@ -1,0 +1,26 @@
+# ===================================================================
+# Weaviate vector database configuration
+#
+# This configuration is only active when the 'weaviate' Spring profile is enabled.
+# Use this profile to enable Weaviate integration for semantic search capabilities.
+# ===================================================================
+
+artemis:
+  weaviate:
+    # Connection settings
+    host: localhost
+    port: 8001
+    grpc-port: 50051
+    secure: false
+
+    # Schema validation settings
+    schema-validation:
+      # Enable/disable schema validation against Iris repository
+      enabled: true
+
+      # Strict mode: if true, schema mismatches will prevent server startup
+      # If false, mismatches will only log warnings
+      strict: true
+
+      # URL to fetch schema definitions from the Iris GitHub repository
+      iris-schema-base-url: https://raw.githubusercontent.com/ls1intum/edutelligence/main/iris/src/iris/vector_database
