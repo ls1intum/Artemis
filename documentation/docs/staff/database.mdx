@@ -127,7 +127,7 @@ Entity relationships often depend on the existence of another entity — for exa
 
 ### CascadeType.ALL
 
-Propagates all operations mentioned below from the parent object to the to child object.
+Propagates all operations mentioned below from the parent object to the child object.
 
 ```java
 // Result.java
@@ -183,7 +183,7 @@ If the source entity is refreshed, it cascades the refresh to the target of the 
 ## Dynamic Fetching
 
 In Artemis, we use dynamic fetching to load the relationships of an entity on demand. As we do not want to load all relationships of an entity every time we fetch it from the database, we use as described above `FetchType.LAZY`.
-In order to load the relationships of an entity on demand, we then use one of 3 methods:
+In order to load the relationships of an entity on demand, we then use one of 4 methods:
 
 ### 1. EntityGraph
 
@@ -267,7 +267,7 @@ When possible, use the default Spring Data/JPA methods for second (fetching) and
 ```java
 // Repository interface
 default Page<User> searchAllByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-    List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();;
+    List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
     if (userIds.isEmpty()) {
         return new PageImpl<>(Collections.emptyList(), pageable, 0);
