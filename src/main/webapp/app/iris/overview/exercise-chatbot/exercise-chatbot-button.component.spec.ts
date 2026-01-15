@@ -22,25 +22,23 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { User } from 'app/core/user/user.model';
 
 describe('ExerciseChatbotButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisExerciseChatbotButtonComponent;
     let fixture: ComponentFixture<IrisExerciseChatbotButtonComponent>;
     let chatService: IrisChatService;
-    let chatHttpServiceMock: IrisChatHttpService;
-    let wsServiceMock: IrisWebsocketService;
+    let chatHttpServiceMock: jest.Mocked<IrisChatHttpService>;
+    let wsServiceMock: jest.Mocked<IrisWebsocketService>;
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
-    let mockDialogClose: ReturnType<typeof vi.fn>;
+    let mockDialogClose: any;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
     let accountService: AccountService;
 
     const statusMock = {
-        currentRatelimitInfo: vi.fn().mockReturnValue(of({})),
-        handleRateLimitInfo: vi.fn(),
-        setCurrentCourse: vi.fn(),
+        currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
+        handleRateLimitInfo: jest.fn(),
+        setCurrentCourse: jest.fn(),
     };
     const accountMock = { selectedLLMUsageTimestamp: dayjs() } as User;
 
@@ -55,19 +53,19 @@ describe('ExerciseChatbotButtonComponent', () => {
             queryParams: mockQueryParamsSubject,
         } as unknown as ActivatedRoute;
 
-        mockDialogClose = vi.fn();
+        mockDialogClose = jest.fn();
 
         mockDialog = {
             open: jest.fn().mockReturnValue({
                 afterClosed: jest.fn().mockReturnValue(of(undefined)),
                 close: mockDialogClose,
             }),
-            closeAll: vi.fn(),
+            closeAll: jest.fn(),
         } as unknown as MatDialog;
 
         mockOverlay = {
             scrollStrategies: {
-                noop: vi.fn().mockReturnValue({}),
+                noop: jest.fn().mockReturnValue({}),
             },
         } as unknown as Overlay;
 
@@ -97,8 +95,8 @@ describe('ExerciseChatbotButtonComponent', () => {
 
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(mockCourseId);
-                chatHttpServiceMock = TestBed.inject(IrisChatHttpService);
-                wsServiceMock = TestBed.inject(IrisWebsocketService);
+                chatHttpServiceMock = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
+                wsServiceMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 accountService = TestBed.inject(AccountService);
 
                 accountService.userIdentity.set(accountMock);
@@ -111,14 +109,14 @@ describe('ExerciseChatbotButtonComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
-    it('should subscribe to route.params and call chatService.switchTo with exercise mode', async () => {
-        vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
-        vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-        const spy = vi.spyOn(chatService, 'switchTo');
+    it('should subscribe to route.params and call chatService.switchTo with exercise mode', fakeAsync(() => {
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
+        jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
+        jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const spy = jest.spyOn(chatService, 'switchTo');
 
         fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         fixture.changeDetectorRef.detectChanges();
@@ -131,13 +129,13 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
         flush();
-    });
+    }));
 
-    it('should subscribe to route.params and call chatService.switchTo with text exercise mode', async () => {
-        vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
-        vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-        const spy = vi.spyOn(chatService, 'switchTo');
+    it('should subscribe to route.params and call chatService.switchTo with text exercise mode', fakeAsync(() => {
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
+        jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
+        jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const spy = jest.spyOn(chatService, 'switchTo');
 
         fixture.componentRef.setInput('mode', ChatServiceMode.TEXT_EXERCISE);
         fixture.changeDetectorRef.detectChanges();
@@ -150,7 +148,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
         flush();
-    });
+    }));
 
     it('should close the dialog when destroying the object', () => {
         // given
@@ -183,7 +181,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         flush();
     }));
 
-    it('should not show new message indicator when chatbot is open', async () => {
+    it('should not show new message indicator when chatbot is open', fakeAsync(() => {
         // given
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
@@ -202,7 +200,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
         flush();
-    });
+    }));
 
     it('should not open the chatbot if no irisQuestion is provided in the queryParams', fakeAsync(() => {
         // given

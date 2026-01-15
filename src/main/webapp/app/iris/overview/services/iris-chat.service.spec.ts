@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { firstValueFrom, of, filter } from 'rxjs';
+import { filter, firstValueFrom, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
