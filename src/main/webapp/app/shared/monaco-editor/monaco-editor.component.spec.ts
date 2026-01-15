@@ -413,4 +413,62 @@ describe('MonacoEditorComponent', () => {
         const newPosition = comp.getPosition();
         expect(newPosition.column).toBe(7);
     }));
+
+    it('should initialize diff mode when mode input is set to diff', fakeAsync(() => {
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        tick();
+
+        expect(comp['_diffEditor']).toBeDefined();
+    }));
+
+    it('should return the active editor correctly in normal mode', () => {
+        fixture.detectChanges();
+        const activeEditor = comp.getActiveEditor();
+        expect(activeEditor).toBe(comp['_editor']);
+    });
+
+    it('should return undefined for getDiffText when not in diff mode', () => {
+        fixture.detectChanges();
+        const diffText = comp.getDiffText();
+        expect(diffText).toBeUndefined();
+    });
+
+    it('should return undefined for getModifiedEditor when not in diff mode', () => {
+        fixture.detectChanges();
+        const modifiedEditor = comp.getModifiedEditor();
+        expect(modifiedEditor).toBeUndefined();
+    });
+
+    it('should dispose selection change listeners on destroy', () => {
+        fixture.detectChanges();
+
+        // Add a mock selection change listener
+        const mockDisposable = { dispose: jest.fn() };
+        comp['selectionChangeListeners'] = [{ listener: jest.fn(), disposable: mockDisposable }];
+
+        comp.ngOnDestroy();
+
+        expect(mockDisposable.dispose).toHaveBeenCalled();
+        expect(comp['selectionChangeListeners']).toHaveLength(0);
+    });
+
+    it('should handle multiple models', () => {
+        fixture.detectChanges();
+
+        comp.changeModel('file1', 'content1');
+        comp.changeModel('file2', 'content2');
+
+        expect(comp.models).toHaveLength(2);
+        expect(comp.models[0].getValue()).toBe('content1');
+        expect(comp.models[1].getValue()).toBe('content2');
+    });
+
+    it('should track text changed emit timeouts', () => {
+        fixture.componentRef.setInput('textChangedEmitDelay', 1000);
+        fixture.detectChanges();
+
+        // Verify the timeouts map exists
+        expect(comp['textChangedEmitTimeouts']).toBeDefined();
+    });
 });

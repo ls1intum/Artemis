@@ -345,4 +345,241 @@ describe('ProgrammingExerciseProblemComponent', () => {
         // Verify state is reset
         expect(comp.isGenerating()).toBeFalse();
     });
+
+    it('should handle inline refinement successfully', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original problem statement with content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const mockResponse: ProblemStatementRefinementResponse = {
+            refinedProblemStatement: 'Refined problem statement',
+        };
+
+        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+
+        const event = {
+            instruction: 'Improve this section',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(comp.showDiff()).toBeTrue();
+        expect(comp.refinedProblemStatement()).toBe('Refined problem statement');
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
+    }));
+
+    it('should handle inline refinement error when no courseId', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        // No course set
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    });
+
+    it('should handle inline refinement error when problem statement is empty', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = '   '; // Only whitespace
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    });
+
+    it('should handle inline refinement API error', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatement.mockReturnValue(throwError(() => new Error('API error')));
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        expect(comp.isRefining()).toBeFalse();
+    }));
+
+    it('should handle inline refinement with empty response', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatement.mockReturnValue(of({ refinedProblemStatement: '' }));
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    }));
+
+    it('should handle refinement with only originalProblemStatement in response', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const mockResponse: ProblemStatementRefinementResponse = {
+            originalProblemStatement: 'Original',
+        };
+
+        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+
+        comp.userPrompt = 'Improve clarity';
+        comp.refineProblemStatement();
+
+        expect(mockAlertService.warning).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementFailed');
+    }));
+
+    it('should handle refinement with completely empty response', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const mockResponse: ProblemStatementRefinementResponse = {};
+
+        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+
+        comp.userPrompt = 'Improve clarity';
+        comp.refineProblemStatement();
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
+    }));
+
+    it('should not refine when userPrompt is empty', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        comp.userPrompt = '';
+        comp.refineProblemStatement();
+
+        expect(mockHyperionApiService.refineProblemStatement).not.toHaveBeenCalled();
+    });
+
+    it('should not refine when no courseId', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Original';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        comp.userPrompt = 'Improve';
+        comp.refineProblemStatement();
+
+        expect(mockHyperionApiService.refineProblemStatement).not.toHaveBeenCalled();
+    });
+
+    it('should close diff view properly', () => {
+        comp.showDiff.set(true);
+        comp.originalProblemStatement.set('Original');
+        comp.refinedProblemStatement.set('Refined');
+
+        comp.closeDiff();
+
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.originalProblemStatement()).toBe('');
+        expect(comp.refinedProblemStatement()).toBe('');
+    });
+
+    it('should use exerciseGroup course id when course is not set', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.exerciseGroup = { exam: { course: { id: 99 } } } as any;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const mockResponse: ProblemStatementGenerationResponse = {
+            draftProblemStatement: 'Generated statement',
+        };
+
+        mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
+
+        comp.userPrompt = 'Create exercise';
+        comp.generateProblemStatement();
+
+        expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object));
+    }));
+
+    it('should cancel active subscription on cancelGeneration', () => {
+        const mockSubscription = { unsubscribe: jest.fn() };
+        comp['currentGenerationSubscription'] = mockSubscription as any;
+
+        comp.cancelGeneration();
+
+        expect(mockSubscription.unsubscribe).toHaveBeenCalled();
+        expect(comp['currentGenerationSubscription']).toBeUndefined();
+    });
+
+    it('should unsubscribe on destroy', () => {
+        const mockSubscription = { unsubscribe: jest.fn() };
+        comp['currentGenerationSubscription'] = mockSubscription as any;
+
+        comp.ngOnDestroy();
+
+        expect(mockSubscription.unsubscribe).toHaveBeenCalled();
+    });
+
+    it('should show generate button when problem statement matches template', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Template content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges();
+
+        // Set the template to match the problem statement
+        comp['templateProblemStatement'].set('Template content');
+        comp['currentProblemStatement'].set('Template content');
+
+        expect(comp.shouldShowGenerateButton()).toBeTrue();
+    }));
+
+    it('should show refine button when problem statement differs from template', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Custom content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges();
+
+        comp['templateProblemStatement'].set('Template content');
+        comp['currentProblemStatement'].set('Custom content');
+
+        expect(comp.shouldShowGenerateButton()).toBeFalse();
+    }));
 });
