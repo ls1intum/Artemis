@@ -240,6 +240,7 @@
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",
                 "generateCode": "Generate Code",
+                "generateWithAi": "Generate with AI",
                 "generating": "Generating...",
                 "description": "Generate solution, template, and test code using AI",
                 "tooltip": "AI Code Generation - Generate solution, template, and test code",

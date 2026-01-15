@@ -240,6 +240,7 @@
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
+                "generateWithAi": "Mit KI generieren",
                 "generating": "Generiere...",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
