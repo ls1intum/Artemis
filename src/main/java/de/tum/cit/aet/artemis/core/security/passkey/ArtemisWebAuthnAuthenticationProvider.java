@@ -68,7 +68,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
                 throw new BadCredentialsException("User " + username + " was not found in the database");
             }
             if (!user.get().getActivated()) {
-                throw new UserNotActivatedException("User " + username + " was not activated");
+                throw new UserNotActivatedException("User " + username + " is not activated");
             }
 
             Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credentialId);
