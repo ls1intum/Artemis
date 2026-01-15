@@ -17,7 +17,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.config.LlmUsageProperties;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -43,7 +42,7 @@ class HyperionProblemStatementRewriteServiceTest {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, new LlmUsageProperties());
+        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository);
         var observationRegistry = ObservationRegistry.create();
         this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, observationRegistry, llmUsageHelper);
     }

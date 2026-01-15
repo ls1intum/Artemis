@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.LlmUsageProperties;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -138,7 +137,7 @@ public class HyperionConsistencyCheckService {
 
         // Cost calculations
         var costs = llmUsageHelper.getCostsUsd();
-        var costsUsd = costs.getOrDefault(modelName, new LlmUsageProperties.ModelCostUsd(0f, 0f));
+        var costsUsd = costs.getOrDefault(modelName, new LlmUsageHelper.ModelCostUsd(0f, 0f));
         double promptCost = (totalPromptTokens / 1_000_000.0) * costsUsd.costPerMillionInputUsd();
         double completionCost = (totalCompletionTokens / 1_000_000.0) * costsUsd.costPerMillionOutputUsd();
         var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);

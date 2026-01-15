@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.LlmUsageProperties;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -32,21 +31,27 @@ public class LlmUsageHelper {
 
     private static final Logger log = LoggerFactory.getLogger(LlmUsageHelper.class);
 
-    private static final LlmUsageProperties.ModelCost ZERO_COST = new LlmUsageProperties.ModelCost(0f, 0f);
+    private static final String DEFAULT_MODEL = "gpt-5-mini";
+
+    private static final Map<String, ModelCost> DEFAULT_COSTS = Map.of(DEFAULT_MODEL, new ModelCost(0.23f, 1.84f));
+
+    private static final Map<String, ModelCostUsd> DEFAULT_COSTS_USD = Map.of(DEFAULT_MODEL, new ModelCostUsd(0.25f, 2.00f));
+
+    private static final ModelCost ZERO_COST = new ModelCost(0f, 0f);
 
     private final LLMTokenUsageService llmTokenUsageService;
 
     private final UserRepository userRepository;
 
-    private final Map<String, LlmUsageProperties.ModelCost> costs;
+    private final Map<String, ModelCost> costs;
 
-    private final Map<String, LlmUsageProperties.ModelCostUsd> costsUsd;
+    private final Map<String, ModelCostUsd> costsUsd;
 
-    public LlmUsageHelper(LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, LlmUsageProperties llmUsageProperties) {
+    public LlmUsageHelper(LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.costs = llmUsageProperties.getCosts();
-        this.costsUsd = llmUsageProperties.getCostsUsd();
+        this.costs = DEFAULT_COSTS;
+        this.costsUsd = DEFAULT_COSTS_USD;
     }
 
     /**
@@ -70,7 +75,7 @@ public class LlmUsageHelper {
         int completionTokens = usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0;
         String model = chatResponse.getMetadata().getModel();
         String normalizedModel = normalizeModelName(model);
-        LlmUsageProperties.ModelCost modelCost = costs.getOrDefault(normalizedModel, ZERO_COST);
+        ModelCost modelCost = costs.getOrDefault(normalizedModel, ZERO_COST);
 
         double estimatedCost = (promptTokens * modelCost.costPerMillionInput() / 1_000_000.0) + (completionTokens * modelCost.costPerMillionOutput() / 1_000_000.0);
         log.info("LLM {} estimated cost for model {}: {} € (input {} @ {}/M, output {} @ {}/M)", checkType, normalizedModel, String.format("%.4f", estimatedCost), promptTokens,
@@ -128,11 +133,17 @@ public class LlmUsageHelper {
         return dateIndex > 0 ? rawModel.substring(0, dateIndex) : rawModel;
     }
 
-    public Map<String, LlmUsageProperties.ModelCost> getCosts() {
+    public Map<String, ModelCost> getCosts() {
         return costs;
     }
 
-    public Map<String, LlmUsageProperties.ModelCostUsd> getCostsUsd() {
+    public Map<String, ModelCostUsd> getCostsUsd() {
         return costsUsd;
+    }
+
+    public record ModelCost(float costPerMillionInput, float costPerMillionOutput) {
+    }
+
+    public record ModelCostUsd(float costPerMillionInputUsd, float costPerMillionOutputUsd) {
     }
 }
