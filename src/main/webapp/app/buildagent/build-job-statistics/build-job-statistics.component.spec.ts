@@ -104,4 +104,27 @@ describe('BuildJobStatisticsComponent', () => {
         expect(component.displayMissingBuilds).toBeFalsy();
         expect(component.displaySpanSelector).toBeFalsy();
     });
+
+    it('should have flex-wrap on statistics containers to prevent horizontal overflow', () => {
+        mockActivatedRoute.url = of([{ path: 'build-queue' }]);
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+        component.isCollapsed = false;
+        fixture.detectChanges();
+
+        const nativeElement = fixture.nativeElement;
+        // Find flex containers that have gap-4 class (statistics containers)
+        const flexContainers = nativeElement.querySelectorAll('.d-flex.gap-4');
+
+        // There should be at least 2 flex containers with gap-4 (outer and inner)
+        expect(flexContainers.length).toBeGreaterThanOrEqual(2);
+
+        // Both containers should have flex-wrap class to prevent horizontal overflow
+        const outerFlexContainer = flexContainers[0];
+        const innerFlexContainer = flexContainers[1];
+
+        expect(outerFlexContainer.classList.contains('flex-wrap')).toBe(true);
+        expect(innerFlexContainer.classList.contains('flex-wrap')).toBe(true);
+    });
 });

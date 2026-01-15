@@ -1,8 +1,10 @@
 .result-card {
     width: 8vw;
     min-width: 115px;
+    flex-shrink: 0;
 }
 
 .stats-column {
-    min-width: 230px;
+    min-width: 180px;
+    flex-shrink: 1;
 }
