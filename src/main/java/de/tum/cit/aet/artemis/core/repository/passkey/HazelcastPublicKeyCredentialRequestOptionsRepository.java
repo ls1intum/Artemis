@@ -117,6 +117,11 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
      * Loads the previously saved {@link PublicKeyCredentialRequestOptions} from the Hazelcast map
      * using the requested session ID from the HTTP request.
      *
+     * <p>
+     * Falls back to checking the HTTP session attribute if the requested session ID is null
+     * (e.g., in test environments using MockMvc where no session cookie is sent).
+     * </p>
+     *
      * @param request the HTTP request (used to extract session ID)
      * @return the stored {@link PublicKeyCredentialRequestOptions}, or {@code null} if not found or session is missing
      */
@@ -124,7 +129,16 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
         String sessionId = request.getRequestedSessionId();
         if (sessionId == null) {
-            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
+            // Fallback to HTTP session for test environments (e.g., MockMvc)
+            // where no session cookie is sent but session attributes are available
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                Object options = session.getAttribute(this.attrName);
+                if (options instanceof PublicKeyCredentialRequestOptions storedOptions) {
+                    return storedOptions;
+                }
+            }
+            log.warn("Session ID is null and no options found in HTTP session. Unable to load PublicKeyCredentialRequestOptions.");
             return null;
         }
 
