@@ -32,7 +32,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param originalProblemStatement original problem statement text if refinement
  *                                     failed (null on success, non-null on error)
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Response containing generated problem statement")
 public record ProblemStatementRefinementResponseDTO(@Schema(description = "Refined problem statement text") String refinedProblemStatement,
         @Nullable @Schema(description = "Original problem statement if refinement failed") String originalProblemStatement) {

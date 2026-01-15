@@ -329,17 +329,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         let originalModel = monaco.editor.getModel(originalModelUri);
         if (!originalModel) {
             originalModel = monaco.editor.createModel(original, 'markdown', originalModelUri);
-            if (!this.models.includes(originalModel)) {
-                this.models.push(originalModel);
-            }
+            this.models.push(originalModel);
         }
 
         let modifiedModel = monaco.editor.getModel(modifiedFileUri);
         if (!modifiedModel) {
             modifiedModel = monaco.editor.createModel(modified, 'markdown', modifiedFileUri);
-            if (!this.models.includes(modifiedModel)) {
-                this.models.push(modifiedModel);
-            }
+            this.models.push(modifiedModel);
         }
 
         originalModel.setValue(original);
@@ -550,12 +546,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     setText(text: string): void {
         const convertedText = this.convertTextToEmoji(text);
+        const activeEditor = this.getActiveEditor();
         if (this.isConvertedToEmoji(text, convertedText)) {
-            this._editor.setValue(convertedText);
+            activeEditor.setValue(convertedText);
             this.setPosition({ column: this.getPosition().column + convertedText.length + text.length, lineNumber: this.getPosition().lineNumber });
         }
         if (this.getText() !== convertedText) {
-            this._editor.setValue(convertedText);
+            activeEditor.setValue(convertedText);
         }
     }
 
@@ -572,11 +569,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     getNumberOfLines(): number {
-        return this._editor.getModel()?.getLineCount() ?? 0;
+        return this.getActiveEditor().getModel()?.getLineCount() ?? 0;
     }
 
     isReadOnly(): boolean {
-        return this._editor.getOption(monaco.editor.EditorOption.readOnly);
+        return this.getActiveEditor().getOption(monaco.editor.EditorOption.readOnly);
     }
 
     /**
@@ -639,7 +636,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param listener The callback to invoke on keydown events while the editor is focused.
      */
     onKeyDown(listener: (event: monaco.IKeyboardEvent) => void): Disposable {
-        return this._editor.onKeyDown(listener);
+        return this.getActiveEditor().onKeyDown(listener);
     }
 
     disposeWidgets() {

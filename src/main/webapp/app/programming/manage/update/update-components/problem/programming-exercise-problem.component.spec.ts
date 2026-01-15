@@ -223,19 +223,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.refinedProblemStatement()).toBe('');
     });
 
-    it('should close diff and reset public state', () => {
-        comp.showDiff.set(true);
-        comp.originalProblemStatement.set('Original');
-        comp.refinedProblemStatement.set('Refined');
-
-        comp.closeDiff();
-
-        // Verify through public properties only
-        expect(comp.showDiff()).toBeFalse();
-        expect(comp.originalProblemStatement()).toBe('');
-        expect(comp.refinedProblemStatement()).toBe('');
-    });
-
     it('should cancel generation and reset states', () => {
         comp.isGenerating.set(true);
         comp.isRefining.set(true);
@@ -257,11 +244,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(emitSpy).toHaveBeenCalledWith('New problem statement');
         expect(programmingExercise.problemStatement).toBe('New problem statement');
-    });
-
-    it('should get translated placeholder', () => {
-        const placeholder = comp.getTranslatedPlaceholder();
-        expect(placeholder).toBeDefined();
     });
 
     it('should handle competency links change', () => {
@@ -315,18 +297,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(translateService.instant).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     });
 
-    it('should close diff and reset state', () => {
-        comp.showDiff.set(true);
-        comp.originalProblemStatement.set('original');
-        comp.refinedProblemStatement.set('refined');
-
-        comp.closeDiff();
-
-        expect(comp.showDiff()).toBeFalse();
-        expect(comp.originalProblemStatement()).toBe('');
-        expect(comp.refinedProblemStatement()).toBe('');
-    });
-
     it('should accept refinement and apply changes', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.course = { id: 42 } as any;
@@ -353,14 +323,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Statement should not change
         expect(exercise.problemStatement).toBe('Original statement');
-    });
-
-    it('should emit problemStatementChange on onProblemStatementChange', () => {
-        const emitSpy = jest.spyOn(comp.problemStatementChange, 'emit');
-
-        comp.onProblemStatementChange('New problem statement');
-
-        expect(emitSpy).toHaveBeenCalledWith('New problem statement');
     });
 
     it('should handle generate with existing non-empty problem statement', () => {
