@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -34,6 +35,8 @@ class ArtemisWebAuthnAuthenticationProviderTest {
 
     private PasskeyCredentialsRepository passkeyCredentialsRepository;
 
+    private RateLimitService rateLimitService;
+
     private ArtemisWebAuthnAuthenticationProvider provider;
 
     @BeforeEach
@@ -41,24 +44,25 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         relyingPartyOperations = mock(WebAuthnRelyingPartyOperations.class);
         userRepository = mock(UserTestRepository.class);
         passkeyCredentialsRepository = mock(PasskeyCredentialsRepository.class);
-        provider = new ArtemisWebAuthnAuthenticationProvider(relyingPartyOperations, userRepository, passkeyCredentialsRepository);
+        rateLimitService = mock(RateLimitService.class);
+        provider = new ArtemisWebAuthnAuthenticationProvider(relyingPartyOperations, userRepository, rateLimitService, passkeyCredentialsRepository);
     }
 
     @Test
     void testConstructorThrowsExceptionForNullRelyingPartyOperations() {
-        assertThatThrownBy(() -> new ArtemisWebAuthnAuthenticationProvider(null, userRepository, passkeyCredentialsRepository)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new ArtemisWebAuthnAuthenticationProvider(null, userRepository, rateLimitService, passkeyCredentialsRepository)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("relyingPartyOperations cannot be null");
     }
 
     @Test
     void testConstructorThrowsExceptionForNullUserRepository() {
-        assertThatThrownBy(() -> new ArtemisWebAuthnAuthenticationProvider(relyingPartyOperations, null, passkeyCredentialsRepository)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new ArtemisWebAuthnAuthenticationProvider(relyingPartyOperations, null, rateLimitService, passkeyCredentialsRepository)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("userRepository cannot be null");
     }
 
     @Test
     void testConstructorThrowsExceptionForNullPasskeyCredentialsRepository() {
-        assertThatThrownBy(() -> new ArtemisWebAuthnAuthenticationProvider(relyingPartyOperations, userRepository, null)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new ArtemisWebAuthnAuthenticationProvider(relyingPartyOperations, userRepository, rateLimitService, null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("passkeyCredentialsRepository cannot be null");
     }
 
