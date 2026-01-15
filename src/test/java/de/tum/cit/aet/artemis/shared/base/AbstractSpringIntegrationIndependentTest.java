@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
@@ -112,6 +113,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     // Nebula is enabled in tests; we mock this bean to avoid real HTTP calls and control responses
     @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
+
+    // Mock SlideUnhideScheduleService to prevent scheduling issues in tests
+    @MockitoBean
+    protected SlideUnhideScheduleService slideUnhideScheduleService;
 
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked

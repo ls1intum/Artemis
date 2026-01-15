@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
-import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -37,9 +35,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ApplicationContext applicationContext;
-
-    @MockitoBean
-    private SlideUnhideScheduleService slideUnhideScheduleService;
 
     @BeforeEach
     void initTestCase() {
