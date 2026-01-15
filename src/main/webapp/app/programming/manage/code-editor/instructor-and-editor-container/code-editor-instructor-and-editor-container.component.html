@@ -167,8 +167,8 @@
                     @if (exercise.isAtLeastInstructor && hyperionEnabled) {
                         <!-- Refine Problem Statement Button -->
                         <div class="position-relative me-2">
-                            <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary" [disabled]="isRefining()">
-                                @if (isRefining()) {
+                            <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary" [disabled]="isInlineRefining()">
+                                @if (isInlineRefining()) {
                                     <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
                                 } @else {
                                     <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
@@ -305,7 +305,7 @@
                         [enableResize]="false"
                         [showPreview]="false"
                         [consistencyIssues]="consistencyIssues()"
-                        [isRefining]="isRefining()"
+                        [isRefining]="isInlineRefining()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [originalContent]="showDiff() ? originalProblemStatement() : undefined"
                         [modifiedContent]="showDiff() ? refinedProblemStatement() : undefined"

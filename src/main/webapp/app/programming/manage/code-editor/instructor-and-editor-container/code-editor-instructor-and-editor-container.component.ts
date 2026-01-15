@@ -173,14 +173,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.subscribeToJob(res.jobId);
             },
-            error: (err) => {
+            error: () => {
                 this.isGeneratingCode.set(false);
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
                 });
             },
-            complete: () => {},
         });
     }
 
@@ -254,9 +253,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     translationParams: { repositoryType: this.selectedRepository },
                 });
             },
-            complete: () => {
-                // don't auto-stop spinner here; DONE/ERROR/timeout handle it
-            },
         });
 
         // Safety timeout (20 minutes)
@@ -273,7 +269,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Inline refinement state (selection-based refinement)
     protected isInlineRefining = signal(false);
-    protected isRefining = computed(() => this.isInlineRefining());
     private currentRefinementSubscription: Subscription | undefined;
 
     // Diff mode properties

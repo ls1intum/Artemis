@@ -102,10 +102,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.problemStatementChange.emit(newProblemStatement);
     }
 
-    get exerciseId(): number | undefined {
-        const exercise = this.programmingExercise();
-        return exercise?.id;
-    }
     isRefining = signal(false);
 
     // Diff mode properties
@@ -289,9 +285,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
                 },
-                error: (error) => {
+                error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                    // TODO: The backend does not support ProblemStatementRefinementResponseDTO yet
                 },
             });
     }

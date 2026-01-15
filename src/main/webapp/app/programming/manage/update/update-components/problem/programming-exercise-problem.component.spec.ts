@@ -176,9 +176,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt = 'Improve clarity';
         comp.refineProblemStatement();
 
-        expect(comp.showDiff).toBeTrue();
-        expect(comp.refinedProblemStatement).toBe('Refined problem statement');
-        expect(comp.originalProblemStatement).toBe('Original problem statement');
+        expect(comp.showDiff()).toBeTrue();
+        expect(comp.refinedProblemStatement()).toBe('Refined problem statement');
+        expect(comp.originalProblemStatement()).toBe('Original problem statement');
     }));
 
     it('should handle refinement error', fakeAsync(() => {
@@ -202,38 +202,38 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        comp.showDiff = true;
-        comp.refinedProblemStatement = 'Refined';
+        comp.showDiff.set(true);
+        comp.refinedProblemStatement.set('Refined');
 
         comp.acceptRefinement();
 
         expect(programmingExercise.problemStatement).toBe('Refined');
-        expect(comp.showDiff).toBeFalse();
+        expect(comp.showDiff()).toBeFalse();
     });
 
     it('should reject refinement and close diff', () => {
-        comp.showDiff = true;
-        comp.originalProblemStatement = 'Original';
-        comp.refinedProblemStatement = 'Refined';
+        comp.showDiff.set(true);
+        comp.originalProblemStatement.set('Original');
+        comp.refinedProblemStatement.set('Refined');
 
         comp.rejectRefinement();
 
-        expect(comp.showDiff).toBeFalse();
-        expect(comp.originalProblemStatement).toBe('');
-        expect(comp.refinedProblemStatement).toBe('');
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.originalProblemStatement()).toBe('');
+        expect(comp.refinedProblemStatement()).toBe('');
     });
 
     it('should close diff and reset public state', () => {
-        comp.showDiff = true;
-        comp.originalProblemStatement = 'Original';
-        comp.refinedProblemStatement = 'Refined';
+        comp.showDiff.set(true);
+        comp.originalProblemStatement.set('Original');
+        comp.refinedProblemStatement.set('Refined');
 
         comp.closeDiff();
 
         // Verify through public properties only
-        expect(comp.showDiff).toBeFalse();
-        expect(comp.originalProblemStatement).toBe('');
-        expect(comp.refinedProblemStatement).toBe('');
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.originalProblemStatement()).toBe('');
+        expect(comp.refinedProblemStatement()).toBe('');
     });
 
     it('should cancel generation and reset states', () => {
@@ -315,30 +315,16 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(translateService.instant).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     });
 
-    it('should return exerciseId when exercise has id', () => {
-        const exercise = new ProgrammingExercise(undefined, undefined);
-        exercise.id = 123;
-        fixture.componentRef.setInput('programmingExercise', exercise);
-
-        expect(comp.exerciseId).toBe(123);
-    });
-
-    it('should return undefined exerciseId when exercise is undefined', () => {
-        fixture.componentRef.setInput('programmingExercise', undefined);
-
-        expect(comp.exerciseId).toBeUndefined();
-    });
-
     it('should close diff and reset state', () => {
-        comp.showDiff = true;
-        comp.originalProblemStatement = 'original';
-        comp.refinedProblemStatement = 'refined';
+        comp.showDiff.set(true);
+        comp.originalProblemStatement.set('original');
+        comp.refinedProblemStatement.set('refined');
 
         comp.closeDiff();
 
-        expect(comp.showDiff).toBeFalse();
-        expect(comp.originalProblemStatement).toBe('');
-        expect(comp.refinedProblemStatement).toBe('');
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.originalProblemStatement()).toBe('');
+        expect(comp.refinedProblemStatement()).toBe('');
     });
 
     it('should accept refinement and apply changes', () => {
@@ -346,14 +332,14 @@ describe('ProgrammingExerciseProblemComponent', () => {
         exercise.course = { id: 42 } as any;
         fixture.componentRef.setInput('programmingExercise', exercise);
 
-        comp.showDiff = true;
-        comp.refinedProblemStatement = 'New refined statement';
-        comp.originalProblemStatement = 'Original';
+        comp.showDiff.set(true);
+        comp.refinedProblemStatement.set('New refined statement');
+        comp.originalProblemStatement.set('Original');
 
         comp.acceptRefinement();
 
         expect(exercise.problemStatement).toBe('New refined statement');
-        expect(comp.showDiff).toBeFalse();
+        expect(comp.showDiff()).toBeFalse();
     });
 
     it('should not accept refinement with empty content', () => {
@@ -361,7 +347,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         exercise.problemStatement = 'Original statement';
         fixture.componentRef.setInput('programmingExercise', exercise);
 
-        comp.refinedProblemStatement = '';
+        comp.refinedProblemStatement.set('');
 
         comp.acceptRefinement();
 

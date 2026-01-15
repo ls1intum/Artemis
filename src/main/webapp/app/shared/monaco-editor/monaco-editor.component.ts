@@ -643,30 +643,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeWidgets() {
-        this.lineWidgets.forEach((i) => {
-            i.dispose();
-        });
+        this.lineWidgets.forEach((w) => w.dispose());
         this.lineWidgets = [];
     }
 
     disposeAnnotations() {
-        this.buildAnnotations.forEach((o) => {
-            o.dispose();
-        });
+        this.buildAnnotations.forEach((a) => a.dispose());
         this.buildAnnotations = [];
     }
 
     disposeLineHighlights(): void {
-        this.lineHighlights.forEach((o) => {
-            o.dispose();
-        });
+        this.lineHighlights.forEach((h) => h.dispose());
         this.lineHighlights = [];
     }
 
     disposeActions(): void {
-        this.actions.forEach((a) => {
-            a.dispose();
-        });
+        this.actions.forEach((a) => a.dispose());
         this.actions = [];
     }
 
