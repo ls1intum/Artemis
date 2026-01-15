@@ -232,6 +232,69 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldIncludeInitializationErrorMessageInNotExecutedFeedback() {
+        // Adjust existing test cases - all active and visible
+        var testCases = getTestCases(programmingExercise);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
+        testCaseRepository.saveAll(testCases.values());
+
+        // Create feedbacks: only test1 was executed, test2 and test3 were not
+        // Also include an initializationError feedback to simulate a test setup failure
+        String initializationErrorMessage = "java.lang.AssertionError: assignment/src/de/tum/cit/fop does not exist";
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().testCase(testCases.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
+        // Add the initialization error feedback - this simulates JUnit reporting an initialization error
+        feedbacks.add(new Feedback().text(ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME).detailText(initializationErrorMessage).positive(false)
+                .type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        // Find feedbacks for test cases that were not executed (test2 and test3)
+        var notExecutedFeedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("Test was not executed"))
+                .toList();
+
+        // Verify that feedback was created for non-executed tests and includes the initialization error message
+        assertThat(notExecutedFeedbacks).hasSize(2);
+        for (Feedback feedback : notExecutedFeedbacks) {
+            assertThat(feedback.getDetailText()).contains("An error occurred during test initialization");
+            assertThat(feedback.getDetailText()).contains("assignment/src/de/tum/cit/fop does not exist");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldShowGenericMessageWhenNoInitializationError() {
+        // Adjust existing test cases - all active and visible
+        var testCases = getTestCases(programmingExercise);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
+        testCaseRepository.saveAll(testCases.values());
+
+        // Create feedbacks: only test1 was executed, test2 and test3 were not
+        // No initialization error - normal case
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().testCase(testCases.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        // Find feedbacks for test cases that were not executed (test2 and test3)
+        var notExecutedFeedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().equals("Test was not executed."))
+                .toList();
+
+        // Verify that feedback was created with the generic message (no initialization error details)
+        assertThat(notExecutedFeedbacks).hasSize(2);
+        for (Feedback feedback : notExecutedFeedbacks) {
+            assertThat(feedback.getDetailText()).isEqualTo("Test was not executed.");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         var tests = getTestCases(programmingExercise);
         tests.put("test4", programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));
