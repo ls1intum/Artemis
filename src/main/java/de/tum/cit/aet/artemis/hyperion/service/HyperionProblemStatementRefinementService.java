@@ -309,6 +309,7 @@ public class HyperionProblemStatementRefinementService {
         log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
                 originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
 
-        throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "problemStatementRefinementFailed");
+        String errorMessage = "Failed to refine problem statement: " + e.getMessage();
+        throw new InternalServerErrorAlertException(errorMessage, "ProblemStatement", "problemStatementRefinementFailed");
     }
 }

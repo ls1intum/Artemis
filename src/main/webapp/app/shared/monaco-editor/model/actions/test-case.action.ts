@@ -23,15 +23,21 @@ export class TestCaseAction extends TextEditorDomainActionWithOptions {
      * Registers the action with the given editor and sets up the completion provider that offers all possible test cases to the user as they type.
      * @param editor The editor to register the action in.
      * @param translateService The translation service to use for translating the action label.
-     * @throws error If the action is already registered with an editor or no model is attached to the editor.
+     * @throws error If the action is already registered with an editor.
      */
     register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
-        this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
-            editor,
-            () => Promise.resolve(this.values),
-            (item: ValueItem, range: TextEditorRange) => new TextEditorCompletionItem(item.value, 'Test', item.value, TextEditorCompletionItemKind.Default, range),
-        );
+        // Only register the completion provider if a model is attached.
+        // In diff mode, the model may not be attached yet when re-registering actions.
+        try {
+            this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
+                editor,
+                () => Promise.resolve(this.values),
+                (item: ValueItem, range: TextEditorRange) => new TextEditorCompletionItem(item.value, 'Test', item.value, TextEditorCompletionItemKind.Default, range),
+            );
+        } catch {
+            // Model not attached yet - completion provider will not be available until re-registration
+        }
     }
 
     dispose() {
