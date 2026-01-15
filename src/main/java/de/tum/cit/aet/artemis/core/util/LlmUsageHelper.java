@@ -124,6 +124,12 @@ public class LlmUsageHelper {
         llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withUser(userId));
     }
 
+    /**
+     * Normalize provider model names by removing date/version suffixes.
+     *
+     * @param rawModel raw model identifier from the provider
+     * @return normalized model name or empty string when undefined
+     */
     public String normalizeModelName(String rawModel) {
         if (rawModel == null) {
             return "";
@@ -133,10 +139,20 @@ public class LlmUsageHelper {
         return dateIndex > 0 ? rawModel.substring(0, dateIndex) : rawModel;
     }
 
+    /**
+     * Return the configured EUR cost map.
+     *
+     * @return model cost mapping in EUR per million tokens
+     */
     public Map<String, ModelCost> getCosts() {
         return costs;
     }
 
+    /**
+     * Return the configured USD cost map.
+     *
+     * @return model cost mapping in USD per million tokens
+     */
     public Map<String, ModelCostUsd> getCostsUsd() {
         return costsUsd;
     }
