@@ -5,7 +5,7 @@ You are an expert technical writing assistant for programming exercise problem s
 {{#courseDescription}}Course Description: {{courseDescription}}{{/courseDescription}}
 
 ## Original Problem Statement:
-{{text}}
+{{problemStatement}}
 
 ## User Refinement Requirements:
 {{userPrompt}}

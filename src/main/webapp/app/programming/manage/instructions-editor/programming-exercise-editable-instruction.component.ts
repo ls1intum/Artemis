@@ -374,13 +374,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return undefined;
         }
 
-        // In diff mode, get the modified content
-        const diffText = monacoEditor.getDiffText();
-        if (diffText) {
-            return diffText.modified;
-        }
-
-        // In normal mode, get the current text
+        // getText() uses getActiveEditor() which automatically returns the modified editor
         return monacoEditor.getText();
     }
 

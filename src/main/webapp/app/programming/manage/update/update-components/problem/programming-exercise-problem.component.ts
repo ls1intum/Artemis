@@ -227,6 +227,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
                         this.problemStatementChange.emit(response.draftProblemStatement);
                         this.programmingExerciseChange.emit(exercise);
+
+                        // Directly update the editor content since Angular won't detect the change
+                        // on the nested input binding when the object reference stays the same
+                        this.editableInstructions()?.markdownEditorMonaco?.monacoEditor?.setText(response.draftProblemStatement);
                     }
                     this.userPrompt = '';
 
@@ -245,14 +249,17 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     refineProblemStatement(): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
-        if (!this.userPrompt?.trim() || !courseId || !exercise?.problemStatement) {
+        // Get the current content from the editor (which may be in diff mode with intermediate edits)
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
+
+        if (!this.userPrompt?.trim() || !courseId || !currentContent) {
             return;
         }
 
         this.isRefining.set(true);
 
         const request: ProblemStatementRefinementRequest = {
-            problemStatementText: exercise.problemStatement,
+            problemStatementText: currentContent,
             userPrompt: this.userPrompt.trim(),
         };
 
@@ -269,7 +276,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     // Check if refinement was successful
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         // Store original and refined content for diff view
-                        this.originalProblemStatement.set(exercise.problemStatement || '');
+                        this.originalProblemStatement.set(exercise?.problemStatement || '');
                         this.refinedProblemStatement.set(response.refinedProblemStatement);
                         this.showDiff.set(true);
                         this.userPrompt = '';

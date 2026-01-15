@@ -81,6 +81,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
     private diffEditorFocusListener?: Disposable;
+    private diffOriginalBaseline?: string;
 
     /*
      * Injected services and elements.
@@ -288,6 +289,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         // Emit text change to notify parent of mode switch
         this.emitTextChangeEvent();
+
+        // Clear the baseline so the next diff mode session starts fresh
+        this.diffOriginalBaseline = undefined;
     }
 
     /**
@@ -319,6 +323,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // On first call, store the original as our baseline for comparison.
+        // This ensures that multiple refinements/rewrites always diff against
+        // the state from before entering diff mode, not the most recent state.
+        if (this.diffOriginalBaseline === undefined) {
+            this.diffOriginalBaseline = original;
+        }
+
+        const effectiveOriginal = this.diffOriginalBaseline;
+
         // Emit not ready state while diff is being computed
         this.diffChanged.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
 
@@ -328,7 +341,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Check if models exist or need to be created, and track newly created models for disposal
         let originalModel = monaco.editor.getModel(originalModelUri);
         if (!originalModel) {
-            originalModel = monaco.editor.createModel(original, 'markdown', originalModelUri);
+            originalModel = monaco.editor.createModel(effectiveOriginal, 'markdown', originalModelUri);
             this.models.push(originalModel);
         }
 
@@ -338,7 +351,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.models.push(modifiedModel);
         }
 
-        originalModel.setValue(original);
+        originalModel.setValue(effectiveOriginal);
         modifiedModel.setValue(modified);
 
         this._diffEditor.setModel({
@@ -414,6 +427,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Parent element is needed for diff mode to detect when jhi-monaco-editor resizes
         this.resizeObserver.observe(this.monacoEditorContainerElement);
         this.resizeObserver.observe(this.elementRef.nativeElement);
+        // If the diff editor was initialized from the constructor effect before ngOnInit,
+        // we need to observe its container now that the resize observer exists
+        if (this.diffEditorContainer) {
+            this.resizeObserver.observe(this.diffEditorContainer);
+        }
 
         this.ngZone.runOutsideAngular(() => {
             this.textChangedListener = this._editor.onDidChangeModelContent(() => {
@@ -454,6 +472,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.diffUpdateListener?.dispose();
         this.diffEditorFocusListener?.dispose();
         this.resizeObserver?.disconnect();
+
+        // Dispose all selection change listeners
+        for (const listenerEntry of this.selectionChangeListeners) {
+            listenerEntry.disposable?.dispose();
+        }
+        this.selectionChangeListeners = [];
 
         // Clean up all per-model debounce timeouts
         this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
