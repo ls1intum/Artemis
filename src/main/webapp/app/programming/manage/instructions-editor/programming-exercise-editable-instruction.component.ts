@@ -82,7 +82,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    participationValue: Participation;
+    participationValue: Participation | undefined;
     programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
@@ -154,11 +154,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return this.programmingExercise;
     }
     @Input()
-    get participation() {
+    get participation(): Participation | undefined {
         return this.participationValue;
     }
 
-    @Output() participationChange = new EventEmitter<Participation>();
+    @Output() participationChange = new EventEmitter<Participation | undefined>();
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() instructionChange = new EventEmitter<string>();
@@ -181,7 +181,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Emits diff line change information when in diff mode */
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
-    set participation(participation: Participation) {
+    set participation(participation: Participation | undefined) {
         this.participationValue = participation;
         this.participationChange.emit(this.participationValue);
     }

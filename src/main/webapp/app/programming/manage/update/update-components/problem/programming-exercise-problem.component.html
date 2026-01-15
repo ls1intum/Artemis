@@ -83,7 +83,7 @@
                     [mode]="showDiff() ? 'diff' : 'normal'"
                     [originalContent]="originalProblemStatement()"
                     [modifiedContent]="refinedProblemStatement()"
-                    [participation]="programmingExercise()!.templateParticipation!"
+                    [participation]="programmingExercise()?.templateParticipation"
                     [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
