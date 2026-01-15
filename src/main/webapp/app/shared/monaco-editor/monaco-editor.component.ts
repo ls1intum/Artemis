@@ -786,8 +786,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private reRegisterActions(): void {
         for (const action of this.actions) {
-            action.dispose();
-            action.register(this.textEditorAdapter, this.translateService);
+            try {
+                action.dispose();
+                action.register(this.textEditorAdapter, this.translateService);
+            } catch {
+                // Some actions (like TestCaseAction) may fail to register if no model is attached yet.
+                // This can happen when switching to diff mode before setDiffContents() is called.
+                // The action's base registration via super.register() still succeeds, so basic
+                // functionality works. Features requiring a model (like completion providers) won't
+                // be available until the model is attached.
+            }
         }
     }
 
