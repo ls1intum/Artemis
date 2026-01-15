@@ -20,7 +20,6 @@ config = configparser.ConfigParser()
 config.read(['config.ini'])
 
 # Constants from config file
-SERVER_URL: str = config.get('Settings', 'server_url')
 IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() == 'true'  # Convert to boolean
 COURSE_NAME: str = config.get('CourseSettings', 'course_name')
 SPECIAL_CHARACTERS_REGEX: str = config.get('CourseSettings', 'special_character_regex')
