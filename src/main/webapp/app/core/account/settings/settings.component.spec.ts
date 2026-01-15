@@ -65,7 +65,7 @@ describe('SettingsComponent', () => {
     it('should send the current identity upon save', async () => {
         // GIVEN
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
         vi.spyOn(accountService, 'authenticate');
 
         const settingsFormValues = {
@@ -90,7 +90,7 @@ describe('SettingsComponent', () => {
     it('should notify of success upon successful save', async () => {
         // GIVEN
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
 
         // WHEN
         comp.ngOnInit();
@@ -146,7 +146,7 @@ describe('SettingsComponent', () => {
         const translateService = TestBed.inject(TranslateService);
         const userWithDifferentLang = { ...accountValues, langKey: 'de' };
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(userWithDifferentLang));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
         vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('en');
         const useSpy = vi.spyOn(translateService, 'use');
 
@@ -163,7 +163,7 @@ describe('SettingsComponent', () => {
         // GIVEN
         const translateService = TestBed.inject(TranslateService);
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
         vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('en'); // Same as accountValues.langKey
         const useSpy = vi.spyOn(translateService, 'use');
 
@@ -180,7 +180,7 @@ describe('SettingsComponent', () => {
         // GIVEN
         const userWithEmptyValues = { ...accountValues };
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(userWithEmptyValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
 
         // WHEN
         comp.ngOnInit();
@@ -228,7 +228,7 @@ describe('SettingsComponent', () => {
     it('should update email when saving settings', async () => {
         // GIVEN
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
-        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: new User() })));
 
         // WHEN
         comp.ngOnInit();

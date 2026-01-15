@@ -32,6 +32,7 @@ const createMockEditor = () => {
         getModel: () => createMockModel(),
         setModel: () => {},
         onDidChangeCursorPosition: () => ({ dispose: () => {} }),
+        onDidChangeCursorSelection: () => ({ dispose: () => {} }),
         onDidChangeModelContent: () => ({ dispose: () => {} }),
         onDidFocusEditorText: () => ({ dispose: () => {} }),
         onDidBlurEditorText: () => ({ dispose: () => {} }),
@@ -70,7 +71,6 @@ const createMockEditor = () => {
         onDidScrollChange: () => ({ dispose: () => {} }),
         getId: () => editorId,
         getOption: (optionId: number) => {
-            // Return option-specific mock values based on EditorOption IDs
             const optionValues: Record<number, unknown> = {
                 19: true, // automaticLayout
                 61: 14, // fontSize
@@ -96,19 +96,27 @@ export function clearModelCache(): void {
 
 export const editor = {
     create: createMockEditor,
+
     createModel: (content?: string, language?: string, uri?: { toString: () => string }) => {
         const model = createMockModel();
+        // content/language are intentionally ignored in this lightweight mock
         if (uri) {
             modelCache.set(uri.toString(), model);
         }
         return model;
     },
+
     getModel: (uri: { toString: () => string }) => modelCache.get(uri.toString()) ?? null,
+
+    // Some codebases call this directly when switching languages in tests
     setModelLanguage: () => {},
+
     defineTheme: () => {},
     setTheme: () => {},
+
     EndOfLineSequence: { LF: 0, CRLF: 1 },
     EndOfLinePreference: { TextDefined: 0, LF: 1, CRLF: 2 },
+
     EditorOption: {
         lineHeight: 75,
         readOnly: 104,

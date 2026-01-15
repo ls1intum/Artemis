@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -79,12 +80,12 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * The results are ordered by the log ID in ascending order.
      *
      * @param date The date before which all log ids should be fetched
-     * @return a list of ids of the access logs, which have a timestamp before the date
+     * @return a set of ids of the access logs, which have a timestamp before the date
      */
     @Query("""
             SELECT vcsAccessLog.id
             FROM VcsAccessLog vcsAccessLog
             WHERE vcsAccessLog.timestamp < :date
             """)
-    List<Long> findAllIdsBeforeDate(@Param("date") ZonedDateTime date);
+    Set<Long> findAllIdsBeforeDate(@Param("date") ZonedDateTime date);
 }

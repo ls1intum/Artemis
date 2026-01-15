@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CreateTextUnitComponent } from 'app/lecture/manage/lecture-units/create-text-unit/create-text-unit.component';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -24,10 +26,14 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CreateTextUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let createTextUnitComponentFixture: ComponentFixture<CreateTextUnitComponent>;
     let createTextUnitComponent: CreateTextUnitComponent;
 
     beforeEach(async () => {
+        global.ResizeObserver = MockResizeObserver as any;
+
         await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
@@ -75,22 +81,19 @@ describe('CreateTextUnitComponent', () => {
 
         createTextUnitComponentFixture = TestBed.createComponent(CreateTextUnitComponent);
         createTextUnitComponent = createTextUnitComponentFixture.componentInstance;
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', async () => {
         createTextUnitComponentFixture.detectChanges();
-        tick();
+        await createTextUnitComponentFixture.whenStable();
         expect(createTextUnitComponent).not.toBeNull();
-    }));
+    });
 
-    it('should send POST request upon form submission and navigate', fakeAsync(() => {
+    it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
         const textUnitService = TestBed.inject(TextUnitService);
         const formDate: TextUnitFormData = {
@@ -110,19 +113,18 @@ describe('CreateTextUnitComponent', () => {
             status: 200,
         });
 
-        const createStub = jest.spyOn(textUnitService, 'create').mockReturnValue(of(response));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const createStub = vi.spyOn(textUnitService, 'create').mockReturnValue(of(response));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         createTextUnitComponentFixture.detectChanges();
-        tick();
+        await createTextUnitComponentFixture.whenStable();
 
         const textUnitForm: TextUnitFormComponent = createTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit(formDate);
 
-        createTextUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            navigateSpy.mockRestore();
-        });
-    }));
+        await createTextUnitComponentFixture.whenStable();
+        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        navigateSpy.mockRestore();
+    });
 });

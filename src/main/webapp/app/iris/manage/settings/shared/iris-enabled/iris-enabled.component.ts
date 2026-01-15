@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -17,6 +17,7 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
     templateUrl: './iris-enabled.component.html',
     imports: [TranslateDirective, NgClass, RouterLink, FaIconComponent],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisEnabledComponent implements OnInit {
     protected readonly faArrowRight = faArrowRight;

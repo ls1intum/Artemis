@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, inject } from '@angular/core';
+import { Component, ElementRef, inject, input } from '@angular/core';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -14,11 +14,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class FullscreenComponent {
     private fullScreenWrapper = inject(ElementRef);
 
-    @Input()
-    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' = 'top-right';
+    position = input<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>('top-right');
 
-    @Input()
-    mode: 'compact' | 'extended' = 'extended';
+    mode = input<'compact' | 'extended'>('extended');
 
     // Icons
     faCompress = faCompress;

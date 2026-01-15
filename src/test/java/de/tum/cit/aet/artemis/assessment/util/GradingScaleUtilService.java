@@ -163,7 +163,7 @@ public class GradingScaleUtilService {
      */
     public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
         // This method has a different signature from the one above to define intervals from sizes to be consistent with
-        // the instructor UI at interval-grading-system.component.ts and client tests at bonus.service.spec.ts.
+        // the instructor UI at interval-grading.component.ts and client tests at bonus.service.spec.ts.
 
         int gradeStepCount = intervalSizes.length;
         if (firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
