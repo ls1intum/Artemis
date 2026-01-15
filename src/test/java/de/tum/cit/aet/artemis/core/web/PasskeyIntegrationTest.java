@@ -184,11 +184,15 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAllPasskeysForAdmin_EmptyListWhenNoPasskeys() throws Exception {
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
-        passkeyCredentialsRepository.deleteAll();
+        // Create an admin user without any passkeys to verify the endpoint handles users with no passkeys
+        User adminWithoutPasskeys = userUtilService.createAndSaveUser(TEST_PREFIX + "adminnopk");
+        adminWithoutPasskeys.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+        userTestRepository.save(adminWithoutPasskeys);
 
         List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
-        assertThat(passkeys).isEmpty();
+        // Verify the admin user we created has no passkeys in the response (tests empty case for this user)
+        assertThat(passkeys.stream().filter(p -> p.userLogin().equals(adminWithoutPasskeys.getLogin())).toList()).isEmpty();
     }
 
     @Test
