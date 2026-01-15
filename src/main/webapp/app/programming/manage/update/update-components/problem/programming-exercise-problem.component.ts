@@ -290,15 +290,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     }
                 },
                 error: (error) => {
-                    // Preserve original problem statement from error parameters
-                    const originalFromError = error?.error?.params?.originalProblemStatement;
-                    if (originalFromError && exercise) {
-                        // Restore original statement if it was included in error
-                        exercise.problemStatement = originalFromError;
-                        this.currentProblemStatement.set(originalFromError);
-                        this.programmingExerciseChange.emit(exercise);
-                    }
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                    // TODO: The backend does not support ProblemStatementRefinementResponseDTO yet
                 },
             });
     }

@@ -53,6 +53,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+    private selectionChangeListeners: { listener: (selection: EditorRange | null) => void; disposable?: Disposable }[] = [];
 
     /*
      * Inputs and outputs.
@@ -227,6 +228,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         // Re-register all actions with the new adapter for diff mode
         this.reRegisterActions();
+        this.reRegisterSelectionListeners();
     }
 
     /**
@@ -275,6 +277,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         // Re-register all actions with the restored adapter for normal mode
         this.reRegisterActions();
+        this.reRegisterSelectionListeners();
 
         // Emit text change to notify parent of mode switch
         this.emitTextChangeEvent();
@@ -778,13 +781,25 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Registers a listener for selection changes in the editor.
-     * @param listener The callback to invoke when the selection changes.
-     * @returns A disposable to remove the listener.
+     * Re-registers all selection listeners with the current active editor.
+     * This is needed when switching between normal and diff mode.
+     * @private
      */
-    onSelectionChange(listener: (selection: EditorRange | null) => void): Disposable {
+    private reRegisterSelectionListeners(): void {
+        for (const listenerEntry of this.selectionChangeListeners) {
+            listenerEntry.disposable?.dispose();
+            listenerEntry.disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listenerEntry.listener);
+        }
+    }
+
+    /**
+     * Helper to register a selection listener on a specific editor instance.
+     * @param editor The editor to register the listener on.
+     * @param listener The callback to invoke when selection changes.
+     */
+    private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | null) => void): Disposable {
         return this.ngZone.runOutsideAngular(() => {
-            return this._editor.onDidChangeCursorSelection((e) => {
+            return editor.onDidChangeCursorSelection((e) => {
                 const selection = e.selection;
                 if (selection.isEmpty()) {
                     this.ngZone.run(() => listener(null));
@@ -800,6 +815,27 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 }
             });
         });
+    }
+
+    /**
+     * Registers a listener for selection changes in the editor.
+     * @param listener The callback to invoke when the selection changes.
+     * @returns A disposable to remove the listener.
+     */
+    onSelectionChange(listener: (selection: EditorRange | null) => void): Disposable {
+        const disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listener);
+        const listenerEntry = { listener, disposable };
+        this.selectionChangeListeners.push(listenerEntry);
+
+        return {
+            dispose: () => {
+                listenerEntry.disposable?.dispose();
+                const index = this.selectionChangeListeners.indexOf(listenerEntry);
+                if (index !== -1) {
+                    this.selectionChangeListeners.splice(index, 1);
+                }
+            },
+        };
     }
 
     /**
