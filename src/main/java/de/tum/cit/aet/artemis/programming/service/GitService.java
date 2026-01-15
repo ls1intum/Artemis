@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -43,6 +44,13 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.Edit;
+import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -50,6 +58,7 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -59,7 +68,9 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -1188,5 +1199,121 @@ public class GitService extends AbstractGitService {
 
     protected CloneCommand cloneCommand() {
         return Git.cloneRepository();
+    }
+
+    /**
+     * Maps a line number from an old commit to a new commit for a given file path.
+     * Uses a bare repository and Git diff hunks to determine if the line moved or was modified.
+     *
+     * @param repositoryUri the repository to diff
+     * @param filePath      repository-relative file path
+     * @param oldCommit     base commit hash
+     * @param newCommit     target commit hash
+     * @param oldLine       1-based line number in the old commit
+     * @return mapping result containing the new line or outdated state
+     */
+    public LineMappingResult mapLine(LocalVCRepositoryUri repositoryUri, String filePath, String oldCommit, String newCommit, int oldLine) {
+        if (oldLine <= 0) {
+            return new LineMappingResult(null, true);
+        }
+
+        // Use a bare repository to diff commit trees without a working tree checkout.
+        try (Repository repository = getBareRepository(repositoryUri, false);
+                ObjectReader reader = repository.newObjectReader();
+                DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+            diffFormatter.setRepository(repository);
+            diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
+            diffFormatter.setDetectRenames(false);
+
+            // Resolve commit trees and build parsers for the diff.
+            ObjectId oldTree = repository.resolve(oldCommit + "^{tree}");
+            ObjectId newTree = repository.resolve(newCommit + "^{tree}");
+            if (oldTree == null || newTree == null) {
+                throw new GitException("Cannot resolve commit trees for line mapping");
+            }
+
+            CanonicalTreeParser oldParser = new CanonicalTreeParser();
+            oldParser.reset(reader, oldTree);
+            CanonicalTreeParser newParser = new CanonicalTreeParser();
+            newParser.reset(reader, newTree);
+
+            List<DiffEntry> entries = diffFormatter.scan(oldParser, newParser);
+            for (DiffEntry entry : entries) {
+                String oldPath = entry.getOldPath();
+                String newPath = entry.getNewPath();
+                boolean matchesOld = filePath.equals(oldPath);
+                boolean matchesNew = filePath.equals(newPath);
+                if (!matchesOld && !matchesNew) {
+                    continue;
+                }
+
+                // If the file was removed or replaced, the line can no longer be mapped.
+                if (entry.getChangeType() == DiffEntry.ChangeType.DELETE) {
+                    return new LineMappingResult(null, true);
+                }
+                if (entry.getChangeType() == DiffEntry.ChangeType.ADD && matchesNew && !matchesOld) {
+                    return new LineMappingResult(null, true);
+                }
+
+                // Map the line using hunk edits for this file.
+                EditList edits = diffFormatter.toFileHeader(entry).toEditList();
+                return mapLineWithEdits(oldLine, edits);
+            }
+
+            // No diff for this file: line stays unchanged.
+            return new LineMappingResult(oldLine, false);
+        }
+        catch (IOException ex) {
+            throw new GitException("Cannot map line for file " + filePath, ex);
+        }
+    }
+
+    /**
+     * Maps a line number between two text snapshots using a diff algorithm.
+     *
+     * @param oldText old text snapshot (null treated as empty)
+     * @param newText new text snapshot (null treated as empty)
+     * @param oldLine 1-based line number in the old text
+     * @return mapping result containing the new line or outdated state
+     */
+    public LineMappingResult mapLineInText(@Nullable String oldText, @Nullable String newText, int oldLine) {
+        if (oldLine <= 0) {
+            return new LineMappingResult(null, true);
+        }
+
+        String safeOld = oldText == null ? "" : oldText;
+        String safeNew = newText == null ? "" : newText;
+        RawText oldRaw = new RawText(safeOld.getBytes(StandardCharsets.UTF_8));
+        RawText newRaw = new RawText(safeNew.getBytes(StandardCharsets.UTF_8));
+        EditList edits = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS).diff(RawTextComparator.DEFAULT, oldRaw, newRaw);
+        return mapLineWithEdits(oldLine, edits);
+    }
+
+    private LineMappingResult mapLineWithEdits(int oldLine, EditList edits) {
+        int zeroBasedLine = oldLine - 1;
+        int mappedLine = zeroBasedLine;
+
+        for (Edit edit : edits) {
+            // The line is before the current edit hunk: stop adjusting.
+            if (zeroBasedLine < edit.getBeginA()) {
+                break;
+            }
+            if (zeroBasedLine >= edit.getEndA()) {
+                // Line is after this hunk: shift by the hunk size delta.
+                int delta = (edit.getEndB() - edit.getBeginB()) - (edit.getEndA() - edit.getBeginA());
+                mappedLine += delta;
+                continue;
+            }
+            // Line falls inside the edited hunk: mark as outdated.
+            int offset = zeroBasedLine - edit.getBeginA();
+            int newHunkLength = edit.getEndB() - edit.getBeginB();
+            int newLine = newHunkLength == 0 ? edit.getBeginB() : edit.getBeginB() + Math.min(offset, newHunkLength - 1);
+            return new LineMappingResult(newLine + 1, true);
+        }
+
+        return new LineMappingResult(mappedLine + 1, false);
+    }
+
+    public record LineMappingResult(@Nullable Integer newLine, boolean outdated) {
     }
 }
