@@ -10,7 +10,7 @@ type CommentResponseType = HttpResponse<Comment>;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseReviewCommentService {
-    public resourceUrl = 'api/communication/exercises';
+    public resourceUrl = 'api/exercise/exercises';
 
     private http = inject(HttpClient);
 
