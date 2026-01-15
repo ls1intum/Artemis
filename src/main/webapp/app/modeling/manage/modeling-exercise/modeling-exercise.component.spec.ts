@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
@@ -22,6 +24,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ModelingExercise Management Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ModelingExerciseComponent;
     let fixture: ComponentFixture<ModelingExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
@@ -48,9 +52,7 @@ describe('ModelingExercise Management Component', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideTemplate(ModelingExerciseComponent, '')
-            .compileComponents();
+        }).overrideTemplate(ModelingExerciseComponent, '');
 
         fixture = TestBed.createComponent(ModelingExerciseComponent);
         comp = fixture.componentInstance;
@@ -64,13 +66,13 @@ describe('ModelingExercise Management Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findStub = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
+        const findStub = vi.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [modelingExercise],
@@ -89,15 +91,7 @@ describe('ModelingExercise Management Component', () => {
     });
 
     it('should delete exercise', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {},
-                    headers,
-                }),
-            ),
-        );
+        vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         comp.course = course;
         comp.ngOnInit();
@@ -136,22 +130,22 @@ describe('ModelingExercise Management Component', () => {
         expect(comp.trackId(2, item)).toBe(123);
     });
 
-    it('should delete the given exercise', fakeAsync(() => {
-        const deleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
-        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
+    it('should delete the given exercise', async () => {
+        const deleteStub = vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
         comp.deleteModelingExercise(2);
         expect(deleteStub).toHaveBeenCalledWith(2);
         expect(deleteStub).toHaveBeenCalledOnce();
-        tick();
+        await fixture.whenStable();
         expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'modelingExerciseListModification',
             content: 'Deleted an modelingExercise',
         });
         expect(broadcastSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should sort rows', () => {
-        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
         comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
         comp.predicate = 'testPredicate';
         comp.reverse = true;
@@ -166,7 +160,7 @@ describe('ModelingExercise Management Component', () => {
         comp.toggleExercise(modelingExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toContainEntry(['id', modelingExercise.id]);
+        expect(comp.selectedExercises[0]).toMatchObject({ id: modelingExercise.id });
         expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises.length);
     });
 });

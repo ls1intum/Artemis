@@ -12,7 +12,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import dayjs from 'dayjs/esm';
 import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -49,7 +49,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
 
@@ -100,7 +100,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             this.isAdmin = this.accountService.isAdmin();
             this.getExamDetailSections();
 
-            this.gradingSystemService.findGradingScaleForExam(this.exam.course!.id!, this.exam.id!).subscribe((gradingSystemResponse) => {
+            this.gradingService.findGradingScaleForExam(this.exam.course!.id!, this.exam.id!).subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
                     this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
                 }

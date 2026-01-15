@@ -25,7 +25,10 @@ export class ModalDialogBox {
     }
 
     async checkDialogType(type: string) {
-        await expect(this.getModalDialogContent().locator('.type').getByText(type)).toBeVisible();
+        const modalContent = this.getModalDialogContent();
+        // Wait for modal to be visible first
+        await expect(modalContent).toBeVisible({ timeout: 30000 });
+        await expect(modalContent.locator('.type').getByText(type)).toBeVisible({ timeout: 10000 });
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string) {

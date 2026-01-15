@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -76,21 +76,21 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
-    @Input() showCreationCard = true;
-    @Input() showCompetencies = true;
-    @Input() showDropZone = true;
-    @Input() emitEditEvents = false;
-    @Input() lectureId: number | undefined;
+    showCreationCard = input<boolean>(true);
+    showCompetencies = input<boolean>(true);
+    showDropZone = input<boolean>(true);
+    emitEditEvents = input<boolean>(false);
+    lectureId = input<number | undefined>(undefined);
 
-    @Output() onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
+    onEditLectureUnitClicked = output<LectureUnit>();
 
-    lectureUnits: LectureUnit[] = [];
-    lecture: Lecture;
-    isLoading = false;
-    viewButtonAvailable: Record<number, boolean> = {};
-    transcriptionStatus: Record<number, TranscriptionStatus> = {};
-    processingStatus: Record<number, LectureUnitProcessingStatus> = {};
-    isRetryingProcessing: Record<number, boolean> = {};
+    lectureUnits = signal<LectureUnit[]>([]);
+    lecture = signal<Lecture | undefined>(undefined);
+    isLoading = signal(false);
+    viewButtonAvailable = signal<Record<number, boolean>>({});
+    transcriptionStatus = signal<Record<number, TranscriptionStatus>>({});
+    processingStatus = signal<Record<number, LectureUnitProcessingStatus>>({});
+    isRetryingProcessing = signal<Record<number, boolean>>({});
     isUploadingPdfs = signal<boolean>(false);
 
     private dialogErrorSource = new Subject<string>();
@@ -101,9 +101,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         [LectureUnitType.ONLINE]: 'online-units',
     };
 
+    private resolvedLectureId: number | undefined;
+
     ngOnInit(): void {
-        this.lectureId = Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
-        if (this.lectureId) {
+        this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
+        if (this.resolvedLectureId) {
             // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
             // ideally the router could load the details directly
             this.loadData();
@@ -115,31 +117,33 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .findWithDetails(this.lectureId!)
+            .findWithDetails(this.resolvedLectureId!)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (lecture) => {
-                    this.lecture = lecture;
+                    this.lecture.set(lecture);
                     if (lecture?.lectureUnits) {
-                        this.lectureUnits = lecture?.lectureUnits;
-                        this.lectureUnits.forEach((lectureUnit) => {
-                            this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
+                        this.lectureUnits.set(lecture.lectureUnits);
+                        const viewAvailable: Record<number, boolean> = {};
+                        lecture.lectureUnits.forEach((lectureUnit) => {
+                            viewAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                             if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                                 this.loadTranscriptionStatus(lectureUnit.id!);
                                 this.loadProcessingStatus(lectureUnit.id!);
                             }
                         });
+                        this.viewButtonAvailable.set(viewAvailable);
                     } else {
-                        this.lectureUnits = [];
+                        this.lectureUnits.set([]);
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -147,12 +151,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     updateOrder() {
-        if (this.lectureId === undefined || isNaN(this.lectureId)) {
+        if (this.resolvedLectureId === undefined || isNaN(this.resolvedLectureId)) {
             return;
         }
 
         this.lectureUnitService
-            .updateOrder(this.lectureId!, this.lectureUnits)
+            .updateOrder(this.resolvedLectureId, this.lectureUnits())
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -160,7 +164,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     drop(event: CdkDragDrop<LectureUnit[]>) {
-        moveItemInArray(this.lectureUnits, event.previousIndex, event.currentIndex);
+        const units = [...this.lectureUnits()];
+        moveItemInArray(units, event.previousIndex, event.currentIndex);
+        this.lectureUnits.set(units);
         this.updateOrder();
     }
 
@@ -207,7 +213,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId!).subscribe({
+        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -269,39 +275,43 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private loadTranscriptionStatus(lectureUnitId: number) {
         this.lectureTranscriptionService.getTranscriptionStatus(lectureUnitId).subscribe({
             next: (status) => {
-                if (status) {
-                    this.transcriptionStatus[lectureUnitId] = status;
-                } else {
-                    delete this.transcriptionStatus[lectureUnitId];
-                }
+                this.transcriptionStatus.update((current) => {
+                    const updated = { ...current };
+                    if (status) {
+                        updated[lectureUnitId] = status;
+                    } else {
+                        delete updated[lectureUnitId];
+                    }
+                    return updated;
+                });
             },
         });
     }
 
     private loadProcessingStatus(lectureUnitId: number) {
-        if (!this.lectureId) {
+        if (!this.resolvedLectureId) {
             return;
         }
-        this.lectureUnitService.getProcessingStatus(this.lectureId, lectureUnitId).subscribe({
+        this.lectureUnitService.getProcessingStatus(this.resolvedLectureId, lectureUnitId).subscribe({
             next: (status) => {
                 if (status) {
-                    this.processingStatus[lectureUnitId] = status;
+                    this.processingStatus.update((current) => ({ ...current, [lectureUnitId]: status }));
                 }
             },
         });
     }
 
     hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.transcriptionStatus[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
+        return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
     }
 
     isTranscriptionPending(lectureUnit: AttachmentVideoUnit): boolean {
-        const status = this.transcriptionStatus[lectureUnit.id!];
+        const status = this.transcriptionStatus()[lectureUnit.id!];
         return status === TranscriptionStatus.PENDING;
     }
 
     isTranscriptionFailed(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.transcriptionStatus[lectureUnit.id!] === TranscriptionStatus.FAILED;
+        return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.FAILED;
     }
 
     hasTranscriptionBadge(lectureUnit: AttachmentVideoUnit): boolean {
@@ -314,32 +324,32 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     // Processing status helper methods (for ProcessingPhase)
     isProcessingIdle(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.IDLE;
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.IDLE;
     }
 
     isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
     }
 
     isProcessingIngesting(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.INGESTING;
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.INGESTING;
     }
 
     isProcessingDone(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.DONE;
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.DONE;
     }
 
     isProcessingFailed(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
     }
 
     isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
-        const phase = this.processingStatus[lectureUnit.id!]?.phase;
+        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
         return phase === ProcessingPhase.TRANSCRIBING || phase === ProcessingPhase.INGESTING;
     }
 
     getProcessingErrorKey(lectureUnit: AttachmentVideoUnit): string | undefined {
-        return this.processingStatus[lectureUnit.id!]?.errorKey;
+        return this.processingStatus()[lectureUnit.id!]?.errorKey;
     }
 
     hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
@@ -351,7 +361,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * A course is active if: startDate <= now <= endDate (null dates are treated as no restriction)
      */
     isCourseActive(): boolean {
-        const course = this.lecture?.course;
+        const course = this.lecture()?.course;
         if (!course) {
             return false;
         }
@@ -365,7 +375,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Check if a lecture unit is awaiting processing (IDLE state and course is active so it will be processed).
      */
     isAwaitingProcessing(lectureUnit: AttachmentVideoUnit): boolean {
-        const phase = this.processingStatus[lectureUnit.id!]?.phase;
+        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
         // If processing is in progress or done, it's not awaiting
         if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
             return false;
@@ -400,24 +410,24 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * @param lectureUnit the lecture unit to retry processing for
      */
     retryProcessing(lectureUnit: AttachmentVideoUnit) {
-        if (!this.lectureId || !lectureUnit.id) {
+        if (!this.resolvedLectureId || !lectureUnit.id) {
             return;
         }
 
-        this.isRetryingProcessing[lectureUnit.id] = true;
-        this.lectureUnitService.retryProcessing(this.lectureId, lectureUnit.id).subscribe({
+        this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: true }));
+        this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
                 // Reload both statuses after a short delay to show updated state
                 setTimeout(() => {
                     this.loadTranscriptionStatus(lectureUnit.id!);
                     this.loadProcessingStatus(lectureUnit.id!);
-                    this.isRetryingProcessing[lectureUnit.id!] = false;
+                    this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
                 }, 1000);
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isRetryingProcessing[lectureUnit.id!] = false;
+                this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
             },
         });
     }
@@ -428,7 +438,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Navigates to edit page for the last created unit
      */
     onPdfFilesDropped(files: File[]): void {
-        if (files.length === 0 || !this.lectureId) {
+        if (files.length === 0 || !this.resolvedLectureId) {
             return;
         }
 
@@ -452,12 +462,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.isUploadingPdfs.set(false);
                     this.alertService.success('artemisApp.lecture.pdfUpload.success');
                     // Navigate to edit page for the last created unit
-                    if (lastCreatedUnit?.id && this.lecture?.course?.id) {
+                    const lectureValue = this.lecture();
+                    if (lastCreatedUnit?.id && lectureValue?.course?.id) {
                         this.router.navigate([
                             '/course-management',
-                            this.lecture.course.id,
+                            lectureValue.course.id,
                             'lectures',
-                            this.lectureId,
+                            this.resolvedLectureId,
                             'unit-management',
                             'attachment-video-units',
                             lastCreatedUnit.id,
@@ -474,6 +485,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Creates a single attachment unit from a file
      */
     private createAttachmentUnitFromFile(file: File) {
-        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lectureId!, file);
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.resolvedLectureId!, file);
     }
 }

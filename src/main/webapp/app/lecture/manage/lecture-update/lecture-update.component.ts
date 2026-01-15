@@ -32,6 +32,7 @@ import { LectureService } from '../services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -66,7 +67,7 @@ interface CreateLectureOption {
         CourseTitleBarTitleDirective,
     ],
 })
-export class LectureUpdateComponent implements OnInit, OnDestroy {
+export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsavedChangesComponent {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -175,13 +176,14 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'] as Lecture;
-            this.lecture.set(lecture ?? new Lecture());
-            if (lecture) {
-                this.isTutorialLecture.set(lecture.isTutorialLecture ?? false);
-            }
+            const newLecture = lecture ?? new Lecture();
             const course = data['course'];
             if (course) {
-                this.lecture().course = course;
+                newLecture.course = course;
+            }
+            this.lecture.set(newLecture);
+            if (lecture) {
+                this.isTutorialLecture.set(lecture.isTutorialLecture ?? false);
             }
         });
 
@@ -361,7 +363,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
-    onDatesValuesChanged() {
+    onDatesValuesChanged = () => {
         const startDate = this.lecture().startDate;
         const endDate = this.lecture().endDate;
         const visibleDate = this.lecture().visibleDate;
@@ -375,6 +377,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (visibleDate && startDate?.isBefore(visibleDate)) {
             this.lecture().visibleDate = startDate.clone();
         }
+    };
+
+    onLectureChange(updatedLecture: Lecture): void {
+        this.lecture.set(updatedLecture);
     }
 
     private computeAreSectionsValid(): boolean {

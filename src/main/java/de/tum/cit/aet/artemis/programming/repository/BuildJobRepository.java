@@ -45,6 +45,19 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Slice<Long> findFinishedIds(Pageable pageable);
 
+    /**
+     * Retrieves all build job ids that were submitted before the given date.
+     *
+     * @param date the date before which build jobs should be deleted
+     * @return a set of ids of build jobs submitted before the date
+     */
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            WHERE b.buildSubmissionDate < :date
+            """)
+    Set<Long> findAllIdsBeforeDate(@Param("date") ZonedDateTime date);
+
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
             SELECT b.id
