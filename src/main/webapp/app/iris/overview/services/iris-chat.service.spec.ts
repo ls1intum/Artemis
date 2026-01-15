@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { filter, firstValueFrom, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -27,12 +28,12 @@ describe('IrisChatService', () => {
     const courseId = 234;
 
     const statusMock = {
-        currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
-        handleRateLimitInfo: jest.fn(),
-        setCurrentCourse: jest.fn(),
+        currentRatelimitInfo: vi.fn().mockReturnValue(of({})),
+        handleRateLimitInfo: vi.fn(),
+        setCurrentCourse: vi.fn(),
     };
     const userMock = {
-        acceptLLMUsage: jest.fn(),
+        acceptLLMUsage: vi.fn(),
     };
 
     const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
@@ -63,14 +64,14 @@ describe('IrisChatService', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should clear chat', fakeAsync(async () => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        jest.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2, true)));
-        jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2, true)));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
         service.switchTo(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         service.clearChat();
@@ -89,7 +90,7 @@ describe('IrisChatService', () => {
 
     it('should request tutor suggestion if sessionId is set', async () => {
         service.sessionId = id;
-        const httpStub = jest.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of(new HttpResponse<void>()));
+        const httpStub = vi.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of(new HttpResponse<void>()));
 
         const res = await firstValueFrom(service.requestTutorSuggestion());
         expect(res).toBeUndefined();
@@ -104,8 +105,8 @@ describe('IrisChatService', () => {
 
     describe('switchToSession', () => {
         it('should not switch if session id is the same', () => {
-            const closeSpy = jest.spyOn(service as any, 'close');
-            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of());
+            const closeSpy = vi.spyOn(service as any, 'close');
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of());
             const session = { id: id } as IrisSessionDTO;
             service.sessionId = id;
 
@@ -117,10 +118,10 @@ describe('IrisChatService', () => {
         it('should switch to a different session if llm usage is accepted', async () => {
             const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE, entityName: 'Course 1' };
 
-            const closeSpy = jest.spyOn(service as any, 'close');
-            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
+            const closeSpy = vi.spyOn(service as any, 'close');
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
 
-            const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
 
             service.sessionId = id;
 
@@ -142,10 +143,10 @@ describe('IrisChatService', () => {
 
             const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
 
-            const closeSpy = jest.spyOn(service as any, 'close');
-            const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
-            jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
+            const closeSpy = vi.spyOn(service as any, 'close');
+            const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
 
             service.sessionId = id;
 
@@ -165,10 +166,10 @@ describe('IrisChatService', () => {
 
             const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
 
-            const closeSpy = jest.spyOn(service as any, 'close');
-            const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
-            jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
+            const closeSpy = vi.spyOn(service as any, 'close');
+            const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
 
             service.sessionId = id;
 
@@ -185,8 +186,8 @@ describe('IrisChatService', () => {
     describe('loadChatSessions', () => {
         it('should load chat sessions and update the behavior subject', () => {
             const sessions = [{ id: 1 }, { id: 2 }] as IrisSessionDTO[];
-            const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of(sessions));
-            const nextSpy = jest.spyOn(service.chatSessions, 'next');
+            const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of(sessions));
+            const nextSpy = vi.spyOn(service.chatSessions, 'next');
 
             service['loadChatSessions']();
 
@@ -196,8 +197,8 @@ describe('IrisChatService', () => {
 
         it('should handle an empty array of sessions', () => {
             const sessions: IrisSessionDTO[] = [];
-            const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of(sessions));
-            const nextSpy = jest.spyOn(service.chatSessions, 'next');
+            const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of(sessions));
+            const nextSpy = vi.spyOn(service.chatSessions, 'next');
 
             service['loadChatSessions']();
 
@@ -206,8 +207,8 @@ describe('IrisChatService', () => {
         });
 
         it('should handle an invalid response from the server', () => {
-            const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of(null as any));
-            const nextSpy = jest.spyOn(service.chatSessions, 'next');
+            const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of(null as any));
+            const nextSpy = vi.spyOn(service.chatSessions, 'next');
 
             service['loadChatSessions']();
 
