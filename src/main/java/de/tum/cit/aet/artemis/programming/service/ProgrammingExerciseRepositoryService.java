@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProjectType.isMavenProje
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -148,7 +149,7 @@ public class ProgrammingExerciseRepositoryService {
             FileUtils.cleanDirectory(sourcePath.toFile());
             Path readmeFile = sourcePath.resolve("README.md");
             if (!Files.exists(readmeFile)) {
-                Files.writeString(readmeFile, "");
+                FileUtils.writeStringToFile(readmeFile.toFile(), "", StandardCharsets.UTF_8);
             }
             commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
         }
