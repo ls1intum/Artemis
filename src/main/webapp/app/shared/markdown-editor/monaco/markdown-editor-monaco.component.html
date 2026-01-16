@@ -27,6 +27,7 @@
                         @if (enableFileUpload) {
                             <div class="d-flex align-items-center border-top" #fileUploadFooter>
                                 <input
+                                    #fileUploadInput
                                     [id]="'file-upload ' + uniqueMarkdownEditorId"
                                     class="file-upload-footer-input"
                                     type="file"
