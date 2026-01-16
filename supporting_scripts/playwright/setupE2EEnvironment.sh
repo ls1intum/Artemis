@@ -96,7 +96,6 @@ if curl -fsS --max-time 2 "$health_url" >/dev/null 2>&1; then
     echo "==> Artemis appears to be running already."
 else
     os_name="$(uname -s)"
-    start_script=""
     if [[ "$os_name" == "Darwin" ]]; then
         start_script="$playwright_dir/runArtemisInDocker_macOS.sh"
     elif [[ "$os_name" == "Linux" ]]; then
