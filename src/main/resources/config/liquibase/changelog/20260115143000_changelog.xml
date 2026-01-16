@@ -55,7 +55,7 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="20251219133000-comments" author="codex">
+    <changeSet id="20251219133000-comments" author="starke">
         <createTable tableName="comment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
