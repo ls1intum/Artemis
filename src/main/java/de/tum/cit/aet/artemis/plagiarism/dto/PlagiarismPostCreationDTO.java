@@ -20,6 +20,9 @@ public record PlagiarismPostCreationDTO(Long id, String content, String title, B
      * @return a new Post entity with the data from this DTO
      */
     public Post toEntity() {
+        if (plagiarismCaseId == null) {
+            throw new BadRequestAlertException("The post must be associated with a plagiarism case.", "PlagiarismPost", "plagiarismCaseMissing");
+        }
         Post post = new Post();
         post.setId(id);
         post.setContent(content);
