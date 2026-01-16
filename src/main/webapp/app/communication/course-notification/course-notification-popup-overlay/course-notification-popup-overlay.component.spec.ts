@@ -14,12 +14,14 @@ import { CourseNotificationComponent } from 'app/communication/course-notificati
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
     let component: CourseNotificationPopupOverlayComponent;
     let fixture: ComponentFixture<CourseNotificationPopupOverlayComponent>;
     let courseNotificationWebsocketService: CourseNotificationWebsocketService;
     let courseNotificationService: CourseNotificationService;
+    let conversationSelectionState: ConversationSelectionState;
     let websocketNotificationSubject: Subject<CourseNotification>;
     let mockRoute: any;
     let componentAsAny: any;
@@ -41,8 +43,28 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         );
     };
 
+    const createMockAnswerNotification = (id: number, courseId: number, channelId: number, postId: number): CourseNotification => {
+        return new CourseNotification(
+            id,
+            courseId,
+            'newAnswerNotification',
+            CourseNotificationCategory.COMMUNICATION,
+            CourseNotificationViewingStatus.UNSEEN,
+            dayjs(),
+            {
+                courseTitle: 'Test Course',
+                courseIconUrl: 'test-icon-url',
+                channelId: channelId,
+                postId: postId,
+            },
+            '/',
+        );
+    };
+
     beforeEach(async () => {
         websocketNotificationSubject = new Subject<CourseNotification>();
+
+        conversationSelectionState = new ConversationSelectionState();
 
         courseNotificationWebsocketService = {
             websocketNotification$: websocketNotificationSubject.asObservable(),
@@ -79,6 +101,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
                 { provide: ActivatedRoute, useValue: mockRoute },
+                { provide: ConversationSelectionState, useValue: conversationSelectionState },
             ],
         }).compileComponents();
 
@@ -110,6 +133,30 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should not add notification when conversation is open', fakeAsync(() => {
         const mockNotification = createMockNotification(1, 101, 20);
+
+        websocketNotificationSubject.next(mockNotification);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(componentAsAny.notifications).toHaveLength(0);
+
+        discardPeriodicTasks();
+    }));
+
+    it('should add reply notification when thread is not open', fakeAsync(() => {
+        const mockNotification = createMockAnswerNotification(1, 101, 20, 50);
+
+        websocketNotificationSubject.next(mockNotification);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(componentAsAny.notifications).toHaveLength(1);
+
+        discardPeriodicTasks();
+    }));
+
+    it('should not add reply notification when thread is open', fakeAsync(() => {
+        const mockNotification = createMockAnswerNotification(1, 101, 20, 50);
+
+        conversationSelectionState.setOpenPostId(50);
 
         websocketNotificationSubject.next(mockNotification);
         fixture.changeDetectorRef.detectChanges();

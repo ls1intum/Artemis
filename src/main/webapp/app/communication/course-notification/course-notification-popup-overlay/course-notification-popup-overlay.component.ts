@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 
 /**
  * Component that displays real-time notification popups.
@@ -106,25 +107,39 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     shouldShowNotification(notification: CourseNotification): boolean {
         const courseId = this.route.firstChild?.firstChild?.snapshot.paramMap.get('courseId');
 
-        if (courseId && Number(courseId) === notification.courseId) {
-            const routeParams = this.route.snapshot.queryParamMap;
-            const notificationParams = notification.parameters;
-
-            // Communication
-            const conversationId = routeParams.get('conversationId');
-            if (conversationId && notificationParams && 'channelId' in notificationParams && conversationId == notificationParams['channelId']) {
-                // Announcements/Posts in currently open channel
-                if (notification.notificationType === 'newPostNotification' || notification.notificationType === 'newAnnouncementNotification') {
-                    return false;
-                }
-
-                // Replies in currently open thread
-                const threadId = this.communicationState.openPostId();
-                if (notification.notificationType === 'newAnswerNotification' && 'postId' in notificationParams && threadId == notificationParams['postId']) {
-                    return false;
-                }
-            }
+        // Course is not open
+        if (!courseId || Number(courseId) !== notification.courseId) {
+            return true;
         }
+
+        const routeParams = this.route.snapshot.queryParamMap;
+        const notificationParams = notification.parameters;
+        if (!notificationParams) {
+            // No filtering possible without parameters
+            return true;
+        }
+
+        // Communication
+        const isCommunicationNotification = notification.category == CourseNotificationCategory.COMMUNICATION;
+        const openConversationId = routeParams.get('conversationId');
+        const isCommunicationOpen = openConversationId != null;
+        if (isCommunicationNotification && !isCommunicationOpen) {
+            return true;
+        }
+
+        const isAnnouncementOrPost = notification.notificationType === 'newPostNotification' || notification.notificationType === 'newAnnouncementNotification';
+        const isCorrespondingChannelOpen = 'channelId' in notificationParams && openConversationId == notificationParams['channelId'];
+        if (isAnnouncementOrPost && isCorrespondingChannelOpen) {
+            return false;
+        }
+
+        const threadId = this.communicationState.openPostId();
+        const isAnswerNotification = notification.notificationType === 'newAnswerNotification';
+        const isCorrespondingThreadOpen = 'postId' in notificationParams && threadId == notificationParams['postId'];
+        if (isAnswerNotification && isCorrespondingThreadOpen) {
+            return false;
+        }
+
         return true;
     }
 
