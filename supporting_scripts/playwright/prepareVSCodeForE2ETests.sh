@@ -36,8 +36,8 @@ if [[ ! -f "$config_file" ]]; then
     exit 1
 fi
 
-echo "==> npm install (repo root)"
-npm install
+echo "==> npm ci (repo root)"
+npm ci
 
 echo "==> npm ci (src/test/playwright)"
 (cd "$repo_root/src/test/playwright" && npm ci)
