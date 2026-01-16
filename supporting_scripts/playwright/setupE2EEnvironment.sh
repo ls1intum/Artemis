@@ -64,6 +64,15 @@ wait_for_url() {
     local interval_seconds="${3:-5}"
     local start_time=$SECONDS
 
+    # Validate that timeout_seconds and interval_seconds are numeric to avoid arithmetic errors
+    if ! [[ "$timeout_seconds" =~ ^[0-9]+$ ]]; then
+        echo "Error: Invalid timeout value '$timeout_seconds'. Expected a non-negative integer." >&2
+        return 1
+    fi
+    if ! [[ "$interval_seconds" =~ ^[0-9]+$ ]] || [[ "$interval_seconds" -le 0 ]]; then
+        echo "Error: Invalid interval value '$interval_seconds'. Expected a positive integer." >&2
+        return 1
+    fi
     while (( SECONDS - start_time < timeout_seconds )); do
         if curl -fsS --max-time 2 "$url" >/dev/null 2>&1; then
             return 0
