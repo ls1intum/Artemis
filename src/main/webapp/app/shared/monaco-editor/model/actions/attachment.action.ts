@@ -19,6 +19,7 @@ export class AttachmentAction extends TextEditorAction {
 
     private disposablePasteListener?: Disposable;
     private uploadCallback?: (files: File[]) => void;
+    private openFileDialogCallback?: () => void;
 
     constructor() {
         super(AttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined);
@@ -30,6 +31,15 @@ export class AttachmentAction extends TextEditorAction {
      */
     setUploadCallback(callback?: (files: File[]) => void) {
         this.uploadCallback = callback;
+    }
+
+    /**
+     * Sets the callback to be called when the attachment action is triggered without arguments and no text is selected.
+     * This allows opening a file dialog for manual file selection. The callback will be reset to undefined when the action is disposed.
+     * @param callback The callback to call when a file dialog should be opened.
+     */
+    setOpenFileDialogCallback(callback?: () => void) {
+        this.openFileDialogCallback = callback;
     }
 
     register(editor: TextEditor, translateService: TranslateService) {
@@ -60,6 +70,7 @@ export class AttachmentAction extends TextEditorAction {
         super.dispose();
         this.disposablePasteListener?.dispose();
         this.uploadCallback = undefined;
+        this.openFileDialogCallback = undefined;
     }
 
     /**
@@ -72,14 +83,23 @@ export class AttachmentAction extends TextEditorAction {
 
     /**
      * Inserts, at the current selection, the attachment markdown with the given text and url if they were provided.
-     * If no arguments are provided and there is selected text, wraps the selected text with ![selectedText](https://).
-     * Otherwise, inserts the default text.
+     * If no arguments are provided:
+     * - If there is selected text, wraps it with ![selectedText](https://)
+     * - If there is no selected text and a file dialog callback is configured, opens the file dialog
+     * - Otherwise, inserts the default text
      * @param editor The editor in which to insert the attachment.
-     * @param args The text and url of the attachment to insert. If one or both are not provided, checks for selected text to wrap.
+     * @param args The text and url of the attachment to insert. If one or both are not provided, checks for selected text or opens file dialog.
      */
     run(editor: TextEditor, args?: AttachmentArguments): void {
+        const selectedText = this.getSelectedText(editor)?.trim();
         if (!args?.text || !args?.url) {
-            this.wrapSelectionOrInsertDefault(editor, (selectedText) => `![${sanitizeStringForMarkdownEditor(selectedText)}](https://)`, AttachmentAction.DEFAULT_INSERT_TEXT);
+            if (selectedText) {
+                this.wrapSelectionOrInsertDefault(editor, (text) => `![${sanitizeStringForMarkdownEditor(text)}](https://)`, AttachmentAction.DEFAULT_INSERT_TEXT);
+            } else if (this.openFileDialogCallback) {
+                this.openFileDialogCallback();
+            } else {
+                this.wrapSelectionOrInsertDefault(editor, () => AttachmentAction.DEFAULT_INSERT_TEXT, AttachmentAction.DEFAULT_INSERT_TEXT);
+            }
         } else {
             this.replaceTextAtCurrentSelection(editor, `![${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
