@@ -7,24 +7,19 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { InlineComment } from './inlineComment';
 
 
 /**
- * Request to refine a problem statement
+ * Request to refine a problem statement globally using a user prompt
  */
-export interface ProblemStatementRefinementRequest { 
+export interface ProblemStatementGlobalRefinementRequest { 
     /**
      * Original problem statement text to be refined (max 50,000 chars)
      */
     problemStatementText: string;
     /**
-     * User prompt for global refinement (optional if inlineComments provided)
+     * User prompt for global refinement
      */
     userPrompt?: string;
-    /**
-     * Inline comments for targeted refinement of specific lines
-     */
-    inlineComments?: Array<InlineComment>;
 }
 

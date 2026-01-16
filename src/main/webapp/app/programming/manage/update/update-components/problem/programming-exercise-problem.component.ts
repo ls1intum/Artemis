@@ -16,8 +16,8 @@ import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
-import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
-import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
+import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
+import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
 import { Subscription, finalize } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
@@ -258,13 +258,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
         this.isRefining.set(true);
 
-        const request: ProblemStatementRefinementRequest = {
+        const request: ProblemStatementGlobalRefinementRequest = {
             problemStatementText: currentContent,
             userPrompt: this.userPrompt.trim(),
         };
 
         this.currentGenerationSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
+            .refineProblemStatementGlobally(courseId, request)
             .pipe(
                 finalize(() => {
                     this.isRefining.set(false);
@@ -373,7 +373,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
         this.isRefining.set(true);
 
-        const apiComment: ApiInlineComment = {
+        const request: ProblemStatementTargetedRefinementRequest = {
+            problemStatementText: exercise.problemStatement,
             startLine: event.startLine,
             endLine: event.endLine,
             startColumn: event.startColumn,
@@ -381,13 +382,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             instruction: event.instruction,
         };
 
-        const request: ProblemStatementRefinementRequest = {
-            problemStatementText: exercise.problemStatement,
-            inlineComments: [apiComment],
-        };
-
         this.currentGenerationSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
+            .refineProblemStatementTargeted(courseId, request)
             .pipe(
                 finalize(() => {
                     this.isRefining.set(false);

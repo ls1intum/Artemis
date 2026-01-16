@@ -10,9 +10,13 @@
 
 
 /**
- * Inline comment for targeted refinement of specific lines or text ranges
+ * Request to refine a problem statement using targeted selection-based instructions
  */
-export interface InlineComment { 
+export interface ProblemStatementTargetedRefinementRequest { 
+    /**
+     * Original problem statement text to be refined (max 50,000 chars)
+     */
+    problemStatementText: string;
     /**
      * Start line number (1-indexed)
      */

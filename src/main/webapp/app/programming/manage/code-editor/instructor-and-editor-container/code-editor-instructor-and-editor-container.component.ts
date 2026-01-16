@@ -50,8 +50,8 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
-import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
+import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
+import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
@@ -395,6 +395,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
+    /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then shows diff.
+     */
     onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
 
@@ -405,7 +409,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.isInlineRefining.set(true);
 
-        const apiComment: ApiInlineComment = {
+        const request: ProblemStatementTargetedRefinementRequest = {
+            problemStatementText: this.exercise.problemStatement,
             startLine: event.startLine,
             endLine: event.endLine,
             startColumn: event.startColumn,
@@ -413,13 +418,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             instruction: event.instruction,
         };
 
-        const request: ProblemStatementRefinementRequest = {
-            problemStatementText: this.exercise.problemStatement,
-            inlineComments: [apiComment],
-        };
-
         this.currentRefinementSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
+            .refineProblemStatementTargeted(courseId, request)
             .pipe(
                 finalize(() => {
                     this.isInlineRefining.set(false);
@@ -472,13 +472,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.showRefinementPrompt.set(false);
 
         // For global refinement, we do NOT send inlineComments
-        const request: ProblemStatementRefinementRequest = {
+        const request: ProblemStatementGlobalRefinementRequest = {
             problemStatementText: this.exercise.problemStatement,
             userPrompt: prompt,
         };
 
         this.currentRefinementSubscription = this.hyperionApiService
-            .refineProblemStatement(courseId, request)
+            .refineProblemStatementGlobally(courseId, request)
             .pipe(
                 finalize(() => {
                     this.isInlineRefining.set(false);

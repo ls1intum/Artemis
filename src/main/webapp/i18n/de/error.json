@@ -202,6 +202,16 @@
             "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
+        },
+        "ProblemStatementRefinement": {
+            "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "noRefinementInstructions": "Keine Verfeinerungsanweisungen vorhanden. Bitte füge Canvas-Kommentare hinzu, um anzugeben, wie die Aufgabenbeschreibung verfeinert werden soll.",
+            "chatClientNotConfigured": "Der KI-Chat-Client ist nicht konfiguriert. Bitte kontaktiere den Administrator.",
+            "problemStatementTooLong": "Die Aufgabenbeschreibung ist zu lang. Bitte kürze den Inhalt und versuche es erneut.",
+            "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
+            "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
+            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut."
         }
     }
 }

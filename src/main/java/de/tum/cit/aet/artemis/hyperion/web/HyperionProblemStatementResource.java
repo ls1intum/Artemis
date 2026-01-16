@@ -21,10 +21,11 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGlobalRefinementRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRefinementService;
@@ -33,8 +34,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion problem statement features (generation, refinement, rewrite,
- * and consistency check).
+ * REST controller for Hyperion problem statement features (generation,
+ * refinement, rewrite, and consistency check).
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -70,6 +71,7 @@ public class HyperionProblemStatementResource {
     /**
      * POST programming-exercises/{programmingExerciseId}/consistency-check: Check
      * the consistency of a programming exercise.
+     *
      * Returns a JSON body with the issues (can be empty list).
      *
      * @param exerciseId the id of the programming exercise to check
@@ -123,34 +125,47 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/refine: Refine an existing problem
-     * statement for a programming exercise in the given course.
-     * Supports two modes:
-     * 1. Global refinement: userPrompt is provided
-     * 2. Targeted refinement: inlineComments are provided
+     * POST courses/{courseId}/problem-statements/refine/global: Refine an existing
+     * problem
+     * statement using a global prompt.
      *
      * @param courseId the id of the course the problem statement belongs to
      * @param request  the request containing the original problem statement and
-     *                     either userPrompt or inlineComments
+     *                     user prompt
      * @return the ResponseEntity with status 200 (OK) and the refined problem
      *         statement or an error status
      */
     @EnforceAtLeastEditorInCourse
-    @PostMapping("courses/{courseId}/problem-statements/refine")
-    public ResponseEntity<ProblemStatementRefinementResponseDTO> refineProblemStatement(@PathVariable long courseId,
-            @Valid @RequestBody ProblemStatementRefinementRequestDTO request) {
-        log.debug("REST request to Hyperion refine the problem statement for course [{}]", courseId);
+    @PostMapping("courses/{courseId}/problem-statements/refine/global")
+    public ResponseEntity<ProblemStatementRefinementResponseDTO> refineProblemStatementGlobally(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementGlobalRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine the problem statement globally for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
 
-        ProblemStatementRefinementResponseDTO result;
-        if (request.hasInlineComments()) {
-            // Targeted refinement with inline comments
-            result = problemStatementRefinementService.refineProblemStatementWithComments(course, request.problemStatementText(), request.inlineComments());
-        }
-        else {
-            // Global refinement with user prompt
-            result = problemStatementRefinementService.refineProblemStatement(course, request.problemStatementText(), request.userPrompt());
-        }
+        var result = problemStatementRefinementService.refineProblemStatement(course, request.problemStatementText(), request.userPrompt());
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST courses/{courseId}/problem-statements/refine/targeted: Refine an
+     * existing problem
+     * statement using targeted instructions.
+     *
+     * @param courseId the id of the course the problem statement belongs to
+     * @param request  the request containing the original problem statement and
+     *                     inline comments
+     * @return the ResponseEntity with status 200 (OK) and the refined problem
+     *         statement or an error status
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/problem-statements/refine/targeted")
+    public ResponseEntity<ProblemStatementRefinementResponseDTO> refineProblemStatementTargeted(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementTargetedRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine the problem statement with targeted instructions for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        var result = problemStatementRefinementService.refineProblemStatementTargeted(course, request);
 
         return ResponseEntity.ok(result);
     }

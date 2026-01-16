@@ -533,12 +533,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let alertService: AlertService;
-    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatement'>>;
+    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted'>>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatement: jest.fn() } }],
+            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementTargeted: jest.fn() } }],
         })
             .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
                 set: { template: '', imports: [] },
@@ -546,7 +546,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
             .compileComponents();
 
         alertService = TestBed.inject(AlertService);
-        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatement'>>;
+        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
+            Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted'>
+        >;
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
@@ -561,7 +563,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
     it('should handle inline refinement successfully', () => {
         const successSpy = jest.spyOn(alertService, 'success');
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
-        (hyperionApiService.refineProblemStatement as jest.Mock).mockReturnValue(of(mockResponse));
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
 
         const event = {
             instruction: 'Improve this section',
@@ -573,17 +575,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
 
         comp.onInlineRefinement(event);
 
-        expect(hyperionApiService.refineProblemStatement).toHaveBeenCalledWith(
+        expect(hyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
             1,
             expect.objectContaining({
                 problemStatementText: 'Original problem statement',
-                inlineComments: [
-                    expect.objectContaining({
-                        instruction: 'Improve this section',
-                        startLine: 1,
-                        endLine: 2,
-                    }),
-                ],
+                instruction: 'Improve this section',
+                startLine: 1,
+                endLine: 2,
+                startColumn: 0,
+                endColumn: 10,
             }),
         );
         expect(comp.showDiff()).toBeTrue();
@@ -612,7 +612,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
 
     it('should handle inline refinement API error', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
-        (hyperionApiService.refineProblemStatement as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
@@ -622,7 +622,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
     it('should handle inline refinement with empty response', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: '' };
-        (hyperionApiService.refineProblemStatement as jest.Mock).mockReturnValue(of(mockResponse));
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
@@ -634,12 +634,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let alertService: AlertService;
-    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatement'>>;
+    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally'>>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatement: jest.fn() } }],
+            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementGlobally: jest.fn() } }],
         })
             .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
                 set: { template: '', imports: [] },
@@ -647,7 +647,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
             .compileComponents();
 
         alertService = TestBed.inject(AlertService);
-        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatement'>>;
+        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
+            Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally'>
+        >;
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
@@ -682,12 +684,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
     it('should submit full refinement successfully', () => {
         const successSpy = jest.spyOn(alertService, 'success');
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
-        (hyperionApiService.refineProblemStatement as jest.Mock).mockReturnValue(of(mockResponse));
+        (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(of(mockResponse));
 
         comp.refinementPrompt.set('Improve clarity');
         comp.submitRefinement();
 
-        expect(hyperionApiService.refineProblemStatement).toHaveBeenCalledWith(
+        expect(hyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
             1,
             expect.objectContaining({
                 problemStatementText: 'Original problem statement',
@@ -703,14 +705,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
         comp.refinementPrompt.set('');
         comp.submitRefinement();
 
-        expect(hyperionApiService.refineProblemStatement).not.toHaveBeenCalled();
+        expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
     it('should not submit when prompt is whitespace only', () => {
         comp.refinementPrompt.set('   ');
         comp.submitRefinement();
 
-        expect(hyperionApiService.refineProblemStatement).not.toHaveBeenCalled();
+        expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
     it('should show error when no courseId for full refinement', () => {
@@ -726,7 +728,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
 
     it('should handle full refinement API error', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
-        (hyperionApiService.refineProblemStatement as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
+        (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
 
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();

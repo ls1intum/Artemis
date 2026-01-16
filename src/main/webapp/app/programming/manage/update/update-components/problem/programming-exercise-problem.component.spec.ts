@@ -29,7 +29,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     const mockHyperionApiService = {
         generateProblemStatement: jest.fn(),
-        refineProblemStatement: jest.fn(),
+        refineProblemStatementGlobally: jest.fn(),
+        refineProblemStatementTargeted: jest.fn(),
     };
 
     const mockAlertService = {
@@ -171,7 +172,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             refinedProblemStatement: 'Refined problem statement',
         };
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt = 'Improve clarity';
         comp.refineProblemStatement();
@@ -187,7 +188,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(throwError(() => new Error('API error')));
+        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('API error')));
 
         comp.userPrompt = 'Improve';
         comp.refineProblemStatement();
@@ -356,7 +357,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             refinedProblemStatement: 'Refined problem statement',
         };
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(of(mockResponse));
 
         const event = {
             instruction: 'Improve this section',
@@ -367,6 +368,18 @@ describe('ProgrammingExerciseProblemComponent', () => {
         };
 
         comp.onInlineRefinement(event);
+
+        expect(mockHyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
+            42,
+            expect.objectContaining({
+                problemStatementText: 'Original problem statement with content',
+                instruction: 'Improve this section',
+                startLine: 1,
+                endLine: 2,
+                startColumn: 0,
+                endColumn: 10,
+            }),
+        );
 
         expect(comp.showDiff()).toBeTrue();
         expect(comp.refinedProblemStatement()).toBe('Refined problem statement');
@@ -416,7 +429,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original content';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(throwError(() => new Error('API error')));
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(throwError(() => new Error('API error')));
 
         const event = {
             instruction: 'Improve this',
@@ -438,7 +451,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original content';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(of({ refinedProblemStatement: '' }));
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: '' }));
 
         const event = {
             instruction: 'Improve this',
@@ -463,7 +476,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             originalProblemStatement: 'Original',
         };
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt = 'Improve clarity';
         comp.refineProblemStatement();
@@ -479,7 +492,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         const mockResponse: ProblemStatementRefinementResponse = {};
 
-        mockHyperionApiService.refineProblemStatement.mockReturnValue(of(mockResponse));
+        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt = 'Improve clarity';
         comp.refineProblemStatement();
@@ -496,7 +509,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt = '';
         comp.refineProblemStatement();
 
-        expect(mockHyperionApiService.refineProblemStatement).not.toHaveBeenCalled();
+        expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
     it('should not refine when no courseId', () => {
@@ -507,7 +520,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt = 'Improve';
         comp.refineProblemStatement();
 
-        expect(mockHyperionApiService.refineProblemStatement).not.toHaveBeenCalled();
+        expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
     it('should close diff view properly', () => {

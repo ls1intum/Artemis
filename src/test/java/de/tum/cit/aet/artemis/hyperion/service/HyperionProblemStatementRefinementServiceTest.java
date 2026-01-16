@@ -19,6 +19,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 
@@ -136,29 +137,25 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_returnsOriginalWhenInputIsNull() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenInputIsNull() {
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should return empty refinement and empty original when input is null
-        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, null, "Refine this");
-        assertThat(resp).isNotNull();
-        assertThat(resp.refinedProblemStatement()).isEmpty();
-        assertThat(resp.originalProblemStatement()).isEmpty();
+        // Should throw exception when input is null
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, null, "Refine this")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Cannot refine empty problem statement");
     }
 
     @Test
-    void refineProblemStatement_returnsOriginalWhenInputIsBlank() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenInputIsBlank() {
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should return empty refinement and original when input is blank
-        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, "   ", "Refine this");
-        assertThat(resp).isNotNull();
-        assertThat(resp.refinedProblemStatement()).isEmpty();
-        assertThat(resp.originalProblemStatement()).isEqualTo("   ");
+        // Should throw exception when input is blank
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, "   ", "Refine this")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Cannot refine empty problem statement");
     }
 
     @Test

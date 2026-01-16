@@ -10,7 +10,7 @@
 
 
 /**
- * Response containing generated problem statement
+ * Response containing refined problem statement
  */
 export interface ProblemStatementRefinementResponse { 
     /**
@@ -18,7 +18,7 @@ export interface ProblemStatementRefinementResponse {
      */
     refinedProblemStatement?: string;
     /**
-     * Original problem statement if refinement failed
+     * Original problem statement (reserved for future use)
      */
     originalProblemStatement?: string;
 }
