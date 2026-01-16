@@ -26,6 +26,7 @@
             [showPreviewButton]="showPreview"
             [showEditButton]="showPreview"
             [readOnly]="isRefining()"
+            [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
             (diffLineChange)="diffLineChange.emit($event)"
@@ -68,12 +69,12 @@
     @if (editMode) {
         <button
             id="save-instructions-button"
-            [disabled]="savingInstructions || !unsavedChangesValue"
+            [disabled]="savingInstructions || !unsavedChangesValue || mode() === 'diff'"
             (click)="saveInstructions($event)"
             class="btn editable-instruction-container__save"
             [ngClass]="{
-                'btn-light': savingInstructions || !unsavedChangesValue,
-                'btn-primary': !(savingInstructions || !unsavedChangesValue),
+                'btn-light': savingInstructions || !unsavedChangesValue || mode() === 'diff',
+                'btn-primary': !(savingInstructions || !unsavedChangesValue || mode() === 'diff'),
                 'btn-sm': externalHeight,
             }"
         >

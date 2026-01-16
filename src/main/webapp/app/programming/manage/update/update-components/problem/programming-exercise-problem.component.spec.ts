@@ -363,7 +363,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             instruction: 'Improve this section',
             startLine: 1,
             endLine: 2,
-            startColumn: 0,
+            startColumn: 1,
             endColumn: 10,
         };
 
@@ -376,7 +376,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 instruction: 'Improve this section',
                 startLine: 1,
                 endLine: 2,
-                startColumn: 0,
+                startColumn: 1,
                 endColumn: 10,
             }),
         );

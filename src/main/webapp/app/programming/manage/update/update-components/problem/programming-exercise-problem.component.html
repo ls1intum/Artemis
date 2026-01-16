@@ -35,10 +35,30 @@
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (showDiff()) {
                 <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
-                    <span>
-                        <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
-                        <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
-                    </span>
+                    <div class="d-flex align-items-center">
+                        <span>
+                            <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                            <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                        </span>
+                        <div class="d-flex flex-row gap-2 ms-4">
+                            <jhi-button
+                                [btnType]="ButtonType.PRIMARY"
+                                [btnSize]="ButtonSize.SMALL"
+                                [icon]="faTableColumns"
+                                tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
+                                [tooltipPlacement]="TooltipPlacement.BOTTOM"
+                                [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
+                                (onClick)="allowSplitView.set(!allowSplitView())"
+                            />
+                            <jhi-git-diff-line-stat
+                                class="mt-1 fw-bold"
+                                [addedLineCount]="addedLineCount()"
+                                [removedLineCount]="removedLineCount()"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate }}"
+                            />
+                        </div>
+                    </div>
+
                     <div class="d-flex gap-2">
                         <button class="btn btn-success btn-sm" type="button" [disabled]="isAnyApplying()" (click)="acceptRefinement()">
                             <fa-icon [icon]="faSave" class="me-1" />
@@ -93,6 +113,8 @@
                     (instructionChange)="onProblemStatementChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"
                     (onInlineRefinement)="onInlineRefinement($event)"
+                    [renderSideBySide]="allowSplitView()"
+                    (diffLineChange)="onDiffLineChange($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />

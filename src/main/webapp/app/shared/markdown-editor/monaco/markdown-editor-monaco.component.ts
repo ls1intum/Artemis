@@ -281,6 +281,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Modified markdown content for diff mode */
     modifiedMarkdown = input<string | undefined>();
 
+    renderSideBySide = input<boolean>(true);
+
     closeEditor = output<void>();
 
     /** Emits diff line change information when in diff mode */

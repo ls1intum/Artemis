@@ -63,6 +63,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     shrinkToFit = input<boolean>(true);
     stickyScroll = input<boolean>(false);
     readOnly = input<boolean>(false);
+    renderSideBySide = input<boolean>(true);
 
     textChanged = output<{ text: string; fileName: string }>();
     contentHeightChanged = output<number>();
@@ -118,17 +119,25 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
 
         effect(() => {
+            const stickyScrollEnabled = this.stickyScroll();
+            const isReadOnly = this.readOnly();
+            const renderSideBySide = this.renderSideBySide();
+
             this._editor.updateOptions({
-                stickyScroll: { enabled: this.stickyScroll() },
-                readOnly: this.readOnly(),
+                stickyScroll: { enabled: stickyScrollEnabled },
+                readOnly: isReadOnly,
             });
 
             // Also update diff editor if it exists
             if (this._diffEditor) {
                 this._diffEditor.updateOptions({
-                    readOnly: this.readOnly(),
+                    readOnly: isReadOnly,
                     originalEditable: false,
+                    renderSideBySide: renderSideBySide,
                 });
+                // this._diffEditor.layout();
+                // // Force layout update when options change
+                // this.ngZone.run(() => this.contentHeightChanged.emit(this.getContentHeight()));
             }
         });
 
@@ -184,7 +193,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             // Enable editing on the modified (right) side of the diff editor
             // The original (left) side should always be read-only
             originalEditable: false,
-            renderSideBySide: true,
+            renderSideBySide: this.renderSideBySide(),
         });
 
         // Update the text editor adapter to point to the modified (editable) side of the diff editor
@@ -224,6 +233,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.diffEditorFocusListener = this._diffEditor!.getModifiedEditor().onDidFocusEditorText(() => {
                 this.ngZone.run(() => this.registerCustomBackspaceAction(this._diffEditor!.getModifiedEditor()));
             });
+            //
+            // // Set up content height listener for diff editor
+            // this.contentHeightListener?.dispose();
+            // this.contentHeightListener = this._diffEditor!.getModifiedEditor().onDidContentSizeChange((event) => {
+            //     if (event.contentHeightChanged) {
+            //         this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._diffEditor!.getModifiedEditor().getOption(monaco.editor.EditorOption.lineHeight)));
+            //     }
+            // });
         });
         this.registerCustomBackspaceAction(this._diffEditor.getModifiedEditor());
 
@@ -281,6 +298,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.textChangedListener = this._editor.onDidChangeModelContent(() => {
                 this.ngZone.run(() => this.emitTextChangeEvent());
             });
+            //
+            // // Restore content height listener for normal editor
+            // this.contentHeightListener?.dispose();
+            // this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            //     if (event.contentHeightChanged) {
+            //         this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
+            //     }
+            // });
         });
 
         // Re-register all actions with the restored adapter for normal mode

@@ -80,21 +80,11 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
-    private void mockGenerateSuccess() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(azureOpenAiChatModel)
-                .call(any(Prompt.class));
+    private void mockChatSuccess(String responseMessage) {
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseMessage))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
-    private void mockRefineSuccess() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Refined problem statement generated successfully."))))).when(azureOpenAiChatModel)
-                .call(any(Prompt.class));
-    }
-
-    private void mockGenerateFailure() {
-        doThrow(new RuntimeException("AI service unavailable")).when(azureOpenAiChatModel).call(any(Prompt.class));
-    }
-
-    private void mockRefineFailure() {
+    private void mockChatFailure() {
         doThrow(new RuntimeException("AI service unavailable")).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
@@ -192,7 +182,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldGenerateProblemStatementForInstructor() throws Exception {
         long courseId = persistedCourseId;
-        mockGenerateSuccess();
+        mockChatSuccess("Draft problem statement generated successfully.");
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"userPrompt\":\"Prompt\"}";
@@ -204,7 +194,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldGenerateProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
-        mockGenerateSuccess();
+        mockChatSuccess("Draft problem statement generated successfully.");
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"userPrompt\":\"Prompt\"}";
@@ -240,7 +230,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnInternalServerErrorWhenGenerationFails() throws Exception {
         long courseId = persistedCourseId;
-        mockGenerateFailure();
+        mockChatFailure();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"userPrompt\":\"Prompt\"}";
@@ -253,7 +243,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldRefineProblemStatementGloballyForInstructor() throws Exception {
         long courseId = persistedCourseId;
-        mockRefineSuccess();
+        mockChatSuccess("Refined problem statement generated successfully.");
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
@@ -265,7 +255,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldRefineProblemStatementTargetedForInstructor() throws Exception {
         long courseId = persistedCourseId;
-        mockRefineSuccess();
+        mockChatSuccess("Refined problem statement generated successfully.");
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"instruction\":\"Make it better\",\"startLine\":1,\"endLine\":2}";
@@ -277,7 +267,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldRefineProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
-        mockRefineSuccess();
+        mockChatSuccess("Refined problem statement generated successfully.");
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
@@ -313,7 +303,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnInternalServerErrorWhenRefinementFails() throws Exception {
         long courseId = persistedCourseId;
-        mockRefineFailure();
+        mockChatFailure();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";

@@ -20,6 +20,7 @@ import {
     faPlus,
     faSave,
     faSpinner,
+    faTableColumns,
     faTimes,
     faTimesCircle,
     faTriangleExclamation,
@@ -49,11 +50,15 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
 import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -84,6 +89,8 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseInstructionComponent,
         FormsModule,
         A11yModule,
+        ButtonComponent,
+        GitDiffLineStatComponent,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
@@ -94,6 +101,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+
+    // Diff view state
+    readonly allowSplitView = signal<boolean>(true);
+    readonly addedLineCount = signal<number>(0);
+    readonly removedLineCount = signal<number>(0);
+    readonly faTableColumns = faTableColumns;
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly TooltipPlacement = TooltipPlacement;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -427,17 +443,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }),
             )
             .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Store original and refined content for diff view
-                        this.originalProblemStatement.set(this.exercise.problemStatement || '');
-                        this.refinedProblemStatement.set(response.refinedProblemStatement);
-                        this.showDiff.set(true);
-                        this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
-                    } else {
-                        this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                    }
-                },
+                next: (response) => this.handleRefinementResponse(response),
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
@@ -487,20 +493,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }),
             )
             .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        this.originalProblemStatement.set(this.exercise.problemStatement || '');
-                        this.refinedProblemStatement.set(response.refinedProblemStatement);
-                        this.showDiff.set(true);
-                        this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
-                    } else {
-                        this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                    }
-                },
+                next: (response) => this.handleRefinementResponse(response),
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
             });
+    }
+
+    private handleRefinementResponse(response: ProblemStatementRefinementResponse): void {
+        if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+            this.originalProblemStatement.set(this.exercise.problemStatement || '');
+            this.refinedProblemStatement.set(response.refinedProblemStatement);
+            this.showDiff.set(true);
+            this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
+        } else {
+            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+        }
     }
 
     /**
@@ -615,5 +623,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;
         }
+    }
+
+    onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
+        this.addedLineCount.set(event.lineChange.addedLineCount);
+        this.removedLineCount.set(event.lineChange.removedLineCount);
     }
 }

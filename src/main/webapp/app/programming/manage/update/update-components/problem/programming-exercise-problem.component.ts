@@ -1,14 +1,18 @@
 import { Component, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -26,15 +30,22 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+
 import { FileService } from 'app/shared/service/file.service';
+import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [
+        CommonModule,
         TranslateDirective,
         NgbAlert,
+        NgbTooltip,
+
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         CompetencySelectionComponent,
@@ -44,6 +55,8 @@ import { FileService } from 'app/shared/service/file.service';
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        ButtonComponent,
+        GitDiffLineStatComponent,
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
@@ -64,8 +77,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     // icons
     facArtemisIntelligence = facArtemisIntelligence;
     faSpinner = faSpinner;
+
     faBan = faBan;
     faSave = faSave;
+    faTableColumns = faTableColumns;
+
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly TooltipPlacement = TooltipPlacement;
 
     // Injected services
     private hyperionApiService = inject(HyperionProblemStatementApiService);
@@ -100,9 +119,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     isRefining = signal(false);
 
     // Diff mode properties
+
+    // Diff mode properties
     showDiff = signal(false);
+    allowSplitView = signal(true);
+    addedLineCount = signal(0);
+    removedLineCount = signal(0);
     originalProblemStatement = signal('');
+
     refinedProblemStatement = signal('');
+
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
 
@@ -406,5 +432,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
             });
+    }
+
+    onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
+        this.addedLineCount.set(event.lineChange.addedLineCount);
+        this.removedLineCount.set(event.lineChange.removedLineCount);
     }
 }

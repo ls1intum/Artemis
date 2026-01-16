@@ -149,6 +149,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Modified content for diff mode */
     readonly modifiedContent = input<string | undefined>(undefined);
 
+    readonly renderSideBySide = input<boolean>(true);
+
     @Input()
     get exercise() {
         return this.programmingExercise;
