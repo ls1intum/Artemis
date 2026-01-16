@@ -116,6 +116,53 @@ docker compose -f weaviate.yml up -d
 
 ---
 
+## Integration with Artemis
+
+To enable Weaviate integration in Artemis, add the following to your `application-local.yml`:
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    host: localhost
+    port: 8001
+    grpc-port: 50051
+    secure: false
+    schema-validation:
+      enabled: true
+      strict: true
+```
+
+Alternatively, you can enable Weaviate via:
+
+- **Environment variable**: `ARTEMIS_WEAVIATE_ENABLED=true`
+- **Command line**: `--artemis.weaviate.enabled=true`
+
+### Configuration Options
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `artemis.weaviate.enabled` | `false` | Enable/disable Weaviate integration |
+| `artemis.weaviate.host` | `localhost` | Weaviate server hostname |
+| `artemis.weaviate.port` | `8001` | REST API port |
+| `artemis.weaviate.grpc-port` | `50051` | gRPC port |
+| `artemis.weaviate.secure` | `false` | Use HTTPS/TLS connection |
+| `artemis.weaviate.schema-validation.enabled` | `true` | Validate schemas against Iris on startup |
+| `artemis.weaviate.schema-validation.strict` | `true` | Fail startup on schema mismatch |
+
+### Schema Validation
+
+When Artemis starts with Weaviate enabled, it validates its schema definitions against the [Iris repository](https://github.com/ls1intum/edutelligence) schemas. This ensures compatibility between Artemis and the EduTelligence suite.
+
+- **Strict mode** (`strict: true`): Server fails to start if schemas don't match (recommended for production)
+- **Non-strict mode** (`strict: false`): Logs warnings but allows startup
+
+<Callout variant={CalloutVariant.warning}>
+  <p>Ensure Weaviate is running before starting Artemis with Weaviate enabled. The server will fail to start if it cannot connect to Weaviate.</p>
+</Callout>
+
+---
+
 ## Integration with Pyris
 
 When running Weaviate locally, configure the Weaviate connection in your `application.local.yml`:
