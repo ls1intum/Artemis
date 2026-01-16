@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -5,6 +7,8 @@ import { By } from '@angular/platform-browser';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('ChatStatusBarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ChatStatusBarComponent;
     let fixture: ComponentFixture<ChatStatusBarComponent>;
 
@@ -18,6 +22,10 @@ describe('ChatStatusBarComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -26,7 +34,7 @@ describe('ChatStatusBarComponent', () => {
         const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false }];
         fixture.componentRef.setInput('stages', stages);
         await fixture.whenStable();
-        expect(component.open()).toBeTrue();
+        expect(component.open()).toBe(true);
         expect(component.activeStage()).toEqual(stages[0]);
         expect(component.displayedText()).toBe('Test Stage');
     });
@@ -35,21 +43,21 @@ describe('ChatStatusBarComponent', () => {
         const stages = [{ name: 'Test Stage', state: IrisStageStateDTO.DONE, weight: 1, message: 'Test', internal: false }];
         fixture.componentRef.setInput('stages', stages);
         await fixture.whenStable();
-        expect(component.open()).toBeFalse();
+        expect(component.open()).toBe(false);
         expect(component.activeStage()).toBeUndefined();
         expect(component.displayedText()).toBeUndefined();
     });
 
     it('should return true for finished stages in isStageFinished', () => {
         const stage: IrisStageDTO = { name: 'Test Stage', state: IrisStageStateDTO.DONE, weight: 1, message: 'Test', internal: false };
-        expect(component.isStageFinished(stage)).toBeTrue();
+        expect(component.isStageFinished(stage)).toBe(true);
         stage.state = IrisStageStateDTO.SKIPPED;
-        expect(component.isStageFinished(stage)).toBeTrue();
+        expect(component.isStageFinished(stage)).toBe(true);
     });
 
     it('should return false for unfinished stages in isStageFinished', () => {
         const stage: IrisStageDTO = { name: 'Test Stage', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Test', internal: false };
-        expect(component.isStageFinished(stage)).toBeFalse();
+        expect(component.isStageFinished(stage)).toBe(false);
     });
 
     it('should render progress bar when stages are present', async () => {
