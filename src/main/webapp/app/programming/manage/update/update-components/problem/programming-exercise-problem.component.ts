@@ -120,7 +120,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     // Diff mode properties
 
-    // Diff mode properties
     showDiff = signal(false);
     allowSplitView = signal(true);
     addedLineCount = signal(0);

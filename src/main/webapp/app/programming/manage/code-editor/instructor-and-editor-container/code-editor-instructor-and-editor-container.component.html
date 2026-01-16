@@ -186,8 +186,7 @@
                                     </div>
                                     <div class="refinement-prompt-body">
                                         <textarea
-                                            [ngModel]="refinementPrompt()"
-                                            (ngModelChange)="refinementPrompt.set($event)"
+                                            [(ngModel)]="refinementPrompt"
                                             class="form-control refinement-textarea"
                                             rows="5"
                                             cdkTrapFocus

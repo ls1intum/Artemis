@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, isDevMode, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -135,9 +135,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                     originalEditable: false,
                     renderSideBySide: renderSideBySide,
                 });
-                // this._diffEditor.layout();
-                // // Force layout update when options change
-                // this.ngZone.run(() => this.contentHeightChanged.emit(this.getContentHeight()));
             }
         });
 
@@ -233,14 +230,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.diffEditorFocusListener = this._diffEditor!.getModifiedEditor().onDidFocusEditorText(() => {
                 this.ngZone.run(() => this.registerCustomBackspaceAction(this._diffEditor!.getModifiedEditor()));
             });
-            //
-            // // Set up content height listener for diff editor
-            // this.contentHeightListener?.dispose();
-            // this.contentHeightListener = this._diffEditor!.getModifiedEditor().onDidContentSizeChange((event) => {
-            //     if (event.contentHeightChanged) {
-            //         this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._diffEditor!.getModifiedEditor().getOption(monaco.editor.EditorOption.lineHeight)));
-            //     }
-            // });
         });
         this.registerCustomBackspaceAction(this._diffEditor.getModifiedEditor());
 
@@ -838,12 +827,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             try {
                 action.dispose();
                 action.register(this.textEditorAdapter, this.translateService);
-            } catch {
-                // Some actions (like TestCaseAction) may fail to register if no model is attached yet.
+            } catch (error) {
+                // Expected: Some actions (like TestCaseAction) may fail if no model is attached yet.
                 // This can happen when switching to diff mode before setDiffContents() is called.
-                // The action's base registration via super.register() still succeeds, so basic
-                // functionality works. Features requiring a model (like completion providers) won't
-                // be available until the model is attached.
+                if (isDevMode()) {
+                    // eslint-disable-next-line no-undef
+                    console.error('Failed to register action', action, error);
+                }
             }
         }
     }

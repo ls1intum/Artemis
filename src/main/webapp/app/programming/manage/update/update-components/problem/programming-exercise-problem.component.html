@@ -88,7 +88,7 @@
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()?.templateParticipation!"
+                    [participation]="programmingExercise()!.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }

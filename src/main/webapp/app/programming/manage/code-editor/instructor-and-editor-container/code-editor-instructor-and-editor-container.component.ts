@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, ViewChild, computed, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -285,7 +285,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Full problem statement refinement prompt state
     showRefinementPrompt = signal(false);
-    refinementPrompt = signal('');
+    refinementPrompt = model('');
     protected readonly faPaperPlane = faPaperPlane;
 
     override ngOnDestroy(): void {
@@ -407,10 +407,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.refinedProblemStatement.set('');
     }
 
-    /**
-     * Handles inline refinement request from editor selection.
-     * Calls the Hyperion API with the selected text and instruction, then shows diff.
-     */
     /**
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
