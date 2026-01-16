@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,7 +25,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, NgbPagination, ArtemisDatePipe, AdminTitleBarTitleDirective],
 })
 export class AuditsComponent implements OnInit {

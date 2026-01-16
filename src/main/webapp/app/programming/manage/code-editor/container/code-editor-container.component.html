@@ -49,7 +49,7 @@
     <ng-container editorCenter>
         <!-- Problem Statement Editor - always in DOM, hidden when not selected -->
         <jhi-code-editor-instructions
-            [hidden]="!(selectedFile === problemStatementIdentifier && showEditorInstructions && isProblemStatementVisible())"
+            [hidden]="!shouldShowProblemStatement()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
             (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment"
@@ -60,7 +60,7 @@
         </jhi-code-editor-instructions>
         <!-- Regular Code Editor - always in DOM, hidden when Problem Statement is selected -->
         <jhi-code-editor-monaco
-            [hidden]="selectedFile === problemStatementIdentifier && showEditorInstructions && isProblemStatementVisible()"
+            [hidden]="shouldShowProblemStatement()"
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course"
@@ -71,7 +71,7 @@
             [isTutorAssessment]="isTutorAssessment"
             [highlightDifferences]="highlightDifferences"
             [selectedFile]="selectedFile === problemStatementIdentifier ? undefined : selectedFile"
-            [selectedRepository]="selectedRepository"
+            [selectedRepository]="selectedRepository()"
             [buildAnnotations]="annotations"
             [sessionId]="participation?.id ?? 'test'"
             [consistencyIssues]="consistencyIssues()"
@@ -81,6 +81,7 @@
             (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
             (onError)="onError($event)"
             (onFileLoad)="fileLoad($event)"
+            (onEditorLoaded)="onEditorLoaded.emit()"
         />
     </ng-container>
     <ng-container editorSidebarRight>

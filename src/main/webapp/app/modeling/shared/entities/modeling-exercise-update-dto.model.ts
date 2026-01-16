@@ -69,7 +69,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         exampleSolutionPublicationDate: convertDateFromClient(modelingExercise.exampleSolutionPublicationDate),
         exampleSolutionModel: modelingExercise.exampleSolutionModel,
         exampleSolutionExplanation: modelingExercise.exampleSolutionExplanation,
-        courseId: modelingExercise.course?.id,
+        courseId: modelingExercise.course?.id ?? modelingExercise.exerciseGroup?.exam?.course?.id,
         exerciseGroupId: modelingExercise.exerciseGroup?.id,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
