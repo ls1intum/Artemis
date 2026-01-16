@@ -1,4 +1,41 @@
 #!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# setupE2EEnvironment.sh
+#
+# Purpose:
+#   Orchestrates the local end-to-end (E2E) test environment for Artemis +
+#   Playwright. This script:
+#     - Prepares Playwright dependencies and VS Code settings
+#     - Ensures required helper scripts and config files are present
+#     - Starts an Artemis instance in Docker on supported OSes (macOS, Linux)
+#       if it is not already running
+#     - Waits for Artemis to become healthy
+#     - Sets up E2E test users
+#
+# Prerequisites:
+#   - Docker installed and running (for running Artemis in Docker)
+#   - macOS or Linux (automatic Docker startup is only supported on these)
+#   - Bash (this script uses bash-specific features such as BASH_SOURCE)
+#   - Optional: Visual Studio Code for using the prepared editor settings
+#   - The following files present relative to the repository root:
+#       supporting_scripts/playwright/prepareVSCodeForE2ETests.sh
+#       supporting_scripts/playwright/setupUsers.sh
+#       supporting_scripts/course-scripts/config.ini
+#
+# Usage:
+#   From the repository root (or any directory):
+#       supporting_scripts/playwright/setupE2EEnvironment.sh
+#
+#   The script will:
+#     - Prepare VS Code / Playwright settings
+#     - Start Artemis in Docker in the background if needed
+#     - Wait for the Artemis health endpoint to become available
+#     - Create test users via setupUsers.sh
+#
+#   After successful completion, it will print commands to run Playwright E2E
+#   tests, both headless and in UI mode.
+# -----------------------------------------------------------------------------
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
