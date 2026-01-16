@@ -87,10 +87,10 @@ if ! grep -Fq "$revert_line" "$config_file"; then
 fi
 rm -f "$backup_file"
 
-echo "==> Leaving patched file in place at: $config_file"
+echo "==> Restored original file at: $config_file"
 
-# Keep the backup file available for manual restore if needed:
-echo "Backup saved at: $backup_file"
+# No patched version is kept; the configuration file has been reverted.
+echo "No patched version kept; file has been restored to its original state."
 
 trap - EXIT
 
