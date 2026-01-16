@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
@@ -88,8 +88,8 @@ public class AtlasAgentService {
      *
      * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
      */
-    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
-            .maximumSize(MAX_SESSIONS).build();
+    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
 
     private final Cache<String, List<CompetencyMappingToolsService.RelationOperation>> sessionPendingRelationOperationsCache = CacheBuilder.newBuilder()
             .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
@@ -192,8 +192,7 @@ public class AtlasAgentService {
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-                             @Value("${atlas.chat-temperature:0.2}") double temperature) {
+            @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
@@ -222,7 +221,7 @@ public class AtlasAgentService {
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
-            //CompetencyExpertToolsService.clearAllPreviews();
+            // CompetencyExpertToolsService.clearAllPreviews();
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
@@ -260,6 +259,35 @@ public class AtlasAgentService {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
             }
+            else if (response.contains(CREATE_APPROVED_RELATION) || message.equals(CREATE_APPROVED_RELATION)) {
+                sessionAgentMap.put(sessionId, AgentType.COMPETENCY_MAPPER);
+                List<CompetencyMappingToolsService.RelationOperation> cachedRelationData = getCachedRelationData(sessionId);
+
+                // Set sessionId for tool calls
+                CompetencyMappingToolsService.setCurrentSessionId(sessionId);
+
+                String creationResponse = delegateTheRightAgent(CREATE_APPROVED_RELATION, courseId, sessionId);
+
+                // Retrieve relation preview data from ThreadLocal
+                SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
+                BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
+                RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
+                System.out.println("DEBUG: DKHALLLLL  Single relation preview: " + singleRelationPreview);
+                // Embed relation preview data in the response
+                String responseWithEmbeddedData = embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
+
+                if (cachedRelationData != null && !cachedRelationData.isEmpty()) {
+                    clearCachedRelationOperations(sessionId);
+                }
+
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
+
+                sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
+
+                // Return with relation preview data (convert to unified list)
+                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
+                return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, relationGraphPreview);
+            }
             else if (response.contains(DELEGATE_TO_COMPETENCY_MAPPER)) {
                 // Extract brief from marker
                 String brief = extractBriefFromDelegationMarker(response);
@@ -295,8 +323,8 @@ public class AtlasAgentService {
 
                 // Return with relation preview data (convert to unified list)
                 List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
-                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null,
-                    relationPreviews, relationGraphPreview);
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews,
+                        relationGraphPreview);
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
@@ -321,8 +349,8 @@ public class AtlasAgentService {
             return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null);
         }
         catch (Exception e) {
-            return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false,
-                    null, null, null);
+            return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false, null,
+                    null, null);
         }
         finally {
             competencyModifiedInCurrentRequest.remove();

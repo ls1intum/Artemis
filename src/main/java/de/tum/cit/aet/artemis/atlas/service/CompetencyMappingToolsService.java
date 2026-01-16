@@ -22,11 +22,11 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.RelationGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.RelationGraphNodeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
@@ -372,8 +372,8 @@ public class CompetencyMappingToolsService {
             if (previews != null) {
                 storePreviewData(previews, true, successfulOperations.size());
 
-                // Generate and store graph preview data (includes all course competencies)
-                RelationGraphPreviewDTO graphPreview = buildGraphPreview(courseId, previews, true);
+                // Generate and store graph preview data with ALL existing relations in the course
+                RelationGraphPreviewDTO graphPreview = buildCompleteGraphPreview(courseId, true);
                 currentRelationGraphPreview.set(graphPreview);
             }
         }
@@ -473,7 +473,7 @@ public class CompetencyMappingToolsService {
 
     /**
      * Builds graph preview data from relation preview DTOs.
-     * Includes ALL course competencies to ensure 1:1 mapping with the course competency graph.
+     * Includes ONLY the competencies involved in the previewed relations.
      *
      * @param courseId the ID of the course
      * @param previews the preview DTOs
@@ -503,6 +503,46 @@ public class CompetencyMappingToolsService {
         for (CompetencyRelationPreviewDTO preview : previews) {
             String edgeId = preview.relationId() != null ? "edge-" + preview.relationId() : "edge-new-" + preview.headCompetencyId() + "-" + preview.tailCompetencyId();
             edges.add(new RelationGraphEdgeDTO(edgeId, String.valueOf(preview.headCompetencyId()), String.valueOf(preview.tailCompetencyId()), preview.relationType().name()));
+        }
+
+        return new RelationGraphPreviewDTO(nodes, edges, viewOnly != null && viewOnly);
+    }
+
+    /**
+     * Builds a complete graph preview with ALL existing relations in the course.
+     * Used after persistence to show the full competency graph.
+     *
+     * @param courseId the ID of the course
+     * @param viewOnly whether this is view-only mode
+     * @return the complete graph preview DTO with all existing relations
+     */
+    private RelationGraphPreviewDTO buildCompleteGraphPreview(Long courseId, Boolean viewOnly) {
+        List<RelationGraphNodeDTO> nodes = new ArrayList<>();
+        List<RelationGraphEdgeDTO> edges = new ArrayList<>();
+
+        // Fetch ALL existing relations for the course
+        Set<CompetencyRelation> existingRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
+
+        // Collect all competencies involved in existing relations
+        Set<Long> competencyIds = new HashSet<>();
+        for (CompetencyRelation relation : existingRelations) {
+            competencyIds.add(relation.getHeadCompetency().getId());
+            competencyIds.add(relation.getTailCompetency().getId());
+        }
+
+        // Fetch all competencies involved in relations
+        List<CourseCompetency> competencies = courseCompetencyRepository.findAllById(competencyIds);
+
+        // Add all competencies as nodes
+        for (CourseCompetency competency : competencies) {
+            nodes.add(new RelationGraphNodeDTO(String.valueOf(competency.getId()), competency.getTitle()));
+        }
+
+        // Add all existing relations as edges
+        for (CompetencyRelation relation : existingRelations) {
+            String edgeId = "edge-" + relation.getId();
+            edges.add(new RelationGraphEdgeDTO(edgeId, String.valueOf(relation.getHeadCompetency().getId()), String.valueOf(relation.getTailCompetency().getId()),
+                    relation.getType().name()));
         }
 
         return new RelationGraphPreviewDTO(nodes, edges, viewOnly != null && viewOnly);
