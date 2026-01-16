@@ -255,7 +255,7 @@ public class ParticipationService {
     private StudentParticipation startProgrammingParticipation(ProgrammingExerciseStudentParticipation participation) {
         // Configure the student repository (e.g. access right, etc.)
         participation = configureRepository(participation);
-        // Mark ass initialized to indicate the programming exercise is ready
+        // Mark as initialized to indicate the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;

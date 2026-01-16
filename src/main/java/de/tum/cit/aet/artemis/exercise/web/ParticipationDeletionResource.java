@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 
 /**
- * REST controller for deleting a participation and cleaning up a build plan for a participation.
+ * REST controller for deleting a participation.
  */
 @Profile(PROFILE_CORE)
 @Lazy

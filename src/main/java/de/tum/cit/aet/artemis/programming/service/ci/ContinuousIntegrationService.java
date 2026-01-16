@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  */
 public interface ContinuousIntegrationService extends StatelessCIService {
 
-    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
+    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/'
     String matchPathEndingWithAssignmentDirectory = "(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY;
 
     String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
