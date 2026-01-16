@@ -74,7 +74,7 @@ public class PlagiarismPostService extends PostingService {
 
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        if (course.getCourseInformationSharingConfiguration().equals(CourseInformationSharingConfiguration.DISABLED)) {
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Posting is disabled for this course.", METIS_POST_ENTITY_NAME, "courseInformationSharingDisabled");
         }
 
