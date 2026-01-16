@@ -56,15 +56,15 @@ fi
 
 echo "==> Reverting change"
 
- export REVERT_LINE="$revert_line"
- perl -0777 -i -pe 'BEGIN { $new=$ENV{NEW_DOTENV_LINE}; $revert=$ENV{REVERT_LINE}; }
+export REVERT_LINE="$revert_line"
+perl -0777 -i -pe 'BEGIN { $new=$ENV{NEW_DOTENV_LINE}; $revert=$ENV{REVERT_LINE}; }
      s/\Q$new\E/$revert/g;
- ' "$config_file"
- if ! grep -Fq "$revert_line" "$config_file"; then
-     echo "Error: Expected reverted dotenv line not found." >&2
-     exit 1
- fi
- rm -f "$backup_file"
+' "$config_file"
+if ! grep -Fq "$revert_line" "$config_file"; then
+    echo "Error: Expected reverted dotenv line not found." >&2
+    exit 1
+fi
+rm -f "$backup_file"
 
 echo "==> Leaving patched file in place at: $config_file"
 
