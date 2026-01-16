@@ -1,4 +1,25 @@
 #!/usr/bin/env bash
+
+# prepareVSCodeForE2ETests.sh
+# 
+# Purpose:
+#   Prepare the repository for running Playwright end-to-end tests in VS Code.
+#   This script installs dependencies and temporarily patches the Playwright
+#   configuration so that dotenv loads environment variables from ./playwright.env.
+#
+# What it does:
+#   - Locates the repository root based on this script's location.
+#   - Runs `npm install` in the repo root.
+#   - Runs `npm ci` in src/test/playwright.
+#   - Temporarily replaces the dotenv.config(...) line in
+#     src/test/playwright/playwright.config.ts to use ./playwright.env, verifies
+#     the patch, then reverts the change and keeps a backup copy.
+#
+# Usage:
+#   Run this script from anywhere:
+#       supporting_scripts/playwright/prepareVSCodeForE2ETests.sh
+#   It will determine the repo root automatically. Requires bash, npm, and perl.
+#
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
