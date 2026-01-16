@@ -9,7 +9,7 @@
 #
 # What it does:
 #   - Locates the repository root based on this script's location.
-#   - Runs `npm install` in the repo root.
+#   - Runs `npm ci` in the repo root.
 #   - Runs `npm ci` in src/test/playwright.
 #   - Temporarily replaces the dotenv.config(...) line in
 #     src/test/playwright/playwright.config.ts to use ./playwright.env, verifies
