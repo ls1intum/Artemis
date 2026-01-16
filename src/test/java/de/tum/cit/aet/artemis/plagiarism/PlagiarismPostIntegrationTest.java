@@ -203,10 +203,13 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testValidatePostContextConstraintViolation() throws Exception {
-        var invalidDto = new PlagiarismPostCreationDTO(null, "Content Post", "Title Post", true, false, null);
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", invalidDto, PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreatePostWithoutPlagiarismCase_badRequest() throws Exception {
+        Course course = conversationUtilService.createCourseWithPostsDisabled();
+        courseId = course.getId();
+        Post postToSave = createPostWithoutContext();
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

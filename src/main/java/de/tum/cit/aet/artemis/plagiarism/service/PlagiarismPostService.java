@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.validation.Valid;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -63,7 +61,7 @@ public class PlagiarismPostService extends PostingService {
      * @param post     post to create
      * @return created a post that was persisted
      */
-    public Post createPost(Long courseId, @Valid Post post) {
+    public Post createPost(Long courseId, Post post) {
         // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");

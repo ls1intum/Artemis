@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
-import jakarta.validation.Valid;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -38,7 +38,7 @@ public record PlagiarismPostCreationDTO(Long id, String content, String title, B
      * @param post the post-entity
      * @return a DTO containing the data required to create a plagiarism post
      */
-    public static PlagiarismPostCreationDTO of(@Valid Post post) {
+    public static PlagiarismPostCreationDTO of(@NonNull Post post) {
         if (post.getPlagiarismCase() == null || post.getPlagiarismCase().getId() == null) {
             throw new BadRequestAlertException("The post must be associated with a plagiarism case.", "PlagiarismPost", "plagiarismCaseMissing");
         }

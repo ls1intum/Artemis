@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import java.time.ZonedDateTime;
 
-import jakarta.validation.Valid;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,7 +24,7 @@ public record PlagiarismPostCreationResponseDTO(Long id, String content, String 
      * @param post the persisted post-entity
      * @return a DTO containing the relevant plagiarism-related post-data
      */
-    public static PlagiarismPostCreationResponseDTO of(@Valid Post post) {
+    public static PlagiarismPostCreationResponseDTO of(@NonNull Post post) {
         return new PlagiarismPostCreationResponseDTO(post.getId(), post.getContent(), post.getTitle(), post.isVisibleForStudents(), post.getCreationDate(), post.getAuthorRole(),
                 post.isResolved(), post.getDisplayPriority(), PlagiarismCaseDTO.of(post.getPlagiarismCase()));
     }
