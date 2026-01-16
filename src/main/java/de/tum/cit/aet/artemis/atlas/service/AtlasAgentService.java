@@ -698,21 +698,4 @@ public class AtlasAgentService {
 
         return result.isEmpty() ? null : result;
     }
-
-    /**
-     * Check if the user message is a natural language approval for relation mapping.
-     * Recognizes common approval phrases like "Map it", "Create it", "Yes", "Approve", etc.
-     *
-     * @param message The user's message
-     * @return true if the message is a relation approval
-     */
-    private boolean isRelationApprovalMessage(String message) {
-        if (message == null || message.isBlank()) {
-            return false;
-        }
-
-        String normalized = message.trim().toLowerCase();
-
-        return normalized.matches("(?i)^(map|create|yes|approve|ok|okay|confirm|looks good|perfect|great|good)\\s*(it|the relation|the mapping|relation|mapping)?[!.]*$");
-    }
 }
