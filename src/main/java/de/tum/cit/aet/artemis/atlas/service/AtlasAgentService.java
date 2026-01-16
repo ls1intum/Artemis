@@ -568,11 +568,9 @@ public class AtlasAgentService {
             PreviewDataContainer container = new PreviewDataContainer(previews);
             String jsonData = objectMapper.writeValueAsString(container);
 
-            // Append marker with JSON data to the response
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
         }
         catch (JsonProcessingException e) {
-            // If JSON serialization fails, return response without preview data
             return response;
         }
     }
@@ -596,7 +594,6 @@ public class AtlasAgentService {
             RelationPreviewDataContainer container = new RelationPreviewDataContainer(singleRelationPreview, batchRelationPreview, relationGraphPreview);
             String jsonData = objectMapper.writeValueAsString(container);
 
-            // Append marker with JSON data to the response
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
         }
         catch (JsonProcessingException e) {
@@ -716,7 +713,6 @@ public class AtlasAgentService {
 
         String normalized = message.trim().toLowerCase();
 
-        // Common approval patterns for relation mapping
         return normalized.matches("(?i)^(map|create|yes|approve|ok|okay|confirm|looks good|perfect|great|good)\\s*(it|the relation|the mapping|relation|mapping)?[!.]*$");
     }
 }

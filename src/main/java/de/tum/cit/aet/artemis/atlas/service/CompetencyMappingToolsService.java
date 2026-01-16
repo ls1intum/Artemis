@@ -211,26 +211,22 @@ public class CompetencyMappingToolsService {
             return "Error: No relations provided for preview.";
         }
 
-        // Convert operations to preview DTOs
         List<CompetencyRelationPreviewDTO> previews = buildPreviewDTOs(relations, viewOnly);
         if (previews == null) {
             return "Error: Competency not found for relation mapping";
         }
 
-        // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
         storePreviewData(previews, viewOnly, relations.size());
 
-        // Generate and store graph preview data (includes all course competencies)
         RelationGraphPreviewDTO graphPreview = buildGraphPreview(courseId, previews, viewOnly);
         currentRelationGraphPreview.set(graphPreview);
 
-        // Cache the relation operation data for refinement operations
+        // Cache the relation operation data for refinement operations (possible update request)
         String sessionId = currentSessionId.get();
         if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
             atlasAgentService.cacheRelationOperations(sessionId, new ArrayList<>(relations));
         }
 
-        // Return simple confirmation message
         return relations.size() == 1 ? "Preview generated successfully for 1 relation mapping." : "Preview generated successfully for " + relations.size() + " relation mappings.";
     }
 
@@ -244,7 +240,6 @@ public class CompetencyMappingToolsService {
     @Tool(description = "Get ML-based suggested competency relation mappings for a course using clustering analysis. Returns suggested relations with relation types.")
     public String suggestRelationMappingsUsingML(@ToolParam(description = "the Course ID from the CONTEXT section") Long courseId) {
         try {
-            // Call AtlasML to get ML-based relation suggestions
             SuggestCompetencyRelationsResponseDTO suggestionsResponse = atlasMLApi.suggestCompetencyRelations(courseId);
 
             if (suggestionsResponse == null || suggestionsResponse.relations() == null || suggestionsResponse.relations().isEmpty()) {
@@ -253,7 +248,6 @@ public class CompetencyMappingToolsService {
                 return toJson(new ErrorResponse("No relation suggestions available from ML clustering"));
             }
 
-            // Convert AtlasML relations to our RelationOperation format for preview
             List<RelationOperation> suggestedRelations = new ArrayList<>();
             for (AtlasMLCompetencyRelationDTO atlasMLRelation : suggestionsResponse.relations()) {
                 RelationType relationType;
@@ -261,7 +255,6 @@ public class CompetencyMappingToolsService {
                     relationType = RelationType.valueOf(atlasMLRelation.relationType());
                 }
                 catch (IllegalArgumentException e) {
-                    // Skip invalid relation types
                     continue;
                 }
 
@@ -318,7 +311,6 @@ public class CompetencyMappingToolsService {
 
         for (RelationOperation rel : relations) {
             try {
-                // Fetch competencies
                 CompetencyPair competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
                 if (competencies == null) {
                     errors.add("Competency not found for relation");
@@ -326,7 +318,6 @@ public class CompetencyMappingToolsService {
                 }
 
                 if (rel.relationId() == null) {
-                    // Create new relation
                     competencyRelationService.createCompetencyRelation(competencies.tail(), competencies.head(), rel.relationType(), course);
                     createCount++;
                     successfulOperations.add(rel);
@@ -336,14 +327,10 @@ public class CompetencyMappingToolsService {
                         atlasMLApi.mapCompetencyToCompetency(rel.headCompetencyId(), rel.tailCompetencyId());
                     }
                     catch (Exception e) {
-                        // Log but don't fail the operation if AtlasML sync fails
-                        // The relation was successfully created in Artemis database
                         java.util.logging.Logger.getLogger(getClass().getName()).warning("Failed to sync relation to AtlasML: " + e.getMessage());
                     }
                 }
                 else {
-                    // Update existing relation by modifying in place
-                    // Note: Matches old behavior - updates don't trigger circular dependency validation
                     Optional<CompetencyRelation> existing = competencyRelationRepository.findById(rel.relationId());
                     if (existing.isEmpty()) {
                         errors.add("Relation not found with ID: " + rel.relationId());
@@ -366,24 +353,22 @@ public class CompetencyMappingToolsService {
         }
 
         // Store preview data for successfully saved relations in ThreadLocal
-        // This is needed for AtlasAgentService to extract and send back to frontend
+        // This is needed for AtlasAgentService to extract and send back to client
         if (!successfulOperations.isEmpty()) {
             List<CompetencyRelationPreviewDTO> previews = buildPreviewDTOs(successfulOperations, true);
             if (previews != null) {
                 storePreviewData(previews, true, successfulOperations.size());
 
-                // Generate and store graph preview data with ALL existing relations in the course
-                RelationGraphPreviewDTO graphPreview = buildCompleteGraphPreview(courseId, true);
+                // Pass null for previews to trigger complete graph mode
+                RelationGraphPreviewDTO graphPreview = buildGraphPreview(courseId, null, true);
                 currentRelationGraphPreview.set(graphPreview);
             }
         }
 
-        // Mark competencies as modified if any operations succeeded
         if (createCount > 0 || updateCount > 0) {
             AtlasAgentService.markCompetencyModified();
         }
 
-        // Construct response
         List<String> messages = new ArrayList<>();
         if (createCount > 0) {
             messages.add(createCount + " relation" + (createCount == 1 ? "" : "s") + " created");
@@ -472,77 +457,43 @@ public class CompetencyMappingToolsService {
     }
 
     /**
-     * Builds graph preview data from relation preview DTOs.
-     * Includes ONLY the competencies involved in the previewed relations.
+     * Builds a graph preview for relation mappings.
+     * When previews are provided, shows only the competencies involved in those specific relations (focused preview).
+     * When previews are null, fetches and shows ALL existing relations in the course (complete graph after save).
      *
      * @param courseId the ID of the course
-     * @param previews the preview DTOs
+     * @param previews the preview DTOs, or null to show all existing relations
      * @param viewOnly whether this is view-only mode
      * @return the graph preview DTO
      */
     private RelationGraphPreviewDTO buildGraphPreview(Long courseId, List<CompetencyRelationPreviewDTO> previews, Boolean viewOnly) {
         List<RelationGraphNodeDTO> nodes = new ArrayList<>();
         List<RelationGraphEdgeDTO> edges = new ArrayList<>();
-
-        // Collect IDs of competencies involved in the relations being previewed
-        Set<Long> involvedCompetencyIds = new HashSet<>();
-        for (CompetencyRelationPreviewDTO preview : previews) {
-            involvedCompetencyIds.add(preview.headCompetencyId());
-            involvedCompetencyIds.add(preview.tailCompetencyId());
-        }
-
-        // Fetch ONLY the competencies involved in the previewed relations
-        List<CourseCompetency> relevantCompetencies = courseCompetencyRepository.findAllById(involvedCompetencyIds);
-
-        // Add only relevant competencies as nodes
-        for (CourseCompetency competency : relevantCompetencies) {
-            nodes.add(new RelationGraphNodeDTO(String.valueOf(competency.getId()), competency.getTitle()));
-        }
-
-        // Create edges from relations
-        for (CompetencyRelationPreviewDTO preview : previews) {
-            String edgeId = preview.relationId() != null ? "edge-" + preview.relationId() : "edge-new-" + preview.headCompetencyId() + "-" + preview.tailCompetencyId();
-            edges.add(new RelationGraphEdgeDTO(edgeId, String.valueOf(preview.headCompetencyId()), String.valueOf(preview.tailCompetencyId()), preview.relationType().name()));
-        }
-
-        return new RelationGraphPreviewDTO(nodes, edges, viewOnly != null && viewOnly);
-    }
-
-    /**
-     * Builds a complete graph preview with ALL existing relations in the course.
-     * Used after persistence to show the full competency graph.
-     *
-     * @param courseId the ID of the course
-     * @param viewOnly whether this is view-only mode
-     * @return the complete graph preview DTO with all existing relations
-     */
-    private RelationGraphPreviewDTO buildCompleteGraphPreview(Long courseId, Boolean viewOnly) {
-        List<RelationGraphNodeDTO> nodes = new ArrayList<>();
-        List<RelationGraphEdgeDTO> edges = new ArrayList<>();
-
-        // Fetch ALL existing relations for the course
-        Set<CompetencyRelation> existingRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
-
-        // Collect all competencies involved in existing relations
         Set<Long> competencyIds = new HashSet<>();
-        for (CompetencyRelation relation : existingRelations) {
-            competencyIds.add(relation.getHeadCompetency().getId());
-            competencyIds.add(relation.getTailCompetency().getId());
+
+        if (previews != null) {
+            for (CompetencyRelationPreviewDTO preview : previews) {
+                competencyIds.add(preview.headCompetencyId());
+                competencyIds.add(preview.tailCompetencyId());
+
+                String edgeId = preview.relationId() != null ? "edge-" + preview.relationId() : "edge-new-" + preview.headCompetencyId() + "-" + preview.tailCompetencyId();
+                edges.add(new RelationGraphEdgeDTO(edgeId, String.valueOf(preview.headCompetencyId()), String.valueOf(preview.tailCompetencyId()), preview.relationType().name()));
+            }
+        }
+        else {
+            Set<CompetencyRelation> existingRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
+            for (CompetencyRelation relation : existingRelations) {
+                competencyIds.add(relation.getHeadCompetency().getId());
+                competencyIds.add(relation.getTailCompetency().getId());
+
+                edges.add(new RelationGraphEdgeDTO("edge-" + relation.getId(), String.valueOf(relation.getHeadCompetency().getId()),
+                        String.valueOf(relation.getTailCompetency().getId()), relation.getType().name()));
+            }
         }
 
-        // Fetch all competencies involved in relations
         List<CourseCompetency> competencies = courseCompetencyRepository.findAllById(competencyIds);
-
-        // Add all competencies as nodes
         for (CourseCompetency competency : competencies) {
             nodes.add(new RelationGraphNodeDTO(String.valueOf(competency.getId()), competency.getTitle()));
-        }
-
-        // Add all existing relations as edges
-        for (CompetencyRelation relation : existingRelations) {
-            String edgeId = "edge-" + relation.getId();
-            edges.add(new RelationGraphEdgeDTO(edgeId, String.valueOf(relation.getHeadCompetency().getId()), String.valueOf(relation.getTailCompetency().getId()),
-                    relation.getType().name()));
         }
 
         return new RelationGraphPreviewDTO(nodes, edges, viewOnly != null && viewOnly);
