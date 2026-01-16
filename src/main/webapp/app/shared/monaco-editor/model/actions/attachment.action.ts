@@ -91,9 +91,9 @@ export class AttachmentAction extends TextEditorAction {
      * @param args The text and url of the attachment to insert. If one or both are not provided, checks for selected text or opens file dialog.
      */
     run(editor: TextEditor, args?: AttachmentArguments): void {
-        const selectedText = this.getSelectedText(editor)?.trim();
+        const selectedText = this.getSelectedText(editor);
         if (!args?.text || !args?.url) {
-            if (selectedText) {
+            if (selectedText !== undefined && selectedText.length > 0) {
                 this.wrapSelectionOrInsertDefault(editor, (text) => `![${sanitizeStringForMarkdownEditor(text)}](https://)`, AttachmentAction.DEFAULT_INSERT_TEXT);
             } else if (this.openFileDialogCallback) {
                 this.openFileDialogCallback();
