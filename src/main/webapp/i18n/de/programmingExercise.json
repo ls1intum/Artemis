@@ -539,7 +539,7 @@
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
-                "exampleSolutionPublicationDateTooltipOnImport": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Kann nicht beim Import gesetzt werden.",
+                "exampleSolutionPublicationDateTooltipOnImport": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Kann beim Import nicht gesetzt werden.",
                 "releaseTestsWithExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
                 "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
