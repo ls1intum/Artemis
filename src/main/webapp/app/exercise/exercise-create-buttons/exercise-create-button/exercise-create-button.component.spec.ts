@@ -44,9 +44,11 @@ describe('ExerciseCreateButtonComponent', () => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
         jest.spyOn(router, 'navigate');
         jest.spyOn(modalService, 'dismissAll');
+        const beforeNavigateSpy = jest.spyOn(component.beforeNavigate, 'emit');
 
         component.linkToExerciseCreation();
 
+        expect(beforeNavigateSpy).toHaveBeenCalledOnce();
         expect(modalService.dismissAll).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new']);
     });

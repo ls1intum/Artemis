@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CurveFactory } from 'd3-shape';
 import dayjs from 'dayjs/esm';
@@ -30,23 +30,23 @@ export enum SwitchTimeSpanDirection {
     styleUrls: ['./course-detail-line-chart.component.scss'],
     imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
-export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnInit, OnChanges {
+export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     private courseManagementService = inject(CourseManagementService);
     private translateService = inject(TranslateService);
 
     protected readonly SwitchTimeSpanDirection = SwitchTimeSpanDirection;
 
-    @Input() course: Course;
-    @Input() numberOfStudentsInCourse: number;
-    loading = true;
+    readonly course = input.required<Course>();
+    readonly numberOfStudentsInCourse = input.required<number>();
 
-    displayedNumberOfWeeks: number = 8;
-    showsCurrentWeek = true;
+    readonly loading = signal(true);
+    readonly displayedNumberOfWeeks = signal(8);
+    readonly showsCurrentWeek = signal(true);
 
     // Chart related
-    amountOfStudents: string;
-    showLifetimeOverview = false;
-    overviewStats: number[];
+    readonly amountOfStudents = signal('');
+    readonly showLifetimeOverview = signal(false);
+    readonly overviewStats = signal<number[] | undefined>(undefined);
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
@@ -58,9 +58,9 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         group: ScaleType.Ordinal,
         domain: [GraphColors.DARK_BLUE],
     };
-    xAxisLabel: string;
+    readonly xAxisLabel = signal('');
 
-    data: any[];
+    readonly data = signal<any[]>([]);
     // Data changes will be stored in the copy first, to trigger change detection when ready
     dataCopy: { name: string; series: { name?: string; value?: number }[] }[] = [
         {
@@ -71,45 +71,61 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     // Used for storing absolute values to display in tooltip
     absoluteSeries: { absoluteValue?: number; name?: string }[] = [{}];
     curve: CurveFactory = shape.curveMonotoneX;
-    average = { name: 'Mean', value: 0 };
-    startDateDisplayed = false;
+    readonly average = signal({ name: 'Mean', value: 0 });
+    readonly startDateDisplayed = signal(false);
 
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
-            this.loadTranslations();
-        });
-    }
+    constructor() {
+        super();
 
-    ngOnChanges() {
-        this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
-        this.loadTranslations();
-        this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
-        /*
-        if the course has a start date and already ended
-        (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
-         */
-        if (this.course.startDate && !!this.currentOffsetToEndDate) {
-            this.showLifetimeOverview = true;
-            this.displayLifetimeOverview();
-        } else {
-            this.displayPeriodOverview(this.displayedNumberOfWeeks);
-        }
+        // Effect to handle language changes
+        effect(() => {
+            // Subscribe to language changes is handled once in constructor
+            untracked(() => {
+                this.translateService.onLangChange.subscribe(() => {
+                    this.loadTranslations();
+                });
+            });
+        });
+
+        // Effect to handle input changes (replaces ngOnChanges)
+        effect(() => {
+            const course = this.course();
+            // Read the signal to track it but the value is used via this.numberOfStudentsInCourse() in processDataAndCreateChart
+            this.numberOfStudentsInCourse();
+            const displayedNumberOfWeeks = this.displayedNumberOfWeeks();
+
+            untracked(() => {
+                this.amountOfStudents.set(this.translateService.instant('artemisApp.courseStatistics.amountOfStudents'));
+                this.loadTranslations();
+                this.determineDisplayedPeriod(course, displayedNumberOfWeeks);
+                /*
+                if the course has a start date and already ended
+                (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
+                 */
+                if (course.startDate && !!this.currentOffsetToEndDate) {
+                    this.showLifetimeOverview.set(true);
+                    this.displayLifetimeOverview();
+                } else {
+                    this.displayPeriodOverview(displayedNumberOfWeeks);
+                }
+            });
+        });
     }
 
     /**
      * Reload the chart with the new data after an arrow is clicked
      */
     private reloadChart() {
-        this.loading = true;
+        this.loading.set(true);
         this.createLabels();
-        this.courseManagementService.getStatisticsData(this.course.id!, this.currentPeriod, this.displayedNumberOfWeeks).subscribe((res: number[]) => {
+        this.courseManagementService.getStatisticsData(this.course().id!, this.currentPeriod, this.displayedNumberOfWeeks()).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
-            this.data = [...this.dataCopy];
+            this.data.set([...this.dataCopy]);
         });
     }
 
@@ -118,33 +134,47 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      */
     private processDataAndCreateChart(array: number[]) {
         let currentMean = 0;
-        if (this.numberOfStudentsInCourse > 0) {
+        if (this.numberOfStudentsInCourse() > 0) {
             const allValues = [];
             for (let i = 0; i < array.length; i++) {
-                allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
-                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
-                this.absoluteSeries[i]['absoluteValue'] = array[i];
+                const course = this.course();
+                const numberOfStudentsInCourse = this.numberOfStudentsInCourse();
+                allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / numberOfStudentsInCourse, course));
+                // Ensure the series element exists before setting properties
+                if (this.dataCopy[0].series[i]) {
+                    this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / numberOfStudentsInCourse, course);
+                }
+                if (this.absoluteSeries[i]) {
+                    this.absoluteSeries[i]['absoluteValue'] = array[i];
+                }
             }
             currentMean = allValues.length > 0 ? mean(allValues) : 0;
         } else {
             for (let i = 0; i < this.currentSpanSize; i++) {
-                this.dataCopy[0].series[i]['value'] = 0;
-                this.absoluteSeries[i]['absoluteValue'] = 0;
+                // Ensure the series element exists before setting properties
+                if (this.dataCopy[0].series[i]) {
+                    this.dataCopy[0].series[i]['value'] = 0;
+                }
+                if (this.absoluteSeries[i]) {
+                    this.absoluteSeries[i]['absoluteValue'] = 0;
+                }
             }
         }
 
-        this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + currentMean.toFixed(2) + '%';
-        this.average.value = currentMean;
-        this.loading = false;
+        this.average.set({
+            name: this.translateService.instant('artemisApp.courseStatistics.average') + currentMean.toFixed(2) + '%',
+            value: currentMean,
+        });
+        this.loading.set(false);
     }
 
     private createLabels() {
         this.dataCopy[0].series = [{}];
         this.absoluteSeries = [{}];
         let endDate: dayjs.Dayjs;
-        if (this.showLifetimeOverview) {
+        if (this.showLifetimeOverview()) {
             endDate = dayjs().subtract(this.currentOffsetToEndDate, 'weeks');
-            this.currentSpanSize = this.determineDifferenceBetweenIsoWeeks(this.course.startDate!, endDate) + 1;
+            this.currentSpanSize = this.determineDifferenceBetweenIsoWeeks(this.course().startDate!, endDate) + 1;
         } else {
             /*
                 This variable contains the number of weeks between the last displayed week in the chart and the current date.
@@ -152,15 +182,16 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
                 displayedNumberOfWeeks determines the normal scope of the chart (usually 17 weeks).
                 currentPeriod indicates how many times the observer shifted the scope in the past (by pressing the arrow)
              */
-            const diffToLastChartWeek = this.currentOffsetToEndDate - this.displayedNumberOfWeeks * this.currentPeriod;
+            const diffToLastChartWeek = this.currentOffsetToEndDate - this.displayedNumberOfWeeks() * this.currentPeriod;
             endDate = dayjs().subtract(diffToLastChartWeek, 'weeks');
-            const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
-            this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
+            const course = this.course();
+            const remainingWeeksTillStartDate = course.startDate ? this.determineDifferenceBetweenIsoWeeks(course.startDate, endDate) + 1 : this.displayedNumberOfWeeks();
+            this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks());
             // for the start date, we subtract the currently possible span size - 1 from the end date in addition
-            this.startDateDisplayed = !!this.course.startDate && remainingWeeksTillStartDate <= this.displayedNumberOfWeeks;
+            this.startDateDisplayed.set(!!this.course().startDate && remainingWeeksTillStartDate <= this.displayedNumberOfWeeks());
         }
         this.assignLabelsToDataObjects();
-        this.dataCopy[0].name = this.amountOfStudents;
+        this.dataCopy[0].name = this.amountOfStudents();
     }
 
     switchTimeSpan(direction: SwitchTimeSpanDirection): void {
@@ -169,7 +200,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         } else if (direction === SwitchTimeSpanDirection.LEFT) {
             this.currentPeriod -= 1;
         }
-        this.showsCurrentWeek = this.currentPeriod === 0;
+        this.showsCurrentWeek.set(this.currentPeriod === 0);
         this.reloadChart();
     }
 
@@ -190,9 +221,9 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      */
     displayPeriodOverview(periodSize: number): void {
         this.currentPeriod = 0;
-        this.displayedNumberOfWeeks = periodSize;
-        this.showLifetimeOverview = false;
-        this.loading = true;
+        this.displayedNumberOfWeeks.set(periodSize);
+        this.showLifetimeOverview.set(false);
+        this.loading.set(true);
         this.createLabels();
         this.reloadChart();
     }
@@ -202,21 +233,22 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      */
     displayLifetimeOverview(): void {
         // if the course does not have a start date, we can't create an meaningful lifetime overview
-        if (!this.course.startDate) {
+        if (!this.course().startDate) {
             return;
         }
-        this.showLifetimeOverview = true;
-        this.loading = true;
+        this.showLifetimeOverview.set(true);
+        this.loading.set(true);
         this.currentPeriod = 0;
-        this.startDateDisplayed = true;
-        this.showsCurrentWeek = true;
+        this.startDateDisplayed.set(true);
+        this.showsCurrentWeek.set(true);
         this.createLabels();
         // we cache the overview stats to prevent many server requests
-        if (!this.overviewStats) {
+        const cachedOverviewStats = this.overviewStats();
+        if (!cachedOverviewStats) {
             this.fetchLifetimeOverviewData();
         } else {
-            this.processDataAndCreateChart(this.overviewStats);
-            this.data = [...this.dataCopy];
+            this.processDataAndCreateChart(cachedOverviewStats);
+            this.data.set([...this.dataCopy]);
         }
     }
 
@@ -229,7 +261,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         let currentWeek;
         for (let i = 0; i < this.currentSpanSize; i++) {
             currentWeek = dayjs()
-                .subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 - this.displayedNumberOfWeeks * this.currentPeriod - i, 'weeks')
+                .subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 - this.displayedNumberOfWeeks() * this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.dataCopy[0].series[i] = {};
@@ -243,10 +275,10 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      * Fetches and caches the data for the lifetime overview from the server and creates the chart
      */
     private fetchLifetimeOverviewData(): void {
-        this.courseManagementService.getStatisticsForLifetimeOverview(this.course.id!).subscribe((res: number[]) => {
-            this.overviewStats = res;
-            this.processDataAndCreateChart(this.overviewStats);
-            this.data = [...this.dataCopy];
+        this.courseManagementService.getStatisticsForLifetimeOverview(this.course().id!).subscribe((res: number[]) => {
+            this.overviewStats.set(res);
+            this.processDataAndCreateChart(res);
+            this.data.set([...this.dataCopy]);
         });
     }
 
@@ -254,7 +286,11 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      * Auxiliary method handles the translation sensitivity of the x axis label
      */
     private loadTranslations() {
-        this.xAxisLabel = this.translateService.instant('artemisApp.courseStatistics.calendarWeek');
-        this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + this.average.value.toFixed(2) + '%';
+        this.xAxisLabel.set(this.translateService.instant('artemisApp.courseStatistics.calendarWeek'));
+        const currentAverage = this.average();
+        this.average.set({
+            name: this.translateService.instant('artemisApp.courseStatistics.average') + currentAverage.value.toFixed(2) + '%',
+            value: currentAverage.value,
+        });
     }
 }

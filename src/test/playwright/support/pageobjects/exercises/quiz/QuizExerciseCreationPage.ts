@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
-import { clearTextField } from '../../../utils';
-import { QUIZ_EXERCISE_BASE, QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
+import { setMonacoEditorContentByLocator } from '../../../utils';
+import { QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
@@ -13,10 +13,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#score').fill(points.toString());
 
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
-        const textInputField = this.page.locator('.monaco-editor');
-        await textInputField.click();
-        await clearTextField(textInputField);
-        await textInputField.pressSequentially(fileContent!);
+        // Use specific selector for the multiple choice question editor
+        const textInputField = this.page.locator('.edit-mc-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
     }
 
     /**
@@ -48,9 +47,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.locator('#short-answer-question-title').fill(title);
 
         const fileContent = await Fixtures.get('exercise/quiz/short_answer/question.txt');
-        const textInputField = this.page.locator('.monaco-editor');
-        await clearTextField(textInputField);
-        await this.page.keyboard.insertText(fileContent!);
+        // Use specific selector for the short answer question editor
+        const textInputField = this.page.locator('.edit-sa-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
         await this.page.locator('#short-answer-show-visual').click();
     }
 
@@ -106,9 +105,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.page.mouse.up();
 
         const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
-        const textInputField = this.page.locator('.monaco-editor');
-        await clearTextField(textInputField);
-        await textInputField.pressSequentially(fileContent!);
+        // Use specific selector for the drag-and-drop question editor
+        const textInputField = this.page.locator('.edit-dnd-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
     }
 
     async createDragAndDropItem(text: string) {
@@ -138,7 +137,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
         await this.page.locator('#quiz-save').click();
         return await responsePromise;
     }

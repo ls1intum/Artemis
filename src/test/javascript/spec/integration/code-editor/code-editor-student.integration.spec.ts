@@ -28,7 +28,6 @@ import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/a
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
-import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import {
     CodeEditorBuildLogService,
@@ -66,13 +65,11 @@ describe('CodeEditorStudentIntegration', () => {
     let container: CodeEditorStudentContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;
-    let codeEditorRepositoryService: CodeEditorRepositoryService;
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let route: ActivatedRoute;
 
-    let checkIfRepositoryIsCleanStub: jest.SpyInstance;
     let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
     let getFeedbackDetailsForResultStub: jest.SpyInstance;
     let getStudentParticipationWithLatestResultStub: jest.SpyInstance;
@@ -137,7 +134,6 @@ describe('CodeEditorStudentIntegration', () => {
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
 
-                codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 resultService = TestBed.inject(ResultService);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
@@ -149,7 +145,6 @@ describe('CodeEditorStudentIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-                checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
                 subscribeForLatestResultOfParticipationStub = jest
                     .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
                     .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
@@ -189,31 +184,24 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.participation).toEqual({ ...participation, submissions: [{ ...submission, results: [result] }] });
     });
 
-    // TODO re-enable after remove-gitalb issues are resolved
-    it.skip('should show the repository locked badge and disable the editor actions if the participation is locked', () => {
+    it('should show the repository locked badge and disable the editor actions when due date has passed', () => {
         container.ngOnInit();
+        const exercise = { id: 99, dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise;
         const participation = {
             id: 1,
-            results: [result],
-            exercise: { id: 99, dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise,
-            locked: true,
+            submissions: [{ id: 1, results: [result] }],
+            exercise,
+            testRun: false, // Not practice mode
         } as any;
-        const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
-        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
-        const isCleanSubject = new Subject();
         getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
-        getFeedbackDetailsForResultStub.mockReturnValue(getFeedbackDetailsForResultSubject);
-        checkIfRepositoryIsCleanStub.mockReturnValue(isCleanSubject);
 
         routeSubject.next({ participationId: 1 });
         findWithLatestResultSubject.next(participation);
-        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         containerFixture.detectChanges();
-        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
 
-        // Repository should be locked, the student can't write into it anymore.
+        // Repository should be locked because due date has passed and it's not practice mode
         expect(container.repositoryIsLocked).toBeTrue();
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
         expect(container.codeEditorContainer.fileBrowser.disableActions).toBeTrue();

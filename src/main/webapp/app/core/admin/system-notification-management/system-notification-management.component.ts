@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -55,7 +55,6 @@ enum NotificationState {
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
     private readonly systemNotificationService = inject(SystemNotificationService);
@@ -98,7 +97,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     readonly predicate = signal('notificationDate');
 
     /** Previous page number for change detection */
-    private previousPage = 1;
+    private readonly previousPage = signal(1);
 
     /** Sort order (true = ascending) */
     readonly reverse = signal(false);
@@ -120,7 +119,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
             const pagingParams = data['pagingParams'];
             if (pagingParams) {
                 this.page.set(pagingParams.page);
-                this.previousPage = pagingParams.page;
+                this.previousPage.set(pagingParams.page);
                 this.reverse.set(pagingParams.ascending);
                 this.predicate.set(pagingParams.predicate);
             }
@@ -234,8 +233,8 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param page - The page number to load
      */
     loadPage(page: number): void {
-        if (page !== this.previousPage) {
-            this.previousPage = page;
+        if (page !== this.previousPage()) {
+            this.previousPage.set(page);
             this.page.set(page);
             this.transition();
         }

@@ -3,8 +3,19 @@
 Server Setup
 ------------
 
+.. note::
+    **First-time deployment checklist:**
+    
+    Before starting the Artemis server for the first time:
+    
+    1. **Database**: Ensure a database is running. See :ref:`Database Setup <Database Setup>` for instructions.
+    2. **Configuration**: Create ``application-local.yml`` in ``src/main/resources/config`` (see Configuration Setup below).
+    3. **Deployment**: We recommend deploying **Artemis Server (Dev, BuildAgent+LocalCI)** for local development.
+
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
 Make sure to install the **Spring Boot** plugins for IntelliJ IDEA, this will make it easier to run the server.
+
+As an alternative, you may consider running the entire Artemis application using the Helios application. See :ref:`setup-with-helios` for more details.
 
 Before starting the application, update the required configuration settings.
 
@@ -33,6 +44,7 @@ Common Configuration Options
 
 For **development purposes, these settings are preconfigured, and no action is necessary** in this step.
 You only need to modify them if your specific work or production environments require changes.
+For example, when using Hyperion for AI-based programming exercise generation, you will need to add an OpenAI key.
 
 .. code:: yaml
 
@@ -86,7 +98,7 @@ Run the server via a run configuration in IntelliJ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
-When you import the project into IntelliJ the run configurations will also be imported.
+When you import the project into IntelliJ, the run configurations will also be imported.
 
 The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot
 module replacement in the client.
@@ -94,15 +106,20 @@ module replacement in the client.
 * **Artemis (Client):** Will execute ``npm install`` and ``npm run start``. The client will be available at
   `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
   :ref:`Client Setup <client-setup>`).
-* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles
-  ``dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap,local``.
-* **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles
-  ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
-* **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
-  (see `Athena Service <#athena-service>`__).
-* **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
-* **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
+* **Artemis BuildAgent (Prod):** The server will be started separately from the client with the profiles ``buildagent,local``.
   This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+* **Artemis Server (Dev, BuildAgent+LocalCI):** The server will be started separately from the client with the profiles
+  ``dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local``.
+* **Artemis Server (Dev, Core, Jenkins):** The server will be started separately from the client with the profiles
+  ``dev,jenkins,localvc,artemis,scheduling,core,local``.
+* **Artemis Server (Dev, LocalCI+BuildAgent, Athena):** The server will be started separately from the client with the profiles
+  ``dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local``.
+* **Artemis Server (Dev, LocalCI+BuildAgent, Iris):** The server will be started separately from the client with the profiles
+  ``dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local``.
+* **Artemis Server (Dev, LocalCI+BuildAgent, Theia):** The server will be started separately from the client with the profiles
+  ``theia,dev,localci,localvc,artemis,scheduling,buildagent,core,ldap,local``.
+* **Artemis Server (Prod, Core, LocalCI):** The server will be started separately from the client with the profiles
+  ``prod,core,ldap,localvc,localci,scheduling,local``.
 
 Deprecated Options
 """""""""""""""""""
@@ -258,5 +275,5 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 Production setup
 """"""""""""""""
 
-See `Hyperion Service <https://ls1intum.github.io/Artemis/admin/hyperion>`_ in the Administration Guide for instructions on enabling the
+See `Hyperion Service Administration Guide <https://ls1intum.github.io/Artemis/admin/hyperion>`_ for instructions on enabling the
 module in production and configuring LLM credentials.
