@@ -36,7 +36,7 @@ This PR implements the Weaviate Java client integration with automatic schema va
 1. **Weaviate Client Configuration**
    - `WeaviateConfigurationProperties`: Configuration for host, port, gRPC port, and schema validation settings
    - `WeaviateClientConfiguration`: Creates the Weaviate client bean
-   - New Spring profile `weaviate` to enable the integration
+   - Property-based activation via `artemis.weaviate.enabled=true`
 
 2. **Schema Definitions** (matching Iris Python schemas)
    - `Lectures` (LectureUnitPageChunk) - Lecture slide content
@@ -59,6 +59,7 @@ This PR implements the Weaviate Java client integration with automatic schema va
 ```yaml
 artemis:
   weaviate:
+    enabled: true        # Enable/disable Weaviate integration
     host: localhost
     port: 8001
     grpc-port: 50051
@@ -76,10 +77,8 @@ artemis:
 - `gradle.properties`: Added `weaviate_client_version=6.0.0`
 - `build.gradle`: Added Weaviate client dependency
 - `docker/weaviate.yml`: Upgraded to Weaviate 1.33.0 (required for Java client v6)
-- `Constants.java`: Added `PROFILE_WEAVIATE`
 - `spring.factories`: Registered failure analyzer
-- `application-artemis.yml`: Added weaviate configuration example
-- New `application-weaviate.yml`: Profile-specific configuration
+- New `application-weaviate.yml`: Default Weaviate configuration (sets `enabled: true`)
 
 
 ### Steps for Testing
@@ -88,9 +87,9 @@ Prerequisites:
 - Docker installed
 - Weaviate running (use `docker compose -f docker/weaviate.yml up -d`)
 
-**Test 1: Basic Startup with Weaviate Profile**
+**Test 1: Basic Startup with Weaviate Enabled**
 1. Start Weaviate: `docker compose -f docker/weaviate.yml up -d`
-2. Start Artemis with the weaviate profile: `--spring.profiles.active=dev,localci,localvc,artemis,scheduling,core,weaviate`
+2. Start Artemis with Weaviate enabled: `--artemis.weaviate.enabled=true` or set in configuration
 3. Verify in logs:
    - "Starting Weaviate schema validation against Iris repository..."
    - "Weaviate schema validation passed: Artemis schemas match Iris schemas"
@@ -99,17 +98,17 @@ Prerequisites:
 
 **Test 2: Schema Validation Failure (Strict Mode)**
 1. Temporarily modify a schema in `WeaviateSchemas.java` (e.g., rename a property)
-2. Start Artemis with the weaviate profile
+2. Start Artemis with Weaviate enabled
 3. Verify server fails to start with a helpful error message from the failure analyzer
 
 **Test 3: Schema Validation Warning (Non-Strict Mode)**
 1. Set `artemis.weaviate.schema-validation.strict: false`
 2. Temporarily modify a schema in `WeaviateSchemas.java`
-3. Start Artemis with the weaviate profile
+3. Start Artemis with Weaviate enabled
 4. Verify server starts but logs warnings about schema mismatches
 
 **Test 4: Disabled Weaviate**
-1. Start Artemis without the weaviate profile
+1. Start Artemis without setting `artemis.weaviate.enabled` (defaults to false)
 2. Verify no Weaviate-related logs appear and startup succeeds
 
 

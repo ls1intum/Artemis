@@ -1,14 +1,12 @@
 package de.tum.cit.aet.artemis.core.service.weaviate;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_WEAVIATE;
-
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSchema;
@@ -25,7 +23,7 @@ import io.weaviate.client6.v1.collections.Collection;
  * This service handles schema creation, data insertion, and search operations.
  */
 @Service
-@Profile(PROFILE_WEAVIATE)
+@ConditionalOnProperty(name = "artemis.weaviate.enabled", havingValue = "true")
 public class WeaviateService {
 
     private static final Logger log = LoggerFactory.getLogger(WeaviateService.class);

@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_WEAVIATE;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import io.weaviate.client6.WeaviateClient;
 import io.weaviate.client6.options.WeaviateLocalOptions;
@@ -17,7 +15,7 @@ import io.weaviate.client6.options.WeaviateLocalOptions;
  * This creates and configures the Weaviate client based on the application properties.
  */
 @Configuration
-@Profile(PROFILE_WEAVIATE)
+@ConditionalOnProperty(name = "artemis.weaviate.enabled", havingValue = "true")
 @EnableConfigurationProperties(WeaviateConfigurationProperties.class)
 public class WeaviateClientConfiguration {
 

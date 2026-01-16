@@ -1,12 +1,15 @@
 # ===================================================================
 # Weaviate vector database configuration
 #
-# This configuration is only active when the 'weaviate' Spring profile is enabled.
-# Use this profile to enable Weaviate integration for semantic search capabilities.
+# Set artemis.weaviate.enabled=true to enable Weaviate integration.
+# This can be done in your local configuration or via environment variable.
 # ===================================================================
 
 artemis:
   weaviate:
+    # Enable/disable Weaviate integration
+    enabled: true
+
     # Connection settings
     host: localhost
     port: 8001

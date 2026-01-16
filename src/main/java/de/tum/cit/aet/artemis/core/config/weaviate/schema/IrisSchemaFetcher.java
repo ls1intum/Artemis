@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config.weaviate.schema;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_WEAVIATE;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -17,7 +15,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
@@ -28,7 +26,7 @@ import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperti
  * property definitions for validation against the local Artemis schemas.
  */
 @Component
-@Profile(PROFILE_WEAVIATE)
+@ConditionalOnProperty(name = "artemis.weaviate.enabled", havingValue = "true")
 public class IrisSchemaFetcher {
 
     private static final Logger log = LoggerFactory.getLogger(IrisSchemaFetcher.class);

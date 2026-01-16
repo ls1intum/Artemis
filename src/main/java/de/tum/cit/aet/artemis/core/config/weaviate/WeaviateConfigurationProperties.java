@@ -1,17 +1,19 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_WEAVIATE;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration properties for the Weaviate vector database integration.
  * These properties control how Artemis connects to and interacts with Weaviate.
  */
-@Profile(PROFILE_WEAVIATE)
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public class WeaviateConfigurationProperties {
+
+    /**
+     * Whether Weaviate integration is enabled.
+     * When true, Weaviate beans will be loaded and connections established.
+     */
+    private boolean enabled = false;
 
     /**
      * The hostname or IP address of the Weaviate server.
@@ -37,6 +39,14 @@ public class WeaviateConfigurationProperties {
      * Schema validation configuration.
      */
     private SchemaValidation schemaValidation = new SchemaValidation();
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public String getHost() {
         return host;

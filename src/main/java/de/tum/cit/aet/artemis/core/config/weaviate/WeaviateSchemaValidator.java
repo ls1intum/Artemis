@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_WEAVIATE;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,9 +10,9 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.IrisSchemaFetcher;
@@ -31,7 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.WeaviateSchemaValidationException;
  * or log warnings (non-strict mode) when schema mismatches are detected.
  */
 @Component
-@Profile(PROFILE_WEAVIATE)
+@ConditionalOnProperty(name = "artemis.weaviate.enabled", havingValue = "true")
 @Lazy(false)
 @EnableConfigurationProperties(WeaviateConfigurationProperties.class)
 public class WeaviateSchemaValidator {
