@@ -18,6 +18,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentHistoryMessageDTO(String content, boolean isUser, @Nullable List<CompetencyPreviewDTO> competencyPreviews,
-                                          @Nullable List<CompetencyRelationPreviewDTO> relationPreviews, @Nullable RelationGraphPreviewDTO relationGraphPreview) {
+        @Nullable List<CompetencyRelationPreviewDTO> relationPreviews, @Nullable RelationGraphPreviewDTO relationGraphPreview) {
 
 }

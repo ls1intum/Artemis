@@ -94,7 +94,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, "gpt-4o",0.2);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, "gpt-4o", 0.2);
         boolean available = serviceWithNullClient.isAvailable();
 
         assertThat(available).isFalse();
