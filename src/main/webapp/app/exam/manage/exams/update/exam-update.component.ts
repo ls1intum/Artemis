@@ -19,7 +19,7 @@ import { DocumentationType } from 'app/shared/components/buttons/documentation-b
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -49,7 +49,6 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
         ConfirmEntityNameComponent,
-        ReactiveFormsModule,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
