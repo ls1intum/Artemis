@@ -270,12 +270,16 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     /**
      * Updates the confirmation state of the date change modal.
-     * The confirm action is only enabled when the entered value matches the exam title.
+     * The confirm action is only enabled when:
+     * - an entered value exists
+     * - the exam title is defined
+     * - the entered value exactly matches the exam title
      */
     onConfirmNameChange(value: string) {
         this.confirmEntityNameValue.set(value);
         if (this.activeModalRef) {
-            this.activeModalRef.componentInstance.confirmDisabled = value !== this.exam.title;
+            const confirmDisabled = !value || !this.exam.title || value !== this.exam.title;
+            this.activeModalRef.componentInstance.confirmDisabled = confirmDisabled;
         }
     }
 
