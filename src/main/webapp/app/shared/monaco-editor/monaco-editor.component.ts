@@ -287,14 +287,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.textChangedListener = this._editor.onDidChangeModelContent(() => {
                 this.ngZone.run(() => this.emitTextChangeEvent());
             });
-            //
-            // // Restore content height listener for normal editor
-            // this.contentHeightListener?.dispose();
-            // this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
-            //     if (event.contentHeightChanged) {
-            //         this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
-            //     }
-            // });
         });
 
         // Re-register all actions with the restored adapter for normal mode
@@ -914,7 +906,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     setWordWrap(value: boolean): void {
-        this._editor.updateOptions({
+        this.getActiveEditor().updateOptions({
             wordWrap: value ? 'on' : 'off',
         });
     }
@@ -934,7 +926,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param options The options to apply.
      */
     applyOptionPreset(options: MonacoEditorOptionPreset): void {
-        options.apply(this._editor);
+        options.apply(this.getActiveEditor());
     }
 
     public getCustomBackspaceCommandId(): string | undefined {

@@ -457,7 +457,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             instruction: 'Improve this',
             startLine: 1,
             endLine: 2,
-            startColumn: 0,
+            startColumn: 1,
             endColumn: 10,
         };
 
