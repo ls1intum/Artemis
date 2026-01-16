@@ -47,7 +47,6 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
                 return;
             }
 
-            // Don't show the notification to the user if not needed, e.g. conversation open
             if (!this.shouldShowNotification(notification)) {
                 // Calling closeClicked ensures the notification gets marked as seen
                 this.closeClicked(notification);
@@ -99,7 +98,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     }
 
     /**
-     * Checks whether it makes sense to show a notification to the user in the current context.
+     * Checks whether it makes sense to show a notification to the user in the current context, e.g. when a conversation is open.
      *
      * @param notification - The notification to potentially show
      * @returns shouldShow - Whether the notification should be shown
