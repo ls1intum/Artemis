@@ -40,8 +40,7 @@ public class LocalCIService implements StatelessCIService {
     }
 
     /**
-     * Get the current status of the build for the given participation, i.e.
-     * INACTIVE, QUEUED, or BUILDING.
+     * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
      *
      * @param participation participation for which to get status
      * @return build status
