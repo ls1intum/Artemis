@@ -75,23 +75,10 @@ if ! grep -Fq "$new_line" "$config_file"; then
     exit 1
 fi
 
-echo "==> Reverting change"
+# File restoration is handled by the EXIT trap via the restore() function.
 
-export REVERT_LINE="$revert_line"
-perl -0777 -i -pe 'BEGIN { $new=$ENV{NEW_DOTENV_LINE}; $revert=$ENV{REVERT_LINE}; }
-     s/\Q$new\E/$revert/g;
-' "$config_file"
-if ! grep -Fq "$revert_line" "$config_file"; then
-    echo "Error: Expected reverted dotenv line not found." >&2
-    exit 1
-fi
-rm -f "$backup_file"
+echo "==> Leaving patched file in place at: $config_file"
 
-echo "==> Restored original file at: $config_file"
-
-# No patched version is kept; the configuration file has been reverted.
-echo "No patched version kept; file has been restored to its original state."
-
-trap - EXIT
-
+# Keep the backup file available for manual restore if needed:
+echo "Backup saved at: $backup_file"
 echo "==> Done"
