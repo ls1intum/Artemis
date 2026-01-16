@@ -23,6 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
@@ -39,6 +41,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -159,14 +163,17 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             return;
         }
 
-        PlagiarismPostCreationResponseDTO createdPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave),
-                PlagiarismPostCreationResponseDTO.class, HttpStatus.CREATED);
+        JsonNode createdPostJson = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), JsonNode.class,
+                HttpStatus.CREATED);
 
-        Post persistedPost = postRepository.findByIdElseThrow(createdPost.id());
+        String raw = createdPostJson.toString();
+        assertThat(raw).doesNotContain("email");
+        assertThat(raw).doesNotContain("registrationNumber");
+        assertThat(raw).doesNotContain("\"login\"");
 
-        conversationUtilService.assertSensitiveInformationHidden(persistedPost);
+        long createdPostId = createdPostJson.get("id").asLong();
+        Post persistedPost = postRepository.findByIdElseThrow(createdPostId);
         checkCreatedPost(postToSave, persistedPost);
-
         List<Post> plagiarismPosts = postRepository.findPostsByPlagiarismCaseId(persistedPost.getPlagiarismCase().getId());
         assertThat(plagiarismPosts).hasSize(1);
     }
@@ -229,7 +236,8 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPost_asTutor() throws Exception {
         Post postToUpdate = editExistingPost(existingPlagiarismPosts.getFirst());
-        Post notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.FORBIDDEN);
+        PlagiarismPostUpdateResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                PlagiarismPostUpdateDTO.of(postToUpdate), PlagiarismPostUpdateResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -242,13 +250,22 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         postToUpdate.setContent(userMention);
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), PlagiarismPostUpdateDTO.of(postToUpdate),
+                    PlagiarismPostUpdateResponseDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
 
-        Post updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
-        assertThat(updatedPost).isEqualTo(postToUpdate);
+        JsonNode updatedPostJson = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), PlagiarismPostUpdateDTO.of(postToUpdate),
+                JsonNode.class, HttpStatus.OK);
+
+        String raw = updatedPostJson.toString();
+        assertThat(raw).doesNotContain("email");
+        assertThat(raw).doesNotContain("registrationNumber");
+        assertThat(raw).doesNotContain("\"login\"");
+
+        long updatedPostId = updatedPostJson.get("id").asLong();
+        Post persistedPost = postRepository.findByIdElseThrow(updatedPostId);
+        assertThat(persistedPost).isEqualTo(postToUpdate);
     }
 
     @Test
@@ -257,19 +274,28 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.getFirst());
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class,
-                HttpStatus.FORBIDDEN);
+        PlagiarismPostUpdateResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(),
+                PlagiarismPostUpdateDTO.of(postToNotUpdate), PlagiarismPostUpdateResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testEditPostWithIdIsNull_badRequest() throws Exception {
+        PlagiarismPostUpdateDTO dto = new PlagiarismPostUpdateDTO(null, "title", "content");
+
+        PlagiarismPostUpdateResponseDTO updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/1", dto, PlagiarismPostUpdateResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(updatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEditPostWithIdIsNull_FailFast() {
         Post postToUpdate = existingPosts.getFirst();
         postToUpdate.setId(null);
 
-        Post updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
+        assertThatThrownBy(() -> PlagiarismPostUpdateDTO.of(postToUpdate)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("must have an id");
     }
 
     // GET
@@ -282,7 +308,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
         List<Post> returnedPosts = getPosts(params);
-        // get number of posts with a certain plagiarism context
+        // get the number of posts with a certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
         assertThat(returnedPosts.getFirst().getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
     }
@@ -295,7 +321,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
         List<Post> returnedPosts = getPosts(params);
-        // get amount of posts with certain plagiarism context
+        // get the number of posts with certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
     }
 
@@ -365,7 +391,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     private void checkCreatedPost(Post expectedPost, Post createdPost) {
-        // check if post was created with id
+        // check if the post was created with id
         assertThat(createdPost).isNotNull();
         assertThat(createdPost.getId()).isNotNull();
 

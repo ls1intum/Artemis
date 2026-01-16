@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 @Conditional(PlagiarismEnabled.class)
@@ -93,7 +94,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Persists the continuous plagiarism control plagiarism case post,
+     * Persists the continuous plagiarism control plagiarism case post
      * and sends a notification to affected user groups
      *
      * @param post post to create
@@ -104,18 +105,18 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
+     * Checks course, user, and post-validity,
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param postId   id of the post to update
      * @param post     post to update
      * @return updated post that was persisted
      */
-    public Post updatePost(Long courseId, Long postId, Post post) {
+    public Post updatePost(Long courseId, Long postId, PlagiarismPostUpdateDTO post) {
         // check
-        if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
+        if (post.id() == null || !Objects.equals(post.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
         }
 
@@ -124,16 +125,16 @@ public class PlagiarismPostService extends PostingService {
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        parseUserMentions(course, post.getContent());
+        parseUserMentions(course, post.content());
 
-        boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
+        boolean hasContentChanged = !existingPost.getContent().equals(post.content());
         if (hasContentChanged) {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
-        // update: allow overwriting of values only for depicted fields if user is at least student
-        existingPost.setTitle(post.getTitle());
-        existingPost.setContent(post.getContent());
+        // update: allow overwriting of values only for depicted fields if the user is an at least student
+        existingPost.setTitle(post.title());
+        existingPost.setContent(post.content());
 
         Post updatedPost = postRepository.save(existingPost);
 
@@ -143,7 +144,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
+     * Checks course, user, and post-validity,
      * retrieves and filters posts for a plagiarism case by its id
      * and ensures that sensitive information is filtered out
      *
@@ -153,7 +154,7 @@ public class PlagiarismPostService extends PostingService {
     public List<Post> getAllPlagiarismCasePosts(PostContextFilterDTO postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
-        // user has to be at least student in the course
+        // the user has to be at least a student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.plagiarismCaseId());
 
@@ -174,10 +175,10 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
-     * determines authority to delete post and deletes the post
+     * Checks course, user, and post-validity,
+     * determines authority to delete a post, and deletes the post
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param postId   id of the post to delete
      */
     public void deletePostById(Long courseId, Long postId) {
@@ -202,7 +203,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Retrieve post from database by id
+     * Retrieve post from the database by id
      *
      * @param postId id of requested post
      * @return retrieved post
@@ -212,7 +213,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Retrieve post or message post from database by id
+     * Retrieve post or message post from the database by id
      *
      * @param postOrMessageId ID of requested post or message
      * @return retrieved post

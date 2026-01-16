@@ -207,6 +207,7 @@
             "studentMissing": "Der Plagiatsfall ist keinem Studierenden zugeordnet."
         },
         "PlagiarismPost": {
+            "idNull": "Der Beitrag muss eine ID besitzen.",
             "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
         },
         "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert."

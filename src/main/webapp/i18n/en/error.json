@@ -207,6 +207,7 @@
             "studentMissing": "The plagiarism case is not associated with a student."
         },
         "PlagiarismPost": {
+            "idNull": "The plagiarism post must have an id.",
             "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
         },
         "courseInformationSharingDisabled": "Posting is disabled for this course."
