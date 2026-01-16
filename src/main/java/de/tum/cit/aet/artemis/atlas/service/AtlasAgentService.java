@@ -272,7 +272,6 @@ public class AtlasAgentService {
                 SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
                 BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
                 RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
-                System.out.println("DEBUG: DKHALLLLL  Single relation preview: " + singleRelationPreview);
                 // Embed relation preview data in the response
                 String responseWithEmbeddedData = embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
 
@@ -301,17 +300,10 @@ public class AtlasAgentService {
                 // Delegate to Competency Mapper
                 String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
 
-                System.out.println("DEBUG: Delegated to Competency Mapper");
-                System.out.println("DEBUG: Delegation response: " + delegationResponse);
-
                 // Retrieve relation preview data from ThreadLocal
                 SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
                 BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
                 RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
-
-                System.out.println("DEBUG: Single relation preview: " + singleRelationPreview);
-                System.out.println("DEBUG: Batch relation preview: " + batchRelationPreview);
-                System.out.println("DEBUG: Relation graph preview: " + relationGraphPreview);
 
                 // Embed relation preview data in the response
                 String responseWithEmbeddedData = embedRelationPreviewDataInResponse(delegationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
