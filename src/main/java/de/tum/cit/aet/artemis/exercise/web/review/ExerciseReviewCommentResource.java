@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.validation.Valid;
 
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
@@ -39,12 +37,6 @@ import de.tum.cit.aet.artemis.exercise.dto.review.UpdateCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -60,19 +52,9 @@ public class ExerciseReviewCommentResource {
 
     private final ExerciseVersionRepository exerciseVersionRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    private final GitService gitService;
-
-    public ExerciseReviewCommentResource(ExerciseReviewCommentService exerciseReviewCommentService, ExerciseVersionRepository exerciseVersionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, @Lazy GitService gitService) {
+    public ExerciseReviewCommentResource(ExerciseReviewCommentService exerciseReviewCommentService, ExerciseVersionRepository exerciseVersionRepository) {
         this.exerciseReviewCommentService = exerciseReviewCommentService;
         this.exerciseVersionRepository = exerciseVersionRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.gitService = gitService;
     }
 
     /**
@@ -88,11 +70,12 @@ public class ExerciseReviewCommentResource {
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
 
-        ExerciseVersion initialVersion = loadInitialVersion(createCommentThreadDTO.initialVersionId(), createCommentThreadDTO.targetType(), exerciseId);
-        String initialCommitSha = resolveInitialCommitSha(createCommentThreadDTO, exerciseId);
+        ExerciseVersion initialVersion = loadInitialVersion(createCommentThreadDTO.targetType(), exerciseId);
+        String initialCommitSha = exerciseReviewCommentService.resolveLatestCommitSha(createCommentThreadDTO.targetType(), createCommentThreadDTO.auxiliaryRepositoryId(),
+                exerciseId);
         CommentThread thread = toEntity(createCommentThreadDTO, initialVersion, initialCommitSha);
         CommentThread savedThread = exerciseReviewCommentService.createThread(exerciseId, thread);
-        return ResponseEntity.created(new URI("/api/communication/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
+        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
                 .body(new CommentThreadDTO(savedThread, List.of()));
     }
 
@@ -126,7 +109,7 @@ public class ExerciseReviewCommentResource {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
         Comment comment = toEntity(createCommentDTO);
         Comment savedComment = exerciseReviewCommentService.createComment(threadId, comment);
-        return ResponseEntity.created(new URI("/api/communication/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
+        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
     }
 
     /**
@@ -177,24 +160,12 @@ public class ExerciseReviewCommentResource {
         return ResponseEntity.ok().build();
     }
 
-    private ExerciseVersion loadInitialVersion(Long initialVersionId, CommentThreadLocationType targetType, long exerciseId) {
-        if (initialVersionId == null) {
-            if (targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
-                return null;
-            }
-            return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId)
-                    .orElseThrow(() -> new BadRequestAlertException("No exercise version available for problem statement thread", THREAD_ENTITY_NAME, "initialVersionMissing"));
-        }
-
+    private ExerciseVersion loadInitialVersion(CommentThreadLocationType targetType, long exerciseId) {
         if (targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
             return null;
         }
-
-        ExerciseVersion initialVersion = exerciseVersionRepository.findById(initialVersionId).orElseThrow(() -> new EntityNotFoundException("ExerciseVersion", initialVersionId));
-        if (!Objects.equals(initialVersion.getExerciseId(), exerciseId)) {
-            throw new BadRequestAlertException("Initial version does not belong to exercise", THREAD_ENTITY_NAME, "initialVersionMismatch");
-        }
-        return initialVersion;
+        return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId)
+                .orElseThrow(() -> new BadRequestAlertException("No exercise version available for problem statement thread", THREAD_ENTITY_NAME, "initialVersionMissing"));
     }
 
     private CommentThread toEntity(CreateCommentThreadDTO dto, ExerciseVersion initialVersion, String initialCommitSha) {
@@ -227,48 +198,4 @@ public class ExerciseReviewCommentResource {
                 Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).toList();
     }
 
-    private String resolveInitialCommitSha(CreateCommentThreadDTO dto, long exerciseId) {
-        if (dto.initialCommitSha() != null) {
-            return dto.initialCommitSha();
-        }
-
-        CommentThreadLocationType targetType = dto.targetType();
-        if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return null;
-        }
-
-        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId)
-                .orElseThrow(() -> new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming"));
-
-        LocalVCRepositoryUri repositoryUri = switch (targetType) {
-            case TEMPLATE_REPO -> exercise.getVcsTemplateRepositoryUri() != null ? exercise.getVcsTemplateRepositoryUri()
-                    : exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getVcsRepositoryUri() : null;
-            case SOLUTION_REPO -> exercise.getVcsSolutionRepositoryUri() != null ? exercise.getVcsSolutionRepositoryUri()
-                    : exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getVcsRepositoryUri() : null;
-            case TEST_REPO -> exercise.getVcsTestRepositoryUri();
-            case AUXILIARY_REPO -> getAuxiliaryRepositoryUri(dto.auxiliaryRepositoryId(), exerciseId);
-            default -> null;
-        };
-
-        if (repositoryUri == null) {
-            log.warn("Repository URI missing for thread target {} in exercise {}", targetType, exerciseId);
-            return null;
-        }
-
-        return gitService.getLastCommitHash(repositoryUri);
-    }
-
-    private LocalVCRepositoryUri getAuxiliaryRepositoryUri(Long auxiliaryRepositoryId, long exerciseId) {
-        if (auxiliaryRepositoryId == null) {
-            throw new BadRequestAlertException("Auxiliary repository id is required", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
-        }
-
-        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findById(auxiliaryRepositoryId)
-                .orElseThrow(() -> new EntityNotFoundException("AuxiliaryRepository", auxiliaryRepositoryId));
-        if (auxiliaryRepository.getExercise() == null || auxiliaryRepository.getExercise().getId() == null
-                || !Objects.equals(auxiliaryRepository.getExercise().getId(), exerciseId)) {
-            throw new BadRequestAlertException("Auxiliary repository does not belong to exercise", THREAD_ENTITY_NAME, "auxiliaryRepositoryMismatch");
-        }
-        return auxiliaryRepository.getVcsRepositoryUri();
-    }
 }
