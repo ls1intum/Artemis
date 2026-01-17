@@ -334,6 +334,9 @@ describe('BuildQueueComponent', () => {
         // Initialize the component
         component.ngOnInit();
 
+        // Admin view should be enabled when no courseId is present
+        expect(component.isAdministrationView()).toBe(true);
+
         // Expectations: The service methods for general build jobs are called
         expect(mockBuildQueueService.getQueuedBuildJobs).toHaveBeenCalled();
         expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalled();
@@ -362,10 +365,18 @@ describe('BuildQueueComponent', () => {
         // Initialize the component
         component.ngOnInit();
 
+        // Admin view should be disabled when courseId is present
+        expect(component.isAdministrationView()).toBe(false);
+
         // Expectations: The service methods are called with the test course ID
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
+
+        // Expectations: The service methods for general build jobs should not be called
+        expect(mockBuildQueueService.getQueuedBuildJobs).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getRunningBuildJobs).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
@@ -585,33 +596,86 @@ describe('BuildQueueComponent', () => {
         expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
     });
 
-    it('should download build logs', () => {
-        const buildJobId = '1';
+    describe('BuildOverviewComponent Download Logs', () => {
+        let alertService: AlertService;
+        let originalClick: typeof HTMLAnchorElement.prototype.click;
+        let originalURL: typeof window.URL;
 
-        const buildLogsMultiLines = 'log1\nlog2\nlog3';
-        mockBuildQueueService.getBuildJobLogs = vi.fn().mockReturnValue(of(buildLogsMultiLines));
+        beforeEach(() => {
+            alertService = TestBed.inject(AlertService);
 
-        component.viewBuildLogs(undefined, buildJobId);
+            originalClick = HTMLAnchorElement.prototype.click;
+            HTMLAnchorElement.prototype.click = vi.fn();
 
-        expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
+            originalURL = window.URL;
+        });
 
-        const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
+        afterEach(() => {
+            HTMLAnchorElement.prototype.click = originalClick;
 
-        // Mock URL.createObjectURL to ensure consistent behavior across environments
-        global.URL.createObjectURL = vi.fn(() => 'mockedURL');
-        global.URL.revokeObjectURL = vi.fn();
+            // restore URL
+            Object.defineProperty(window, 'URL', {
+                value: originalURL,
+                writable: true,
+                configurable: true,
+            });
 
-        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            vi.restoreAllMocks();
+        });
 
-        component.downloadBuildLogs();
+        it('should show error alert when browser API is missing', async () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            const alertSpy = vi.spyOn(alertService, 'error');
 
-        component.downloadBuildLogs();
+            Object.defineProperty(window, 'URL', {
+                value: {},
+                writable: true,
+                configurable: true,
+            });
 
-        expect(downloadSpy).toHaveBeenCalledTimes(2);
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), `${buildJobId}.log`);
+
+            const [blobArg, filenameArg] = downloadSpy.mock.calls[0] as [Blob, string];
+            expect(filenameArg).toBe(`${buildJobId}.log`);
+            expect(blobArg.type).toBe('text/plain');
+            expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalled();
+        });
+
+        it('should download file when browser API is available', async () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
+
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            Object.defineProperty(window, 'URL', {
+                value: {
+                    createObjectURL: vi.fn(() => 'mock-url'),
+                    revokeObjectURL: vi.fn(),
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), `${buildJobId}.log`);
+
+            const [blobArg, filenameArg] = downloadSpy.mock.calls[0] as [Blob, string];
+            expect(filenameArg).toBe(`${buildJobId}.log`);
+            expect(blobArg.type).toBe('text/plain');
+            expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
     });
 });
