@@ -211,7 +211,7 @@
             "idNull": "The plagiarism post must have an id.",
             "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
         },
-        "courseInformationSharingDisabled": "Posting is disabled for this course."
+        "courseInformationSharingDisabled": "Posting is disabled for this course.",
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "You are not a super administrator and therefore not allowed to create a super administrator account.",
             "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."

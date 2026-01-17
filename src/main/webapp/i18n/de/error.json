@@ -211,7 +211,7 @@
             "idNull": "Der Beitrag muss eine ID besitzen.",
             "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
         },
-        "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert."
+        "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Du bist kein Super-Administrator und kannst daher keinen Super-Administrator-Account erstellen.",
             "onlySuperAdminCanManageSuperAdmins": "Du bist kein Super-Administrator und kannst daher keine Super-Administratoren-Accounts verwalten."
