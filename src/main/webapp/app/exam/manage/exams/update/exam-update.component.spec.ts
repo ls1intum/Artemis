@@ -36,6 +36,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { By } from '@angular/platform-browser';
 
 @Component({
     template: '',
@@ -50,12 +52,8 @@ describe('ExamUpdateComponent', () => {
     let profileService: ProfileService;
     let getProfileInfoSub: jest.SpyInstance;
 
-    const examWithoutExercises = new Exam();
-    examWithoutExercises.id = 1;
-
-    const course = new Course();
-    course.id = 1;
-    course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+    let examWithoutExercises: Exam;
+    let course: Course;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -68,6 +66,11 @@ describe('ExamUpdateComponent', () => {
 
     describe('create and edit exams', () => {
         beforeEach(() => {
+            examWithoutExercises = new Exam();
+            examWithoutExercises.id = 1;
+            course = new Course();
+            course.id = 1;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             TestBed.configureTestingModule({
                 imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
@@ -482,7 +485,13 @@ describe('ExamUpdateComponent', () => {
             const alertServiceSpy = jest.spyOn(alertService, 'error');
             const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
 
-            // trigger save
+            component.exam.id = undefined;
+            const now = dayjs();
+            component.exam.visibleDate = now;
+            component.exam.startDate = now.add(1, 'hour');
+            component.exam.endDate = now.add(2, 'hours');
+            component.exam.workingTime = 3600;
+
             component.save();
             tick();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -567,6 +576,65 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.numberOfExercisesInExam).toBe(40);
             expect(component.isValidNumberOfExercises).toBeTrue();
         });
+
+        it('should bind correct title into jhi-button and compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle).toBe('entity.action.save');
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.title).toBe('entity.action.save');
+        });
+
+        it('should bind isSaving into jhi-button isLoading', () => {
+            fixture.detectChanges();
+
+            component.isSaving = true;
+            fixture.changeDetectorRef.detectChanges();
+
+            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.isLoading).toBeTrue();
+
+            component.isSaving = false;
+            fixture.changeDetectorRef.detectChanges();
+
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.isLoading).toBeFalse();
+        });
+
+        it('should toggle save button disabled state based on form validity and configuration validity', fakeAsync(() => {
+            const now = dayjs().startOf('minute');
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+
+            fixture.changeDetectorRef.detectChanges();
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            const invalidSpy = jest.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            //Step 1: Test case where the configuration and the form are valid
+            expect(component.isValidConfiguration).toBeTrue();
+            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeFalse();
+
+            // Step 2: Test case where the configuration is invalid
+            examWithoutExercises.startDate = now.add(5, 'hours');
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBeFalse();
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeTrue();
+
+            // Step 3: Test case where the configuration is valid again, but the form is invalid
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
+            invalidSpy.mockReturnValue(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBeTrue();
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeTrue();
+        }));
     });
 
     describe('import exams', () => {
@@ -840,6 +908,13 @@ describe('ExamUpdateComponent', () => {
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
             expect(alertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should bind correct title into jhi-button and compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle).toBe('entity.action.import');
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.title).toBe('entity.action.import');
         });
     });
 });
