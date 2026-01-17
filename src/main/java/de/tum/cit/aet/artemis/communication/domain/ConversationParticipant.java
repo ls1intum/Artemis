@@ -46,6 +46,9 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "is_muted")
     private boolean isMuted;
 
+    @Column(name = "is_marked_as_unread")
+    private boolean isMarkedAsUnread;
+
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
 
@@ -141,5 +144,9 @@ public class ConversationParticipant extends DomainObject {
 
     public void setIsMuted(boolean isMuted) {
         this.isMuted = isMuted;
+    }
+
+    public void setIsMarkedAsUnread(boolean isMarkedAsUnread) {
+        this.isMarkedAsUnread = isMarkedAsUnread;
     }
 }

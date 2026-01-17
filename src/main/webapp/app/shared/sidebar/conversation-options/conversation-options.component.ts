@@ -1,7 +1,17 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBoxArchive,
+    faBoxOpen,
+    faEllipsisVertical,
+    faEnvelope,
+    faEnvelopeOpen,
+    faGear,
+    faHeart as faHearthSolid,
+    faVolumeUp,
+    faVolumeXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -43,6 +53,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     favorite$ = new Subject<boolean>();
     hide$ = new Subject<boolean>();
     mute$ = new Subject<boolean>();
+    markAsUnread$ = new Subject<boolean>();
 
     course: Course;
 
@@ -62,6 +73,8 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     faVolumeXmark = faVolumeXmark;
     faVolumeUp = faVolumeUp;
     faGear = faGear;
+    faEnvelope = faEnvelope;
+    faEnvelopeOpen = faEnvelopeOpen;
 
     getAsGroupChat = getAsGroupChatDTO;
 
@@ -72,6 +85,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.updateConversationIsFavorite();
         this.updateConversationIsHidden();
         this.updateConversationIsMuted();
+        this.updateConversationIsMarkedAsUnread();
         this.conversationAsChannel = getAsChannelDTO(this.conversation);
         this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
@@ -114,6 +128,11 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     onMuteClicked($event: MouseEvent) {
         $event.stopPropagation();
         this.mute$.next(!this.conversation.isMuted);
+    }
+
+    onMarkAsUnreadClicked($event: MouseEvent) {
+        $event.stopPropagation();
+        this.markAsUnread$.next(!this.conversation.isMarkedAsUnread);
     }
 
     openConversationDetailDialog(event: MouseEvent) {
@@ -168,6 +187,20 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
             this.conversationService.updateIsMuted(this.course.id, this.conversation.id, isMuted).subscribe({
                 next: () => {
                     this.conversation.isMuted = isMuted;
+                    this.onUpdateSidebar.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        });
+    }
+
+    private updateConversationIsMarkedAsUnread() {
+        this.markAsUnread$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMarkedAsUnread) => {
+            if (!this.course.id || !this.conversation.id) return;
+
+            this.conversationService.updateIsMarkedAsUnread(this.course.id, this.conversation.id, isMarkedAsUnread).subscribe({
+                next: () => {
+                    this.conversation.isMarkedAsUnread = isMarkedAsUnread;
                     this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

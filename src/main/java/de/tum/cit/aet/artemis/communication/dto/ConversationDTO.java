@@ -52,6 +52,9 @@ public class ConversationDTO {
     private Boolean isMuted;
 
     // property not taken from entity
+    private Boolean isMarkedAsUnread;
+
+    // property not taken from entity
     private Boolean isCreator;
 
     // property not taken from entity
@@ -167,6 +170,14 @@ public class ConversationDTO {
 
     public void setIsMuted(Boolean isMuted) {
         this.isMuted = isMuted;
+    }
+
+    public Boolean getIsMarkedAsUnread() {
+        return isMarkedAsUnread;
+    }
+
+    public void setIsMarkedAsUnread(Boolean isMarkedAsUnread) {
+        this.isMarkedAsUnread = isMarkedAsUnread;
     }
 
     public ZonedDateTime getLastReadDate() {

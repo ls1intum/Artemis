@@ -51,6 +51,8 @@
                     "hidden": "ausgeblendet",
                     "show": "Zeigen",
                     "hide": "Ausblenden",
+                    "markAsUnread": "Als ungelesen markieren",
+                    "markAsRead": "Als gelesen markieren",
                     "favorite": "Zu Favoriten hinzufügen",
                     "unfavorite": "Aus Favoriten entfernen",
                     "mute": "Stummschalten",

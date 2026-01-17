@@ -10,8 +10,9 @@ import java.time.ZonedDateTime;
  * @param isFavorite                true if the conversation is marked as favorite
  * @param isHidden                  true if the conversation is marked as hidden
  * @param isMuted                   true if the conversation is marked as muted
+ * @param isMarkedAsUnread          true if the conversation is marked as unread
  * @param lastRead                  the last date the participant read the messages in the conversation
  */
 public record ConversationParticipantSettingsView(Long conversationParticipantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, Boolean isMuted,
-        ZonedDateTime lastRead) {
+        Boolean isMarkedAsUnread, ZonedDateTime lastRead) {
 }
