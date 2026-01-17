@@ -213,6 +213,7 @@
             "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
             "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
             "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut."
+        },
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Du bist kein Super-Administrator und kannst daher keinen Super-Administrator-Account erstellen.",
             "onlySuperAdminCanManageSuperAdmins": "Du bist kein Super-Administrator und kannst daher keine Super-Administratoren-Accounts verwalten."
