@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 
 @Entity
@@ -42,6 +43,13 @@ public class Comment extends DomainObject {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "json", nullable = false)
     private CommentContentDTO content;
+
+    @ManyToOne
+    @JoinColumn(name = "initial_version_id")
+    private ExerciseVersion initialVersion;
+
+    @Column(name = "initial_commit_sha")
+    private String initialCommitSha;
 
     @CreatedDate
     @Column(name = "created_date", updatable = false)
@@ -81,6 +89,22 @@ public class Comment extends DomainObject {
 
     public void setContent(CommentContentDTO content) {
         this.content = content;
+    }
+
+    public ExerciseVersion getInitialVersion() {
+        return initialVersion;
+    }
+
+    public void setInitialVersion(ExerciseVersion initialVersion) {
+        this.initialVersion = initialVersion;
+    }
+
+    public String getInitialCommitSha() {
+        return initialCommitSha;
+    }
+
+    public void setInitialCommitSha(String initialCommitSha) {
+        this.initialCommitSha = initialCommitSha;
     }
 
     public Instant getCreatedDate() {
