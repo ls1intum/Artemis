@@ -143,7 +143,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.plagiarismCase = plagiarismCase;
         component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
-        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost.plagiarismCaseId).toBe(1);
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
@@ -172,7 +172,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.plagiarismCase = examPlagiarismCase;
         component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
-        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost.plagiarismCaseId).toBe(1);
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
@@ -201,7 +201,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.currentAccount = { id: 99, name: 'user' } as User;
 
         component.createEmptyPost();
-        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost.plagiarismCaseId).toBe(1);
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 

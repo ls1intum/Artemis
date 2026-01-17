@@ -38,6 +38,7 @@ import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismPostCreationDTO';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -497,7 +498,7 @@ export class MetisService implements OnDestroy {
         }
     }
     /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     * creates empty default post needed on initialization of a newly opened modal to edit or create a post
      * @param conversation optional conversation as default context
      * @param plagiarismCase optional plagiarism case as default context
      * @return {Post} created default object
@@ -510,6 +511,19 @@ export class MetisService implements OnDestroy {
             emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
         }
         return emptyPost;
+    }
+
+    /**
+     * Creates an empty plagiarism post DTO for initializing the create/edit modal.
+     *
+     * @param plagiarismCase optional plagiarism case used as default context
+     */
+    createEmptyPlagiarismPost(plagiarismCase?: PlagiarismCase): PlagiarismPostCreationDTO {
+        return {
+            plagiarismCaseId: plagiarismCase?.id,
+            visibleForStudents: true,
+            hasForwardedMessages: false,
+        };
     }
 
     /**
