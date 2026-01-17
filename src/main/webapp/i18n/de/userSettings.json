@@ -112,7 +112,8 @@
                 },
                 "error": {
                     "invalidCredential": "Es wurde ein ungültiger Passkey bereitgestellt. Bitte versuche es erneut mit einem anderen Authentifikator (z. B. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
-                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
+                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast. Sofern ein Passkey registriert ist, lade die Seite neu und versuche es erneut.",
+                    "loginDeactivated": "Login mit Passkey fehlgeschlagen, bitte lade die Seite erneut und probiere es nochmal. Falls das nicht hilft, scheint der Account deaktiviert zu sein.",
                     "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
                     "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
                     "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
