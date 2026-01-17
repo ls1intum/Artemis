@@ -1,0 +1,161 @@
+name: Ready to Merge Label Validator
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  validate-ready-to-merge:
+    if: github.event.label.name == 'ready to merge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Validate PR is ready to merge
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const author = context.payload.pull_request.user.login;
+
+            console.log(`Validating PR #${prNumber} for "ready to merge" label`);
+
+            // Get PR body
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber
+            });
+
+            const body = pr.body || '';
+            const issues = [];
+
+            // Check for unchecked checkboxes in the PR body
+            // Match both "- [ ]" and "- [ ] text" patterns
+            const checkboxRegex = /^[\s]*-\s*\[\s*\]\s+.+$/gm;
+            const uncheckedBoxes = body.match(checkboxRegex) || [];
+
+            if (uncheckedBoxes.length > 0) {
+              issues.push({
+                type: 'checkboxes',
+                count: uncheckedBoxes.length,
+                items: uncheckedBoxes.slice(0, 10).map(box => box.trim())
+              });
+            }
+
+            // Check for unresolved review threads using GraphQL API
+            // The REST API doesn't expose review thread resolution status
+            const query = `
+              query($owner: String!, $repo: String!, $prNumber: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $prNumber) {
+                    reviewThreads(first: 100) {
+                      nodes {
+                        isResolved
+                        comments(first: 1) {
+                          nodes {
+                            body
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const graphqlResult = await github.graphql(query, {
+              owner,
+              repo,
+              prNumber
+            });
+
+            const reviewThreads = graphqlResult.repository.pullRequest.reviewThreads.nodes;
+            const unresolvedThreads = reviewThreads.filter(thread => !thread.isResolved);
+
+            if (unresolvedThreads.length > 0) {
+              issues.push({
+                type: 'threads',
+                count: unresolvedThreads.length,
+                items: unresolvedThreads.slice(0, 5).map(thread => {
+                  const firstComment = thread.comments.nodes[0]?.body || '';
+                  // Truncate long comments
+                  return firstComment.length > 80 ? firstComment.substring(0, 77) + '...' : firstComment;
+                })
+              });
+            }
+
+            // If there are issues, remove label and post comment
+            if (issues.length > 0) {
+              console.log('PR is not ready to merge, removing label');
+
+              // Remove the label
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: 'ready to merge'
+                });
+                console.log('Label removed successfully');
+              } catch (error) {
+                // Label might already be removed
+                console.log('Could not remove label (may already be removed):', error.message);
+              }
+
+              // Build comment body
+              let commentBody = `@${author} The "ready to merge" label was removed because the PR is not yet ready:\n\n`;
+
+              const checkboxIssue = issues.find(i => i.type === 'checkboxes');
+              if (checkboxIssue) {
+                commentBody += `### Unchecked Tasks (${checkboxIssue.count})\n\n`;
+                checkboxIssue.items.forEach(item => {
+                  commentBody += `${item}\n`;
+                });
+                if (checkboxIssue.count > 10) {
+                  commentBody += `\n... and ${checkboxIssue.count - 10} more unchecked tasks\n`;
+                }
+                commentBody += '\n';
+              }
+
+              const threadIssue = issues.find(i => i.type === 'threads');
+              if (threadIssue) {
+                commentBody += `### Unresolved Review Threads (${threadIssue.count})\n\n`;
+                threadIssue.items.forEach((preview, index) => {
+                  commentBody += `${index + 1}. "${preview}"\n`;
+                });
+                if (threadIssue.count > 5) {
+                  commentBody += `\n... and ${threadIssue.count - 5} more unresolved threads\n`;
+                }
+                commentBody += '\n';
+              }
+
+              commentBody += `---\n`;
+              commentBody += `**To resolve:**\n`;
+              if (checkboxIssue) {
+                commentBody += `- Check all task checkboxes in the PR description (both Checklist and Review Progress sections)\n`;
+              }
+              if (threadIssue) {
+                commentBody += `- Resolve all review comment threads\n`;
+              }
+              commentBody += `\nOnce resolved, you can re-add the "ready to merge" label.`;
+
+              // Post comment
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+
+              console.log('Posted comment explaining why label was removed');
+              core.setFailed('PR is not ready to merge');
+            } else {
+              console.log('PR is ready to merge - all checkboxes checked and all review threads resolved');
+            }
