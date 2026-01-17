@@ -12,7 +12,7 @@ An exemplary deployment with Integrated Code Lifecycle (without using an externa
 Employing the Integrated Code Lifecycle, administrators and developers can set the Artemis application up without the need for dedicated VCS and CIS installations.
 This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
 Developers have fewer applications to run in parallel, which translates into decreased system requirements.
-See :ref:`Integrated Code Lifecycle Setup` on how to set up a single-node environment for developing purposes. TODO: Additional reference to the production setup.
+See the `Integrated Code Lifecycle Setup <https://ls1intum.github.io/Artemis/staff/setup#integrated-code-lifecycle-setup>`_ guide on how to set up a single-node environment for developing purposes. TODO: Additional reference to the production setup.
 
 .. _local_vc:
 
