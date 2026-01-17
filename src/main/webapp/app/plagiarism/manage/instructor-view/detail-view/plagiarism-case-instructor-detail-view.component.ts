@@ -252,7 +252,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.createEmptyPost();
             },
             error: () => {
-                this.isNotifyingStudent = false;
+                this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.notificationFailed');
             },
         });
     }

@@ -213,8 +213,9 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Course course = conversationUtilService.createCourseWithPostsDisabled();
         courseId = course.getId();
         Post postToSave = createPostWithoutContext();
+        var invalidDto = new PlagiarismPostCreationDTO(null, postToSave.getContent(), postToSave.getTitle(), true, false, null);
 
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", invalidDto, PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

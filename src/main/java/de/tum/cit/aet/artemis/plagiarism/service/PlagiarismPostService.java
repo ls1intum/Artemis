@@ -126,7 +126,7 @@ public class PlagiarismPostService extends PostingService {
 
         parseUserMentions(course, post.getContent());
 
-        boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
+        boolean hasContentChanged = !Objects.equals(existingPost.getContent(), post.getContent());
         if (hasContentChanged) {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
