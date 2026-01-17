@@ -247,7 +247,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             },
             error: () => {
                 this.isAgentTyping.set(false);
-                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error.relationCreateFailed'), false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error.relationMappingFailed'), false);
 
                 // Restore focus to input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
