@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -200,15 +201,17 @@ public class AtlasMLService {
      * @return true if successful, false otherwise
      */
     public boolean mapCompetencyToCompetency(Long sourceCompetencyId, Long targetCompetencyId) {
+        if (!isAtlasMLFeatureEnabled("map competency to competency operation")) {
+            return false;
+        }
         try {
             log.debug("Mapping competency {} to competency {}", sourceCompetencyId, targetCompetencyId);
 
             HttpHeaders headers = buildHeadersWithAuth();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO requestBody = new de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO(
-                    sourceCompetencyId, targetCompetencyId);
-            HttpEntity<de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO> entity = new HttpEntity<>(requestBody, headers);
+            MapCompetencyToCompetencyRequestDTO requestBody = new MapCompetencyToCompetencyRequestDTO(sourceCompetencyId, targetCompetencyId);
+            HttpEntity<MapCompetencyToCompetencyRequestDTO> entity = new HttpEntity<>(requestBody, headers);
 
             String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT;
             ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);

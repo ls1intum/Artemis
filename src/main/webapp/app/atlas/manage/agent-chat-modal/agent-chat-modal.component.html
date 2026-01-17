@@ -106,9 +106,17 @@
                                             [disabled]="isAgentTyping() || message.relationCreated"
                                         >
                                             @if (message.relationCreated) {
-                                                {{ 'artemisApp.agent.chat.mapped' | artemisTranslate }}
+                                                @if (isRelationUpdateOperation(message)) {
+                                                    {{ 'artemisApp.agent.chat.updated' | artemisTranslate }}
+                                                } @else {
+                                                    {{ 'artemisApp.agent.chat.mapped' | artemisTranslate }}
+                                                }
                                             } @else {
-                                                {{ 'artemisApp.agent.chat.map' | artemisTranslate }}
+                                                @if (isRelationUpdateOperation(message)) {
+                                                    {{ 'artemisApp.agent.chat.update' | artemisTranslate }}
+                                                } @else {
+                                                    {{ 'artemisApp.agent.chat.map' | artemisTranslate }}
+                                                }
                                             }
                                         </button>
                                     </div>

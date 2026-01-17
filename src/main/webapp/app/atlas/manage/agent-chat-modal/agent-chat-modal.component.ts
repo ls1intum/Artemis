@@ -12,7 +12,7 @@ import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { Competency, CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 
@@ -84,6 +84,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected closeModal(): void {
+        this.competencyCache.clear();
+        this.relationCache.clear();
         this.activeModal.close();
     }
 
@@ -456,16 +458,28 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     relationId = isNaN(parsed) ? -(index + 1) : parsed;
                 }
 
+                // Validate relation type against known enum values
+                const validRelationTypes = Object.values(CompetencyRelationType);
+                const relationType = validRelationTypes.includes(edge.label as CompetencyRelationType) ? (edge.label as CompetencyRelationType) : CompetencyRelationType.ASSUMES;
+
                 return {
                     id: relationId,
                     headCompetencyId: parseInt(edge.source, 10),
                     tailCompetencyId: parseInt(edge.target, 10),
-                    relationType: edge.label as any,
+                    relationType,
                 };
             });
             this.relationCache.set(cacheKey, relations);
         }
 
         return this.relationCache.get(cacheKey)!;
+    }
+
+    /**
+     * Checks if the message contains an update operation (vs create).
+     * An update operation has at least one relationPreview with a relationId set.
+     */
+    protected isRelationUpdateOperation(message: ChatMessage): boolean {
+        return message.relationPreviews?.some((preview) => preview.relationId !== undefined) ?? false;
     }
 }

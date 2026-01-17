@@ -47,7 +47,7 @@ class AtlasAgentServiceTest {
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, null, "gpt-4o", 0.2);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, chatMemory, "gpt-4o", 0.2);
     }
 
     @Test

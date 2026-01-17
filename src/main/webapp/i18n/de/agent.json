@@ -29,8 +29,8 @@
                     "createdSingle": "Kompetenz erfolgreich erstellt!"
                 },
                 "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen.",
-                "map": "karte",
-                "mapped": "kartiert"
+                "map": "verknüpfen",
+                "mapped": "verknüpft"
             }
         }
     }

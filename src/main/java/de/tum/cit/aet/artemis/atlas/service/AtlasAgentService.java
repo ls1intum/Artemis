@@ -28,6 +28,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
@@ -91,8 +92,8 @@ public class AtlasAgentService {
     private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder()
             .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
 
-    private final Cache<String, List<CompetencyMappingToolsService.RelationOperation>> sessionPendingRelationOperationsCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
+    private final Cache<String, List<CompetencyRelationDTO>> sessionPendingRelationOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
+            .maximumSize(MAX_SESSIONS).build();
 
     private final ChatClient chatClient;
 
@@ -165,7 +166,7 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @return the cached relation operations, or null if none exist
      */
-    public List<CompetencyMappingToolsService.RelationOperation> getCachedRelationData(String sessionId) {
+    public List<CompetencyRelationDTO> getCachedRelationData(String sessionId) {
         return sessionPendingRelationOperationsCache.getIfPresent(sessionId);
     }
 
@@ -176,7 +177,7 @@ public class AtlasAgentService {
      * @param sessionId  the session ID
      * @param operations the relation operations to cache
      */
-    public void cacheRelationOperations(String sessionId, List<CompetencyMappingToolsService.RelationOperation> operations) {
+    public void cacheRelationOperations(String sessionId, List<CompetencyRelationDTO> operations) {
         sessionPendingRelationOperationsCache.put(sessionId, operations);
     }
 
@@ -261,7 +262,7 @@ public class AtlasAgentService {
             }
             else if (response.contains(CREATE_APPROVED_RELATION) || message.equals(CREATE_APPROVED_RELATION)) {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_MAPPER);
-                List<CompetencyMappingToolsService.RelationOperation> cachedRelationData = getCachedRelationData(sessionId);
+                List<CompetencyRelationDTO> cachedRelationData = getCachedRelationData(sessionId);
 
                 // Set sessionId for tool calls
                 CompetencyMappingToolsService.setCurrentSessionId(sessionId);
