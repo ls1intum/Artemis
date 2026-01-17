@@ -95,23 +95,136 @@ jobs:
         run: |
           chmod +x .ci/E2E-tests/cleanup.sh
           chmod +x .ci/E2E-tests/execute.sh
+          chmod +x .ci/E2E-tests/get-relevant-tests.sh
+          chmod +x .ci/E2E-tests/get-all-test-folders.sh
+          chmod +x .ci/E2E-tests/get-remaining-tests.sh
+
+      - name: Determine base branch
+        id: base-branch
+        run: |
+          if [ "${{ github.event.workflow_run.event }}" = "pull_request" ]; then
+            # For PRs, try to get the base branch from the PR
+            BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
+            PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+            BASE_BRANCH=$(echo "$PR_RESPONSE" | grep -o '"base":{"ref":"[^"]*"' | head -1 | sed 's/"base":{"ref":"//g' | sed 's/"//g')
+            if [ -z "$BASE_BRANCH" ]; then
+              BASE_BRANCH="origin/${{ github.event.repository.default_branch }}"
+            else
+              BASE_BRANCH="origin/$BASE_BRANCH"
+            fi
+          else
+            BASE_BRANCH="origin/${{ github.event.repository.default_branch }}"
+          fi
+          echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+          echo "Using base branch: $BASE_BRANCH"
+
+      - name: Get relevant tests for Phase 1
+        id: phase1-tests
+        run: |
+          BASE_BRANCH="${{ steps.base-branch.outputs.base_branch }}"
+          RELEVANT_TESTS=$(.ci/E2E-tests/get-relevant-tests.sh "$BASE_BRANCH")
+          echo "relevant_tests=$RELEVANT_TESTS" >> $GITHUB_OUTPUT
+          if [ -z "$RELEVANT_TESTS" ]; then
+            echo "No specific tests identified, will run all tests in Phase 1"
+          else
+            echo "Phase 1 will run tests in: $RELEVANT_TESTS"
+          fi
 
       - name: Run cleanup script (before E2E)
         run: .ci/E2E-tests/cleanup.sh
 
+      # Phase 1: Run relevant tests based on changes
       # If the workflow is triggered by a pull request, we need to run the tests on single node Artemis instance.
-      - name: Run E2E Playwright tests (MySQL, Local)
+      - name: Phase 1 - Run E2E Playwright tests (MySQL, Local)
+        id: phase1
         if: ${{ github.event.workflow_run.event == 'pull_request' }}
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright
+        run: |
+          RELEVANT_TESTS="${{ steps.phase1-tests.outputs.relevant_tests }}"
+          if [ -n "$RELEVANT_TESTS" ]; then
+            echo "Running Phase 1 tests: $RELEVANT_TESTS"
+            .ci/E2E-tests/execute.sh mysql-localci playwright "$RELEVANT_TESTS"
+          else
+            echo "Running all tests in Phase 1 (no specific tests identified)"
+            .ci/E2E-tests/execute.sh mysql-localci playwright
+          fi
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
       # If the workflow is triggered other events (by a push to a branch e.g. develop, main, or release), we need to run the tests on multi-node Artemis instance.
-      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+      - name: Phase 1 - Run E2E Playwright tests (MySQL, Local, Multi-Node)
+        id: phase1-multinode
         if: ${{ github.event.workflow_run.event != 'pull_request' }}
-        run: .ci/E2E-tests/execute.sh multi-node playwright
+        run: |
+          RELEVANT_TESTS="${{ steps.phase1-tests.outputs.relevant_tests }}"
+          if [ -n "$RELEVANT_TESTS" ]; then
+            echo "Running Phase 1 tests: $RELEVANT_TESTS"
+            .ci/E2E-tests/execute.sh multi-node playwright "$RELEVANT_TESTS"
+          else
+            echo "Running all tests in Phase 1 (no specific tests identified)"
+            .ci/E2E-tests/execute.sh multi-node playwright
+          fi
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
+
+      - name: Check Phase 1 results
+        id: phase1-check
+        if: always()
+        run: |
+          # Check Phase 1 outcome
+          PHASE1_OUTCOME="${{ steps.phase1.outcome || steps.phase1-multinode.outcome }}"
+          RELEVANT_TESTS="${{ steps.phase1-tests.outputs.relevant_tests }}"
+          
+          if [ "$PHASE1_OUTCOME" = "failure" ]; then
+            echo "phase1_passed=false" >> $GITHUB_OUTPUT
+            echo "phase2_needed=false" >> $GITHUB_OUTPUT
+            echo "Phase 1 failed, skipping Phase 2"
+          elif [ -z "$RELEVANT_TESTS" ]; then
+            echo "phase1_passed=true" >> $GITHUB_OUTPUT
+            echo "phase2_needed=false" >> $GITHUB_OUTPUT
+            echo "Phase 1 ran all tests, skipping Phase 2"
+          else
+            echo "phase1_passed=true" >> $GITHUB_OUTPUT
+            echo "phase2_needed=true" >> $GITHUB_OUTPUT
+            echo "Phase 1 passed, Phase 2 will run remaining tests"
+          fi
+
+      # Phase 2: Run remaining tests only if Phase 1 passed
+      - name: Get remaining tests for Phase 2
+        id: phase2-tests
+        if: steps.phase1-check.outputs.phase2_needed == 'true'
+        run: |
+          BASE_BRANCH="${{ steps.base-branch.outputs.base_branch }}"
+          RELEVANT_TESTS="${{ steps.phase1-tests.outputs.relevant_tests }}"
+          REMAINING_TESTS=$(.ci/E2E-tests/get-remaining-tests.sh "$BASE_BRANCH" "$RELEVANT_TESTS")
+          echo "remaining_tests=$REMAINING_TESTS" >> $GITHUB_OUTPUT
+          if [ -z "$REMAINING_TESTS" ]; then
+            echo "No remaining tests to run in Phase 2"
+          else
+            echo "Phase 2 will run tests in: $REMAINING_TESTS"
+          fi
+
+      - name: Phase 2 - Run E2E Playwright tests (MySQL, Local)
+        id: phase2
+        if: steps.phase1-check.outputs.phase1_passed == 'true' && steps.phase1-check.outputs.phase2_needed == 'true' && steps.phase2-tests.outputs.remaining_tests != '' && github.event.workflow_run.event == 'pull_request'
+        run: |
+          REMAINING_TESTS="${{ steps.phase2-tests.outputs.remaining_tests }}"
+          echo "Running Phase 2 tests: $REMAINING_TESTS"
+          .ci/E2E-tests/execute.sh mysql-localci playwright "$REMAINING_TESTS"
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Phase 2 - Run E2E Playwright tests (MySQL, Local, Multi-Node)
+        id: phase2-multinode
+        if: steps.phase1-check.outputs.phase1_passed == 'true' && steps.phase1-check.outputs.phase2_needed == 'true' && steps.phase2-tests.outputs.remaining_tests != '' && github.event.workflow_run.event != 'pull_request'
+        run: |
+          REMAINING_TESTS="${{ steps.phase2-tests.outputs.remaining_tests }}"
+          echo "Running Phase 2 tests: $REMAINING_TESTS"
+          .ci/E2E-tests/execute.sh multi-node playwright "$REMAINING_TESTS"
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 75
+
 
       - name: Upload JUnit Test Results
         if: success() || failure()

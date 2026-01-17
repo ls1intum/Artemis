@@ -2,6 +2,7 @@
 
 CONFIGURATION=$1
 TEST_FRAMEWORK=$2
+TEST_PATHS=$3  # Optional: space-separated list of test folder paths
 DB="mysql"
 
 echo "CONFIGURATION:"
@@ -28,6 +29,15 @@ echo $COMPOSE_FILE
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME="nginx"
+
+# Export test paths if provided (will be used by docker compose)
+if [ -n "$TEST_PATHS" ]; then
+    export PLAYWRIGHT_TEST_PATHS="$TEST_PATHS"
+    echo "Running tests in folders: $TEST_PATHS"
+else
+    export PLAYWRIGHT_TEST_PATHS=""
+    echo "Running all tests"
+fi
 
 cd docker
 
