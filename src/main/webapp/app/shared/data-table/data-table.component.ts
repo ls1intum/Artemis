@@ -252,7 +252,8 @@ export class DataTableComponent implements OnInit, OnChanges, OnDestroy {
      * Initializes the debounced resize subscription.
      */
     private initResizeSubscription(): void {
-        this.resizeSubscription = this.resize$.pipe(debounceTime(200)).subscribe(() => {
+        // 300ms debounce gives Safari enough time to stabilize layout
+        this.resizeSubscription = this.resize$.pipe(debounceTime(300)).subscribe(() => {
             this.resetDatatableLayout();
         });
     }
@@ -298,10 +299,18 @@ export class DataTableComponent implements OnInit, OnChanges, OnDestroy {
             });
         });
 
-        // Dispatch a resize event to trigger ngx-datatable's internal recalculation
+        // Force a reflow to ensure styles are applied before recalculation
+        // This is critical for Safari which may defer layout updates
+        void nativeElement.offsetHeight;
+
+        // Use requestAnimationFrame to wait for the next paint cycle
+        // This ensures the DOM has fully updated before triggering recalculation
         this.isDispatchingResize = true;
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
+        requestAnimationFrame(() => {
+            // Double RAF ensures we wait for both layout and paint phases
+            requestAnimationFrame(() => {
+                window.dispatchEvent(new Event('resize'));
+            });
         });
     }
 
