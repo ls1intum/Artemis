@@ -35,13 +35,13 @@ import {
     NgbNavOutlet,
 } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
-import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismPostCreationDTO';
+import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -58,7 +58,6 @@ import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/Plagia
         NgbDropdownMenu,
         NgbDropdownItem,
         PostingThreadComponent,
-        PostCreateEditModalComponent,
         NgbNav,
         NgbNavItem,
         NgbNavItemRole,
@@ -79,6 +78,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private themeService = inject(ThemeService);
     private accountService = inject(AccountService);
+    private plagiarismPostService = inject(PlagiarismPostService);
 
     courseId: number;
     plagiarismCaseId: number;
@@ -220,12 +220,61 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         return this.posts?.length > 0;
     }
 
-    onStudentNotified(post: Post) {
+    isNotifyingStudent = false;
+
+    notifyStudent(): void {
+        if (this.isNotifyingStudent) {
+            return;
+        }
+
+        const dto = this.createdPost;
+        if (!dto) {
+            return;
+        }
+
+        if (!dto.plagiarismCaseId) {
+            this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.missingPlagiarismCaseId');
+            return;
+        }
+
+        const title = (dto.title ?? '').trim();
+        const content = (dto.content ?? '').trim();
+        if (!title || !content) {
+            this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.missingTitleOrContent');
+            return;
+        }
+
+        this.isNotifyingStudent = true;
+
+        this.plagiarismPostService.createPlagiarismPost(this.courseId, dto).subscribe({
+            next: (createdPost: Post) => {
+                this.onStudentNotified(createdPost);
+                this.createEmptyPost();
+            },
+            error: () => {
+                this.isNotifyingStudent = false;
+            },
+        });
+    }
+
+    /**
+     * Called after successfully creating the plagiarism notification post.
+     * Adds the created post to the local list so the thread becomes visible immediately.
+     */
+    onStudentNotified(createdPost: Post): void {
+        this.isNotifyingStudent = false;
+
         if (!this.posts) {
             this.posts = [];
         }
-        this.posts.push(post);
+
+        const exists = this.posts.some((p) => p.id === createdPost.id);
+        if (!exists) {
+            this.posts.push(createdPost);
+        }
+
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
+        this.metisService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
     }
 
     /**

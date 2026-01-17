@@ -36,8 +36,6 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateDTO;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -91,12 +89,12 @@ public class PlagiarismPostResource {
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<PlagiarismPostUpdateResponseDTO> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody PlagiarismPostUpdateDTO post) {
-        log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.content());
+    public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
+        log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
         Post updatedPost = plagiarismPostService.updatePost(courseId, postId, post);
         log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(PlagiarismPostUpdateResponseDTO.of(updatedPost), null, HttpStatus.OK);
+        return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
     /**

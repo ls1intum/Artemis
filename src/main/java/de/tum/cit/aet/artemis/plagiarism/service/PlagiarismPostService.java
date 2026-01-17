@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 @Conditional(PlagiarismEnabled.class)
@@ -114,9 +113,9 @@ public class PlagiarismPostService extends PostingService {
      * @param post     post to update
      * @return updated post that was persisted
      */
-    public Post updatePost(Long courseId, Long postId, PlagiarismPostUpdateDTO post) {
+    public Post updatePost(Long courseId, Long postId, Post post) {
         // check
-        if (post.id() == null || !Objects.equals(post.id(), postId)) {
+        if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
         }
 
@@ -125,16 +124,16 @@ public class PlagiarismPostService extends PostingService {
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        parseUserMentions(course, post.content());
+        parseUserMentions(course, post.getContent());
 
-        boolean hasContentChanged = !Objects.equals(existingPost.getContent(), post.content());
+        boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
         if (hasContentChanged) {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
-        // update: allow overwriting of values only for depicted fields if the user is an at least student
-        existingPost.setTitle(post.title());
-        existingPost.setContent(post.content());
+        // update: allow overwriting of values only for depicted fields if the user is at least a student
+        existingPost.setTitle(post.getTitle());
+        existingPost.setContent(post.getContent());
 
         Post updatedPost = postRepository.save(existingPost);
 

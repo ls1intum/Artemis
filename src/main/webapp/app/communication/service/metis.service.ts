@@ -514,7 +514,7 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * Creates an empty plagiarism post DTO for initializing the create/edit modal.
+     * Creates an empty plagiarism post DTO for initializing the creation/edit modal.
      *
      * @param plagiarismCase optional plagiarism case used as default context
      */
