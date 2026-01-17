@@ -300,7 +300,9 @@ export class DataTableComponent implements OnInit, OnChanges, OnDestroy {
 
         // Dispatch a resize event to trigger ngx-datatable's internal recalculation
         this.isDispatchingResize = true;
-        window.dispatchEvent(new Event('resize'));
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        });
     }
 
     /**
