@@ -478,7 +478,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null,
-                        List.of(new MemirisMemoryDTO("UUID", "Test Memory", "Test Content", Collections.emptyList(), Collections.emptyList(), false, false)), null),
+                        List.of(new MemirisMemoryDTO("UUID", "Test Memory", "Test Content", Collections.emptyList(), Collections.emptyList(), false, false)), null, null),
                 HttpStatus.OK, headers);
     }
 }
