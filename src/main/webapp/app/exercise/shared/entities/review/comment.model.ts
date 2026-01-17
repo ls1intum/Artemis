@@ -12,6 +12,8 @@ export interface Comment {
     authorName?: string;
     type: CommentType;
     content: CommentContent;
+    initialVersionId?: number;
+    initialCommitSha?: string;
     createdDate?: string;
     lastModifiedDate?: string;
 }

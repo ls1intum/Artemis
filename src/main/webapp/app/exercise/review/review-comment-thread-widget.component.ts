@@ -119,8 +119,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         }
         const severity = content.severity ?? '';
         const category = content.category ?? '';
-        const description = content.description ?? '';
-        return [severity, category, description].filter(Boolean).join(' - ');
+        const text = content.text ?? '';
+        return [severity, category, text].filter(Boolean).join(' - ');
     }
 
     getCommentAuthorName(comment: Comment): string {

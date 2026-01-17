@@ -1,4 +1,3 @@
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 export type CommentContentType = 'USER' | 'CONSISTENCY_CHECK';
@@ -12,13 +11,20 @@ export interface UserCommentContent extends BaseCommentContent {
     text: string;
 }
 
+export interface InlineCodeChange {
+    startLine?: number;
+    endLine?: number;
+    expectedCode?: string;
+    replacementCode?: string;
+    applied?: boolean;
+}
+
 export interface ConsistencyIssueCommentContent extends BaseCommentContent {
     contentType: 'CONSISTENCY_CHECK';
     severity: ConsistencyIssue.SeverityEnum;
     category: ConsistencyIssue.CategoryEnum;
-    description: string;
-    suggestedFix: string;
-    relatedLocations: ArtifactLocation[];
+    text: string;
+    suggestedFix?: InlineCodeChange;
 }
 
 export type CommentContent = UserCommentContent | ConsistencyIssueCommentContent;

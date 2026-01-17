@@ -29,8 +29,6 @@ export interface CreateCommentThread {
     groupId?: number;
     targetType: CommentThreadLocationType;
     auxiliaryRepositoryId?: number;
-    initialVersionId?: number;
-    initialCommitSha?: string;
     filePath?: string;
     initialFilePath?: string;
     lineNumber?: number;
