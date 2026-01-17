@@ -25,7 +25,6 @@ All these exercises are supposed to be run either live in the lecture with insta
    :maxdepth: 3
 
    user/user-guide
-   user/communication
 
 
 .. toctree::

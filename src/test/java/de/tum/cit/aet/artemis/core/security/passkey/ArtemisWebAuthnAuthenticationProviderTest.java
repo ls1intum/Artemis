@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
@@ -77,6 +78,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
 
         User user = new User();
         user.setLogin(username);
+        user.setActivated(true);
         user.setAuthorities(Set.of(new Authority(Role.STUDENT.getAuthority())));
 
         PublicKeyCredentialUserEntity userEntity = mock(PublicKeyCredentialUserEntity.class);
@@ -107,6 +109,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
 
         User user = new User();
         user.setLogin(username);
+        user.setActivated(true);
         user.setAuthorities(Set.of(new Authority(Role.ADMIN.getAuthority())));
 
         PasskeyCredential passkeyCredential = new PasskeyCredential();
@@ -146,6 +149,28 @@ class ArtemisWebAuthnAuthenticationProviderTest {
 
         // Execute & Verify
         assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(BadCredentialsException.class).hasMessageContaining("was not found in the database");
+    }
+
+    @Test
+    void testAuthenticateUserNotActivated() {
+        // Setup
+        String credentialId = "test-credential-id";
+        String username = "deactivateduser";
+
+        User user = new User();
+        user.setLogin(username);
+        user.setActivated(false);
+        user.setAuthorities(Set.of(new Authority(Role.STUDENT.getAuthority())));
+
+        PublicKeyCredentialUserEntity userEntity = mock(PublicKeyCredentialUserEntity.class);
+        when(userEntity.getName()).thenReturn(username);
+
+        WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
+        when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
+        when(userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
+
+        // Execute & Verify
+        assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(UserNotActivatedException.class).hasMessageContaining("is not activated");
     }
 
     @Test
