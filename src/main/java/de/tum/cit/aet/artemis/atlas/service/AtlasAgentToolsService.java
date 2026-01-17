@@ -15,11 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentExerciseDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -49,87 +45,18 @@ public class AtlasAgentToolsService {
 
     private final ObjectMapper objectMapper;
 
-    private final CompetencyRepository competencyRepository;
-
     private final CourseRepository courseRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
-        this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
     /**
-     * Retrieves all competencies for a given course.
-     * The LLM can call this method when asked questions such as:
-     * “Show me the competencies for course 123” or “What are the learning goals for this course?”
-     *
-     * @param courseId ID of the course
-     * @return JSON response containing the list of competencies or an error message
-     */
-    @Tool(description = "Get all competencies for a course")
-    public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
-        Optional<Course> courseOptional = courseRepository.findById(courseId);
-        if (courseOptional.isEmpty()) {
-            return toJson(Map.of("error", "Course not found with ID: " + courseId));
-        }
-
-        Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-        List<AtlasAgentCompetencyDTO> competencyList = competencies.stream().map(AtlasAgentCompetencyDTO::of).toList();
-
-        record Response(Long courseId, List<AtlasAgentCompetencyDTO> competencies) {
-        }
-        return toJson(new Response(courseId, competencyList));
-    }
-
-    /**
-     * Creates a new competency for a given course.
-     * The LLM typically calls this method when users request to create a new competency
-     * If successful, the competency is persisted and the modification flag is set to true.
-     *
-     * @param courseId      ID of the course
-     * @param title         title of the new competency
-     * @param description   detailed description of the competency
-     * @param taxonomyLevel Bloom's taxonomy level - see {@link CompetencyTaxonomy}
-     * @return JSON response containing the created competency or an error message
-     */
-    @Tool(description = "Create a new competency for a course")
-    public String createCompetency(@ToolParam(description = "the ID of the course") Long courseId, @ToolParam(description = "the title of the competency") String title,
-            @ToolParam(description = "the description of the competency") String description,
-            @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") CompetencyTaxonomy taxonomyLevel) {
-        try {
-            Optional<Course> courseOptional = courseRepository.findById(courseId);
-            if (courseOptional.isEmpty()) {
-                return toJson(Map.of("error", "Course not found with ID: " + courseId));
-            }
-
-            Course course = courseOptional.get();
-            Competency competency = new Competency();
-            competency.setTitle(title);
-            competency.setDescription(description);
-            competency.setCourse(course);
-            competency.setTaxonomy(taxonomyLevel);
-
-            Competency savedCompetency = competencyRepository.save(competency);
-
-            // Mark that a competency was created during this request
-            AtlasAgentService.markCompetencyCreated();
-
-            record Response(boolean success, AtlasAgentCompetencyDTO competency) {
-            }
-            return toJson(new Response(true, AtlasAgentCompetencyDTO.of(savedCompetency, courseId)));
-        }
-        catch (Exception e) {
-            return toJson(Map.of("error", "Failed to create competency: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Returns the description text of a specific course.
-     * This helps the LLM understand course context when generating competencies or answers.
+     * Tool for getting course description.
      *
      * @param courseId ID of the course
      * @return course description or empty string if not found
@@ -154,7 +81,10 @@ public class AtlasAgentToolsService {
         }
 
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
-        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(AtlasAgentExerciseDTO::of).toList();
+        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream()
+                .map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getMaxPoints(),
+                        exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : null, exercise.getDueDate() != null ? exercise.getDueDate().toString() : null))
+                .toList();
 
         record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {
         }
