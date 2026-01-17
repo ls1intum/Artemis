@@ -560,6 +560,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
+            SELECT COUNT(p)
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
             SELECT DISTINCT p.id
             FROM ProgrammingExercise p
             WHERE p.exerciseGroup.exam.id = :examId
