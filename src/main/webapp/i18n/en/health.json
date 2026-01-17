@@ -24,6 +24,7 @@
             "continuousIntegrationServer": "Continuous Integration Server",
             "versionControlServer": "Version Control Server",
             "hazelcast": "Hazelcast",
+            "jHipsterRegistry": "JHipsterRegistry (Eureka Service Registry)",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",

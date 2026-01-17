@@ -1,5 +1,5 @@
 /**
- * DTO for IrisMessageContent to match the backend structure.
+ * DTO for IrisMessageContent to match the server structure.
  * Used when sending messages to the server.
  */
 export class IrisMessageContentDTO {
