@@ -15,6 +15,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Build, CompatibleVersions, Git, Java, ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 @Component({ template: '', standalone: true })
 class MockEmptyComponent {}
@@ -75,6 +77,7 @@ describe('AdminContainerComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([{ path: '**', component: MockEmptyComponent }]),
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ProfileService,
                     useValue: {
@@ -85,6 +88,7 @@ describe('AdminContainerComponent', () => {
                     provide: FeatureToggleService,
                     useValue: {
                         getFeatureToggleActive: vi.fn().mockReturnValue(of(false)),
+                        unsubscribeFeatureToggleUpdates: vi.fn(), // added mock to avoid runtime error
                     },
                 },
                 {
@@ -123,6 +127,9 @@ describe('AdminContainerComponent', () => {
         expect(component.atlasEnabled()).toBe(false);
         expect(component.examEnabled()).toBe(false);
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
+        expect(component.passkeyEnabled()).toBe(false);
+        expect(component.passkeyRequiredForAdmin()).toBe(false);
+        expect(component.isSuperAdmin()).toBe(false);
     });
 
     it('should detect feature flags from profile info', () => {
@@ -142,6 +149,22 @@ describe('AdminContainerComponent', () => {
         expect(newComponent.ltiEnabled()).toBe(true);
         expect(newComponent.atlasEnabled()).toBe(true);
         expect(newComponent.examEnabled()).toBe(true);
+    });
+
+    it('should detect passkey feature flags from profile info', () => {
+        const profileInfoWithPasskey: ProfileInfo = {
+            ...mockProfileInfo,
+            activeModuleFeatures: ['passkey', 'passkey-admin'],
+        };
+
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithPasskey);
+
+        const newFixture = TestBed.createComponent(AdminContainerComponent);
+        const newComponent = newFixture.componentInstance;
+        newFixture.detectChanges();
+
+        expect(newComponent.passkeyEnabled()).toBe(true);
+        expect(newComponent.passkeyRequiredForAdmin()).toBe(true);
     });
 
     describe('onResize', () => {
