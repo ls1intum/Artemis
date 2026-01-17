@@ -14,14 +14,14 @@ import React from 'react';
  * @returns {React.ReactElement} The rendered image component.
  */
 const Image = ({
-    src,
-    alt,
-    size = ImageSize.medium,
-    style,
-    hideBorder,
-    caption,
-    ...rest
-}: {
+                   src,
+                   alt,
+                   size = ImageSize.medium,
+                   style,
+                   hideBorder,
+                   caption,
+                   ...rest
+               }: {
     src: string | React.ComponentType<React.SVGProps<SVGSVGElement>>;
     alt: string;
     size?: ImageSize;
@@ -73,7 +73,7 @@ const Image = ({
 export enum ImageSize {
     small = 'small',
     medium = 'medium',
-    large = 'large',
+    large = 'large'
 }
 
 export default Image;

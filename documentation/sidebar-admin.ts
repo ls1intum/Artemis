@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'course-management',
+        'access-rights',
         'artemis-intelligence',
         {
             type: 'category',

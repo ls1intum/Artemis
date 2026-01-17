@@ -66,7 +66,7 @@ Communication & Collaboration
 Communication Features
 ----------------------
 
-For detailed information about Artemis communication features, see the `Communication Documentation <https://ls1intum.github.io/Artemis/user/communication/>`__.
+For detailed information about Artemis communication features, see the `Communication Guide <https://ls1intum.github.io/Artemis/student/communication/>`__.
 
 Tutorial Groups
 ---------------
