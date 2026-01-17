@@ -37,6 +37,7 @@ import { OrganizationManagementService } from 'app/core/admin/organization-manag
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 // Mock Sentry before tests run to prevent actual error reporting
 vi.mock('@sentry/angular', async () => {
@@ -209,6 +210,39 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(component.editForm.controls['id']).toBeDefined();
+        });
+
+        it('should include SUPER_ADMIN authority when current user is a super admin', () => {
+            // GIVEN
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(true);
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+
+            // WHEN
+            component.ngOnInit();
+
+            // THEN
+            expect(adminUserService.authorities).toHaveBeenCalledOnce();
+            expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]);
+        });
+
+        it('should filter out SUPER_ADMIN authority when current user is not a super admin', () => {
+            // GIVEN
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(false);
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+
+            // WHEN
+            component.ngOnInit();
+
+            // THEN
+            expect(adminUserService.authorities).toHaveBeenCalledOnce();
+            expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN]);
+            expect(component.authorities()).not.toContain(Authority.SUPER_ADMIN);
         });
     });
 
@@ -669,6 +703,41 @@ describe('UserManagementUpdateComponent', () => {
             component.toggleAuthority('ROLE_ADMIN');
 
             expect(component.editForm.get('authorities')?.value).toEqual(['ROLE_ADMIN']);
+        });
+
+        it('should sort authorities by role hierarchy', () => {
+            // Set authorities in random order
+            component.authorities.set(['ROLE_USER', 'ROLE_EDITOR', 'ROLE_SUPER_ADMIN', 'ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+
+            // Get sorted authorities
+            const sorted = component.sortedAuthorities();
+
+            // Verify correct order: super admin > admin > instructor > editor > tutor > user
+            expect(sorted).toEqual(['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA', 'ROLE_USER']);
+        });
+
+        it('should reactively update sortedAuthorities when authorities signal changes', () => {
+            // Initially set some authorities
+            component.authorities.set(['ROLE_USER', 'ROLE_ADMIN']);
+            expect(component.sortedAuthorities()).toEqual(['ROLE_ADMIN', 'ROLE_USER']);
+
+            // Update authorities signal
+            component.authorities.set(['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_SUPER_ADMIN']);
+
+            // Verify sortedAuthorities updated automatically
+            expect(component.sortedAuthorities()).toEqual(['ROLE_SUPER_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
+        });
+
+        it('should handle unknown authorities in sorting', () => {
+            // Set authorities including unknown ones
+            component.authorities.set(['ROLE_UNKNOWN', 'ROLE_ADMIN', 'ROLE_CUSTOM']);
+
+            const sorted = component.sortedAuthorities();
+
+            // Known roles should come first, unknown roles last (sorted by their fallback value of 999)
+            expect(sorted[0]).toBe('ROLE_ADMIN');
+            expect(sorted).toContain('ROLE_UNKNOWN');
+            expect(sorted).toContain('ROLE_CUSTOM');
         });
     });
 

@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "adminPasskeyManagement": {
+            "title": "Passkey-Verwaltung",
+            "userLogin": "Benutzer-Login",
+            "userName": "Benutzername",
+            "label": "Label",
+            "created": "Erstellt",
+            "lastUsed": "Zuletzt verwendet",
+            "approved": "Freigegeben",
+            "yes": "Ja",
+            "no": "Nein",
+            "noPasskeys": "Keine Passkeys für reguläre Administratoren (nicht Super-Admins) gefunden.",
+            "toggleApproval": "Freigabestatus umschalten",
+            "errors": {
+                "passkeyNotFound": "Der Passkey wurde nicht gefunden."
+            }
+        }
+    }
+}
