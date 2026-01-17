@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -185,6 +185,16 @@ export class LectureUnitService {
     retryProcessing(lectureId: number, lectureUnitId: number): Observable<HttpResponse<void>> {
         return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/retry-processing`, null, { observe: 'response' });
     }
+
+    /**
+     * Get the combined processing and transcription status for all attachment video units in a lecture.
+     * This bulk endpoint reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
+     * @param lectureId the ID of the lecture
+     * @returns Observable with the list of combined statuses
+     */
+    getUnitStatuses(lectureId: number): Observable<LectureUnitCombinedStatus[]> {
+        return this.httpClient.get<LectureUnitCombinedStatus[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/statuses`);
+    }
 }
 
 /**
@@ -207,4 +217,17 @@ export enum ProcessingPhase {
     INGESTING = 'INGESTING',
     DONE = 'DONE',
     FAILED = 'FAILED',
+}
+
+/**
+ * DTO representing the combined processing and transcription status of a lecture unit.
+ * Used by the bulk status endpoint to reduce HTTP requests.
+ */
+export interface LectureUnitCombinedStatus {
+    lectureUnitId: number;
+    processingPhase: ProcessingPhase;
+    retryCount: number;
+    startedAt?: string;
+    processingErrorKey?: string;
+    transcriptionStatus?: TranscriptionStatus;
 }

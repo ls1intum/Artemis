@@ -13,7 +13,7 @@ import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-uni
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitCombinedStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
@@ -138,6 +138,17 @@ describe('LectureUnitManagementComponent', () => {
         findLectureWithDetailsSpy.mockReturnValue(returnValue);
         updateOrderSpy.mockReturnValue(returnValue);
         deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+        // Mock the bulk status endpoint
+        const combinedStatuses: LectureUnitCombinedStatus[] = [
+            {
+                lectureUnitId: attachmentVideoUnit.id!,
+                processingPhase: ProcessingPhase.DONE,
+                retryCount: 0,
+                transcriptionStatus: TranscriptionStatus.COMPLETED,
+            },
+        ];
+        vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
+        // Also mock individual status methods for retry flow tests
         vi.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
         vi.spyOn(lectureUnitService, 'getProcessingStatus').mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
         lectureUnitManagementComponentFixture.detectChanges();
@@ -172,6 +183,26 @@ describe('LectureUnitManagementComponent', () => {
         const loadDataSpy = vi.spyOn(lectureUnitManagementComponent, 'loadData');
         lectureUnitManagementComponent.deleteLectureUnit(1);
         expect(loadDataSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle loadData error and set isStatusLoading to false', () => {
+        findLectureWithDetailsSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        lectureUnitManagementComponent.isStatusLoading.set(true);
+
+        lectureUnitManagementComponent.loadData();
+
+        expect(lectureUnitManagementComponent.isStatusLoading()).toBe(false);
+    });
+
+    it('should handle lecture with no lectureUnits and set isStatusLoading to false', () => {
+        const lectureWithNoUnits = { ...lecture, lectureUnits: undefined };
+        findLectureWithDetailsSpy.mockReturnValue(of(new HttpResponse({ body: lectureWithNoUnits, status: 200 })));
+        lectureUnitManagementComponent.isStatusLoading.set(true);
+
+        lectureUnitManagementComponent.loadData();
+
+        expect(lectureUnitManagementComponent.isStatusLoading()).toBe(false);
+        expect(lectureUnitManagementComponent.lectureUnits()).toEqual([]);
     });
 
     it('should give the correct delete question translation key', () => {
@@ -237,12 +268,20 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('Transcription', () => {
-        it('should load transcription status for attachment video units', () => {
-            const statusSpy = vi.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
+        it('should load transcription status from bulk endpoint for attachment video units', () => {
+            const combinedStatuses: LectureUnitCombinedStatus[] = [
+                {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    processingPhase: ProcessingPhase.DONE,
+                    retryCount: 0,
+                    transcriptionStatus: TranscriptionStatus.COMPLETED,
+                },
+            ];
+            const statusSpy = vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
 
             lectureUnitManagementComponent.loadData();
 
-            expect(statusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(statusSpy).toHaveBeenCalledWith(lectureId);
             expect(lectureUnitManagementComponent.transcriptionStatus()[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.COMPLETED);
         });
 
@@ -274,14 +313,20 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('Processing Status', () => {
-        it('should load processing status for attachment video units', () => {
-            const statusSpy = vi
-                .spyOn(lectureUnitService, 'getProcessingStatus')
-                .mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
+        it('should load processing status from bulk endpoint for attachment video units', () => {
+            const combinedStatuses: LectureUnitCombinedStatus[] = [
+                {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    processingPhase: ProcessingPhase.DONE,
+                    retryCount: 0,
+                    transcriptionStatus: TranscriptionStatus.COMPLETED,
+                },
+            ];
+            const statusSpy = vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
 
             lectureUnitManagementComponent.loadData();
 
-            expect(statusSpy).toHaveBeenCalledWith(lectureId, attachmentVideoUnit.id);
+            expect(statusSpy).toHaveBeenCalledWith(lectureId);
             expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
         });
 
@@ -377,6 +422,15 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.lectureUnit.processing.error.transcriptionFailed');
+        });
+
+        it('should handle error when bulk status endpoint fails', () => {
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            lectureUnitManagementComponent.isStatusLoading.set(true);
+            lectureUnitManagementComponent.loadData();
+
+            expect(lectureUnitManagementComponent.isStatusLoading()).toBe(false);
         });
     });
 

@@ -430,8 +430,24 @@ async function runClientTests(modules, options) {
     if (vitestModules.length > 0) {
         log(`Running Vitest for modules: ${vitestModules.join(', ')}`, options);
         try {
-            const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-            const vitestResult = spawnSync(npmCmd, ['run', 'vitest:coverage'], {
+            const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+            // Build coverage include patterns for only the modules being tested
+            // This prevents measuring coverage for unrelated modules
+            const coverageIncludes = vitestModules.map(m => `src/main/webapp/app/${m}/**/*.ts`);
+            const vitestArgs = [
+                'vitest', 'run', '--coverage',
+                // Override coverage.include to only measure the modules being tested
+                ...coverageIncludes.map(pattern => `--coverage.include=${pattern}`),
+                // Disable global thresholds since we're only testing a subset
+                '--coverage.thresholds.lines=0',
+                '--coverage.thresholds.statements=0',
+                '--coverage.thresholds.branches=0',
+                '--coverage.thresholds.functions=0',
+                // Filter test files to only run tests for these modules
+                ...vitestModules,
+            ];
+            log(`Running: npx ${vitestArgs.join(' ')}`, options);
+            const vitestResult = spawnSync(npxCmd, vitestArgs, {
                 cwd: PROJECT_ROOT,
                 stdio: options.verbose ? 'inherit' : 'pipe',
                 encoding: 'utf-8',
