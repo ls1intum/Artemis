@@ -23,7 +23,7 @@ setupUsers.sh
 
 This will create 20 test users.
 
-## 3. Setup Playwright and run Playwright tests in terminal
+## 3. Setup Playwright and run Playwright tests
 
 You can run Playwright tests in two different ways: running all tests or running in UI mode.
 
