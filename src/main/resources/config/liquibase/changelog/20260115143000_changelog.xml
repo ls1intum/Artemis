@@ -68,6 +68,8 @@
                 <constraints nullable="false"/>
             </column>
             <column name="content" type="json"/>
+            <column name="initial_version_id" type="bigint"/>
+            <column name="initial_commit_sha" type="varchar(255)"/>
             <column name="created_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
@@ -84,6 +86,12 @@
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="initial_version_id"
+                                 constraintName="fk_comment_initial_version"
+                                 referencedTableName="exercise_version"
                                  referencedColumnNames="id"/>
 
 
