@@ -1,7 +1,19 @@
+/**
+ * Tests for TextResultComponent.
+ * This test suite verifies the text result display functionality including:
+ * - Component initialization
+ * - Conversion of text blocks to result blocks
+ * - Credit display and translation
+ * - Feedback text building and display
+ * - Subsequent feedback marking
+ * - Result block styling and icons
+ */
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
@@ -14,8 +26,12 @@ import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextResultBlock } from 'app/text/overview/text-result/text-result-block';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TextResultComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TextResultComponent>;
     let component: TextResultComponent;
 
@@ -40,11 +56,16 @@ describe('TextResultComponent', () => {
         } as Feedback,
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TextResultComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TextResultComponent],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideComponent(TextResultComponent, {
+                set: {
+                    imports: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), NgClass, MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextResultComponent);
@@ -91,9 +112,11 @@ describe('TextResultComponent', () => {
         result.submission = submission;
         result.feedbacks = feedbacks;
 
-        component.result = result;
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('result', result);
+        fixture.detectChanges();
 
-        expect(component.textResults).toHaveLength(4);
+        expect(component.textResults()).toHaveLength(4);
     });
 
     it('should repeat steps for each credit', () => {
@@ -220,12 +243,14 @@ describe('TextResultComponent', () => {
         result.submission = submission;
         result.feedbacks = feedback;
 
-        component.result = result;
+        // Use setInput for signal inputs
+        fixture.componentRef.setInput('result', result);
+        fixture.detectChanges();
 
-        expect(component.textResults).toHaveLength(2);
-        expect(component.textResults[0].feedback).toBeDefined();
-        expect(component.textResults[0].feedback!.isSubsequent).toBeUndefined();
-        expect(component.textResults[1].feedback).toBeDefined();
-        expect(component.textResults[1].feedback!.isSubsequent).toBeTrue();
+        expect(component.textResults()).toHaveLength(2);
+        expect(component.textResults()[0].feedback).toBeDefined();
+        expect(component.textResults()[0].feedback!.isSubsequent).toBeUndefined();
+        expect(component.textResults()[1].feedback).toBeDefined();
+        expect(component.textResults()[1].feedback!.isSubsequent).toBe(true);
     });
 });

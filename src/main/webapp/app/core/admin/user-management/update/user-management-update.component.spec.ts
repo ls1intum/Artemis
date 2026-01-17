@@ -11,7 +11,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -23,7 +23,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockProvider } from 'ng-mocks';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -37,6 +37,7 @@ import { OrganizationManagementService } from 'app/core/admin/organization-manag
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 // Mock Sentry before tests run to prevent actual error reporting
 vi.mock('@sentry/angular', async () => {
@@ -54,7 +55,7 @@ describe('UserManagementUpdateComponent', () => {
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let adminUserService: AdminUserService;
     let titleService: Title;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let translateService: TranslateService;
     let profileService: ProfileService;
 
@@ -77,7 +78,7 @@ describe('UserManagementUpdateComponent', () => {
                 { provide: ActivatedRoute, useValue: mockRoute },
                 LocalStorageService,
                 SessionStorageService,
-                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -91,7 +92,7 @@ describe('UserManagementUpdateComponent', () => {
         fixture = TestBed.createComponent(UserManagementUpdateComponent);
         component = fixture.componentInstance;
         adminUserService = TestBed.inject(AdminUserService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         titleService = TestBed.inject(Title);
         translateService = TestBed.inject(TranslateService);
         profileService = TestBed.inject(ProfileService);
@@ -210,6 +211,39 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(component.editForm.controls['id']).toBeDefined();
         });
+
+        it('should include SUPER_ADMIN authority when current user is a super admin', () => {
+            // GIVEN
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(true);
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+
+            // WHEN
+            component.ngOnInit();
+
+            // THEN
+            expect(adminUserService.authorities).toHaveBeenCalledOnce();
+            expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]);
+        });
+
+        it('should filter out SUPER_ADMIN authority when current user is not a super admin', () => {
+            // GIVEN
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(false);
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+
+            // WHEN
+            component.ngOnInit();
+
+            // THEN
+            expect(adminUserService.authorities).toHaveBeenCalledOnce();
+            expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN]);
+            expect(component.authorities()).not.toContain(Authority.SUPER_ADMIN);
+        });
     });
 
     describe('save', () => {
@@ -263,26 +297,27 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     it('should open organizations modal and add selected organization', () => {
-        const existingOrganizations = [{}] as Organization[];
-        component.user = { organizations: existingOrganizations } as User;
+        const existingOrganization = {} as Organization;
+        component.user = { organizations: [existingOrganization] } as User;
 
         const organizationSubject = new Subject<Organization>();
-        const mockModalRef = {
-            componentInstance: { organizations: undefined },
-            closed: organizationSubject.asObservable(),
-        } as NgbModalRef;
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const mockDialogRef = {
+            onClose: organizationSubject.asObservable(),
+        } as unknown as DynamicDialogRef;
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         component.openOrganizationsModal();
 
         expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
-        expect(mockModalRef.componentInstance.organizations).toBe(existingOrganizations);
+        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, expect.any(Object));
 
         // Simulate selecting a new organization
         const newOrganization = {} as Organization;
         organizationSubject.next(newOrganization);
-        expect(existingOrganizations).toContain(newOrganization);
+        // Check component.user.organizations directly since immutable operations create a new array
+        expect(component.user.organizations).toContain(existingOrganization);
+        expect(component.user.organizations).toContain(newOrganization);
+        expect(component.user.organizations).toHaveLength(2);
 
         // Test when user has no organizations yet
         component.user.organizations = undefined;
@@ -415,11 +450,10 @@ describe('UserManagementUpdateComponent', () => {
         component.user = { organizations: [{ id: 1 }] as Organization[] } as User;
 
         const organizationSubject = new Subject<Organization | undefined>();
-        const mockModalRef = {
-            componentInstance: { organizations: undefined },
-            closed: organizationSubject.asObservable(),
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const mockDialogRef = {
+            onClose: organizationSubject.asObservable(),
+        } as unknown as DynamicDialogRef;
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         component.openOrganizationsModal();
         organizationSubject.next(undefined);
@@ -669,6 +703,41 @@ describe('UserManagementUpdateComponent', () => {
             component.toggleAuthority('ROLE_ADMIN');
 
             expect(component.editForm.get('authorities')?.value).toEqual(['ROLE_ADMIN']);
+        });
+
+        it('should sort authorities by role hierarchy', () => {
+            // Set authorities in random order
+            component.authorities.set(['ROLE_USER', 'ROLE_EDITOR', 'ROLE_SUPER_ADMIN', 'ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+
+            // Get sorted authorities
+            const sorted = component.sortedAuthorities();
+
+            // Verify correct order: super admin > admin > instructor > editor > tutor > user
+            expect(sorted).toEqual(['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA', 'ROLE_USER']);
+        });
+
+        it('should reactively update sortedAuthorities when authorities signal changes', () => {
+            // Initially set some authorities
+            component.authorities.set(['ROLE_USER', 'ROLE_ADMIN']);
+            expect(component.sortedAuthorities()).toEqual(['ROLE_ADMIN', 'ROLE_USER']);
+
+            // Update authorities signal
+            component.authorities.set(['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_SUPER_ADMIN']);
+
+            // Verify sortedAuthorities updated automatically
+            expect(component.sortedAuthorities()).toEqual(['ROLE_SUPER_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']);
+        });
+
+        it('should handle unknown authorities in sorting', () => {
+            // Set authorities including unknown ones
+            component.authorities.set(['ROLE_UNKNOWN', 'ROLE_ADMIN', 'ROLE_CUSTOM']);
+
+            const sorted = component.sortedAuthorities();
+
+            // Known roles should come first, unknown roles last (sorted by their fallback value of 999)
+            expect(sorted[0]).toBe('ROLE_ADMIN');
+            expect(sorted).toContain('ROLE_UNKNOWN');
+            expect(sorted).toContain('ROLE_CUSTOM');
         });
     });
 

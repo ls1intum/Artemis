@@ -3,7 +3,7 @@
         <div class="d-flex p-0 justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 <fa-icon class="me-3" size="lg" [icon]="icon()" />
-                <h5 class="m-0">{{ lectureUnit().name ?? '' }}</h5>
+                <h5 class="m-0" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{ lectureUnit().name ?? '' }}</h5>
                 @if (!isVisibleToStudents()) {
                     <span
                         class="badge bg-warning ms-2 me-2"

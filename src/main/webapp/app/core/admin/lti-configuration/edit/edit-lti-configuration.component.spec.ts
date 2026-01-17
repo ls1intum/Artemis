@@ -93,8 +93,9 @@ describe('Edit LTI Configuration Component', () => {
 
         const changedConfiguration = updateConfiguration();
 
-        const updateResponse: HttpResponse<void> = new HttpResponse({
+        const updateResponse = new HttpResponse<LtiPlatformConfiguration>({
             status: 200,
+            body: platformConfiguration,
         });
 
         vi.spyOn(ltiConfigurationService, 'updateLtiPlatformConfiguration').mockReturnValue(of(updateResponse));

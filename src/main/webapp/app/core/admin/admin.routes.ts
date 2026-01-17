@@ -3,13 +3,14 @@ import { userManagementRoute } from 'app/core/admin/user-management/user-managem
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
+import { adminDataExportsRoute } from 'app/core/admin/admin-data-exports/admin-data-exports.route';
 
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-configuration.route';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
 import { AdminContainerComponent } from 'app/core/admin/admin-container/admin-container.component';
 
 const childRoutes: Routes = [
@@ -34,10 +35,10 @@ const childRoutes: Routes = [
         },
     },
     {
-        path: 'feature-toggles',
+        path: 'features',
         loadComponent: () => import('app/core/admin/features/admin-feature-toggle.component').then((m) => m.AdminFeatureToggleComponent),
         data: {
-            pageTitle: 'featureToggles.title',
+            pageTitle: 'features.title',
         },
     },
     {
@@ -170,10 +171,19 @@ const childRoutes: Routes = [
             pageTitle: 'artemisApp.courseRequest.admin.title',
         },
     },
+    {
+        path: 'passkey-management',
+        loadComponent: () => import('app/core/admin/passkey-management/admin-passkey-management.component').then((m) => m.AdminPasskeyManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_SUPER_ADMIN,
+            pageTitle: 'artemisApp.adminPasskeyManagement.title',
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,
+    ...adminDataExportsRoute,
 ];
 
 const routes: Routes = [

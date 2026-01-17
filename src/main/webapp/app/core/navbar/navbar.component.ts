@@ -67,18 +67,6 @@ import { ServerAdministrationComponent } from 'app/core/navbar/server-administra
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    protected readonly faBars = faBars;
-    protected readonly faThLarge = faThLarge;
-    protected readonly faThList = faThList;
-    protected readonly faUser = faUser;
-    protected readonly faCog = faCog;
-    protected readonly faWrench = faWrench;
-    protected readonly faLock = faLock;
-    protected readonly faFlag = faFlag;
-    protected readonly faBook = faBook;
-    protected readonly faSignOutAlt = faSignOutAlt;
-    protected readonly faChevronRight = faChevronRight;
-
     private readonly accountService = inject(AccountService);
     private readonly loginService = inject(LoginService);
     private readonly translateService = inject(TranslateService);
@@ -93,6 +81,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
+
+    protected readonly faBars = faBars;
+    protected readonly faThLarge = faThLarge;
+    protected readonly faThList = faThList;
+    protected readonly faUser = faUser;
+    protected readonly faCog = faCog;
+    protected readonly faWrench = faWrench;
+    protected readonly faLock = faLock;
+    protected readonly faFlag = faFlag;
+    protected readonly faBook = faBook;
+    protected readonly faSignOutAlt = faSignOutAlt;
+    protected readonly faChevronRight = faChevronRight;
+
+    protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     inProduction: boolean;
     testServer: boolean;

@@ -9,11 +9,13 @@ Main features
 
 Artemis supports the following exercises:
 
-#. :doc:`Programming exercises <user/exercises/programming>` with version control and automatic assessment with test cases and continuous integration
-#. :doc:`Quiz exercises <user/exercises/quiz>` with multiple choice, drag and drop and short answer quiz questions
-#. :doc:`Modeling exercises <user/exercises/modeling>` with semi-automatic assessment using machine learning concepts
-#. :doc:`Textual exercises <user/exercises/textual>` with manual (and experimental semi-automatic) assessment
-#. :doc:`File upload exercises <user/exercises/file-upload>` with manual assessment
+#. Programming exercises with version control and automatic assessment with test cases and continuous integration
+#. Quiz exercises with multiple choice, drag and drop and short answer quiz questions
+#. Modeling exercises with semi-automatic assessment using machine learning concepts
+#. Textual exercises with manual (and experimental semi-automatic) assessment
+#. File upload exercises with manual assessment
+
+For detailed information about all exercises, see the :doc:`User Guide <user/user-guide>`.
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
@@ -22,28 +24,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   user/assessment
-   user/exercises
-   user/quiz-training
-   user/lectures
-   user/exam_mode
-   user/communication
-   user/faqs
-   user/tutorialgroups
-   user/plagiarism-check
-   user/learning-analytics
-   user/adaptive-learning
-   user/notifications
-   user/user-experience
-   user/grading
-   user/courses/customizable
-   user/markdown-support
-   user/integrated-code-lifecycle
-   user/exports
-   user/sharing
-   user/mobile-applications
-   user/lti
-   user/calendar
+   user/user-guide
 
 
 .. toctree::

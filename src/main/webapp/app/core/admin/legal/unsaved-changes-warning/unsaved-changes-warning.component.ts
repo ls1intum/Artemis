@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,7 +10,6 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 @Component({
     selector: 'jhi-unsaved-changes-warning',
     templateUrl: './unsaved-changes-warning.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, TranslateDirective, ButtonComponent],
 })
 export class UnsavedChangesWarningComponent {

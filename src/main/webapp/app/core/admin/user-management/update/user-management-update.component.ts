@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
@@ -20,6 +21,7 @@ import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -28,6 +30,8 @@ import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
  * Component for creating and updating users in the admin user management.
@@ -57,7 +61,6 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementUpdateComponent implements OnInit {
     private readonly languageHelper = inject(JhiLanguageHelper);
@@ -65,11 +68,18 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly courseAdminService = inject(CourseAdminService);
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
     private readonly fb = inject(FormBuilder);
+    private readonly accountService = inject(AccountService);
+
+    protected readonly faBan = faBan;
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
+    protected readonly faSave = faSave;
 
     /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -89,6 +99,23 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
 
+    /** Sorted authorities by role hierarchy (super admin > admin > instructor > editor > tutor) */
+    readonly sortedAuthorities = computed(() => {
+        const roleOrder: Record<string, number> = {
+            ROLE_SUPER_ADMIN: 0,
+            ROLE_ADMIN: 1,
+            ROLE_INSTRUCTOR: 2,
+            ROLE_EDITOR: 3,
+            ROLE_TA: 4,
+            ROLE_USER: 5,
+        };
+        return [...this.authorities()].sort((a, b) => {
+            const orderA = roleOrder[a] ?? 999;
+            const orderB = roleOrder[b] ?? 999;
+            return orderA - orderB;
+        });
+    });
+
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
 
@@ -104,14 +131,9 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Form control for group autocomplete */
     readonly groupCtrl = new FormControl();
 
-    /** Icons */
-    protected readonly faTimes = faTimes;
-    protected readonly faBan = faBan;
-    protected readonly faSave = faSave;
-    protected readonly faCheck = faCheck;
-
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
+        ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
         ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
         ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
         ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',
@@ -159,7 +181,7 @@ export class UserManagementUpdateComponent implements OnInit {
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
-            this.authorities.set(authorities);
+            this.authorities.set(this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN));
         });
         this.languages = this.languageHelper.getAll();
         // Empty array for new user
@@ -231,14 +253,20 @@ export class UserManagementUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.organizations = this.user.organizations;
-        modalRef.closed.subscribe((organization) => {
+        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
+            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
+            width: '80vw',
+            modal: true,
+            closable: true,
+            dismissableMask: true,
+            data: {
+                organizations: this.user.organizations,
+            } as OrganizationSelectorDialogData,
+        });
+        dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                if (this.user.organizations === undefined) {
-                    this.user.organizations = [];
-                }
-                this.user.organizations!.push(organization);
+                // Create a new array reference to trigger change detection with OnPush
+                this.user.organizations = [...(this.user.organizations ?? []), organization];
             }
         });
     }

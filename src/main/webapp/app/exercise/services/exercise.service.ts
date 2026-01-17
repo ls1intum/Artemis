@@ -362,10 +362,6 @@ export class ExerciseService {
         return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
     }
 
-    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
-        return exercise.categories?.map((category) => JSON.stringify(category));
-    }
-
     /**
      * Converts the exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
@@ -585,5 +581,17 @@ export class ExerciseService {
             programmingExercise,
             exampleSolutionPublished: true,
         };
+    }
+
+    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
+        return exercise.categories?.map((category) => JSON.stringify(category));
+    }
+
+    static isExerciseVisibleToStudents(exercise: Exercise): boolean {
+        const effectiveDate = exercise.releaseDate ?? exercise.startDate;
+        if (!effectiveDate) {
+            return false;
+        }
+        return dayjs().isSameOrAfter(effectiveDate);
     }
 }

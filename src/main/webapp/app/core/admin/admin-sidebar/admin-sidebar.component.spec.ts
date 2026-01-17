@@ -44,6 +44,9 @@ describe('AdminSidebarComponent', () => {
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
         expect(component.atlasEnabled()).toBe(false);
         expect(component.examEnabled()).toBe(false);
+        expect(component.passkeyEnabled()).toBe(false);
+        expect(component.passkeyRequiredForAdmin()).toBe(false);
+        expect(component.isSuperAdmin()).toBe(false);
     });
 
     it('should generate sidebar groups', () => {
@@ -51,7 +54,7 @@ describe('AdminSidebarComponent', () => {
         expect(groups.length).toBeGreaterThan(0);
 
         expect(groups[0].translation).toBe('global.menu.admin.groups.usersAndOrganizations');
-        expect(groups[0].items).toHaveLength(2);
+        expect(groups[0].items).toHaveLength(3); // User Management, Organizations, Data Exports
     });
 
     it('should include Build System group when localCIActive is true', () => {
@@ -88,5 +91,67 @@ describe('AdminSidebarComponent', () => {
         const toggleSpy = vi.spyOn(component.toggleCollapseState, 'emit');
         component.toggleCollapseState.emit();
         expect(toggleSpy).toHaveBeenCalled();
+    });
+
+    it('should include passkey management link when all conditions are met', () => {
+        fixture.componentRef.setInput('passkeyEnabled', true);
+        fixture.componentRef.setInput('passkeyRequiredForAdmin', true);
+        fixture.componentRef.setInput('isSuperAdmin', true);
+        fixture.detectChanges();
+
+        const groups = component.sidebarGroups();
+        const userManagementGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.usersAndOrganizations');
+        expect(userManagementGroup).toBeTruthy();
+        expect(userManagementGroup!.items).toHaveLength(4); // User Management, Organizations, Data Exports, Passkey Management
+
+        const passkeyManagementItem = userManagementGroup!.items.find((i) => i.routerLink === '/admin/passkey-management');
+        expect(passkeyManagementItem).toBeTruthy();
+        expect(passkeyManagementItem!.translation).toBe('global.menu.admin.sidebar.passkeyManagement');
+        expect(passkeyManagementItem!.testId).toBe('admin-passkey-management');
+    });
+
+    it('should not include passkey management link when passkey is not enabled', () => {
+        fixture.componentRef.setInput('passkeyEnabled', false);
+        fixture.componentRef.setInput('passkeyRequiredForAdmin', true);
+        fixture.componentRef.setInput('isSuperAdmin', true);
+        fixture.detectChanges();
+
+        const groups = component.sidebarGroups();
+        const userManagementGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.usersAndOrganizations');
+        expect(userManagementGroup).toBeTruthy();
+        expect(userManagementGroup!.items).toHaveLength(3); // User Management, Organizations, Data Exports only
+
+        const passkeyManagementItem = userManagementGroup!.items.find((i) => i.routerLink === '/admin/passkey-management');
+        expect(passkeyManagementItem).toBeFalsy();
+    });
+
+    it('should not include passkey management link when passkey is not required for admin', () => {
+        fixture.componentRef.setInput('passkeyEnabled', true);
+        fixture.componentRef.setInput('passkeyRequiredForAdmin', false);
+        fixture.componentRef.setInput('isSuperAdmin', true);
+        fixture.detectChanges();
+
+        const groups = component.sidebarGroups();
+        const userManagementGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.usersAndOrganizations');
+        expect(userManagementGroup).toBeTruthy();
+        expect(userManagementGroup!.items).toHaveLength(3); // User Management, Organizations, Data Exports only
+
+        const passkeyManagementItem = userManagementGroup!.items.find((i) => i.routerLink === '/admin/passkey-management');
+        expect(passkeyManagementItem).toBeFalsy();
+    });
+
+    it('should not include passkey management link when user is not super admin', () => {
+        fixture.componentRef.setInput('passkeyEnabled', true);
+        fixture.componentRef.setInput('passkeyRequiredForAdmin', true);
+        fixture.componentRef.setInput('isSuperAdmin', false);
+        fixture.detectChanges();
+
+        const groups = component.sidebarGroups();
+        const userManagementGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.usersAndOrganizations');
+        expect(userManagementGroup).toBeTruthy();
+        expect(userManagementGroup!.items).toHaveLength(3); // User Management, Organizations, Data Exports only
+
+        const passkeyManagementItem = userManagementGroup!.items.find((i) => i.routerLink === '/admin/passkey-management');
+        expect(passkeyManagementItem).toBeFalsy();
     });
 });

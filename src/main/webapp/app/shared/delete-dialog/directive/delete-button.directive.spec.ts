@@ -6,7 +6,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-component',
@@ -25,11 +26,13 @@ describe('DeleteDialogDirective', () => {
     let translateService: TranslateService;
     let translateSpy: jest.SpyInstance;
 
-    const mockNgbModal = {
-        open: jest.fn().mockReturnValue({
-            result: Promise.resolve(), // or whatever you expect
-            componentInstance: {},
-        }),
+    const mockDialogRef = {
+        onClose: new Subject<void>(),
+        close: jest.fn(),
+    } as unknown as DynamicDialogRef;
+
+    const mockDialogService = {
+        open: jest.fn().mockReturnValue(mockDialogRef),
     };
 
     beforeEach(() =>
@@ -37,8 +40,7 @@ describe('DeleteDialogDirective', () => {
             imports: [TestComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
-                { provide: NgbModal, useValue: mockNgbModal },
+                { provide: DialogService, useValue: mockDialogService },
             ],
         })
             .compileComponents()
@@ -74,9 +76,10 @@ describe('DeleteDialogDirective', () => {
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         expect(directiveEl).not.toBeNull();
         const directiveInstance = directiveEl.injector.get(DeleteButtonDirective);
-        expect(directiveInstance.entityTitle).toBe('title');
-        expect(directiveInstance.deleteQuestion).toBe('question');
-        expect(directiveInstance.deleteConfirmationText).toBe('text');
+        // Signal inputs need to be called as functions
+        expect(directiveInstance.entityTitle()).toBe('title');
+        expect(directiveInstance.deleteQuestion()).toBe('question');
+        expect(directiveInstance.deleteConfirmationText()).toBe('text');
     });
 
     it('on click should call delete dialog service', fakeAsync(() => {

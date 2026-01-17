@@ -8,9 +8,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
-import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.security.Role.ADMIN;
+import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
@@ -162,7 +162,7 @@ public class UserService {
                     log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
                     existingInternalAdmin.get().setPassword(passwordService.hashPassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
                 }
                 else {
@@ -189,7 +189,7 @@ public class UserService {
         userDto.setCreatedBy("system");
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
-        userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
+        userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
         userDto.setGroups(new HashSet<>());
         return userDto;
     }
@@ -573,26 +573,45 @@ public class UserService {
     }
 
     /**
-     * delete the group with the given name
-     *
-     * @param groupName the name of the group which should be deleted
-     */
-    public void deleteGroup(String groupName) {
-        removeGroupFromUsers(groupName);
-    }
-
-    /**
-     * removes the passed group from all users in the Artemis database, e.g. when the group was deleted
+     * Removes the passed group from all users in the Artemis database using a single bulk delete query.
+     * This is more efficient than loading, modifying, and saving each user individually.
+     * <p>
+     * The method first retrieves the logins of affected users for cache eviction,
+     * then performs the bulk delete, and finally evicts all affected users from the cache.
      *
      * @param groupName the group that should be removed from all existing users
      */
-    public void removeGroupFromUsers(String groupName) {
-        log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupName);
-        log.info("Found {} users with group {}", users.size(), groupName);
-        for (User user : users) {
-            user.getGroups().remove(groupName);
-            saveUser(user);
+    public void removeGroupFromAllUsers(String groupName) {
+        log.info("Remove group {} from all users", groupName);
+
+        // First, get the logins of users who have this group (for cache eviction)
+        Set<String> affectedLogins = userRepository.findLoginsByGroupName(groupName);
+        log.debug("Found {} users with group {}", affectedLogins.size(), groupName);
+
+        if (affectedLogins.isEmpty()) {
+            return;
+        }
+
+        // Perform bulk delete directly in the database
+        int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
+        log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
+
+        // Evict all affected users from the cache
+        evictUsersFromCache(affectedLogins);
+    }
+
+    /**
+     * Evicts multiple users from the cache by their logins.
+     *
+     * @param logins the set of user logins to evict from cache
+     */
+    private void evictUsersFromCache(Set<String> logins) {
+        var userCache = cacheManager.getCache(User.class.getName());
+        if (userCache != null) {
+            for (String login : logins) {
+                userCache.evict(login);
+            }
+            log.debug("Evicted {} users from cache", logins.size());
         }
     }
 

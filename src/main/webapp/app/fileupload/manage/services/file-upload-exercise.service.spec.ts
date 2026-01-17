@@ -202,7 +202,7 @@ describe('FileUploadExerciseService', () => {
 
     describe('delete', () => {
         it('should delete exercise by ID', async () => {
-            const resultPromise = new Promise<HttpResponse<object>>((resolve) => {
+            const resultPromise = new Promise<HttpResponse<void>>((resolve) => {
                 service.delete(456).subscribe((resp) => resolve(resp));
             });
 

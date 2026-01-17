@@ -3,6 +3,8 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
     default: [
         'intro',
+        'course-management',
+        'access-rights',
         'artemis-intelligence',
         {
             type: 'category',
@@ -22,6 +24,16 @@ const sidebars: SidebarsConfig = {
         },
         'hyperion',
         'adaptive-learning',
+        'scaling',
+        'user-registration',
+        'saml2-login-registration',
+        'troubleshooting',
+        'database-tips',
+        'known-issues',
+        'benchmarking-tool',
+        'telemetry',
+        'cleanup-service',
+        'extensions-setup',
     ],
 };
 
