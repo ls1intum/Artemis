@@ -57,7 +57,7 @@ management:
     endpoint:
         health:
             show-details: when_authorized
-            roles: 'ROLE_ADMIN'
+            roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
         jhimetrics:
