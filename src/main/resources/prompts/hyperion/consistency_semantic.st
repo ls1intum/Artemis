@@ -177,8 +177,63 @@ Analysis: Same entity with different names - students cannot map requirements to
 }
 ```
 
-# IMPORTANT
-Return only the minimal necessary changes. Preserve existing code comments unless a change is required by the fix. If you include `modifiedText`, it must fully replace the referenced line range (startLine..endLine) without leaving any line in that range unchanged. For problem statement changes, treat the text as student-facing and apply only minimal, clarity-preserving edits. If no concrete text change is needed for a location, omit `modifiedText`.
+# OUTPUT EXAMPLE (MIXED MODIFIEDTEXT)
+```json
+{
+  "issues": [
+    {
+      "description": "Problem statement and template use different names for the same method.",
+      "severity": "MEDIUM",
+      "category": "IDENTIFIER_NAMING_INCONSISTENCY",
+      "relatedLocations": [
+        {
+          "type": "PROBLEM_STATEMENT",
+          "filePath": "problem_statement.md",
+          "startLine": 12,
+          "endLine": 12,
+          "modifiedText": "Implement calculateTotal() for the invoice."
+        },
+        {
+          "type": "TEMPLATE_REPOSITORY",
+          "filePath": "src/example/Invoice.java",
+          "startLine": 8,
+          "endLine": 8
+        }
+      ],
+      "suggestedFix": "Use a single method name across statement and template."
+    },
+    {
+      "description": "Template and solution use different class names for the same entity.",
+      "severity": "LOW",
+      "category": "IDENTIFIER_NAMING_INCONSISTENCY",
+      "relatedLocations": [
+        {
+          "type": "TEMPLATE_REPOSITORY",
+          "filePath": "src/example/ClientRecord.java",
+          "startLine": 1,
+          "endLine": 3,
+          "modifiedText": "public class Customer {\n    private String name;\n}"
+        },
+        {
+          "type": "SOLUTION_REPOSITORY",
+          "filePath": "src/example/Customer.java",
+          "startLine": 1,
+          "endLine": 1
+        }
+      ],
+      "suggestedFix": "Align class names across template and solution."
+    }
+  ]
+}
+```
+
+# IMPORTANT FOR THE ATTRIBUTE `modifiedText`
+Return only the minimal necessary changes in `modifiedText`.
+Preserve existing code comments unless a change is required by the fix.
+Use the smallest possible line range (startLine..endLine) that fully captures the change, and avoid introducing unnecessary new lines.
+If you include `modifiedText`, it must fully replace the referenced line range (startLine..endLine) without leaving any line in that range unchanged.
+For problem statement changes, treat the text as student-facing and apply only minimal, clarity-preserving edits.
+If no concrete text change is needed for a location, omit `modifiedText`.
 
 # EXECUTION
 Analyze the provided artifacts for semantic naming inconsistencies that would create cognitive mapping barriers for students.
