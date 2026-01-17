@@ -102,6 +102,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
+    isNotifyingStudent = false;
+    studentNotified = false;
+
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.plagiarismCaseId = Number(this.route.snapshot.paramMap.get('plagiarismCaseId'));
@@ -220,25 +223,20 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         return this.posts?.length > 0;
     }
 
-    isNotifyingStudent = false;
-
     notifyStudent(): void {
         if (this.isNotifyingStudent) {
             return;
         }
 
         const dto = this.createdPost;
-        if (!dto) {
-            return;
-        }
 
-        if (!dto.plagiarismCaseId) {
+        if (!dto?.plagiarismCaseId) {
             this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.missingPlagiarismCaseId');
             return;
         }
 
-        const title = (dto.title ?? '').trim();
-        const content = (dto.content ?? '').trim();
+        const title = dto.title?.trim();
+        const content = dto.content?.trim();
         if (!title || !content) {
             this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.missingTitleOrContent');
             return;
@@ -250,8 +248,10 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             next: (createdPost: Post) => {
                 this.onStudentNotified(createdPost);
                 this.createEmptyPost();
+                this.isNotifyingStudent = false;
             },
             error: () => {
+                this.isNotifyingStudent = false;
                 this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.notificationFailed');
             },
         });
@@ -262,18 +262,17 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * Adds the created post to the local list so the thread becomes visible immediately.
      */
     onStudentNotified(createdPost: Post): void {
-        this.isNotifyingStudent = false;
+        const currentPosts = this.posts ?? [];
 
-        if (!this.posts) {
-            this.posts = [];
-        }
-
-        const exists = this.posts.some((p) => p.id === createdPost.id);
+        const exists = currentPosts.some((post) => post.id === createdPost.id);
         if (!exists) {
-            this.posts.push(createdPost);
+            this.posts = [...currentPosts, createdPost];
         }
 
+        this.studentNotified = true;
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
+
+        // Keep Metis in sync (answers, reactions, websocket state)
         this.metisService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
     }
 
