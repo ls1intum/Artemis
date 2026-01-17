@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
@@ -30,8 +31,13 @@ import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -52,6 +58,12 @@ public class ExerciseReviewCommentService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ExerciseVersionRepository exerciseVersionRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -59,10 +71,15 @@ public class ExerciseReviewCommentService {
     private final GitService gitService;
 
     public ExerciseReviewCommentService(CommentThreadRepository commentThreadRepository, CommentRepository commentRepository, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, GitService gitService) {
+            ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
+            GitService gitService) {
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
         this.exerciseRepository = exerciseRepository;
+        this.exerciseVersionRepository = exerciseVersionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.gitService = gitService;
@@ -146,6 +163,15 @@ public class ExerciseReviewCommentService {
         if (comment.getType() == CommentType.USER) {
             User author = userRepository.getUserWithGroupsAndAuthorities();
             comment.setAuthor(author);
+        }
+
+        if (commentRepository.countByThreadId(threadId) == 0) {
+            comment.setInitialVersion(thread.getInitialVersion());
+            comment.setInitialCommitSha(thread.getInitialCommitSha());
+        }
+        else {
+            comment.setInitialVersion(resolveLatestVersion(thread));
+            comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
         }
 
         comment.setThread(thread);
@@ -331,6 +357,53 @@ public class ExerciseReviewCommentService {
             return Optional.empty();
         }
         return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(currentRepo.repositoryUri()), previousRepo.commitId(), currentRepo.commitId()));
+    }
+
+    private ExerciseVersion resolveLatestVersion(CommentThread thread) {
+        if (thread.getTargetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return null;
+        }
+        return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(thread.getExercise().getId()).orElse(null);
+    }
+
+    public String resolveLatestCommitSha(CommentThreadLocationType targetType, Long auxiliaryRepositoryId, long exerciseId) {
+        if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return null;
+        }
+
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId)
+                .orElseThrow(() -> new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming"));
+
+        LocalVCRepositoryUri repositoryUri = switch (targetType) {
+            case TEMPLATE_REPO -> exercise.getVcsTemplateRepositoryUri() != null ? exercise.getVcsTemplateRepositoryUri()
+                    : exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getVcsRepositoryUri() : null;
+            case SOLUTION_REPO -> exercise.getVcsSolutionRepositoryUri() != null ? exercise.getVcsSolutionRepositoryUri()
+                    : exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getVcsRepositoryUri() : null;
+            case TEST_REPO -> exercise.getVcsTestRepositoryUri();
+            case AUXILIARY_REPO -> getAuxiliaryRepositoryUri(auxiliaryRepositoryId, exerciseId);
+            case PROBLEM_STATEMENT -> null;
+        };
+
+        if (repositoryUri == null) {
+            log.warn("Repository URI missing for thread target {} in exercise {}", targetType, exerciseId);
+            return null;
+        }
+
+        return gitService.getLastCommitHash(repositoryUri);
+    }
+
+    private LocalVCRepositoryUri getAuxiliaryRepositoryUri(Long auxiliaryRepositoryId, long exerciseId) {
+        if (auxiliaryRepositoryId == null) {
+            throw new BadRequestAlertException("Auxiliary repository id is required", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
+        }
+
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findById(auxiliaryRepositoryId)
+                .orElseThrow(() -> new EntityNotFoundException("AuxiliaryRepository", auxiliaryRepositoryId));
+        if (auxiliaryRepository.getExercise() == null || auxiliaryRepository.getExercise().getId() == null
+                || !Objects.equals(auxiliaryRepository.getExercise().getId(), exerciseId)) {
+            throw new BadRequestAlertException("Auxiliary repository does not belong to exercise", THREAD_ENTITY_NAME, "auxiliaryRepositoryMismatch");
+        }
+        return auxiliaryRepository.getVcsRepositoryUri();
     }
 
     private record RepoDiffInfo(LocalVCRepositoryUri repositoryUri, String oldCommit, String newCommit) {
