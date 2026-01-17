@@ -19,6 +19,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -35,14 +36,20 @@ import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants
     ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
-    route = inject(ActivatedRoute);
-    private sortService = inject(SortService);
-    private courseManagementService = inject(CourseManagementService);
-    private http = inject(HttpClient);
-    private accountService = inject(AccountService);
-    private router = inject(Router);
-    private alertService = inject(AlertService);
-    private sessionStorageService = inject(SessionStorageService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly sortService = inject(SortService);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
+    private readonly alertService = inject(AlertService);
+    private readonly sessionStorageService = inject(SessionStorageService);
+
+    protected readonly IS_AT_LEAST_INSTRUCTOR = IS_AT_LEAST_INSTRUCTOR;
+
+    protected readonly faSort = faSort;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faWrench = faWrench;
 
     courseId: number;
     exercises: Exercise[];
@@ -61,11 +68,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     //grouping
     isExerciseGroupingActive = false;
     isLectureGroupingActive = false;
-
-    // Icons
-    faSort = faSort;
-    faExclamationTriangle = faExclamationTriangle;
-    faWrench = faWrench;
 
     /**
      * Initializes the component.
