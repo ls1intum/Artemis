@@ -7,10 +7,12 @@ import { Subscription, filter } from 'rxjs';
 import { AdminSidebarComponent } from 'app/core/admin/admin-sidebar/admin-sidebar.component';
 import { AdminTitleBarComponent } from 'app/core/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
 
 /**
  * Container component for the admin section.
@@ -31,6 +33,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly layoutService = inject(LayoutService);
     private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
 
     /** Whether the navbar is collapsed */
     readonly isNavbarCollapsed = signal(false);
@@ -41,6 +44,9 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     readonly atlasEnabled = signal(false);
     readonly examEnabled = signal(false);
     readonly standardizedCompetenciesEnabled = signal(false);
+    readonly passkeyEnabled = signal(false);
+    readonly passkeyRequiredForAdmin = signal(false);
+    readonly isSuperAdmin = signal(false);
 
     private standardizedCompetencySubscription?: Subscription;
     private routerSubscription?: Subscription;
@@ -51,6 +57,9 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.examEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM));
         this.localCIActive.set(profileInfo.activeProfiles.includes(PROFILE_LOCALCI));
         this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
+        this.passkeyEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY));
+        this.passkeyRequiredForAdmin.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN));
+        this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled.set(isActive);
