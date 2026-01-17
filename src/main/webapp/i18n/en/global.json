@@ -140,6 +140,7 @@
                 "sidebar": {
                     "organizations": "Organizations",
                     "users": "Users",
+                    "passkeyManagement": "Passkeys",
                     "courseRequests": "Course Requests",
                     "dataExports": "Data Exports",
                     "iris": "Iris",

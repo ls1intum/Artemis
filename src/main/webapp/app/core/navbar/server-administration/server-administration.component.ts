@@ -4,6 +4,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -13,6 +14,8 @@ import { faUserShield } from '@fortawesome/free-solid-svg-icons';
 })
 export class ServerAdministrationComponent {
     protected readonly faUserShield = faUserShield;
+
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
