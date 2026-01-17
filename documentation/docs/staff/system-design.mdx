@@ -261,7 +261,7 @@ The process becomes more complex for jobs already in process, involving the `can
 A cancellation message for the build job ID is broadcast to all build agents, with the `BuildJobManagementService` listening for these messages via Hazelcast's `MessageListener`.
 Every build agent then checks its `runningFutures` map to see if it holds the specific build job future.
 Should a build agent currently process the specified job, it executes `cancelBuildJob(String buildJobId)` within the `BuildJobManagementService`.
-This step involves canceling the future and recording the job ID in `Set<String> cancelledBuildJobs`.
+This step involves cancelling the future and recording the job ID in `Set<String> cancelledBuildJobs`.
 The cancellation triggers an Exception which is caught and managed in `processBuild(...)` within the `SharedQueueProcessingService`.
 The build status is set to `CANCELLED`, the job is removed from `processingJobs`, and the process reinitialized with `checkAvailabilityAndProcessNextBuild()`.
-Modifications to `processingJobs` trigger WebSocket updates, consequently removing the canceled job from the client's build overview display.
+Modifications to `processingJobs` trigger WebSocket updates, consequently removing the cancelled job from the client's build overview display.
