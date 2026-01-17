@@ -33,7 +33,7 @@ public class Comment extends DomainObject {
     private CommentThread thread;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private User author;
 
     @Enumerated(EnumType.STRING)
