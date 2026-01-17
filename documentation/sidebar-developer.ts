@@ -4,10 +4,14 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
+        'development-process',
+        'reviewer-guidelines',
         'database',
+        'local-user-management',
         'open-source',
         'system-design',
         'test-servers',
+        'builds-and-dependencies',
         'e2e-testing-playwright',
         'spring-ai',
         'jenkins-localvc',
@@ -17,16 +21,6 @@ const sidebars: SidebarsConfig = {
         'docker-debugging',
         'local-database-tests',
         'local-moodle-setup-for-lti',
-        {
-            type: 'category',
-            label: 'Contributor Guide',
-            items: [
-                'development-process',
-                'reviewer-guidelines',
-                'local-user-management',
-                'builds-and-dependencies',
-            ],
-        },
     ],
 };
 
