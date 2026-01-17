@@ -16,7 +16,7 @@ const sidebars: SidebarsConfig = {
         'docker-compose',
         'docker-debugging',
         'local-database-tests',
-        'local-moodle-setup-for-lti'
+        'local-moodle-setup-for-lti',
     ],
 };
 
