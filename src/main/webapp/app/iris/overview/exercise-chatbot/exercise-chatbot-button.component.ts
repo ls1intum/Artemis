@@ -13,13 +13,15 @@ import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { IrisCitationDTO } from 'app/iris/shared/entities/iris-citation-dto.model';
+import { formatMarkdownWithCitations } from 'app/iris/shared/util/iris-citation.util';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
+    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
@@ -45,7 +47,7 @@ export class IrisExerciseChatbotButtonComponent {
     // UI state as signals for OnPush change detection
     readonly chatOpen = signal(false);
     readonly isOverflowing = signal(false);
-    readonly newIrisMessage = signal<string | undefined>(undefined);
+    readonly newIrisMessage = signal<ChatBubbleMessage | undefined>(undefined);
 
     // Convert numNewMessages observable to signal
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
@@ -57,7 +59,7 @@ export class IrisExerciseChatbotButtonComponent {
             filter((msg) => !!msg),
             switchMap((msg) => {
                 if (msg!.content && msg!.content.length > 0 && isTextContent(msg!.content[0])) {
-                    return of(msg!.content[0].textContent);
+                    return of({ text: msg!.content[0].textContent, citations: msg!.citations });
                 }
                 return EMPTY;
             }),
@@ -123,8 +125,8 @@ export class IrisExerciseChatbotButtonComponent {
             const isChatClosed = untracked(() => !this.chatOpen());
 
             // Only show if: message exists, chat is closed, AND it's a new message we haven't shown
-            if (message && isChatClosed && message !== this.lastShownBubbleMessage) {
-                this.lastShownBubbleMessage = message;
+            if (message?.text && isChatClosed && message.text !== this.lastShownBubbleMessage) {
+                this.lastShownBubbleMessage = message.text;
                 this.newIrisMessage.set(message);
                 setTimeout(() => this.checkOverflow(), 0);
 
@@ -190,4 +192,17 @@ export class IrisExerciseChatbotButtonComponent {
         this.chatOpen.set(false);
         this.newIrisMessage.set(undefined);
     }
+
+    renderChatBubbleMessage(message?: ChatBubbleMessage): string {
+        if (!message?.text) {
+            return '';
+        }
+        const withCitations = formatMarkdownWithCitations(message.text, message.citations);
+        return htmlForMarkdown(withCitations);
+    }
 }
+
+type ChatBubbleMessage = {
+    text: string;
+    citations?: IrisCitationDTO[];
+};

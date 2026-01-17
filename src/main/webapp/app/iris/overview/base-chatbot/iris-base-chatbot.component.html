@@ -194,7 +194,7 @@
                                     <div style="width: fit-content; position: relative">
                                         @if (content.type === IrisMessageContentType.TEXT) {
                                             <div class="bubble-left">
-                                                <span [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></span>
+                                                <span [innerHTML]="renderMessageContent(content | as: IrisTextMessageContent, message)"></span>
                                             </div>
 
                                             <div class="rate-message-buttons toolbox">

@@ -303,6 +303,72 @@
             pre code {
                 line-height: 1;
             }
+
+            .iris-citation {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 2px 8px 2px 4px;
+                border-radius: 999px;
+                background-color: rgba(0, 0, 0, 0.06);
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                font-size: 0.85em;
+                line-height: 1.4;
+                vertical-align: middle;
+                margin: 0 2px;
+                max-width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .iris-citation__icon {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                display: grid;
+                place-items: center;
+                color: #fff;
+                font-size: 0.65em;
+                font-weight: 600;
+                flex: 0 0 auto;
+            }
+
+            .iris-citation__icon::before {
+                content: '';
+            }
+
+            .iris-citation--slide .iris-citation__icon {
+                background-color: #3b82f6;
+            }
+
+            .iris-citation--slide .iris-citation__icon::before {
+                content: 'S';
+            }
+
+            .iris-citation--video .iris-citation__icon {
+                background-color: #f97316;
+            }
+
+            .iris-citation--video .iris-citation__icon::before {
+                content: 'V';
+            }
+
+            .iris-citation--faq .iris-citation__icon {
+                background-color: #22c55e;
+            }
+
+            .iris-citation--faq .iris-citation__icon::before {
+                content: '?';
+            }
+
+            .iris-citation--source .iris-citation__icon {
+                background-color: #6b7280;
+            }
+
+            .iris-citation--source .iris-citation__icon::before {
+                content: 'i';
+            }
         }
     }
 }

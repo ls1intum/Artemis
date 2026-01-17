@@ -138,7 +138,9 @@ public class IrisTextExerciseChatSessionService
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            message.setCitations(statusUpdate.citations());
             IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            savedMessage.setCitations(statusUpdate.citations());
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
         }
         else {

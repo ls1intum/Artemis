@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { IrisMessageContent, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
+import { IrisCitationDTO } from 'app/iris/shared/entities/iris-citation-dto.model';
 
 /**
  * The IrisMessage class is used to represent a message in the Iris system.
@@ -20,6 +21,7 @@ export class IrisAssistantMessage implements BaseEntity {
     sender: IrisSender.LLM;
     helpful?: boolean;
     accessedMemories?: MemirisMemory[];
+    citations?: IrisCitationDTO[];
 }
 
 export class IrisUserMessage implements BaseEntity {
@@ -29,6 +31,7 @@ export class IrisUserMessage implements BaseEntity {
     sender: IrisSender.USER;
     messageDifferentiator?: number;
     createdMemories?: MemirisMemory[];
+    citations?: IrisCitationDTO[];
 }
 
 export class IrisArtifactMessage implements BaseEntity {
@@ -36,6 +39,7 @@ export class IrisArtifactMessage implements BaseEntity {
     content: IrisTextMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.ARTIFACT;
+    citations?: IrisCitationDTO[];
 }
 
 export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;

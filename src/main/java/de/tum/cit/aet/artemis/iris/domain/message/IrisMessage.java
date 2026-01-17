@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCitationDTO;
 
 /**
  * An IrisMessage represents a single message in an IrisSession.
@@ -72,6 +73,9 @@ public class IrisMessage extends DomainObject {
 
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
+
+    @Transient
+    private List<PyrisCitationDTO> citations = new ArrayList<>();
 
     public IrisSession getSession() {
         return session;
@@ -146,6 +150,15 @@ public class IrisMessage extends DomainObject {
     @JsonProperty
     public void setMessageDifferentiator(Integer messageDifferentiator) {
         this.messageDifferentiator = messageDifferentiator;
+    }
+
+    @JsonProperty
+    public List<PyrisCitationDTO> getCitations() {
+        return citations;
+    }
+
+    public void setCitations(List<PyrisCitationDTO> citations) {
+        this.citations = citations != null ? citations : new ArrayList<>();
     }
 
     @Override

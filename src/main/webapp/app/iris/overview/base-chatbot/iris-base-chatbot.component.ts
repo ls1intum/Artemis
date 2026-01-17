@@ -36,12 +36,13 @@ import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.compon
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { formatMarkdownWithCitations } from 'app/iris/shared/util/iris-citation.util';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -58,7 +59,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
-        HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
@@ -250,6 +250,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
         return processed;
+    }
+
+    renderMessageContent(content: IrisTextMessageContent, message: IrisMessage): string {
+        const withCitations = formatMarkdownWithCitations(content.textContent, message.citations);
+        return htmlForMarkdown(withCitations);
     }
 
     ngAfterViewInit() {
