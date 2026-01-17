@@ -238,8 +238,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
     });
 
     test.describe('Student Competency Progress - Exercise Completion', { tag: '@fast' }, () => {
-        let course: Course;
-
         test.beforeEach('Setup course', async ({ login, courseManagementAPIRequests }) => {
             await login(admin);
             course = await courseManagementAPIRequests.createCourse();
@@ -342,9 +340,21 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const response = await quizExerciseMultipleChoice.submit();
             expect(response.status()).toBe(200);
 
-            // Wait for the quiz to end naturally (10 second duration + grace period)
-            // The quiz results are calculated automatically once the quiz ends
-            await page.waitForTimeout(15000);
+            // Wait for the quiz to end naturally and for competency progress to be calculated
+            await expect
+                .poll(
+                    async () => {
+                        const progressResponse = await page.request.get(`api/atlas/courses/${course.id}/competencies`);
+                        if (!progressResponse.ok()) {
+                            return 0;
+                        }
+                        const competencies = (await progressResponse.json()) as Array<{ id?: number; userProgress?: Array<{ progress?: number }> }>;
+                        const updatedCompetency = competencies.find((item) => item.id === competency.id);
+                        return updatedCompetency?.userProgress?.[0]?.progress ?? 0;
+                    },
+                    { timeout: 20000 },
+                )
+                .toBeGreaterThan(0);
 
             // Navigate to competencies overview to check updated progress
             await page.goto(`/courses/${course.id}/competencies`);
