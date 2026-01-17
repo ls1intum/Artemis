@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ImportComponent } from 'app/shared/import/import.component';
@@ -28,7 +29,8 @@ describe('ImportComponent', () => {
     let sortService: SortService;
     let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
+    let dialogRefCloseSpy: jest.SpyInstance;
 
     let searchResult: SearchResult<BaseEntity>;
     let state: SearchTermPageableSearch;
@@ -36,10 +38,16 @@ describe('ImportComponent', () => {
     const content: BaseEntity = { id: 2 };
 
     beforeEach(() => {
+        dialogRefCloseSpy = jest.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
             imports: [FormsModule, MockComponent(NgbPagination)],
             declarations: [DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
-            providers: [MockProvider(DummyPagingService), MockProvider(SortService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
         })
             .compileComponents()
             .then(() => {
@@ -47,7 +55,6 @@ describe('ImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(DummyPagingService);
                 sortService = TestBed.inject(SortService);
-                activeModal = TestBed.inject(NgbActiveModal);
 
                 searchStub = jest.spyOn(pagingService, 'search');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
@@ -142,27 +149,24 @@ describe('ImportComponent', () => {
         expect(comp.trackId(0, content)).toEqual(content.id);
     });
 
-    it('should close the active modal', () => {
-        const activeModalSpy = jest.spyOn(activeModal, 'dismiss');
-
+    it('should close the dialog', () => {
         // WHEN
         comp.clear();
 
         // THEN
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-        expect(activeModalSpy).toHaveBeenCalledWith('cancel');
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith();
     });
 
-    it('should close the active modal with result', () => {
+    it('should close the dialog with result', () => {
         // GIVEN
-        const activeModalSpy = jest.spyOn(activeModal, 'close');
         const exam = { id: 1 } as Exam;
         // WHEN
         comp.selectImport(exam);
 
         // THEN
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-        expect(activeModalSpy).toHaveBeenCalledWith(exam);
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith(exam);
     });
 
     it('should change the page on active modal', fakeAsync(() => {

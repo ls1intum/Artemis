@@ -2,8 +2,9 @@ import { Page, expect } from '@playwright/test';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
-import { clearTextField } from '../../utils';
+import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -273,9 +274,8 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const editorContainer = this.page.locator('.markdown-editor .monaco-editor').first();
-        await editorContainer.click();
-        await this.page.keyboard.insertText(message);
+        // Use the specific posting markdown editor container
+        await setMonacoEditorContent(this.page, 'jhi-posting-markdown-editor', message);
     }
 
     /**
@@ -325,9 +325,8 @@ export class CourseMessagesPage {
             await postLocator.locator('.reaction-button.edit').click();
         }
 
-        const textInputField = postLocator.locator('.monaco-editor').first();
-        await clearTextField(textInputField);
-        await this.page.keyboard.insertText(message);
+        // Use the setMonacoEditorContentByLocator utility to set the content directly
+        await setMonacoEditorContentByLocator(this.page, postLocator, message);
 
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
@@ -369,7 +368,12 @@ export class CourseMessagesPage {
      */
     async save(force = false): Promise<Post> {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages`);
-        await this.page.locator('#save').click({ force });
+        const saveButton = this.page.locator('#save');
+        // Ensure the button is visible and scrolled into view
+        await saveButton.scrollIntoViewIfNeeded();
+        // Wait for any notifications that might overlap to disappear
+        await this.page.waitForTimeout(500);
+        await saveButton.click({ force });
         const response = await responsePromise;
         return response.json();
     }
@@ -407,7 +411,7 @@ export class CourseMessagesPage {
      * @param user - The username of the user to add to the group chat.
      */
     async addUserToGroupChat(user: string) {
-        await this.page.locator('#users-selector0-user-input').fill(user);
+        await this.page.locator('#users-selector0-search-input').fill(user);
         await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
     }
 

@@ -4,6 +4,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { UnitType } from '../../support/pageobjects/lecture/LectureManagementPage';
+import { setMonacoEditorContentByLocator } from '../../support/utils';
 
 test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
     let course: Course;
@@ -81,8 +82,9 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await lectureManagement.openCreateUnit(UnitType.TEXT);
             await page.fill('#name', 'UI Created Text Unit');
-            await page.locator('.monaco-editor').click();
-            await page.locator('.monaco-editor').pressSequentially('Content created through UI');
+            // Use the specific container for the content Monaco editor (id="content" in text-unit-form.component.html)
+            const contentEditor = page.locator('#content');
+            await setMonacoEditorContentByLocator(page, contentEditor, 'Content created through UI');
 
             await page.getByRole('checkbox', { name: 'UI Link Competency' }).check();
 
