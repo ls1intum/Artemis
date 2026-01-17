@@ -17,6 +17,7 @@ import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submiss
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -94,9 +95,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private participationIdToExerciseId = new Map<number, number>();
 
     // undefined describes the case when there is not a pending submission, undefined is used for the setup process and will not be emitted to subscribers.
-    private submissionSubjects: {
-        [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined>;
-    } = {};
+    private submissionSubjects: { [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined> } = {};
     // exerciseId -> ExerciseSubmissionState
     private exerciseBuildStateSubjects = new Map<number, BehaviorSubject<ExerciseSubmissionState | undefined>>();
     // participationId -> Subject
@@ -177,13 +176,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param exerciseId of programming exercise.
      */
-    private fetchLatestPendingSubmissionsByExerciseId(exerciseId: number): Observable<{
-        [participationId: number]: ProgrammingSubmission;
-    }> {
+    private fetchLatestPendingSubmissionsByExerciseId(exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission }> {
         return this.http
-            .get<{
-                [participationId: number]: ProgrammingSubmission;
-            }>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`)
+            .get<{ [participationId: number]: ProgrammingSubmission }>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`)
             .pipe(catchError(() => of([])));
     }
 
@@ -444,11 +439,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     private emitNoPendingSubmission(participationId: number, exerciseId: number) {
-        const newSubmissionState = {
-            participationId,
-            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-            submission: undefined,
-        };
+        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     }
 
@@ -491,10 +482,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             submissionSubject.next(newSubmissionState);
         }
         // Inform exercise subscribers.
-        this.exerciseBuildState = {
-            ...this.exerciseBuildState,
-            [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState },
-        };
+        const updatedBuildState = deepClone(this.exerciseBuildState);
+        const updatedExerciseState = deepClone(updatedBuildState[exerciseId] ?? {});
+        updatedExerciseState[participationId] = newSubmissionState;
+        updatedBuildState[exerciseId] = updatedExerciseState;
+        this.exerciseBuildState = updatedBuildState;
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
