@@ -54,7 +54,7 @@
                                 </button>
                                 <button
                                     id="delete-course"
-                                    *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                                    *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN"
                                     [buttonSize]="ButtonSize.SMALL"
                                     jhiDeleteButton
                                     [entityTitle]="course()?.title || ''"

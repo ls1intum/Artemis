@@ -217,7 +217,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             size: 'lg',
             backdrop: true,
         });
-        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.courseId.set(this.courseId());
 
         modalRef.componentInstance.competencyChanged.subscribe(() => {
             this.loadCourseCompetencies(this.courseId());
