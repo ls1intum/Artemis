@@ -375,7 +375,7 @@ export const courseManagementRoutes: Routes = [
                                 loadComponent: () => import('app/atlas/manage/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
                                 data: {
                                     authorities: IS_AT_LEAST_INSTRUCTOR,
-                                    pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
+                                    pageTitle: 'artemisApp.prerequisite.create.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -384,7 +384,7 @@ export const courseManagementRoutes: Routes = [
                                 loadComponent: () => import('app/atlas/manage/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
                                 data: {
                                     authorities: IS_AT_LEAST_INSTRUCTOR,
-                                    pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
+                                    pageTitle: 'artemisApp.prerequisite.edit.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
