@@ -1,9 +1,3 @@
----
-id: security
-title: Security Configuration
-sidebar_label: Security
----
-
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
@@ -41,6 +35,46 @@ jhipster:
     Always restrict read access to configuration files for the minimum required set of users (usually only the system user that runs the Artemis service) only.
 </Callout>
 
+## Passkey Authentication
+
+Artemis supports passkey-based authentication as more secure authentication method compared to passwords.
+[Passkeys provide phishing-resistant authentication using WebAuthn/FIDO2 standards](https://fidoalliance.org/passkeys/).
+
+### Passkey Approval
+
+When passkeys are activated and passkey enforcement is enabled for administrator feature access, an additional security layer is implemented:
+
+- **Super Admins:** Can approve passkey registrations for administrators
+- **Admins:** Require passkey approval from a Super Admin before accessing admin features
+
+This approach minimizes the attack surface for the critical operation of registering new passkeys by limiting this privilege to a very small number of Super Admin users.
+This ensures that even if an administrator account is compromised, the attacker cannot bypass passkey enforcement by registering their own passkey without Super Admin approval.
+
+### Configuration
+
+To enable passkeys and enforce them for administrator features, add the following to your configuration:
+
+```yaml
+artemis:
+    user-management:
+        passkey:
+            enabled: true
+            require-for-administrator-features: true
+```
+
+**Configuration Options:**
+
+- `artemis.user-management.passkey.enabled`: Enables passkey authentication functionality (default: `false`)
+- `artemis.user-management.passkey.require-for-administrator-features`: When enabled, administrators must have an approved passkey to access admin features (default: `false`)
+
+<Callout variant={CalloutVariant.warning}>
+    When enabling `require-for-administrator-features`, the internal system admin `artemis.user-management.internal-admin` will automatically be granted the role `Super Admin`.
+    Passkeys of a super admin are automatically approved on registration or when logging in with an unapproved passkey for the first time.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+    Passkey enforcement only applies to administrator-level features. Regular users and course roles (instructors, TAs, students) are not affected by this setting.
+</Callout>
 
 ## SSH Access
 

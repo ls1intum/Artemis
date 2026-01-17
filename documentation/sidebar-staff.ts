@@ -4,7 +4,19 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
-        'spring-ai'
+        'database',
+        'open-source',
+        'system-design',
+        'test-servers',
+        'e2e-testing-playwright',
+        'spring-ai',
+        'jenkins-localvc',
+        'aeolus',
+        'openapi',
+        'docker-compose',
+        'docker-debugging',
+        'local-database-tests',
+        'local-moodle-setup-for-lti',
     ],
 };
 
