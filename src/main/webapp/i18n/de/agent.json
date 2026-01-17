@@ -30,7 +30,7 @@
                     "relationCreated": "Kompetenzbeziehung erfolgreich erstellt!"
                 },
                 "failure": {
-                    "relationMappingFailed": "Fehler beim Erstellen der Kompetenzbeziehung.Bitte versuch es erneut."
+                    "relationMappingFailed": "Fehler beim Erstellen der Kompetenzbeziehung. Bitte versuch es erneut."
                 },
                 "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen.",
                 "map": "verknüpfen",
