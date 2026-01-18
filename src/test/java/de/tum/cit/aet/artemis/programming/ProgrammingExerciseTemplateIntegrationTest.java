@@ -280,8 +280,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      */
     private void waitForFileToExist(Path directory, String fileName, String description) throws InterruptedException {
         Path filePath = directory.resolve(fileName);
-        int maxRetries = 20;
-        int retryDelayMs = 500;
+        final int maxRetries = 20;
+        final int retryDelayMs = 500;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             if (Files.exists(filePath)) {
