@@ -155,6 +155,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         return PROBLEM_STATEMENT_IDENTIFIER;
     }
 
+    shouldShowProblemStatement(): boolean {
+        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions && this.isProblemStatementVisible();
+    }
+
     /** Code Editor State Variables **/
     editorState: EditorState;
     commitState: CommitState;

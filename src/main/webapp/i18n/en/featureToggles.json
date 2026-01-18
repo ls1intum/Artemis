@@ -160,8 +160,8 @@
                 },
                 "TutorSuggestions": {
                     "name": "AI Tutor Suggestions",
-                    "description": "Uses the Athena service to suggest feedback and grading for tutors during manual assessment of text and programming exercises.",
-                    "disableWarning": "Tutors will not receive AI-assisted suggestions from Athena during assessment."
+                    "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
+                    "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
                 },
                 "AtlasML": {
                     "name": "Atlas Machine Learning",
