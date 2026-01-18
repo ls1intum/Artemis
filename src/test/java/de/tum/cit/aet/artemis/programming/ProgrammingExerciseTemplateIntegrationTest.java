@@ -321,8 +321,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      * @throws IllegalStateException if directory does not exist after all retries
      */
     private void waitForDirectoryToExist(Path directoryPath, String description) throws InterruptedException {
-        int maxRetries = 30; // Increased retries for slow CI
-        int retryDelayMs = 1000; // 1 second delay (30 seconds total)
+        final int maxRetries = 30; // Increased retries for slow CI
+        final int retryDelayMs = 1000; // 1 second delay (30 seconds total)
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             if (Files.exists(directoryPath) && Files.isDirectory(directoryPath)) {
