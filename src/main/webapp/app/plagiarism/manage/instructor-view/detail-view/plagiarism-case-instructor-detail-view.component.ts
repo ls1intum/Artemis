@@ -283,6 +283,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         const dto: PlagiarismPostCreationDTO = {
             title: post.title,
             content: post.content,
+            visibleForStudents: true,
+            hasForwardedMessages: post.hasForwardedMessages,
             plagiarismCaseId: this.plagiarismCaseId,
         };
         return this.plagiarismPostService.createPlagiarismPost(this.courseId, dto);
