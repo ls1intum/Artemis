@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, Signal, effect, inject, model, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, tap } from 'rxjs';
@@ -28,14 +28,34 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     readonly faQuestionCircle = faQuestionCircle;
     isFormValid = signal(false);
 
+    static integerValidator(control: AbstractControl): ValidationErrors | null {
+        const value = control.value;
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+        if (!Number.isInteger(value)) {
+            return { notInteger: true };
+        }
+        return null;
+    }
+
     constructor() {
         this.form = this.fb.group({
-            continuousPlagiarismControlEnabled: [false],
-            continuousPlagiarismControlPostDueDateChecksEnabled: [false],
-            similarityThreshold: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
-            minimumScore: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
-            minimumSize: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
-            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: [null, [Validators.required, Validators.min(7), Validators.max(31)]],
+            continuousPlagiarismControlEnabled: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlEnabled],
+            continuousPlagiarismControlPostDueDateChecksEnabled: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPostDueDateChecksEnabled],
+            similarityThreshold: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.similarityThreshold,
+                [Validators.required, Validators.min(0), Validators.max(100), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+            minimumScore: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumScore,
+                [Validators.required, Validators.min(0), Validators.max(100), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+            minimumSize: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumSize, [Validators.required, Validators.min(0), ExerciseUpdatePlagiarismComponent.integerValidator]],
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
+                [Validators.required, Validators.min(7), Validators.max(31), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
         });
 
         this.formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
@@ -55,9 +75,9 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
                     ].forEach((k) => this.form.get(k)?.[enabled ? 'enable' : 'disable']({ emitEvent: false }));
                 }),
             )
-            .subscribe((plagiarismDetectionConfig) => {
+            .subscribe(() => {
                 this.exercise.update((exercise) => {
-                    exercise.plagiarismDetectionConfig = { ...plagiarismDetectionConfig };
+                    exercise.plagiarismDetectionConfig = { ...this.form.getRawValue() };
                     return exercise;
                 });
             });
@@ -69,13 +89,17 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
         }
 
         this.form.patchValue({
-            continuousPlagiarismControlEnabled: this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? false,
-            continuousPlagiarismControlPostDueDateChecksEnabled: this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled ?? false,
-            similarityThreshold: this.exercise()?.plagiarismDetectionConfig?.similarityThreshold ?? null,
-            minimumScore: this.exercise()?.plagiarismDetectionConfig?.minimumScore ?? null,
-            minimumSize: this.exercise()?.plagiarismDetectionConfig?.minimumSize ?? null,
+            continuousPlagiarismControlEnabled:
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlEnabled,
+            continuousPlagiarismControlPostDueDateChecksEnabled:
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled ??
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPostDueDateChecksEnabled,
+            similarityThreshold: this.exercise()?.plagiarismDetectionConfig?.similarityThreshold ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.similarityThreshold,
+            minimumScore: this.exercise()?.plagiarismDetectionConfig?.minimumScore ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumScore,
+            minimumSize: this.exercise()?.plagiarismDetectionConfig?.minimumSize ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumSize,
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod:
-                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ?? null,
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ??
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
         });
     }
 
