@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -134,6 +135,9 @@ public class TextExerciseCreationUpdateResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
+
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
@@ -184,6 +188,9 @@ public class TextExerciseCreationUpdateResource {
         // Important: use the original exercise for permission check
         final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
+
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
