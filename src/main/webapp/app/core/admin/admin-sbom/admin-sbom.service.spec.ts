@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -84,6 +84,10 @@ describe('AdminSbomService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
+    afterEach(() => {
+        httpMock.verify();
+    });
+
     it('should be created', () => {
         expect(service).toBeTruthy();
     });
@@ -96,7 +100,7 @@ describe('AdminSbomService', () => {
                 expect(result.client?.bomFormat).toBe('CycloneDX');
             });
 
-            const req = httpMock.expectOne('api/core/admin/sbom');
+            const req = httpMock.expectOne('/api/core/admin/sbom');
             expect(req.request.method).toBe('GET');
             req.flush(mockCombinedSbom);
         });
@@ -110,7 +114,7 @@ describe('AdminSbomService', () => {
                 expect(result.components![0].name).toBe('spring-core');
             });
 
-            const req = httpMock.expectOne('api/core/admin/sbom/server');
+            const req = httpMock.expectOne('/api/core/admin/sbom/server');
             expect(req.request.method).toBe('GET');
             req.flush(mockServerSbom);
         });
@@ -124,7 +128,7 @@ describe('AdminSbomService', () => {
                 expect(result.components![0].name).toBe('core');
             });
 
-            const req = httpMock.expectOne('api/core/admin/sbom/client');
+            const req = httpMock.expectOne('/api/core/admin/sbom/client');
             expect(req.request.method).toBe('GET');
             req.flush(mockClientSbom);
         });
@@ -138,7 +142,7 @@ describe('AdminSbomService', () => {
                 expect(result.highCount).toBe(1);
             });
 
-            const req = httpMock.expectOne('api/core/admin/sbom/vulnerabilities');
+            const req = httpMock.expectOne('/api/core/admin/sbom/vulnerabilities');
             expect(req.request.method).toBe('GET');
             req.flush(mockVulnerabilities);
         });
@@ -150,7 +154,7 @@ describe('AdminSbomService', () => {
                 expect(result).toEqual(mockVulnerabilities);
             });
 
-            const req = httpMock.expectOne('api/core/admin/sbom/vulnerabilities/refresh');
+            const req = httpMock.expectOne('/api/core/admin/sbom/vulnerabilities/refresh');
             expect(req.request.method).toBe('GET');
             req.flush(mockVulnerabilities);
         });

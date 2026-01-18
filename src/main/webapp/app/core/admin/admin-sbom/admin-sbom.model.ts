@@ -29,7 +29,7 @@ export interface Sbom {
     serialNumber?: string;
     version?: number;
     metadata?: SbomMetadata;
-    components: SbomComponent[];
+    components?: SbomComponent[];
 }
 
 /**
