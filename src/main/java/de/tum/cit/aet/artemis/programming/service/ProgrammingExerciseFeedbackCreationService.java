@@ -380,10 +380,29 @@ public class ProgrammingExerciseFeedbackCreationService {
         Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
 
         return buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
+                // Filter out "initializationError" which is a JUnit internal pseudo-test for setup failures
+                // This should not be registered as a real test case as it causes issues with duplicate detection
+                // Check for both plain "initializationError" and qualified names like "TestClass.initializationError"
+                .filter(testCase -> !isInitializationError(testCase.name()))
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
                         .visibility(defaultVisibility))
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Checks if a test name represents an initialization error.
+     * Initialization errors can be either plain "initializationError" or qualified like "TestClass.initializationError".
+     *
+     * @param testName the name of the test case
+     * @return true if this is an initialization error, false otherwise
+     */
+    private boolean isInitializationError(String testName) {
+        if (testName == null) {
+            return false;
+        }
+        return ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME.equals(testName)
+                || testName.endsWith("." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME);
     }
 
     /**

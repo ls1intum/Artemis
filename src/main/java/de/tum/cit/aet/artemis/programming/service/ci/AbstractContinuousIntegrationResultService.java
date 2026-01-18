@@ -9,9 +9,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
+import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
@@ -64,18 +66,39 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobInterface> jobs, ProgrammingExercise programmingExercise) {
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
         jobs.forEach(job -> {
-            job.failedTests().forEach(failedTest -> result
-                    .addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases)));
+            job.failedTests().forEach(failedTest -> result.addFeedback(
+                    feedbackCreationService.createFeedbackFromTestCase(getTestName(failedTest), failedTest.testMessages(), false, programmingExercise, activeTestCases)));
             result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
             for (final var successfulTest : job.successfulTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.testMessages(), true, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(getTestName(successfulTest), successfulTest.testMessages(), true, programmingExercise, activeTestCases));
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
         });
+    }
+
+    /**
+     * Gets the test name for a test case. For initialization errors (which occur when @BeforeAll or class loading fails),
+     * the class name is prepended to make the error unique and help identify which test class failed.
+     *
+     * @param testCase the test case to get the name for
+     * @return the test name, potentially qualified with the class name for initialization errors
+     */
+    private String getTestName(TestCaseBase testCase) {
+        String testName = testCase.name();
+        String className = testCase.classname();
+
+        // For initialization errors, prepend the class name to make it unique and informative
+        if (ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME.equals(testName) && className != null && !className.isBlank()) {
+            // Use simple class name (without package) for readability
+            String simpleClassName = className.contains(".") ? className.substring(className.lastIndexOf('.') + 1) : className;
+            return simpleClassName + "." + testName;
+        }
+
+        return testName;
     }
 
     private void addStaticCodeAnalysisFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {

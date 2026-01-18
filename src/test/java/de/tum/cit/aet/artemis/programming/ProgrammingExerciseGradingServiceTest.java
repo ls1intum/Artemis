@@ -252,6 +252,13 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
+        // Verify that a dedicated "Test Initialization Error" feedback is created
+        var initializationErrorFeedback = result.getFeedbacks().stream().filter(feedback -> "Test Initialization Error".equals(feedback.getText())).findFirst();
+        assertThat(initializationErrorFeedback).isPresent();
+        assertThat(initializationErrorFeedback.get().getDetailText()).contains("error occurred during test initialization");
+        assertThat(initializationErrorFeedback.get().getDetailText()).contains("assignment/src/de/tum/cit/fop does not exist");
+        assertThat(initializationErrorFeedback.get().isPositive()).isFalse();
+
         // Find feedbacks for test cases that were not executed (test2 and test3)
         var notExecutedFeedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("Test was not executed"))
                 .toList();
@@ -261,6 +268,50 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         for (Feedback feedback : notExecutedFeedbacks) {
             assertThat(feedback.getDetailText()).contains("An error occurred during test initialization");
             assertThat(feedback.getDetailText()).contains("assignment/src/de/tum/cit/fop does not exist");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCollectMultipleInitializationErrors() {
+        // Adjust existing test cases - all active and visible
+        var testCases = getTestCases(programmingExercise);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
+        testCaseRepository.saveAll(testCases.values());
+
+        // Create feedbacks: simulate multiple test classes having initialization errors
+        // Use qualified names like "BehaviorTest.initializationError" to simulate the CI result service behavior
+        String initializationErrorMessage1 = "java.lang.AssertionError: assignment/src/de/tum/cit/fop does not exist";
+        String initializationErrorMessage2 = "java.lang.NoClassDefFoundError: com/example/MissingClass";
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().testCase(testCases.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
+        // Add multiple initialization error feedbacks with qualified class names
+        feedbacks.add(new Feedback().text("BehaviorTest." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME).detailText(initializationErrorMessage1)
+                .positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("StructuralTest." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME).detailText(initializationErrorMessage2)
+                .positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        // Verify that a dedicated "Test Initialization Error" feedback is created with both error messages
+        // Each error should include the class name prefix
+        var initializationErrorFeedback = result.getFeedbacks().stream().filter(feedback -> "Test Initialization Error".equals(feedback.getText())).findFirst();
+        assertThat(initializationErrorFeedback).isPresent();
+        assertThat(initializationErrorFeedback.get().getDetailText()).contains("[BehaviorTest]");
+        assertThat(initializationErrorFeedback.get().getDetailText()).contains("assignment/src/de/tum/cit/fop does not exist");
+        assertThat(initializationErrorFeedback.get().getDetailText()).contains("[StructuralTest]");
+        assertThat(initializationErrorFeedback.get().getDetailText()).contains("com/example/MissingClass");
+
+        // Verify that the "not executed" feedbacks also contain both error messages
+        var notExecutedFeedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("Test was not executed"))
+                .toList();
+        assertThat(notExecutedFeedbacks).hasSize(2);
+        for (Feedback feedback : notExecutedFeedbacks) {
+            assertThat(feedback.getDetailText()).contains("[BehaviorTest]");
+            assertThat(feedback.getDetailText()).contains("[StructuralTest]");
         }
     }
 
