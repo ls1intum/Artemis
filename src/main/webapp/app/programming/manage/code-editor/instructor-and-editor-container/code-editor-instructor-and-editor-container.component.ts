@@ -1,4 +1,5 @@
 import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -57,6 +58,7 @@ const SEVERITY_ORDER = {
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
+    standalone: true,
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -164,8 +166,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.subscribeToJob(res.jobId);
             },
-            error: (err) => {
+            error: (error: HttpErrorResponse) => {
                 this.isGeneratingCode.set(false);
+                if (this.isCodeGenerationAlreadyRunning(error)) {
+                    this.openCodeGenerationRunningModal();
+                    return;
+                }
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
@@ -173,6 +179,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             },
             complete: () => {},
         });
+    }
+
+    private isCodeGenerationAlreadyRunning(error: HttpErrorResponse): boolean {
+        if (!error || error.status !== 409) {
+            return false;
+        }
+        const payload = typeof error.error === 'object' && error.error !== null ? (error.error as Record<string, unknown>) : {};
+        const errorKey =
+            payload['errorKey'] ?? payload['X-artemisApp-error'] ?? payload['message'] ?? error.headers?.get('X-artemisApp-error') ?? error.headers?.get('X-artemisApp-message');
+        return errorKey === 'codeGenerationRunning' || errorKey === 'error.codeGenerationRunning';
+    }
+
+    private openCodeGenerationRunningModal(): void {
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
+        modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.runningTitle';
+        modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.runningText';
+        modalRef.componentInstance.translateText = true;
+        modalRef.componentInstance.textIsMarkdown = false;
     }
 
     protected override applyDomainChange(domainType: any, domainValue: any) {

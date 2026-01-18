@@ -34,7 +34,7 @@ import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entitie
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
@@ -198,6 +198,33 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS });
         expect(comp.isGeneratingCode()).toBeFalse();
         expect(addAlertSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: AlertType.DANGER,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+            }),
+        );
+    });
+
+    it('should show modal when code generation is already running', async () => {
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const modalService = TestBed.inject(NgbModal);
+        const openSpy = jest.spyOn(modalService, 'open');
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+
+        const conflict = new HttpErrorResponse({
+            status: 409,
+            error: { 'X-artemisApp-error': 'error.codeGenerationRunning' },
+        });
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => conflict) as any);
+
+        comp.generateCode();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(openSpy).toHaveBeenCalledTimes(2);
+        expect(addAlertSpy).not.toHaveBeenCalledWith(
             expect.objectContaining({
                 type: AlertType.DANGER,
                 translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
