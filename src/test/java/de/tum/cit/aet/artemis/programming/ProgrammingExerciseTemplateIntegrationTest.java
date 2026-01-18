@@ -804,8 +804,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         // Retry logic to handle timing issues where test reports might not be immediately available
         // Increased retries and delay to handle systems under load, especially in CI environments
-        int maxRetries = 30; // Increased from 10 for slow CI environments
-        int retryDelayMs = 2000; // Increased from 1000ms for slow CI environments (60s total)
+        final int maxRetries = 30; // Increased from 10 for slow CI environments
+        final int retryDelayMs = 2000; // Increased from 1000ms for slow CI environments (60s total)
         boolean hasReports = false;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
