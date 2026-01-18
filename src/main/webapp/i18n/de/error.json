@@ -213,7 +213,7 @@
         "examWorkingTimeTooHigh": "Die Bearbeitungszeit ist zu lang. Bitte gib einen Wert von maximal 10 Tagen (864000 Sekunden) ein.",
         "examGracePeriodTooHigh": "Die Nachfrist ist zu lang. Bitte gib einen Wert zwischen 0 und 3600 Sekunden ein.",
         "examMaxPointsTooHigh": "Die maximale Punktzahl ist zu hoch. Bitte gib einen Wert zwischen 1 und 9999 ein.",
-        "examNumberOfExercisesTooHigh": "Die Anzahl der Aufgaben ist zu hoch. Bitte gib einen Wert zwischen 1 und 100 ein."
+        "examNumberOfExercisesTooHigh": "Die Anzahl der Aufgaben ist zu hoch. Bitte gib einen Wert zwischen 1 und 100 ein.",
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Du bist kein Super-Administrator und kannst daher keinen Super-Administrator-Account erstellen.",
             "onlySuperAdminCanManageSuperAdmins": "Du bist kein Super-Administrator und kannst daher keine Super-Administratoren-Accounts verwalten."
