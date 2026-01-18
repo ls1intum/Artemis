@@ -9,6 +9,12 @@ artemis:
         enabled: true
     text:
         enabled: true
+    modeling:
+        enabled: true
+    fileupload:
+        enabled: true
+    lecture:
+        enabled: true
     sharing:
         enabled: false
         # the shared common secret
@@ -51,7 +57,7 @@ management:
     endpoint:
         health:
             show-details: when_authorized
-            roles: 'ROLE_ADMIN'
+            roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
         jhimetrics:

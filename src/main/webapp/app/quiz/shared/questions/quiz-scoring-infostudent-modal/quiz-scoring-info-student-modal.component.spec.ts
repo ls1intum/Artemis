@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockBuilder } from 'ng-mocks';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
@@ -17,34 +18,41 @@ import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 
 describe('Quiz Scoring Info Student Modal Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<QuizScoringInfoStudentModalComponent>;
     let comp: QuizScoringInfoStudentModalComponent;
     let modalService: NgbModal;
     let translateService: TranslateService;
-    let translateSpy: jest.SpyInstance;
+    let translateSpy: any;
     const translationBasePath = 'artemisApp.quizExercise.explanationText.';
 
     beforeEach(async () => {
-        await MockBuilder(QuizScoringInfoStudentModalComponent)
-            .provide({ provide: TranslateService, useClass: MockTranslateService })
-            .provide({ provide: NgbModal, useClass: MockNgbModalService });
+        await TestBed.configureTestingModule({
+            imports: [QuizScoringInfoStudentModalComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
+            ],
+        }).compileComponents();
 
         fixture = TestBed.createComponent(QuizScoringInfoStudentModalComponent);
         comp = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
         translateService = TestBed.inject(TranslateService);
 
-        translateSpy = jest.spyOn(translateService, 'instant');
+        translateSpy = vi.spyOn(translateService, 'instant');
         fixture.componentRef.setInput('question', {} as ShortAnswerQuestion);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should check for singular point singular score', () => {
         comp.question().points = 1;
         comp.score.set(1);
+        translateSpy.mockClear();
         comp.ngAfterViewInit();
         expect(translateSpy).toHaveBeenCalledTimes(2);
         expect(translateSpy).toHaveBeenNthCalledWith(1, translationBasePath + 'point');
@@ -54,6 +62,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     it('should check for plural points and scores', () => {
         comp.question().points = 2;
         comp.score.set(2);
+        translateSpy.mockClear();
         comp.ngAfterViewInit();
         expect(translateSpy).toHaveBeenCalledTimes(2);
         expect(translateSpy).toHaveBeenNthCalledWith(1, translationBasePath + 'points');
@@ -62,7 +71,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
 
     it('should open modal', () => {
         const content: any = {} as HTMLElement;
-        const openModalSpy = jest.spyOn(modalService, 'open');
+        const openModalSpy = vi.spyOn(modalService, 'open');
 
         comp.open(content);
 
@@ -74,6 +83,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         fixture.componentRef.setInput('question', new DragAndDropQuestion());
         fixture.componentRef.setInput('correctlyMappedDragAndDropItems', 1);
         fixture.componentRef.setInput('incorrectlyMappedDragAndDropItems', 1);
+        translateSpy.mockClear();
         comp.ngAfterViewInit();
 
         expect(comp.differenceDragAndDrop).toBe(0);
@@ -86,6 +96,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         fixture.componentRef.setInput('question', new DragAndDropQuestion());
         fixture.componentRef.setInput('correctlyMappedDragAndDropItems', 5);
         fixture.componentRef.setInput('incorrectlyMappedDragAndDropItems', 2);
+        translateSpy.mockClear();
         comp.ngAfterViewInit();
 
         expect(comp.differenceDragAndDrop).toBe(3);
@@ -105,6 +116,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         shortAnswerText2.isCorrect = false;
         fixture.componentRef.setInput('shortAnswerText', [shortAnswerText1, shortAnswerText2]);
 
+        translateSpy.mockClear();
         comp.ngAfterViewInit();
 
         expect(comp.shortAnswerSpots).toBe(2);
@@ -131,6 +143,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         shortAnswerText4.isCorrect = false;
         fixture.componentRef.setInput('shortAnswerText', [shortAnswerText1, shortAnswerText2, shortAnswerText3, shortAnswerText4]);
 
+        translateSpy.mockClear();
         comp.ngAfterViewInit();
 
         expect(comp.shortAnswerSpots).toBe(4);
@@ -185,6 +198,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         });
 
         it('check count for multiple choice exercise with singular values', () => {
+            translateSpy.mockClear();
             comp.ngAfterViewInit();
 
             expect(comp.multipleChoiceAnswerOptions).toBe(2);
@@ -225,6 +239,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
 
             submittedAnswers.push(correctSubmittedAnswer2, wrongSubmittedAnswer2);
 
+            translateSpy.mockClear();
             comp.ngAfterViewInit();
 
             expect(comp.multipleChoiceAnswerOptions).toBe(4);

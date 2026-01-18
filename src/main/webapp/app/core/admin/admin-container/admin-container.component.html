@@ -9,18 +9,24 @@
             <mat-sidenav disableClose class="module-bg rounded-3" [opened]="true" mode="side">
                 <jhi-admin-sidebar
                     [isNavbarCollapsed]="isNavbarCollapsed()"
-                    [localCIActive]="localCIActive"
-                    [ltiEnabled]="ltiEnabled"
-                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
-                    [atlasEnabled]="atlasEnabled"
-                    [examEnabled]="examEnabled"
+                    [localCIActive]="localCIActive()"
+                    [ltiEnabled]="ltiEnabled()"
+                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+                    [atlasEnabled]="atlasEnabled()"
+                    [examEnabled]="examEnabled()"
+                    [passkeyEnabled]="passkeyEnabled()"
+                    [passkeyRequiredForAdmin]="passkeyRequiredForAdmin()"
+                    [isSuperAdmin]="isSuperAdmin()"
                     (toggleCollapseState)="toggleCollapseState()"
                 />
             </mat-sidenav>
 
             <mat-sidenav-content>
-                <div class="admin-body-container ms-2 module-bg rounded-3 scrollable-content p-3">
-                    <router-outlet />
+                <div class="admin-content-wrapper ms-2">
+                    <jhi-admin-title-bar />
+                    <div class="admin-body-container module-bg rounded-3 scrollable-content p-3">
+                        <router-outlet />
+                    </div>
                 </div>
             </mat-sidenav-content>
         </mat-sidenav-container>

@@ -10,14 +10,14 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface IAccountService {
-    save: (account: any) => Observable<HttpResponse<any>>;
+    save: (account: User) => Observable<HttpResponse<User>>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
@@ -84,8 +84,8 @@ export class AccountService implements IAccountService {
         return this.http.get<User>('api/core/public/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<any>> {
-        return this.http.put('api/core/account', user, { observe: 'response' });
+    save(user: User): Observable<HttpResponse<User>> {
+        return this.http.put<User>('api/core/account', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
@@ -240,6 +240,10 @@ export class AccountService implements IAccountService {
 
     isAdmin(): boolean {
         return this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+    }
+
+    isSuperAdmin(): boolean {
+        return this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN);
     }
 
     isAtLeastTutor(): boolean {

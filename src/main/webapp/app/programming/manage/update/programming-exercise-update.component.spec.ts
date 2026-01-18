@@ -3,7 +3,6 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from 
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -73,7 +72,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
+            imports: [FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -843,7 +842,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
         }));
 
         it('should call create service on save for new sharing entity, but save failed', fakeAsync(() => {
@@ -865,7 +864,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
         }));
 
         it('should import without buildConfig and reset dates, id, project key and store zipFile', fakeAsync(() => {

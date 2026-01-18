@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -15,99 +16,53 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { HttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('AttachmentVideoUnitFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
     let attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent;
-    let accountService: AccountService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
                 ReactiveFormsModule,
                 FormsModule,
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
                 FontAwesomeTestingModule,
                 AttachmentVideoUnitFormComponent,
+                FormDateTimePickerComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(CompetencySelectionComponent),
+                MockDirective(NgbTooltip),
             ],
-            declarations: [FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent), MockDirective(NgbTooltip)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
 
         attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
         attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
-        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         expect(attachmentVideoUnitFormComponent).not.toBeNull();
-    });
-
-    it('should show transcription input for admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptionCreation()).toBeTrue();
-        const transcriptionInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#video-transcription-row');
-        expect(transcriptionInput).not.toBeNull();
-    });
-
-    it('should not show transcription input for non-admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptionCreation()).toBeFalse();
-        const transcriptionInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#video-transcription-row');
-        expect(transcriptionInput).toBeNull();
-    });
-
-    it('should include transcription in form submission when admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-
-        const exampleName = 'test';
-        attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
-        const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
-        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
-        const exampleTranscription = '{"language": "en"}';
-        attachmentVideoUnitFormComponent.videoTranscriptionControl!.setValue(exampleTranscription);
-
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
-
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
-
-        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        submitButton.click();
-
-        expect(submitFormSpy).toHaveBeenCalledOnce();
-        expect(submitFormEventSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-                transcriptionProperties: {
-                    videoTranscription: exampleTranscription,
-                },
-            }),
-        );
-
-        submitFormSpy.mockRestore();
-        submitFormEventSpy.mockRestore();
     });
 
     it('should correctly set form values in edit mode', () => {
@@ -143,50 +98,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.file).toEqual(formData.fileProperties.file);
     });
 
-    it('should clear transcription status when switching to a unit without transcription data', () => {
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-
-        const formDataWithStatus: AttachmentVideoUnitFormData = {
-            formProperties: {},
-            fileProperties: {},
-            transcriptionStatus: TranscriptionStatus.PENDING,
-        };
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
-
-        const formDataWithoutStatus: AttachmentVideoUnitFormData = {
-            formProperties: {},
-            fileProperties: {},
-        };
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutStatus);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
-        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
-    });
-
-    it('should clear transcription status when leaving edit mode', () => {
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-
-        const formDataWithStatus: AttachmentVideoUnitFormData = {
-            formProperties: {},
-            fileProperties: {},
-            transcriptionStatus: TranscriptionStatus.PENDING,
-        };
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-
-        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
-        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeTrue();
-
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', false);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-
-        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
-        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
-    });
     it('should submit valid form', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
@@ -210,15 +121,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
 
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalledTimes(1);
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -229,8 +140,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
-                generateTranscript: false,
-                videoTranscription: undefined,
             },
             fileProperties: {
                 file: fakeFile,
@@ -240,11 +149,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoFile: undefined,
                 videoFileName: undefined,
             },
-            transcriptionProperties: {
-                videoTranscription: null,
-            },
-            playlistUrl: undefined,
-            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -267,9 +171,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.file = fakeFile;
         attachmentVideoUnitFormComponent.fileName.set('lorem Ipsum');
 
-        expect(attachmentVideoUnitFormComponent.form.invalid).toBeTrue();
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        expect(attachmentVideoUnitFormComponent.form.invalid).toBe(true);
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -282,11 +186,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
         // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
-        const onFileChangeStub = jest.spyOn(attachmentVideoUnitFormComponent, 'onFileChange');
+        const onFileChangeStub = vi.spyOn(attachmentVideoUnitFormComponent, 'onFileChange');
         attachmentVideoUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledOnce();
+        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
     it('should disable submit button for too big file', fakeAsync(() => {
@@ -307,8 +211,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
-        expect(submitButton.disabled).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
+        expect(submitButton.disabled).toBe(true);
     }));
 
     it('should not submit a form when file and videoSource is missing', () => {
@@ -328,10 +232,10 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue('');
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -362,15 +266,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalledTimes(1);
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -381,8 +285,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
-                generateTranscript: false,
-                videoTranscription: undefined,
             },
             fileProperties: {
                 file: undefined,
@@ -392,11 +294,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoFile: undefined,
                 videoFileName: undefined,
             },
-            transcriptionProperties: {
-                videoTranscription: null,
-            },
-            playlistUrl: undefined,
-            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -428,15 +325,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
-        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBe(true);
 
-        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalledTimes(1);
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -447,8 +344,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: '',
                 urlHelper: null,
-                generateTranscript: false,
-                videoTranscription: undefined,
             },
             fileProperties: {
                 file: fakeFile,
@@ -458,24 +353,19 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoFile: undefined,
                 videoFileName: undefined,
             },
-            transcriptionProperties: {
-                videoTranscription: null,
-            },
-            playlistUrl: undefined,
-            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
         submitFormEventSpy.mockRestore();
     });
 
-    it('should correctly transform YouTube URL into embeddable format', () => {
+    it('should correctly transform YouTube URL into embeddable format', async () => {
         const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
         const validYouTubeUrlInEmbeddableFormat = 'https://www.youtube.com/embed/8iU8LPEa4o0';
 
-        jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
-        jest.spyOn(attachmentVideoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
-        jest.spyOn(attachmentVideoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
+        vi.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
+        vi.spyOn(attachmentVideoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        vi.spyOn(attachmentVideoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
@@ -484,12 +374,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
-        return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
-            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
-        });
+        await attachmentVideoUnitFormComponentFixture.whenStable();
+        expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
     });
 
-    it('should correctly transform TUM-Live URL without video only into embeddable format', () => {
+    it('should correctly transform TUM-Live URL without video only into embeddable format', async () => {
         const tumLiveUrl = 'https://live.rbg.tum.de/w/test/26';
         const expectedUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1';
 
@@ -500,78 +389,10 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
-        return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
-            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
-        });
+        await attachmentVideoUnitFormComponentFixture.whenStable();
+        expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
     });
 
-    it('should enable generateTranscript checkbox when playlist is available', () => {
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
-        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
-
-        const httpMock = TestBed.inject(HttpClient);
-        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
-
-        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
-
-        expect(spy).toHaveBeenCalled();
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
-    });
-
-    it('should disable generateTranscript checkbox when playlist is unavailable', () => {
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
-        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
-
-        const httpMock = TestBed.inject(HttpClient);
-        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
-
-        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
-
-        expect(spy).toHaveBeenCalled();
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
-        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')?.value).toBeFalse();
-    });
-    it('should show transcript checkbox only when playlistUrl is set', () => {
-        // Initially hidden
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
-
-        // Simulate playlist found
-        attachmentVideoUnitFormComponent.playlistUrl.set('https://live.rbg.tum.de/playlist.m3u8');
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
-
-        // Simulate playlist removed
-        attachmentVideoUnitFormComponent.playlistUrl.set(undefined);
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
-    });
-
-    it('should update checkbox visibility after successful playlist fetch', () => {
-        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
-        const http = TestBed.inject(HttpClient);
-        jest.spyOn(http, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
-
-        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
-
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
-    });
-
-    it('should hide checkbox and reset generateTranscript after failed playlist fetch', () => {
-        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
-        attachmentVideoUnitFormComponent.form.get('generateTranscript')!.setValue(true);
-
-        const http = TestBed.inject(HttpClient);
-        jest.spyOn(http, 'get').mockReturnValue(throwError(() => new Error('Not found')));
-
-        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
-
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
-        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
-        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
-    });
     it('videoSourceUrlValidator: rejects TUM-Live without video_only=1, accepts others', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
@@ -614,53 +435,24 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(ytEmbed).toBe('https://www.youtube.com/embed/8iU8LPEa4o0');
     });
 
-    it('setEmbeddedVideoUrl: uses urlHelper, sets videoSource, and checks playlist with ORIGINAL URL', () => {
+    it('setEmbeddedVideoUrl: uses urlHelper and sets videoSource', () => {
         const original = 'https://live.rbg.tum.de/w/test/26';
         const embedded = 'https://live.rbg.tum.de/w/test/26?video_only=1';
 
-        // spy extract + playlist check
-        const extractSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
-        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkPlaylistAvailability');
+        const extractSpy = vi.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(original);
 
-        const stopPropagation = jest.fn();
+        const stopPropagation = vi.fn();
         attachmentVideoUnitFormComponent.setEmbeddedVideoUrl({ stopPropagation } as any);
 
         expect(stopPropagation).toHaveBeenCalled();
         expect(extractSpy).toHaveBeenCalledWith(original);
         expect(attachmentVideoUnitFormComponent.videoSourceControl!.value).toBe(embedded);
-        // IMPORTANT: check should be called with the original URL, not the embedded one
-        expect(checkSpy).toHaveBeenCalledWith(original);
 
         extractSpy.mockRestore();
-        checkSpy.mockRestore();
     });
-
-    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', fakeAsync(() => {
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        // Pre-set to ensure reset occurs
-        attachmentVideoUnitFormComponent.canGenerateTranscript.set(true);
-        attachmentVideoUnitFormComponent.playlistUrl.set('https://some/playlist.m3u8');
-        attachmentVideoUnitFormComponent.form.get('generateTranscript')!.setValue(true);
-
-        // Non TUM-Live URL
-        const nonTumUrl = 'https://example.com/video/123';
-
-        // Mock the service to return null (no playlist found for non-TUM URLs)
-        const http = TestBed.inject(HttpClient);
-        jest.spyOn(http, 'get').mockReturnValue(of(null));
-
-        attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
-
-        // Wait for async operations to complete
-        flushMicrotasks();
-
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
-        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
-    }));
 
     it('onFileChange: auto-fills name when empty and marks large files', fakeAsync(() => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -682,7 +474,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
-        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
     }));
 
     it('isTransformable reflects urlHelper validity', () => {
@@ -690,88 +482,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Empty -> false
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('');
-        expect(attachmentVideoUnitFormComponent.isTransformable).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBe(false);
 
         // Invalid -> false
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('not-a-url');
-        expect(attachmentVideoUnitFormComponent.isTransformable).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBe(false);
 
         // Valid -> true
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-        expect(attachmentVideoUnitFormComponent.isTransformable).toBeTrue();
-    });
-    it('submitForm includes playlistUrl when present', () => {
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-
-        attachmentVideoUnitFormComponent.nameControl!.setValue('Unit B');
-        attachmentVideoUnitFormComponent.versionControl!.enable();
-        attachmentVideoUnitFormComponent.versionControl!.setValue(1);
-        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/8iU8LPEa4o0');
-
-        // set a playlist URL to ensure it’s propagated
-        const playlist = 'https://live.rbg.tum.de/playlist.m3u8';
-        attachmentVideoUnitFormComponent.playlistUrl.set(playlist);
-
-        const emitSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
-
-        attachmentVideoUnitFormComponent.submitForm();
-
-        expect(emitSpy).toHaveBeenCalledOnce();
-        const payload = emitSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
-        expect(payload.playlistUrl).toBe(playlist);
-
-        emitSpy.mockRestore();
-    });
-
-    it('should set playlist URL from formData in edit mode via effect', () => {
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-
-        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
-        const formDataWithPlaylist: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: 'test',
-            },
-            fileProperties: {},
-            playlistUrl: playlistUrl,
-        };
-
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-
-        // Effect should have triggered and set the playlist URL
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
-    });
-
-    it('should update playlist URL when formData changes in edit mode', () => {
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-
-        // Initial formData without playlist
-        const formDataWithoutPlaylist: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: 'test',
-            },
-            fileProperties: {},
-        };
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutPlaylist);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
-
-        // Update formData with playlist URL
-        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
-        const formDataWithPlaylist: AttachmentVideoUnitFormData = {
-            ...formDataWithoutPlaylist,
-            playlistUrl: playlistUrl,
-        };
-        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
-
-        // Effect should have updated the playlist URL
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBe(true);
     });
 
     describe('Video Upload Feature Flag', () => {

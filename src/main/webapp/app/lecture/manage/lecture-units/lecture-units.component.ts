@@ -1,8 +1,8 @@
-import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -21,10 +21,9 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import { combineLatest, of } from 'rxjs';
-import { LectureTranscriptionService } from '../services/lecture-transcription.service';
-import { AccountService } from 'app/core/auth/account.service';
+import { concatMap, filter, map } from 'rxjs/operators';
+import { from } from 'rxjs';
+import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({
     selector: 'jhi-lecture-update-units',
@@ -37,6 +36,7 @@ import { AccountService } from 'app/core/auth/account.service';
         OnlineUnitFormComponent,
         AttachmentVideoUnitFormComponent,
         CreateExerciseUnitComponent,
+        PdfDropZoneComponent,
     ],
 })
 export class LectureUpdateUnitsComponent implements OnInit {
@@ -45,12 +45,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected textUnitService = inject(TextUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    protected lectureTranscriptionService = inject(LectureTranscriptionService);
-    protected accountService = inject(AccountService);
 
-    @Input() lecture: Lecture;
+    lecture = input.required<Lecture>();
 
-    @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
+    unitManagementComponent = viewChild(LectureUnitManagementComponent);
+    editFormContainer = viewChild<ElementRef<HTMLElement>>('editFormContainer');
 
     textUnitForm = viewChild(TextUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
@@ -63,18 +62,19 @@ export class LectureUpdateUnitsComponent implements OnInit {
         );
     });
 
-    isEditingLectureUnit: boolean;
+    isEditingLectureUnit = signal(false);
     isTextUnitFormOpen = signal<boolean>(false);
     isExerciseUnitFormOpen = signal<boolean>(false);
     isOnlineUnitFormOpen = signal<boolean>(false);
     isAttachmentVideoUnitFormOpen = signal<boolean>(false);
+    isUploadingPdfs = signal<boolean>(false);
 
-    currentlyProcessedTextUnit: TextUnit;
-    currentlyProcessedOnlineUnit: OnlineUnit;
-    currentlyProcessedAttachmentVideoUnit: AttachmentVideoUnit;
-    textUnitFormData: TextUnitFormData;
-    onlineUnitFormData: OnlineUnitFormData;
-    attachmentVideoUnitFormData: AttachmentVideoUnitFormData;
+    currentlyProcessedTextUnit = signal<TextUnit | undefined>(undefined);
+    currentlyProcessedOnlineUnit = signal<OnlineUnit | undefined>(undefined);
+    currentlyProcessedAttachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
+    textUnitFormData = signal<TextUnitFormData | undefined>(undefined);
+    onlineUnitFormData = signal<OnlineUnitFormData | undefined>(undefined);
+    attachmentVideoUnitFormData = signal<AttachmentVideoUnitFormData | undefined>(undefined);
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
@@ -86,7 +86,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     onCreateLectureUnit(type: LectureUnitType) {
-        this.isEditingLectureUnit = false;
+        this.isEditingLectureUnit.set(false);
         this.onCloseLectureUnitForms();
         switch (type) {
             case LectureUnitType.TEXT:
@@ -113,6 +113,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isOnlineUnitFormOpen.set(false);
         this.isAttachmentVideoUnitFormOpen.set(false);
         this.isExerciseUnitFormOpen.set(false);
+        this.isEditingLectureUnit.set(false);
     }
 
     createEditTextUnit(formData: TextUnitFormData) {
@@ -122,19 +123,17 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         const { name, releaseDate, content, competencyLinks } = formData;
 
-        this.currentlyProcessedTextUnit = this.isEditingLectureUnit ? this.currentlyProcessedTextUnit : new TextUnit();
-        this.currentlyProcessedTextUnit.name = name;
-        this.currentlyProcessedTextUnit.releaseDate = releaseDate;
-        this.currentlyProcessedTextUnit.content = content;
-        this.currentlyProcessedTextUnit.competencyLinks = competencyLinks;
+        const textUnit = this.isEditingLectureUnit() ? this.currentlyProcessedTextUnit()! : new TextUnit();
+        textUnit.name = name;
+        textUnit.releaseDate = releaseDate;
+        textUnit.content = content;
+        textUnit.competencyLinks = competencyLinks;
+        this.currentlyProcessedTextUnit.set(textUnit);
 
-        (this.isEditingLectureUnit
-            ? this.textUnitService.update(this.currentlyProcessedTextUnit, this.lecture.id!)
-            : this.textUnitService.create(this.currentlyProcessedTextUnit!, this.lecture.id!)
-        ).subscribe({
+        (this.isEditingLectureUnit() ? this.textUnitService.update(textUnit, this.lecture().id!) : this.textUnitService.create(textUnit, this.lecture().id!)).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
-                this.unitManagementComponent.loadData();
+                this.unitManagementComponent()?.loadData();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -147,42 +146,38 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         const { name, description, releaseDate, source, competencyLinks } = formData;
 
-        this.currentlyProcessedOnlineUnit = this.isEditingLectureUnit ? this.currentlyProcessedOnlineUnit : new OnlineUnit();
-        this.currentlyProcessedOnlineUnit.name = name || undefined;
-        this.currentlyProcessedOnlineUnit.releaseDate = releaseDate || undefined;
-        this.currentlyProcessedOnlineUnit.description = description || undefined;
-        this.currentlyProcessedOnlineUnit.source = source || undefined;
-        this.currentlyProcessedOnlineUnit.competencyLinks = competencyLinks || undefined;
+        const onlineUnit = this.isEditingLectureUnit() ? this.currentlyProcessedOnlineUnit()! : new OnlineUnit();
+        onlineUnit.name = name || undefined;
+        onlineUnit.releaseDate = releaseDate || undefined;
+        onlineUnit.description = description || undefined;
+        onlineUnit.source = source || undefined;
+        onlineUnit.competencyLinks = competencyLinks || undefined;
+        this.currentlyProcessedOnlineUnit.set(onlineUnit);
 
-        (this.isEditingLectureUnit
-            ? this.onlineUnitService.update(this.currentlyProcessedOnlineUnit, this.lecture.id!)
-            : this.onlineUnitService.create(this.currentlyProcessedOnlineUnit!, this.lecture.id!)
-        ).subscribe({
+        (this.isEditingLectureUnit() ? this.onlineUnitService.update(onlineUnit, this.lecture().id!) : this.onlineUnitService.create(onlineUnit, this.lecture().id!)).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
-                this.unitManagementComponent.loadData();
+                this.unitManagementComponent()?.loadData();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
 
         if (!name || (!fileName && !videoSource)) {
             return;
         }
 
-        this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
-        const attachmentToCreateOrEdit =
-            this.isEditingLectureUnit && this.currentlyProcessedAttachmentVideoUnit.attachment ? this.currentlyProcessedAttachmentVideoUnit.attachment : new Attachment();
+        const attachmentVideoUnit = this.isEditingLectureUnit() ? this.currentlyProcessedAttachmentVideoUnit()! : new AttachmentVideoUnit();
+        const attachmentToCreateOrEdit = this.isEditingLectureUnit() && attachmentVideoUnit.attachment ? attachmentVideoUnit.attachment : new Attachment();
 
-        if (this.isEditingLectureUnit) {
+        if (this.isEditingLectureUnit()) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
-            this.currentlyProcessedAttachmentVideoUnit.attachment = undefined;
+            attachmentVideoUnit.attachment = undefined;
             if (attachmentToCreateOrEdit != null) {
                 attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
             }
@@ -194,11 +189,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         if (name) {
-            this.currentlyProcessedAttachmentVideoUnit.name = name;
+            attachmentVideoUnit.name = name;
             attachmentToCreateOrEdit.name = name;
         }
         if (releaseDate) {
-            this.currentlyProcessedAttachmentVideoUnit.releaseDate = releaseDate;
+            attachmentVideoUnit.releaseDate = releaseDate;
             attachmentToCreateOrEdit.releaseDate = releaseDate;
         }
         attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
@@ -206,91 +201,43 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentToCreateOrEdit.uploadDate = dayjs();
 
         if (videoSource) {
-            this.currentlyProcessedAttachmentVideoUnit.videoSource = videoSource;
+            attachmentVideoUnit.videoSource = videoSource;
         }
 
         if (description) {
-            this.currentlyProcessedAttachmentVideoUnit.description = description;
+            attachmentVideoUnit.description = description;
         }
-        this.currentlyProcessedAttachmentVideoUnit.competencyLinks = competencyLinks;
+        attachmentVideoUnit.competencyLinks = competencyLinks;
+        this.currentlyProcessedAttachmentVideoUnit.set(attachmentVideoUnit);
 
         const formData = new FormData();
         if (!!file && !!fileName) {
             formData.append('file', file, fileName);
             formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const save$ = this.isEditingLectureUnit
-            ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
-            : this.attachmentVideoUnitService.create(formData, this.lecture.id!);
+        const save$ = this.isEditingLectureUnit()
+            ? this.attachmentVideoUnitService.update(this.lecture().id!, attachmentVideoUnit.id!, formData, notificationText)
+            : this.attachmentVideoUnitService.create(formData, this.lecture().id!);
 
-        save$
-            .pipe(
-                switchMap((response) => {
-                    const lectureUnit = response.body!;
-                    const lectureUnitId = lectureUnit.id!;
-
-                    // First: Handle automatic transcription generation if requested
-                    let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnitId) {
-                        const transcriptionUrl = attachmentVideoUnitFormData.playlistUrl ?? lectureUnit.videoSource;
-                        if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lecture.id!, lectureUnitId, transcriptionUrl).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }
-                    }
-
-                    return transcriptionObservable;
-                }),
-                switchMap((lectureUnit) => {
-                    // Second: Handle manual transcription save if provided
-                    if (!videoTranscription || !lectureUnit.id) {
-                        return of(lectureUnit);
-                    }
-
-                    let transcription: LectureTranscriptionDTO;
-                    try {
-                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                    } catch (e) {
-                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(lectureUnit);
-                    }
-
-                    transcription.lectureUnitId = lectureUnit.id;
-
-                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id, transcription).pipe(
-                        map(() => lectureUnit),
-                        // Swallow transcription errors so the primary save still counts as success
-                        catchError((err) => {
-                            onError(this.alertService, err);
-                            return of(lectureUnit);
-                        }),
-                    );
-                }),
-            )
-            .subscribe({
-                next: () => {
-                    this.onCloseLectureUnitForms();
-                    this.unitManagementComponent.loadData();
-                },
-                error: (res: HttpErrorResponse | Error) => {
-                    if (res instanceof Error) {
-                        this.alertService.error(res.message);
-                        return;
-                    }
-                    if (res.error?.params === 'file' && res?.error?.title) {
-                        this.alertService.error(res.error.title);
-                    } else {
-                        onError(this.alertService, res);
-                    }
-                },
-            });
+        save$.subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent()?.loadData();
+            },
+            error: (res: HttpErrorResponse | Error) => {
+                if (res instanceof Error) {
+                    this.alertService.error(res.message);
+                    return;
+                }
+                if (res.error?.params === 'file' && res?.error?.title) {
+                    this.alertService.error(res.error.title);
+                } else {
+                    onError(this.alertService, res);
+                }
+            },
+        });
     }
 
     /**
@@ -298,84 +245,121 @@ export class LectureUpdateUnitsComponent implements OnInit {
      */
     onExerciseUnitCreated() {
         this.onCloseLectureUnitForms();
-        this.unitManagementComponent.loadData();
+        this.unitManagementComponent()?.loadData();
+    }
+
+    /**
+     * Scrolls to the edit form container
+     */
+    private scrollToEditForm(): void {
+        const container = this.editFormContainer();
+        if (container?.nativeElement) {
+            container.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     startEditLectureUnit(lectureUnit: LectureUnit) {
-        this.isEditingLectureUnit = true;
+        this.isEditingLectureUnit.set(true);
 
         lectureUnit.lecture = new Lecture();
-        lectureUnit.lecture.id = this.lecture.id;
-        lectureUnit.lecture.course = this.lecture.course;
+        lectureUnit.lecture.id = this.lecture().id;
+        lectureUnit.lecture.course = this.lecture().course;
 
-        this.currentlyProcessedTextUnit = lectureUnit as TextUnit;
-        this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
-        this.currentlyProcessedAttachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
+        this.currentlyProcessedTextUnit.set(lectureUnit as TextUnit);
+        this.currentlyProcessedOnlineUnit.set(lectureUnit as OnlineUnit);
+        this.currentlyProcessedAttachmentVideoUnit.set(lectureUnit as AttachmentVideoUnit);
 
         this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
         this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
         this.isAttachmentVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
 
-        of(lectureUnit)
+        // Scroll to the edit form after a brief delay to allow the form to render
+        setTimeout(() => this.scrollToEditForm(), 100);
+
+        const textUnit = this.currentlyProcessedTextUnit();
+        const onlineUnit = this.currentlyProcessedOnlineUnit();
+        const attachmentVideoUnit = this.currentlyProcessedAttachmentVideoUnit();
+
+        switch (lectureUnit.type) {
+            case LectureUnitType.TEXT:
+                this.textUnitFormData.set({
+                    name: textUnit?.name,
+                    releaseDate: textUnit?.releaseDate,
+                    content: textUnit?.content,
+                });
+                break;
+            case LectureUnitType.ONLINE:
+                this.onlineUnitFormData.set({
+                    name: onlineUnit?.name,
+                    description: onlineUnit?.description,
+                    releaseDate: onlineUnit?.releaseDate,
+                    source: onlineUnit?.source,
+                });
+                break;
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                this.attachmentVideoUnitFormData.set({
+                    formProperties: {
+                        name: attachmentVideoUnit?.name,
+                        description: attachmentVideoUnit?.description,
+                        releaseDate: attachmentVideoUnit?.releaseDate,
+                        version: attachmentVideoUnit?.attachment?.version,
+                        videoSource: attachmentVideoUnit?.videoSource,
+                    },
+                    fileProperties: {
+                        fileName: attachmentVideoUnit?.attachment?.link,
+                    },
+                    videoFileProperties: {
+                        videoFileName: undefined,
+                    },
+                });
+                break;
+        }
+    }
+
+    /**
+     * Handles PDF files dropped on the drop zone
+     * Creates attachment units for each file with name from filename and release date 15 min in future
+     * Opens the edit form for the last created unit
+     */
+    onPdfFilesDropped(files: File[]): void {
+        if (files.length === 0 || !this.lecture().id) {
+            return;
+        }
+
+        this.isUploadingPdfs.set(true);
+        let lastCreatedUnit: AttachmentVideoUnit | undefined;
+
+        from(files)
             .pipe(
-                switchMap((unit) => {
-                    if (unit.type === LectureUnitType.ATTACHMENT_VIDEO && this.accountService.isAdmin()) {
-                        return combineLatest({
-                            transcription: this.lectureTranscriptionService.getTranscription(unit.id!),
-                            transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(unit.id!),
-                        });
-                    }
-                    return of({ transcription: null, transcriptionStatus: undefined });
-                }),
+                concatMap((file) => this.createAttachmentUnitFromFile(file)),
+                filter((response) => response.body != null),
+                map((response) => response.body as AttachmentVideoUnit),
             )
-            .subscribe(({ transcription, transcriptionStatus }) => {
-                switch (lectureUnit.type) {
-                    case LectureUnitType.TEXT:
-                        this.textUnitFormData = {
-                            name: this.currentlyProcessedTextUnit.name,
-                            releaseDate: this.currentlyProcessedTextUnit.releaseDate,
-                            content: this.currentlyProcessedTextUnit.content,
-                        };
-                        break;
-                    case LectureUnitType.ONLINE:
-                        this.onlineUnitFormData = {
-                            name: this.currentlyProcessedOnlineUnit.name,
-                            description: this.currentlyProcessedOnlineUnit.description,
-                            releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
-                            source: this.currentlyProcessedOnlineUnit.source,
-                        };
-                        break;
-                    case LectureUnitType.ATTACHMENT_VIDEO:
-                        this.attachmentVideoUnitFormData = {
-                            formProperties: {
-                                name: this.currentlyProcessedAttachmentVideoUnit.name,
-                                description: this.currentlyProcessedAttachmentVideoUnit.description,
-                                releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
-                                version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
-                                videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
-                            },
-                            fileProperties: {
-                                fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
-                            },
-                            videoFileProperties: {
-                                videoFileName: undefined,
-                            },
-                            transcriptionProperties: {
-                                videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
-                            },
-                            transcriptionStatus: transcriptionStatus,
-                        };
-                        // Check if playlist URL is available for existing video to enable transcription generation
-                        this.attachmentVideoUnitService
-                            .fetchAndUpdatePlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource, this.attachmentVideoUnitFormData)
-                            .subscribe({
-                                next: (updatedFormData) => {
-                                    this.attachmentVideoUnitFormData = updatedFormData;
-                                },
-                            });
-                        break;
-                }
+            .subscribe({
+                next: (unit) => {
+                    lastCreatedUnit = unit;
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isUploadingPdfs.set(false);
+                    onError(this.alertService, error);
+                },
+                complete: () => {
+                    this.isUploadingPdfs.set(false);
+                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                    this.unitManagementComponent()?.loadData();
+                    // Open edit form for the last created unit
+                    if (lastCreatedUnit) {
+                        this.startEditLectureUnit(lastCreatedUnit);
+                    }
+                },
             });
+    }
+
+    /**
+     * Creates a single attachment unit from a file
+     */
+    private createAttachmentUnitFromFile(file: File) {
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lecture().id!, file);
     }
 }

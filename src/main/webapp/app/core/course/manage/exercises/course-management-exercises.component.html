@@ -1,10 +1,10 @@
-@if (course) {
+@if (course()) {
     <div *titleBarTitle>
         <div class="d-flex align-items-center">
             <h5 class="mb-0">
                 <span>
                     {{ 'artemisApp.course.exercises' | artemisTranslate }}
-                    ({{ getExerciseCount() }})
+                    ({{ exerciseCount() }})
                 </span>
             </h5>
             <jhi-documentation-button [type]="documentationType" />
@@ -13,95 +13,99 @@
 
     <div *titleBarActions>
         <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
-            {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
+            {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch() | artemisTranslate }}
         </button>
     </div>
-    @if (showSearch) {
-        <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter = $event" />
+    @if (showSearch()) {
+        <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter.set($event)" />
     }
-    @if (showSearch && getFilteredExerciseCount() === 0 && !exerciseFilter.isEmpty()) {
+    @if (showSearch() && filteredExerciseCount() === 0 && !exerciseFilter().isEmpty()) {
         <div class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.course.exercise.search.noResults"></div>
     }
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.programmingExercises'"
-        [exerciseCount]="programmingExercisesCount"
+        [exerciseCount]="programmingExercisesCount()"
         [hidden]="shouldHideExerciseCard('programming')"
-        [course]="course"
+        [course]="course()!"
     >
-        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.PROGRAMMING" [featureToggle]="FeatureToggle.ProgrammingExercises" />
+        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.PROGRAMMING" [featureToggle]="FeatureToggle.ProgrammingExercises" />
         <jhi-programming-exercise
             exercises
             [embedded]="true"
-            [course]="course"
-            [exerciseFilter]="exerciseFilter"
-            (exerciseCount)="programmingExercisesCount = $event"
-            (filteredExerciseCount)="filteredProgrammingExercisesCount = $event"
+            [course]="course()!"
+            [exerciseFilter]="exerciseFilter()"
+            (exerciseCount)="programmingExercisesCount.set($event)"
+            (filteredExerciseCount)="filteredProgrammingExercisesCount.set($event)"
         />
     </jhi-course-exercise-card>
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.quizExercises'"
-        [exerciseCount]="quizExercisesCount"
+        [exerciseCount]="quizExercisesCount()"
         [hidden]="shouldHideExerciseCard('quiz')"
-        [course]="course"
+        [course]="course()!"
     >
-        <jhi-quiz-exercise-create-buttons exerciseCreateButtons [course]="course" [quizExercisesCount]="quizExercisesCount" />
+        <jhi-quiz-exercise-create-buttons exerciseCreateButtons [course]="course()!" [quizExercisesCount]="quizExercisesCount()" />
         <jhi-quiz-exercise
             exercises
             [embedded]="true"
-            [course]="course"
-            [exerciseFilter]="exerciseFilter"
-            (exerciseCount)="quizExercisesCount = $event"
-            (filteredExerciseCount)="filteredQuizExercisesCount = $event"
+            [course]="course()!"
+            [exerciseFilter]="exerciseFilter()"
+            (exerciseCount)="quizExercisesCount.set($event)"
+            (filteredExerciseCount)="filteredQuizExercisesCount.set($event)"
         />
     </jhi-course-exercise-card>
-    <jhi-course-exercise-card
-        [headingJhiTranslate]="'artemisApp.course.modelingExercises'"
-        [exerciseCount]="modelingExercisesCount"
-        [hidden]="shouldHideExerciseCard('modeling')"
-        [course]="course"
-    >
-        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.MODELING" />
-        <jhi-modeling-exercise
-            exercises
-            [embedded]="true"
-            [course]="course"
-            [exerciseFilter]="exerciseFilter"
-            (exerciseCount)="modelingExercisesCount = $event"
-            (filteredExerciseCount)="filteredModelingExercisesCount = $event"
-        />
-    </jhi-course-exercise-card>
-    @if (textExerciseEnabled) {
+    @if (modelingExerciseEnabled()) {
         <jhi-course-exercise-card
-            [headingJhiTranslate]="'artemisApp.course.textExercises'"
-            [exerciseCount]="textExercisesCount"
-            [hidden]="shouldHideExerciseCard('text')"
-            [course]="course"
+            [headingJhiTranslate]="'artemisApp.course.modelingExercises'"
+            [exerciseCount]="modelingExercisesCount()"
+            [hidden]="shouldHideExerciseCard('modeling')"
+            [course]="course()!"
         >
-            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.TEXT" />
-            <jhi-text-exercise
+            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.MODELING" />
+            <jhi-modeling-exercise
                 exercises
                 [embedded]="true"
-                [course]="course"
-                [exerciseFilter]="exerciseFilter"
-                (exerciseCount)="textExercisesCount = $event"
-                (filteredExerciseCount)="filteredTextExercisesCount = $event"
+                [course]="course()!"
+                [exerciseFilter]="exerciseFilter()"
+                (exerciseCount)="modelingExercisesCount.set($event)"
+                (filteredExerciseCount)="filteredModelingExercisesCount.set($event)"
             />
         </jhi-course-exercise-card>
     }
-    <jhi-course-exercise-card
-        [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
-        [exerciseCount]="fileUploadExercisesCount"
-        [hidden]="shouldHideExerciseCard('file-upload')"
-        [course]="course"
-    >
-        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" />
-        <jhi-file-upload-exercise
-            exercises
-            [embedded]="true"
-            [course]="course"
-            [exerciseFilter]="exerciseFilter"
-            (exerciseCount)="fileUploadExercisesCount = $event"
-            (filteredExerciseCount)="filteredFileUploadExercisesCount = $event"
-        />
-    </jhi-course-exercise-card>
+    @if (textExerciseEnabled()) {
+        <jhi-course-exercise-card
+            [headingJhiTranslate]="'artemisApp.course.textExercises'"
+            [exerciseCount]="textExercisesCount()"
+            [hidden]="shouldHideExerciseCard('text')"
+            [course]="course()!"
+        >
+            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.TEXT" />
+            <jhi-text-exercise
+                exercises
+                [embedded]="true"
+                [course]="course()!"
+                [exerciseFilter]="exerciseFilter()"
+                (exerciseCount)="textExercisesCount.set($event)"
+                (filteredExerciseCount)="filteredTextExercisesCount.set($event)"
+            />
+        </jhi-course-exercise-card>
+    }
+    @if (fileUploadExerciseEnabled()) {
+        <jhi-course-exercise-card
+            [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
+            [exerciseCount]="fileUploadExercisesCount()"
+            [hidden]="shouldHideExerciseCard('file-upload')"
+            [course]="course()!"
+        >
+            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.FILE_UPLOAD" />
+            <jhi-file-upload-exercise
+                exercises
+                [embedded]="true"
+                [course]="course()!"
+                [exerciseFilter]="exerciseFilter()"
+                (exerciseCount)="fileUploadExercisesCount.set($event)"
+                (filteredExerciseCount)="filteredFileUploadExercisesCount.set($event)"
+            />
+        </jhi-course-exercise-card>
+    }
 }

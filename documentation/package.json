@@ -19,14 +19,14 @@
   "dependencies": {
     "@docusaurus/core": "3.9.2",
     "@docusaurus/preset-classic": "3.9.2",
-    "@easyops-cn/docusaurus-search-local": "0.52.1",
+    "@easyops-cn/docusaurus-search-local": "0.52.2",
     "@fortawesome/free-solid-svg-icons": "7.1.0",
-    "@fortawesome/react-fontawesome": "3.1.0",
+    "@fortawesome/react-fontawesome": "3.1.1",
     "@mdx-js/react": "3.1.1",
     "clsx": "2.1.1",
     "prism-react-renderer": "2.4.1",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.9.2",
@@ -34,7 +34,7 @@
     "@docusaurus/types": "3.9.2",
     "@types/prop-types": "15.7.15",
     "patch-package": "8.0.1",
-    "prettier": "3.6.2",
+    "prettier": "3.8.0",
     "typescript": "5.9.3"
   },
   "overrides": {

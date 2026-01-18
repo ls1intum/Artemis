@@ -64,8 +64,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 optional DB call to get the amount of notifications inside the course.
 
         var course = courses.getFirst();
-        // potentially, we might get a course that has faqs disabled, in which case we would have 16 calls instead of 17
-        int numberOfCounts = course.isFaqEnabled() ? 17 : 16;
+        // potentially, we might get a course that has faqs disabled, in which case we would have 14 calls instead of 15
+        int numberOfCounts = course.isFaqEnabled() ? 15 : 14;
         assertThatDb(() -> {
             log.info("Start course for dashboard call for one course");
             var userCourse = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
@@ -83,7 +83,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get the grading scale
         // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
         // 1 DB call to get the faqs, if they are enabled
-        // 2 DB calls to check/create Iris course settings (SELECT + optional INSERT for new courses)
+        // 1 DB call to check if Iris is enabled in the course
         // 1 DB call to determine if the quiz training mode is enabled for the course
     }
 

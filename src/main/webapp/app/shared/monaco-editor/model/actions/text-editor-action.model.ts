@@ -173,6 +173,31 @@ export abstract class TextEditorAction implements Disposable {
         const selection = editor.getSelection();
         return selection ? this.getTextAtRange(editor, selection) : undefined;
     }
+    /**
+     * Wraps the selected text with a custom wrapper function, or inserts default text if no selection exists.
+     * This is useful for actions like URL and Attachment that need to wrap selected text with specific syntax.
+     * The wrapper function receives the selected text and should handle sanitization if needed.
+     * @param editor The editor to operate on.
+     * @param wrapperFn A function that takes the selected text and returns the wrapped string (should handle sanitization).
+     * @param defaultText The default text to insert if there is no selection.
+     */
+    protected wrapSelectionOrInsertDefault(editor: TextEditor, wrapperFn: (selectedText: string) => string, defaultText: string): void {
+        const selectedText = this.getSelectedText(editor)?.trim();
+        const selection = editor.getSelection();
+
+        if (selectedText && selection) {
+            const wrappedText = wrapperFn(selectedText);
+            if (wrappedText) {
+                this.replaceTextAtRange(editor, selection, wrappedText);
+                return;
+            }
+            // If wrapper function returned empty string, fall through to insert default text
+        }
+        // No selection or empty wrapped text - insert default text at cursor
+        const position = editor.getPosition();
+        const cursorRange = new TextEditorRange(position, position);
+        this.replaceTextAtRange(editor, cursorRange, defaultText);
+    }
 
     /**
      * Inserts the given text at the current cursor position.

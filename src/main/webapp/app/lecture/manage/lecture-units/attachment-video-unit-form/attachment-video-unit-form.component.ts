@@ -13,9 +13,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { AccountService } from 'app/core/auth/account.service';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_VIDEO_UPLOAD } from 'app/app.constants';
 
@@ -23,9 +20,6 @@ export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
     videoFileProperties?: VideoFileProperties;
-    playlistUrl?: string;
-    transcriptionProperties?: TranscriptionProperties;
-    transcriptionStatus?: string;
     uploadProgressCallback?: (progress: number, status: string) => void;
 }
 
@@ -39,8 +33,6 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
-    generateTranscript?: boolean;
-    videoTranscription?: string;
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -53,10 +45,6 @@ export interface FileProperties {
 export interface VideoFileProperties {
     videoFile?: File;
     videoFileName?: string;
-}
-
-export interface TranscriptionProperties {
-    videoTranscription?: string;
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -104,19 +92,6 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     return { invalidVideoUrl: true };
 }
 
-function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
-    if (value === undefined || value === null || value === '') {
-        return null;
-    }
-    try {
-        JSON.parse(value);
-        return null;
-    } catch {
-        return { invalidJson: true };
-    }
-}
-
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
@@ -130,22 +105,14 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faVideo = faVideo;
     protected readonly faExclamationTriangle = faExclamationTriangle;
-    protected readonly TranscriptionStatus = TranscriptionStatus;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
-
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    canGenerateTranscript = signal(false);
-    playlistUrl = signal<string | undefined>(undefined);
-    transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
-
     // Upload progress tracking
     isUploading = signal(false);
     uploadProgress = signal(0);
     uploadStatus = signal('');
     private uploadResetTimeoutId?: number;
-
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
 
@@ -157,8 +124,7 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     // have to handle the file input as a special case at is not part of the reactive form
-    @ViewChild('fileInput', { static: false })
-    fileInput: ElementRef;
+    fileInput = viewChild<ElementRef>('fileInput');
     file: File;
     fileInputTouched = false;
 
@@ -178,10 +144,7 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
-    private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
-
-    readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
     readonly isVideoUploadEnabled = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_VIDEO_UPLOAD));
 
     constructor() {
@@ -189,16 +152,6 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
             const formData = this.formData();
             if (this.isEditMode() && formData) {
                 this.setFormValues(formData);
-                const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
-                this.transcriptionStatus.set(newStatus);
-
-                // Set playlist URL if available from formData (for existing videos)
-                if (formData.playlistUrl) {
-                    this.playlistUrl.set(formData.playlistUrl);
-                    this.canGenerateTranscript.set(true);
-                }
-            } else {
-                this.transcriptionStatus.set(undefined);
             }
         });
     }
@@ -218,50 +171,10 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
-        videoTranscription: [undefined as string | undefined, [validJsonOrEmpty]],
-        generateTranscript: [false],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
-
-    readonly shouldShowTranscriptCheckbox = computed(() => {
-        const status = this.transcriptionStatus();
-        const hasPlaylist = !!this.playlistUrl();
-
-        // Don't show checkbox if no playlist URL
-        if (!hasPlaylist) {
-            return false;
-        }
-
-        // Don't show checkbox if transcription is pending/processing
-        if (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING) {
-            return false;
-        }
-
-        // Show checkbox if:
-        // 1. No transcription exists yet (status is undefined) OR
-        // 2. Transcription is COMPLETED or FAILED (allow regeneration/overwrite)
-        return true;
-    });
-
-    readonly showTranscriptionPendingWarning = computed(() => {
-        const status = this.transcriptionStatus();
-        return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
-    });
-
-    readonly showTranscriptionOverwriteWarning = computed(() => {
-        const status = this.transcriptionStatus();
-        const hasPlaylist = !!this.playlistUrl();
-
-        // Show overwrite warning when user can generate but a transcription already exists
-        return hasPlaylist && (status === TranscriptionStatus.COMPLETED || status === TranscriptionStatus.FAILED);
-    });
-
-    readonly showTranscriptionStatusBadge = computed(() => {
-        const status = this.transcriptionStatus();
-        return this.isEditMode() && status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
-    });
 
     isFormValid = computed(() => {
         const hasValidFile = !!this.fileName();
@@ -350,41 +263,12 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
         return this.form.get('urlHelper');
     }
 
-    get videoTranscriptionControl() {
-        return this.form.get('videoTranscription');
-    }
-
-    checkPlaylistAvailability(originalUrl: string): void {
-        this.attachmentVideoUnitService.getPlaylistUrl(originalUrl).subscribe({
-            next: (playlist) => {
-                if (playlist) {
-                    this.canGenerateTranscript.set(true);
-                    this.playlistUrl.set(playlist);
-                } else {
-                    this.canGenerateTranscript.set(false);
-                    this.playlistUrl.set(undefined);
-                    this.form.get('generateTranscript')?.setValue(false);
-                }
-            },
-            error: () => {
-                this.canGenerateTranscript.set(false);
-                this.playlistUrl.set(undefined);
-                this.form.get('generateTranscript')?.setValue(false);
-            },
-        });
-    }
-
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
-
-        formProperties.videoTranscription = undefined;
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),
-        };
-        const transcriptionProperties: TranscriptionProperties = {
-            videoTranscription: formValue.videoTranscription,
         };
 
         // Create upload progress callback
@@ -416,8 +300,6 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
             formProperties,
             fileProperties,
             videoFileProperties,
-            transcriptionProperties,
-            playlistUrl: this.playlistUrl(),
             uploadProgressCallback,
         });
     }
@@ -438,9 +320,6 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
         if (formData?.videoFileProperties?.videoFileName) {
             this.videoFileName.set(formData?.videoFileProperties?.videoFileName);
         }
-        if (formData?.transcriptionProperties) {
-            this.form.patchValue(formData.transcriptionProperties);
-        }
     }
 
     get isTransformable() {
@@ -457,8 +336,6 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
         const originalUrl = this.urlHelperControl!.value;
         const embeddedUrl = this.extractEmbeddedUrl(originalUrl);
         this.videoSourceControl!.setValue(embeddedUrl);
-
-        this.checkPlaylistAvailability(originalUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {

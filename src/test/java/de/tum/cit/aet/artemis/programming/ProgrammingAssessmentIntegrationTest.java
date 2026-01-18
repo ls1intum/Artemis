@@ -759,7 +759,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         participationUtilService.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
         final var secondSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, "2");
         participationUtilService.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
-        var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri()).getName();
+        var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri());
         // Ensure the existing submission matches the repository HEAD returned during locking
         final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, latestCommitHash);
         participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);

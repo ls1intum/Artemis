@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/core/course/manage/overview/course-management-exercise-row.component';
@@ -59,101 +59,100 @@ import { getContrastingTextColor } from 'app/shared/util/color.utils';
         FeatureOverlayComponent,
     ],
 })
-export class CourseManagementCardComponent implements OnInit, OnChanges {
+export class CourseManagementCardComponent {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     private readonly profileService = inject(ProfileService);
 
     // TODO: can we merge the 3 courses here?
-    @Input() course: Course;
-    @Input() courseStatistics?: CourseManagementOverviewStatisticsDto;
-    @Input() courseWithExercises: Course | undefined;
-    @Input() courseWithUsers: Course | undefined;
+    readonly course = input.required<Course>();
+    readonly courseStatistics = input<CourseManagementOverviewStatisticsDto>();
+    readonly courseWithExercises = input<Course>();
+    readonly courseWithUsers = input<Course>();
 
-    atlasEnabled = false;
-    examEnabled = false;
-    tutorialGroupEnabled = false;
+    readonly atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    readonly examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+    readonly lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
+    readonly tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
 
-    statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
+    readonly statisticsPerExercise = signal(new Map<number, CourseManagementOverviewExerciseStatisticsDTO>());
 
-    futureExercises: Exercise[];
-    currentExercises: Exercise[];
-    exercisesInAssessment: Exercise[];
-    pastExercises: Exercise[];
-    pastExerciseCount: number;
+    readonly futureExercises = signal<Exercise[]>([]);
+    readonly currentExercises = signal<Exercise[]>([]);
+    readonly exercisesInAssessment = signal<Exercise[]>([]);
+    readonly pastExercises = signal<Exercise[]>([]);
+    readonly pastExerciseCount = signal<number>(0);
 
-    showFutureExercises = false;
-    showCurrentExercises = true;
-    showExercisesInAssessment = true;
-    showPastExercises = false;
+    readonly showFutureExercises = signal(false);
+    readonly showCurrentExercises = signal(true);
+    readonly showExercisesInAssessment = signal(true);
+    readonly showPastExercises = signal(false);
 
     // Expose enums to the template
-    exerciseType = ExerciseType;
-    exerciseRowType = ExerciseRowType;
+    readonly exerciseType = ExerciseType;
+    readonly exerciseRowType = ExerciseRowType;
 
     private statisticsSorted = false;
     private exercisesSorted = false;
 
     // Icons
-    faTable = faTable;
-    faUserCheck = faUserCheck;
-    faFlag = faFlag;
-    faNetworkWired = faNetworkWired;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faFilePdf = faFilePdf;
-    faComments = faComments;
-    faClipboard = faClipboard;
-    faGraduationCap = faGraduationCap;
-    faAngleDown = faAngleDown;
-    faAngleUp = faAngleUp;
-    faPersonChalkboard = faPersonChalkboard;
-    faSpinner = faSpinner;
-    faQuestion = faQuestion;
+    readonly faTable = faTable;
+    readonly faUserCheck = faUserCheck;
+    readonly faFlag = faFlag;
+    readonly faNetworkWired = faNetworkWired;
+    readonly faListAlt = faListAlt;
+    readonly faChartBar = faChartBar;
+    readonly faFilePdf = faFilePdf;
+    readonly faComments = faComments;
+    readonly faClipboard = faClipboard;
+    readonly faGraduationCap = faGraduationCap;
+    readonly faAngleDown = faAngleDown;
+    readonly faAngleUp = faAngleUp;
+    readonly faPersonChalkboard = faPersonChalkboard;
+    readonly faSpinner = faSpinner;
+    readonly faQuestion = faQuestion;
 
-    courseColor: string;
-    contentColor: string;
+    readonly courseColor = computed(() => this.course().color || this.ARTEMIS_DEFAULT_COLOR);
+    readonly contentColor = computed(() => getContrastingTextColor(this.courseColor()));
 
     readonly FeatureToggle = FeatureToggle;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    ngOnInit() {
-        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
-        this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
-    }
+    constructor() {
+        // Effect to process courseStatistics changes
+        effect(() => {
+            const courseStatistics = this.courseStatistics();
+            if (!this.statisticsSorted && courseStatistics && courseStatistics.exerciseDTOS?.length > 0) {
+                this.statisticsSorted = true;
+                const newMap = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
+                courseStatistics.exerciseDTOS.forEach((dto) => {
+                    if (dto.exerciseId !== undefined) {
+                        newMap.set(dto.exerciseId, dto);
+                    }
+                });
+                this.statisticsPerExercise.set(newMap);
+            }
+        });
 
-    ngOnChanges() {
-        const targetCourseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
-        if (this.courseColor !== targetCourseColor) {
-            this.courseColor = targetCourseColor;
-            this.contentColor = getContrastingTextColor(this.courseColor);
-        }
+        // Effect to process courseWithExercises changes
+        effect(() => {
+            const courseWithExercises = this.courseWithExercises();
+            if (this.exercisesSorted || !courseWithExercises || !courseWithExercises.exercises) {
+                return;
+            }
 
-        // Only sort one time once loaded
-        if (!this.statisticsSorted && this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
-            this.statisticsSorted = true;
-            this.courseStatistics.exerciseDTOS.forEach((dto) => {
-                if (dto.exerciseId !== undefined) {
-                    this.statisticsPerExercise.set(dto.exerciseId, dto);
-                }
+            this.sortExercises(courseWithExercises.exercises);
+
+            // Directly show future exercises if there are no current exercises for the students or to assess
+            // Use untracked to prevent this effect from re-running when these signals change
+            untracked(() => {
+                this.showFutureExercises.set(this.currentExercises().length === 0 && this.exercisesInAssessment().length === 0);
+                // If there are no future exercises either, show the past exercises by default
+                this.showPastExercises.set(this.futureExercises().length === 0 && this.currentExercises().length === 0 && this.exercisesInAssessment().length === 0);
             });
-        }
-
-        // Only sort one time once loaded
-        if (this.exercisesSorted || !this.courseWithExercises || !this.courseWithExercises.exercises) {
-            return;
-        }
-
-        this.sortExercises(this.courseWithExercises.exercises);
-
-        // Directly show future exercises if there are no current exercises for the students or to assess
-        this.showFutureExercises = this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
-
-        // If there are no future exercises either, show the past exercises by default
-        this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
+        });
     }
 
     /**
@@ -170,21 +169,25 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
 
         const inSevenDays = dayjs().add(7, 'days').endOf('day');
 
-        this.futureExercises = exercises
-            .filter((exercise) => exercise.releaseDate && exercise.releaseDate > dayjs() && exercise.releaseDate <= inSevenDays)
-            .sort((exerciseA, exerciseB) => {
-                return exerciseA.releaseDate!.valueOf() - exerciseB.releaseDate!.valueOf();
-            })
-            .slice(0, 5);
-
-        this.currentExercises = exercises.filter(
-            (exercise) =>
-                (exercise.releaseDate && exercise.releaseDate <= dayjs() && (!exercise.dueDate || exercise.dueDate > dayjs())) ||
-                (!exercise.releaseDate && exercise.dueDate && exercise.dueDate > dayjs()),
+        this.futureExercises.set(
+            exercises
+                .filter((exercise) => exercise.releaseDate && exercise.releaseDate > dayjs() && exercise.releaseDate <= inSevenDays)
+                .sort((exerciseA, exerciseB) => {
+                    return exerciseA.releaseDate!.valueOf() - exerciseB.releaseDate!.valueOf();
+                })
+                .slice(0, 5),
         );
 
-        this.exercisesInAssessment = exercises.filter(
-            (exercise) => exercise.dueDate && exercise.dueDate <= dayjs() && exercise.assessmentDueDate && exercise.assessmentDueDate > dayjs(),
+        this.currentExercises.set(
+            exercises.filter(
+                (exercise) =>
+                    (exercise.releaseDate && exercise.releaseDate <= dayjs() && (!exercise.dueDate || exercise.dueDate > dayjs())) ||
+                    (!exercise.releaseDate && exercise.dueDate && exercise.dueDate > dayjs()),
+            ),
+        );
+
+        this.exercisesInAssessment.set(
+            exercises.filter((exercise) => exercise.dueDate && exercise.dueDate <= dayjs() && exercise.assessmentDueDate && exercise.assessmentDueDate > dayjs()),
         );
 
         const allPastExercises = exercises
@@ -198,7 +201,7 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
                 return (exerciseB.assessmentDueDate ?? exerciseB.dueDate)!.valueOf() - (exerciseA.assessmentDueDate ?? exerciseA.dueDate)!.valueOf();
             });
 
-        this.pastExerciseCount = allPastExercises.length;
-        this.pastExercises = allPastExercises.slice(0, 5);
+        this.pastExerciseCount.set(allPastExercises.length);
+        this.pastExercises.set(allPastExercises.slice(0, 5));
     }
 }

@@ -15,6 +15,8 @@
 # ===================================================================
 
 logging:
+    pattern:
+        correlation: ""
     level:
         ROOT: INFO
         de.tum.cit.aet.artemis: INFO
@@ -32,6 +34,8 @@ logging:
 artemis:
     version: #project.version#
     file-upload-path: uploads
+    feedback:
+        max-feedback-length: 20000  # Maximum length for feedback text before truncation
     submission-export-path: exports
     temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
@@ -69,7 +73,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
-                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"

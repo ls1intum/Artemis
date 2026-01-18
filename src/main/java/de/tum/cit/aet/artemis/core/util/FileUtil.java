@@ -626,6 +626,10 @@ public class FileUtil {
 
         if (subDirectories != null) {
             for (String subDirectory : subDirectories) {
+                if (subDirectory.equalsIgnoreCase(".git")) {
+                    // Skip .git folder to avoid interfering with Git's internal file operations
+                    continue;
+                }
                 replaceVariablesInDirectoryName(directory.toPath().toAbsolutePath().resolve(subDirectory), targetString, replacementString);
             }
         }

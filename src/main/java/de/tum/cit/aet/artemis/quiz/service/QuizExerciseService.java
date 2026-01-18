@@ -530,7 +530,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
-        List<Result> results = resultRepository.findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
         for (Result result : results) {
@@ -573,7 +573,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
-        validateQuizExerciseFiles(originalQuizExercise, files, false);
+        validateQuizExerciseFiles(originalQuizExercise, files);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : originalQuizExercise.getQuizQuestions()) {
@@ -606,8 +606,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // fetch exercise again to make sure we have an updated version
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
-        // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
-        quizExercise.setIsOpenForPractice(Boolean.FALSE);
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
             quizExercise.setReleaseDate(ZonedDateTime.now());
@@ -673,23 +671,70 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void handleDndQuizFileCreation(QuizExercise quizExercise, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(quizExercise, nullsafeFiles, true);
+        validateQuizExerciseFiles(quizExercise, nullsafeFiles);
         Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
 
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, null);
+                    handleDndBackgroundForCreation(dragAndDropQuestion, fileMap);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
         }
     }
 
+    /**
+     * Handles the background file for a DragAndDropQuestion during creation. If the file already exists in the file system, it copies it to a new location.
+     * This logic is necessary to handle the case where a DragAndDropQuestion is created based on an existing one (e.g. via import).
+     *
+     * @param question the DragAndDropQuestion
+     * @param fileMap  the map of provided files
+     * @throws IOException if file operations fail
+     */
+    public void handleDndBackgroundForCreation(DragAndDropQuestion question, Map<String, MultipartFile> fileMap) throws IOException {
+        String path = question.getBackgroundFilePath();
+        FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
+        Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
+
+        if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
+            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
+            Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
+            if (newPath == null) {
+                throw new IOException("Failed to copy existing drag and drop background file to new location for path: " + oldPath);
+            }
+            question.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+        }
+        else {
+            saveDndQuestionBackground(question, fileMap, null);
+        }
+    }
+
+    /**
+     * Handles the drag items for a DragAndDropQuestion during creation. If the files already exist in the file system, it copies them to new locations.
+     *
+     * @param dragAndDropQuestion the DragAndDropQuestion
+     * @param fileMap             the map of provided files
+     * @throws IOException if file operations fail
+     */
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
+        FilePathType type = FilePathType.DRAG_ITEM;
+        Path basePath = FilePathConverter.getDragItemFilePath();
+
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
-                saveDndDragItemPicture(dragItem, fileMap, null);
+                String path = dragItem.getPictureFilePath();
+                if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
+                    Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
+                    Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
+                    if (newPath == null) {
+                        throw new IOException("Failed to copy existing drag item file to new location for path: " + oldPath);
+                    }
+                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+                }
+                else {
+                    saveDndDragItemPicture(dragItem, fileMap, null);
+                }
             }
         }
     }
@@ -705,7 +750,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
+        validateQuizExerciseFiles(updatedExercise, nullsafeFiles);
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
 
@@ -777,34 +822,33 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param quizExercise  the quiz exercise to validate
      * @param providedFiles the provided files to validate
-     * @param isCreate      On create all files get validated, on update only changed files get validated
      */
-    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles, boolean isCreate) {
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles) {
         long fileCount = providedFiles.size();
 
         Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
-
         Map<FilePathType, Set<String>> newFilePathsMap = new HashMap<>();
 
-        if (isCreate) {
-            newFilePathsMap = new HashMap<>(exerciseFilePathsMap);
-        }
-        else {
-            for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
-                FilePathType type = entry.getKey();
-                Set<String> paths = entry.getValue();
-                paths.forEach(FileUtil::sanitizeFilePathByCheckingForInvalidCharactersElseThrow);
-                paths.stream().filter(path -> Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))).forEach(path -> {
+        for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
+            FilePathType type = entry.getKey();
+            Set<String> paths = entry.getValue();
+            Set<String> newPaths = new HashSet<>();
+            for (String path : paths) {
+                FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(path);
+                URI uri = URI.create(path);
+                Path fsPath = FilePathConverter.fileSystemPathForExternalUri(uri, type);
+
+                if (Files.exists(fsPath)) {
                     URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
-                });
-
-                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
-                        .collect(Collectors.toSet());
-
-                if (!newPaths.isEmpty()) {
-                    newFilePathsMap.put(type, newPaths);
+                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(uri, intendedSubPath);
                 }
+                else {
+                    newPaths.add(path);
+                }
+            }
+
+            if (!newPaths.isEmpty()) {
+                newFilePathsMap.put(type, newPaths);
             }
         }
 
@@ -891,11 +935,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             QuizPointStatistic quizPointStatistic = new QuizPointStatistic();
             quizExercise.setQuizPointStatistic(quizPointStatistic);
             quizPointStatistic.setQuiz(quizExercise);
-        }
-
-        // Set released for practice to false if not set already
-        if (quizExercise.isIsOpenForPractice() == null) {
-            quizExercise.setIsOpenForPractice(Boolean.FALSE);
         }
 
         // make sure the pointers in the statistics are correct

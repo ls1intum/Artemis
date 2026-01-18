@@ -45,7 +45,7 @@ import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exe
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
@@ -214,7 +214,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
                 .pipe(
                     tap((updatedProgrammingExercise) => {
+                        // Preserve categories from the initial exercise as the API might not return them
+                        const categories = this.programmingExercise.categories;
                         this.programmingExercise = updatedProgrammingExercise.body!;
+                        if (!this.programmingExercise.categories?.length && categories?.length) {
+                            this.programmingExercise.categories = categories;
+                        }
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
@@ -407,9 +412,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
                 { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
                 {
-                    type: DetailType.Text,
+                    type: DetailType.ExerciseCategories,
                     title: 'artemisApp.exercise.categories',
-                    data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                    data: { categories: exercise.categories },
                 },
             ],
         };
@@ -760,6 +765,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
             exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
         }
+    }
+
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.programmingExerciseService.getDeletionSummary(this.programmingExercise.id!);
     }
 
     /**

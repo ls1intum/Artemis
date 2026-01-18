@@ -207,7 +207,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * Submits the exam
      */
     submitExam() {
-        this.onExamEnded.emit();
+        this.onExamEnded.emit(this.studentExam);
     }
 
     /**

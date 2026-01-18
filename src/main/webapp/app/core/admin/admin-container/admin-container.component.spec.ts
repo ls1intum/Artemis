@@ -1,20 +1,29 @@
+/**
+ * Vitest tests for AdminContainerComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { AdminContainerComponent } from './admin-container.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
+import { of } from 'rxjs';
+
+import { AdminContainerComponent } from './admin-container.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Build, CompatibleVersions, Git, Java, ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 @Component({ template: '', standalone: true })
 class MockEmptyComponent {}
 
 describe('AdminContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AdminContainerComponent;
     let fixture: ComponentFixture<AdminContainerComponent>;
     let profileService: ProfileService;
@@ -47,6 +56,7 @@ describe('AdminContainerComponent', () => {
         features: [],
         git: mockGit,
         java: new Java(),
+        allowedCustomDockerNetworks: [],
         operatorAdminName: '',
         operatorName: '',
         repositoryAuthenticationMechanisms: [],
@@ -62,32 +72,36 @@ describe('AdminContainerComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [AdminContainerComponent, TranslateModule.forRoot()],
+            imports: [AdminContainerComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([{ path: '**', component: MockEmptyComponent }]),
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ProfileService,
                     useValue: {
-                        getProfileInfo: jest.fn().mockReturnValue(mockProfileInfo),
+                        getProfileInfo: vi.fn().mockReturnValue(mockProfileInfo),
                     },
                 },
                 {
                     provide: FeatureToggleService,
                     useValue: {
-                        getFeatureToggleActive: jest.fn().mockReturnValue(of(false)),
+                        getFeatureToggleActive: vi.fn().mockReturnValue(of(false)),
+                        unsubscribeFeatureToggleUpdates: vi.fn(), // added mock to avoid runtime error
                     },
                 },
                 {
                     provide: LayoutService,
                     useValue: {
-                        subscribeToLayoutChanges: jest.fn().mockReturnValue(of([])),
-                        isBreakpointActive: jest.fn().mockReturnValue(true), // Assume sidebar can expand
+                        subscribeToLayoutChanges: vi.fn().mockReturnValue(of([])),
+                        isBreakpointActive: vi.fn().mockReturnValue(true),
                     },
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideTemplate(AdminContainerComponent, '')
+            .compileComponents();
 
         profileService = TestBed.inject(ProfileService);
         fixture = TestBed.createComponent(AdminContainerComponent);
@@ -108,11 +122,14 @@ describe('AdminContainerComponent', () => {
     });
 
     it('should have all feature flags as false by default', () => {
-        expect(component.localCIActive).toBeFalse();
-        expect(component.ltiEnabled).toBeFalse();
-        expect(component.atlasEnabled).toBeFalse();
-        expect(component.examEnabled).toBeFalse();
-        expect(component.standardizedCompetenciesEnabled).toBeFalse();
+        expect(component.localCIActive()).toBe(false);
+        expect(component.ltiEnabled()).toBe(false);
+        expect(component.atlasEnabled()).toBe(false);
+        expect(component.examEnabled()).toBe(false);
+        expect(component.standardizedCompetenciesEnabled()).toBe(false);
+        expect(component.passkeyEnabled()).toBe(false);
+        expect(component.passkeyRequiredForAdmin()).toBe(false);
+        expect(component.isSuperAdmin()).toBe(false);
     });
 
     it('should detect feature flags from profile info', () => {
@@ -122,15 +139,112 @@ describe('AdminContainerComponent', () => {
             activeModuleFeatures: ['atlas', 'exam'],
         };
 
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithFeatures);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithFeatures);
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;
         newFixture.detectChanges();
 
-        expect(newComponent.localCIActive).toBeTrue();
-        expect(newComponent.ltiEnabled).toBeTrue();
-        expect(newComponent.atlasEnabled).toBeTrue();
-        expect(newComponent.examEnabled).toBeTrue();
+        expect(newComponent.localCIActive()).toBe(true);
+        expect(newComponent.ltiEnabled()).toBe(true);
+        expect(newComponent.atlasEnabled()).toBe(true);
+        expect(newComponent.examEnabled()).toBe(true);
+    });
+
+    it('should detect passkey feature flags from profile info', () => {
+        const profileInfoWithPasskey: ProfileInfo = {
+            ...mockProfileInfo,
+            activeModuleFeatures: ['passkey', 'passkey-admin'],
+        };
+
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithPasskey);
+
+        const newFixture = TestBed.createComponent(AdminContainerComponent);
+        const newComponent = newFixture.componentInstance;
+        newFixture.detectChanges();
+
+        expect(newComponent.passkeyEnabled()).toBe(true);
+        expect(newComponent.passkeyRequiredForAdmin()).toBe(true);
+    });
+
+    describe('onResize', () => {
+        it('should call updateCollapseState when window resizes', () => {
+            const layoutService = TestBed.inject(LayoutService);
+            vi.spyOn(layoutService, 'isBreakpointActive').mockReturnValue(false);
+
+            component.onResize();
+
+            expect(component.isNavbarCollapsed()).toBe(true);
+        });
+
+        it('should not collapse navbar when breakpoint is active on resize', () => {
+            const layoutService = TestBed.inject(LayoutService);
+            vi.spyOn(layoutService, 'isBreakpointActive').mockReturnValue(true);
+            component.isNavbarCollapsed.set(false);
+
+            component.onResize();
+
+            // When breakpoint is active, updateCollapseState doesn't change the state
+            expect(component.isNavbarCollapsed()).toBe(false);
+        });
+    });
+
+    describe('onKeyDown', () => {
+        it('should toggle collapse state when Ctrl+M is pressed and breakpoint is active', () => {
+            const layoutService = TestBed.inject(LayoutService);
+            vi.spyOn(layoutService, 'isBreakpointActive').mockReturnValue(true);
+            const initialState = component.isNavbarCollapsed();
+            const event = new KeyboardEvent('keydown', { ctrlKey: true, key: 'm' });
+            const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+            component.onKeyDown(event);
+
+            expect(preventDefaultSpy).toHaveBeenCalled();
+            expect(component.isNavbarCollapsed()).toBe(!initialState);
+        });
+
+        it('should not toggle collapse state when breakpoint is not active', () => {
+            const layoutService = TestBed.inject(LayoutService);
+            vi.spyOn(layoutService, 'isBreakpointActive').mockReturnValue(false);
+            const initialState = component.isNavbarCollapsed();
+            const event = new KeyboardEvent('keydown', { ctrlKey: true, key: 'm' });
+            const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+            component.onKeyDown(event);
+
+            expect(preventDefaultSpy).not.toHaveBeenCalled();
+            expect(component.isNavbarCollapsed()).toBe(initialState);
+        });
+    });
+
+    describe('updateCollapseState', () => {
+        it('should auto-collapse navbar on smaller screens', () => {
+            const layoutService = TestBed.inject(LayoutService);
+            vi.spyOn(layoutService, 'isBreakpointActive').mockReturnValue(false);
+            component.isNavbarCollapsed.set(false);
+
+            // Trigger updateCollapseState via onResize
+            component.onResize();
+
+            expect(component.isNavbarCollapsed()).toBe(true);
+        });
+
+        it('should not change collapsed state when breakpoint is active', () => {
+            const layoutService = TestBed.inject(LayoutService);
+            vi.spyOn(layoutService, 'isBreakpointActive').mockReturnValue(true);
+            component.isNavbarCollapsed.set(false);
+
+            // Trigger updateCollapseState via onResize
+            component.onResize();
+
+            expect(component.isNavbarCollapsed()).toBe(false);
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should unsubscribe from subscriptions on destroy', () => {
+            component.ngOnInit();
+            expect(() => component.ngOnDestroy()).not.toThrow();
+        });
     });
 });

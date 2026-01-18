@@ -42,7 +42,7 @@ public class ChannelService {
 
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
-    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$][a-z0-9-]{0,30}$";
+    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$][a-z0-9:\\-]{0,30}$";
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
@@ -75,7 +75,8 @@ public class ChannelService {
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
             conversationParticipant.setIsModerator(true);
         }
-        // If the channel is course-wide, there might not be a participant entry for some users yet. They are created here.
+        // If the channel is course-wide, there might not be a participant entry for
+        // some users yet. They are created here.
         if (channel.getIsCourseWide()) {
             var matchingParticipantIds = matchingParticipants.stream().map(participant -> participant.getUser().getId()).collect(Collectors.toSet());
             var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
@@ -136,7 +137,8 @@ public class ChannelService {
      *
      * @param course  the course to create the channel for
      * @param channel the channel to create
-     * @param creator the creator of the channel, if set a participant will be created for the creator
+     * @param creator the creator of the channel, if set a participant will be
+     *                    created for the creator
      * @return the created channel
      */
     public Channel createChannel(Course course, Channel channel, Optional<User> creator) {
@@ -152,7 +154,8 @@ public class ChannelService {
 
         if (creator.isPresent()) {
             var conversationParticipantOfRequestingUser = ConversationParticipant.createWithDefaultValues(creator.get(), savedChannel);
-            // Creator is a moderator. Special case, because creator is the only moderator that can not be revoked the role
+            // Creator is a moderator. Special case, because creator is the only moderator
+            // that can not be revoked the role
             conversationParticipantOfRequestingUser.setIsModerator(true);
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
@@ -165,10 +168,14 @@ public class ChannelService {
     /**
      * Register users to the newly created channel
      *
-     * @param addAllStudents        if true, all students of the course will be added to the channel
-     * @param addAllTutors          if true, all tutors of the course will be added to the channel
-     * @param addAllInstructors     if true, all instructors of the course will be added to the channel
-     * @param usersLoginsToRegister the logins of the users to register to the channel
+     * @param addAllStudents        if true, all students of the course will be
+     *                                  added to the channel
+     * @param addAllTutors          if true, all tutors of the course will be added
+     *                                  to the channel
+     * @param addAllInstructors     if true, all instructors of the course will be
+     *                                  added to the channel
+     * @param usersLoginsToRegister the logins of the users to register to the
+     *                                  channel
      * @param course                the course to create the channel for
      * @param channel               the channel to create
      * @return all users that were registered to the channel
@@ -194,14 +201,15 @@ public class ChannelService {
     }
 
     /**
-     * Checks if the given channel is valid for the given course or throws an exception
+     * Checks if the given channel is valid for the given course or throws an
+     * exception
      *
      * @param courseId the id of the course
      * @param channel  the channel to check
      */
     public void channelIsValidOrThrow(Long courseId, @Valid Channel channel) {
         if (channel.getName() != null && !channel.getName().matches(CHANNEL_NAME_REGEX)) {
-            throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
+            throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, colons and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
 
         if (this.allowDuplicateChannelName(channel)) {
@@ -252,13 +260,16 @@ public class ChannelService {
 
     /**
      * Creates and persists channels for the given lectures within a course.
-     * Assumes that unique channel names can be derived from the lectures titles. Will produce duplicate channel names otherwise that need to be corrected.
+     * Assumes that unique channel names can be derived from the lectures titles.
+     * Will produce duplicate channel names otherwise that need to be corrected.
      * Assigns the specified user as the creator and moderator.
      *
      * @param lectures the list of lectures for which channels should be created
      * @param course   the course to which the lectures (and channels) belong
-     * @param creator  the user who will be set as the creator and moderator of each channel
-     * @throws IllegalArgumentException if for any lecture a channel name is derived that does not follow the required format
+     * @param creator  the user who will be set as the creator and moderator of each
+     *                     channel
+     * @throws IllegalArgumentException if for any lecture a channel name is derived
+     *                                      that does not follow the required format
      */
     public void createChannelsForLectures(List<Lecture> lectures, Course course, User creator) {
         Set<Channel> channelsToCreate = new HashSet<>();
@@ -285,7 +296,8 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a lecture and sets the channel name of the lecture accordingly.
+     * Creates a channel for a lecture and sets the channel name of the lecture
+     * accordingly.
      *
      * @param lecture     the lecture to create the channel for
      * @param channelName the name of the channel (optional), will be generated from the lecture title if not provided
@@ -300,7 +312,8 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly.
+     * Creates a channel for a course exercise and sets the channel name of the
+     * exercise accordingly.
      *
      * @param exercise    the exercise to create the channel for
      * @param channelName the name of the channel
@@ -316,7 +329,8 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a real exam and sets the channel name of the exam accordingly.
+     * Creates a channel for a real exam and sets the channel name of the exam
+     * accordingly.
      *
      * @param exam        the exam to create the channel for
      * @param channelName the name of the channel
@@ -395,11 +409,14 @@ public class ChannelService {
 
     /**
      * Creates a channel object with the provided name.
-     * The resulting channel is public, not an announcement channel and not archived.
+     * The resulting channel is public, not an announcement channel and not
+     * archived.
      *
-     * @param channelNameOptional the desired name of the channel wrapped in an Optional
+     * @param channelNameOptional the desired name of the channel wrapped in an
+     *                                Optional
      * @param prefix              the prefix for the channel name
-     * @param backupTitle         used as a basis for the resulting channel name if the provided channel name is empty
+     * @param backupTitle         used as a basis for the resulting channel name if
+     *                                the provided channel name is empty
      * @return a default channel with the given name
      */
     private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NonNull String prefix, String backupTitle) {
@@ -423,18 +440,23 @@ public class ChannelService {
     }
 
     /**
-     * Generates the channel name based on the associated lecture/exercise/exam title and a corresponding prefix.
-     * The resulting name only contains lower case letters, digits and hyphens and has a maximum length of 30 characters.
-     * Upper case letters are transformed to lower case and special characters are replaced with a hyphen, while avoiding
+     * Generates the channel name based on the associated lecture/exercise/exam
+     * title and a corresponding prefix.
+     * The resulting name only contains lower case letters, digits and hyphens and
+     * has a maximum length of 30 characters.
+     * Upper case letters are transformed to lower case and special characters are
+     * replaced with a hyphen, while avoiding
      * consecutive hyphens, e.g. "Example(%)name" becomes "example-name".
      *
      * @param prefix prefix for the channel
-     * @param title  title of the lecture/exercise/exam to derive the channel name from
+     * @param title  title of the lecture/exercise/exam to derive the channel name
+     *                   from
      * @return the generated channel name
      */
     private static String generateChannelNameFromTitle(@NonNull String prefix, Optional<String> title) {
         String channelName = prefix + title.orElse("");
-        // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
+        // [^a-z0-9]+ matches all occurrences of single or consecutive characters that
+        // are no digits and letters
         String specialCharacters = "[^a-z0-9]+";
         // -+$ matches a trailing hyphen at the end of a string
         String leadingTrailingHyphens = "-$";
@@ -449,13 +471,19 @@ public class ChannelService {
      * Creates a feedback-specific channel for an exercise within a course.
      *
      * @param course              in which the channel is being created.
-     * @param exerciseId          of the exercise associated with the feedback channel.
-     * @param channelDTO          containing the properties of the channel to be created, such as name, description, and visibility.
-     * @param feedbackDetailTexts used to identify the students affected by the feedback.
+     * @param exerciseId          of the exercise associated with the feedback
+     *                                channel.
+     * @param channelDTO          containing the properties of the channel to be
+     *                                created, such as name, description, and
+     *                                visibility.
+     * @param feedbackDetailTexts used to identify the students affected by the
+     *                                feedback.
      * @param requestingUser      initiating the channel creation request.
-     * @param testCaseName        to filter student submissions according to a specific feedback
+     * @param testCaseName        to filter student submissions according to a
+     *                                specific feedback
      * @return the created {@link Channel} object with its properties.
-     * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
+     * @throws BadRequestAlertException if the channel name starts with an invalid
+     *                                      prefix (e.g., "$").
      */
     public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailTexts, String testCaseName, User requestingUser) {
         if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {

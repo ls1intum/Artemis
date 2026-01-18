@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    HostListener,
+    Input,
+    OnChanges,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    inject,
+    input,
+    output,
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -29,6 +43,7 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -55,6 +70,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
@@ -111,6 +127,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     course?: Course;
 
+    onEditorLoaded = output<void>();
+
+    selectedRepository = input<RepositoryType>();
+
     /** Work in Progress: temporary properties needed to get first prototype working */
 
     @Input()
@@ -128,19 +148,15 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
-    }
-
-    private selectedRepositoryValue?: RepositoryType;
-    get selectedRepository(): RepositoryType | undefined {
-        return this.selectedRepositoryValue;
-    }
-
-    set selectedRepository(repository: RepositoryType | undefined) {
-        this.selectedRepositoryValue = repository;
+        this.changeDetector.markForCheck();
     }
 
     get problemStatementIdentifier(): string {
         return PROBLEM_STATEMENT_IDENTIFIER;
+    }
+
+    shouldShowProblemStatement(): boolean {
+        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions && this.isProblemStatementVisible();
     }
 
     /** Code Editor State Variables **/
@@ -211,8 +227,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     initializeProperties = () => {
         this.selectedFile = undefined;
-        // I assume we always load into the Template Repo at the beginning
-        this.selectedRepository = RepositoryType.TEMPLATE;
         this.unsavedFiles = {};
         this.fileBadges = {};
         this.editorState = EditorState.CLEAN;
@@ -351,6 +365,16 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         const submission = this.participation?.submissions?.[0];
         const result = submission?.results?.[0];
         return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
+    }
+
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
+    jumpToLine(lineNumber: number) {
+        this.monacoEditor.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     /**

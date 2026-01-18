@@ -35,7 +35,7 @@ export const FILES_PATH_PREFIX = 'api/core/files/';
 
 export const MODULE_FEATURE_PASSKEY = 'passkey';
 
-export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkeyRequiredForAdministratorFeatures';
+export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkey-admin';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
@@ -46,6 +46,12 @@ export const MODULE_FEATURE_EXAM = 'exam';
 export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
 
 export const MODULE_FEATURE_TEXT = 'text';
+
+export const MODULE_FEATURE_MODELING = 'modeling';
+
+export const MODULE_FEATURE_FILEUPLOAD = 'fileupload';
+
+export const MODULE_FEATURE_LECTURE = 'lecture';
 
 export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 
@@ -63,12 +69,17 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM
     | typeof MODULE_FEATURE_TEXT
+    | typeof MODULE_FEATURE_MODELING
+    | typeof MODULE_FEATURE_FILEUPLOAD
+    | typeof MODULE_FEATURE_LECTURE
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
     | typeof MODULE_FEATURE_VIDEO_UPLOAD;
 
 export const PROFILE_LOCALCI = 'localci';
+
+export const PROFILE_BUILDAGENT = 'buildagent';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
@@ -92,8 +103,11 @@ export const PROFILE_THEIA = 'theia';
 
 export const PROFILE_LDAP = 'ldap';
 
+export const PROFILE_SAML2 = 'saml2';
+
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
+    | typeof PROFILE_BUILDAGENT
     | typeof PROFILE_AEOLUS
     | typeof PROFILE_IRIS
     | typeof PROFILE_LTI
@@ -104,4 +118,5 @@ export type ProfileFeature =
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
     | typeof PROFILE_THEIA
-    | typeof PROFILE_LDAP;
+    | typeof PROFILE_LDAP
+    | typeof PROFILE_SAML2;

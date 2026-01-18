@@ -62,7 +62,7 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -73,11 +73,11 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Staff',
-                        path: 'staff'
+                        label: 'Developer Guide',
+                        path: 'developer'
                     },
                     {
-                        label: 'Admin',
+                        label: 'Admin Guide',
                         path: 'admin'
                     }
                 ],
@@ -111,10 +111,10 @@ const config: Config = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'staff',
-                path: 'docs/staff',
-                routeBasePath: 'staff',
-                sidebarPath: './sidebar-staff.ts',
+                id: 'developer',
+                path: 'docs/developer',
+                routeBasePath: 'developer',
+                sidebarPath: './sidebar-developer.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -199,7 +199,7 @@ const config: Config = {
                     ],
                 },
             ],
-            copyright: `© 2025 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
+            copyright: `© 2026 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
         },
         prism: {
             theme: prismThemes.github,

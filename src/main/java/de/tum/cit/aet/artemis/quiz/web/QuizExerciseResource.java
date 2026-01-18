@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizExercise actions.
  * CRUD operations have been moved to specialized resource files:
  * - Creation/Update: QuizExerciseCreationUpdateResource
- * - Deletion/Import: QuizExerciseImportDeletionResource
+ * - Deletion: QuizExerciseDeletionResource
  * - Retrieval: QuizExerciseRetrievalResource
  * - Evaluation: QuizExerciseEvaluationResource
  * - Batches: QuizExerciseBatchResource
@@ -127,12 +127,12 @@ public class QuizExerciseResource {
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId the id of the quiz exercise to start
-     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
+    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -188,23 +188,6 @@ public class QuizExerciseResource {
                 // set quiz to visible
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
             }
-            case OPEN_FOR_PRACTICE -> {
-                // check if quiz has ended
-                if (!quizExercise.isQuizEnded()) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
-                            .build();
-                }
-                // check if quiz is already open for practice
-                if (quizExercise.isIsOpenForPractice()) {
-                    return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice."))
-                            .build();
-                }
-
-                // set quiz to open for practice
-                quizExercise.setIsOpenForPractice(true);
-                groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
-            }
             case START_BATCH -> {
                 // Use the start-batch endpoint for starting batches instead
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchActionNotAllowed", "Action not allowed."))
@@ -232,6 +215,11 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
         exerciseVersionService.createExerciseVersion(quizExercise, user);
-        return new ResponseEntity<>(quizExercise, HttpStatus.OK);
+        if (quizBatch != null && quizBatch.getStartTime() != null) {
+            // Set the start date from the batch to the quiz exercise DTO
+            quizExercise.setStartDate(quizBatch.getStartTime());
+        }
+        QuizExerciseDatesDTO quizExerciseDatesDTO = QuizExerciseDatesDTO.of(quizExercise);
+        return new ResponseEntity<>(quizExerciseDatesDTO, HttpStatus.OK);
     }
 }

@@ -50,7 +50,7 @@ describe('CourseDashboardComponent', () => {
                 {
                     provide: CourseStorageService,
                     useValue: {
-                        getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisCourseChatEnabled: true, learningPathsEnabled: true }),
+                        getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
                         subscribeToCourseUpdates: () => ({ subscribe: jest.fn() }),
                     },
                 },
@@ -124,7 +124,7 @@ describe('CourseDashboardComponent', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             id: 456,
             studentCourseAnalyticsDashboardEnabled: false,
-            irisCourseChatEnabled: true,
+            irisEnabledInCourse: true,
             learningPathsEnabled: true,
         });
         component.ngOnInit();
@@ -135,7 +135,7 @@ describe('CourseDashboardComponent', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             id: 456,
             studentCourseAnalyticsDashboardEnabled: true,
-            irisCourseChatEnabled: true,
+            irisEnabledInCourse: true,
             learningPathsEnabled: true,
         });
         component.ngOnInit();

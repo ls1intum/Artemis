@@ -67,7 +67,7 @@ public class CalendarResource {
 
     private final Optional<ExamApi> examApi;
 
-    private final LectureApi lectureApi;
+    private final Optional<LectureApi> lectureApi;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -80,8 +80,9 @@ public class CalendarResource {
     private final CalendarSubscriptionService calendarSubscriptionService;
 
     public CalendarResource(CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository, UserRepository userRepository,
-            Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, LectureApi lectureApi, ExerciseService exerciseService, QuizExerciseService quizExerciseService,
-            CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, CalendarSubscriptionService calendarSubscriptionService) {
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, Optional<LectureApi> lectureApi, ExerciseService exerciseService,
+            QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            CalendarSubscriptionService calendarSubscriptionService) {
         this.calendarSubscriptionTokenStoreRepository = calendarSubscriptionTokenStoreRepository;
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
@@ -140,13 +141,13 @@ public class CalendarResource {
 
         Function<TutorialGroupApi, Set<CalendarEventDTO>> tutorialEventSupplier = api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId);
         Function<ExamApi, Set<CalendarEventDTO>> examEventSupplier = api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language);
-        Supplier<Set<CalendarEventDTO>> lectureEventSupplier = () -> lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
+        Function<LectureApi, Set<CalendarEventDTO>> lectureEventSupplier = api -> api.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
         Supplier<Set<CalendarEventDTO>> quizExerciseEventSupplier = () -> quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
         Supplier<Set<CalendarEventDTO>> otherExerciseEventSupplier = () -> exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
 
         Set<CalendarEventDTO> tutorialEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeTutorialEvents, tutorialGroupApi, tutorialEventSupplier);
         Set<CalendarEventDTO> examEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeExamEvents, examApi, examEventSupplier);
-        Set<CalendarEventDTO> lectureEventDTOs = getEventsIfShouldBeIncluded(includeLectureEvents, lectureEventSupplier);
+        Set<CalendarEventDTO> lectureEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeLectureEvents, lectureApi, lectureEventSupplier);
         Set<CalendarEventDTO> quizExerciseEventDTOs = getEventsIfShouldBeIncluded(includeExerciseEvents, quizExerciseEventSupplier);
         Set<CalendarEventDTO> otherExerciseEventDTOs = getEventsIfShouldBeIncluded(includeExerciseEvents, otherExerciseEventSupplier);
 
@@ -214,7 +215,7 @@ public class CalendarResource {
 
         Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(userId, courseId)).orElse(Collections.emptySet());
         Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
+        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.map(api -> api.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language)).orElse(Collections.emptySet());
         Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
         Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
 

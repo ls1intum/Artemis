@@ -9,18 +9,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
-import de.tum.cit.aet.artemis.iris.repository.CourseIrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 
 class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissettingsresource";
 
     @Autowired
-    private CourseIrisSettingsRepository courseIrisSettingsRepository;
+    private IrisCourseSettingsRepository irisCourseSettingsRepository;
 
     private Course course1;
 
@@ -90,7 +90,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettingsDTO.of(false, current.customInstructions(), current.variant(), current.rateLimit());
+        var update = IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.rateLimit());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -108,7 +108,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), "Custom instructions for this course", current.variant(), current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), "Custom instructions for this course", current.variant(), current.rateLimit());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -126,7 +126,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.rateLimit());
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -145,7 +145,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var newRateLimit = new IrisRateLimitConfiguration(100, 24);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), newRateLimit);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), newRateLimit);
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -166,7 +166,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.rateLimit());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -178,7 +178,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var newRateLimit = new IrisRateLimitConfiguration(100, 24);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), newRateLimit);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), newRateLimit);
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -189,7 +189,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
-        var update = IrisCourseSettingsDTO.of(false, current.customInstructions(), current.variant(), current.rateLimit());
+        var update = IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.rateLimit());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -197,7 +197,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateCourseSettings_nonExistentCourse() throws Exception {
-        var update = IrisCourseSettingsDTO.of(true, null, IrisPipelineVariant.DEFAULT, null);
+        var update = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, null);
         // Security annotation checks enrollment first, so we get 403 instead of 404
         request.putWithResponseBody("/api/iris/courses/999999/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -211,7 +211,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var oversizedInstructions = "a".repeat(2049); // Max is 2048
-        var update = IrisCourseSettingsDTO.of(current.enabled(), oversizedInstructions, current.variant(), current.rateLimit());
+        var update = IrisCourseSettings.of(current.enabled(), oversizedInstructions, current.variant(), current.rateLimit());
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -223,7 +223,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var negativeRateLimit = new IrisRateLimitConfiguration(-1, 24);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), negativeRateLimit);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), negativeRateLimit);
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -235,7 +235,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         var negativeTimeframe = new IrisRateLimitConfiguration(100, -1);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), negativeTimeframe);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), negativeTimeframe);
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -248,7 +248,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var current = irisSettingsService.getSettingsForCourse(course1);
         // 0 timeframe is invalid (would cause division by zero in rate limiting)
         var zeroRateLimit = new IrisRateLimitConfiguration(0, 0);
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), zeroRateLimit);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), zeroRateLimit);
 
         request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -260,7 +260,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         var current = irisSettingsService.getSettingsForCourse(course1);
         // null rateLimit means "no override, use defaults"
-        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), null);
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), null);
 
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
 
@@ -306,14 +306,14 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course1);
 
         // Verify settings exist before deletion
-        var settingsBefore = courseIrisSettingsRepository.findByCourseId(course1.getId());
+        var settingsBefore = irisCourseSettingsRepository.findByCourseId(course1.getId());
         assertThat(settingsBefore).isPresent();
 
         // Delete the course
         request.delete("/api/core/admin/courses/" + course1.getId(), HttpStatus.OK);
 
         // Verify Iris settings were also deleted via cascade
-        var settingsAfter = courseIrisSettingsRepository.findByCourseId(course1.getId());
+        var settingsAfter = irisCourseSettingsRepository.findByCourseId(course1.getId());
         assertThat(settingsAfter).isEmpty();
     }
 }
