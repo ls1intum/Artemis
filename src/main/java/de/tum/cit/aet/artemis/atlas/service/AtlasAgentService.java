@@ -58,12 +58,6 @@ public class AtlasAgentService {
     private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
 
     /**
-     * Cache name for tracking which agent is active for each session.
-     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
-     */
-    public static final String ATLAS_SESSION_AGENT_CACHE = "atlas-session-agent";
-
-    /**
      * Cache name for tracking pending competency operations for each session.
      * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
      */
@@ -159,34 +153,6 @@ public class AtlasAgentService {
     }
 
     /**
-     * Get the current agent type for a session from the cache.
-     *
-     * @param sessionId the session ID
-     * @return the agent type, or MAIN_AGENT if not found
-     */
-    private AgentType getSessionAgentType(String sessionId) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_AGENT_CACHE);
-        if (cache == null) {
-            return AgentType.MAIN_AGENT;
-        }
-        AgentType agentType = cache.get(sessionId, AgentType.class);
-        return agentType != null ? agentType : AgentType.MAIN_AGENT;
-    }
-
-    /**
-     * Set the current agent type for a session in the cache.
-     *
-     * @param sessionId the session ID
-     * @param agentType the agent type to set
-     */
-    private void setSessionAgentType(String sessionId, AgentType agentType) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_AGENT_CACHE);
-        if (cache != null) {
-            cache.put(sessionId, agentType);
-        }
-    }
-
-    /**
      * Process a chat message with multi-agent orchestration.
      * Routes to the appropriate agent based on session state and delegation markers.
      * Uses ThreadLocal state tracking to detect competency modifications.
@@ -204,13 +170,12 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
 
-            String response = delegateTheRightAgent(message, courseId, sessionId);
+            String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
 
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
                 String brief = extractBriefFromDelegationMarker(response);
 
-                setSessionAgentType(sessionId, AgentType.COMPETENCY_EXPERT);
-                String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
+                String delegationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, brief, courseId, sessionId);
 
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
 
@@ -220,14 +185,12 @@ public class AtlasAgentService {
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
-                setSessionAgentType(sessionId, AgentType.MAIN_AGENT);
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                setSessionAgentType(sessionId, AgentType.COMPETENCY_EXPERT);
                 List<CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
 
-                String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+                String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
@@ -237,11 +200,9 @@ public class AtlasAgentService {
 
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
-                setSessionAgentType(sessionId, AgentType.MAIN_AGENT);
                 return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
-                setSessionAgentType(sessionId, AgentType.MAIN_AGENT);
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
 
                 boolean competenciesModified = competencyModifiedInCurrentRequest.get();
@@ -274,16 +235,15 @@ public class AtlasAgentService {
     }
 
     /**
-     * Process message with the Main Agent (Requirements Engineer/Orchestrator).
+     * Delegate message processing to the specified agent type.
      *
+     * @param agentType the type of agent to use (MAIN_AGENT or COMPETENCY_EXPERT)
      * @param message   the user's message
      * @param courseId  the course ID for context
      * @param sessionId the session ID for chat memory
      * @return the agent's response
      */
-    private String delegateTheRightAgent(String message, Long courseId, String sessionId) {
-        AgentType agentType = getSessionAgentType(sessionId);
-
+    private String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId) {
         String resourcePath;
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             resourcePath = "/prompts/atlas/agent_system_prompt.st";

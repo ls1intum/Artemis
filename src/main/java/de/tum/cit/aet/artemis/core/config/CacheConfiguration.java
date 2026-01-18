@@ -160,7 +160,6 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
-            testConfig.getMapConfigs().put("atlas-session-agent", initializeAtlasSessionMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
             testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
@@ -256,8 +255,7 @@ public class CacheConfiguration {
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
-        // Atlas Agent session caches with 2-hour TTL
-        config.getMapConfigs().put("atlas-session-agent", initializeAtlasSessionMapConfig(jHipsterProperties));
+        // Atlas Agent session cache for pending competency operations with 2-hour TTL
         config.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
         // Configure split brain protection if the cluster was split at some point
