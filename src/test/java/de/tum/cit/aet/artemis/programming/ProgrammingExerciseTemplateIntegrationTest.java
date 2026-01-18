@@ -367,10 +367,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         int maxRetries = 15;
         int retryDelayMs = 500; // 500ms delay (7.5 seconds total)
 
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            Path assignmentPath = assignmentUri.getLocalRepositoryPath(localVCBasePath);
-            Path testPath = testUri.getLocalRepositoryPath(localVCBasePath);
+        Path assignmentPath = assignmentUri.getLocalRepositoryPath(localVCBasePath);
+        Path testPath = testUri.getLocalRepositoryPath(localVCBasePath);
 
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
             boolean assignmentExists = Files.exists(assignmentPath) && Files.isDirectory(assignmentPath);
             boolean testExists = Files.exists(testPath) && Files.isDirectory(testPath);
 
@@ -632,7 +632,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             }
 
             var testReportPath = projectType != null && projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
-            var testResults = readTestReports(testRepository.getLocalPath(), testReportPath);
+            var testResults = readTestReportsWithRetries(testRepository.getLocalPath(), testReportPath);
             assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
         }
         finally {
@@ -772,21 +772,16 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
     }
 
-    private void moveAssignmentSourcesOf(Path assignmentRepositoryPath, Path testRepositoryPath) throws IOException {
-        Path sourceSrc = assignmentRepositoryPath.resolve("src");
-        Path assignment = testRepositoryPath.resolve("assignment");
-        Files.createDirectories(assignment);
-        FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
-
-        // Ensure all files are fully written to disk before proceeding
-        // This prevents race conditions where Gradle/Maven start before files are ready
-        Path assignmentSrc = assignment.resolve("src");
-        Files.walkFileTree(assignmentSrc, new SimpleFileVisitor<Path>() {
+    /**
+     * Forces synchronization of all files in a directory to disk.
+     * This prevents race conditions where Gradle/Maven start before files are ready,
+     * especially on network-mounted file systems.
+     */
+    private void syncFilesToDisk(Path directory) throws IOException {
+        Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                // Force synchronization to disk for each file
-                // This ensures file system has fully committed changes, even on network-mounted file systems
                 try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
                     channel.force(true);
                 }
@@ -796,10 +791,19 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 return FileVisitResult.CONTINUE;
             }
         });
-        log.debug("File system synchronization completed for assignment sources");
+        log.debug("File system synchronization completed for: {}", directory);
     }
 
-    private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) throws InterruptedException {
+    private void moveAssignmentSourcesOf(Path assignmentRepositoryPath, Path testRepositoryPath) throws IOException {
+        Path sourceSrc = assignmentRepositoryPath.resolve("src");
+        Path assignment = testRepositoryPath.resolve("assignment");
+        Files.createDirectories(assignment);
+        FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
+
+        syncFilesToDisk(assignment.resolve("src"));
+    }
+
+    private Map<TestResult, Integer> readTestReportsWithRetries(Path testRepositoryPath, String testResultPath) throws InterruptedException {
         File reportFolder = testRepositoryPath.resolve(testResultPath).toFile();
 
         // Retry logic to handle timing issues where test reports might not be immediately available

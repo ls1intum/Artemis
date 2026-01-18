@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExpo
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -1654,7 +1655,7 @@ public class ProgrammingExerciseTestService {
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
 
-        waitForZipFileToBeComplete(zipFile);
+        waitForZipFileToBeCompleteElseFail(zipFile);
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
@@ -1704,9 +1705,9 @@ public class ProgrammingExerciseTestService {
      * @param zipFile the zip file to wait for
      * @throws InterruptedException if the thread is interrupted while waiting
      */
-    private void waitForZipFileToBeComplete(File zipFile) throws InterruptedException {
-        int maxAttempts = 20;
-        int waitTimeMs = 500;
+    private void waitForZipFileToBeCompleteElseFail(File zipFile) throws InterruptedException {
+        final int maxAttempts = 20;
+        final int waitTimeMs = 500;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             if (!zipFile.exists()) {
@@ -1726,7 +1727,7 @@ public class ProgrammingExerciseTestService {
             }
         }
 
-        log.warn("Zip file may not be complete after {} attempts (final size: {} bytes)", maxAttempts, zipFile.length());
+        fail("Zip file is not complete after " + maxAttempts + " attempts (final size: " + zipFile.length() + " bytes)");
     }
 
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
@@ -1743,7 +1744,7 @@ public class ProgrammingExerciseTestService {
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
 
-        waitForZipFileToBeComplete(zipFile);
+        waitForZipFileToBeCompleteElseFail(zipFile);
 
         // Recursively unzip the exported file, to make sure there is no erroneous content
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
