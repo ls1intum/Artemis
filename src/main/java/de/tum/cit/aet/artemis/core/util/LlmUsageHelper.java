@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
@@ -68,7 +69,7 @@ public class LlmUsageHelper {
             return null;
         }
 
-        var usage = chatResponse.getMetadata().getUsage();
+        Usage usage = chatResponse.getMetadata().getUsage();
         log.info("LLM {} usage: prompt={}, completion={}, total={}", checkType, usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
 
         int promptTokens = usage.getPromptTokens() != null ? usage.getPromptTokens() : 0;
