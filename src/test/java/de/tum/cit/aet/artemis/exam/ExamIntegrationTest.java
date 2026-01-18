@@ -559,7 +559,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        // Test with a test exam where workingTime is directly validated
         Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
+        exam.setTestExam(true);
+        exam.setNumberOfCorrectionRoundsInExam(0);
         exam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
 
         request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
@@ -592,6 +595,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        // Test with a test exam where workingTime is directly validated
+        exam1.setTestExam(true);
+        exam1.setNumberOfCorrectionRoundsInExam(0);
         exam1.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
 
         request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
