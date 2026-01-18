@@ -4,6 +4,7 @@ import { systemNotificationManagementRoute } from 'app/core/admin/system-notific
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
 import { adminDataExportsRoute } from 'app/core/admin/admin-data-exports/admin-data-exports.route';
+import { adminSbomRoute } from 'app/core/admin/admin-sbom/admin-sbom.route';
 
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-configuration.route';
@@ -184,6 +185,7 @@ const childRoutes: Routes = [
     ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,
     ...adminDataExportsRoute,
+    ...adminSbomRoute,
 ];
 
 const routes: Routes = [

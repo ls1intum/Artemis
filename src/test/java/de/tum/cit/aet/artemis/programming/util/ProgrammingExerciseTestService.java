@@ -1654,8 +1654,8 @@ public class ProgrammingExerciseTestService {
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
-
         waitForZipFileToBeCompleteElseFail(zipFile);
+
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
@@ -1771,6 +1771,7 @@ public class ProgrammingExerciseTestService {
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
+        waitForZipFileToBeCompleteElseFail(zipFile);
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
         // Check that the contents we created exist in the unzipped exported folder
