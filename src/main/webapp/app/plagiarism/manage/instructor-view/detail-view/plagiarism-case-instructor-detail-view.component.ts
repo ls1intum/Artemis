@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -42,6 +42,7 @@ import { LinkPreviewService } from 'app/communication/link-preview/services/link
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismPostCreationDTO';
 import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
+import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -99,6 +100,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     faCheck = faCheck;
 
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
+    private readonly createEditModal = viewChild<PostCreateEditModalComponent>('createEditModal');
     private postsSubscription: Subscription;
     posts: Post[];
 
@@ -313,5 +315,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     async printPlagiarismCase() {
         return await this.themeService.print();
+    }
+
+    openNotifyStudentModal(): void {
+        this.createEditModal()?.open();
     }
 }
