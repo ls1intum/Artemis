@@ -385,11 +385,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             }
         }
 
-        // Provide diagnostic information if initialization fails
-        Path assignmentPath = assignmentUri.getLocalRepositoryPath(localVCBasePath);
-        Path testPath = testUri.getLocalRepositoryPath(localVCBasePath);
         String diagnosticInfo = String.format("Assignment repository exists: %s, Test repository exists: %s", Files.exists(assignmentPath), Files.exists(testPath));
-
         log.error("Repositories not initialized after {} retries. {}", maxRetries, diagnosticInfo);
         throw new IllegalStateException(String.format("Repositories not initialized after %d attempts. %s", maxRetries, diagnosticInfo));
     }
