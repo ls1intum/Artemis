@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, flushMicrotasks, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -25,10 +25,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
-import {
-    ImportAllCourseCompetenciesModalComponent,
-    ImportAllCourseCompetenciesResult,
-} from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { ImportAllCourseCompetenciesModalComponent } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
