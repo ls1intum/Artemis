@@ -6,8 +6,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -124,9 +126,10 @@ public class AdminUserResource {
 
         log.debug("REST request to save User : {}", managedUserVM);
 
-        if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) && !this.authorizationCheckService.isSuperAdmin()) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to create other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
+        if ((managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) || managedUserVM.getAuthorities().contains(Authority.ADMIN_AUTHORITY.getName()))
+                && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to create administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageAdmins");
         }
 
         if (managedUserVM.getId() != null) {
@@ -159,9 +162,10 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
-            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
-                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
-                        "userManagement.onlySuperAdminCanManageSuperAdmins");
+            if ((user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) || user.getAuthorities().contains(Authority.ADMIN_AUTHORITY))
+                    && !this.authorizationCheckService.isSuperAdmin()) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageAdmins");
             }
             userCreationService.activateUser(user);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", user.getLogin())).body(new UserDTO(user));
@@ -178,9 +182,10 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
-            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
-                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
-                        "userManagement.onlySuperAdminCanManageSuperAdmins");
+            if ((user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) || user.getAuthorities().contains(Authority.ADMIN_AUTHORITY))
+                    && !this.authorizationCheckService.isSuperAdmin()) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageAdmins");
             }
             userCreationService.deactivateUser(user);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", user.getLogin())).body(new UserDTO(user));
@@ -211,9 +216,8 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
-        if (isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(managedUserVM, existingUser)) {
-            throw new AccessForbiddenAlertException("Only super administrators can grant super admin authority.", "userManagement",
-                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
+        if (isNonSuperAdminUserTryingToManageAdmin(managedUserVM, existingUser)) {
+            throw new AccessForbiddenAlertException("Only super administrators can manage administrators.", "userManagement", "userManagement.onlySuperAdminCanManageAdmins");
         }
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
@@ -226,19 +230,19 @@ public class AdminUserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
     }
 
-    private boolean isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(ManagedUserVM managedUserVM, User existingUser) {
-        boolean isUpdatedUserIsSuperAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
-        boolean isNonSuperAdminUserTryingToUpdateSuperAdmin = isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
-        if (isNonSuperAdminUserTryingToUpdateSuperAdmin) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+    private boolean isNonSuperAdminUserTryingToManageAdmin(ManagedUserVM managedUserVM, User existingUser) {
+        boolean isUpdatedUserAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) || existingUser.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
+        boolean isNonSuperAdminUserTryingToUpdateAdmin = isUpdatedUserAdmin && !this.authorizationCheckService.isSuperAdmin();
+        if (isNonSuperAdminUserTryingToUpdateAdmin) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageAdmins");
         }
 
-        boolean isTryingToEscalatePrivilegesToSuperAdmin = managedUserVM.getAuthorities() != null
-                && managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        boolean isTryingToEscalatePrivilegesToAdmin = managedUserVM.getAuthorities() != null && (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName())
+                || managedUserVM.getAuthorities().contains(Authority.ADMIN_AUTHORITY.getName()));
         // noinspection UnnecessaryLocalVariable: not inlined because the variable name improves readability
-        boolean isNonSuperAdminUserTryingToCreateSuperAdmin = isTryingToEscalatePrivilegesToSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
-        return isNonSuperAdminUserTryingToCreateSuperAdmin;
+        boolean isNonSuperAdminUserTryingToCreateAdmin = isTryingToEscalatePrivilegesToAdmin && !this.authorizationCheckService.isSuperAdmin();
+        return isNonSuperAdminUserTryingToCreateAdmin;
     }
 
     /**
@@ -340,11 +344,11 @@ public class AdminUserResource {
         }
 
         User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
-        boolean isNonSuperAdminUserTryingToDeleteSuperAdmin = userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)
-                && !this.authorizationCheckService.isSuperAdmin();
-        if (isNonSuperAdminUserTryingToDeleteSuperAdmin) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+        boolean isNonSuperAdminUserTryingToDeleteAdmin = (userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)
+                || userToBeDeleted.getAuthorities().contains(Authority.ADMIN_AUTHORITY)) && !this.authorizationCheckService.isSuperAdmin();
+        if (isNonSuperAdminUserTryingToDeleteAdmin) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to delete administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageAdmins");
         }
         userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
@@ -364,6 +368,17 @@ public class AdminUserResource {
         // Get current user and remove current user from list of logins
         var currentUser = userRepository.getUser();
         logins.remove(currentUser.getLogin());
+
+        // Check if non-super-admin is trying to delete admin users
+        if (!this.authorizationCheckService.isSuperAdmin()) {
+            Set<User> usersToDelete = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
+            boolean containsAdminUser = usersToDelete.stream()
+                    .anyMatch(user -> user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) || user.getAuthorities().contains(Authority.ADMIN_AUTHORITY));
+            if (containsAdminUser) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to delete administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageAdmins");
+            }
+        }
 
         logins.parallelStream().forEach(login -> {
             try {

@@ -68,7 +68,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
-        void updateUser_addAdminRoleByAdmin_success() throws Exception {
+        void updateUser_addAdminRoleByAdmin_forbidden() throws Exception {
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser2");
 
@@ -77,10 +77,10 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
             mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isForbidden());
 
-            User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
-            assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Role.ADMIN.getAuthority());
+            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            assertThat(unchangedUser.getAuthorities()).extracting(Authority::getName).doesNotContain(Role.ADMIN.getAuthority());
         }
     }
 
@@ -102,17 +102,15 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
-        void createUser_createAdminByAdmin_success() throws Exception {
+        void createUser_createAdminByAdmin_forbidden() throws Exception {
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newadmin");
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
             mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
-                    .andExpect(status().isCreated());
+                    .andExpect(status().isForbidden());
 
-            // Verify user was created with correct authorities
-            assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newadmin")).isTrue();
-            User createdUser = userUtilService.getUserByLogin(TEST_PREFIX + "newadmin");
-            assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.ADMIN.getAuthority());
+            // Verify user was not created
+            assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newadmin")).isFalse();
         }
 
         @Test
@@ -417,6 +415,207 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             // Verify user was deactivated
             User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(deactivatedUser.getActivated()).isFalse();
+        }
+    }
+
+    @Nested
+    class AdminTryingToManageAdminUsers {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_updateAdminByAdmin_forbidden() throws Exception {
+            // Create an admin user using the utility method
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser1");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser1admin");
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(adminUser.getLogin());
+            managedUserVM.setId(adminUser.getId());
+            managedUserVM.setFirstName("UpdatedFirstName");
+            managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
+
+            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isForbidden());
+
+            // Verify user was not updated
+            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            assertThat(unchangedUser.getFirstName()).isNotEqualTo("UpdatedFirstName");
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void activateUser_activateAdminByAdmin_forbidden() throws Exception {
+            // Create a deactivated admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser2");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser2admin");
+            adminUser.setActivated(false);
+            userTestRepository.save(adminUser);
+
+            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isForbidden());
+
+            // Verify user was not activated
+            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            assertThat(unchangedUser.getActivated()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void deactivateUser_deactivateAdminByAdmin_forbidden() throws Exception {
+            // Create an activated admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser3");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser3admin");
+            adminUser.setActivated(true);
+            userTestRepository.save(adminUser);
+
+            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isForbidden());
+
+            // Verify user was not deactivated
+            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            assertThat(unchangedUser.getActivated()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void deleteUser_deleteAdminByAdmin_forbidden() throws Exception {
+            // Create an admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser4");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser4admin");
+
+            mockMvc.perform(delete("/api/core/admin/users/" + adminUser.getLogin())).andExpect(status().isForbidden());
+
+            // Verify user was not deleted
+            User unchangedUser = userTestRepository.findById(adminUser.getId()).orElseThrow();
+            assertThat(unchangedUser.isDeleted()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "calleradmin", roles = "ADMIN")
+        void deleteUsers_deleteAdminsByAdmin_forbidden() throws Exception {
+            // Create the calling user (admin) in the database - required for batch delete
+            userUtilService.addAdmin(TEST_PREFIX + "caller");
+
+            // Create admin users to be deleted
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser5");
+            User adminUser1 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser5admin");
+
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser6");
+            User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser6admin");
+
+            mockMvc.perform(delete("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(java.util.List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
+
+            // Verify users were not deleted
+            User unchangedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
+            User unchangedUser2 = userTestRepository.findById(adminUser2.getId()).orElseThrow();
+            assertThat(unchangedUser1.isDeleted()).isFalse();
+            assertThat(unchangedUser2.isDeleted()).isFalse();
+        }
+    }
+
+    @Nested
+    class SuperAdminManagingAdminUsers {
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void createUser_createAdminBySuperAdmin_success() throws Exception {
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newadminsuperadmin");
+            managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
+
+            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isCreated());
+
+            // Verify user was created with correct authorities
+            assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newadminsuperadmin")).isTrue();
+            User createdUser = userUtilService.getUserByLogin(TEST_PREFIX + "newadminsuperadmin");
+            assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.ADMIN.getAuthority());
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_updateAdminBySuperAdmin_success() throws Exception {
+            // Create an admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser7");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser7admin");
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(adminUser.getLogin());
+            managedUserVM.setId(adminUser.getId());
+            managedUserVM.setFirstName("UpdatedFirstName");
+            managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
+
+            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            // Verify user was updated
+            User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void activateUser_activateAdminBySuperAdmin_success() throws Exception {
+            // Create a deactivated admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser8");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser8admin");
+            adminUser.setActivated(false);
+            userTestRepository.save(adminUser);
+
+            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isOk());
+
+            // Verify user was activated
+            User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            assertThat(activatedUser.getActivated()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void deactivateUser_deactivateAdminBySuperAdmin_success() throws Exception {
+            // Create an activated admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser9");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser9admin");
+            adminUser.setActivated(true);
+            userTestRepository.save(adminUser);
+
+            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isOk());
+
+            // Verify user was deactivated
+            User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            assertThat(deactivatedUser.getActivated()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void deleteUser_deleteAdminBySuperAdmin_success() throws Exception {
+            // Create an admin user
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser10");
+            User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser10admin");
+
+            mockMvc.perform(delete("/api/core/admin/users/" + adminUser.getLogin())).andExpect(status().isOk());
+
+            // Verify user was soft deleted
+            User deletedUser = userTestRepository.findById(adminUser.getId()).orElseThrow();
+            assertThat(deletedUser.isDeleted()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "callersuperadmin", roles = "SUPER_ADMIN")
+        void deleteUsers_deleteAdminsBySuperAdmin_success() throws Exception {
+            // Create the calling user (super admin) in the database - required for batch delete
+            userUtilService.addSuperAdmin(TEST_PREFIX + "caller");
+
+            // Create admin users to be deleted
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser11");
+            User adminUser1 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser11admin");
+
+            userUtilService.addAdmin(TEST_PREFIX + "adminuser12");
+            User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser12admin");
+
+            mockMvc.perform(delete("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(java.util.List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
+
+            // Verify users were soft deleted
+            User deletedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
+            User deletedUser2 = userTestRepository.findById(adminUser2.getId()).orElseThrow();
+            assertThat(deletedUser1.isDeleted()).isTrue();
+            assertThat(deletedUser2.isDeleted()).isTrue();
         }
     }
 }
