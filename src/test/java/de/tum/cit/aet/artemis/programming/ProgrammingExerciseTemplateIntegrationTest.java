@@ -404,8 +404,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             return;
         }
 
-        int maxAttempts = 10;
-        int attemptDelayMs = 100;
+        final int maxAttempts = 10;
+        final int attemptDelayMs = 100;
         IOException lastException = null;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
