@@ -18,7 +18,7 @@ import { DisplayPriority } from '../metis.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -114,7 +114,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
-    channels: ChannelDTO[] = [];
+    channels: (ChannelDTO | GroupChatDTO)[] = [];
     users: UserPublicInfoDTO[] = [];
     posting = input<T>();
     isThreadSidebar = input<boolean>();
@@ -519,6 +519,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                     conversations.forEach((conversation) => {
                         if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
                             this.channels.push(conversation as ChannelDTO);
+                        } else if (conversation.type === ConversationType.GROUP_CHAT) {
+                            (conversation as GroupChatDTO).name = this.conversationService.getConversationName(conversation);
+                            this.channels.push(conversation as GroupChatDTO);
                         }
                     });
 

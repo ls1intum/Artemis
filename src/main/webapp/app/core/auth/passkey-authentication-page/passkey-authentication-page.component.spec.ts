@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, flushMicrotasks, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { PasskeyAuthenticationPageComponent } from './passkey-authentication-page.component';
@@ -84,10 +84,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
             jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
             const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-            component.returnUrl = '/admin/user-management';
 
-            component.ngOnInit();
-            await fixture.whenStable();
+            // Trigger ngOnInit via detectChanges
+            fixture.detectChanges();
+
+            // Wait for all promises to resolve
+            await new Promise(process.nextTick);
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });
