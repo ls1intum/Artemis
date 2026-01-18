@@ -206,7 +206,8 @@
         },
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "You are not a super administrator and therefore not allowed to create a super administrator account.",
-            "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."
+            "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts.",
+            "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts."
         }
     }
 }
