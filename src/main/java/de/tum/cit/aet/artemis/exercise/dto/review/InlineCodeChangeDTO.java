@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.exercise.dto.review;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Inline code change suggestion that can be applied to a specific line range.")
 public record InlineCodeChangeDTO(@Schema(description = "First line number (inclusive) of the replacement range.") Integer startLine,
         @Schema(description = "Last line number (inclusive) of the replacement range.") Integer endLine,
