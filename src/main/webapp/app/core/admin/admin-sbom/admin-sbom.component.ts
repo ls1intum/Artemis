@@ -5,6 +5,7 @@ import {
     faArrowUp,
     faDesktop,
     faDownload,
+    faEnvelope,
     faExclamationTriangle,
     faExternalLinkAlt,
     faInfoCircle,
@@ -68,10 +69,12 @@ export class AdminSbomComponent implements OnInit {
     protected readonly faArrowUp = faArrowUp;
     protected readonly faInfoCircle = faInfoCircle;
     protected readonly faExternalLink = faExternalLinkAlt;
+    protected readonly faEnvelope = faEnvelope;
 
     // State
     readonly loading = signal<boolean>(false);
     readonly loadingVulnerabilities = signal<boolean>(false);
+    readonly sendingEmail = signal<boolean>(false);
     readonly combinedSbom = signal<CombinedSbom | undefined>(undefined);
     readonly vulnerabilities = signal<ComponentVulnerabilities | undefined>(undefined);
     readonly versionInfo = signal<ArtemisVersion | undefined>(undefined);
@@ -304,6 +307,23 @@ export class AdminSbomComponent implements OnInit {
             error: () => {
                 this.alertService.error('artemisApp.dependencies.vulnerabilityLoadError');
                 this.loadingVulnerabilities.set(false);
+            },
+        });
+    }
+
+    /**
+     * Send vulnerability report email to the configured admin.
+     */
+    sendVulnerabilityEmail(): void {
+        this.sendingEmail.set(true);
+        this.sbomService.sendVulnerabilityEmail().subscribe({
+            next: () => {
+                this.sendingEmail.set(false);
+                this.alertService.success('artemisApp.dependencies.emailSentSuccess');
+            },
+            error: () => {
+                this.alertService.error('artemisApp.dependencies.emailSentError');
+                this.sendingEmail.set(false);
             },
         });
     }

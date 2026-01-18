@@ -66,4 +66,13 @@ export class AdminSbomService {
     getVersionInfo(): Observable<ArtemisVersion> {
         return this.http.get<ArtemisVersion>(`${this.resourceUrl}/version`);
     }
+
+    /**
+     * Triggers sending the vulnerability scan email to the configured admin.
+     *
+     * @returns Observable that completes when email is sent
+     */
+    sendVulnerabilityEmail(): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/vulnerabilities/send-email`, {});
+    }
 }

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -11,12 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.connector.OsvRequestMockProvider;
+import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.core.dto.SbomDTO;
 import de.tum.cit.aet.artemis.core.dto.osv.OsvVulnerabilityDTO;
+import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.web.admin.AdminSbomResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -36,6 +41,9 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private CacheManager cacheManager;
+
+    @MockitoSpyBean
+    private ArtemisVersionService artemisVersionService;
 
     @BeforeEach
     void setUp() {
@@ -203,5 +211,31 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void refreshVulnerabilities_returnsForbidden_whenNotAdmin() throws Exception {
         request.get("/api/core/admin/sbom/vulnerabilities/refresh", HttpStatus.FORBIDDEN, ComponentVulnerabilitiesDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void sendVulnerabilityEmail_returnsOk_whenEmailSentSuccessfully() throws Exception {
+        // Mock OSV API to return no vulnerabilities
+        osvRequestMockProvider.mockBatchQueryWithNoVulnerabilities(4);
+
+        // Mock version service to avoid GitHub API call
+        ArtemisVersionDTO versionInfo = new ArtemisVersionDTO("7.8.0", "7.8.0", false, null, null, Instant.now().toString());
+        doReturn(versionInfo).when(artemisVersionService).getVersionInfo();
+
+        request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.OK, null);
+
+        osvRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
+    void sendVulnerabilityEmail_returnsForbidden_whenNotAdmin() throws Exception {
+        request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    void sendVulnerabilityEmail_returnsUnauthorized_whenNotLoggedIn() throws Exception {
+        request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.UNAUTHORIZED, null);
     }
 }

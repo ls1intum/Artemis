@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.dto.SbomDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.SbomService;
+import de.tum.cit.aet.artemis.core.service.VulnerabilityScanScheduleService;
 import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 
 /**
@@ -39,10 +41,14 @@ public class AdminSbomResource {
 
     private final ArtemisVersionService artemisVersionService;
 
-    public AdminSbomResource(SbomService sbomService, VulnerabilityService vulnerabilityService, ArtemisVersionService artemisVersionService) {
+    private final VulnerabilityScanScheduleService vulnerabilityScanScheduleService;
+
+    public AdminSbomResource(SbomService sbomService, VulnerabilityService vulnerabilityService, ArtemisVersionService artemisVersionService,
+            VulnerabilityScanScheduleService vulnerabilityScanScheduleService) {
         this.sbomService = sbomService;
         this.vulnerabilityService = vulnerabilityService;
         this.artemisVersionService = artemisVersionService;
+        this.vulnerabilityScanScheduleService = vulnerabilityScanScheduleService;
     }
 
     /**
@@ -138,5 +144,22 @@ public class AdminSbomResource {
         log.debug("REST request to get Artemis version info");
         ArtemisVersionDTO versionInfo = artemisVersionService.getVersionInfo();
         return ResponseEntity.ok(versionInfo);
+    }
+
+    /**
+     * POST /sbom/vulnerabilities/send-email: Trigger sending the vulnerability scan email to the configured admin.
+     * This allows administrators to manually trigger the weekly vulnerability report email on demand.
+     *
+     * @return the ResponseEntity with status 200 (OK) if email was sent successfully,
+     *         or status 400 (Bad Request) if admin email is not configured or sending failed
+     */
+    @PostMapping("sbom/vulnerabilities/send-email")
+    public ResponseEntity<Void> sendVulnerabilityEmail() {
+        log.info("REST request to send vulnerability scan email");
+        boolean success = vulnerabilityScanScheduleService.sendVulnerabilityScanEmail();
+        if (success) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.badRequest().build();
     }
 }

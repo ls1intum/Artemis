@@ -6,6 +6,10 @@
             <fa-icon [icon]="faRefresh" [animation]="loadingVulnerabilities() ? 'spin' : undefined" />
             <span jhiTranslate="artemisApp.dependencies.refreshVulnerabilities"></span>
         </button>
+        <button class="btn btn-outline-info btn-sm" (click)="sendVulnerabilityEmail()" [disabled]="sendingEmail()">
+            <fa-icon [icon]="sendingEmail() ? faSpinner : faEnvelope" [animation]="sendingEmail() ? 'spin' : undefined" />
+            <span jhiTranslate="artemisApp.dependencies.sendEmail"></span>
+        </button>
     }
     @if (combinedSbom()?.server) {
         <button class="btn btn-outline-primary btn-sm" (click)="downloadSbom('server')">

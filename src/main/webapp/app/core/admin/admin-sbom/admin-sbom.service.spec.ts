@@ -159,4 +159,17 @@ describe('AdminSbomService', () => {
             req.flush(mockVulnerabilities);
         });
     });
+
+    describe('sendVulnerabilityEmail', () => {
+        it('should send POST request to trigger vulnerability email', () => {
+            service.sendVulnerabilityEmail().subscribe((result) => {
+                expect(result).toBeNull();
+            });
+
+            const req = httpMock.expectOne('/api/core/admin/sbom/vulnerabilities/send-email');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({});
+            req.flush(null);
+        });
+    });
 });

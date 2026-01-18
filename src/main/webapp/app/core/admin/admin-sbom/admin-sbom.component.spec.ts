@@ -104,6 +104,7 @@ describe('AdminSbomComponent', () => {
                     getVulnerabilities: () => of(mockVulnerabilities),
                     refreshVulnerabilities: () => of(mockVulnerabilities),
                     getVersionInfo: () => of(mockVersionInfo),
+                    sendVulnerabilityEmail: () => of(undefined),
                 }),
                 MockProvider(AlertService, {
                     error: vi.fn(),
@@ -306,6 +307,40 @@ describe('AdminSbomComponent', () => {
 
         it('should return bg-secondary for unknown', () => {
             expect(component.getSeverityClass('UNKNOWN')).toBe('bg-secondary');
+        });
+    });
+
+    describe('sendVulnerabilityEmail', () => {
+        it('should send vulnerability email and show success alert', () => {
+            const sendEmailSpy = vi.spyOn(sbomService, 'sendVulnerabilityEmail').mockReturnValue(of(undefined));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.sendVulnerabilityEmail();
+
+            expect(sendEmailSpy).toHaveBeenCalled();
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.dependencies.emailSentSuccess');
+            expect(component.sendingEmail()).toBe(false);
+        });
+
+        it('should show error alert when sending email fails', () => {
+            vi.spyOn(sbomService, 'sendVulnerabilityEmail').mockReturnValue(throwError(() => new Error('Send failed')));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.sendVulnerabilityEmail();
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.dependencies.emailSentError');
+            expect(component.sendingEmail()).toBe(false);
+        });
+
+        it('should set sendingEmail to true while sending', () => {
+            // Use a subject to control when the observable completes
+            const sendEmailSpy = vi.spyOn(sbomService, 'sendVulnerabilityEmail').mockReturnValue(of(undefined));
+
+            expect(component.sendingEmail()).toBe(false);
+            component.sendVulnerabilityEmail();
+            // After completion, sendingEmail should be false again
+            expect(component.sendingEmail()).toBe(false);
+            expect(sendEmailSpy).toHaveBeenCalled();
         });
     });
 });
