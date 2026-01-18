@@ -253,6 +253,75 @@
     gap: 8px;
 }
 
+.context-selection-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 500px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.context-selection-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px 20px;
+    background-color: var(--iris-suggestion-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--bs-border-radius-lg);
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.1s ease;
+    text-align: left;
+    gap: 12px;
+
+    &:hover {
+        background-color: var(--iris-tool-background);
+        border-color: var(--primary);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+
+    &.selected {
+        background-color: var(--iris-tool-background);
+        border-color: var(--primary);
+        border-width: 2px;
+    }
+
+    .context-icon {
+        font-size: 1.2rem;
+        color: var(--primary);
+        margin-bottom: 0;
+        min-width: 1.4rem;
+    }
+
+    .context-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .context-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--bs-body-color);
+    }
+
+    .context-description {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+        margin-top: 2px;
+    }
+}
+
 :host {
     .bubble-left,
     .bubble-right {

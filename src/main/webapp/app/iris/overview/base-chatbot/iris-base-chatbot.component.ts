@@ -1,11 +1,14 @@
 import {
     faArrowDown,
+    faBook,
     faChevronRight,
     faCircle,
     faCircleInfo,
     faCircleNotch,
+    faCode,
     faCompress,
     faExpand,
+    faGraduationCap,
     faLink,
     faPaperPlane,
     faPenToSquare,
@@ -42,6 +45,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ContextType } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -90,6 +94,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly facSidebar = facSidebar;
     protected readonly faLink = faLink;
     protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faBook = faBook;
+    protected readonly faCode = faCode;
+    protected readonly faGraduationCap = faGraduationCap;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -139,14 +146,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageIds = new Set<number>();
     public ButtonType = ButtonType;
 
+    // Context selection state
+    readonly selectedContext = signal<ContextType>('course');
+
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
+    readonly showContextSelection = input<boolean>(false);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
+    readonly contextSelected = output<ContextType>();
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
@@ -536,5 +548,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             default:
                 return undefined;
         }
+    }
+
+    selectContext(context: ContextType): void {
+        this.selectedContext.set(context);
+        this.contextSelected.emit(context);
     }
 }

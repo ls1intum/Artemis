@@ -137,7 +137,15 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "Wie kann ich Dir helfen?"
+                "helpOffer": "Wie kann ich Dir helfen?",
+                "contextSelection": {
+                    "entireCourse": "Gesamter Kurs",
+                    "entireCourseDescription": "Fragen zum gesamten Kursinhalt stellen",
+                    "selectLecture": "Vorlesung auswählen",
+                    "selectLectureDescription": "Fokus auf eine bestimmte Vorlesung",
+                    "selectExercise": "Aufgabe auswählen",
+                    "selectExerciseDescription": "Hilfe zu einer bestimmten Aufgabe erhalten"
+                }
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",

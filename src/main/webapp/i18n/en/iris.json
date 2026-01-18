@@ -137,7 +137,15 @@
                 "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "How can I help you today?"
+                "helpOffer": "How can I help you today?",
+                "contextSelection": {
+                    "entireCourse": "Entire Course",
+                    "entireCourseDescription": "Ask questions about the entire course content",
+                    "selectLecture": "Select Lecture",
+                    "selectLectureDescription": "Focus on a specific lecture",
+                    "selectExercise": "Select Exercise",
+                    "selectExerciseDescription": "Get help with a specific exercise"
+                }
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
