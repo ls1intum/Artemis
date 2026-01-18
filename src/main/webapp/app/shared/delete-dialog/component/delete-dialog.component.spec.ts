@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { EventEmitter } from '@angular/core';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/component/delete-dialog.component';
