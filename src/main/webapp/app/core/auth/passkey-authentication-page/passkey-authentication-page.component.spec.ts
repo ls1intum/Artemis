@@ -84,10 +84,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
             jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
             const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-            component.returnUrl = '/admin/user-management';
 
-            component.ngOnInit();
-            await fixture.whenStable();
+            // Trigger ngOnInit via detectChanges
+            fixture.detectChanges();
+
+            // Wait for all promises to resolve
+            await new Promise(process.nextTick);
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });
