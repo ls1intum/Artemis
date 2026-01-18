@@ -84,7 +84,7 @@
                     "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
                     "versionControlTitle": "Version Control",
                     "versionControlMessage": "Decide which version control features should be available.",
-                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://docs.artemis.cit.tum.de/user/exercises/programming.html#generate-programming-exercise\">documentation</a> on the topic of exercise creation.",
+                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://ls1intum.github.io/Artemis/instructor/exercises/programming-exercise#generate-programming-exercise\">documentation</a> on the topic of exercise creation.",
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
