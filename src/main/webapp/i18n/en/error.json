@@ -213,7 +213,7 @@
         "examWorkingTimeTooHigh": "The working time is too long. Please enter a value that represents at most 10 days (864000 seconds).",
         "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
         "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
-        "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100."
+        "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "You are not a super administrator and therefore not allowed to create a super administrator account.",
             "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."
