@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
 // Additionally, the case names must match the keys in documentationLinks.json for the tooltip.
 const DocumentationLinks: { [key: string]: string } = {
-    SshSetup: 'icl/ssh-intro',
+    SshSetup: 'student/integrated-code-lifecycle',
 };
 
 export type DocumentationType = keyof typeof DocumentationLinks;
@@ -16,7 +16,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     imports: [TranslateDirective],
 })
 export class DocumentationLinkComponent {
-    readonly BASE_URL = 'https://docs.artemis.cit.tum.de/user/';
+    readonly BASE_URL = 'https://ls1intum.github.io/Artemis/';
     readonly DocumentationLinks = DocumentationLinks;
 
     documentationType = input<string>();

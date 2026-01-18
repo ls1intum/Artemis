@@ -160,8 +160,8 @@
                 },
                 "TutorSuggestions": {
                     "name": "KI-Tutor-Vorschläge",
-                    "description": "Nutzt den Athena-Service, um Tutor:innen bei der manuellen Bewertung von Text- und Programmieraufgaben Feedback- und Bewertungsvorschläge zu machen.",
-                    "disableWarning": "Tutor:innen erhalten keine KI-gestützten Vorschläge von Athena während der Bewertung."
+                    "description": "Nutzt Iris, um Tutor:innen Antwortvorschläge zu machen, wenn sie im Kommunikationsmodul auf Studierendenfragen antworten.",
+                    "disableWarning": "Tutor:innen erhalten keine KI-gestützten Antwortvorschläge von Iris im Kommunikationsmodul."
                 },
                 "AtlasML": {
                     "name": "Atlas Machine Learning",
