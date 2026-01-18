@@ -233,6 +233,38 @@ public class FileUtil {
     }
 
     /**
+     * Validates the file extension for video files.
+     *
+     * @param filename the filename to validate
+     * @throws BadRequestAlertException if the file extension is not a valid video format
+     */
+    public static void validateVideoExtension(String filename) {
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        if (allowedVideoFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            throw new BadRequestAlertException("Unsupported video file type! Allowed video file types: " + String.join(", ", allowedVideoFileExtensions), "file", null, true);
+        }
+    }
+
+    /**
+     * Saves a video file to the given path using a generated filename.
+     * This method specifically validates video file extensions.
+     *
+     * @param file         the video file to save
+     * @param basePath     the base path to save the file to
+     * @param filePathType the type of the file path
+     * @param keepFilename whether to keep the original filename or not
+     * @return the path where the file was saved
+     */
+    @NonNull
+    public static Path saveVideoFile(MultipartFile file, Path basePath, FilePathType filePathType, boolean keepFilename) {
+        String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
+        validateVideoExtension(sanitizedFilename);
+        String generatedFilename = generateFilename(generateTargetFilenameBase(filePathType), sanitizedFilename, keepFilename);
+        Path savePath = basePath.resolve(generatedFilename);
+        return saveFile(file, savePath);
+    }
+
+    /**
      * Checks if the given filename has a video file extension.
      *
      * @param filename the filename to check

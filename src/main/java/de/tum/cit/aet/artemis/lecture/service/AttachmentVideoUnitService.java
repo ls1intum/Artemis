@@ -245,7 +245,7 @@ public class AttachmentVideoUnitService {
             }
 
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString()).resolve("video");
-            Path savePath = FileUtil.saveFile(videoFile, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            Path savePath = FileUtil.saveVideoFile(videoFile, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             String videoFilePath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnit.getId()).toString();
             attachmentVideoUnit.setVideoSource(videoFilePath);
             attachmentVideoUnitRepository.saveAndFlush(attachmentVideoUnit);
