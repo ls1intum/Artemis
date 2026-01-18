@@ -111,7 +111,7 @@ public class AdminSbomResource {
     }
 
     /**
-     * POST /sbom/vulnerabilities/refresh: Force refresh vulnerability information from OSV API.
+     * GET /sbom/vulnerabilities/refresh: Force refresh vulnerability information from OSV API.
      * This bypasses the cache and fetches fresh data.
      *
      * @return the ResponseEntity with status 200 (OK) and the fresh vulnerability data in the body,

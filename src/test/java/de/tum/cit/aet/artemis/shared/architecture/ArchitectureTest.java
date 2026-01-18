@@ -245,9 +245,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testJavaxActivationExclusion() {
-        var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("javax.activation..")
+        var javaxActivationUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("javax.activation..")
                 .because("javax.activation is an outdated library, please use an alternative.");
-        var result = gsonUsageRule.evaluate(allClasses);
+        var result = javaxActivationUsageRule.evaluate(allClasses);
         assertThat(result.getFailureReport().getDetails()).hasSize(0);
     }
 

@@ -10,7 +10,7 @@ import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, Sbom } from './
 @Injectable({ providedIn: 'root' })
 export class AdminSbomService {
     private readonly http = inject(HttpClient);
-    private readonly resourceUrl = 'api/core/admin/sbom';
+    private readonly resourceUrl = '/api/core/admin/sbom';
 
     /**
      * Retrieves the combined SBOM containing both server and client dependencies.
