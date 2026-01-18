@@ -188,7 +188,7 @@ export class ProgrammingExerciseService {
     updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: any) {
         const options = createRequestOption(req);
         // Send a single space for empty problem statements to avoid Spring Boot empty body rejection
-        // The backend will trim it and convert to null
+        // The server will trim it and convert to null
         const body = problemStatement?.trim() || ' ';
         return this.http
             .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, body, {
