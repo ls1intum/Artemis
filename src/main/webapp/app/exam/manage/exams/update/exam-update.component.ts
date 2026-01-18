@@ -115,6 +115,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.course = data.course;
                 this.exam.course = data.course;
 
+                // Prefill course name with course title for new exams
+                if (!this.exam.id && !this.exam.courseName && this.course.title) {
+                    this.exam.courseName = this.course.title;
+                }
+
                 if (!this.exam.startText) {
                     this.exam.startText = this.examDefaultStartText;
                 }
