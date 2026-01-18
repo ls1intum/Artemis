@@ -32,11 +32,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -44,6 +46,7 @@ import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
@@ -93,13 +96,16 @@ public class AdminUserResource {
 
     private final Optional<LdapUserService> ldapUserService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService) {
+            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -113,11 +119,15 @@ public class AdminUserResource {
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
-
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException, AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         log.debug("REST request to save User : {}", managedUserVM);
+
+        if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to create other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
+        }
 
         if (managedUserVM.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
@@ -146,9 +156,13 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the activated user, or with status 404 (Not Found)
      */
     @PatchMapping("users/{userId}/activate")
-    public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) {
+    public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
+            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageSuperAdmins");
+            }
             userCreationService.activateUser(user);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", user.getLogin())).body(new UserDTO(user));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -161,9 +175,13 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the deactivated user, or with status 404 (Not Found)
      */
     @PatchMapping("users/{userId}/deactivate")
-    public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) {
+    public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
+            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageSuperAdmins");
+            }
             userCreationService.deactivateUser(user);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", user.getLogin())).body(new UserDTO(user));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -178,7 +196,7 @@ public class AdminUserResource {
      * @throws LoginAlreadyUsedException 400 (Bad Request) if the login is already in use
      */
     @PutMapping("users")
-    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
+    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
@@ -193,6 +211,10 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+        if (isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(managedUserVM, existingUser)) {
+            throw new AccessForbiddenAlertException("Only super administrators can grant super admin authority.", "userManagement",
+                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
+        }
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
@@ -202,6 +224,21 @@ public class AdminUserResource {
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
+    }
+
+    private boolean isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(ManagedUserVM managedUserVM, User existingUser) {
+        boolean isUpdatedUserIsSuperAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
+        boolean isNonSuperAdminUserTryingToUpdateSuperAdmin = isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
+        if (isNonSuperAdminUserTryingToUpdateSuperAdmin) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+        }
+
+        boolean isTryingToEscalatePrivilegesToSuperAdmin = managedUserVM.getAuthorities() != null
+                && managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        // noinspection UnnecessaryLocalVariable: not inlined because the variable name improves readability
+        boolean isNonSuperAdminUserTryingToCreateSuperAdmin = isTryingToEscalatePrivilegesToSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
+        return isNonSuperAdminUserTryingToCreateSuperAdmin;
     }
 
     /**
@@ -300,6 +337,14 @@ public class AdminUserResource {
         log.debug("REST request to delete User: {}", login);
         if (userRepository.isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
+        }
+
+        User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        boolean isNonSuperAdminUserTryingToDeleteSuperAdmin = userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)
+                && !this.authorizationCheckService.isSuperAdmin();
+        if (isNonSuperAdminUserTryingToDeleteSuperAdmin) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageSuperAdmins");
         }
         userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
