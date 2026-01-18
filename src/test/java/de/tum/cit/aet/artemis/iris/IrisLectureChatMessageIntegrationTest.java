@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
@@ -7,6 +8,7 @@ import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.message
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,9 +16,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +32,8 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -36,8 +42,11 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -60,6 +69,15 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     @Autowired
     private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private PyrisPipelineService pyrisPipelineService;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     private Lecture lecture;
 
@@ -104,6 +122,110 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
         verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
                 statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_withMemirisFeatureEnabled_keepsUserFlag() throws Exception {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        featureToggleService.enableFeature(Feature.Memiris);
+        userTestRepository.updateMemirisEnabled(user.getId(), true);
+
+        try {
+            var irisSession = createSessionForUser("student1");
+            var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+            messageToSend.setMessageDifferentiator(1455);
+
+            irisRequestMockProvider.mockLectureChatResponse(dto -> {
+                assertThat(dto.user().memirisEnabled()).isTrue();
+                pipelineDone.set(true);
+            });
+
+            request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+            await().until(pipelineDone::get);
+        }
+        finally {
+            userTestRepository.updateMemirisEnabled(user.getId(), false);
+            featureToggleService.disableFeature(Feature.Memiris);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void executeLectureChatPipeline_withoutMessages_setsNullUserMessageId() {
+        var irisSession = createSessionForUser("student1");
+        var sessionFromDb = (IrisLectureChatSession) irisLectureChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+
+        AtomicReference<String> jobIdRef = new AtomicReference<>();
+
+        irisRequestMockProvider.mockLectureChatResponse(dto -> {
+            jobIdRef.set(dto.settings().authenticationToken());
+            pipelineDone.set(true);
+        });
+
+        pyrisPipelineService.executeLectureChatPipeline("default", null, sessionFromDb, lecture);
+
+        await().until(pipelineDone::get);
+
+        var job = (LectureChatJob) pyrisJobService.getJob(jobIdRef.get());
+        assertThat(job.userMessageId()).isNull();
+        assertThat(job.sessionId()).isEqualTo(sessionFromDb.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_includesLectureUnitsInPipeline() throws Exception {
+        pipelineDone.set(false);
+
+        var attachmentUnit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
+        var textUnit = lectureUtilService.createTextUnit(lecture);
+        lecture = lectureUtilService.addLectureUnitsToLecture(lecture, List.of(attachmentUnit, textUnit));
+
+        var irisSession = createSessionForUser("student1");
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+        messageToSend.setMessageDifferentiator(1454);
+
+        AtomicReference<String> jobIdRef = new AtomicReference<>();
+
+        irisRequestMockProvider.mockLectureChatResponse(dto -> {
+            jobIdRef.set(dto.settings().authenticationToken());
+
+            assertThat(dto.course().id()).isEqualTo(lecture.getCourse().getId());
+            assertThat(dto.lecture().id()).isEqualTo(lecture.getId());
+            assertThat(dto.lecture().units()).hasSize(2);
+
+            assertThat(dto.lecture().units()).anySatisfy(unit -> {
+                assertThat(unit.lectureUnitId()).isEqualTo(attachmentUnit.getId());
+                assertThat(unit.courseId()).isEqualTo(lecture.getCourse().getId());
+                assertThat(unit.lectureId()).isEqualTo(lecture.getId());
+                assertThat(unit.releaseDate()).isCloseTo(toInstant(attachmentUnit.getReleaseDate()), within(1, ChronoUnit.MICROS));
+                assertThat(unit.name()).isEqualTo(attachmentUnit.getName());
+                assertThat(unit.attachmentVersion()).isEqualTo(attachmentUnit.getAttachment().getVersion());
+            });
+
+            assertThat(dto.lecture().units()).anySatisfy(unit -> {
+                assertThat(unit.lectureUnitId()).isEqualTo(textUnit.getId());
+                assertThat(unit.courseId()).isEqualTo(lecture.getCourse().getId());
+                assertThat(unit.lectureId()).isEqualTo(lecture.getId());
+                assertThat(unit.releaseDate()).isEqualTo(toInstant(textUnit.getReleaseDate()));
+                assertThat(unit.name()).isEqualTo(textUnit.getName());
+                assertThat(unit.attachmentVersion()).isNull();
+            });
+
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+        await().until(pipelineDone::get);
+
+        var sessionFromDb = irisLectureChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+        var job = (LectureChatJob) pyrisJobService.getJob(jobIdRef.get());
+        assertThat(job.sessionId()).isEqualTo(irisSession.getId());
+        assertThat(job.lectureId()).isEqualTo(lecture.getId());
+        assertThat(job.courseId()).isEqualTo(lecture.getCourse().getId());
+        assertThat(job.userMessageId()).isEqualTo(sessionFromDb.getMessages().getLast().getId());
     }
 
     @Test
