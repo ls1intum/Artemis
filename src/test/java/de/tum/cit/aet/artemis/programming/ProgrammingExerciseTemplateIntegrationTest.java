@@ -364,8 +364,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      * @throws IllegalStateException if repositories are not initialized after all retries
      */
     private void waitForRepositoriesToBeInitialized(LocalVCRepositoryUri assignmentUri, LocalVCRepositoryUri testUri) throws InterruptedException {
-        int maxRetries = 15;
-        int retryDelayMs = 500; // 500ms delay (7.5 seconds total)
+        final int maxRetries = 15;
+        final int retryDelayMs = 500; // 500ms delay (7.5 seconds total)
 
         Path assignmentPath = assignmentUri.getLocalRepositoryPath(localVCBasePath);
         Path testPath = testUri.getLocalRepositoryPath(localVCBasePath);
