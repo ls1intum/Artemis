@@ -4,7 +4,7 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 # Setup Guide
 
-This guide explains how to set up Artemis in your development environment or a demo production environment. For production setups, you would need to additionally consider topics discussed in the [Administration Setup](/admin).
+This guide explains how to set up Artemis in your development environment or a demo production environment. For production setups, you would need to additionally consider topics discussed in the [Administration Setup](/admin/intro).
 
 Running Artemis consists of two main steps:
 
@@ -368,7 +368,7 @@ If you want to run the application via the command line instead, make sure to pa
 Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
 
 <Callout variant={CalloutVariant.info}>
-    For local development with LM Studio (no cloud API keys required), see the [Spring AI Development Guide](/staff/spring-ai).
+    For local development with LM Studio (no cloud API keys required), see the [Spring AI Development Guide](/developer/spring-ai).
 </Callout>
 
 For production setup, see [Hyperion Service](/admin/hyperion) in the Administration Guide for instructions on enabling the module in production and configuring LLM credentials.
@@ -622,7 +622,7 @@ You can probably connect to this VM similarly as described in the regular setup 
 ### Production Setup
 
 A production setup of these core services might need further adaptation to ensure security.
-For details on securing your production environment, see the [Administration Setup](/admin).
+For details on securing your production environment, see the [Administration Setup](/admin/intro).
 
 ### Extension Services
 
@@ -632,7 +632,7 @@ Artemis allows extension with several additional services, such as:
 - Automatic feedback generation using large language models (e.g., **Iris/Athena**)
 - And more...
 
-The setup for these additional services is described as part of the [Extension Service Setup](/admin).
+The setup for these additional services is described as part of the [Extension Service Setup](/admin/extensions-setup).
 
 ---
 
@@ -658,9 +658,9 @@ For detailed instructions on setting up Artemis with Helios, refer to the offici
 
 For more advanced setup scenarios and development tools, see the following guides:
 
-- **[Jenkins and LocalVC Setup](/staff/jenkins-localvc)** - Alternative CI/CD setup using Jenkins with LocalVC
-- **[Aeolus Setup](/staff/aeolus)** - Custom build plans for Jenkins and Integrated Code Lifecycle
-- **[OpenAPI and API-driven Development](/staff/openapi)** - Working with OpenAPI specifications
-- **[Docker Compose Setup](/staff/docker-compose)** - Alternative Docker Compose-based deployment
-- **[Docker Debugging](/staff/docker-debugging)** - Debugging Artemis in Docker containers
-- **[Local Database Tests](/staff/local-database-tests)** - Running database tests locally
+- **[Jenkins and LocalVC Setup](/developer/jenkins-localvc)** - Alternative CI/CD setup using Jenkins with LocalVC
+- **[Aeolus Setup](/developer/aeolus)** - Custom build plans for Jenkins and Integrated Code Lifecycle
+- **[OpenAPI and API-driven Development](/developer/openapi)** - Working with OpenAPI specifications
+- **[Docker Compose Setup](/developer/docker-compose)** - Alternative Docker Compose-based deployment
+- **[Docker Debugging](/developer/docker-debugging)** - Debugging Artemis in Docker containers
+- **[Local Database Tests](/developer/local-database-tests)** - Running database tests locally
