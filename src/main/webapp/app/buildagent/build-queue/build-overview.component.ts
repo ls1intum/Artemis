@@ -125,6 +125,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     /** Flag indicating if finished build jobs are currently being loaded */
     isLoading = signal(false);
 
+    /** Signal indicating whether the component is in administration view */
+    isAdministrationView = signal(false);
+
     /** Current search term for filtering finished build jobs */
     searchTerm?: string = undefined;
 
@@ -153,6 +156,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
+        this.isAdministrationView.set(this.courseId === 0);
         this.loadQueue();
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));

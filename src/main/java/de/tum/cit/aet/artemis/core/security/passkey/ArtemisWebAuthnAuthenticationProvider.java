@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
 
@@ -74,6 +75,9 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
             if (user.isEmpty()) {
                 throw new BadCredentialsException("User " + username + " was not found in the database");
             }
+            if (!user.get().getActivated()) {
+                throw new UserNotActivatedException("User " + username + " is not activated");
+            }
 
             Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credentialId);
 
@@ -82,8 +86,11 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
 
             return auth;
         }
-        catch (RuntimeException ex) {
-            throw new BadCredentialsException(ex.getMessage(), ex);
+        catch (AuthenticationException exception) {
+            throw exception;
+        }
+        catch (RuntimeException exception) {
+            throw new BadCredentialsException(exception.getMessage(), exception);
         }
     }
 
