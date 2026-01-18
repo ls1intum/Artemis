@@ -49,6 +49,8 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
+    write_output "RELEVANT_COUNT" "0"
+    write_output "REMAINING_COUNT" "0"
     exit 0
 fi
 
@@ -61,6 +63,8 @@ if [ -z "$CHANGED_FILES" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
+    write_output "RELEVANT_COUNT" "0"
+    write_output "REMAINING_COUNT" "0"
     exit 0
 fi
 
@@ -77,11 +81,13 @@ RUN_ALL_TESTS=false
 RUN_ALL_PATTERNS=$(jq -r '.runAllTestsPatterns[]' "$MAPPING_FILE" 2>/dev/null || echo "")
 
 for pattern in $RUN_ALL_PATTERNS; do
-    if echo "$CHANGED_FILES" | grep -q "^$pattern"; then
-        echo "Found changes in '$pattern' - will run all tests"
-        RUN_ALL_TESTS=true
-        break
-    fi
+    while IFS= read -r file; do
+        if [[ "$file" == "$pattern"* ]]; then
+            echo "Found changes in '$pattern' - will run all tests"
+            RUN_ALL_TESTS=true
+            break 2
+        fi
+    done <<< "$CHANGED_FILES"
 done
 
 if [ "$RUN_ALL_TESTS" = "true" ]; then
@@ -111,12 +117,16 @@ for module in $MODULES; do
     # Get source paths for this module
     SOURCE_PATHS=$(jq -r ".mappings[\"$module\"].sourcePaths[]" "$MAPPING_FILE" 2>/dev/null || echo "")
     
-    # Check if any changed file matches a source path
+    # Check if any changed file matches a source path (using literal prefix matching)
     MATCHED=false
     for source_path in $SOURCE_PATHS; do
-        if [ -n "$source_path" ] && echo "$CHANGED_FILES" | grep -q "^$source_path"; then
-            MATCHED=true
-            break
+        if [ -n "$source_path" ]; then
+            while IFS= read -r file; do
+                if [[ "$file" == "$source_path"* ]]; then
+                    MATCHED=true
+                    break 2
+                fi
+            done <<< "$CHANGED_FILES"
         fi
     done
     
