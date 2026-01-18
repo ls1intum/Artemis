@@ -147,30 +147,60 @@ public class TestResultXmlParser {
     /**
      * Processes a test suite, categorizing its test cases into failed or successful lists,
      * and recursively handling nested test suites.
+     * <p>
+     * Each test case is converted to a {@link LocalCITestJobDTO} containing:
+     * <ul>
+     * <li><b>name:</b> The qualified test name (prefix + test case name)</li>
+     * <li><b>classname:</b> The fully qualified class name from the XML attribute, used to identify
+     * which test class a test belongs to. This is especially important for initialization errors
+     * (tests named "initializationError") where multiple test classes might have the same
+     * generic test name - the classname allows disambiguation.</li>
+     * <li><b>messages:</b> Error messages for failed tests (empty for successful tests)</li>
+     * </ul>
      *
-     * @param testSuite       The test suite to process.
-     * @param failedTests     A list of failed tests. This list will be populated by the method.
-     * @param successfulTests A list of successful tests. This list will be populated by the method.
-     * @param namePrefix      The name prefix for the test cases within the suite.
+     * @param testSuite                the test suite to process
+     * @param failedTestsCollector     list that will be populated with failed test results
+     * @param successfulTestsCollector list that will be populated with successful test results
+     * @param testNamePrefix           the accumulated name prefix from parent test suites (separated by dots)
      */
-    private static void processTestSuiteWithNamePrefix(TestSuite testSuite, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String namePrefix) {
+    private static void processTestSuiteWithNamePrefix(TestSuite testSuite, List<LocalCITestJobDTO> failedTestsCollector, List<LocalCITestJobDTO> successfulTestsCollector,
+            String testNamePrefix) {
         for (TestCase testCase : testSuite.testCases()) {
+            // Skip tests that were explicitly marked as skipped (e.g., @Disabled in JUnit 5)
             if (testCase.isSkipped()) {
                 continue;
             }
-            Failure failure = testCase.extractFailure();
-            if (failure != null) {
-                // Truncate feedback message if it exceeds maximum length to avoid polluting the network or database with too long messages
-                final var truncatedFeedbackMessage = truncateFeedbackMessage(failure.extractMessage());
-                failedTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), testCase.classname(), List.of(truncatedFeedbackMessage)));
+
+            // Build the fully qualified test name by combining the prefix with the test case name
+            String qualifiedTestName = testNamePrefix + testCase.name();
+
+            // Extract the classname attribute - this is crucial for identifying which test class
+            // generated the result, especially for initialization errors where multiple test classes
+            // might report the same "initializationError" test name
+            String testClassName = testCase.classname();
+
+            // Check if this test case has a failure or error element
+            Failure testFailure = testCase.extractFailure();
+            boolean isFailedTest = testFailure != null;
+
+            if (isFailedTest) {
+                // Extract and truncate the error message to prevent excessively large feedback
+                String rawErrorMessage = testFailure.extractMessage();
+                String truncatedErrorMessage = truncateFeedbackMessage(rawErrorMessage);
+
+                LocalCITestJobDTO failedTestResult = new LocalCITestJobDTO(qualifiedTestName, testClassName, List.of(truncatedErrorMessage));
+                failedTestsCollector.add(failedTestResult);
             }
             else {
-                successfulTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), testCase.classname(), List.of()));
+                // Successful test - no error messages to include
+                LocalCITestJobDTO successfulTestResult = new LocalCITestJobDTO(qualifiedTestName, testClassName, List.of());
+                successfulTestsCollector.add(successfulTestResult);
             }
         }
 
-        for (TestSuite suite : testSuite.testSuites()) {
-            processInnerTestSuite(suite, failedTests, successfulTests, namePrefix);
+        // Recursively process any nested test suites
+        for (TestSuite nestedSuite : testSuite.testSuites()) {
+            processInnerTestSuite(nestedSuite, failedTestsCollector, successfulTestsCollector, testNamePrefix);
         }
     }
 
@@ -203,54 +233,133 @@ public class TestResultXmlParser {
         }
     }
 
+    /**
+     * Represents a single test case from JUnit XML results.
+     * <p>
+     * The {@code classname} attribute is particularly important for initialization errors:
+     * When a test class fails during setup (e.g., in {@code @BeforeAll}), JUnit reports a
+     * pseudo-test named "initializationError". The classname attribute allows us to identify
+     * which test class had the initialization failure, enabling us to create unique and
+     * informative error messages like "MathTest.initializationError" instead of just
+     * "initializationError".
+     *
+     * @param name      the test method name (e.g., "testAddition" or "initializationError")
+     * @param classname the fully qualified class name (e.g., "com.example.MathTest")
+     * @param failure   the failure element if the test failed with an assertion error
+     * @param error     the error element if the test failed with an unexpected exception
+     * @param skipped   present if the test was skipped (e.g., via @Disabled)
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(isAttribute = true, localName = "classname") String classname,
             @JacksonXmlProperty(localName = "failure") Failure failure, @JacksonXmlProperty(localName = "error") Failure error,
             @JacksonXmlProperty(localName = "skipped") Skip skipped) {
 
+        /**
+         * Checks if this test case was skipped (not executed).
+         *
+         * @return true if the test has a {@code <skipped/>} element, false otherwise
+         */
         private boolean isSkipped() {
             return skipped != null;
         }
 
+        /**
+         * Extracts the failure information from either the {@code <failure>} or {@code <error>} element.
+         * <p>
+         * In JUnit XML format:
+         * <ul>
+         * <li>{@code <failure>} is used for assertion failures (expected test behavior)</li>
+         * <li>{@code <error>} is used for unexpected exceptions (including initialization errors)</li>
+         * </ul>
+         * Both contain similar information (message and stack trace), so we treat them the same.
+         *
+         * @return the Failure object if the test failed, null if the test passed
+         */
         private Failure extractFailure() {
             return failure != null ? failure : error;
         }
 
-        // Intentionally empty record to represent the skipped tag (<skipped/>)
+        /**
+         * Empty record to represent the {@code <skipped/>} tag in JUnit XML.
+         * The presence of this element indicates the test was not executed.
+         */
         @JsonIgnoreProperties(ignoreUnknown = true)
         record Skip() {
         }
     }
 
-    // Due to issues with Jackson this currently cannot be a record.
-    // See https://github.com/FasterXML/jackson-module-kotlin/issues/138#issuecomment-1062725140
+    /**
+     * Represents a test failure or error from JUnit XML results.
+     * <p>
+     * A failure element in JUnit XML can contain:
+     * <ul>
+     * <li>A {@code message} attribute with a brief error description</li>
+     * <li>Text content with the detailed stack trace or error message</li>
+     * </ul>
+     * <p>
+     * Example XML:
+     *
+     * <pre>{@code
+     * <failure message="expected 5 but was 3">
+     *   java.lang.AssertionError: expected 5 but was 3
+     *     at MathTest.testAddition(MathTest.java:15)
+     * </failure>
+     * }</pre>
+     * <p>
+     * For initialization errors, the message typically contains the exception type and message,
+     * while the text content contains the full stack trace.
+     * <p>
+     * Note: This cannot be a record due to Jackson XML deserialization issues.
+     *
+     * @see <a href="https://github.com/FasterXML/jackson-module-kotlin/issues/138#issuecomment-1062725140">Jackson issue</a>
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     static final class Failure {
 
-        private String message;
+        /** The brief error message from the {@code message} attribute */
+        private String messageAttribute;
 
-        private String detailedMessage;
+        /** The detailed message/stack trace from the element's text content */
+        private String textContent;
 
+        /**
+         * Extracts the most informative error message from the failure element.
+         * <p>
+         * Prefers the {@code message} attribute if present, otherwise falls back to
+         * the text content. Returns empty string if neither is available.
+         *
+         * @return the error message to display to the user
+         */
         private String extractMessage() {
-            if (message != null) {
-                return message;
+            if (messageAttribute != null) {
+                return messageAttribute;
             }
-            else if (detailedMessage != null) {
-                return detailedMessage;
+            else if (textContent != null) {
+                return textContent;
             }
-            // empty text nodes are deserialized as null instead of a string, see: https://github.com/FasterXML/jackson-dataformat-xml/issues/565
-            // note that this workaround does not fix the issue entirely, as strings of only whitespace become the empty string
+            // Note: Empty text nodes are deserialized as null instead of empty string
+            // due to a Jackson XML issue: https://github.com/FasterXML/jackson-dataformat-xml/issues/565
             return "";
         }
 
+        /**
+         * Sets the message attribute from the XML {@code message} attribute.
+         *
+         * @param message the brief error message
+         */
         @JacksonXmlProperty(isAttribute = true, localName = "message")
         public void setMessage(String message) {
-            this.message = message;
+            this.messageAttribute = message;
         }
 
+        /**
+         * Sets the text content from the element body (usually the stack trace).
+         *
+         * @param detailedMessage the detailed error message or stack trace
+         */
         @JacksonXmlText
         public void setDetailedMessage(String detailedMessage) {
-            this.detailedMessage = detailedMessage;
+            this.textContent = detailedMessage;
         }
     }
 }

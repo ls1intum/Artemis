@@ -376,33 +376,82 @@ public class ProgrammingExerciseFeedbackCreationService {
         });
     }
 
+    /**
+     * Extracts test case entities from build results for registration in the database.
+     * <p>
+     * This method processes all test results from the build and creates corresponding
+     * {@link ProgrammingExerciseTestCase} entities. New test cases are initialized with
+     * default grading values (weight=1.0, no bonus) that instructors can later customize.
+     * <p>
+     * <b>Important:</b> Initialization errors (JUnit pseudo-tests for setup failures) are
+     * explicitly filtered out and NOT registered as test cases. This prevents:
+     * <ul>
+     * <li>Duplicate detection issues when multiple test classes have "initializationError"</li>
+     * <li>Transient error entries polluting the test case database</li>
+     * <li>Incorrect grading weights being applied to error reports</li>
+     * </ul>
+     * The error information from initialization failures is still preserved and displayed
+     * to students through the feedback mechanism, just not registered as formal test cases.
+     *
+     * @param buildResult the build result notification containing all test execution data
+     * @param exercise    the programming exercise to associate the test cases with
+     * @return a set of test case entities ready for database persistence (excluding initialization errors)
+     */
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
+        Visibility defaultTestCaseVisibility = exercise.getDefaultTestCaseVisibility();
 
-        return buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
-                // Filter out "initializationError" which is a JUnit internal pseudo-test for setup failures
-                // This should not be registered as a real test case as it causes issues with duplicate detection
-                // Check for both plain "initializationError" and qualified names like "TestClass.initializationError"
-                .filter(testCase -> !isInitializationError(testCase.name()))
-                // we use default values for weight, bonus multiplier and bonus points
-                .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
-                        .visibility(defaultVisibility))
+        // Default grading values for newly discovered test cases
+        final double defaultWeight = 1.0;
+        final double defaultBonusMultiplier = 1.0;
+        final double defaultBonusPoints = 0.0;
+
+        return buildResult.jobs().stream()
+                // Combine failed and successful tests from all build jobs
+                .flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
+                // Exclude initialization errors - these are JUnit pseudo-tests, not real test cases
+                .filter(testResult -> !isInitializationError(testResult.name()))
+                // Convert each test result to a ProgrammingExerciseTestCase entity
+                .map(testResult -> new ProgrammingExerciseTestCase().testName(testResult.name()).weight(defaultWeight).bonusMultiplier(defaultBonusMultiplier)
+                        .bonusPoints(defaultBonusPoints).exercise(exercise).active(true).visibility(defaultTestCaseVisibility))
                 .collect(Collectors.toSet());
     }
 
     /**
-     * Checks if a test name represents an initialization error.
-     * Initialization errors can be either plain "initializationError" or qualified like "TestClass.initializationError".
+     * Determines whether a test name represents a JUnit initialization error pseudo-test.
+     * <p>
+     * Initialization errors are not real test cases but JUnit's mechanism for reporting
+     * failures during test class setup (e.g., {@code @BeforeAll} failures, class loading errors).
+     * These should be filtered out from test case registration to prevent:
+     * <ul>
+     * <li>Duplicate test case detection issues (multiple classes can have "initializationError")</li>
+     * <li>Incorrect grading weights being applied to error reports</li>
+     * <li>Pollution of the test case database with transient error entries</li>
+     * </ul>
+     * <p>
+     * The test name can appear in two forms:
+     * <ul>
+     * <li><b>Unqualified:</b> {@code "initializationError"} - raw JUnit output</li>
+     * <li><b>Qualified:</b> {@code "TestClass.initializationError"} - enhanced with class name
+     * for better identification when multiple test classes have setup failures</li>
+     * </ul>
      *
-     * @param testName the name of the test case
-     * @return true if this is an initialization error, false otherwise
+     * @param testName the name of the test case to check
+     * @return {@code true} if this is an initialization error that should not be registered as a test case,
+     *         {@code false} for regular test cases that should be registered
+     * @see ProgrammingExerciseGradingService#TESTCASE_INITIALIZATION_ERROR_NAME
      */
     private boolean isInitializationError(String testName) {
         if (testName == null) {
             return false;
         }
-        return ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME.equals(testName)
-                || testName.endsWith("." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME);
+
+        String initErrorName = ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME;
+
+        // Match both "initializationError" and "ClassName.initializationError" patterns
+        boolean isUnqualifiedInitError = initErrorName.equals(testName);
+        boolean isQualifiedInitError = testName.endsWith("." + initErrorName);
+
+        return isUnqualifiedInitError || isQualifiedInitError;
     }
 
     /**

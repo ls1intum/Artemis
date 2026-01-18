@@ -131,21 +131,42 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     /**
-     * Creates a feedback item from a feedback generated from an automatic test case result.
-     * @param feedback A feedback received from an automatic test case.
-     * @param showTestDetails
+     * Creates a feedback item from automatic test case feedback.
+     *
+     * This method handles both regular test cases (which have a linked testCase entity)
+     * and initialization errors (which only have feedback.text set, no linked testCase).
+     *
+     * For initialization errors (e.g., "MathTest.initializationError"), the test name
+     * is stored in feedback.text because these pseudo-tests are not registered as
+     * formal test cases in the database. This fallback ensures the error is displayed
+     * with the proper test/class name rather than a generic "Test Case" label.
+     *
+     * @param feedback The feedback from an automatic test case execution
+     * @param showTestDetails Whether to show detailed test information (test name in title)
+     * @returns A FeedbackItem configured for display in the UI
      */
     private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         let title = undefined;
-        if (showTestDetails && feedback.testCase?.testName) {
+
+        // Determine the test name to display:
+        // 1. For regular tests: use the linked testCase entity's name
+        // 2. For initialization errors: fall back to feedback.text (e.g., "MathTest.initializationError")
+        //    since initialization errors are not registered as formal test cases
+        const testDisplayName = feedback.testCase?.testName ?? feedback.text;
+
+        if (showTestDetails && testDisplayName) {
+            // Generate appropriate title based on test result status
             if (feedback.positive === undefined) {
-                title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: feedback.testCase.testName });
+                // Test status unknown (e.g., test was not executed)
+                title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: testDisplayName });
+            } else if (feedback.positive) {
+                title = this.translateService.instant('artemisApp.result.detail.test.passed', { name: testDisplayName });
             } else {
-                title = feedback.positive
-                    ? this.translateService.instant('artemisApp.result.detail.test.passed', { name: feedback.testCase.testName })
-                    : this.translateService.instant('artemisApp.result.detail.test.failed', { name: feedback.testCase.testName });
+                // Test failed - includes both regular test failures and initialization errors
+                title = this.translateService.instant('artemisApp.result.detail.test.failed', { name: testDisplayName });
             }
         }
+
         return {
             type: 'Test',
             name: this.translateService.instant('artemisApp.result.detail.test.name'),
