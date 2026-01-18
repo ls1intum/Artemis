@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -40,8 +41,8 @@ import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
-import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismPostCreationDTO';
 import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
+import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismPostCreationDTO';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
@@ -59,6 +60,7 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
         NgbDropdownMenu,
         NgbDropdownItem,
         PostingThreadComponent,
+        PostCreateEditModalComponent,
         NgbNav,
         NgbNavItem,
         NgbNavItemRole,
@@ -87,7 +89,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     verdictPointDeduction = 0;
     verdictMessage = '';
-    createdPost: PlagiarismPostCreationDTO;
+    createdPost: Post;
     currentAccount?: User;
 
     activeTab = 1;
@@ -100,11 +102,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     faCheck = faCheck;
 
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
-    private readonly createEditModal = viewChild<PostCreateEditModalComponent>('createEditModal');
     private postsSubscription: Subscription;
     posts: Post[];
-
-    isNotifyingStudent = false;
     studentNotified = false;
 
     ngOnInit(): void {
@@ -225,40 +224,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         return this.posts?.length > 0;
     }
 
-    notifyStudent(): void {
-        if (this.isNotifyingStudent) {
-            return;
-        }
-
-        const dto = this.createdPost;
-
-        if (!dto?.plagiarismCaseId) {
-            this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.missingPlagiarismCaseId');
-            return;
-        }
-
-        const title = dto.title?.trim();
-        const content = dto.content?.trim();
-        if (!title || !content) {
-            this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.missingTitleOrContent');
-            return;
-        }
-
-        this.isNotifyingStudent = true;
-
-        this.plagiarismPostService.createPlagiarismPost(this.courseId, dto).subscribe({
-            next: (createdPost: Post) => {
-                this.onStudentNotified(createdPost);
-                this.createEmptyPost();
-                this.isNotifyingStudent = false;
-            },
-            error: () => {
-                this.isNotifyingStudent = false;
-                this.alertService.error('artemisApp.plagiarism.plagiarismCases.error.notificationFailed');
-            },
-        });
-    }
-
     /**
      * Called after successfully creating the plagiarism notification post.
      * Adds the created post to the local list so the thread becomes visible immediately.
@@ -273,8 +238,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
         this.studentNotified = true;
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
-
-        // Keep Metis in sync (answers, reactions, websocket state)
         this.metisService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
     }
 
@@ -293,8 +256,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             70,
         );
 
-        this.createdPost = this.metisService.createEmptyPlagiarismPost(this.plagiarismCase);
-        // Note the limit of 1.000 characters for the post's content
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.plagiarismCase); // Note the limit of 1.000 characters for the post's content
         this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
             exercise: exerciseTitle,
         });
@@ -317,7 +279,12 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         return await this.themeService.print();
     }
 
-    openNotifyStudentModal(): void {
-        this.createEditModal()?.open();
-    }
+    createPlagiarismPost = (post: Post): Observable<Post> => {
+        const dto: PlagiarismPostCreationDTO = {
+            title: post.title,
+            content: post.content,
+            plagiarismCaseId: this.plagiarismCaseId,
+        };
+        return this.plagiarismPostService.createPlagiarismPost(this.courseId, dto);
+    };
 }

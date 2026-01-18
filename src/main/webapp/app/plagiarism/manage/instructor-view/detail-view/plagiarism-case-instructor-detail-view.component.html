@@ -56,9 +56,7 @@
                 }
                 @if ((!posts || posts.length === 0) && createdPost) {
                     <div>
-                        <button class="btn btn-md btn-primary" (click)="openNotifyStudentModal()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notifyStudent"></button>
-
-                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)" />
+                        <jhi-post-create-edit-modal [posting]="createdPost" [createOverride]="createPlagiarismPost" (onCreate)="onStudentNotified($event)" />
                     </div>
                 }
             </section>

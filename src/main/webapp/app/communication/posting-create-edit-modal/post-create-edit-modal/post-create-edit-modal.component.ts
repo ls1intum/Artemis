@@ -1,4 +1,5 @@
 import { Component, OnChanges, OnInit, input } from '@angular/core';
+import { Observable } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -46,6 +47,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+    createOverride = input<((post: Post) => Observable<Post>) | undefined>(undefined);
 
     /**
      * on initialization: reset all input field of the modal, determine the post context;
@@ -105,8 +107,13 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
+        this.isLoading = true;
         this.posting = this.setPostProperties(this.posting);
-        this.metisService.createPost(this.posting).subscribe({
+
+        const override = this.createOverride();
+        const create$ = override ? override(this.posting) : this.metisService.createPost(this.posting);
+
+        create$.subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
                 this.modalRef?.close();
