@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.Instant;
@@ -15,7 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.connector.OsvRequestMockProvider;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
@@ -44,6 +49,9 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @MockitoSpyBean
     private ArtemisVersionService artemisVersionService;
+
+    @MockitoSpyBean
+    private MailService mailServiceSpy;
 
     @BeforeEach
     void setUp() {
@@ -222,6 +230,9 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Mock version service to avoid GitHub API call
         ArtemisVersionDTO versionInfo = new ArtemisVersionDTO("7.8.0", "7.8.0", false, null, null, Instant.now().toString());
         doReturn(versionInfo).when(artemisVersionService).getVersionInfo();
+
+        // Mock mail service to avoid sending real emails
+        doNothing().when(mailServiceSpy).sendVulnerabilityScanResultEmail(any(User.class), any(ComponentVulnerabilitiesDTO.class), any(ArtemisVersionDTO.class), anyBoolean());
 
         request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.OK, null);
 
