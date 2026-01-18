@@ -548,8 +548,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      * @throws Exception if checkout fails after all retries
      */
     private Repository checkoutRepositoryWithRetry(LocalVCRepositoryUri repositoryUri, String description) throws Exception {
-        int maxAttempts = 10;
-        int retryDelayMs = 500;
+        final int maxAttempts = 10;
+        final int retryDelayMs = 500;
         Exception lastException = null;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
