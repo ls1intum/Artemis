@@ -626,27 +626,27 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidGracePeriod).toBeFalse();
         });
 
-        it('should correctly validate working time with upper limit of 10 days (864000 seconds)', () => {
+        it('should correctly validate working time with upper limit of 30 days (2592000 seconds)', () => {
             fixture.detectChanges();
 
             // Set up exam as a test exam with a long exam window
             examWithoutExercises.testExam = true;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
-            examWithoutExercises.endDate = dayjs().add(15, 'days'); // Long exam window
+            examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
 
             // Valid working time
             examWithoutExercises.workingTime = 86400; // 1 day
             expect(component.exam.workingTime).toBe(86400);
             expect(component.validateWorkingTime).toBeTrue();
 
-            // Working time at limit (10 days = 864000 seconds)
-            examWithoutExercises.workingTime = 864000;
-            expect(component.exam.workingTime).toBe(864000);
+            // Working time at limit (30 days = 2592000 seconds)
+            examWithoutExercises.workingTime = 2592000;
+            expect(component.exam.workingTime).toBe(2592000);
             expect(component.validateWorkingTime).toBeTrue();
 
             // Working time exceeds limit
-            examWithoutExercises.workingTime = 864001;
-            expect(component.exam.workingTime).toBe(864001);
+            examWithoutExercises.workingTime = 2592001;
+            expect(component.exam.workingTime).toBe(2592001);
             expect(component.validateWorkingTime).toBeFalse();
         });
 

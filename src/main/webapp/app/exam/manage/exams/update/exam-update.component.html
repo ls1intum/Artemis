@@ -17,12 +17,10 @@
             <div>
                 <hr />
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration"></h5>
-                <label class="form-check-label" jhiTranslate="artemisApp.examManagement.examTitle"></label>
                 <jhi-title-channel-name
                     [(title)]="exam.title"
                     [(channelName)]="exam.channelName"
                     channelNamePrefix="exam-"
-                    [hideTitleLabel]="true"
                     [hideChannelName]="hideChannelNameInput"
                     [initChannelName]="isImport || exam.id === undefined"
                 />
@@ -127,6 +125,9 @@
                     <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                     @if (!exam.testExam) {
                         <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutesRounded" />
+                        @if (isWorkingTimeTooHigh) {
+                            <div class="alert alert-danger" jhiTranslate="error.examWorkingTimeTooHigh"></div>
+                        }
                     }
                     @if (exam.testExam) {
                         <input
@@ -141,7 +142,7 @@
                             (focusout)="roundWorkingTime()"
                             #workingTimeInput="ngModel"
                         />
-                        @if (workingTimeInput.errors?.['max'] || workingTimeInMinutes > 14400) {
+                        @if (workingTimeInput.errors?.['max'] || isWorkingTimeTooHigh) {
                             <div class="alert alert-danger" jhiTranslate="error.examWorkingTimeTooHigh"></div>
                         }
                     }

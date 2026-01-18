@@ -436,7 +436,7 @@ public class ExamResource {
     /**
      * Validates numeric field limits for exam configuration.
      * Maximum values:
-     * - Working time: 864000 seconds (10 days)
+     * - Working time: 2592000 seconds (30 days)
      * - Grace period: 3600 seconds (1 hour)
      * - Exam max points: 9999
      * - Number of exercises: 100
@@ -444,9 +444,9 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
-        // Max working time: 10 days = 864000 seconds
-        if (exam.getWorkingTime() > 864000) {
-            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 10 days (864000 seconds).", ENTITY_NAME, "examWorkingTimeTooHigh");
+        // Max working time: 30 days = 2592000 seconds
+        if (exam.getWorkingTime() > 2592000) {
+            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (2592000 seconds).", ENTITY_NAME, "examWorkingTimeTooHigh");
         }
 
         // Grace period: max 1 hour = 3600 seconds

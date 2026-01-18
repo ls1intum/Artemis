@@ -489,22 +489,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
+     * Maximum working time in seconds (30 days).
+     */
+    readonly maxWorkingTimeSeconds = 2592000;
+
+    /**
      * Validates the WorkingTime.
      * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
-     * and must not exceed 10 days (864000 seconds).
+     * and must not exceed 30 days (2592000 seconds).
      * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
-     * and must not exceed 10 days (864000 seconds).
+     * and must not exceed 30 days (2592000 seconds).
      */
     get validateWorkingTime(): boolean {
-        // Maximum working time is 10 days = 864000 seconds
-        const maxWorkingTimeSeconds = 864000;
-
         if (this.exam.testExam) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
-            // Check 10-day limit
-            if (this.exam.workingTime > maxWorkingTimeSeconds) {
+            // Check 30-day limit
+            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
                 return false;
             }
             if (this.exam.startDate && this.exam.endDate) {
@@ -513,13 +515,23 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return false;
         }
         if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
-            // Check 10-day limit for real exams as well
-            if (this.exam.workingTime > maxWorkingTimeSeconds) {
+            // Check 30-day limit for real exams as well
+            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
                 return false;
             }
             return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
         }
         return false;
+    }
+
+    /**
+     * Returns true if the working time exceeds the maximum allowed limit of 30 days.
+     */
+    get isWorkingTimeTooHigh(): boolean {
+        if (this.exam.workingTime === undefined || this.exam.workingTime === null) {
+            return false;
+        }
+        return this.exam.workingTime > this.maxWorkingTimeSeconds;
     }
 
     get isValidPublishResultsDate(): boolean {

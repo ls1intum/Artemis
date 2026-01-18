@@ -210,7 +210,7 @@
         "negativePoints": "Die maximale Punktzahl einer Klausur muss größer als 0 sein.",
         "correctionRoundViolation": "Ungültige Anzahl an Korrekturläufen: Testklausuren müssen 0 Korrekturläufe haben, echte Klausuren müssen 1 oder 2 Korrekturläufe haben.",
         "attendanceCheckViolation": "Testklausuren können keine Anwesenheitskontrolle haben.",
-        "examWorkingTimeTooHigh": "Die Bearbeitungszeit ist zu lang. Bitte gib einen Wert von maximal 10 Tagen (864000 Sekunden) ein.",
+        "examWorkingTimeTooHigh": "Die Bearbeitungszeit ist zu lang. Das Maximum beträgt 43200 Minuten (30 Tage). Bitte passe den Start und/oder das Ende der Bearbeitungszeit an.",
         "examGracePeriodTooHigh": "Die Nachfrist ist zu lang. Bitte gib einen Wert zwischen 0 und 3600 Sekunden ein.",
         "examMaxPointsTooHigh": "Die maximale Punktzahl ist zu hoch. Bitte gib einen Wert zwischen 1 und 9999 ein.",
         "examNumberOfExercisesTooHigh": "Die Anzahl der Aufgaben ist zu hoch. Bitte gib einen Wert zwischen 1 und 100 ein.",
