@@ -1650,7 +1650,7 @@ public class ProgrammingExerciseTestService {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, saveEmbeddedFiles, shouldIncludeBuildplan);
         // Assure that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
-        await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && isZipReadable(zipFile));
         assertThat(zipFile).isNotNull();
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
@@ -1692,6 +1692,19 @@ public class ProgrammingExerciseTestService {
         FileUtils.delete(zipFile);
     }
 
+    private static boolean isZipReadable(File file) {
+        if (file == null || !file.isFile() || file.length() == 0) {
+            return false;
+        }
+        try (var zipFile = new java.util.zip.ZipFile(file)) {
+            // Just opening it already validates the central directory is present & consistent enough to read.
+            return zipFile.size() >= 0;
+        }
+        catch (Exception e) {
+            return false; // ZipException while still being written is common
+        }
+    }
+
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
@@ -1729,7 +1742,7 @@ public class ProgrammingExerciseTestService {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, false, false);
         // Assure that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
-        await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && isZipReadable(zipFile));
         assertThat(zipFile).isNotNull();
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
