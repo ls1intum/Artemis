@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
@@ -40,13 +39,17 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void generatePng_asStudent_success() throws Exception {
-        try (var ignored = Mockito.mockConstruction(ByteArrayOutputStream.class, (bosMock, _) -> doReturn(UML_PNG).when(bosMock).toByteArray())) {
-            try (var ignored2 = Mockito.mockConstruction(SourceStringReader.class, (readerMock, _) -> doReturn(description).when(readerMock).outputImage(any(), any()))) {
-                final var paramMap = new LinkedMultiValueMap<String, String>();
-                paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
-                final var pngResponse = request.getPng("/api/programming/plantuml/png", HttpStatus.OK, paramMap);
-                assertThat(pngResponse).isEqualTo(UML_PNG);
-            }
+        // Mock the method outputImage, so that it simply writes the expected value into the byte array output stream
+        Answer<DiagramDescription> answer = invocation -> {
+            ByteArrayOutputStream bos = invocation.getArgument(0);
+            bos.write(UML_PNG);
+            return description;
+        };
+        try (var ignored = Mockito.mockConstruction(SourceStringReader.class, (readerMock, _) -> when(readerMock.outputImage(any(), any())).then(answer))) {
+            final var paramMap = new LinkedMultiValueMap<String, String>();
+            paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
+            final var pngResponse = request.getPng("/api/programming/plantuml/png", HttpStatus.OK, paramMap);
+            assertThat(pngResponse).isEqualTo(UML_PNG);
         }
     }
 

@@ -75,7 +75,7 @@
                 "."
               ],
               "sass": {
-                "silenceDeprecations": ["color-functions", "global-builtin", "import"]
+                "silenceDeprecations": ["color-functions", "global-builtin", "import", "if-function"]
               }
             },
             "assets": [
@@ -208,7 +208,7 @@
         "test": {
           "builder": "@angular-builders/jest:run",
           "options": {
-            "configPath": "jest.config.js"
+            "zoneless": false
           }
         },
         "lint": {

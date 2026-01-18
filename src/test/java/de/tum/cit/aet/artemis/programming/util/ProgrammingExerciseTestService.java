@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExpo
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -1652,6 +1654,8 @@ public class ProgrammingExerciseTestService {
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
+
+        waitForZipFileToBeCompleteElseFail(zipFile);
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
@@ -1692,6 +1696,40 @@ public class ProgrammingExerciseTestService {
         FileUtils.delete(zipFile);
     }
 
+    /**
+     * Waits for a zip file to be fully written to disk by validating its structure.
+     * <b>This is critical for slow CI environments where the file might exist but still be in the process of being written.</b>
+     * The method validates the ZIP by attempting to open it, which checks for the End of Central Directory Record (EOCD)
+     * that is written last in ZIP files.
+     *
+     * @param zipFile the zip file to wait for
+     * @throws InterruptedException if the thread is interrupted while waiting
+     */
+    private void waitForZipFileToBeCompleteElseFail(File zipFile) throws InterruptedException {
+        final int maxAttempts = 20;
+        final int waitTimeMs = 500;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (!zipFile.exists()) {
+                log.debug("Zip file does not exist yet, waiting... (attempt {}/{})", attempt, maxAttempts);
+                Thread.sleep(waitTimeMs);
+                continue;
+            }
+
+            // Try to open the ZIP file - this validates the complete structure including EOCD
+            try (var ignored = new ZipFile(zipFile)) {
+                log.info("Zip file is valid and complete after {} attempts (size: {} bytes)", attempt, zipFile.length());
+                return;
+            }
+            catch (IOException exception) {
+                log.debug("Zip file not yet valid (attempt {}/{}): {}", attempt, maxAttempts, exception.getMessage());
+                Thread.sleep(waitTimeMs);
+            }
+        }
+
+        fail("Zip file is not complete after " + maxAttempts + " attempts (final size: " + zipFile.length() + " bytes)");
+    }
+
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
@@ -1705,6 +1743,8 @@ public class ProgrammingExerciseTestService {
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
+
+        waitForZipFileToBeCompleteElseFail(zipFile);
 
         // Recursively unzip the exported file, to make sure there is no erroneous content
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
