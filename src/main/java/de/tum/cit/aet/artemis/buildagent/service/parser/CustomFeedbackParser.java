@@ -58,7 +58,8 @@ public final class CustomFeedbackParser {
         List<LocalCITestJobDTO> toAddFeedbackTo = feedback.successful() ? successfulTests : failedTests;
         // Truncate feedback message if it exceeds maximum length to avoid polluting the network or database with too long messages
         final var truncatedFeedbackMessage = truncateFeedbackMessage(feedback.getMessage());
-        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), List.of(truncatedFeedbackMessage)));
+        // Custom feedback doesn't have a classname, so we pass null
+        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), null, List.of(truncatedFeedbackMessage)));
     }
 
     /**

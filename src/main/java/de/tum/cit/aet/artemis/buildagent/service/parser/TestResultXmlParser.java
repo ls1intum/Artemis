@@ -162,10 +162,10 @@ public class TestResultXmlParser {
             if (failure != null) {
                 // Truncate feedback message if it exceeds maximum length to avoid polluting the network or database with too long messages
                 final var truncatedFeedbackMessage = truncateFeedbackMessage(failure.extractMessage());
-                failedTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of(truncatedFeedbackMessage)));
+                failedTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), testCase.classname(), List.of(truncatedFeedbackMessage)));
             }
             else {
-                successfulTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of()));
+                successfulTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), testCase.classname(), List.of()));
             }
         }
 
@@ -204,8 +204,9 @@ public class TestResultXmlParser {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
-            @JacksonXmlProperty(localName = "error") Failure error, @JacksonXmlProperty(localName = "skipped") Skip skipped) {
+    record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(isAttribute = true, localName = "classname") String classname,
+            @JacksonXmlProperty(localName = "failure") Failure failure, @JacksonXmlProperty(localName = "error") Failure error,
+            @JacksonXmlProperty(localName = "skipped") Skip skipped) {
 
         private boolean isSkipped() {
             return skipped != null;
