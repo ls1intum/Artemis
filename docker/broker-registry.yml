@@ -5,7 +5,7 @@
 services:
     jhipster-registry:
         container_name: artemis-jhipster-registry
-        image: docker.io/jhipster/jhipster-registry:v7.4.0
+        image: docker.io/jhipster/jhipster-registry:v7.5.0
         pull_policy: missing
         volumes:
             - ./registry:/central-config
