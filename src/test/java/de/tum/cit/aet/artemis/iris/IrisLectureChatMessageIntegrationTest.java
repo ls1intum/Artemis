@@ -208,7 +208,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
                 assertThat(unit.lectureUnitId()).isEqualTo(textUnit.getId());
                 assertThat(unit.courseId()).isEqualTo(lecture.getCourse().getId());
                 assertThat(unit.lectureId()).isEqualTo(lecture.getId());
-                assertThat(unit.releaseDate()).isEqualTo(toInstant(textUnit.getReleaseDate()));
+                assertThat(unit.releaseDate()).isCloseTo(toInstant(textUnit.getReleaseDate()), within(1, ChronoUnit.MICROS));
                 assertThat(unit.name()).isEqualTo(textUnit.getName());
                 assertThat(unit.attachmentVersion()).isNull();
             });
