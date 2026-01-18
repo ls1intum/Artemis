@@ -135,12 +135,11 @@ Ensure that Weaviate is running before starting Artemis. Artemis will connect to
 
 ### Port Conflicts
 
-If port 8001 or 50051 is already in use, you can modify the ports in `docker/weaviate.yml`:
+If port 8001 or 50051 is already in use, create or edit `docker/.env` (which is gitignored) and set custom ports:
 
-```yaml
-ports:
-  - "8002:8001"  # Map to different host port
-  - "50052:50051"
+```bash
+WEAVIATE_REST_PORT=8002
+WEAVIATE_GRPC_PORT=50052
 ```
 
 Remember to update the Pyris configuration accordingly.
