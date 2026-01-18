@@ -207,6 +207,12 @@ data-exports/
 /src/main/webapp/i18n/*.json
 
 ######################
+# TypeScript output (should go to build/, but gitignore as safeguard)
+######################
+/src/main/webapp/**/*.js
+/src/main/webapp/**/*.js.map
+
+######################
 # Artemis resources
 ######################
 /src/main/resources/config/application-local*.yml
