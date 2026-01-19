@@ -100,18 +100,18 @@ jobs:
           TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
 
           echo "Executing tests for modules: $CHANGED_MODULES"
-          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
+          ./gradlew --console=plain --continue test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
           exit 0
         fi
 
         echo "Executing all tests"
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+        ./gradlew --console=plain --continue test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+        ./gradlew --console=plain --continue test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v5
