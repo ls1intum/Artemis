@@ -32,6 +32,8 @@ node supporting_scripts/code-coverage/pr-coverage.mjs
 | Option | Description |
 |--------|-------------|
 | `--base-branch <branch>` | Base branch to compare against (default: `origin/develop`) |
+| `--client-modules <modules>` | Comma-separated list of client modules to test (overrides auto-detection) |
+| `--server-modules <modules>` | Comma-separated list of server modules to test (overrides auto-detection) |
 | `--skip-tests` | Skip running tests, use existing coverage data |
 | `--client-only` | Only run client tests |
 | `--server-only` | Only run server tests |
@@ -69,10 +71,14 @@ npm run coverage:pr -- --verbose
 1. **Detect changed files**: Uses `git diff` to find files changed compared to the base branch
 2. **Identify affected modules**: Extracts module names from file paths (e.g., `core`, `exam`, `programming`)
 3. **Run module tests**:
+   - Some client modules use **Vitest** (e.g., `fileupload`, `assessment`, `lecture`, `quiz`, `text`, `tutorialgroup`, `lti`, `modeling`, `iris`, `buildagent`, and parts of `core`)
+   - Other client modules use **Jest**
+   - The script automatically detects which framework each module uses based on `vitest.config.ts`
    - Client: Runs `npm run prebuild && npx ng test --coverage --test-path-pattern=...` for affected modules
    - Server: Runs `./gradlew test -DincludeModules=<modules> jacocoTestReport`
 4. **Parse coverage reports**:
-   - Client: Reads `build/test-results/coverage-summary.json` (Jest output)
+   - Client (Jest): Reads `build/test-results/jest/coverage-summary.json`
+   - Client (Vitest): Reads `build/test-results/vitest/coverage/coverage-summary.json`
    - Server: Reads JaCoCo XML reports from `build/reports/jacoco/<module>/jacocoTestReport.xml`
 5. **Generate report**: Creates a Markdown table with coverage percentages
 
@@ -135,7 +141,8 @@ The following files are automatically excluded from coverage reporting (they can
 ### "Coverage data not found"
 
 - Make sure tests have been run with coverage enabled
-- For client: Check that `build/test-results/coverage-summary.json` exists
+- For client (Jest): Check that `build/test-results/jest/coverage-summary.json` exists
+- For client (Vitest): Check that `build/test-results/vitest/coverage/coverage-summary.json` exists
 - For server: Check that `build/reports/jacoco/<module>/jacocoTestReport.xml` exists
 
 ### Tests are failing

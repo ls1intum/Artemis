@@ -1114,7 +1114,7 @@ function buildClientCoverageTable(clientFiles, options) {
 /**
  * Build coverage table for server files
  */
-function buildServerCoverageTable(serverFiles, serverModules, options) {
+function buildServerCoverageTable(serverFiles, options) {
     if (Object.keys(serverFiles).length === 0) {
         return null;
     }
@@ -1258,7 +1258,7 @@ async function main() {
     }
 
     if (!options.clientOnly) {
-        const serverTable = buildServerCoverageTable(serverFiles, categorized.serverModules, options);
+        const serverTable = buildServerCoverageTable(serverFiles, options);
         if (serverTable) {
             result += `#### Server\n\n${serverTable}\n`;
         }

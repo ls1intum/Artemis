@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
       pull-requests: write
       actions: read
 
@@ -59,7 +60,7 @@ jobs:
 
       - name: Download Jest coverage
         if: steps.pr.outputs.found == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Jest Coverage Summary
           path: build/test-results/jest
@@ -69,7 +70,7 @@ jobs:
 
       - name: Download Vitest coverage
         if: steps.pr.outputs.found == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage
@@ -79,7 +80,7 @@ jobs:
 
       - name: Download Server coverage
         if: steps.pr.outputs.found == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: Server Coverage XML
           path: build/reports/jacoco
