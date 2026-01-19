@@ -29,6 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -47,6 +48,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
+        ButtonComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -63,6 +65,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly documentationType: DocumentationType = 'Exams';
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     exam: Exam;
     course: Course;
@@ -110,6 +114,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
                 this.course = data.course;
                 this.exam.course = data.course;
+
+                // Prefill course name with course title for new exams
+                if (!this.exam.id && !this.exam.courseName && this.course.title) {
+                    this.exam.courseName = this.course.title;
+                }
 
                 if (!this.exam.startText) {
                     this.exam.startText = this.examDefaultStartText;
@@ -352,6 +361,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
+        const examValidGracePeriod = this.isValidGracePeriod;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
@@ -359,18 +369,22 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             examMaxPointsValid &&
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
-            examValidNumberOfExercises
+            examValidNumberOfExercises &&
+            examValidGracePeriod
         );
     }
 
     /**
      * Returns a boolean indicating whether the exam's number of exercises is valid.
-     * The number of exercises is valid if it's not set, or if it's at least 1.
+     * The number of exercises is valid if it's not set, or if it's between 1 and 100.
      *
      * @returns {boolean} `true` if the exam's number of exercises is valid, `false` otherwise.
      */
     get isValidNumberOfExercises(): boolean {
-        return this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null || this.exam.numberOfExercisesInExam! >= 1;
+        if (this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null) {
+            return true;
+        }
+        return this.exam.numberOfExercisesInExam >= 1 && this.exam.numberOfExercisesInExam <= 100;
     }
 
     /**
@@ -401,7 +415,20 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidMaxPoints(): boolean {
-        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0;
+        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0 && this.exam?.examMaxPoints <= 9999;
+    }
+
+    /**
+     * Returns a boolean indicating whether the exam's grace period is valid.
+     * The grace period is valid if it's not set, or if it's between 0 and 3600 seconds.
+     *
+     * @returns {boolean} `true` if the exam's grace period is valid, `false` otherwise.
+     */
+    get isValidGracePeriod(): boolean {
+        if (this.exam.gracePeriod === undefined || this.exam.gracePeriod === null) {
+            return true;
+        }
+        return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
     }
 
     /**
@@ -467,13 +494,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
+     * Maximum working time in seconds (30 days).
+     */
+    readonly maxWorkingTimeSeconds = 2592000;
+
+    /**
      * Validates the WorkingTime.
-     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window
-     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
+     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
+     * and must not exceed 30 days (2592000 seconds).
+     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
+     * and must not exceed 30 days (2592000 seconds).
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
+                return false;
+            }
+            // Check 30-day limit
+            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
                 return false;
             }
             if (this.exam.startDate && this.exam.endDate) {
@@ -482,9 +520,23 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return false;
         }
         if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
+            // Check 30-day limit for real exams as well
+            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
+                return false;
+            }
             return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
         }
         return false;
+    }
+
+    /**
+     * Returns true if the working time exceeds the maximum allowed limit of 30 days.
+     */
+    get isWorkingTimeTooHigh(): boolean {
+        if (this.exam.workingTime === undefined || this.exam.workingTime === null) {
+            return false;
+        }
+        return this.exam.workingTime > this.maxWorkingTimeSeconds;
     }
 
     get isValidPublishResultsDate(): boolean {
@@ -551,6 +603,18 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return (
             warningForInstructionsText + readCarefullyText + workOnYourOwnText + checkForPlagiarismText + programmingSubmissionText + submissionPeriodText + workingInstructionText
         );
+    }
+
+    /**
+     * Returns the appropriate translation key for the save button title.
+     *
+     * If the exam is being imported, the title reflects an import action;
+     * otherwise, it reflects a standard save action.
+     *
+     * @returns {string} The translation key for the save button title.
+     */
+    get saveTitle(): string {
+        return this.isImport ? 'entity.action.import' : 'entity.action.save';
     }
 }
 

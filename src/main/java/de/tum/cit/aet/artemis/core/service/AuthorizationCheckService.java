@@ -393,8 +393,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
-                || isAdmin(user);
+        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user)
+                || isSuperAdmin(user);
     }
 
     /**
@@ -468,6 +468,7 @@ public class AuthorizationCheckService {
     public void checkHasAtLeastRoleInCourseElseThrow(@NonNull Role role, @NonNull Course course, @Nullable User user) {
         // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
         Consumer<User> consumer = switch (role) {
+            case SUPER_ADMIN -> this::checkIsSuperAdminElseThrow;
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
             case EDITOR -> userOrNull -> checkIsAtLeastEditorInCourseElseThrow(course, userOrNull);
@@ -716,7 +717,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAdmin() {
-        return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority());
+        return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority()) || SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
     }
 
     /**
@@ -730,7 +731,7 @@ public class AuthorizationCheckService {
         if (user == null) {
             return isAdmin();
         }
-        return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
+        return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY) || user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
     }
 
     /**
@@ -751,6 +752,55 @@ public class AuthorizationCheckService {
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {
         if (!isAdmin(user)) {
+            throw new AccessForbiddenException();
+        }
+    }
+
+    /**
+     * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
+     * Preferably use the method isSuperAdmin(user) below
+     * <p>
+     * Checks if the currently logged-in user is a super admin user
+     *
+     * @return true, if user is super admin, otherwise false
+     */
+    @CheckReturnValue
+    public boolean isSuperAdmin() {
+        return SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
+    }
+
+    /**
+     * Checks if the passed user is a super admin user
+     *
+     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
+     * @return true, if user is super admin, otherwise false
+     */
+    @CheckReturnValue
+    public boolean isSuperAdmin(@Nullable User user) {
+        if (user == null) {
+            return isSuperAdmin();
+        }
+        return user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
+    }
+
+    /**
+     * Checks if the passed user is a super admin user
+     *
+     * @param login the login of the user that needs to be checked
+     * @return true, if user is super admin, otherwise false
+     */
+    @CheckReturnValue
+    public boolean isSuperAdmin(@NonNull String login) {
+        return userRepository.isSuperAdmin(login);
+    }
+
+    /**
+     * Checks if the passed user is a super admin user. Throws an AccessForbiddenException in case the user is not a super admin
+     *
+     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
+     **/
+    public void checkIsSuperAdminElseThrow(@Nullable User user) {
+        if (!isSuperAdmin(user)) {
             throw new AccessForbiddenException();
         }
     }
@@ -820,6 +870,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInCourse(Role role, long courseId) {
         return switch (role) {
+            case SUPER_ADMIN -> isSuperAdmin();
             case ADMIN -> isAdmin();
             case INSTRUCTOR -> isAtLeastInstructorInCourse(courseId);
             case EDITOR -> isAtLeastEditorInCourse(courseId);
@@ -917,6 +968,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInExercise(Role role, long exerciseId) {
         return switch (role) {
+            case SUPER_ADMIN -> isSuperAdmin();
             case ADMIN -> isAdmin();
             case INSTRUCTOR -> isAtLeastInstructorInExercise(exerciseId);
             case EDITOR -> isAtLeastEditorInExercise(exerciseId);
@@ -1038,6 +1090,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInLectureUnit(Role role, long lectureUnitId) {
         return switch (role) {
+            case SUPER_ADMIN -> isSuperAdmin();
             case ADMIN -> isAdmin();
             case INSTRUCTOR -> isAtLeastInstructorInLectureUnit(lectureUnitId);
             case EDITOR -> isAtLeastEditorInLectureUnit(lectureUnitId);
@@ -1063,6 +1116,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInLecture(Role role, long lectureId) {
         return switch (role) {
+            case SUPER_ADMIN -> isSuperAdmin();
             case ADMIN -> isAdmin();
             case INSTRUCTOR -> isAtLeastInstructorInLecture(lectureId);
             case EDITOR -> isAtLeastEditorInLecture(lectureId);
