@@ -99,7 +99,7 @@ jobs:
                           azureEndpoint !== '' && azureApiKey !== '';
 
                       // Helper function to call Azure OpenAI
-                      async function callAI(systemPrompt, userPrompt) {
+                      async function callAI(systemPrompt, userPrompt, maxTokens = 100) {
                           const response = await fetch(
                               `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
                               {
@@ -114,7 +114,7 @@ jobs:
                                           { role: 'user', content: userPrompt }
                                       ],
                                       temperature: 0,
-                                      max_tokens: 50
+                                      max_tokens: maxTokens
                                   })
                               }
                           );
@@ -129,41 +129,86 @@ jobs:
                           }
 
                           const data = await response.json();
-                          const content = data.choices?.[0]?.message?.content?.trim().toUpperCase();
-                          return content;
+                          return data.choices?.[0]?.message?.content?.trim() || null;
                       }
 
+                      // Store AI suggestions for the comment
+                      const aiSuggestions = [];
+
                       // ============================================================
-                      // AI CHECK 1: Content Quality (gibberish/placeholder detection)
+                      // AI CHECK 1: Motivation Quality
                       // ============================================================
-                      if (hasAiCredentials && motivationSection && descriptionSection) {
+                      if (hasAiCredentials && motivationSection) {
                           try {
-                              const contentCheckPrompt = `You detect gibberish or placeholder text.
+                              const prompt = 'Check if this Motivation text is meaningful. ' +
+                                  'FAIL for gibberish, random characters, placeholder text like TODO or TBD or fill in, or unrelated content. ' +
+                                  'PASS for any real explanation of why a change is needed (brief is OK, imperfect grammar is OK). ' +
+                                  'Reply with PASS if acceptable. Reply with FAIL and one short suggestion if not acceptable.';
 
-                      FAIL examples: "asdf", "xxx", "test test", "lorem ipsum", "TODO", "TBD", "fill this in", "description here", "...", random characters.
+                              console.log('Running motivation quality check...');
+                              const result = await callAI(prompt, motivationSection.substring(0, 500));
+                              console.log(`Motivation check result: ${result}`);
 
-                      PASS examples: Any real sentence about code, bugs, features, or changes. Brevity is OK. Imperfect grammar is OK.
-
-                      Reply only: PASS or FAIL`;
-
-                              const contentInput = `Motivation: ${motivationSection.substring(0, 500)}
-
-                      Description: ${descriptionSection.substring(0, 500)}`;
-
-                              console.log('Running AI content quality check...');
-                              const contentResult = await callAI(contentCheckPrompt, contentInput);
-                              console.log(`Content quality result: ${contentResult}`);
-
-                              if (contentResult === 'FAIL') {
-                                  issues.push('**Motivation or Description** appears to contain placeholder text or gibberish');
+                              if (result && result.toUpperCase().startsWith('FAIL')) {
+                                  issues.push('**Motivation and Context** section needs improvement');
+                                  const suggestion = result.substring(result.indexOf(':') + 1).trim();
+                                  if (suggestion) aiSuggestions.push(suggestion);
                               }
                           } catch (error) {
-                              console.log('Content quality check error (non-blocking):', error.message);
+                              console.log('Motivation check error (non-blocking):', error.message);
                           }
                       }
 
                       // ============================================================
-                      // AI CHECK 2: Visual Changes Detection (only for client changes)
+                      // AI CHECK 2: Description Quality
+                      // ============================================================
+                      if (hasAiCredentials && descriptionSection) {
+                          try {
+                              const prompt = 'Check if this Description text is meaningful. ' +
+                                  'FAIL for gibberish, random characters, placeholder text like TODO or TBD or fill in, or no actual change described. ' +
+                                  'PASS for any real description of what was changed (brief is OK, imperfect grammar is OK). ' +
+                                  'Reply with PASS if acceptable. Reply with FAIL and one short suggestion if not acceptable.';
+
+                              console.log('Running description quality check...');
+                              const result = await callAI(prompt, descriptionSection.substring(0, 500));
+                              console.log(`Description check result: ${result}`);
+
+                              if (result && result.toUpperCase().startsWith('FAIL')) {
+                                  issues.push('**Description** section needs improvement');
+                                  const suggestion = result.substring(result.indexOf(':') + 1).trim();
+                                  if (suggestion) aiSuggestions.push(suggestion);
+                              }
+                          } catch (error) {
+                              console.log('Description check error (non-blocking):', error.message);
+                          }
+                      }
+
+                      // ============================================================
+                      // AI CHECK 3: Testing Steps Quality
+                      // ============================================================
+                      if (hasAiCredentials && testingSection) {
+                          try {
+                              const prompt = 'Check if these Testing Steps are actionable. ' +
+                                  'FAIL for vague instructions like test it or check everything, placeholder text, or no actual steps. ' +
+                                  'PASS for specific actions a tester can follow (does not need to be perfect). ' +
+                                  'Reply with PASS if acceptable. Reply with FAIL and one short suggestion if not acceptable.';
+
+                              console.log('Running testing steps quality check...');
+                              const result = await callAI(prompt, testingSection.substring(0, 500));
+                              console.log(`Testing steps check result: ${result}`);
+
+                              if (result && result.toUpperCase().startsWith('FAIL')) {
+                                  issues.push('**Steps for Testing** section needs more specific instructions');
+                                  const suggestion = result.substring(result.indexOf(':') + 1).trim();
+                                  if (suggestion) aiSuggestions.push(suggestion);
+                              }
+                          } catch (error) {
+                              console.log('Testing steps check error (non-blocking):', error.message);
+                          }
+                      }
+
+                      // ============================================================
+                      // AI CHECK 4: Visual Changes Detection (only for client changes)
                       // ============================================================
                       let hasVisualChanges = false;
 
@@ -175,24 +220,22 @@ jobs:
                                       `${f.filename}:\n${(f.patch || '').substring(0, 300)}`
                                   ).join('\n\n');
 
-                                  const visualCheckPrompt = `You detect if code changes affect the UI visually.
+                                  const prompt = 'Do these code changes affect the UI visually? ' +
+                                      'Answer YES for changes to HTML templates, CSS/SCSS styles, component layouts, or UI elements. ' +
+                                      'Answer NO for TypeScript logic only, variable renames, refactoring, test files, services, or imports. ' +
+                                      'Reply only YES or NO.';
 
-                      VISUAL (answer YES): Changes to HTML templates, CSS/SCSS styles, component layouts, adding/removing UI elements.
+                                  console.log('Running visual changes check...');
+                                  const result = await callAI(prompt, patchSummary, 10);
+                                  console.log(`Visual changes result: ${result}`);
 
-                      NOT VISUAL (answer NO): TypeScript logic only, variable renames, refactoring, test files, services, utility functions, imports.
-
-                      Reply only: YES or NO`;
-
-                              const visualInput = `Files changed:\n${patchSummary}`;
-
-                                  console.log('Running AI visual changes check...');
-                                  const visualResult = await callAI(visualCheckPrompt, visualInput);
-                                  console.log(`Visual changes result: ${visualResult}`);
-
-                                  hasVisualChanges = visualResult === 'YES';
+                                  if (result) {
+                                      hasVisualChanges = result.toUpperCase().startsWith('YES');
+                                  } else {
+                                      hasVisualChanges = null; // Trigger fallback
+                                  }
                               } catch (error) {
                                   console.log('Visual changes check error (non-blocking):', error.message);
-                                  // Fallback to pattern matching
                                   hasVisualChanges = null;
                               }
                           }
@@ -210,6 +253,7 @@ jobs:
                           // Check screenshots if visual changes detected
                           if (hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
                               issues.push('**Screenshots** section is empty but this PR contains visual/UI changes');
+                              aiSuggestions.push('Add screenshots showing the UI before and after your changes');
                           }
                       }
 
@@ -227,14 +271,12 @@ jobs:
                               commentBody += `${index + 1}. ${issue}\n`;
                           });
 
-                          commentBody += `\n### How to Fix\n`;
-                          commentBody += `- Fill in the **Motivation and Context** section explaining why this change is needed\n`;
-                          commentBody += `- Add a clear **Description** of what was changed\n`;
-                          commentBody += `- Provide specific **Steps for Testing** that reviewers can follow\n`;
-                          if (hasClientChanges) {
-                              commentBody += `- Add **Screenshots** if your changes affect the UI\n`;
+                          if (aiSuggestions.length > 0) {
+                              commentBody += `\n### How to Fix\n`;
+                              aiSuggestions.forEach(suggestion => {
+                                  commentBody += `- ${suggestion}\n`;
+                              });
                           }
-                          commentBody += `- Check the relevant checkboxes in the checklist\n`;
 
                           commentBody += `\n---\n`;
                           commentBody += `*This check validates that your PR description follows the [PR template](https://github.com/${owner}/${repo}/blob/develop/.github/PULL_REQUEST_TEMPLATE.md). `;
