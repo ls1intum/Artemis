@@ -1,7 +1,3 @@
----
-title: Server Development
----
-
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
@@ -9,7 +5,7 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 ## General Best Practices
 
-* Always use the least possible access level; prefer private over public (package-private or protected can be used as well).
+* Always use the least possible access level; prefer `private` over `public` (package-private or protected can be used as well).
 * Avoid using `@Transactional` randomly. Transactions can hurt performance, introduce locking/concurrency issues, and add complexity. See: https://codete.com/blog/5-common-spring-transactional-pitfalls/
 * Define a constant if the same value is used more than once. This makes future changes easier.
 * Facilitate code reuse. Move duplicated code to reusable methods. Use Generics where appropriate. IntelliJ can help find and extract duplicates.
@@ -29,17 +25,17 @@ The main application is stored under `/src/main` and separated into modules:
     * config - different configurations (production, development, etc.) for application.
         * liquibase - contains `master.xml` file where all the changelogs from the changelog folder are specified.
                       When you want to do changes to the database, you will need to add a new changelog file here.
-                      To understand how to create new changelog file you can check existing changelog files or read documentation: https://www.liquibase.org/documentation/databasechangelog.html.
+                      To understand how to create a new changelog file you can check existing changelog files or read documentation: https://www.liquibase.org/documentation/databasechangelog.html.
 * java - Artemis Spring Boot application is located here. It contains the following folders:
     * config - different classes for configuring database, Sentry, Liquibase, etc.
     * **domain** - all the entities and data classes are located here (the model of the server application).
     * **dto** - contains Data Transfer Objects (DTOs) that are used to transfer data between the server and the client.
-    * exception - store custom types of exceptions here. We encourage to create custom exceptions to help other developers understand what problem exactly happened.
+    * exception - store custom types of exceptions here. We encourage it to create custom exceptions to help other developers understand what problem exactly happened.
                   This can also be helpful when we want to provide specific exception handling logic.
-    * **repository** - used to access or change objects in the database. There are several techniques to query database: named queries, queries with SpEL expressions and Entity Graphs.
+    * **repository** - used to access or change objects in the database. There are several techniques to query a database: named queries, queries with SpEL expressions and Entity Graphs.
     * security - contains different POJOs (simple classes that don't implement/extend any interface/class and don't have annotations) and component classes related to security.
     * **service** - represents the controller of the server application. Add the application logic here. Retrieve and change objects using repositories.
-    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here, but do not include complex application logic. For websockets, use the `MessagingTemplate` to push small data to the client or to notify the client about events.
+    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here but do not include complex application logic. For websockets, use the `MessagingTemplate` to push small data to the client or to notify the client about events.
 
 ### Naming convention
 
@@ -82,11 +78,11 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 
 ### Variables and methods declaration
 
-* Encapsulate the code you feel might change in future.
+* Encapsulate the code you feel might change in the future.
 * Make variables and methods private by default and increase access step by step by changing them from a private to package-private or protected first and not public right away.
 * Classes, methods or functions should be open for extension and closed for modification (open closed design principle).
-* Program for the interface and not for implementation, you should use interface type on variables, return types of a method or argument type of methods. Just like using SuperClass type to store object rather using SubClass.
-* The use of interface is to facilitate polymorphism, a client should not implement an interface method if its not needed.
+* Program for the interface and not for implementation, you should use an interface type on variables, return types of a method or argument type of methods. Just like using SuperClass type to store an object rather using SubClass.
+* The use of interface is to facilitate polymorphism, a client should not implement an interface method if it's not needed.
 * Type inference of variables - var vs. actual type:
     * Variables with primitive types like int, long, or also String should be defined with the actual type by default.
     * Types which share similar functionality but require different handling should also be explicitly stated, e.g. Lists and Sets.
@@ -96,21 +92,21 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 
 * Default packages are not allowed. It can cause particular problems for Spring Boot applications that use the `@ComponentScan`, `@EntityScan` or `@SpringBootApplication` annotations since every class from every jar is read.
 * All variables in the class should be declared at the top of the class.
-* If a variable is used only in one method then it would be better to declare it as a local variable of this method.
+* If a variable is used only in one method, then it would be better to declare it as a local variable of this method.
 * Methods should be declared in the same order as they are used (from top to bottom).
 * More important methods should be declared at the top of a class and minor methods at the end.
 
 ### Comments
 
-* Add JavaDoc and inline comments to clarify code and intent.
-* Use AI tools to assist, but always review for accuracy.
+* Add Javadoc and inline comments to clarify code and intent.
+* Use AI tools to assist but always review for accuracy.
 * Comments should be in English and add value.
 
 ### Keep it simple and stupid
 
 * Don't write complex code.
 * Don't write code when you are tired or in a bad mood.
-* Optimization vs Readability: always write code that is simple to read and which will be understandable for developers. Because the time and resources spent on hard-to-read code cost much more than what we gain through optimization.
+* Optimization vs. Readability: always write code that is simple to read and which will be understandable for developers. Because the time and resources spent on hard-to-read code cost much more than what we gain through optimization.
 * Commit messages should describe both what the commit changes and how it does it.
 * ARCHITECTURE FIRST: writing code without thinking of the system's architecture is useless, in the same way as dreaming about your desires without a plan of achieving them.
 
@@ -122,16 +118,16 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Write performant queries that can also deal with more than 1000 objects in a reasonable time.
 * Prefer one query that fetches additional data instead of many small queries, but don't overdo it. A good rule of thumb is to query not more than 3 associations at the same time.
 * Think about lazy vs. eager fetching when modeling the data types. Generally avoid `fetch = FetchType.EAGER`.
-* Do NOT use nested queries, because those hava a bad performance, in particular for many objects.
+* Do NOT use nested queries, because those have a bad performance, in particular for many objects.
 * Simple datatypes: immediately think about whether `null` should be supported as additional state or not. In most cases it is preferable to avoid `null`.
-* Use `Datetime` instead of `Timestamp`. `Datetime` occupies more storage space compared to `Timestamp`, however it covers a greater date range that justifies its use in the long run. Always use `datetime(3)`
+* Use `Datetime` instead of `Timestamp`. `Datetime` occupies more storage space compared to `Timestamp`, however, it covers a greater date range that justifies its use in the long run. Always use `datetime(3)`
 
 For detailed database guidelines, please refer to the [Database Guidelines](/developer/guidelines/database) page.
 
 ### File handling
 
 * Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
-* Do not deal with File.separator manually. Instead use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
+* Do not deal with `File.separator` manually. Instead, use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
 * Existing paths can easily be appended with a new folder using `existingPath.resolve(subfolder)`
 
 ### Proper annotation of SQL query parameters
@@ -166,7 +162,7 @@ The string name inside must match the name of the variable exactly!
 
 ### SQL statement formatting
 
-We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
+We prefer to write SQL statements all in the upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
 
 ```java
 @Query("""
@@ -211,13 +207,13 @@ you should use:
 long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 ```
 
-Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
+Functionally, both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
 ### Criteria Builder
 
 The Criteria Builder is a powerful feature in JPA/Hibernate that allows you to construct type-safe, dynamic queries in Java code, rather than using string-based JPQL or SQL.
 Use Criteria Builder when you need to build queries dynamically at runtime, require type safety, or want to avoid hardcoding query strings.
-It is especially useful for complex search/filtering scenarios where query structure depends on user input or other runtime conditions.
+It is especially useful for complex search/filtering scenarios where the query structure depends on user input or other runtime conditions.
 
 For more details, please visit the [Criteria Builder Guidelines](/developer/guidelines/criteria-builder) page.
 
@@ -239,9 +235,9 @@ It gets activated when a particular jar file is detected on the classpath. The s
 
 ### Dependency injection
 
-* Some of you may argue with this, but by favoring constructor injection you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
-* Use setter based DI only for optional dependencies.
-* Avoid circular dependencies, try constructor and setter based DI for such cases.
+* Some of you may argue with this, but by favoring constructor injection, you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
+* Use setter-based DI only for optional dependencies.
+* Avoid circular dependencies, try constructor and setter-based DI for such cases.
 
 
 ## REST API & Controllers
@@ -258,19 +254,19 @@ It gets activated when a particular jar file is detected on the classpath. The s
 Route naming conventions:
 
 * Always use kebab-case (e.g. ".../exampleAssessment" → ".../example-assessment").
-* The routes should follow the general structure list-entity > entityId > sub-entity ... (e.g. "exercises/{exerciseId}/participations").
+* The routes should follow the general structure list-entity > entityId > sub-entity ... (e.g. `exercises/{exerciseId}/participations`).
 * Use plural for a route's list-entities (e.g. "exercises/..."), use singular for a singleton (e.g. ".../assessment"), use verbs for naming remote methods on the server (e.g. ".../submit").
-* Specify the key entity at the end of the route (e.g. "text-editor/participations/{participationId}" should be changed to "participations/{participationId}/text-editor").
+* Specify the key entity at the end of the route (e.g. `text-editor/participations/{participationId}` should be changed to `participations/{participationId}/text-editor`).
 * Use consistent routes that start with `courses`, `exercises`, `participations`, `exams` or `lectures` to simplify access control. Do not start routes with other entity names.
-* When defining a new route, all subroutes should be addressable as well, e.g. your new route is "exercises/{exerciseId}/statistics", then both "exercises/{exerciseId}" and "exercises" should be addressable.
-* If you want an alternative representation of the entity that e.g. sends extra data needed for assessment, then specify the reason for this alternative route at the end of the route, for example "participations/{participationId}/for-assessment".
+* When defining a new route, all subroutes should be addressable as well, e.g. your new route is `exercises/{exerciseId}/statistics`, then both `exercises/{exerciseId}` and `exercises` should be addressable.
+* If you want an alternative representation of the entity that e.g. sends extra data needed for assessment, then specify the reason for this alternative route at the end of the route, for example `participations/{participationId}/for-assessment`.
 
 Additional notes on the controller methods:
 
-* The REST Controllers route should end with a tailing "/" and not start with a "/" (e.g. "api/"), the individual endpoints routes should not start and not end with a "/" (e.g. "exercises/{exerciseId}").
+* The REST Controllers route should end with a tailing "/" and not start with a "/" (e.g. "api/"), the individual endpoints routes should not start and not end with a "/" (e.g. `exercises/{exerciseId}`).
 * Use ...ElseThrow alternatives of all Repository and AuthorizationCheck calls whenever applicable, this increases readability (e.g. `findByIdElseThrow(...)` instead of `findById(...)` and then checking for `null`).
 * POST should return the newly created entity.
-* POST should be used to trigger remote methods (e.g. ".../{participationId}/submit" should be triggered with a POST).
+* POST should be used to trigger remote methods (e.g. `.../{participationId}/submit` should be triggered with a POST).
 * Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
     * Always use the Authorization enforcement logic described down below to only allow certain roles to access the method.
     * Perform additional security checks using the `AuthorizationCheckService`.
@@ -283,7 +279,7 @@ Additional notes on the controller methods:
 * Always use different response status codes to notify the client about errors on the server, e.g.:
     * Forbidden - the user is not authorized to access the controller.
     * Bad Request - the request was wrong.
-    * Not Found - can't find the requested data or it should be not accessible yet.
+    * Not Found - can't find the requested data, or it should be not accessible yet.
 
 ### Use DTOs for Efficient Data Transfer
 
@@ -313,7 +309,7 @@ Hence, entity objects must not be included in DTOs. This is a bad example for a 
 public record PostDTO(Post post, MetisCrudAction action) {}
 ```
 
-This is a good example for a DTO, because it only contains very little information in the form of boxed primitive types and an enum value:
+This is a good example for a DTO because it only contains very little information in the form of boxed primitive types and an enum value:
 
 ```java
 public record GradeDTO(String gradeName, Boolean isPassingGrade, GradeType gradeType) {}
@@ -327,7 +323,7 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
     1.  `AllowedTools(ToolTokenType.__)`, which ensures that tool-based requests can only access specific endpoints following the Principle of Least Privilege.
     2. `EnforceRoleInResource` (e.g. `EnforceAtLeastInstructorInCourse`) annotations are responsible for blocking users with *wrong or missing authorization roles* without querying the database.
     3. If necessary, these annotations check for access rights to individual resources within the database via light-weight queries.
-    4. Currently we offer the following annotations: `EnforceRoleInCourse` and `EnforceRoleInExercise`
+    4. Currently, we offer the following annotations: `EnforceRoleInCourse` and `EnforceRoleInExercise`
 2. Explicit authorization checks (which operate in two steps):
     1. `EnforceAtLeastRole` (e.g. `EnforceAtLeastInstructor`) annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
     2. The `AuthorizationCheckService` is responsible for checking access rights to individual resources by querying the database. *Important*: these checks have to be performed explicitly.
@@ -341,12 +337,12 @@ The table contains all annotations for the corresponding minimum role including 
 
 | **Minimum Role** | **Endpoint Annotation**                | **Path Prefix**          | **Package**          |
 |------------------|----------------------------------------|--------------------------|----------------------|
-| ADMIN            | @EnforceAdmin                          | /api/{module}/admin/     | {module}.web.admin   |
-| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/{module}/           | {module}.web         |
-| EDITOR           | @EnforceAtLeastEditor                  | /api/{module}/           | {module}.web         |
-| TA               | @EnforceAtLeastTutor                   | /api/{module}/           | {module}.web         |
-| USER             | @EnforceAtLeastStudent                 | /api/{module}/           | {module}.web         |
-| ANONYMOUS        | @EnforceNothing                        | /api/{module}/public/    | {module}.web.open    |
+| ADMIN            | @EnforceAdmin                          | `/api/{module}/admin/`   | `{module}.web.admin` |
+| INSTRUCTOR       | @EnforceAtLeastInstructor              | `/api/{module}/`         | `{module}.web`       |
+| EDITOR           | @EnforceAtLeastEditor                  | `/api/{module}/`         | `{module}.web`       |
+| TA               | @EnforceAtLeastTutor                   | `/api/{module}/`         | `{module}.web`       |
+| USER             | @EnforceAtLeastStudent                 | `/api/{module}/`         | `{module}.web`       |
+| ANONYMOUS        | @EnforceNothing                        | `/api/{module}/public/`  | `{module}.web.open`  |
 
 If, for some reason, you need to deviate from these rules, use `@ManualConfig`. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
@@ -365,7 +361,7 @@ To enforce minimal access for external tools, Artemis provides an additional ann
 This annotation is used to restrict Tool Tokens to certain endpoints.
 A Tool Token is a normal jwt token with the claim `"tools": "TOOLTYPE"` specified.
 
-**How it works?**
+**How does it work?**
 
 * **Requests without a tool claim** (e.g., requests from users in a browser) can access all endpoints as long as they meet role-based authorization rules. So they are not restricted by the `@AllowedTools` annotation.
 * **Requests with a tool claim** (e.g., `{"tool": "SCORPIO"}` in the JWT) can only access endpoints annotated with `@AllowedTools(ToolTokenType.__)` (e.g. `@AllowedTools(ToolTokenType.SCORPIO)`).

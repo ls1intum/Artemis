@@ -20,7 +20,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Server Guidelines',
-                    items: ['guidelines/server', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
+                    items: ['guidelines/server-development', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
                 },
                 {
                     type: 'category',
