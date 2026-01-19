@@ -179,7 +179,10 @@ configurations.configureEach {
     exclude group: "org.apfloat", module: "apfloat"
     exclude group: "xom", module: "xom"
 
+    // the following two outdated commons libraries should not be used anymore due to security vulnerabilities
+    // there are newer versions available: commons-configuration2 and commons-lang3 which are actively maintained
     exclude group: "commons-configuration", module: "commons-configuration"
+    exclude group: "commons-lang", module: "commons-lang"
 }
 
 dependencies {
