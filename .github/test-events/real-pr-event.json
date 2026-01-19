@@ -1,0 +1,22 @@
+{
+  "action": "opened",
+  "pull_request": {
+    "number": 11989,
+    "draft": false,
+    "user": {
+      "login": "test-user"
+    },
+    "base": {
+      "ref": "develop"
+    },
+    "head": {
+      "sha": "73b3d098f8"
+    }
+  },
+  "repository": {
+    "owner": {
+      "login": "ls1intum"
+    },
+    "name": "Artemis"
+  }
+}

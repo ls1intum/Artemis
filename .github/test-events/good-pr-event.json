@@ -1,0 +1,23 @@
+{
+  "action": "opened",
+  "pull_request": {
+    "number": 99998,
+    "draft": false,
+    "user": {
+      "login": "test-user"
+    },
+    "base": {
+      "ref": "develop"
+    },
+    "head": {
+      "sha": "def456"
+    },
+    "body": "### Checklist\n#### General\n- [x] I tested all changes locally\n- [x] I followed the naming conventions\n\n### Motivation and Context\nThe current login page does not show proper error messages when authentication fails, causing confusion for users who mistype their password.\n\n### Description\nThis PR adds descriptive error messages to the login form. When authentication fails, users now see specific messages like \"Invalid password\" or \"User not found\" instead of a generic error.\n\n### Steps for Testing\n1. Log in as any user\n2. Navigate to the login page\n3. Enter an invalid password\n4. Verify that the error message says \"Invalid password\"\n5. Enter a non-existent username\n6. Verify that the error message says \"User not found\"\n\n### Screenshots\nN/A - no visual changes, only text content"
+  },
+  "repository": {
+    "owner": {
+      "login": "ls1intum"
+    },
+    "name": "Artemis"
+  }
+}

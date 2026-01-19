@@ -31,22 +31,23 @@ jobs:
 
                       console.log(`Validating PR #${prNumber} description`);
 
-                      // Fetch PR data
-                      const { data: pr } = await github.rest.pulls.get({
-                          owner,
-                          repo,
-                          pull_number: prNumber
-                      });
+                      // Use body from event payload (available in pull_request_target events)
+                      const body = context.payload.pull_request.body || '';
 
-                      const body = pr.body || '';
-
-                      // Fetch changed files
-                      const { data: files } = await github.rest.pulls.listFiles({
-                          owner,
-                          repo,
-                          pull_number: prNumber,
-                          per_page: 100
-                      });
+                      // Fetch changed files (needed for visual changes detection)
+                      let files = [];
+                      try {
+                          const response = await github.rest.pulls.listFiles({
+                              owner,
+                              repo,
+                              pull_number: prNumber,
+                              per_page: 100
+                          });
+                          files = response.data;
+                      } catch (error) {
+                          console.log('Could not fetch changed files:', error.message);
+                          // Continue without file analysis - AI checks for visual changes will be skipped
+                      }
 
                       const changedFiles = files.map(f => f.filename);
                       const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
@@ -284,12 +285,16 @@ jobs:
                           commentBody += `A complete description helps reviewers understand your changes and speeds up the review process.*`;
 
                           // Post comment
-                          await github.rest.issues.createComment({
-                              owner,
-                              repo,
-                              issue_number: prNumber,
-                              body: commentBody
-                          });
+                          try {
+                              await github.rest.issues.createComment({
+                                  owner,
+                                  repo,
+                                  issue_number: prNumber,
+                                  body: commentBody
+                              });
+                          } catch (commentError) {
+                              console.log('Could not post comment:', commentError.message);
+                          }
 
                           core.setFailed('PR description validation failed');
                       } else {
