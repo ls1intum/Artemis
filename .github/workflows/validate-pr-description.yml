@@ -54,14 +54,14 @@ jobs:
                       const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
                       console.log(`Change types - Client: ${hasClientChanges}`);
 
-                      // Extract sections from PR body
+                      // Extract sections from PR body (supports ## and ### headings)
                       const extractSection = (header) => {
-                          const regex = new RegExp(`###\\s*${header}[\\s\\S]*?(?=###|$)`, 'i');
+                          const regex = new RegExp(`###+\\s*${header}[\\s\\S]*?(?=##|$)`, 'i');
                           const match = body.match(regex);
                           if (!match) return '';
                           // Remove the header line and HTML comments
                           return match[0]
-                              .replace(/###\s*[^\n]+\n?/, '')
+                              .replace(/##+\s*[^\n]+\n?/, '')
                               .replace(/<!--[\s\S]*?-->/g, '')
                               .trim();
                       };
@@ -93,8 +93,9 @@ jobs:
                       }
 
                       // Check if all checkboxes are unchecked (at least some should be checked)
-                      const checkedBoxes = (body.match(/- \[x\]/gi) || []).length;
-                      const uncheckedBoxes = (body.match(/- \[ \]/g) || []).length;
+                      // Supports both - [ ] and * [ ] checkbox styles
+                      const checkedBoxes = (body.match(/[-*] \[x\]/gi) || []).length;
+                      const uncheckedBoxes = (body.match(/[-*] \[ \]/g) || []).length;
                       if (uncheckedBoxes > 0 && checkedBoxes === 0) {
                           issues.push('No checkboxes are checked in the PR description');
                           aiSuggestions.push('Check the boxes that apply to your changes in the Checklist section');
