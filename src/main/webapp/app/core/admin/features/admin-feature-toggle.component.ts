@@ -130,6 +130,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.AtlasAgent]: 'https://ls1intum.github.io/Artemis/admin/artemis-intelligence',
         [FeatureToggle.Memiris]: 'https://ls1intum.github.io/Artemis/admin/extensions-setup#iris--pyris-setup-guide',
         [FeatureToggle.LectureContentProcessing]: 'https://ls1intum.github.io/Artemis/admin/extensions-setup#nebula-setup-guide',
+        [FeatureToggle.RateLimit]: 'https://ls1intum.github.io/Artemis/admin/production-setup/security#rate-limiting',
     };
 
     /** Documentation links for profile-based features */
