@@ -1,7 +1,3 @@
----
-title: Criteria Builder
----
-
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
@@ -11,7 +7,8 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 In order to use Criteria Builder and benefit from Specifications, we need to adjust the Repository.
 
-1. **Metamodel:** The metamodel is used to refer to the columns of a table, in an object-oriented way. For this, each entity needs to have a corresponding metamodel class. (Artemis already fulfills this requirement)
+1. **Metamodel:** The metamodel is used to refer to the columns of a table in an object-oriented way.
+For this, each entity needs to have a corresponding metamodel class. (Artemis already fulfills this requirement)
 
     ```java
     @Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
@@ -30,7 +27,7 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
     }
     ```
 
-2. **JpaSpecificationExecutor:** To execute Specifications and generate SQL statements, we need to extend the JpaSpecificationExecutor interface in our Spring Data JPA Repository.
+2. **JpaSpecificationExecutor:** To execute Specifications and generate SQL statements, we need to extend the `JpaSpecificationExecutor` interface in our Spring Data JPA Repository.
 
     ```java
     @Repository
@@ -183,10 +180,12 @@ Different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin, ...
 Sub-queries are usually fine unless they are dependent sub-queries (also known as [correlated](https://en.wikipedia.org/wiki/Correlated_subquery) sub queries).
 
 1. **Dependent Sub-Query:**
-    In an SQL database query, a correlated sub-query is a sub-query (a query nested inside another query) that uses values from the outer query. But with a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query, e.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
+    In an SQL database query, a correlated sub-query is a sub-query (a query nested inside another query) that uses values from the outer query.
+    But with a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query, e.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
 
 2. **Independent Sub-Query:**
-    An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query. Therefore, an independent sub-query typically only needs to be evaluated once.
+    An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query.
+    Therefore, an independent sub-query typically only needs to be evaluated once.
 
 You can find additional information on dependent sub-queries and how to identify them [here](https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847).
 
@@ -233,7 +232,7 @@ You can find additional information on dependent sub-queries and how to identify
 
             group.on(criteriaBuilder.or(predicates));
 
-            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));          
+            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
 
             return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
         }
