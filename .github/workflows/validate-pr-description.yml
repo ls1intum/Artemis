@@ -1,0 +1,304 @@
+name: Validate PR Description
+
+on:
+    pull_request_target:
+        types: [opened, edited, ready_for_review]
+
+jobs:
+    validate-pr-description:
+        if: github.event.pull_request.draft == false
+        runs-on: ubuntu-latest
+        timeout-minutes: 2
+        permissions:
+            pull-requests: write
+            contents: read
+
+        steps:
+            - name: Validate PR description
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const prNumber = context.payload.pull_request.number;
+                      const owner = context.repo.owner;
+                      const repo = context.repo.repo;
+                      const author = context.payload.pull_request.user.login;
+
+                      console.log(`Validating PR #${prNumber} description`);
+
+                      // Fetch PR data
+                      const { data: pr } = await github.rest.pulls.get({
+                          owner,
+                          repo,
+                          pull_number: prNumber
+                      });
+
+                      const body = pr.body || '';
+
+                      // Fetch changed files
+                      const { data: files } = await github.rest.pulls.listFiles({
+                          owner,
+                          repo,
+                          pull_number: prNumber,
+                          per_page: 100
+                      });
+
+                      const changedFiles = files.map(f => f.filename);
+                      const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
+                      const hasServerChanges = changedFiles.some(f => f.startsWith('src/main/java/'));
+                      const hasTestChanges = changedFiles.some(f =>
+                          f.includes('.spec.ts') ||
+                          f.includes('Test.java') ||
+                          f.startsWith('src/test/')
+                      );
+
+                      console.log(`Change types - Client: ${hasClientChanges}, Server: ${hasServerChanges}, Tests: ${hasTestChanges}`);
+
+                      // Extract sections from PR body
+                      const extractSection = (header) => {
+                          const regex = new RegExp(`###\\s*${header}[\\s\\S]*?(?=###|$)`, 'i');
+                          const match = body.match(regex);
+                          if (!match) return '';
+                          // Remove the header line and HTML comments
+                          return match[0]
+                              .replace(/###\s*[^\n]+\n?/, '')
+                              .replace(/<!--[\s\S]*?-->/g, '')
+                              .trim();
+                      };
+
+                      const motivationSection = extractSection('Motivation and Context');
+                      const descriptionSection = extractSection('Description');
+                      const testingSection = extractSection('Steps for Testing');
+                      const screenshotsSection = extractSection('Screenshots');
+                      const testCoverageSection = extractSection('Test Coverage');
+
+                      // Quick pre-checks - fail fast if sections are obviously empty
+                      const issues = [];
+
+                      if (!motivationSection || motivationSection.length < 10) {
+                          issues.push('**Motivation and Context** section is empty or too brief');
+                      }
+
+                      if (!descriptionSection || descriptionSection.length < 10) {
+                          issues.push('**Description** section is empty or too brief');
+                      }
+
+                      if (!testingSection || testingSection.length < 20) {
+                          issues.push('**Steps for Testing** section is empty or lacks specific steps');
+                      }
+
+                      // Check if all checkboxes are unchecked (at least some should be checked)
+                      const checkedBoxes = (body.match(/- \[x\]/gi) || []).length;
+                      const uncheckedBoxes = (body.match(/- \[ \]/g) || []).length;
+                      if (uncheckedBoxes > 0 && checkedBoxes === 0) {
+                          issues.push('No checkboxes are checked in the PR description');
+                      }
+
+                      // Check test coverage table if tests were modified
+                      if (hasTestChanges) {
+                          const hasTestCoverageTable = testCoverageSection.includes('|') &&
+                              (testCoverageSection.includes('%') || testCoverageSection.includes('Coverage'));
+                          if (!hasTestCoverageTable) {
+                              issues.push('**Test Coverage** table is missing (required when test files are modified)');
+                          }
+                      }
+
+                      // If basic checks pass and we have client changes, use AI to check for visual changes
+                      let aiValidation = null;
+                      const azureEndpoint = '${{ secrets.AZURE_OPENAI_ENDPOINT }}';
+                      const azureApiKey = '${{ secrets.AZURE_OPENAI_API_KEY }}';
+                      const deploymentName = '${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}';
+
+                      if (hasClientChanges && azureEndpoint && azureApiKey && deploymentName &&
+                          azureEndpoint !== '' && azureApiKey !== '') {
+                          try {
+                              // Get file patches for client files to help AI determine if changes are visual
+                              const clientFiles = files.filter(f => f.filename.startsWith('src/main/webapp/'));
+                              const clientPatches = clientFiles.slice(0, 10).map(f => ({
+                                  filename: f.filename,
+                                  patch: (f.patch || '').substring(0, 1000) // Limit patch size
+                              }));
+
+                              const systemPrompt = `You are a PR description validator for the Artemis project. Your task is to validate that a PR description follows the template and contains meaningful content.
+
+                      Analyze the PR description and changed files to determine:
+                      1. Whether the Motivation/Description/Testing sections have actual content (not just placeholders)
+                      2. Whether the changes include VISUAL changes (UI components, styling, layouts, templates) that would require screenshots
+                      3. Whether the testing steps are specific and actionable
+
+                      Non-visual client changes that do NOT require screenshots include:
+                      - Variable/function renames or refactoring
+                      - Logic-only changes (no template/HTML changes)
+                      - TypeScript-only changes without component template modifications
+                      - Test file changes
+                      - Configuration changes
+                      - Pure service/utility changes
+
+                      Visual changes that DO require screenshots include:
+                      - HTML template modifications
+                      - CSS/SCSS styling changes
+                      - Component UI changes
+                      - Layout modifications
+                      - New UI components or views
+
+                      Respond with a JSON object (no markdown, just raw JSON):
+                      {
+                        "isValid": boolean,
+                        "issues": ["list of specific issues found"],
+                        "suggestions": ["list of actionable suggestions to fix issues"],
+                        "hasVisualChanges": boolean,
+                        "reasoning": "brief explanation of your assessment"
+                      }`;
+
+                              const userPrompt = `PR Description:
+                      ${body.substring(0, 4000)}
+
+                      Changed files (${changedFiles.length} total):
+                      ${changedFiles.slice(0, 30).join('\n')}
+
+                      Client file patches:
+                      ${JSON.stringify(clientPatches, null, 2)}
+
+                      Screenshots section content:
+                      ${screenshotsSection || '(empty)'}`;
+
+                              const response = await fetch(
+                                  `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
+                                  {
+                                      method: 'POST',
+                                      headers: {
+                                          'Content-Type': 'application/json',
+                                          'api-key': azureApiKey
+                                      },
+                                      body: JSON.stringify({
+                                          messages: [
+                                              { role: 'system', content: systemPrompt },
+                                              { role: 'user', content: userPrompt }
+                                          ],
+                                          temperature: 0.1,
+                                          max_tokens: 1000
+                                      })
+                                  }
+                              );
+
+                              if (response.ok) {
+                                  const data = await response.json();
+                                  const content = data.choices?.[0]?.message?.content;
+                                  if (content) {
+                                      try {
+                                          // Try to extract JSON from the response
+                                          const jsonMatch = content.match(/\{[\s\S]*\}/);
+                                          if (jsonMatch) {
+                                              aiValidation = JSON.parse(jsonMatch[0]);
+                                              console.log('AI validation result:', JSON.stringify(aiValidation, null, 2));
+                                          }
+                                      } catch (parseError) {
+                                          console.log('Failed to parse AI response as JSON:', parseError.message);
+                                      }
+                                  }
+                              } else if (response.status === 429 || response.status === 503) {
+                                  console.log(`AI service temporarily unavailable (${response.status}), skipping AI validation`);
+                              } else {
+                                  console.log(`AI validation request failed with status ${response.status}`);
+                              }
+                          } catch (error) {
+                              console.log('AI validation error (non-blocking):', error.message);
+                          }
+                      }
+
+                      // Process AI validation results
+                      if (aiValidation) {
+                          if (aiValidation.hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
+                              issues.push('**Screenshots** section is empty but this PR contains visual/UI changes');
+                          }
+                          if (aiValidation.issues && aiValidation.issues.length > 0) {
+                              aiValidation.issues.forEach(issue => {
+                                  if (!issues.includes(issue)) {
+                                      issues.push(issue);
+                                  }
+                              });
+                          }
+                      } else if (hasClientChanges) {
+                          // Fallback: If no AI validation available, check for obvious visual file changes
+                          const visualFilePatterns = ['.html', '.scss', '.css', '.component.ts'];
+                          const hasObviousVisualChanges = changedFiles.some(f =>
+                              visualFilePatterns.some(pattern => f.endsWith(pattern)) &&
+                              !f.includes('.spec.')
+                          );
+                          if (hasObviousVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
+                              issues.push('**Screenshots** section appears empty but this PR modifies client UI files (HTML/SCSS/components)');
+                          }
+                      }
+
+                      // Define the comment marker for identification
+                      const commentMarker = '<!-- pr-description-validator -->';
+
+                      if (issues.length > 0) {
+                          console.log(`Found ${issues.length} issues with PR description`);
+
+                          // Build comment body
+                          let commentBody = `${commentMarker}\n`;
+                          commentBody += `@${author} Your PR description needs attention before it can be reviewed:\n\n`;
+                          commentBody += `### Issues Found\n`;
+                          issues.forEach((issue, index) => {
+                              commentBody += `${index + 1}. ${issue}\n`;
+                          });
+
+                          if (aiValidation?.suggestions && aiValidation.suggestions.length > 0) {
+                              commentBody += `\n### How to Fix\n`;
+                              aiValidation.suggestions.forEach(suggestion => {
+                                  commentBody += `- ${suggestion}\n`;
+                              });
+                          } else {
+                              commentBody += `\n### How to Fix\n`;
+                              commentBody += `- Fill in the **Motivation and Context** section explaining why this change is needed\n`;
+                              commentBody += `- Add a clear **Description** of what was changed\n`;
+                              commentBody += `- Provide specific **Steps for Testing** that reviewers can follow\n`;
+                              if (hasClientChanges) {
+                                  commentBody += `- Add **Screenshots** if your changes affect the UI\n`;
+                              }
+                              commentBody += `- Check the relevant checkboxes in the checklist\n`;
+                          }
+
+                          commentBody += `\n---\n`;
+                          commentBody += `*This check validates that your PR description follows the [PR template](https://github.com/${owner}/${repo}/blob/develop/.github/PULL_REQUEST_TEMPLATE.md). `;
+                          commentBody += `A complete description helps reviewers understand your changes and speeds up the review process.*`;
+
+                          // Post comment
+                          await github.rest.issues.createComment({
+                              owner,
+                              repo,
+                              issue_number: prNumber,
+                              body: commentBody
+                          });
+
+                          core.setFailed('PR description validation failed');
+                      } else {
+                          console.log('PR description validation passed');
+
+                          // Clean up any previous validation failure comments
+                          try {
+                              const { data: comments } = await github.rest.issues.listComments({
+                                  owner,
+                                  repo,
+                                  issue_number: prNumber,
+                                  per_page: 100
+                              });
+
+                              const botComments = comments.filter(c =>
+                                  c.user.type === 'Bot' &&
+                                  c.body.includes(commentMarker)
+                              );
+
+                              for (const comment of botComments) {
+                                  await github.rest.issues.deleteComment({
+                                      owner,
+                                      repo,
+                                      comment_id: comment.id
+                                  });
+                                  console.log(`Deleted previous validation comment ${comment.id}`);
+                              }
+                          } catch (error) {
+                              console.log('Could not clean up old comments:', error.message);
+                          }
+                      }
