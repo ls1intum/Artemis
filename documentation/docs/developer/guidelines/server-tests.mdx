@@ -71,7 +71,7 @@ For example, instead of
 ```java
 assertThat(submissions.size()).isEqualTo(1);
 assertThat(submissionInDb.isPresent()).isTrue();
-assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+assertThat(submissionInDb.get().getFilePath().contains("file.png")).isTrue();
 ```
 
 use the built-in assertions directly:
@@ -79,7 +79,7 @@ use the built-in assertions directly:
 ```java
 assertThat(submissions).hasSize(1);
 assertThat(submissionInDb).isPresent();
-assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
+assertThat(submissionInDb.get().getFilePath()).contains("file.png");
 ```
 
 These assertions provide better error messages when they fail and improve the code readability. However, not all methods are suitable for this type of assertion.

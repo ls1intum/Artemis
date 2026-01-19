@@ -12,13 +12,13 @@ Quick Links to New Documentation
 
 **Client Guidelines:**
 
-* `Client Development <https://ls1intum.github.io/Artemis/developer/guidelines/client>`_
-* `Client Theming <https://ls1intum.github.io/Artemis/developer/guidelines/client-design>`_
+* `Client Development <https://ls1intum.github.io/Artemis/developer/guidelines/client-development>`_
+* `Client Theming <https://ls1intum.github.io/Artemis/developer/guidelines/client-theming>`_
 * `Client Tests <https://ls1intum.github.io/Artemis/developer/guidelines/client-tests>`_
 
 **Server Guidelines:**
 
-* `Server Development <https://ls1intum.github.io/Artemis/developer/guidelines/server>`_
+* `Server Development <https://ls1intum.github.io/Artemis/developer/guidelines/server-development>`_
 * `Server Tests <https://ls1intum.github.io/Artemis/developer/guidelines/server-tests>`_
 * `Database <https://ls1intum.github.io/Artemis/developer/guidelines/database>`_
 * `Performance <https://ls1intum.github.io/Artemis/developer/guidelines/performance>`_

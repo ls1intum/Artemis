@@ -80,7 +80,7 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 
 * Encapsulate the code you feel might change in the future.
 * Make variables and methods private by default and increase access step by step by changing them from a private to package-private or protected first and not public right away.
-* Classes, methods or functions should be open for extension and closed for modification (open closed design principle).
+* Classes, methods or functions should be open for extension and closed for modification (open-closed design principle).
 * Program for the interface and not for implementation, you should use an interface type on variables, return types of a method or argument type of methods. Just like using SuperClass type to store an object rather using SubClass.
 * The use of interface is to facilitate polymorphism, a client should not implement an interface method if it's not needed.
 * Type inference of variables - var vs. actual type:
@@ -227,7 +227,7 @@ Utility methods can and should be placed in a class named for specific functiona
 ### Auto configuration
 
 Spring Boot favors Java-based configuration.
-Although it is possible to use Sprint Boot with XML sources, it is generally not recommended.
+Although it is possible to use Spring Boot with XML sources, it is generally not recommended.
 You don't have to put all your `@Configuration` into a single class.
 The `@Import` annotation can be used to import additional configuration classes.
 One of the flagship features of Spring Boot is its use of Auto-configuration. This is the part of Spring Boot that makes your code simply work.
