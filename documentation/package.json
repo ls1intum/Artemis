@@ -34,7 +34,7 @@
     "@docusaurus/types": "3.9.2",
     "@types/prop-types": "15.7.15",
     "patch-package": "8.0.1",
-    "prettier": "3.7.4",
+    "prettier": "3.8.0",
     "typescript": "5.9.3"
   },
   "overrides": {

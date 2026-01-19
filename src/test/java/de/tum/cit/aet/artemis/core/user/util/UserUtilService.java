@@ -22,9 +22,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -51,6 +53,8 @@ public class UserUtilService {
 
     private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
+    private static final Authority superAdminAuthority = new Authority(Role.SUPER_ADMIN.getAuthority());
+
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
     private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
@@ -60,6 +64,8 @@ public class UserUtilService {
     private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
 
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
+
+    private static final Set<Authority> superAdminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority, superAdminAuthority);
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -209,7 +215,6 @@ public class UserUtilService {
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
-     * @return The updated User
      */
     public void clearAllTokensAndSetTokenForUser(User user, String calendarSubscriptionToken) {
         calendarSubscriptionTokenStoreRepository.deleteAll();
@@ -344,7 +349,7 @@ public class UserUtilService {
      */
     public List<User> addUsers(String prefix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
         if (authorityRepository.count() == 0) {
-            authorityRepository.saveAll(adminAuthorities);
+            authorityRepository.saveAll(superAdminAuthorities);
         }
         log.debug("Generate {} students...", numberOfStudents);
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD),
@@ -373,6 +378,14 @@ public class UserUtilService {
             admin.setAuthorities(adminAuthorities);
             usersToAdd.add(admin);
             log.debug("Generate admin done");
+        }
+        if (!userExistsWithLogin("superadmin")) {
+            log.debug("Generate super admin");
+            User admin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+            admin.setGroups(Set.of("superadmin"));
+            admin.setAuthorities(superAdminAuthorities);
+            usersToAdd.add(admin);
+            log.debug("Generate super admin done");
         }
 
         // Before adding new users, existing users are removed from courses.
@@ -483,6 +496,21 @@ public class UserUtilService {
     }
 
     /**
+     * Creates and saves a User with super admin authorities.
+     *
+     * @param prefix The prefix for the super admin username
+     */
+    public void addSuperAdmin(final String prefix) {
+        String superAdminLogin = prefix + "superadmin";
+        User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { "superadmin", "testgroup" };
+        superAdmin.setGroups(Set.of(groups));
+        superAdmin.setAuthorities(superAdminAuthorities);
+        superAdmin = userTestRepository.save(superAdmin);
+        assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
+    }
+
+    /**
      * Gets a user from the database using the provided login but without the authorities.
      * <p>
      * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
@@ -559,5 +587,24 @@ public class UserUtilService {
             user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
             userTestRepository.save(user);
         }
+    }
+
+    /**
+     * Creates a ManagedUserVM for testing.
+     *
+     * @param login the login of the user
+     * @return the created ManagedUserVM
+     */
+    public ManagedUserVM createManagedUserVM(String login) {
+        ManagedUserVM userVM = new ManagedUserVM();
+        userVM.setLogin(login);
+        userVM.setPassword(UserFactory.USER_PASSWORD);
+        userVM.setFirstName("Firstname");
+        userVM.setLastName("Lastname");
+        userVM.setEmail(login + "@test.de");
+        userVM.setActivated(true);
+        userVM.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
+        return userVM;
     }
 }

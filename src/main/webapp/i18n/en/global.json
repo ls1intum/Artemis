@@ -140,6 +140,7 @@
                 "sidebar": {
                     "organizations": "Organizations",
                     "users": "Users",
+                    "passkeyManagement": "Passkeys",
                     "courseRequests": "Course Requests",
                     "dataExports": "Data Exports",
                     "iris": "Iris",
@@ -160,7 +161,8 @@
                     "imprint": "Imprint",
                     "privacy": "Privacy",
                     "notifications": "Notifications",
-                    "examRooms": "Exam Rooms"
+                    "examRooms": "Exam Rooms",
+                    "dependencies": "Dependencies"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
