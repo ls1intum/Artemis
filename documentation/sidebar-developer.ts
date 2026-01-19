@@ -29,7 +29,6 @@ const sidebars: SidebarsConfig = {
                 },
             ],
         },
-        'database',
         'open-source',
         'system-design',
         'test-servers',

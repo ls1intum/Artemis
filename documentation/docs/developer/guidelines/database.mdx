@@ -1,10 +1,5 @@
----
-title: Database
----
-
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 # Database
 
@@ -13,7 +8,7 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 ### Weekly Database Meeting
 
 We hold a weekly, in-person, cross-functional meeting involving database, infrastructure, and operations teams. Attendance is required whenever changes to the database, configurations, or related operations are proposed.
-Please prepare for the meeting and enter your PR and a short description of the changes in the [meeting agenda](https://confluence.aet.cit.tum.de/x/SaC5Bw).
+Please prepare for the meeting and enter your PR and a short description of the changes in the [meeting agenda](https://outline.aet.cit.tum.de/doc/meetings-stDhTnsRvf).
 
 ### Approval Process
 
@@ -46,8 +41,10 @@ In JPA lazy fetching can be set on any relationship using the fetch attribute. T
 
 We **always** use `FetchType.LAZY`, unless there is a very strong case to be made for `FetchType.EAGER`.
 
-<Callout variant={CalloutVariant.warning}>
-Additional effort to use `FetchType.LAZY` does not count as a strong argument.
+<Callout variant={CalloutVariant.info}>
+    <p>
+        Additional effort to use <code>FetchType.LAZY</code> does not count as a strong argument.
+    </p>
 </Callout>
 
 ## Relationships
@@ -56,7 +53,9 @@ A relationship is a reference from one object to another. In a relational databa
 
 In this section, we depict common entity relationships we use in Artemis and show some code snippets.
 
-* **OneToOne** A unique reference from one object to another. It is also inverse of itself. Example: one `Complaint` has a reference to one `Result`.
+### OneToOne
+
+A unique reference from one object to another. It is also inverse of itself. Example: one `Complaint` has a reference to one `Result`.
 
 ```java
 // Complaint.java
@@ -65,7 +64,10 @@ In this section, we depict common entity relationships we use in Artemis and sho
 private Result result;
 ```
 
-* **OneToMany** A `Collection` or `Map` of objects. It is the inverse of a **ManyToOne** relationship. Example: one `Result` has a list of `Feedback` elements.
+### OneToMany
+
+A `Collection` or `Map` of objects. It is the inverse of a **ManyToOne** relationship. Example: one `Result` has a list of `Feedback` elements.
+For ordered OneToMany relations see the [ordered collections section](#choosing-collection-types) below.
 
 ```java
 // Result.java
@@ -76,8 +78,9 @@ private Result result;
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
+### ManyToOne
 
-* **ManyToOne** A reference from one object to another. It is the inverse of an **OneToMany** relationship. Example: one `Feedback` has a reference to one `Result`.
+A reference from one object to another. It is the inverse of an **OneToMany** relationship. Example: one `Feedback` has a reference to one `Result`.
 
 ```java
 // Feedback.java
@@ -86,8 +89,9 @@ private List<Feedback> feedbacks = new ArrayList<>();
 private Result result;
 ```
 
+### ManyToMany
 
-* **ManyToMany** `A Collection` or `Map` of objects. It is the inverse of itself. Example: one `Exercise` has a list of `LearningGoal` elements, one `LearningGoal` has list of `Exercise` elements. In other words: many exercises are connected to many learning goals and vice-versa.
+A `Collection` or `Map` of objects. It is the inverse of itself. Example: one `Exercise` has a list of `LearningGoal` elements, one `LearningGoal` has list of `Exercise` elements. In other words: many exercises are connected to many learning goals and vice-versa.
 
 ```java
 // Exercise.java
@@ -101,34 +105,30 @@ public Set<LearningGoal> learningGoals = new HashSet<>();
 private Set<Exercise> exercises = new HashSet<>();
 ```
 
-
 <Callout variant={CalloutVariant.danger}>
-For **OneToMany**, **ManyToOne**, and **ManyToMany** relationships you must not forget to mark the associated elements with `@JsonIgnoreProperties()`. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: [Jackson and JsonIgnoreType](https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype).
+  For <strong>OneToMany</strong>, <strong>ManyToOne</strong>, and <strong>ManyToMany</strong> relationships you must not forget to mark the associated elements with <code>@JsonIgnoreProperties()</code>. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: <a href="https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype">Jackson and JsonIgnoreType</a>.
 </Callout>
 
-<Callout variant={CalloutVariant.info}>
-**Lazy relationships**
+### Lazy Relationships
 
 Lazy relationships in Artemis may require some additional special handling to work correctly:
 
-* Lazy **OneToOne** relationships require the additional presence of the `@JoinColumn` annotation and only work in one direction.
+- Lazy **OneToOne** relationships require the additional presence of the `@JoinColumn` annotation and only work in one direction.
   They can only lazily load the child of the relationship, not the parent. The parent is the entity whose database table owns the foreign key.
 
   E.g., You can lazily load `ProgrammingExercise::solutionParticipation` but not `SolutionProgrammingExerciseParticipation::programmingExercise`, as the foreign key is part of the `exercise` table.
 
-* Lazy **ManyToOne** relationships require the additional presence of the `@JoinColumn` annotation.
+- Lazy **ManyToOne** relationships require the additional presence of the `@JoinColumn` annotation.
 
-* Lazy **OneToMany** and **ManyToMany** relationships work without further changes.
-</Callout>
-
-
-
+- Lazy **OneToMany** and **ManyToMany** relationships work without further changes.
 
 ## Cascade Types
 
 Entity relationships often depend on the existence of another entity — for example, the Result-Feedback relationship. Without the Result, the Feedback entity doesn't have any meaning of its own. When we delete the Result entity, our Feedback entity should also get deleted. For more information see: [jpa cascade types](https://www.baeldung.com/jpa-cascade-types).
 
-* `CascadeType.ALL` Propagates all operations mentioned below from the parent object to the to child object.
+### CascadeType.ALL
+
+Propagates all operations mentioned below from the parent object to the child object.
 
 ```java
 // Result.java
@@ -139,8 +139,9 @@ Entity relationships often depend on the existence of another entity — for exa
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
+### CascadeType.PERSIST
 
-* `CascadeType.PERSIST` When persisting a parent entity, it also persists the child entities held in its fields. This cascade rule is helpful for relationships where the parent acts as a *container* to the child entity. If you do not use this, you have to ensure that you persist the child entity first, otherwise an error will be thrown. Example: The code below propagates the **persist** operation from parent `AnswerCounter` to child `AnswerOption`. When an `AnswerCounter` is persisted, its `AnswerOption` is persisted as well.
+When persisting a parent entity, it also persists the child entities held in its fields. This cascade rule is helpful for relationships where the parent acts as a *container* to the child entity. If you do not use this, you have to ensure that you persist the child entity first, otherwise an error will be thrown. Example: The code below propagates the **persist** operation from parent `AnswerCounter` to child `AnswerOption`. When an `AnswerCounter` is persisted, its `AnswerOption` is persisted as well.
 
 ```java
 // AnswerCounter.java
@@ -149,8 +150,9 @@ private List<Feedback> feedbacks = new ArrayList<>();
 private AnswerOption answer;
 ```
 
+### CascadeType.MERGE
 
-* `CascadeType.MERGE` If you merge the source entity (saved/updated/synchronized) to the database, the merge is cascaded to the target of the association. This rule applies to existing objects only. Use this type to always merge/synchronize the existing data in the table with the data in the object. Example below: whenever we merge a `Result` to the database, i.e. save the changes on the object, the `Assessor` object is also merged/saved.
+If you merge the source entity (saved/updated/synchronized) to the database, the merge is cascaded to the target of the association. This rule applies to existing objects only. Use this type to always merge/synchronize the existing data in the table with the data in the object. Example below: whenever we merge a `Result` to the database, i.e. save the changes on the object, the `Assessor` object is also merged/saved.
 
 ```java
 // Result.java
@@ -159,8 +161,9 @@ private AnswerOption answer;
 private User assessor;
 ```
 
+### CascadeType.REMOVE
 
-* `CascadeType.REMOVE` If the source entity is removed, the target of the association is also removed. Example below: propagates **remove** operation from parent `Submission` to child `Result`. When a `Submission` is deleted, the corresponding `Result` is also deleted.
+If the source entity is removed, the target of the association is also removed. Example below: propagates **remove** operation from parent `Submission` to child `Result`. When a `Submission` is deleted, the corresponding `Result` is also deleted.
 
 ```java
 // Submission.java
@@ -170,18 +173,22 @@ private User assessor;
 private Result result;
 ```
 
+### CascadeType.REFRESH
 
-* `CascadeType.REFRESH` If the source entity is refreshed, it cascades the refresh to the target of the association. This is used to refresh the data in the object and its associations. This is useful for cases where there is a change which needs to be synchronized FROM the database.
+If the source entity is refreshed, it cascades the refresh to the target of the association. This is used to refresh the data in the object and its associations. This is useful for cases where there is a change which needs to be synchronized FROM the database.
 
-Not used in Artemis yet.
-
+<Callout variant={CalloutVariant.info}>
+  This cascade type is not used in Artemis yet.
+</Callout>
 
 ## Dynamic Fetching
 
 In Artemis, we use dynamic fetching to load the relationships of an entity on demand. As we do not want to load all relationships of an entity every time we fetch it from the database, we use as described above `FetchType.LAZY`.
-In order to load the relationships of an entity on demand, we then use one of 3 methods:
+In order to load the relationships of an entity on demand, we then use one of 4 methods:
 
-1. **EntityGraph**: The `@EntityGraph` annotation is the simplest way to specify a graph of relationships to fetch. It should be used when a query is auto-constructed by Spring Data JPA and does not have a custom `@Query` annotation. Example:
+### 1. EntityGraph
+
+The `@EntityGraph` annotation is the simplest way to specify a graph of relationships to fetch. It should be used when a query is auto-constructed by Spring Data JPA and does not have a custom `@Query` annotation. Example:
 
 ```java
 // CourseRepository.java
@@ -189,7 +196,9 @@ In order to load the relationships of an entity on demand, we then use one of 3 
 Course findWithEagerExercisesById(long courseId);
 ```
 
-2. **JOIN FETCH**: The `JOIN FETCH` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom `@Query` annotation. You can see the example below. Also, explicitly or implicitly limiting queries in Hibernate can lead to in-memory paging. For more details, see the 'In-memory paging' section.
+### 2. JOIN FETCH
+
+The `JOIN FETCH` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom `@Query` annotation. You can see the example below. Also, explicitly or implicitly limiting queries in Hibernate can lead to in-memory paging. For more details, see the 'In-memory paging' section.
 
 ```java
 // ProgrammingExerciseRepository.java
@@ -203,7 +212,12 @@ Course findWithEagerExercisesById(long courseId);
 List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 ```
 
-3. **DynamicSpecificationRepository**: For repositories that use a lot of different queries with different relationships to fetch, we use the `DynamicSpecificationRepository`. You can let a repository additionally implement this interface and then use the `findAllWithEagerRelationships` and then use the `getDynamicSpecification(Collection<? extends FetchOptions> fetchOptions)` method in combination with a custom enum implementing the `FetchOptions` interface to dynamically specify which relationships to fetch inside of service methods. Example:
+### 3. DynamicSpecificationRepository
+
+For repositories that use a lot of different queries with different relationships to fetch, we use the `DynamicSpecificationRepository`. You can let a repository additionally implement this interface and then use the `findAllWithEagerRelationships` and then use the `getDynamicSpecification(Collection<? extends FetchOptions> fetchOptions)` method in combination with a custom enum implementing the `FetchOptions` interface to dynamically specify which relationships to fetch inside of service methods.
+
+<details>
+<summary>Example: DynamicSpecificationRepository Usage</summary>
 
 ```java
 // ProgrammingExerciseFetchOptions.java
@@ -238,15 +252,23 @@ final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? 
 var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
 ```
 
-4. **In memory paging**: Since the flag `hibernate.query.fail_on_pagination_over_collection_fetch: true` is now active, it is crucial to carefully craft database queries that involve FETCH statements with collections and thoroughly test the changes. In-memory paging would cause performance decrements and is, therefore, disabled. Any use of it will lead to runtime errors.
-Queries that may result in this error can return `Page<>` and contain JOIN FETCHES or involve internal limiting in Hibernate, such as `findFirst`, `findLast`, or `findOne`. One solution is to split the original query into multiple queries and a default method. The first query fetches only the IDs of entities whose full dependencies need to be fetched. The second query eagerly fetches all necessary dependencies, and the third query uses counting to build Pages, if they are utilized.
-When possible, use the default Spring Data/JPA methods for second(fetching) and third(counting) queries.
-An example implementation could look like this:
+</details>
+
+### 4. In-Memory Paging
+
+Since the flag `hibernate.query.fail_on_pagination_over_collection_fetch: true` is now active, it is crucial to carefully craft database queries that involve FETCH statements with collections and thoroughly test the changes. In-memory paging would cause performance decrements and is, therefore, disabled. Any use of it will lead to runtime errors.
+
+Queries that may result in this error can return `Page<>` and contain `JOIN FETCH`es or involve internal limiting in Hibernate, such as `findFirst`, `findLast`, or `findOne`. One solution is to split the original query into multiple queries and a default method. The first query fetches only the IDs of entities whose full dependencies need to be fetched. The second query eagerly fetches all necessary dependencies, and the third query uses counting to build Pages, if they are utilized.
+
+When possible, use the default Spring Data/JPA methods for second (fetching) and third (counting) queries.
+
+<details>
+<summary>Example: Avoiding In-Memory Paging</summary>
 
 ```java
 // Repository interface
 default Page<User> searchAllByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-    List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();;
+    List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
     if (userIds.isEmpty()) {
         return new PageImpl<>(Collections.emptyList(), pageable, 0);
@@ -304,14 +326,20 @@ List<User> findUsersWithGroupsByIds(@Param("ids") List<Long> ids);
 long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 ```
 
-
-
+</details>
 
 ## Best Practices
 
-* If you want to create a `@OneToMany` relationship or `@ManyToMany` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a `Set` instead of `List`. If you are unsure, start with a `Set`.
+### Choosing Collection Types
 
-  * **Unordered Collection**: A `Set` comes with certain advantages such as ensuring that there are no duplicates and null values in your collection. There are also performance arguments to use a `Set`, especially for `@ManyToMany` relationships. For more information see this [stackoverflow thread](https://stackoverflow.com/questions/4655392/which-java-type-do-you-use-for-jpa-collections-and-why). E.g.:
+If you want to create a `@OneToMany` relationship or `@ManyToMany` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a `Set` instead of `List`. If you are unsure, start with a `Set`.
+
+#### Unordered Collection (Set)
+
+A `Set` comes with certain advantages such as ensuring that there are no duplicates and null values in your collection. There are also performance arguments to use a `Set`, especially for `@ManyToMany` relationships. For more information see this [stackoverflow thread](https://stackoverflow.com/questions/4655392/which-java-type-do-you-use-for-jpa-collections-and-why).
+
+<details>
+<summary>Example: Unordered Collection with Set</summary>
 
 ```java
 // Course.java
@@ -321,8 +349,14 @@ long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @
 private Set<Exercise> exercises = new HashSet<>();
 ```
 
+</details>
 
-  * **Ordered Collection without duplicates**: When you want to order the collection of objects of the relationship, while having no duplicates use a `TreeSet`. A `TreeSet` is a sorted set, which means that the elements are ordered using their natural ordering or by a comparator provided at set creation time. E.g.:
+#### Ordered Collection without Duplicates (TreeSet)
+
+When you want to order the collection of objects of the relationship, while having no duplicates use a `TreeSet`. A `TreeSet` is a sorted set, which means that the elements are ordered using their natural ordering or by a comparator provided at set creation time.
+
+<details>
+<summary>Example: TreeSet for Ordered Collection without Duplicates</summary>
 
 ```java
 // IrisSubSettings.java
@@ -331,8 +365,14 @@ private Set<Exercise> exercises = new HashSet<>();
 private TreeSet<String> allowedVariants = new TreeSet<>();
 ```
 
+</details>
 
-  * **Ordered Collection with duplicates**: When you want to order the collection of (potentially duplicated) objects of the relationship, then always use a `List`. It is important to note here that there is no inherent order in a database table. One could argue that you can use the `id` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for an ordered collection with duplicates, **always** annotate it with `@OrderColumn`. An order column indicates to Hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tablenameS\_order*. For ordered collections, we also recommend that you annotate them with `cascade = CascadeType.ALL` and `orphanRemoval = true`. E.g.:
+#### Ordered Collection with Duplicates (List)
+
+When you want to order the collection of (potentially duplicated) objects of the relationship, then always use a `List`. It is important to note here that there is no inherent order in a database table. One could argue that you can use the `id` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for an ordered collection with duplicates, **always** annotate it with `@OrderColumn`. An order column indicates to Hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tableNameS_order*. For ordered collections, we also recommend that you annotate them with `cascade = CascadeType.ALL` and `orphanRemoval = true`.
+
+<details>
+<summary>Example: Ordered Collection with List</summary>
 
 ```java
 //Result.java
@@ -343,10 +383,11 @@ private TreeSet<String> allowedVariants = new TreeSet<>();
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
-<Callout variant={CalloutVariant.warning}>
-Hibernate will take care of the ordering for you but you must create the order column in the database. This is not created automatically!
+<Callout variant={CalloutVariant.info}>
+    <p>
+        Hibernate will take care of the ordering for you but you must create the order column in the database. This is not created automatically!
+    </p>
 </Callout>
-
 
 With ordered collections, you have to be very careful with the way you persist the objects in the database. You must first persist the child object without a relation to the parent object. Then, you recreate the association and persist the parent object. Example of how to correctly persist objects in an ordered collection:
 
@@ -369,10 +410,16 @@ result.setFeedbacks(savedFeedbacks);
 return resultRepository.save(result);
 ```
 
+</details>
 
-## Solutions for known issues
+## Solutions for Known Issues
 
-* `org.hibernate.LazyInitializationException : could not initialize proxy – no Session` caused by `fetchType.LAZY`. You must explicitly load the associated object from the database before trying to access those. Example of how to eagerly fetch the feedbacks with the result:
+### LazyInitializationException
+
+`org.hibernate.LazyInitializationException : could not initialize proxy – no Session` caused by `fetchType.LAZY`. You must explicitly load the associated object from the database before trying to access those.
+
+<details>
+<summary>Example: Eagerly Fetch with LEFT JOIN FETCH</summary>
 
 ```java
 // ResultRepository.java
@@ -380,22 +427,29 @@ return resultRepository.save(result);
 Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 ```
 
+</details>
 
-* `JpaSystemException: null index column for collection` caused by `@OrderColumn` annotation:
+### JpaSystemException with @OrderColumn
+
+`JpaSystemException: null index column for collection` caused by `@OrderColumn` annotation.
 
 There is a problem with the way you save the associated objects. You must follow this procedure:
 
-1. Save the child entity (e.g., `Feedback`) without connection to the parent entity (e.g., `Result`)
+1. Save the child entity (e.g., [Feedback](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Feedback.java)) without connection to the parent entity (e.g., [Result](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Result.java))
 2. Add back the connection of the child entity to the parent entity.
 3. Save the parent entity.
 4. Always use the returned value after saving the entity, see: `feedback = feedbackRepository.save(feedback);`
 
 <Callout variant={CalloutVariant.info}>
-For more information see the ordered collections section above.
+  For more information see the ordered collections section above.
 </Callout>
 
+### Null Values in Ordered Collections
 
-* There are `null` values in your ordered collection: You must annotate the ordered collection with `CascadeType.ALL` and `orphanRemoval = true`. E.g:
+There are `null` values in your ordered collection: You must annotate the ordered collection with `CascadeType.ALL` and `orphanRemoval = true`.
+
+<details>
+<summary>Example: Prevent Null Values in Ordered Collections</summary>
 
 ```java
 //Result.java
@@ -405,3 +459,5 @@ For more information see the ordered collections section above.
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
+
+</details>
