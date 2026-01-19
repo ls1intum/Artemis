@@ -1,7 +1,3 @@
----
-title: Client Tests
----
-
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
@@ -330,24 +326,16 @@ expect(courseList).toHaveLength(4);
 
 * Use a **uniform style** for common cases to keep the codebase as consistent as possible:
 
-| Situation | Solution |
-|-----------|----------|
-| Expecting a boolean value | `expect(value).toBeTrue();`<br/>`expect(value).toBeFalse();` |
-| Two objects should be the same reference | `expect(object).toBe(referenceObject);` |
-| A CSS element should exist | `expect(element).not.toBeNull();` |
-| A CSS element should not exist | `expect(element).toBeNull();` |
-| A value should be undefined | `expect(value).toBeUndefined();` |
-| A value should be either null or undefined | Use `expect(value).toBeUndefined();` for internal calls.<br/><br/>If an external library uses null value, use `expect(value).toBeNull();` and if not avoidable `expect(value).not.toBeNull();`.<br/><br/>**Never use** `expect(value).not.toBeDefined()` or `expect(value).toBeNil()` as they might not catch all failures under certain conditions. |
-| A class object should be defined | Always try to test for certain properties or entries.<br/><br/>`expect(classObject).toContainEntries([[key, value]]);`<br/><br/>`expect(classObject).toEqual(expectedClassObject);`<br/><br/>**Never use** `expect(value).toBeDefined()` as it might not catch all failures under certain conditions. |
-| A class object should not be undefined | Try to test for a defined object as described above. |
-| A spy should not have been called | `expect(spy).not.toHaveBeenCalled();` |
-| A spy should have been called once | `expect(spy).toHaveBeenCalledOnce();` |
-| A spy should have been called with a value | Always test the number of calls as well:<br/><br/>```ts
-expect(spy).toHaveBeenCalledOnce();
-expect(spy).toHaveBeenCalledWith(value);
-```<br/><br/>If you have multiple calls, you can verify the parameters of each call separately:<br/><br/>```ts
-expect(spy).toHaveBeenCalledTimes(3);
-expect(spy).toHaveBeenNthCalledWith(1, value0);
-expect(spy).toHaveBeenNthCalledWith(2, value1);
-expect(spy).toHaveBeenNthCalledWith(3, value2);
-``` |
+| Situation                                  | Solution                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Expecting a boolean value                  | `expect(value).toBeTrue();`<br/>`expect(value).toBeFalse();`                                                                                                                                                                                                                                                                                                                                                                                          |
+| Two objects should be the same reference   | `expect(object).toBe(referenceObject);`                                                                                                                                                                                                                                                                                                                                                                                                               |
+| A CSS element should exist                 | `expect(element).not.toBeNull();`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| A CSS element should not exist             | `expect(element).toBeNull();`                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| A value should be undefined                | `expect(value).toBeUndefined();`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| A value should be either null or undefined | Use `expect(value).toBeUndefined();` for internal calls.<br/><br/>If an external library uses null value, use `expect(value).toBeNull();` and if not avoidable `expect(value).not.toBeNull();`.<br/><br/>**Never use** `expect(value).not.toBeDefined()` or `expect(value).toBeNil()` as they might not catch all failures under certain conditions.                                                                                                  |
+| A class object should be defined           | Always try to test for certain properties or entries.<br/><br/>`expect(classObject).toContainEntries([[key, value]]);`<br/><br/>`expect(classObject).toEqual(expectedClassObject);`<br/><br/>**Never use** `expect(value).toBeDefined()` as it might not catch all failures under certain conditions.                                                                                                                                                 |
+| A class object should not be undefined     | Try to test for a defined object as described above.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| A spy should not have been called          | `expect(spy).not.toHaveBeenCalled();`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| A spy should have been called once         | `expect(spy).toHaveBeenCalledOnce();`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| A spy should have been called with a value | Always test the number of calls as well:<br/><br/>`expect(spy).toHaveBeenCalledOnce();`<br/>`expect(spy).toHaveBeenCalledWith(value);`<br/><br/>If you have multiple calls, you can verify the parameters of each call separately:<br/><br/>`expect(spy).toHaveBeenCalledTimes(3);`<br/>`expect(spy).toHaveBeenNthCalledWith(1, value0);`<br/>`expect(spy).toHaveBeenNthCalledWith(2, value1);`<br/>`expect(spy).toHaveBeenNthCalledWith(3, value2);` |
