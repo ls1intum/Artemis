@@ -309,7 +309,7 @@ Hence, entity objects must not be included in DTOs. This is a bad example for a 
 public record PostDTO(Post post, MetisCrudAction action) {}
 ```
 
-This is a good example for a DTO because it only contains very little information in the form of boxed primitive types and an enum value:
+This is a good example for a DTO because it only contains very little information in the form of boxed primitive types and the enum value `GradeType`:
 
 ```java
 public record GradeDTO(String gradeName, Boolean isPassingGrade, GradeType gradeType) {}
