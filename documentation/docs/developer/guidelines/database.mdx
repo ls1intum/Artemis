@@ -142,7 +142,7 @@ private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
 
-* `CascadeType.PERSIST` When persisting a parent entity, it also persists the child entities held in its fields. This cascade rule is helpful for relationships where the parent acts as a *container* to the child entity. If you do not use this, you have to ensure that you persist the child entity first, otherwise an error will be thrown. Example: The code below propagates the **persist** operation from parent `AnswerCounter` to child `AnswerOption`. When an `AnswerCounter` is persisted, its `AnswerOption` is persisted as well. 
+* `CascadeType.PERSIST` When persisting a parent entity, it also persists the child entities held in its fields. This cascade rule is helpful for relationships where the parent acts as a *container* to the child entity. If you do not use this, you have to ensure that you persist the child entity first, otherwise an error will be thrown. Example: The code below propagates the **persist** operation from parent `AnswerCounter` to child `AnswerOption`. When an `AnswerCounter` is persisted, its `AnswerOption` is persisted as well.
 
 ```java
 // AnswerCounter.java
@@ -152,7 +152,7 @@ private AnswerOption answer;
 ```
 
 
-* `CascadeType.MERGE` If you merge the source entity (saved/updated/synchronized) to the database, the merge is cascaded to the target of the association. This rule applies to existing objects only. Use this type to always merge/synchronize the existing data in the table with the data in the object. Example below: whenever we merge a `Result` to the database, i.e. save the changes on the object, the `Assessor` object is also merged/saved. 
+* `CascadeType.MERGE` If you merge the source entity (saved/updated/synchronized) to the database, the merge is cascaded to the target of the association. This rule applies to existing objects only. Use this type to always merge/synchronize the existing data in the table with the data in the object. Example below: whenever we merge a `Result` to the database, i.e. save the changes on the object, the `Assessor` object is also merged/saved.
 
 ```java
 // Result.java
@@ -311,7 +311,7 @@ long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @
 
 ## Best Practices
 
-* If you want to create a `@OneToMany` relationship or `@ManyToMany` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a `Set` instead of `List`. If you are unsure, start with a `Set`. 
+* If you want to create a `@OneToMany` relationship or `@ManyToMany` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a `Set` instead of `List`. If you are unsure, start with a `Set`.
 
   * **Unordered Collection**: A `Set` comes with certain advantages such as ensuring that there are no duplicates and null values in your collection. There are also performance arguments to use a `Set`, especially for `@ManyToMany` relationships. For more information see this [stackoverflow thread](https://stackoverflow.com/questions/4655392/which-java-type-do-you-use-for-jpa-collections-and-why). E.g.:
 
