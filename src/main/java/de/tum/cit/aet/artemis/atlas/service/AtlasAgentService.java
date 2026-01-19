@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,14 +17,14 @@ import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -65,35 +64,13 @@ public class AtlasAgentService {
 
     private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
 
-    // Session timeout duration: 2 hours of inactivity
-    private static final Duration SESSION_EXPIRY_DURATION = Duration.ofHours(2);
-
-    // Maximum number of concurrent sessions to prevent unbounded memory growth
-    private static final int MAX_SESSIONS = 5000;
-
     /**
-     * Track which agent is active for each session.
-     * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * Entries expire after 2 hours of inactivity
-     * Maximum 5000 sessions cached
-     * Automatic cleanup on access and during garbage collection.
+     * Cache name for tracking pending competency operations for each session.
+     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
      */
-    private final Cache<String, AgentType> sessionAgentMap = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
+    public static final String ATLAS_SESSION_PENDING_OPERATIONS_CACHE = "atlas-session-pending-operations";
 
-    /**
-     * Track pending competency operations for each session.
-     * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * Entries expire after 2 hours of inactivity
-     * Maximum 5000 sessions cached
-     * Automatic cleanup on access and during garbage collection.
-     *
-     * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
-     */
-    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
-
-    private final Cache<String, List<CompetencyRelationDTO>> sessionPendingRelationOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
-            .maximumSize(MAX_SESSIONS).build();
+    private final CacheManager cacheManager;
 
     private final ChatClient chatClient;
 
@@ -134,8 +111,13 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @return the cached pending competency operations, or null if none exist
      */
-    public List<CompetencyExpertToolsService.CompetencyOperation> getCachedPendingCompetencyOperations(String sessionId) {
-        return sessionPendingCompetencyOperationsCache.getIfPresent(sessionId);
+
+    public List<CompetencyOperation> getCachedPendingCompetencyOperations(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
+        if (cache == null) {
+            return null;
+        }
+        return (List<CompetencyOperation>) cache.get(sessionId, List.class);
     }
 
     /**
@@ -145,8 +127,11 @@ public class AtlasAgentService {
      * @param sessionId  the session ID
      * @param operations the competency operations to cache
      */
-    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyExpertToolsService.CompetencyOperation> operations) {
-        sessionPendingCompetencyOperationsCache.put(sessionId, operations);
+    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyOperation> operations) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
+        if (cache != null) {
+            cache.put(sessionId, operations);
+        }
     }
 
     /**
@@ -156,7 +141,10 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      */
     public void clearCachedPendingCompetencyOperations(String sessionId) {
-        sessionPendingCompetencyOperationsCache.invalidate(sessionId);
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
+        if (cache != null) {
+            cache.evict(sessionId);
+        }
     }
 
     /**
@@ -191,9 +179,11 @@ public class AtlasAgentService {
         sessionPendingRelationOperationsCache.invalidate(sessionId);
     }
 
-    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
-            @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
+    public AtlasAgentService(CacheManager cacheManager, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
+            @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
+            @Autowired(required = false) ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
+            @Value("${atlas.chat-temperature:0.2}") double temperature) {
+        this.cacheManager = cacheManager;
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
@@ -224,13 +214,12 @@ public class AtlasAgentService {
             resetCompetencyModifiedFlag();
             // CompetencyExpertToolsService.clearAllPreviews();
 
-            String response = delegateTheRightAgent(message, courseId, sessionId);
+            String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
 
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
                 String brief = extractBriefFromDelegationMarker(response);
 
-                sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
-                String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
+                String delegationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, brief, courseId, sessionId);
 
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
 
@@ -240,14 +229,12 @@ public class AtlasAgentService {
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
-                sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null));
             }
-            else if (response.contains(CREATE_APPROVED_COMPETENCY) || message.equals(CREATE_APPROVED_COMPETENCY)) {
-                sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
-                List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
+            else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
+                List<CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
 
-                String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+                String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
@@ -320,7 +307,6 @@ public class AtlasAgentService {
                         relationGraphPreview);
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
-                sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
 
                 boolean competenciesModified = competencyModifiedInCurrentRequest.get();
@@ -356,19 +342,15 @@ public class AtlasAgentService {
     }
 
     /**
-     * Process message with the Main Agent (Requirements Engineer/Orchestrator).
+     * Delegate message processing to the specified agent type.
      *
+     * @param agentType the type of agent to use (MAIN_AGENT or COMPETENCY_EXPERT)
      * @param message   the user's message
      * @param courseId  the course ID for context
      * @param sessionId the session ID for chat memory
      * @return the agent's response
      */
-    private String delegateTheRightAgent(String message, Long courseId, String sessionId) {
-        AgentType agentType = sessionAgentMap.getIfPresent(sessionId);
-        if (agentType == null) {
-            agentType = AgentType.MAIN_AGENT;
-        }
-
+    private String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId) {
         String resourcePath;
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             resourcePath = "/prompts/atlas/agent_system_prompt.st";
