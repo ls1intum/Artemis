@@ -221,6 +221,9 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Schedule a task to update the participant score for the given combination of exercise and participant.
+     * <p>
+     * This method is thread-safe and uses atomic operations to prevent race conditions where multiple
+     * threads could schedule duplicate tasks for the same exercise/participant combination.
      *
      * @param exerciseId          the id of the exercise
      * @param participantId       the id of the participant (user or team, determined by the exercise)
@@ -229,16 +232,18 @@ public class ParticipantScoreScheduleService {
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
-        var task = scheduledTasks.get(participantScoreId);
-        if (task != null) {
-            // If a task is already scheduled, cancel it and reschedule it with the latest result
-            task.cancel(true);
-            scheduledTasks.remove(participantScoreId);
-        }
-
         var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
-        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
-        scheduledTasks.put(participantScoreId, future);
+
+        // Use compute() for atomic check-cancel-schedule to prevent race conditions
+        // where multiple threads could schedule duplicate tasks
+        scheduledTasks.compute(participantScoreId, (key, existingTask) -> {
+            if (existingTask != null) {
+                // If a task is already scheduled, cancel it and reschedule it with the latest result
+                existingTask.cancel(true);
+            }
+            return scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
+        });
+
         log.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
 
