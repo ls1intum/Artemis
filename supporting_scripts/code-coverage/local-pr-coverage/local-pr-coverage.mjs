@@ -431,7 +431,7 @@ async function runClientTests(modules, options) {
         log(`Running Vitest for modules: ${vitestModules.join(', ')}`, options);
         try {
             const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-            const vitestResult = spawnSync(npmCmd, ['run', 'vitest:coverage'], {
+            const vitestResult = spawnSync(npmCmd, ['run', 'vitest:coverage', ""], {
                 cwd: PROJECT_ROOT,
                 stdio: options.verbose ? 'inherit' : 'pipe',
                 encoding: 'utf-8',

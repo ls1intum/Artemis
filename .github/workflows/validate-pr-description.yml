@@ -7,11 +7,7 @@ on:
 jobs:
     validate-pr-description:
         # Only run on non-draft PRs targeting develop (security: prevents stacked PR attacks)
-        # TODO: Remove 'github-actions/validate-pr-description-workflow' from allowed branches before merging!
-        if: >
-            github.event.pull_request.draft == false &&
-            (github.event.pull_request.base.ref == 'develop' ||
-             github.event.pull_request.base.ref == 'github-actions/validate-pr-description-workflow')
+        if: github.event.pull_request.draft == false && github.event.pull_request.base.ref == 'develop'
         runs-on: ubuntu-latest
         timeout-minutes: 2
         permissions:
