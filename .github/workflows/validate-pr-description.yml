@@ -72,16 +72,22 @@ jobs:
                       // Quick pre-checks - fail fast if sections are obviously empty
                       const issues = [];
 
+                      // Store suggestions for the comment
+                      const aiSuggestions = [];
+
                       if (!motivationSection || motivationSection.length < 10) {
                           issues.push('**Motivation and Context** section is empty or too brief');
+                          aiSuggestions.push('Explain why this change is needed and what problem it solves');
                       }
 
                       if (!descriptionSection || descriptionSection.length < 10) {
                           issues.push('**Description** section is empty or too brief');
+                          aiSuggestions.push('Describe what was changed and how it works');
                       }
 
                       if (!testingSection || testingSection.length < 20) {
                           issues.push('**Steps for Testing** section is empty or lacks specific steps');
+                          aiSuggestions.push('Add specific steps like "1. Log in as instructor, 2. Navigate to X, 3. Click Y"');
                       }
 
                       // Check if all checkboxes are unchecked (at least some should be checked)
@@ -89,6 +95,7 @@ jobs:
                       const uncheckedBoxes = (body.match(/- \[ \]/g) || []).length;
                       if (uncheckedBoxes > 0 && checkedBoxes === 0) {
                           issues.push('No checkboxes are checked in the PR description');
+                          aiSuggestions.push('Check the boxes that apply to your changes in the Checklist section');
                       }
 
                       // AI validation setup
@@ -131,9 +138,6 @@ jobs:
                           const data = await response.json();
                           return data.choices?.[0]?.message?.content?.trim() || null;
                       }
-
-                      // Store AI suggestions for the comment
-                      const aiSuggestions = [];
 
                       // ============================================================
                       // AI CHECK 1: Motivation Quality
