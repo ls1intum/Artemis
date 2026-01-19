@@ -214,6 +214,16 @@
             "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
             "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut."
         },
+        "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
+        "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",
+        "examTimes": "Ungültige Klausurzeiten: Bitte stelle sicher, dass das Sichtbarkeitsdatum vor dem Startdatum liegt, das Startdatum vor dem Enddatum liegt und das Veröffentlichungsdatum der Beispiellösung (falls gesetzt) nach dem Enddatum liegt.",
+        "negativePoints": "Die maximale Punktzahl einer Klausur muss größer als 0 sein.",
+        "correctionRoundViolation": "Ungültige Anzahl an Korrekturläufen: Testklausuren müssen 0 Korrekturläufe haben, echte Klausuren müssen 1 oder 2 Korrekturläufe haben.",
+        "attendanceCheckViolation": "Testklausuren können keine Anwesenheitskontrolle haben.",
+        "examWorkingTimeTooHigh": "Die Bearbeitungszeit ist zu lang. Das Maximum beträgt 43200 Minuten (30 Tage). Bitte passe den Start und/oder das Ende der Bearbeitungszeit an.",
+        "examGracePeriodTooHigh": "Die Nachfrist ist zu lang. Bitte gib einen Wert zwischen 0 und 3600 Sekunden ein.",
+        "examMaxPointsTooHigh": "Die maximale Punktzahl ist zu hoch. Bitte gib einen Wert zwischen 1 und 9999 ein.",
+        "examNumberOfExercisesTooHigh": "Die Anzahl der Aufgaben ist zu hoch. Bitte gib einen Wert zwischen 1 und 100 ein.",
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Du bist kein Super-Administrator und kannst daher keinen Super-Administrator-Account erstellen.",
             "onlySuperAdminCanManageSuperAdmins": "Du bist kein Super-Administrator und kannst daher keine Super-Administratoren-Accounts verwalten."

@@ -29,6 +29,7 @@ plugins {
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.18.0"
     id "com.google.osdetector" version "1.7.3"
+    id "org.cyclonedx.bom" version "3.1.0"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -53,6 +54,7 @@ node {
 
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
+apply from: "gradle/sbom.gradle"
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
@@ -156,6 +158,15 @@ configurations.configureEach {
     exclude group: "xalan", module: "xalan"
     // required by JPlag, but not used in this project
     exclude group: "xalan", module: "serializer"
+
+    // we use jackson and want to exclude gson to avoid conflicts and security vulnerabilities
+    exclude group: "com.google.code.gson", module: "gson"
+
+    // we do not really use kotlin libraries, exclude to avoid conflicts and security vulnerabilities
+    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib"
+    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
+    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
+    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-common"
 
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
@@ -304,7 +315,7 @@ dependencies {
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
-    // Avoid outdated version of netty to prevent security issues
+    // Avoid outdated version of json-smart to prevent security issues, we only use this as transitive dependency for third party dependencies
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
 
 
@@ -329,9 +340,6 @@ dependencies {
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
     implementation "org.apache.commons:commons-collections4:4.5.0"
-
-    // required by eureka, but actually superseded by commons-lang3 above
-    implementation "commons-lang:commons-lang:2.6"
 
     implementation("org.liquibase:liquibase-core:${liquibase_version}") {
         exclude group: "com.opencsv", module: "opencsv"
@@ -371,7 +379,6 @@ dependencies {
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
     implementation "com.webauthn4j:webauthn4j-core:0.30.2.RELEASE"
 
-//    implementation "org.springframework.security:spring-security-data"
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
@@ -396,6 +403,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.83"
     implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
+    // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.9"
 
@@ -416,11 +424,6 @@ dependencies {
 
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.5.0-jre"
-    implementation "com.sun.activation:jakarta.activation:2.0.1"
-
-    // use newest version of gson to avoid security issues through outdated dependencies
-    // NOTE: gson itself is not allowed in the Artemis code (based on architecture tests), but is used by dependencies (e.g. spring cloud eureka netflix)
-    implementation "com.google.code.gson:gson:2.13.2"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.12.0"
@@ -579,3 +582,4 @@ tasks.named("dependencyUpdates").configure {
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
+// 16) Generate SBOM (Software Bill of Materials):  ./gradlew cyclonedxBom -x webapp
