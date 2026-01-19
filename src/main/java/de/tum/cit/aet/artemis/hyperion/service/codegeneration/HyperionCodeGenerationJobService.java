@@ -8,7 +8,6 @@ import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -39,7 +38,6 @@ public class HyperionCodeGenerationJobService {
 
     private final HyperionCodeGenerationTaskService taskService;
 
-    @Nullable
     private IMap<String, JobInfo> jobMap;
 
     public HyperionCodeGenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, HyperionCodeGenerationTaskService taskService) {
@@ -51,6 +49,7 @@ public class HyperionCodeGenerationJobService {
     public void init() {
         MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
         mapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
+        jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
     }
 
     /**
@@ -114,14 +113,11 @@ public class HyperionCodeGenerationJobService {
         String key = jobKey(exerciseId);
         JobInfo job = getJobMap().get(key);
         if (job != null && job.jobId().equals(jobId)) {
-            getJobMap().remove(key);
+            getJobMap().remove(key, job);
         }
     }
 
     private IMap<String, JobInfo> getJobMap() {
-        if (jobMap == null) {
-            jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
-        }
         return jobMap;
     }
 

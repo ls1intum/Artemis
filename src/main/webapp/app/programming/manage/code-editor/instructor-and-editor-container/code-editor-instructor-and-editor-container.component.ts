@@ -1,4 +1,4 @@
-import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
@@ -80,6 +80,7 @@ const SEVERITY_ORDER = {
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
+    @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
@@ -126,6 +127,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private jobTimeoutHandle?: number;
     private activeJobId?: string;
     private statusSubscription?: Subscription;
+    private restoreRequestId = 0;
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -191,14 +193,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private openCodeGenerationRunningModal(): void {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { backdrop: 'static', keyboard: false, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.runningTitle';
-        modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.runningText';
-        modalRef.componentInstance.translateText = true;
-        modalRef.componentInstance.textIsMarkdown = false;
-        modalRef.componentInstance.showCancelButton = false;
-        modalRef.componentInstance.showCloseButton = false;
-        modalRef.componentInstance.confirmButtonKey = 'global.form.ok';
+        this.modalService.open(this.codeGenerationRunningModal, { backdrop: 'static', keyboard: false, size: 'md' });
     }
 
     protected override applyDomainChange(domainType: any, domainValue: any) {
@@ -213,21 +208,26 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private restoreCodeGenerationState() {
+        this.restoreRequestId += 1;
+        this.statusSubscription?.unsubscribe();
+        this.statusSubscription = undefined;
+
         if (!this.hyperionEnabled || !this.exercise?.id) {
             return;
         }
-        if (this.isGeneratingCode() && this.activeJobId) {
+        if (this.isGeneratingCode()) {
             return;
-        }
-        if (this.statusSubscription) {
-            this.statusSubscription.unsubscribe();
         }
         if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
             return;
         }
         const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const requestId = this.restoreRequestId;
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
             next: (res) => {
+                if (requestId != this.restoreRequestId) {
+                    return;
+                }
                 if (res?.jobId) {
                     this.subscribeToJob(res.jobId);
                 } else {
@@ -235,6 +235,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
             },
             error: () => {
+                if (requestId != this.restoreRequestId) {
+                    return;
+                }
                 this.clearJobSubscription(true);
             },
         });
