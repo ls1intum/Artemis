@@ -137,6 +137,53 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
+    private hoverMessagesElement?: HTMLElement;
+    private readonly handleCitationMouseOver = (event: MouseEvent) => {
+        const messagesElement = this.hoverMessagesElement;
+        if (!messagesElement) {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
+        if (!citation || !messagesElement.contains(citation)) {
+            return;
+        }
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        if (!summary) {
+            return;
+        }
+        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
+        const boundary = bubble ?? messagesElement;
+        citation.style.setProperty('--iris-citation-shift', '0px');
+        const boundaryRect = boundary.getBoundingClientRect();
+        const summaryRect = summary.getBoundingClientRect();
+        const padding = 8;
+        let shift = 0;
+        if (summaryRect.left < boundaryRect.left + padding) {
+            shift = boundaryRect.left + padding - summaryRect.left;
+        } else if (summaryRect.right > boundaryRect.right - padding) {
+            shift = boundaryRect.right - summaryRect.right;
+        }
+        if (shift !== 0) {
+            citation.style.setProperty('--iris-citation-shift', `${shift}px`);
+        }
+    };
+    private readonly handleCitationMouseOut = (event: MouseEvent) => {
+        const messagesElement = this.hoverMessagesElement;
+        if (!messagesElement) {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
+        if (!citation) {
+            return;
+        }
+        const relatedTarget = event.relatedTarget as HTMLElement | null;
+        if (relatedTarget && citation.contains(relatedTarget)) {
+            return;
+        }
+        citation.style.setProperty('--iris-citation-shift', '0px');
+    };
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
@@ -175,6 +222,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 onCleanup(() => clearTimeout(timeoutId));
             }
             this.previousSessionId = sessionId;
+        });
+
+        effect(() => {
+            const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+            if (!messagesElement || messagesElement === this.hoverMessagesElement) {
+                return;
+            }
+            if (this.hoverMessagesElement) {
+                this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
+                this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
+            }
+            this.hoverMessagesElement = messagesElement;
+            messagesElement.addEventListener('mouseover', this.handleCitationMouseOver);
+            messagesElement.addEventListener('mouseout', this.handleCitationMouseOut);
         });
 
         // Handle message scroll on new messages
@@ -261,38 +322,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
-
-        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
-        if (!messagesElement) {
-            return;
-        }
-
-        const handleMouseOver = (event: MouseEvent) => {
-            const target = event.target as HTMLElement | null;
-            const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
-            if (!citation || !messagesElement.contains(citation)) {
-                return;
-            }
-        };
-
-        const handleMouseOut = (event: MouseEvent) => {
-            const target = event.target as HTMLElement | null;
-            const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
-            if (!citation) {
-                return;
-            }
-            const relatedTarget = event.relatedTarget as HTMLElement | null;
-            if (relatedTarget && citation.contains(relatedTarget)) {
-                return;
-            }
-            citation.style.setProperty('--iris-citation-shift', '0px');
-        };
-
-        messagesElement.addEventListener('mouseover', handleMouseOver);
-        messagesElement.addEventListener('mouseout', handleMouseOut);
         this.destroyRef.onDestroy(() => {
-            messagesElement.removeEventListener('mouseover', handleMouseOver);
-            messagesElement.removeEventListener('mouseout', handleMouseOut);
+            if (!this.hoverMessagesElement) {
+                return;
+            }
+            this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
+            this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
         });
     }
 
