@@ -11,6 +11,7 @@ jobs:
         if: |
             github.event.pull_request.draft == false &&
             github.event.pull_request.base.ref == 'develop' &&
+            github.event.pull_request.head.repo != null &&
             github.event.pull_request.head.repo.fork == false
         runs-on: ubuntu-latest
         timeout-minutes: 2
@@ -22,6 +23,10 @@ jobs:
         steps:
             - name: Validate PR description
               uses: actions/github-script@v7
+              env:
+                  AZURE_ENDPOINT: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}
+                  AZURE_API_KEY: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}
+                  AZURE_DEPLOYMENT: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_DEPLOYMENT }}
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   script: |
@@ -64,20 +69,19 @@ jobs:
                       const aiSuggestions = [];
 
                       // Check if all checkboxes are unchecked (at least some should be checked)
-                      // Supports both - [ ] and * [ ] checkbox styles
+                      // Supports both - [ ] and * [ ] checkbox styles, with flexible spacing
                       const checkedBoxes = (body.match(/[-*] \[x\]/gi) || []).length;
-                      const uncheckedBoxes = (body.match(/[-*] \[ \]/g) || []).length;
+                      const uncheckedBoxes = (body.match(/[-*] \[\s*\]/g) || []).length;
                       if (uncheckedBoxes > 0 && checkedBoxes === 0) {
                           issues.push('No checkboxes are checked in the PR description');
                           aiSuggestions.push('Check the boxes that apply to your changes in the Checklist section');
                       }
 
-                      // AI validation setup
-                      const azureEndpoint = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}';
-                      const azureApiKey = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}';
-                      const deploymentName = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_DEPLOYMENT }}';
-                      const hasAiCredentials = azureEndpoint && azureApiKey && deploymentName &&
-                          azureEndpoint !== '' && azureApiKey !== '';
+                      // AI validation setup (secrets passed via env vars to avoid injection)
+                      const azureEndpoint = process.env.AZURE_ENDPOINT || '';
+                      const azureApiKey = process.env.AZURE_API_KEY || '';
+                      const deploymentName = process.env.AZURE_DEPLOYMENT || '';
+                      const hasAiCredentials = azureEndpoint !== '' && azureApiKey !== '' && deploymentName !== '';
 
                       // Helper function to call Azure OpenAI
                       async function callAI(prompt, userContent) {
@@ -107,8 +111,13 @@ jobs:
                               return null;
                           }
 
-                          const data = await response.json();
-                          return data.choices?.[0]?.message?.content?.trim() || null;
+                          try {
+                              const data = await response.json();
+                              return data.choices?.[0]?.message?.content?.trim() || null;
+                          } catch (parseError) {
+                              console.log('Failed to parse AI response as JSON');
+                              return null;
+                          }
                       }
 
                       // Sanitize AI output to prevent injection attacks via suggestions
@@ -174,7 +183,6 @@ jobs:
 
                               console.log('Running motivation quality check...');
                               const result = await callAI(prompt, bodyForAI);
-                              console.log(`Motivation check result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Motivation quality check skipped: AI service unavailable');
@@ -207,7 +215,6 @@ jobs:
 
                               console.log('Running description quality check...');
                               const result = await callAI(prompt, bodyForAI);
-                              console.log(`Description check result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Description quality check skipped: AI service unavailable');
@@ -240,7 +247,6 @@ jobs:
 
                               console.log('Running testing steps quality check...');
                               const result = await callAI(prompt, bodyForAI);
-                              console.log(`Testing steps check result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Testing steps quality check skipped: AI service unavailable');
@@ -284,7 +290,6 @@ jobs:
 
                               console.log('Running visual changes check...');
                               const result = await callAI(prompt, combinedContent);
-                              console.log(`Visual changes result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Visual changes check skipped: AI service unavailable');
