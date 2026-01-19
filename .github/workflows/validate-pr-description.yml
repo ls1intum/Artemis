@@ -361,7 +361,8 @@ jobs:
 
                           commentBody += `\n---\n`;
                           commentBody += `*This check validates that your PR description follows the [PR template](https://github.com/${owner}/${repo}/blob/develop/.github/PULL_REQUEST_TEMPLATE.md). `;
-                          commentBody += `A complete description helps reviewers understand your changes and speeds up the review process.*`;
+                          commentBody += `A complete description helps reviewers understand your changes and speeds up the review process.*\n\n`;
+                          commentBody += `> **Note:** This description validation is an experimental feature. If you observe false positives, please send a DM with a link to the wrong comment to Patrick Bassner on Slack. Thank you!`;
 
                           // Post new comment
                           try {
