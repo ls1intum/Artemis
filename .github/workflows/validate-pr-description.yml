@@ -91,147 +91,125 @@ jobs:
                           issues.push('No checkboxes are checked in the PR description');
                       }
 
-                      // Use AI to validate content quality and check for visual changes
-                      let aiValidation = null;
+                      // AI validation setup
                       const azureEndpoint = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}';
                       const azureApiKey = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}';
                       const deploymentName = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_DEPLOYMENT }}';
+                      const hasAiCredentials = azureEndpoint && azureApiKey && deploymentName &&
+                          azureEndpoint !== '' && azureApiKey !== '';
 
-                      if (azureEndpoint && azureApiKey && deploymentName &&
-                          azureEndpoint !== '' && azureApiKey !== '') {
-                          try {
-                              // Get file patches for client files to help AI determine if changes are visual
-                              const clientFiles = files.filter(f => f.filename.startsWith('src/main/webapp/'));
-                              const clientPatches = clientFiles.slice(0, 10).map(f => ({
-                                  filename: f.filename,
-                                  patch: (f.patch || '').substring(0, 1000) // Limit patch size
-                              }));
+                      // Helper function to call Azure OpenAI
+                      async function callAI(systemPrompt, userPrompt) {
+                          const response = await fetch(
+                              `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
+                              {
+                                  method: 'POST',
+                                  headers: {
+                                      'Content-Type': 'application/json',
+                                      'api-key': azureApiKey
+                                  },
+                                  body: JSON.stringify({
+                                      messages: [
+                                          { role: 'system', content: systemPrompt },
+                                          { role: 'user', content: userPrompt }
+                                      ],
+                                      temperature: 0,
+                                      max_tokens: 50
+                                  })
+                              }
+                          );
 
-                              const systemPrompt = `You are a PR description validator for the Artemis project. Your task is to validate that a PR description follows the template and contains meaningful content.
-
-                      Analyze the PR description and changed files to determine:
-                      1. Whether the Motivation/Description/Testing sections have actual content (not just placeholders)
-                      2. Whether the changes include VISUAL changes (UI components, styling, layouts, templates) that would require screenshots
-                      3. Whether the testing steps are specific and actionable
-                      4. Whether the Motivation and Description sections make sense and relate to the actual code changes
-
-                      Content quality checks (be lenient, only flag obvious issues):
-                      - Flag gibberish, random characters, or nonsensical text (e.g., "asdfasdf", "lorem ipsum", "test test test")
-                      - Flag obvious placeholders (e.g., "TODO", "fill this in", "describe here")
-                      - Flag content that clearly doesn't match the code changes (e.g., motivation talks about "fixing login" but changes are in exam module)
-                      - Do NOT be overly strict - brief but meaningful descriptions are fine
-                      - Do NOT require perfect grammar or extensive detail
-
-                      Non-visual client changes that do NOT require screenshots include:
-                      - Variable/function renames or refactoring
-                      - Logic-only changes (no template/HTML changes)
-                      - TypeScript-only changes without component template modifications
-                      - Test file changes
-                      - Configuration changes
-                      - Pure service/utility changes
-
-                      Visual changes that DO require screenshots include:
-                      - HTML template modifications
-                      - CSS/SCSS styling changes
-                      - Component UI changes
-                      - Layout modifications
-                      - New UI components or views
-
-                      Respond with a JSON object (no markdown, just raw JSON):
-                      {
-                        "isValid": boolean,
-                        "issues": ["list of specific issues found"],
-                        "suggestions": ["list of actionable suggestions to fix issues"],
-                        "hasVisualChanges": boolean,
-                        "reasoning": "brief explanation of your assessment"
-                      }`;
-
-                              const userPrompt = `PR Description (full):
-                      ${body.substring(0, 4000)}
-
-                      Motivation section:
-                      ${motivationSection || '(empty)'}
-
-                      Description section:
-                      ${descriptionSection || '(empty)'}
-
-                      Testing steps section:
-                      ${testingSection || '(empty)'}
-
-                      Screenshots section:
-                      ${screenshotsSection || '(empty)'}
-
-                      Changed files (${changedFiles.length} total):
-                      ${changedFiles.slice(0, 30).join('\n')}
-
-                      Client file patches:
-                      ${JSON.stringify(clientPatches, null, 2)}`;
-
-                              const response = await fetch(
-                                  `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
-                                  {
-                                      method: 'POST',
-                                      headers: {
-                                          'Content-Type': 'application/json',
-                                          'api-key': azureApiKey
-                                      },
-                                      body: JSON.stringify({
-                                          messages: [
-                                              { role: 'system', content: systemPrompt },
-                                              { role: 'user', content: userPrompt }
-                                          ],
-                                          temperature: 0.1,
-                                          max_tokens: 1000
-                                      })
-                                  }
-                              );
-
-                              if (response.ok) {
-                                  const data = await response.json();
-                                  const content = data.choices?.[0]?.message?.content;
-                                  if (content) {
-                                      try {
-                                          // Try to extract JSON from the response
-                                          const jsonMatch = content.match(/\{[\s\S]*\}/);
-                                          if (jsonMatch) {
-                                              aiValidation = JSON.parse(jsonMatch[0]);
-                                              console.log('AI validation result:', JSON.stringify(aiValidation, null, 2));
-                                          }
-                                      } catch (parseError) {
-                                          console.log('Failed to parse AI response as JSON:', parseError.message);
-                                      }
-                                  }
-                              } else if (response.status === 429 || response.status === 503) {
-                                  console.log(`AI service temporarily unavailable (${response.status}), skipping AI validation`);
+                          if (!response.ok) {
+                              if (response.status === 429 || response.status === 503) {
+                                  console.log(`AI service temporarily unavailable (${response.status})`);
                               } else {
-                                  console.log(`AI validation request failed with status ${response.status}`);
+                                  console.log(`AI request failed with status ${response.status}`);
+                              }
+                              return null;
+                          }
+
+                          const data = await response.json();
+                          const content = data.choices?.[0]?.message?.content?.trim().toUpperCase();
+                          return content;
+                      }
+
+                      // ============================================================
+                      // AI CHECK 1: Content Quality (gibberish/placeholder detection)
+                      // ============================================================
+                      if (hasAiCredentials && motivationSection && descriptionSection) {
+                          try {
+                              const contentCheckPrompt = `You detect gibberish or placeholder text.
+
+                      FAIL examples: "asdf", "xxx", "test test", "lorem ipsum", "TODO", "TBD", "fill this in", "description here", "...", random characters.
+
+                      PASS examples: Any real sentence about code, bugs, features, or changes. Brevity is OK. Imperfect grammar is OK.
+
+                      Reply only: PASS or FAIL`;
+
+                              const contentInput = `Motivation: ${motivationSection.substring(0, 500)}
+
+                      Description: ${descriptionSection.substring(0, 500)}`;
+
+                              console.log('Running AI content quality check...');
+                              const contentResult = await callAI(contentCheckPrompt, contentInput);
+                              console.log(`Content quality result: ${contentResult}`);
+
+                              if (contentResult === 'FAIL') {
+                                  issues.push('**Motivation or Description** appears to contain placeholder text or gibberish');
                               }
                           } catch (error) {
-                              console.log('AI validation error (non-blocking):', error.message);
+                              console.log('Content quality check error (non-blocking):', error.message);
                           }
                       }
 
-                      // Process AI validation results
-                      if (aiValidation) {
-                          if (aiValidation.hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
+                      // ============================================================
+                      // AI CHECK 2: Visual Changes Detection (only for client changes)
+                      // ============================================================
+                      let hasVisualChanges = false;
+
+                      if (hasClientChanges) {
+                          if (hasAiCredentials) {
+                              try {
+                                  const clientFiles = files.filter(f => f.filename.startsWith('src/main/webapp/'));
+                                  const patchSummary = clientFiles.slice(0, 5).map(f =>
+                                      `${f.filename}:\n${(f.patch || '').substring(0, 300)}`
+                                  ).join('\n\n');
+
+                                  const visualCheckPrompt = `You detect if code changes affect the UI visually.
+
+                      VISUAL (answer YES): Changes to HTML templates, CSS/SCSS styles, component layouts, adding/removing UI elements.
+
+                      NOT VISUAL (answer NO): TypeScript logic only, variable renames, refactoring, test files, services, utility functions, imports.
+
+                      Reply only: YES or NO`;
+
+                              const visualInput = `Files changed:\n${patchSummary}`;
+
+                                  console.log('Running AI visual changes check...');
+                                  const visualResult = await callAI(visualCheckPrompt, visualInput);
+                                  console.log(`Visual changes result: ${visualResult}`);
+
+                                  hasVisualChanges = visualResult === 'YES';
+                              } catch (error) {
+                                  console.log('Visual changes check error (non-blocking):', error.message);
+                                  // Fallback to pattern matching
+                                  hasVisualChanges = null;
+                              }
+                          }
+
+                          // Fallback: pattern-based detection if AI unavailable or failed
+                          if (hasVisualChanges === null || !hasAiCredentials) {
+                              const visualFilePatterns = ['.html', '.scss', '.css'];
+                              hasVisualChanges = changedFiles.some(f =>
+                                  visualFilePatterns.some(pattern => f.endsWith(pattern)) &&
+                                  !f.includes('.spec.')
+                              );
+                              console.log(`Fallback visual detection: ${hasVisualChanges}`);
+                          }
+
+                          // Check screenshots if visual changes detected
+                          if (hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
                               issues.push('**Screenshots** section is empty but this PR contains visual/UI changes');
-                          }
-                          if (aiValidation.issues && aiValidation.issues.length > 0) {
-                              aiValidation.issues.forEach(issue => {
-                                  if (!issues.includes(issue)) {
-                                      issues.push(issue);
-                                  }
-                              });
-                          }
-                      } else if (hasClientChanges) {
-                          // Fallback: If no AI validation available, check for obvious visual file changes
-                          const visualFilePatterns = ['.html', '.scss', '.css', '.component.ts'];
-                          const hasObviousVisualChanges = changedFiles.some(f =>
-                              visualFilePatterns.some(pattern => f.endsWith(pattern)) &&
-                              !f.includes('.spec.')
-                          );
-                          if (hasObviousVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
-                              issues.push('**Screenshots** section appears empty but this PR modifies client UI files (HTML/SCSS/components)');
                           }
                       }
 
@@ -249,21 +227,14 @@ jobs:
                               commentBody += `${index + 1}. ${issue}\n`;
                           });
 
-                          if (aiValidation?.suggestions && aiValidation.suggestions.length > 0) {
-                              commentBody += `\n### How to Fix\n`;
-                              aiValidation.suggestions.forEach(suggestion => {
-                                  commentBody += `- ${suggestion}\n`;
-                              });
-                          } else {
-                              commentBody += `\n### How to Fix\n`;
-                              commentBody += `- Fill in the **Motivation and Context** section explaining why this change is needed\n`;
-                              commentBody += `- Add a clear **Description** of what was changed\n`;
-                              commentBody += `- Provide specific **Steps for Testing** that reviewers can follow\n`;
-                              if (hasClientChanges) {
-                                  commentBody += `- Add **Screenshots** if your changes affect the UI\n`;
-                              }
-                              commentBody += `- Check the relevant checkboxes in the checklist\n`;
+                          commentBody += `\n### How to Fix\n`;
+                          commentBody += `- Fill in the **Motivation and Context** section explaining why this change is needed\n`;
+                          commentBody += `- Add a clear **Description** of what was changed\n`;
+                          commentBody += `- Provide specific **Steps for Testing** that reviewers can follow\n`;
+                          if (hasClientChanges) {
+                              commentBody += `- Add **Screenshots** if your changes affect the UI\n`;
                           }
+                          commentBody += `- Check the relevant checkboxes in the checklist\n`;
 
                           commentBody += `\n---\n`;
                           commentBody += `*This check validates that your PR description follows the [PR template](https://github.com/${owner}/${repo}/blob/develop/.github/PULL_REQUEST_TEMPLATE.md). `;
