@@ -1,5 +1,7 @@
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, { ImageSize } from '../../../src/components/Image/Image';
+import FileUploadUtilServiceFactory from './assets/FileUpload_UtilService_Factory.png';
 
 # Server Tests
 
@@ -137,6 +139,8 @@ When setting up data in tests, use helper functions from corresponding UtilServi
 We use the factory method pattern to structure test cases.
 In general, **UtilServices** manage the communication with the database, and **Factories** are responsible for object creation and initialization.
 If you cannot find the correct helper function, add a new one to the most fitting UtilService or Factory and enhance it with Javadoc.
+
+<Image src={FileUploadUtilServiceFactory} alt={"UtilServices and factories"} caption={"UtilServices and factories"} size={ImageSize.medium}></Image>
 
 <Callout variant={CalloutVariant.warning}>
 Make sure to always use the ids returned by the database and to not assume the existence or non-existence of specific values.
