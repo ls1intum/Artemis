@@ -54,44 +54,11 @@ jobs:
                       const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
                       console.log(`Change types - Client: ${hasClientChanges}`);
 
-                      // Extract sections from PR body (supports ## and ### headings)
-                      // Stops at next same-level or higher heading, but includes #### subsections
-                      const extractSection = (header) => {
-                          const regex = new RegExp(`###+\\s*${header}[\\s\\S]*?(?=\\n#{2,3}[^#]|$)`, 'i');
-                          const match = body.match(regex);
-                          if (!match) return '';
-                          // Remove the header line and HTML comments
-                          return match[0]
-                              .replace(/##+\s*[^\n]+\n?/, '')
-                              .replace(/<!--[\s\S]*?-->/g, '')
-                              .trim();
-                      };
+                      // Strip HTML comments from body for AI analysis
+                      const bodyForAI = body.replace(/<!--[\s\S]*?-->/g, '').trim();
 
-                      const motivationSection = extractSection('Motivation and Context');
-                      const descriptionSection = extractSection('Description');
-                      const testingSection = extractSection('Steps for Testing');
-                      const screenshotsSection = extractSection('Screenshots');
-
-                      // Quick pre-checks - fail fast if sections are obviously empty
                       const issues = [];
-
-                      // Store suggestions for the comment
                       const aiSuggestions = [];
-
-                      if (!motivationSection || motivationSection.length < 10) {
-                          issues.push('**Motivation and Context** section is empty or too brief');
-                          aiSuggestions.push('Explain why this change is needed and what problem it solves');
-                      }
-
-                      if (!descriptionSection || descriptionSection.length < 10) {
-                          issues.push('**Description** section is empty or too brief');
-                          aiSuggestions.push('Describe what was changed and how it works');
-                      }
-
-                      if (!testingSection || testingSection.length < 20) {
-                          issues.push('**Steps for Testing** section is empty or lacks specific steps');
-                          aiSuggestions.push('Add specific steps like "1. Log in as instructor, 2. Navigate to X, 3. Click Y"');
-                      }
 
                       // Check if all checkboxes are unchecked (at least some should be checked)
                       // Supports both - [ ] and * [ ] checkbox styles
@@ -165,21 +132,22 @@ jobs:
                       // ============================================================
                       // AI CHECK 1: Motivation Quality
                       // ============================================================
-                      if (hasAiCredentials && motivationSection) {
+                      if (hasAiCredentials) {
                           try {
-                              const prompt = 'Check if this Motivation text is meaningful. ' +
-                                  'FAIL for gibberish, random characters, placeholder text like TODO or TBD or fill in, or unrelated content. ' +
-                                  'PASS for any real explanation of why a change is needed (brief is OK, imperfect grammar is OK). ' +
-                                  'Reply with PASS if acceptable. Reply with FAIL and one short suggestion if not acceptable.';
+                              const prompt = 'You are reviewing a GitHub PR description. Find the section about motivation/context (why this change is needed). ' +
+                                  'It might be labeled "Motivation", "Motivation and Context", "Why", "Context", or similar. ' +
+                                  'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or unrelated content. ' +
+                                  'PASS if: there is any real explanation of why this change is needed (brief is OK, imperfect grammar is OK). ' +
+                                  'Reply with PASS if acceptable. Reply with FAIL: followed by one short suggestion if not acceptable.';
 
                               console.log('Running motivation quality check...');
-                              const result = await callAI(prompt, motivationSection.substring(0, 500));
+                              const result = await callAI(prompt, bodyForAI);
                               console.log(`Motivation check result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Motivation quality check skipped: AI service unavailable');
                               } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Motivation and Context** section needs improvement');
+                                  issues.push('**Motivation/Context** section is missing or needs improvement');
                                   const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
                                   const suggestion = sanitizeAiOutput(rawSuggestion);
                                   if (suggestion) aiSuggestions.push(suggestion);
@@ -193,21 +161,22 @@ jobs:
                       // ============================================================
                       // AI CHECK 2: Description Quality
                       // ============================================================
-                      if (hasAiCredentials && descriptionSection) {
+                      if (hasAiCredentials) {
                           try {
-                              const prompt = 'Check if this Description text is meaningful. ' +
-                                  'FAIL for gibberish, random characters, placeholder text like TODO or TBD or fill in, or no actual change described. ' +
-                                  'PASS for any real description of what was changed (brief is OK, imperfect grammar is OK). ' +
-                                  'Reply with PASS if acceptable. Reply with FAIL and one short suggestion if not acceptable.';
+                              const prompt = 'You are reviewing a GitHub PR description. Find the section describing what was changed. ' +
+                                  'It might be labeled "Description", "Changes", "What", "Summary", or similar. ' +
+                                  'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or no actual changes described. ' +
+                                  'PASS if: there is any real description of what was changed (brief is OK, imperfect grammar is OK). ' +
+                                  'Reply with PASS if acceptable. Reply with FAIL: followed by one short suggestion if not acceptable.';
 
                               console.log('Running description quality check...');
-                              const result = await callAI(prompt, descriptionSection.substring(0, 500));
+                              const result = await callAI(prompt, bodyForAI);
                               console.log(`Description check result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Description quality check skipped: AI service unavailable');
                               } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Description** section needs improvement');
+                                  issues.push('**Description** section is missing or needs improvement');
                                   const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
                                   const suggestion = sanitizeAiOutput(rawSuggestion);
                                   if (suggestion) aiSuggestions.push(suggestion);
@@ -221,21 +190,22 @@ jobs:
                       // ============================================================
                       // AI CHECK 3: Testing Steps Quality
                       // ============================================================
-                      if (hasAiCredentials && testingSection) {
+                      if (hasAiCredentials) {
                           try {
-                              const prompt = 'Check if these Testing Steps are actionable. ' +
-                                  'FAIL for vague instructions like test it or check everything, placeholder text, or no actual steps. ' +
-                                  'PASS for specific actions a tester can follow (does not need to be perfect). ' +
-                                  'Reply with PASS if acceptable. Reply with FAIL and one short suggestion if not acceptable.';
+                              const prompt = 'You are reviewing a GitHub PR description. Find the section about how to test this change. ' +
+                                  'It might be labeled "Testing", "Steps for Testing", "Test Plan", "How to Test", "Verification", or similar. ' +
+                                  'FAIL if: the section is missing, empty, contains only placeholder text, or has only vague instructions like "test it" or "check everything". ' +
+                                  'PASS if: there are specific actions a tester can follow (does not need to be perfect, brief steps are OK). ' +
+                                  'Reply with PASS if acceptable. Reply with FAIL: followed by one short suggestion if not acceptable.';
 
                               console.log('Running testing steps quality check...');
-                              const result = await callAI(prompt, testingSection.substring(0, 500));
+                              const result = await callAI(prompt, bodyForAI);
                               console.log(`Testing steps check result: ${result}`);
 
                               if (result === null) {
                                   core.warning('Testing steps quality check skipped: AI service unavailable');
                               } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Steps for Testing** section needs more specific instructions');
+                                  issues.push('**Testing instructions** are missing or need more specific steps');
                                   const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
                                   const suggestion = sanitizeAiOutput(rawSuggestion);
                                   if (suggestion) aiSuggestions.push(suggestion);
@@ -247,7 +217,7 @@ jobs:
                       }
 
                       // ============================================================
-                      // AI CHECK 4: Visual Changes Detection (only for client changes)
+                      // AI CHECK 4: Visual Changes & Screenshots (only for client changes)
                       // ============================================================
                       if (hasClientChanges && hasAiCredentials) {
                           try {
@@ -258,23 +228,26 @@ jobs:
                                   `${f.filename}:\n${(f.patch || '').substring(0, 1000)}`
                               ).join('\n\n');
 
-                              const prompt = 'Do these code changes affect the UI visually? ' +
-                                  'Answer YES for changes to HTML templates, CSS/SCSS styles, component layouts, or UI elements. ' +
-                                  'Answer NO for TypeScript logic only, variable renames, refactoring, test files, services, or imports. ' +
-                                  'Reply only YES or NO.';
+                              const prompt = 'You are reviewing a GitHub PR. First, analyze the code changes to determine if they affect the UI visually. ' +
+                                  'Visual changes include: HTML template changes, CSS/SCSS style changes, component layout changes, adding/removing UI elements. ' +
+                                  'Non-visual changes include: TypeScript logic only, variable renames, refactoring, services, imports, test files. ' +
+                                  'If the changes ARE visual, check if the PR description contains screenshots (look for image links, "Screenshots" section, or similar). ' +
+                                  'Reply PASS if: changes are non-visual OR changes are visual and screenshots are present. ' +
+                                  'Reply FAIL: followed by a short suggestion if: changes are visual but no screenshots are included.';
+
+                              const combinedContent = `PR DESCRIPTION:\n${bodyForAI}\n\nCODE CHANGES:\n${patchSummary}`;
 
                               console.log('Running visual changes check...');
-                              const result = await callAI(prompt, patchSummary);
+                              const result = await callAI(prompt, combinedContent);
                               console.log(`Visual changes result: ${result}`);
 
-                              if (result) {
-                                  const hasVisualChanges = result.toUpperCase().startsWith('YES');
-                                  if (hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
-                                      issues.push('**Screenshots** section is empty but this PR contains visual/UI changes');
-                                      aiSuggestions.push('Add screenshots showing the UI before and after your changes');
-                                  }
-                              } else {
+                              if (result === null) {
                                   core.warning('Visual changes check skipped: AI service unavailable');
+                              } else if (result.toUpperCase().startsWith('FAIL')) {
+                                  issues.push('**Screenshots** are missing but this PR contains visual/UI changes');
+                                  const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
+                                  const suggestion = sanitizeAiOutput(rawSuggestion);
+                                  if (suggestion) aiSuggestions.push(suggestion);
                               }
                           } catch (error) {
                               console.log('Visual changes check error:', error.message);
