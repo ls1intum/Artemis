@@ -215,9 +215,11 @@ jobs:
                       if (hasClientChanges) {
                           if (hasAiCredentials) {
                               try {
-                                  const clientFiles = files.filter(f => f.filename.startsWith('src/main/webapp/'));
-                                  const patchSummary = clientFiles.slice(0, 5).map(f =>
-                                      `${f.filename}:\n${(f.patch || '').substring(0, 300)}`
+                                  const clientFiles = files.filter(f =>
+                                      f.filename.startsWith('src/main/webapp/') && !f.filename.includes('.spec.')
+                                  );
+                                  const patchSummary = clientFiles.map(f =>
+                                      `${f.filename}:\n${(f.patch || '').substring(0, 1000)}`
                                   ).join('\n\n');
 
                                   const prompt = 'Do these code changes affect the UI visually? ' +
