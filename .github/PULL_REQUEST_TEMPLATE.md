@@ -3,7 +3,7 @@
 
 ### Checklist
 #### General
-<!-- Remove tasks that are not applicable for your PR. Please only put the PR into ready for review, if all relevant tasks are checked! -->
+<!-- Remove tasks that are not applicable for your PR. Please only put the PR into ready for review if all relevant tasks are checked! -->
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
 <!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
