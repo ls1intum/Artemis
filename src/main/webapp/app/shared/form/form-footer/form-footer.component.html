@@ -44,15 +44,15 @@
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>
-        @if (showGenerateWithAi) {
+        @if (showGenerateWithAi()) {
             <jhi-button
                 id="generate-with-ai"
                 [shouldToggle]="true"
-                [disabled]="!!invalidReasons.length || isDisabled || isSaving || isGeneratingWithAi"
-                [isLoading]="isGeneratingWithAi"
+                [disabled]="!!invalidReasons.length || isDisabled || isSaving || isGeneratingWithAi()"
+                [isLoading]="isGeneratingWithAi()"
                 [icon]="facArtemisIntelligence"
                 [title]="'artemisApp.programmingExercise.codeGeneration.generateWithAi'"
-                (onClick)="generateWithAi.next()"
+                (onClick)="generateWithAi.emit()"
                 [btnSize]="ButtonSize.SMALL"
             />
         }
