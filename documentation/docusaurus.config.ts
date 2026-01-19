@@ -22,10 +22,10 @@ const config: Config = {
     },
 
     // Set the production url of your site here
-    url: 'https://docs.artemis.tum.de',
+    url: 'https://ls1intum.github.io/',
     // Set the /<baseUrl>/ pathname under which your site is served
-    // For custom domains, use '/'
-    baseUrl: '/',
+    // For GitHub pages deployment, it is often '/<projectName>/'
+    baseUrl: '/Artemis/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
