@@ -117,7 +117,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     }
 
     shouldShowProblemStatement(): boolean {
-        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions && this.isProblemStatementVisible();
+        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions() && this.isProblemStatementVisible();
     }
 
     /** Code Editor State Variables **/
