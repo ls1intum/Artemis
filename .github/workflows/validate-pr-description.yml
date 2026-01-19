@@ -6,7 +6,8 @@ on:
 
 jobs:
     validate-pr-description:
-        if: github.event.pull_request.draft == false
+        # Only run on non-draft PRs targeting develop (security: prevents stacked PR attacks)
+        if: github.event.pull_request.draft == false && github.event.pull_request.base.ref == 'develop'
         runs-on: ubuntu-latest
         timeout-minutes: 2
         permissions:
