@@ -1,7 +1,7 @@
 <ng-template #codeGenerationRunningModal let-modal>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningTitle"></h4>
-        <button type="button" class="btn-close" aria-label="Close button" (click)="modal.dismiss('Cross click')"></button>
+        <button type="button" class="btn-close" [attr.aria-label]="'entity.action.close' | artemisTranslate" (click)="modal.dismiss('Cross click')"></button>
     </div>
     <div class="modal-body">
         <p style="white-space: pre-line" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningText"></p>
