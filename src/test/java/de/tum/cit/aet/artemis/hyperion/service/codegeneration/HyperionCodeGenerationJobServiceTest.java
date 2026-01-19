@@ -138,7 +138,7 @@ class HyperionCodeGenerationJobServiceTest {
 
         ReflectionTestUtils.invokeMethod(service, "clearJob", 42L, "job-5");
 
-        verify(jobMap).remove("42");
+        verify(jobMap).remove("42", existingJob);
     }
 
     @Test
@@ -148,6 +148,6 @@ class HyperionCodeGenerationJobServiceTest {
 
         ReflectionTestUtils.invokeMethod(service, "clearJob", 42L, "other-job");
 
-        verify(jobMap, never()).remove("42");
+        verify(jobMap, never()).remove("42", existingJob);
     }
 }
