@@ -379,7 +379,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testUpdateExistingProgress_ProgressNotFound() {
-        long nonExistentUserId = Long.MAX_VALUE;
+        long nonExistentUserId = -1;
         ZonedDateTime newAnsweredTime = ZonedDateTime.now();
         QuizQuestionProgressData newProgressData = new QuizQuestionProgressData();
 
