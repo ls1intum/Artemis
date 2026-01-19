@@ -101,17 +101,19 @@ You can manage test servers using [Helios](https://helios.aet.cit.tum.de/). Chec
 - [ ] Test 2
 
 ### Test Coverage
-<!-- Please add the test coverages for all changed files modified in this PR here. You can generate the coverage table using one of these options: -->
-<!-- 1. Run `npm run coverage:pr` to generate coverage locally by running only the affected module tests (see supporting_scripts/code-coverage/local-pr-coverage/README.md) -->
-<!-- 2. Use `supporting_scripts/code-coverage/generate_code_cov_table/generate_code_cov_table.py` to generate the table from CI artifacts (requires GitHub token, follow the README for setup) -->
-<!-- The line coverage must be above 90% for changed files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->
-<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->
-<!--       Remove rows with only trivial changes from the table. -->
+<!-- This section is automatically filled by CI after tests complete. -->
+<!-- For local testing: Run `npm run coverage:pr` (see supporting_scripts/code-coverage/README.md) -->
+<!-- Requirements: Line coverage ≥90% for changed files. -->
 <!--
-| Class/File | Line Coverage | Confirmation (assert/expect) |
-|------------|--------------:|-----------------------------:|
-| ExerciseService.java | 85% | ✅                           |
-| programming-exercise.component.ts | 95% | ✅              |
+#### Client
+| Class/File | Line Coverage | Lines | Expects | Ratio |
+|------------|-------------:|------:|--------:|------:|
+| example.component.ts | 95.00% | 120 | 15 | 12.50 |
+
+#### Server
+| Class/File | Line Coverage | Lines |
+|------------|-------------:|------:|
+| ExampleService.java | 85.00% | 200 |
 -->
 
 ### Screenshots

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 /**
- * Local PR Coverage Report Generator
+ * PR Coverage Report Generator
  *
  * This script generates a code coverage report for changed files in a PR by:
  * 1. Detecting changed files vs. origin/develop (or specified base branch)
  * 2. Identifying affected modules from the changed files
- * 3. Running only the relevant module tests locally
+ * 3. Running only the relevant module tests (or using existing coverage data with --skip-tests)
  * 4. Generating a coverage report table for the changed files
  *
  * Usage:
- *   node local-pr-coverage.mjs [options]
+ *   node pr-coverage.mjs [options]
  *
  * Options:
  *   --base-branch <branch>       Base branch to compare against (default: origin/develop)
@@ -28,11 +28,11 @@ import { execSync, execFileSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getVitestModules } from '../utils.mjs';
+import { getVitestModules } from './utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
 // Configuration
 const CLIENT_SRC_PREFIX = 'src/main/webapp/app/';
@@ -186,7 +186,7 @@ for only the affected modules. This is faster and more reliable than waiting
 for CI builds.
 
 Usage:
-  node local-pr-coverage.mjs [options]
+  node pr-coverage.mjs [options]
   npm run coverage:pr [-- options]
 
 Options:
@@ -211,7 +211,7 @@ Available Modules:
 
 Examples:
   # Auto-detect modules from changed files
-  node local-pr-coverage.mjs
+  node pr-coverage.mjs
 
   # Test specific client modules only
   npm run coverage:pr -- --client-modules core,shared --client-only

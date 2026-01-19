@@ -144,18 +144,24 @@ jobs:
     - name: Number of Server Starts
       if: success() || failure()
       run: bash supporting_scripts/extract_number_of_server_starts.sh
-    - name: Upload Server Test Coverage Report
+    - name: Upload Server Test Coverage Report (HTML)
       if: success() || failure()
       uses: actions/upload-artifact@v5
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/aggregated/html
+    - name: Upload Server Test Coverage Report (XML)
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: Server Coverage XML
+        path: build/reports/jacoco/*/jacocoTestReport.xml
     - name: Append Per-Module Coverage to Job Summary
       if: success() || failure()
       run: |
         AGGREGATED_REPORT_FILE=./module_coverage_report.md
-        python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE
-        cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
+        node ./supporting_scripts/code-coverage/parse-server-module-coverage.mjs build/reports/jacoco $AGGREGATED_REPORT_FILE
+        cat $AGGREGATED_REPORT_FILE >> $GITHUB_STEP_SUMMARY
 
   server-style:
     runs-on: ubuntu-latest
@@ -204,12 +210,18 @@ jobs:
           run: npm run compile:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
-        - name: Upload Client Test Coverage Report
+        - name: Upload Client Test Coverage Report (HTML)
           if: success() || failure()
           uses: actions/upload-artifact@v5
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
+        - name: Upload Jest Coverage Summary (JSON)
+          if: success() || failure()
+          uses: actions/upload-artifact@v5
+          with:
+              name: Jest Coverage Summary
+              path: build/test-results/jest/coverage-summary.json
         - name: Upload Vitest Coverage Report
           if: success() || failure()
           uses: actions/upload-artifact@v5

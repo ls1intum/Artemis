@@ -1,6 +1,6 @@
-# Local PR Coverage Report Generator
+# PR Coverage Report Generator
 
-This script generates a code coverage report for changed files in a PR by running tests locally for only the affected modules. This is faster and more reliable than waiting for CI builds, especially when there are flaky tests in other modules.
+This script generates a code coverage report for changed files in a PR. It can run tests locally for only the affected modules, or parse existing coverage data from CI artifacts.
 
 ## Benefits
 
@@ -24,7 +24,7 @@ This script generates a code coverage report for changed files in a PR by runnin
 npm run coverage:pr
 
 # Or directly
-node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs
+node supporting_scripts/code-coverage/pr-coverage.mjs
 ```
 
 ### Options
@@ -129,18 +129,6 @@ The following files are automatically excluded from coverage reporting (they can
 
 ### Server
 - Test files are not included in coverage reports by default
-
-## Comparison with `generate_code_cov_table`
-
-| Feature | This script | `generate_code_cov_table.py` |
-|---------|-------------|------------------------------|
-| Runs tests locally | ✅ | ❌ (uses CI artifacts) |
-| Requires GitHub token | ❌ | ✅ |
-| Works offline | ✅ | ❌ |
-| Affected by flaky tests in other modules | ❌ | ✅ |
-| Uses CI coverage data | ❌ | ✅ |
-
-Use this script for quick local feedback. Use `generate_code_cov_table.py` when you need the official CI coverage numbers.
 
 ## Troubleshooting
 

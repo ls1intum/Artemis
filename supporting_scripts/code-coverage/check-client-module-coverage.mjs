@@ -1,11 +1,11 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getVitestModules } from '../utils.mjs';
+import { getVitestModules } from './utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
 // Coverage file paths
 const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
