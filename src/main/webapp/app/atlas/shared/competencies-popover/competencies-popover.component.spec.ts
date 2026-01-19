@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Location } from '@angular/common';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -11,6 +12,7 @@ import { RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     selector: 'jhi-statistics',
@@ -25,6 +27,7 @@ class DummyStatisticsComponent {}
 class DummyManagementComponent {}
 
 describe('CompetencyPopoverComponent', () => {
+    setupTestBed({ zoneless: true });
     let competencyPopoverComponentFixture: ComponentFixture<CompetenciesPopoverComponent>;
     let competencyPopoverComponent: CompetenciesPopoverComponent;
 
@@ -49,7 +52,7 @@ describe('CompetencyPopoverComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

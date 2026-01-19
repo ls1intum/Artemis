@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -15,15 +16,17 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportAllCompetenciesComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
     let component: ImportAllCompetenciesComponent;
     let dialogRef: DynamicDialogRef;
 
     beforeEach(() => {
         dialogRef = {
-            close: jest.fn(),
+            close: vi.fn(),
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
 
@@ -45,7 +48,7 @@ describe('ImportAllCompetenciesComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

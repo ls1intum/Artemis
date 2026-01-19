@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
@@ -27,8 +28,10 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('PrerequisiteService', () => {
+    setupTestBed({ zoneless: true });
     let prerequisiteService: PrerequisiteService;
     let httpTestingController: HttpTestingController;
     let defaultPrerequisites: Prerequisite[];
@@ -365,12 +368,12 @@ describe('PrerequisiteService', () => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const accountService = TestBed.inject(AccountService);
 
-        const convertDateSpy = jest.spyOn(dateUtils, 'convertDateFromServer');
-        const convertLectureUnitSpy = jest.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
-        const setAccessRightsCourseSpy = jest.spyOn(accountService, 'setAccessRightsForCourse');
-        const setAccessRightsExerciseSpy = jest.spyOn(accountService, 'setAccessRightsForExercise');
-        const convertExerciseSpy = jest.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
-        const parseCategoriesSpy = jest.spyOn(ExerciseService, 'parseExerciseCategories');
+        const convertDateSpy = vi.spyOn(dateUtils, 'convertDateFromServer');
+        const convertLectureUnitSpy = vi.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
+        const setAccessRightsCourseSpy = vi.spyOn(accountService, 'setAccessRightsForCourse');
+        const setAccessRightsExerciseSpy = vi.spyOn(accountService, 'setAccessRightsForExercise');
+        const convertExerciseSpy = vi.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
+        const parseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
 
         const exercise: Exercise = {
             numberOfAssessmentsOfCorrectionRounds: [],

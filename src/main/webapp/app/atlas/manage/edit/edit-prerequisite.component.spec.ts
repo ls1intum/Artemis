@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
@@ -16,8 +17,10 @@ import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.serv
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('EditPrerequisiteComponent', () => {
+    setupTestBed({ zoneless: true });
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
     let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(async () => {
@@ -44,7 +47,7 @@ describe('EditPrerequisiteComponent', () => {
             ],
         }).compileComponents();
 
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
 
@@ -53,7 +56,7 @@ describe('EditPrerequisiteComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -83,8 +86,8 @@ describe('EditPrerequisiteComponent', () => {
             status: 200,
         });
 
-        const findByIdSpy = jest.spyOn(prerequisiteService, 'findById').mockReturnValue(of(competencyResponse));
-        const getCourseProgressSpy = jest.spyOn(prerequisiteService, 'getCourseProgress').mockReturnValue(of(competencyCourseProgressResponse));
+        const findByIdSpy = vi.spyOn(prerequisiteService, 'findById').mockReturnValue(of(competencyResponse));
+        const getCourseProgressSpy = vi.spyOn(prerequisiteService, 'getCourseProgress').mockReturnValue(of(competencyCourseProgressResponse));
 
         editPrerequisiteComponentFixture.detectChanges();
         const competencyFormComponent = editPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
@@ -119,8 +122,8 @@ describe('EditPrerequisiteComponent', () => {
             body: competencyDatabase,
             status: 200,
         });
-        const findByIdSpy = jest.spyOn(prerequisiteService, 'findById').mockReturnValue(of(findByIdResponse));
-        jest.spyOn(prerequisiteService, 'getCourseProgress').mockReturnValue(
+        const findByIdSpy = vi.spyOn(prerequisiteService, 'findById').mockReturnValue(of(findByIdResponse));
+        vi.spyOn(prerequisiteService, 'getCourseProgress').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {},
@@ -142,8 +145,8 @@ describe('EditPrerequisiteComponent', () => {
             body: changedUnit,
             status: 200,
         });
-        const updatedSpy = jest.spyOn(prerequisiteService, 'update').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const updatedSpy = vi.spyOn(prerequisiteService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         const competencyForm = editPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
         competencyForm.formSubmitted.emit({

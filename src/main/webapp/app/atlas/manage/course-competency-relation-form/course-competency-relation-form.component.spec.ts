@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CourseCompetencyRelationFormComponent, UnionFind } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
@@ -9,17 +11,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { of } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetencyRelationFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CourseCompetencyRelationFormComponent;
     let fixture: ComponentFixture<CourseCompetencyRelationFormComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;
     let alertService: AlertService;
 
-    let createCourseCompetencyRelationSpy: jest.SpyInstance;
-    let updateCourseCompetencyRelationSpy: jest.SpyInstance;
-    let deleteCourseCompetencyRelationSpy: jest.SpyInstance;
-    let getSuggestedCompetencyRelationsSpy: jest.SpyInstance;
+    let createCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let updateCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let deleteCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let getSuggestedCompetencyRelationsSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
     const courseCompetencies: CourseCompetency[] = [
@@ -59,16 +63,16 @@ describe('CourseCompetencyRelationFormComponent', () => {
                 {
                     provide: CourseCompetencyApiService,
                     useValue: {
-                        createCourseCompetencyRelation: jest.fn(),
-                        updateCourseCompetencyRelation: jest.fn(),
-                        deleteCourseCompetencyRelation: jest.fn(),
-                        getSuggestedCompetencyRelations: jest.fn(),
+                        createCourseCompetencyRelation: vi.fn(),
+                        updateCourseCompetencyRelation: vi.fn(),
+                        deleteCourseCompetencyRelation: vi.fn(),
+                        getSuggestedCompetencyRelations: vi.fn(),
                     },
                 },
                 {
                     provide: FeatureToggleService,
                     useValue: {
-                        getFeatureToggleActive: jest.fn().mockReturnValue(of(true)),
+                        getFeatureToggleActive: vi.fn().mockReturnValue(of(true)),
                     },
                 },
             ],
@@ -77,10 +81,10 @@ describe('CourseCompetencyRelationFormComponent', () => {
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);
 
-        createCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(newRelation);
-        updateCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
-        deleteCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
-        getSuggestedCompetencyRelationsSpy = jest.spyOn(courseCompetencyApiService, 'getSuggestedCompetencyRelations');
+        createCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(newRelation);
+        updateCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
+        deleteCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
+        getSuggestedCompetencyRelationsSpy = vi.spyOn(courseCompetencyApiService, 'getSuggestedCompetencyRelations');
 
         fixture = TestBed.createComponent(CourseCompetencyRelationFormComponent);
         component = fixture.componentInstance;
@@ -92,7 +96,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should set relationAlreadyExists correctly', () => {
@@ -174,7 +178,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set isLoading correctly when creating a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(3);
@@ -189,7 +193,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     it('should show error when creating relation fails', async () => {
         const error = 'Error creating relation';
         createCourseCompetencyRelationSpy.mockRejectedValue(error);
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
 
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(3);
@@ -222,7 +226,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set isLoading correctly when updating a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -237,7 +241,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
     it('should show error when updating relation fails', async () => {
         updateCourseCompetencyRelationSpy.mockRejectedValue('Error updating relation');
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -306,7 +310,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set isLoading correctly when deleting a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -319,7 +323,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
     it('should show error when deleting relation fails', async () => {
         deleteCourseCompetencyRelationSpy.mockRejectedValue('Error deleting relation');
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -527,7 +531,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         });
 
         it('should handle API error gracefully when fetching suggestions', async () => {
-            const alertServiceWarningSpy = jest.spyOn(alertService, 'warning');
+            const alertServiceWarningSpy = vi.spyOn(alertService, 'warning');
             getSuggestedCompetencyRelationsSpy.mockRejectedValue(new Error('API Error'));
 
             await component.fetchSuggestions();
@@ -551,8 +555,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
             });
             createCourseCompetencyRelationSpy.mockRejectedValueOnce(new Error('Creation failed'));
 
-            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
-            const alertServiceSuccessSpy = jest.spyOn(alertService, 'success');
+            const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+            const alertServiceSuccessSpy = vi.spyOn(alertService, 'success');
 
             await component['addSelectedSuggestions']();
 

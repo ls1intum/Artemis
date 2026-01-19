@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -7,8 +8,10 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseDescriptionFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionFormComponent>;
     let courseDescriptionComponent: CourseDescriptionFormComponent;
 
@@ -32,7 +35,7 @@ describe('CourseDescriptionFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -43,7 +46,7 @@ describe('CourseDescriptionFormComponent', () => {
     it('should submit successfully', () => {
         courseDescriptionComponentFixture.detectChanges();
         const description = 'I'.repeat(courseDescriptionComponent['DESCRIPTION_MIN'] + 1);
-        const formSubmittedEmitSpy = jest.spyOn(courseDescriptionComponent.formSubmitted, 'emit');
+        const formSubmittedEmitSpy = vi.spyOn(courseDescriptionComponent.formSubmitted, 'emit');
         const generateButton = courseDescriptionComponentFixture.debugElement.nativeElement.querySelector('#generateButton > .jhi-btn');
 
         courseDescriptionComponent.courseDescriptionControl.setValue(description);

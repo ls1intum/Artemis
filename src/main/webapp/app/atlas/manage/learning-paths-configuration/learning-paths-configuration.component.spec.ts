@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsConfigurationComponent } from 'app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
@@ -8,13 +9,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { LearningPathsConfigurationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathsConfigurationComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathsConfigurationComponent;
     let fixture: ComponentFixture<LearningPathsConfigurationComponent>;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
-    let getLearningPathsConfigurationSpy: jest.SpyInstance;
+    let getLearningPathsConfigurationSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
 
@@ -39,7 +42,7 @@ describe('LearningPathsConfigurationComponent', () => {
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);
 
-        getLearningPathsConfigurationSpy = jest.spyOn(learningPathApiService, 'getLearningPathsConfiguration').mockResolvedValue(learningPathsConfiguration);
+        getLearningPathsConfigurationSpy = vi.spyOn(learningPathApiService, 'getLearningPathsConfiguration').mockResolvedValue(learningPathsConfiguration);
 
         fixture = TestBed.createComponent(LearningPathsConfigurationComponent);
         component = fixture.componentInstance;
@@ -59,7 +62,7 @@ describe('LearningPathsConfigurationComponent', () => {
     });
 
     it('should show error on load learning paths configuration', async () => {
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
         getLearningPathsConfigurationSpy.mockRejectedValue(new Error('Error'));
 
         fixture.detectChanges();
@@ -69,7 +72,7 @@ describe('LearningPathsConfigurationComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isConfigLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isConfigLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -112,8 +115,8 @@ describe('LearningPathsConfigurationComponent', () => {
     });
 
     it('should save learning paths configuration', async () => {
-        const updateLearningPathsConfigurationSpy = jest.spyOn(learningPathApiService, 'updateLearningPathsConfiguration').mockResolvedValue();
-        const alertServiceSuccessSpy = jest.spyOn(alertService, 'success');
+        const updateLearningPathsConfigurationSpy = vi.spyOn(learningPathApiService, 'updateLearningPathsConfiguration').mockResolvedValue();
+        const alertServiceSuccessSpy = vi.spyOn(alertService, 'success');
 
         fixture.detectChanges();
         await fixture.whenStable();

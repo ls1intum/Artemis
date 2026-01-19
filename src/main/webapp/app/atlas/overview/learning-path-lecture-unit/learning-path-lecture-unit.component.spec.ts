@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
@@ -22,15 +23,17 @@ import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures
 import { ElementRef, signal } from '@angular/core';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathLectureUnitComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
 
     let learningPathNavigationService: LearningPathNavigationService;
     let lectureUnitService: LectureUnitService;
-    let getLectureUnitByIdSpy: jest.SpyInstance;
-    let setLearningObjectCompletionSpy: jest.SpyInstance;
+    let getLectureUnitByIdSpy: ReturnType<typeof vi.spyOn>;
+    let setLearningObjectCompletionSpy: ReturnType<typeof vi.spyOn>;
 
     const learningPathId = 1;
     const lectureUnit: AttachmentVideoUnit = {
@@ -79,10 +82,10 @@ describe('LearningPathLectureUnitComponent', () => {
             .compileComponents();
 
         lectureUnitService = TestBed.inject(LectureUnitService);
-        getLectureUnitByIdSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
+        getLectureUnitByIdSpy = vi.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
         lectureUnitService = TestBed.inject(LectureUnitService);
         learningPathNavigationService = TestBed.inject(LearningPathNavigationService);
-        setLearningObjectCompletionSpy = jest.spyOn(learningPathNavigationService, 'setCurrentLearningObjectCompletion').mockReturnValue();
+        setLearningObjectCompletionSpy = vi.spyOn(learningPathNavigationService, 'setCurrentLearningObjectCompletion').mockReturnValue();
 
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;
@@ -90,7 +93,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -100,7 +103,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should get lecture unit', async () => {
-        const getLectureUnitSpy = jest.spyOn(component, 'loadLectureUnit');
+        const getLectureUnitSpy = vi.spyOn(component, 'loadLectureUnit');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -116,7 +119,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should not set current learning object on error', async () => {
-        const completeLectureUnitSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit').mockImplementationOnce(() => {});
+        const completeLectureUnitSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit').mockImplementationOnce(() => {});
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -131,7 +134,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should set current learning object completion', async () => {
-        const completeLectureUnitSpy = jest
+        const completeLectureUnitSpy = vi
             .spyOn(lectureUnitService, 'completeLectureUnit')
             .mockImplementationOnce((lecture: Lecture, completionEvent: LectureUnitCompletionEvent) => (completionEvent.lectureUnit.completed = completionEvent.completed));
 
@@ -148,7 +151,7 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should set loading state correctly', async () => {
-        const setIsLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const setIsLoadingSpy = vi.spyOn(component.isLoading, 'set');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();

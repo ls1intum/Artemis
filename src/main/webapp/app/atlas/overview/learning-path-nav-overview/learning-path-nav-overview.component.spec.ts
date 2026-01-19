@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
@@ -12,8 +13,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/shared/science/science.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathNavOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathNavOverviewComponent;
     let fixture: ComponentFixture<LearningPathNavOverviewComponent>;
     let learningPathApiService: LearningPathApiService;
@@ -51,7 +54,7 @@ describe('LearningPathNavOverviewComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize', () => {
@@ -62,8 +65,8 @@ describe('LearningPathNavOverviewComponent', () => {
     });
 
     it('should load competencies', async () => {
-        const loadLearningPathCompetenciesSpy = jest.spyOn(component, 'loadCompetencies');
-        const getLearningPathCompetenciesSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
+        const loadLearningPathCompetenciesSpy = vi.spyOn(component, 'loadCompetencies');
+        const getLearningPathCompetenciesSpy = vi.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -78,8 +81,8 @@ describe('LearningPathNavOverviewComponent', () => {
     });
 
     it('should correctly set isLoading to true and false', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        vi.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         await component.loadCompetencies(learningPathId);
 
@@ -89,8 +92,8 @@ describe('LearningPathNavOverviewComponent', () => {
 
     it('should show error when loading competencies fails', async () => {
         const error = 'Error loading competencies';
-        const getLearningPathCompetenciesSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockRejectedValue(error);
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const getLearningPathCompetenciesSpy = vi.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockRejectedValue(error);
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
 
         await component.loadCompetencies(learningPathId);
 
@@ -101,7 +104,7 @@ describe('LearningPathNavOverviewComponent', () => {
     it('should open competency graph modal', async () => {
         fixture.detectChanges();
 
-        const openCompetencyGraphSpy = jest.spyOn(component, 'openCompetencyGraph');
+        const openCompetencyGraphSpy = vi.spyOn(component, 'openCompetencyGraph');
         const openCompetencyGraphButton = fixture.debugElement.query(By.css('#open-competency-graph-button'));
         openCompetencyGraphButton.nativeElement.click();
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StandardizedCompetencyFilterStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -23,8 +24,10 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseImportStandardizedPrerequisitesComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<CourseImportStandardizedPrerequisitesComponent>;
     let component: CourseImportStandardizedPrerequisitesComponent;
     const courseId = 1;
@@ -67,7 +70,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load data', () => {
@@ -105,8 +108,8 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
         const sources: Source[] = [{ id: 1 }, { id: 2 }];
 
         const standardizedCompetencyService = TestBed.inject(StandardizedCompetencyService);
-        const getForTreeViewSpy = jest.spyOn(standardizedCompetencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: dtoTree })));
-        const getSourcesSpy = jest.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
+        const getForTreeViewSpy = vi.spyOn(standardizedCompetencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: dtoTree })));
+        const getSourcesSpy = vi.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
 
         componentFixture.detectChanges();
 
@@ -162,7 +165,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     it('should sort', () => {
         const sortService = TestBed.inject(SortService);
-        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
 
         component['sortSelected']({ predicate: 'title', ascending: true });
 
@@ -171,9 +174,9 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     it('should navigate after importing competencies', () => {
         const router: Router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const prerequisiteService = TestBed.inject(PrerequisiteService);
-        const importSpy = jest.spyOn(prerequisiteService, 'importStandardizedCompetencies').mockReturnValue(
+        const importSpy = vi.spyOn(prerequisiteService, 'importStandardizedCompetencies').mockReturnValue(
             of({
                 body: [{ id: 1 }, { id: 2 }],
             } as HttpResponse<Competency[]>),
@@ -191,7 +194,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     it('should cancel', () => {
         const router: Router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         component['cancel']();
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -12,13 +13,15 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/shared/science/science.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyGraphModalComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CompetencyGraphModalComponent;
     let fixture: ComponentFixture<CompetencyGraphModalComponent>;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
-    let getCompetencyPathSpy: jest.SpyInstance;
+    let getCompetencyPathSpy: ReturnType<typeof vi.spyOn>;
 
     const learningPathId = 1;
 
@@ -63,7 +66,7 @@ describe('CompetencyGraphModalComponent', () => {
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);
 
-        getCompetencyPathSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyGraph').mockReturnValue(Promise.resolve(competencyGraph));
+        getCompetencyPathSpy = vi.spyOn(learningPathApiService, 'getLearningPathCompetencyGraph').mockReturnValue(Promise.resolve(competencyGraph));
 
         fixture = TestBed.createComponent(CompetencyGraphModalComponent);
         component = fixture.componentInstance;
@@ -86,7 +89,7 @@ describe('CompetencyGraphModalComponent', () => {
 
     it('should show alert on failed data loading', async () => {
         getCompetencyPathSpy.mockReturnValue(Promise.reject());
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const errorSpy = vi.spyOn(alertService, 'error');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -95,7 +98,7 @@ describe('CompetencyGraphModalComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -105,7 +108,7 @@ describe('CompetencyGraphModalComponent', () => {
     });
 
     it('should close modal', () => {
-        const closeSpy = jest.spyOn(component, 'closeModal');
+        const closeSpy = vi.spyOn(component, 'closeModal');
         const closeButton = fixture.debugElement.query(By.css('#close-button'));
         closeButton.nativeElement.click();
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
@@ -17,8 +18,10 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
     let competencyFormComponent: CompetencyFormComponent;
 
@@ -31,7 +34,7 @@ describe('CompetencyFormComponent', () => {
             providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
         competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
@@ -42,7 +45,7 @@ describe('CompetencyFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -53,7 +56,7 @@ describe('CompetencyFormComponent', () => {
     it('should submit valid form', fakeAsync(() => {
         // stubbing competency service for asynchronous validator
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        const getAllTitlesSpy = jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+        const getAllTitlesSpy = vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
         const competencyOfResponse: Competency = { id: 1, title: 'test' };
 
@@ -62,7 +65,7 @@ describe('CompetencyFormComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
+        vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
 
         competencyFormComponentFixture.detectChanges();
 
@@ -81,8 +84,8 @@ describe('CompetencyFormComponent', () => {
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(competencyFormComponent.form.valid).toBeTrue();
         expect(getAllTitlesSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(competencyFormComponent, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(competencyFormComponent.formSubmitted, 'emit');
 
         const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -120,7 +123,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.detectChanges();
 
         const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-        const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
         const titleInput = competencyFormComponentFixture.nativeElement.querySelector('#title');
@@ -139,7 +142,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.detectChanges();
 
         const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-        const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
         competencyFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
@@ -155,7 +158,7 @@ describe('CompetencyFormComponent', () => {
     it('validator should verify title is unique', fakeAsync(() => {
         const existingTitles = ['nameExisting'];
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
         competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
         competencyFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
         competencyFormComponentFixture.detectChanges();
@@ -180,7 +183,7 @@ describe('CompetencyFormComponent', () => {
     }));
 
     function createTranslateSpy() {
-        return jest.spyOn(translateService, 'instant').mockImplementation((key) => {
+        return vi.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
                 case 'artemisApp.courseCompetency.keywords.REMEMBER':
                     return 'Something';

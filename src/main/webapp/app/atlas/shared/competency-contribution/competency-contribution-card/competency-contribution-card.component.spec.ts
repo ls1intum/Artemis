@@ -8,8 +8,10 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyContributionCardComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CompetencyContributionCardComponent;
     let fixture: ComponentFixture<CompetencyContributionCardComponent>;
 

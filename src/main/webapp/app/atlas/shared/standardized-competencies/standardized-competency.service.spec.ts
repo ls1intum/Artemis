@@ -5,8 +5,10 @@ import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/atlas/shar
 import { take } from 'rxjs';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StandardizedCompetencyService', () => {
+    setupTestBed({ zoneless: true });
     let standardizedCompetencyService: StandardizedCompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultStandardizedCompetency: StandardizedCompetency;

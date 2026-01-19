@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
@@ -11,8 +12,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyCardComponent', () => {
+    setupTestBed({ zoneless: true });
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
@@ -36,7 +39,7 @@ describe('CompetencyCardComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should calculate correct progress, confidence and mastery', () => {

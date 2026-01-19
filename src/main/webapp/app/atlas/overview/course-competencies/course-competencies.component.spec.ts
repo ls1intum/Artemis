@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -20,6 +21,7 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ScienceService } from 'app/shared/science/science.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 class MockActivatedRoute {
     parent: any;
@@ -39,6 +41,7 @@ const mockActivatedRoute = new MockActivatedRoute({
     }),
 });
 describe('CourseCompetencies', () => {
+    setupTestBed({ zoneless: true });
     let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
     let courseCompetenciesComponent: CourseCompetenciesComponent;
     let courseCompetencyService: CourseCompetencyService;
@@ -86,7 +89,7 @@ describe('CourseCompetencies', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -103,7 +106,7 @@ describe('CourseCompetencies', () => {
         competency.lectureUnitLinks = [new CompetencyLectureUnitLink(competency, textUnit, 1)];
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
-        const getAllCourseCompetenciesForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(
+        const getAllCourseCompetenciesForCourseSpy = vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [competency, { type: CourseCompetencyType.COMPETENCY }, { type: CourseCompetencyType.PREREQUISITE } as Prerequisite],
@@ -111,8 +114,8 @@ describe('CourseCompetencies', () => {
                 }),
             ),
         );
-        jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
-        const getJoLAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
+        vi.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
+        const getJoLAllForCourseSpy = vi.spyOn(courseCompetencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();

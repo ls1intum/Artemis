@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningPathNavComponent } from 'app/atlas/overview/learning-path-student-nav/learning-path-student-nav.component';
@@ -8,12 +9,14 @@ import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/shared/science/science.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathStudentNavComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathNavComponent;
     let fixture: ComponentFixture<LearningPathNavComponent>;
     let learningPathNavigationService: LearningPathNavigationService;
-    let learningPathNavigationSpy: jest.SpyInstance;
+    let learningPathNavigationSpy: ReturnType<typeof vi.spyOn>;
 
     const navigationDto: LearningPathNavigationDTO = {
         predecessorLearningObject: {
@@ -59,12 +62,12 @@ describe('LearningPathStudentNavComponent', () => {
                 {
                     provide: LearningPathNavigationService,
                     useValue: {
-                        isLoading: jest.fn(),
-                        learningPathNavigation: jest.fn(),
-                        currentLearningObject: jest.fn(),
-                        loadLearningPathNavigation: jest.fn(),
-                        loadRelativeLearningPathNavigation: jest.fn(),
-                        completeLearningPath: jest.fn(),
+                        isLoading: vi.fn(),
+                        learningPathNavigation: vi.fn(),
+                        currentLearningObject: vi.fn(),
+                        loadLearningPathNavigation: vi.fn(),
+                        loadRelativeLearningPathNavigation: vi.fn(),
+                        completeLearningPath: vi.fn(),
                     },
                 },
                 MockProvider(ScienceService),
@@ -74,7 +77,7 @@ describe('LearningPathStudentNavComponent', () => {
             .compileComponents();
 
         learningPathNavigationService = TestBed.inject(LearningPathNavigationService);
-        learningPathNavigationSpy = jest.spyOn(learningPathNavigationService, 'learningPathNavigation');
+        learningPathNavigationSpy = vi.spyOn(learningPathNavigationService, 'learningPathNavigation');
 
         fixture = TestBed.createComponent(LearningPathNavComponent);
         component = fixture.componentInstance;
@@ -82,11 +85,11 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load initial learning path navigation', async () => {
-        const loadLearningPathNavigationSpy = jest.spyOn(learningPathNavigationService, 'loadLearningPathNavigation');
+        const loadLearningPathNavigationSpy = vi.spyOn(learningPathNavigationService, 'loadLearningPathNavigation');
         learningPathNavigationSpy.mockReturnValue(navigationDto);
 
         fixture.detectChanges();
@@ -124,8 +127,8 @@ describe('LearningPathStudentNavComponent', () => {
 
     it('should navigate with next button', async () => {
         learningPathNavigationSpy.mockReturnValue(navigationDto);
-        const loadRelativeLearningPathNavigationSpy = jest.spyOn(learningPathNavigationService, 'loadRelativeLearningPathNavigation');
-        const isLoadingSuccessor = jest.spyOn(component.isLoadingSuccessor, 'set');
+        const loadRelativeLearningPathNavigationSpy = vi.spyOn(learningPathNavigationService, 'loadRelativeLearningPathNavigation');
+        const isLoadingSuccessor = vi.spyOn(component.isLoadingSuccessor, 'set');
         fixture.detectChanges();
 
         const nextButton = fixture.nativeElement.querySelector('#next-button');
@@ -141,8 +144,8 @@ describe('LearningPathStudentNavComponent', () => {
 
     it('should navigate with previous button', async () => {
         learningPathNavigationSpy.mockReturnValue(navigationDto);
-        const loadRelativeLearningPathNavigationSpy = jest.spyOn(learningPathNavigationService, 'loadRelativeLearningPathNavigation');
-        const isLoadingSuccessor = jest.spyOn(component.isLoadingPredecessor, 'set');
+        const loadRelativeLearningPathNavigationSpy = vi.spyOn(learningPathNavigationService, 'loadRelativeLearningPathNavigation');
+        const isLoadingSuccessor = vi.spyOn(component.isLoadingPredecessor, 'set');
         fixture.detectChanges();
 
         const nextButton = fixture.nativeElement.querySelector('#previous-button');
@@ -157,7 +160,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     it('should set current to previous unit on complete button', async () => {
-        const completeLearningPathSpy = jest.spyOn(learningPathNavigationService, 'completeLearningPath');
+        const completeLearningPathSpy = vi.spyOn(learningPathNavigationService, 'completeLearningPath');
         learningPathNavigationSpy.mockReturnValue({
             predecessorLearningObject: { ...navigationDto.predecessorLearningObject },
             currentLearningObject: { ...navigationDto.currentLearningObject },
@@ -173,7 +176,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     it('should show navigation overview on click', async () => {
-        const setIsDropdownOpen = jest.spyOn(component.isDropdownOpen, 'set');
+        const setIsDropdownOpen = vi.spyOn(component.isDropdownOpen, 'set');
 
         component.setIsDropdownOpen(false);
 

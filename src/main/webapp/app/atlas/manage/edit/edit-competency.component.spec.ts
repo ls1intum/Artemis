@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -16,8 +17,10 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { ProfileService } from '../../../core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('EditCompetencyComponent', () => {
+    setupTestBed({ zoneless: true });
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
@@ -45,7 +48,7 @@ describe('EditCompetencyComponent', () => {
             ],
         }).compileComponents();
 
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
 
@@ -54,7 +57,7 @@ describe('EditCompetencyComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -82,8 +85,8 @@ describe('EditCompetencyComponent', () => {
             status: 200,
         });
 
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(competencyResponse));
-        const getCourseProgressSpy = jest.spyOn(competencyService, 'getCourseProgress').mockReturnValue(of(competencyCourseProgressResponse));
+        const findByIdSpy = vi.spyOn(competencyService, 'findById').mockReturnValue(of(competencyResponse));
+        const getCourseProgressSpy = vi.spyOn(competencyService, 'getCourseProgress').mockReturnValue(of(competencyCourseProgressResponse));
 
         editCompetencyComponentFixture.detectChanges();
         const competencyFormComponent = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
@@ -114,8 +117,8 @@ describe('EditCompetencyComponent', () => {
             body: competencyDatabase,
             status: 200,
         });
-        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(findByIdResponse));
-        jest.spyOn(competencyService, 'getCourseProgress').mockReturnValue(
+        const findByIdSpy = vi.spyOn(competencyService, 'findById').mockReturnValue(of(findByIdResponse));
+        vi.spyOn(competencyService, 'getCourseProgress').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {},
@@ -137,8 +140,8 @@ describe('EditCompetencyComponent', () => {
             body: changedUnit,
             status: 200,
         });
-        const updatedSpy = jest.spyOn(competencyService, 'update').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const updatedSpy = vi.spyOn(competencyService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         const competencyForm = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
         competencyForm.formSubmitted.emit({

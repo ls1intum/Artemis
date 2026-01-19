@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -6,8 +7,10 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCompetenciesTableComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<ImportCompetenciesTableComponent>;
     let component: ImportCompetenciesTableComponent;
 
@@ -30,7 +33,7 @@ describe('ImportCompetenciesTableComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

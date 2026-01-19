@@ -3,8 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
 import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StandardizedCompetencyFilterComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<StandardizedCompetencyFilterComponent>;
     let component: StandardizedCompetencyFilterComponent;
 

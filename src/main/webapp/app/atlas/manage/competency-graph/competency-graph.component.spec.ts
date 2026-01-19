@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -5,8 +6,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyGraphComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CompetencyGraphComponent;
     let fixture: ComponentFixture<CompetencyGraphComponent>;
 
@@ -48,7 +51,7 @@ describe('CompetencyGraphComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', async () => {

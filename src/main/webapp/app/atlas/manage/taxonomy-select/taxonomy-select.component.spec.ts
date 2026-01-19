@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -5,8 +6,10 @@ import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('TaxonomySelectComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
     let component: TaxonomySelectComponent;
 
@@ -25,7 +28,7 @@ describe('TaxonomySelectComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

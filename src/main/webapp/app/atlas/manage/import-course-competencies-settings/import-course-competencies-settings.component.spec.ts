@@ -5,8 +5,10 @@ import {
 } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCourseCompetenciesSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ImportCourseCompetenciesSettingsComponent;
     let fixture: ComponentFixture<ImportCourseCompetenciesSettingsComponent>;
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
@@ -20,8 +21,10 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencySelection', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
@@ -62,19 +65,19 @@ describe('CompetencySelection', () => {
         const profileService = TestBed.inject(ProfileService);
 
         const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-        const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+        const getProfileInfoMock = vi.spyOn(profileService, 'getProfileInfo');
         getProfileInfoMock.mockReturnValue(profileInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should get competencies from cache', () => {
         const nonOptional = { id: 1, optional: false } as Competency;
         const optional = { id: 2, optional: true } as Competency;
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
-        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse');
+        const getCourseSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
+        const getAllForCourseSpy = vi.spyOn(courseCompetencyService, 'getAllForCourse');
 
         fixture.detectChanges();
 
@@ -90,8 +93,8 @@ describe('CompetencySelection', () => {
     it('should get competencies from service', () => {
         const nonOptional = { id: 1, optional: false } as Competency;
         const optional = { id: 2, optional: true } as Competency;
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
+        const getCourseSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        const getAllForCourseSpy = vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
 
         fixture.detectChanges();
 
@@ -104,8 +107,8 @@ describe('CompetencySelection', () => {
     });
 
     it('should set disabled when error during loading', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
+        const getCourseSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        const getAllForCourseSpy = vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.detectChanges();
 
@@ -116,8 +119,8 @@ describe('CompetencySelection', () => {
     });
 
     it('should be hidden when no competencies', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
-        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const getCourseSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
+        const getAllForCourseSpy = vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
 
         fixture.detectChanges();
 
@@ -130,7 +133,7 @@ describe('CompetencySelection', () => {
     });
 
     it('should select competencies when value is written', () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as Competency] });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as Competency] });
 
         fixture.detectChanges();
 
@@ -140,7 +143,7 @@ describe('CompetencySelection', () => {
     });
 
     it('should update link weight when value is written', () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             competencies: [{ id: 1, title: 'test' } as Competency, { id: 2, title: 'testAgain' } as Prerequisite, { id: 3, title: 'testMore' } as Competency],
         });
 
@@ -156,9 +159,9 @@ describe('CompetencySelection', () => {
     });
 
     it('should trigger change detection after loading competencies', () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
         const changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-        const detectChangesStub = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
+        const detectChangesStub = vi.spyOn(changeDetector.constructor.prototype, 'detectChanges');
 
         fixture.detectChanges();
 
@@ -169,7 +172,7 @@ describe('CompetencySelection', () => {
         const competency1 = { id: 1, optional: false } as Competency;
         const competency2 = { id: 2, optional: true } as Competency;
         const competency3 = { id: 3, optional: false } as Competency;
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
 
         fixture.detectChanges();
         expect(component.selectedCompetencyLinks).toBeUndefined();
@@ -194,7 +197,7 @@ describe('CompetencySelection', () => {
 
     it('should register onchange', () => {
         component.checkboxStates = {};
-        const registerSpy = jest.fn();
+        const registerSpy = vi.fn();
         component.registerOnChange(registerSpy);
         component.toggleCompetency(new CompetencyLearningObjectLink({ id: 1 }, 1));
         expect(registerSpy).toHaveBeenCalled();
@@ -211,7 +214,7 @@ describe('CompetencySelection', () => {
             const competency1 = { id: 1, title: 'Programming Basics', optional: false } as Competency;
             const competency2 = { id: 2, title: 'Data Structures', optional: false } as Competency;
             const competency3 = { id: 3, title: 'Algorithms', optional: false } as Competency;
-            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
 
             fixture.componentRef.setInput('exerciseDescription', 'Create a Java program that implements a sorting algorithm');
             fixture.changeDetectorRef.detectChanges();
@@ -243,7 +246,7 @@ describe('CompetencySelection', () => {
                 ],
             };
 
-            const httpPostSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+            const httpPostSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
 
             component.suggestCompetencies();
 
@@ -274,7 +277,7 @@ describe('CompetencySelection', () => {
                 competencies: [{ id: 1, title: 'Programming Basics' }],
             };
 
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
 
             component.suggestCompetencies();
             fixture.changeDetectorRef.detectChanges();
@@ -292,7 +295,7 @@ describe('CompetencySelection', () => {
                 competencies: [{ id: 3, title: 'Algorithms' }],
             };
 
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
 
             component.suggestCompetencies();
 
@@ -302,7 +305,7 @@ describe('CompetencySelection', () => {
         });
 
         it('should handle API error gracefully', () => {
-            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500 })));
+            vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500 })));
 
             component.suggestCompetencies();
 
@@ -311,7 +314,7 @@ describe('CompetencySelection', () => {
         });
 
         it('should not call API if description is empty or whitespace only', () => {
-            const httpPostSpy = jest.spyOn(httpClient, 'post');
+            const httpPostSpy = vi.spyOn(httpClient, 'post');
 
             fixture.componentRef.setInput('exerciseDescription', '');
             component.suggestCompetencies();
@@ -328,7 +331,7 @@ describe('CompetencySelection', () => {
             component.suggestedCompetencyIds.add(2);
 
             const mockResponse = { competencies: [{ id: 3, title: 'New Suggestion' }] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -339,7 +342,7 @@ describe('CompetencySelection', () => {
 
         it('should handle empty response from API', () => {
             const mockResponse = { competencies: [] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -368,7 +371,7 @@ describe('CompetencySelection', () => {
                 competencies: [{ id: 1, title: 'Programming Basics' }],
             };
 
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
 
             component.suggestCompetencies();
             fixture.changeDetectorRef.detectChanges();
@@ -387,7 +390,7 @@ describe('CompetencySelection', () => {
                     { id: 999, title: 'Non-existent' }, // ID doesn't match any competency
                 ],
             };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -406,9 +409,9 @@ describe('CompetencySelection', () => {
 
         it('should emit value changes when competency is toggled', () => {
             const competency = { id: 1, title: 'Test Competency', optional: false } as Competency;
-            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency] });
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency] });
 
-            const emitSpy = jest.spyOn(component.valueChange, 'emit');
+            const emitSpy = vi.spyOn(component.valueChange, 'emit');
 
             fixture.detectChanges();
 

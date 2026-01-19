@@ -11,8 +11,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { take } from 'rxjs/operators';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetencyService', () => {
+    setupTestBed({ zoneless: true });
     let courseCompetencyService: CourseCompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultCompetencies: Competency[];

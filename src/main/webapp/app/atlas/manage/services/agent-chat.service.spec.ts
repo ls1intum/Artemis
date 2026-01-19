@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import type { Mocked } from 'vitest';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -6,15 +8,17 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AgentChatService } from './agent-chat.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('AgentChatService', () => {
+    setupTestBed({ zoneless: true });
     let service: AgentChatService;
     let httpMock: HttpTestingController;
-    let translateService: jest.Mocked<TranslateService>;
+    let translateService: Mocked<TranslateService>;
     let accountService: AccountService;
 
     const mockTranslateService = {
-        instant: jest.fn(),
+        instant: vi.fn(),
     };
 
     beforeEach(() => {
@@ -36,13 +40,13 @@ describe('AgentChatService', () => {
 
         service = TestBed.inject(AgentChatService);
         httpMock = TestBed.inject(HttpTestingController);
-        translateService = TestBed.inject(TranslateService) as jest.Mocked<TranslateService>;
+        translateService = TestBed.inject(TranslateService) as Mocked<TranslateService>;
         accountService = TestBed.inject(AccountService);
 
         accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
 
         // Reset mocks
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {

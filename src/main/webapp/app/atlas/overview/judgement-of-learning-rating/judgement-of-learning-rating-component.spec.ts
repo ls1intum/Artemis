@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -9,8 +10,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('JudgementOfLearningRatingComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: JudgementOfLearningRatingComponent;
     let fixture: ComponentFixture<JudgementOfLearningRatingComponent>;
 
@@ -79,7 +82,7 @@ describe('JudgementOfLearningRatingComponent', () => {
 
         const newRating = 4;
         const event = { oldValue: 3, newValue: newRating };
-        jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        vi.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         component.onRate(event);
         expect(component.rating()).toBe(newRating);
     }));
@@ -90,8 +93,8 @@ describe('JudgementOfLearningRatingComponent', () => {
 
         const newRating = 4;
         const event = { oldValue: 3, newValue: newRating };
-        jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        const errorSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
 
         component.onRate(event);
 

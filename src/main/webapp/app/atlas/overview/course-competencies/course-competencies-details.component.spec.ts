@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -37,15 +38,17 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceService } from 'app/shared/science/science.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesDetails', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
     let courseCompetencyService: CourseCompetencyService;
 
-    let setCompletionSpy: jest.SpyInstance;
-    let getProgressSpy: jest.SpyInstance;
+    let setCompletionSpy: ReturnType<typeof vi.spyOn>;
+    let getProgressSpy: ReturnType<typeof vi.spyOn>;
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
@@ -94,14 +97,14 @@ describe('CourseCompetenciesDetails', () => {
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
                 const lectureUnitService = TestBed.inject(LectureUnitService);
                 const featureToggleService = TestBed.inject(FeatureToggleService);
-                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                setCompletionSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-                getProgressSpy = jest.spyOn(courseCompetencyService, 'getProgress');
+                vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                setCompletionSpy = vi.spyOn(lectureUnitService, 'setCompletion');
+                getProgressSpy = vi.spyOn(courseCompetencyService, 'getProgress');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -115,7 +118,7 @@ describe('CourseCompetenciesDetails', () => {
             lectureUnitLinks: [new CompetencyLectureUnitLink(this, new TextUnit(), 1)],
             exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as TextExercise, 1)],
         } as Competency;
-        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = vi.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -134,7 +137,7 @@ describe('CourseCompetenciesDetails', () => {
             exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as ModelingExercise, 1)],
         } as Competency;
 
-        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = vi.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -155,7 +158,7 @@ describe('CourseCompetenciesDetails', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
-        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = vi.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();

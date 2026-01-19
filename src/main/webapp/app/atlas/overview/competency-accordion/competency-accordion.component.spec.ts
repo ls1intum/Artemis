@@ -16,8 +16,10 @@ import {
 import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyAccordionComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyAccordionComponent>;
     let component: CompetencyAccordionComponent;
     beforeEach(() => {

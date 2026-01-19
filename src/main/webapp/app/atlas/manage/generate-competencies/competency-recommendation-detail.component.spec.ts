@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { MockProvider } from 'ng-mocks';
@@ -10,8 +11,10 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyRecommendationDetailComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
     let component: CompetencyRecommendationDetailComponent;
 
@@ -42,7 +45,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CompetencyRecommendationDetailComponent);
                 component = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });
             });
@@ -65,7 +68,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -75,8 +78,8 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     it('should switch between edit and save mode', () => {
         fixture.detectChanges();
-        const editSpy = jest.spyOn(component, 'edit');
-        const saveSpy = jest.spyOn(component, 'save');
+        const editSpy = vi.spyOn(component, 'edit');
+        const saveSpy = vi.spyOn(component, 'save');
 
         //component should not start out in edit mode
         expect(component.isInEditMode()).toBeFalse();
@@ -96,7 +99,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     it('should delete', () => {
         fixture.detectChanges();
-        const deleteSpy = jest.spyOn(component, 'delete');
+        const deleteSpy = vi.spyOn(component, 'delete');
         const deleteButton = fixture.debugElement.nativeElement.querySelector('#deleteButton-0 > .jhi-btn');
 
         deleteButton.click();
@@ -106,7 +109,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     it('should expand', () => {
         fixture.detectChanges();
-        const toggleSpy = jest.spyOn(component, 'toggle');
+        const toggleSpy = vi.spyOn(component, 'toggle');
         const expandIcon = fixture.debugElement.nativeElement.querySelector('.rotate-icon');
 
         expandIcon.click();

@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +22,7 @@ import { MockProvider } from 'ng-mocks';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
  * Test component that simulates an exercise creation form
@@ -81,7 +84,8 @@ class TestExerciseFormComponent {
  * 6. Saves the exercise
  */
 describe('Exercise Creation with Competency Suggestions - E2E', () => {
-    let consoleErrorSpy: jest.SpyInstance;
+    setupTestBed({ zoneless: true });
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
     let fixture: ComponentFixture<TestExerciseFormComponent>;
     let component: TestExerciseFormComponent;
     let httpClient: HttpClient;
@@ -96,7 +100,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
     ];
 
     beforeEach(() => {
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     beforeEach(async () => {
@@ -130,10 +134,10 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
         const profileService = TestBed.inject(ProfileService);
         const profileInfo = new ProfileInfo();
         profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         // Mock course with competencies
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             id: 123,
             competencies: sampleCompetencies,
         });
@@ -141,7 +145,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
     afterEach(() => {
         consoleErrorSpy?.mockRestore();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Template compatibility', () => {
@@ -176,7 +180,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                     { id: 3, title: 'Algorithm Analysis' },
                 ],
             };
-            const httpSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
+            const httpSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
 
             // Step 5: Trigger suggestions via component API to avoid jhi-button internals
             component.competencySelection().suggestCompetencies();
@@ -239,7 +243,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                     { id: 4, title: 'Software Testing' }, // Only testing is suggested
                 ],
             };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
 
             // Get suggestions via component API
             const comp = component.competencySelection();
@@ -312,7 +316,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                         title: sampleCompetencies[id - 1].title,
                     })),
                 };
-                jest.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
+                vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
 
                 // Request suggestions via component API
                 const comp = component.competencySelection();
@@ -342,7 +346,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
         it('should handle API errors gracefully without breaking exercise creation', fakeAsync(() => {
             // Mock API error
-            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
+            vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
 
             const comp = component.competencySelection();
             comp.suggestCompetencies();
@@ -371,7 +375,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             const profileService = TestBed.inject(ProfileService);
             const profileInfo = new ProfileInfo();
             profileInfo.activeModuleFeatures = [];
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
             // Recreate component with disabled feature
             component.competencySelection().ngOnInit();
@@ -400,7 +404,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
             // Using suggestions shouldn't affect form validation
             const mockResponse = { competencies: [{ id: 1, title: 'Test' }] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             const comp = component.competencySelection();
             comp.suggestCompetencies();
