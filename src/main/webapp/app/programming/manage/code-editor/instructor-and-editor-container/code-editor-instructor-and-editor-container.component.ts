@@ -191,11 +191,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private openCodeGenerationRunningModal(): void {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { backdrop: 'static', keyboard: false, size: 'md' });
         modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.runningTitle';
         modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.runningText';
         modalRef.componentInstance.translateText = true;
         modalRef.componentInstance.textIsMarkdown = false;
+        modalRef.componentInstance.showCancelButton = false;
+        modalRef.componentInstance.showCloseButton = false;
+        modalRef.componentInstance.confirmButtonKey = 'global.form.ok';
     }
 
     protected override applyDomainChange(domainType: any, domainValue: any) {

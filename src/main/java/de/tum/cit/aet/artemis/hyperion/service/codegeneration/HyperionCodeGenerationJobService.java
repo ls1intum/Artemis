@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -48,7 +49,7 @@ public class HyperionCodeGenerationJobService {
 
     @PostConstruct
     public void init() {
-        var mapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
+        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
         mapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
     }
 
@@ -61,9 +62,9 @@ public class HyperionCodeGenerationJobService {
      * @return the created job id
      */
     public String startJob(User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
-        var claim = claimJob(user.getLogin(), exercise.getId(), repositoryType);
+        JobClaim claim = claimJob(user.getLogin(), exercise.getId(), repositoryType);
         if (claim.started()) {
-            var jobId = claim.job().jobId();
+            String jobId = claim.job().jobId();
             taskService.runJobAsync(jobId, user, exercise, repositoryType, () -> clearJob(exercise.getId(), jobId));
         }
         return claim.job().jobId();
@@ -89,9 +90,9 @@ public class HyperionCodeGenerationJobService {
      * @return job claim result
      */
     private JobClaim claimJob(String userLogin, long exerciseId, RepositoryType repositoryType) {
-        var jobId = UUID.randomUUID().toString();
-        var newJob = new JobInfo(jobId, userLogin, exerciseId, repositoryType, Instant.now());
-        var existing = getJobMap().putIfAbsent(jobKey(exerciseId), newJob);
+        String jobId = UUID.randomUUID().toString();
+        JobInfo newJob = new JobInfo(jobId, userLogin, exerciseId, repositoryType, Instant.now());
+        JobInfo existing = getJobMap().putIfAbsent(jobKey(exerciseId), newJob);
         if (existing != null) {
             if (existing.userLogin().equals(userLogin)) {
                 return new JobClaim(existing, false);
@@ -102,7 +103,7 @@ public class HyperionCodeGenerationJobService {
     }
 
     private Optional<JobInfo> getJobForUser(long exerciseId, String userLogin) {
-        var job = getJobMap().get(jobKey(exerciseId));
+        JobInfo job = getJobMap().get(jobKey(exerciseId));
         if (job == null || !job.userLogin().equals(userLogin)) {
             return Optional.empty();
         }
@@ -110,8 +111,8 @@ public class HyperionCodeGenerationJobService {
     }
 
     private void clearJob(long exerciseId, String jobId) {
-        var key = jobKey(exerciseId);
-        var job = getJobMap().get(key);
+        String key = jobKey(exerciseId);
+        JobInfo job = getJobMap().get(key);
         if (job != null && job.jobId().equals(jobId)) {
             getJobMap().remove(key);
         }
