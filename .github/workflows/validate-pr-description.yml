@@ -55,8 +55,9 @@ jobs:
                       console.log(`Change types - Client: ${hasClientChanges}`);
 
                       // Extract sections from PR body (supports ## and ### headings)
+                      // Stops at next same-level or higher heading, but includes #### subsections
                       const extractSection = (header) => {
-                          const regex = new RegExp(`###+\\s*${header}[\\s\\S]*?(?=##|$)`, 'i');
+                          const regex = new RegExp(`###+\\s*${header}[\\s\\S]*?(?=\\n#{2,3}[^#]|$)`, 'i');
                           const match = body.match(regex);
                           if (!match) return '';
                           // Remove the header line and HTML comments
