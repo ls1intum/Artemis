@@ -149,13 +149,16 @@ jobs:
                               const result = await callAI(prompt, motivationSection.substring(0, 500));
                               console.log(`Motivation check result: ${result}`);
 
-                              if (result && result.toUpperCase().startsWith('FAIL')) {
+                              if (result === null) {
+                                  core.warning('Motivation quality check skipped: AI service unavailable');
+                              } else if (result.toUpperCase().startsWith('FAIL')) {
                                   issues.push('**Motivation and Context** section needs improvement');
                                   const suggestion = result.substring(result.indexOf(':') + 1).trim();
                                   if (suggestion) aiSuggestions.push(suggestion);
                               }
                           } catch (error) {
-                              console.log('Motivation check error (non-blocking):', error.message);
+                              console.log('Motivation check error:', error.message);
+                              core.warning('Motivation quality check skipped: AI service error');
                           }
                       }
 
@@ -173,13 +176,16 @@ jobs:
                               const result = await callAI(prompt, descriptionSection.substring(0, 500));
                               console.log(`Description check result: ${result}`);
 
-                              if (result && result.toUpperCase().startsWith('FAIL')) {
+                              if (result === null) {
+                                  core.warning('Description quality check skipped: AI service unavailable');
+                              } else if (result.toUpperCase().startsWith('FAIL')) {
                                   issues.push('**Description** section needs improvement');
                                   const suggestion = result.substring(result.indexOf(':') + 1).trim();
                                   if (suggestion) aiSuggestions.push(suggestion);
                               }
                           } catch (error) {
-                              console.log('Description check error (non-blocking):', error.message);
+                              console.log('Description check error:', error.message);
+                              core.warning('Description quality check skipped: AI service error');
                           }
                       }
 
@@ -197,66 +203,55 @@ jobs:
                               const result = await callAI(prompt, testingSection.substring(0, 500));
                               console.log(`Testing steps check result: ${result}`);
 
-                              if (result && result.toUpperCase().startsWith('FAIL')) {
+                              if (result === null) {
+                                  core.warning('Testing steps quality check skipped: AI service unavailable');
+                              } else if (result.toUpperCase().startsWith('FAIL')) {
                                   issues.push('**Steps for Testing** section needs more specific instructions');
                                   const suggestion = result.substring(result.indexOf(':') + 1).trim();
                                   if (suggestion) aiSuggestions.push(suggestion);
                               }
                           } catch (error) {
-                              console.log('Testing steps check error (non-blocking):', error.message);
+                              console.log('Testing steps check error:', error.message);
+                              core.warning('Testing steps quality check skipped: AI service error');
                           }
                       }
 
                       // ============================================================
                       // AI CHECK 4: Visual Changes Detection (only for client changes)
                       // ============================================================
-                      let hasVisualChanges = false;
-
-                      if (hasClientChanges) {
-                          if (hasAiCredentials) {
-                              try {
-                                  const clientFiles = files.filter(f =>
-                                      f.filename.startsWith('src/main/webapp/') && !f.filename.includes('.spec.')
-                                  );
-                                  const patchSummary = clientFiles.map(f =>
-                                      `${f.filename}:\n${(f.patch || '').substring(0, 1000)}`
-                                  ).join('\n\n');
-
-                                  const prompt = 'Do these code changes affect the UI visually? ' +
-                                      'Answer YES for changes to HTML templates, CSS/SCSS styles, component layouts, or UI elements. ' +
-                                      'Answer NO for TypeScript logic only, variable renames, refactoring, test files, services, or imports. ' +
-                                      'Reply only YES or NO.';
-
-                                  console.log('Running visual changes check...');
-                                  const result = await callAI(prompt, patchSummary, 10);
-                                  console.log(`Visual changes result: ${result}`);
-
-                                  if (result) {
-                                      hasVisualChanges = result.toUpperCase().startsWith('YES');
-                                  } else {
-                                      hasVisualChanges = null; // Trigger fallback
-                                  }
-                              } catch (error) {
-                                  console.log('Visual changes check error (non-blocking):', error.message);
-                                  hasVisualChanges = null;
-                              }
-                          }
-
-                          // Fallback: pattern-based detection if AI unavailable or failed
-                          if (hasVisualChanges === null || !hasAiCredentials) {
-                              const visualFilePatterns = ['.html', '.scss', '.css'];
-                              hasVisualChanges = changedFiles.some(f =>
-                                  visualFilePatterns.some(pattern => f.endsWith(pattern)) &&
-                                  !f.includes('.spec.')
+                      if (hasClientChanges && hasAiCredentials) {
+                          try {
+                              const clientFiles = files.filter(f =>
+                                  f.filename.startsWith('src/main/webapp/') && !f.filename.includes('.spec.')
                               );
-                              console.log(`Fallback visual detection: ${hasVisualChanges}`);
-                          }
+                              const patchSummary = clientFiles.map(f =>
+                                  `${f.filename}:\n${(f.patch || '').substring(0, 1000)}`
+                              ).join('\n\n');
 
-                          // Check screenshots if visual changes detected
-                          if (hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
-                              issues.push('**Screenshots** section is empty but this PR contains visual/UI changes');
-                              aiSuggestions.push('Add screenshots showing the UI before and after your changes');
+                              const prompt = 'Do these code changes affect the UI visually? ' +
+                                  'Answer YES for changes to HTML templates, CSS/SCSS styles, component layouts, or UI elements. ' +
+                                  'Answer NO for TypeScript logic only, variable renames, refactoring, test files, services, or imports. ' +
+                                  'Reply only YES or NO.';
+
+                              console.log('Running visual changes check...');
+                              const result = await callAI(prompt, patchSummary, 10);
+                              console.log(`Visual changes result: ${result}`);
+
+                              if (result) {
+                                  const hasVisualChanges = result.toUpperCase().startsWith('YES');
+                                  if (hasVisualChanges && (!screenshotsSection || screenshotsSection.length < 10)) {
+                                      issues.push('**Screenshots** section is empty but this PR contains visual/UI changes');
+                                      aiSuggestions.push('Add screenshots showing the UI before and after your changes');
+                                  }
+                              } else {
+                                  core.warning('Visual changes check skipped: AI service unavailable');
+                              }
+                          } catch (error) {
+                              console.log('Visual changes check error:', error.message);
+                              core.warning('Visual changes check skipped: AI service error');
                           }
+                      } else if (hasClientChanges && !hasAiCredentials) {
+                          core.warning('Visual changes check skipped: AI credentials not configured');
                       }
 
                       // Define the comment marker for identification
