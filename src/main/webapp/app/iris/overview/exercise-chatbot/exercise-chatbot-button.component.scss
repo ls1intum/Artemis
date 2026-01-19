@@ -122,6 +122,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         position: relative;
+        --iris-citation-shift: 0px;
         z-index: 0;
     }
 
@@ -140,7 +141,7 @@
         line-height: 1.4;
         color: inherit;
         white-space: normal;
-        transform: translate(-50%, -100%);
+        transform: translate(-50%, -100%) translateX(var(--iris-citation-shift));
         opacity: 0;
         visibility: hidden;
         pointer-events: none;

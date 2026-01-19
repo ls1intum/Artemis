@@ -263,11 +263,26 @@
         margin-bottom: 10px;
         color: var(--bs-body-color);
         padding: 10px;
+        position: relative;
+        overflow: visible;
+        background-color: transparent;
 
         // prettier-ignore
-        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
-        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
-        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+        &::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: var(--bubble-bg);
+            z-index: 0;
+            -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+            conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+            radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+        }
+
+        > * {
+            position: relative;
+            z-index: 1;
+        }
         overflow-wrap: break-word;
 
         ::ng-deep {
@@ -321,6 +336,7 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 position: relative;
+                --iris-citation-shift: 0px;
                 z-index: 0;
             }
 
@@ -339,7 +355,7 @@
                 line-height: 1.4;
                 color: inherit;
                 white-space: normal;
-                transform: translate(-50%, -100%);
+                transform: translate(-50%, -100%) translateX(var(--iris-citation-shift));
                 opacity: 0;
                 visibility: hidden;
                 pointer-events: none;
@@ -419,21 +435,21 @@
 
 .bubble-left {
     --_d: 0%;
+    --bubble-bg: var(--iris-client-chat-background);
 
     border-left: var(--t) solid #0000;
-    background-color: var(--iris-client-chat-background);
     margin-right: var(--t);
     place-self: start;
 }
 
 .bubble-right {
     --_d: 100%;
+    --bubble-bg: var(--iris-my-chat-background);
 
     border-right: var(--t) solid #0000;
     margin-left: var(--t);
     place-self: end;
     float: right;
-    background-color: var(--iris-my-chat-background);
 }
 
 .client-chat-error {

@@ -261,6 +261,66 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
+
+        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+        if (!messagesElement) {
+            return;
+        }
+
+        const handleMouseOver = (event: MouseEvent) => {
+            const target = event.target as HTMLElement | null;
+            const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
+            if (!citation || !messagesElement.contains(citation)) {
+                return;
+            }
+            this.updateCitationSummaryOffset(citation);
+        };
+
+        const handleMouseOut = (event: MouseEvent) => {
+            const target = event.target as HTMLElement | null;
+            const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
+            if (!citation) {
+                return;
+            }
+            const relatedTarget = event.relatedTarget as HTMLElement | null;
+            if (relatedTarget && citation.contains(relatedTarget)) {
+                return;
+            }
+            citation.style.setProperty('--iris-citation-shift', '0px');
+        };
+
+        messagesElement.addEventListener('mouseover', handleMouseOver);
+        messagesElement.addEventListener('mouseout', handleMouseOut);
+        this.destroyRef.onDestroy(() => {
+            messagesElement.removeEventListener('mouseover', handleMouseOver);
+            messagesElement.removeEventListener('mouseout', handleMouseOut);
+        });
+    }
+
+    private updateCitationSummaryOffset(citation: HTMLElement) {
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+        if (!summary || !messagesElement) {
+            return;
+        }
+
+        citation.style.setProperty('--iris-citation-shift', '0px');
+        const summaryRect = summary.getBoundingClientRect();
+        const containerRect = messagesElement.getBoundingClientRect();
+
+        const leftOverflow = containerRect.left - summaryRect.left;
+        const rightOverflow = summaryRect.right - containerRect.right;
+        let shiftX = 0;
+
+        if (leftOverflow > 0) {
+            shiftX = leftOverflow;
+        } else if (rightOverflow > 0) {
+            shiftX = -rightOverflow;
+        }
+
+        if (shiftX !== 0) {
+            citation.style.setProperty('--iris-citation-shift', `${shiftX}px`);
+        }
     }
 
     /**
