@@ -158,7 +158,9 @@
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",
                 "thread": "Thread",
-                "saved": "Saved for later"
+                "saved": "Saved for later",
+                "removeBookmarkError": "An error occurred while removing the bookmark. Please try again later.",
+                "changeSavedStatusError": "An error occurred while changing the status. Please try again later."
             },
             "answerPost": {
                 "created": "New reply successfully created",
