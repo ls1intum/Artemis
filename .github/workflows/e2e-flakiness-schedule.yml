@@ -1,0 +1,96 @@
+name: E2E Flakiness Check
+
+# Edit the value below to change the schedule (UTC) (Note: Germany is UTC+1). 
+# Format: "minute hour day-of-month month day-of-week"
+x-cron-schedule: &weekly_schedule "30 2 * * 6"
+
+on:
+  schedule:
+    - cron: *weekly_schedule
+  workflow_dispatch:
+    inputs:
+      test_path:
+        description: "Playwright test file or folder"
+        required: false
+        default: "src/test/playwright/e2e"
+      runs:
+        description: "Number of headless runs (headed runs are half)"
+        required: false
+        default: "10"
+      configuration:
+        description: "Docker compose configuration: multi-node | mysql-localci"
+        required: false
+        default: "multi-node"
+
+env:
+  CRON_SCHEDULE: *weekly_schedule
+  DEFAULT_TEST_PATH: "src/test/playwright/e2e"
+  DEFAULT_RUNS: "10"
+  DEFAULT_CONFIGURATION: "multi-node"
+
+jobs:
+  run-flakiness:
+    name: Run flakiness check
+    runs-on: [self-hosted, e2e-test]
+    environment: playwright-e2e-tests
+    timeout-minutes: 180
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      FAST_TEST_TIMEOUT_SECONDS: ${{ vars.FAST_TEST_TIMEOUT_SECONDS || 75 }}
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v6
+
+      - name: Resolve inputs
+        shell: bash
+        run: |
+          TEST_PATH="${{ inputs.test_path || env.DEFAULT_TEST_PATH }}"
+          RUNS="${{ inputs.runs || env.DEFAULT_RUNS }}"
+          CONFIG="${{ inputs.configuration || env.DEFAULT_CONFIGURATION }}"
+
+          case "$CONFIG" in
+            multi-node)
+              COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
+              ;;
+            mysql-localci)
+              COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
+              ;;
+            *)
+              echo "::error::Unknown configuration: $CONFIG"
+              exit 1
+              ;;
+          esac
+
+          echo "FLAKINESS_TEST_PATH=$TEST_PATH" >> "$GITHUB_ENV"
+          echo "FLAKINESS_RUNS=$RUNS" >> "$GITHUB_ENV"
+          echo "COMPOSE_FILE=$COMPOSE_FILE" >> "$GITHUB_ENV"
+
+      - name: Set Docker Tag
+        run: echo "ARTEMIS_DOCKER_TAG=${{ vars.ARTEMIS_DOCKER_TAG || 'latest' }}" >> "$GITHUB_ENV"
+
+      - name: Start E2E services
+        run: |
+          docker compose -f "docker/$COMPOSE_FILE" pull --quiet --policy always
+          docker compose -f "docker/$COMPOSE_FILE" up -d nginx
+
+      - name: Run flakiness script in Playwright container
+        run: |
+          docker compose -f "docker/$COMPOSE_FILE" run --rm artemis-playwright bash -lc "
+            cd /app/artemis/src/test/playwright &&
+            chmod 777 /root &&
+            npm ci &&
+            npm run playwright:setup &&
+            bash /app/artemis/supporting_scripts/playwright/checkFlakiness.sh /app/artemis/${FLAKINESS_TEST_PATH} ${FLAKINESS_RUNS}
+          "
+
+      - name: Stop E2E services
+        if: always()
+        run: docker compose -f "docker/$COMPOSE_FILE" down -v
