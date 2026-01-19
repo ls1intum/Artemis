@@ -161,7 +161,8 @@
                     "imprint": "Imprint",
                     "privacy": "Privacy",
                     "notifications": "Notifications",
-                    "examRooms": "Exam Rooms"
+                    "examRooms": "Exam Rooms",
+                    "dependencies": "Dependencies"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
