@@ -40,9 +40,9 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuizBatchForCourseDTO(long id, String password, boolean started, boolean ended) {
+record QuizBatchForCourseDTO(long id, String password, boolean started, boolean ended, ZonedDateTime startTime) {
 
     public static QuizBatchForCourseDTO of(QuizBatch quizBatch) {
-        return new QuizBatchForCourseDTO(quizBatch.getId(), quizBatch.getPassword(), quizBatch.isStarted(), quizBatch.isEnded());
+        return new QuizBatchForCourseDTO(quizBatch.getId(), quizBatch.getPassword(), quizBatch.isStarted(), quizBatch.isEnded(), quizBatch.getStartTime());
     }
 }
