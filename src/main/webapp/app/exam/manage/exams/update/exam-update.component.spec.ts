@@ -37,6 +37,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -52,12 +54,8 @@ describe('ExamUpdateComponent', () => {
     let profileService: ProfileService;
     let getProfileInfoSub: jest.SpyInstance;
 
-    const examWithoutExercises = new Exam();
-    examWithoutExercises.id = 1;
-
-    const course = new Course();
-    course.id = 1;
-    course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+    let examWithoutExercises: Exam;
+    let course: Course;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -70,6 +68,11 @@ describe('ExamUpdateComponent', () => {
 
     describe('create and edit exams', () => {
         beforeEach(() => {
+            examWithoutExercises = new Exam();
+            examWithoutExercises.id = 1;
+            course = new Course();
+            course.id = 1;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             TestBed.configureTestingModule({
                 imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
@@ -484,7 +487,13 @@ describe('ExamUpdateComponent', () => {
             const alertServiceSpy = jest.spyOn(alertService, 'error');
             const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
 
-            // trigger save
+            component.exam.id = undefined;
+            const now = dayjs();
+            component.exam.visibleDate = now;
+            component.exam.startDate = now.add(1, 'hour');
+            component.exam.endDate = now.add(2, 'hours');
+            component.exam.workingTime = 3600;
+
             component.save();
             tick();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -568,7 +577,139 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(40);
             expect(component.isValidNumberOfExercises).toBeTrue();
+
+            // Test max limit of 100
+            examWithoutExercises.numberOfExercisesInExam = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(100);
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = 101;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(101);
+            expect(component.isValidNumberOfExercises).toBeFalse();
         });
+
+        it('should correctly validate max points with upper limit of 9999', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.examMaxPoints = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(100);
+            expect(component.isValidMaxPoints).toBeTrue();
+
+            examWithoutExercises.examMaxPoints = 9999;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(9999);
+            expect(component.isValidMaxPoints).toBeTrue();
+
+            examWithoutExercises.examMaxPoints = 10000;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(10000);
+            expect(component.isValidMaxPoints).toBeFalse();
+        });
+
+        it('should correctly validate grace period with upper limit of 3600 seconds', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.gracePeriod = 180;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(180);
+            expect(component.isValidGracePeriod).toBeTrue();
+
+            examWithoutExercises.gracePeriod = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3600);
+            expect(component.isValidGracePeriod).toBeTrue();
+
+            examWithoutExercises.gracePeriod = 3601;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3601);
+            expect(component.isValidGracePeriod).toBeFalse();
+        });
+
+        it('should correctly validate working time with upper limit of 30 days (2592000 seconds)', () => {
+            fixture.detectChanges();
+
+            // Set up exam as a test exam with a long exam window
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
+
+            // Valid working time
+            examWithoutExercises.workingTime = 86400; // 1 day
+            expect(component.exam.workingTime).toBe(86400);
+            expect(component.validateWorkingTime).toBeTrue();
+
+            // Working time at limit (30 days = 2592000 seconds)
+            examWithoutExercises.workingTime = 2592000;
+            expect(component.exam.workingTime).toBe(2592000);
+            expect(component.validateWorkingTime).toBeTrue();
+
+            // Working time exceeds limit
+            examWithoutExercises.workingTime = 2592001;
+            expect(component.exam.workingTime).toBe(2592001);
+            expect(component.validateWorkingTime).toBeFalse();
+        });
+
+        it('should bind correct title into jhi-button and compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle).toBe('entity.action.save');
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.title).toBe('entity.action.save');
+        });
+
+        it('should bind isSaving into jhi-button isLoading', () => {
+            fixture.detectChanges();
+
+            component.isSaving = true;
+            fixture.changeDetectorRef.detectChanges();
+
+            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.isLoading).toBeTrue();
+
+            component.isSaving = false;
+            fixture.changeDetectorRef.detectChanges();
+
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.isLoading).toBeFalse();
+        });
+
+        it('should toggle save button disabled state based on form validity and configuration validity', fakeAsync(() => {
+            const now = dayjs().startOf('minute');
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+
+            fixture.changeDetectorRef.detectChanges();
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            const invalidSpy = jest.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            //Step 1: Test case where the configuration and the form are valid
+            expect(component.isValidConfiguration).toBeTrue();
+            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeFalse();
+
+            // Step 2: Test case where the configuration is invalid
+            examWithoutExercises.startDate = now.add(5, 'hours');
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBeFalse();
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeTrue();
+
+            // Step 3: Test case where the configuration is valid again, but the form is invalid
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
+            invalidSpy.mockReturnValue(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBeTrue();
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeTrue();
+        }));
 
         it('should open confirmation modal when dates changed for ongoing exam', fakeAsync(() => {
             const modalService = TestBed.inject(NgbModal);
@@ -997,6 +1138,13 @@ describe('ExamUpdateComponent', () => {
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
             expect(alertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should bind correct title into jhi-button and compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle).toBe('entity.action.import');
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.title).toBe('entity.action.import');
         });
     });
 });

@@ -5,6 +5,8 @@ import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
+import { take } from 'rxjs';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-saved-posts',
@@ -19,6 +21,7 @@ export class SavedPostsComponent {
     readonly onNavigateToPost = output<Posting>();
 
     private readonly savedPostService = inject(SavedPostService);
+    private readonly alertService = inject(AlertService);
 
     protected posts: Posting[];
     protected hiddenPosts: number[] = [];
@@ -53,10 +56,23 @@ export class SavedPostsComponent {
     protected trackPostFunction = (index: number, post: Posting): string => index + '' + post.id!;
 
     protected changeSavedPostStatus(post: Posting, status: SavedPostStatus) {
-        this.savedPostService.changeSavedPostStatus(post, status).subscribe({
-            next: () => {},
-        });
-        this.hiddenPosts.push(post.id!);
+        this.savedPostService
+            .changeSavedPostStatus(post, status)
+            .pipe(take(1))
+            .subscribe({
+                next: () => this.hiddenPosts.push(post.id!),
+                error: () => this.alertService.error('artemisApp.metis.post.changeSavedStatusError'),
+            });
+    }
+
+    protected removeSavedPost(post: Posting) {
+        this.savedPostService
+            .removeSavedPost(post)
+            .pipe(take(1))
+            .subscribe({
+                next: () => this.hiddenPosts.push(post.id!),
+                error: () => this.alertService.error('artemisApp.metis.post.removeBookmarkError'),
+            });
     }
 
     protected onTriggerNavigateToPost(post: Posting) {
