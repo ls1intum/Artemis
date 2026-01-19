@@ -103,7 +103,7 @@ jobs:
                           azureEndpoint !== '' && azureApiKey !== '';
 
                       // Helper function to call Azure OpenAI
-                      async function callAI(systemPrompt, userPrompt, maxTokens = 100) {
+                      async function callAI(prompt, userContent) {
                           const response = await fetch(
                               `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
                               {
@@ -114,11 +114,9 @@ jobs:
                                   },
                                   body: JSON.stringify({
                                       messages: [
-                                          { role: 'system', content: systemPrompt },
-                                          { role: 'user', content: userPrompt }
+                                          { role: 'user', content: prompt + '\n\nContent to check:\n' + userContent }
                                       ],
-                                      temperature: 0,
-                                      max_tokens: maxTokens
+                                      reasoning_effort: 'high'
                                   })
                               }
                           );
@@ -235,7 +233,7 @@ jobs:
                                   'Reply only YES or NO.';
 
                               console.log('Running visual changes check...');
-                              const result = await callAI(prompt, patchSummary, 10);
+                              const result = await callAI(prompt, patchSummary);
                               console.log(`Visual changes result: ${result}`);
 
                               if (result) {
