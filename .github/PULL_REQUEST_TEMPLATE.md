@@ -15,7 +15,7 @@
 #### Server
 - [ ] **Important**: I implemented the changes with a [very good performance](https://docs.artemis.cit.tum.de/dev/guidelines/performance/) and prevented too many (unnecessary) and too complex database calls.
 - [ ] I **strictly** followed the principle of **data economy** for all database calls.
-- [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/).
+- [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/Artemis/developer/guidelines/#server-guidelines).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
 - [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/#rest-endpoint-best-practices-for-authorization) and checked the course groups for all new REST Calls (security).
 - [ ] I documented the Java code using JavaDoc style.
