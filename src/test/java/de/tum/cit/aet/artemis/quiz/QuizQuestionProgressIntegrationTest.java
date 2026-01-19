@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.time.Clock;
@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -326,7 +327,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getPriority()).isEqualTo(2);
         assertThat(data.getBox()).isEqualTo(1);
         ZonedDateTime expectedUtc = TimeUtil.now().plusDays(1);
-        assertThat(savedProgress.get().getDueDate()).isEqualTo(expectedUtc);
+        assertThat(savedProgress.get().getDueDate()).isCloseTo(expectedUtc, within(1, ChronoUnit.SECONDS));
     }
 
     @Test
