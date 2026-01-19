@@ -7,7 +7,6 @@ import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
@@ -19,8 +18,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
@@ -34,6 +31,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -800,14 +798,20 @@ public class FileResource {
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {
-        FileNameMap fileNameMap = URLConnection.getFileNameMap();
-        String mimeType = fileNameMap.getContentTypeFor(filename);
-        if (mimeType != null) {
+        // 1) Spring’s mapping (uses common extensions → MediaType)
+        Optional<MediaType> fromSpring = MediaTypeFactory.getMediaType(filename);
+        if (fromSpring.isPresent()) {
+            return fromSpring.get();
+        }
+
+        // 2) JDK fallback (may return null depending on OS/config)
+        String mimeType = URLConnection.guessContentTypeFromName(filename);
+        if (mimeType != null && !mimeType.isBlank()) {
             return MediaType.parseMediaType(mimeType);
         }
-        MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
 
-        return MediaType.parseMediaType(fileTypeMap.getContentType(filename));
+        // 3) Last resort
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 
     /**

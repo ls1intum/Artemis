@@ -17,6 +17,7 @@ import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submiss
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -443,7 +444,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     private emitBuildingSubmission(participationId: number, exerciseId: number, submission: ProgrammingSubmission, buildTimingInfo?: BuildTimingInfo) {
-        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, buildTimingInfo };
+        const newSubmissionState = {
+            participationId,
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission,
+            buildTimingInfo,
+        };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     }
 
@@ -476,7 +482,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             submissionSubject.next(newSubmissionState);
         }
         // Inform exercise subscribers.
-        this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState } };
+        const updatedBuildState = deepClone(this.exerciseBuildState);
+        const updatedExerciseState = deepClone(updatedBuildState[exerciseId] ?? {});
+        updatedExerciseState[participationId] = newSubmissionState;
+        updatedBuildState[exerciseId] = updatedExerciseState;
+        this.exerciseBuildState = updatedBuildState;
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
@@ -534,8 +544,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
-                // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
-                this.submissionSubjects[participation.id!] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+
+                const participationId = participation.id!;
+                // The following needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
+                // Previously, the subject was recreated here to clear its cached value.
+                // This caused existing subscribers to never receive further updates.
+                // We now keep the same BehaviorSubject instance and "clear" it by emitting `undefined`,
+                // ensuring all subscribers stay subscribed.
+                this.setOrResetSubmissionSubject(participationId);
                 this.processPendingSubmission(isPendingSubmission ? latestSubmission : undefined, participation.id!, exercise.id!, true).subscribe();
             });
     }
@@ -717,11 +733,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         if (queueRemainingTime > 0) {
                             this.emitQueuedSubmission(participationId, exerciseId, submission);
                             this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
-                            return {
-                                participationId,
-                                submission: submissionToBeProcessed,
-                                submissionState: ProgrammingSubmissionState.IS_QUEUED,
-                            };
+                            return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }
                     } else {
                         let buildTimingInfo: BuildTimingInfo | undefined = {
@@ -843,6 +855,22 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
         convertedProgrammingSubmission.participation = ParticipationService.convertParticipationDatesFromServer(programmingSubmission.participation);
         return convertedProgrammingSubmission;
+    }
+
+    /**
+     * Creates the BehaviorSubject for the given participation or resets its cached value.
+     * Clearing the cache by creating a new Subject leaves older subscribers hanging. They will never receive an update anymore.
+     * A better approach is to keep the old subject and just emit the new value once processed and "clear" the cache by emitting undefined first.
+     * @param participationId id of the observable participation
+     */
+    private setOrResetSubmissionSubject(participationId: number): void {
+        if (!this.submissionSubjects[participationId]) {
+            // First-time initialization: create the subject
+            this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+        } else {
+            // Reset cached value without breaking existing subscribers
+            this.submissionSubjects[participationId].next(undefined);
+        }
     }
 
     /**

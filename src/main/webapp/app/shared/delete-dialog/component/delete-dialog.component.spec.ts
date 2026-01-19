@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { EventEmitter } from '@angular/core';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/component/delete-dialog.component';
@@ -10,7 +10,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
@@ -49,7 +48,7 @@ describe('DeleteDialogComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, DeleteDialogComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), ConfirmEntityNameComponent],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 JhiLanguageHelper,
                 AlertService,
@@ -78,28 +77,25 @@ describe('DeleteDialogComponent', () => {
         flush();
     }));
 
-    it('Form properly checked before submission', fakeAsync(() => {
+    it('Form properly checked before submission', async () => {
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
-        // Form can't be submitted if there is deleteConfirmationText and user didn't input the entity title
-        comp.confirmEntityName = '';
-        fixture.changeDetectorRef.detectChanges();
-        tick();
+        // Initially the form should be invalid (empty value doesn't match 'title')
         expect(comp.deleteForm.invalid).toBeTrue();
 
-        // User entered some title
+        // User entered some title (wrong title)
         comp.confirmEntityName = 'some title';
-        fixture.changeDetectorRef.detectChanges();
-        tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
         expect(comp.deleteForm.invalid).toBeTrue();
 
         // User entered correct title
         comp.confirmEntityName = 'title';
-        fixture.changeDetectorRef.detectChanges();
-        tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
         expect(comp.deleteForm.invalid).toBeFalse();
-    }));
+    });
 
     it('Dialog closes immediately when confirmDelete is called', fakeAsync(() => {
         fixture.detectChanges();
