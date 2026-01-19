@@ -4,6 +4,31 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
+        {
+            type: 'category',
+            label: 'Coding and Design Guidelines',
+            link: {
+                type: 'doc',
+                id: 'guidelines/index',
+            },
+            items: [
+                {
+                    type: 'category',
+                    label: 'Client Guidelines',
+                    items: ['guidelines/client', 'guidelines/client-design', 'guidelines/client-tests'],
+                },
+                {
+                    type: 'category',
+                    label: 'Server Guidelines',
+                    items: ['guidelines/server', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
+                },
+                {
+                    type: 'category',
+                    label: 'General Guidelines',
+                    items: ['guidelines/language'],
+                },
+            ],
+        },
         'database',
         'open-source',
         'system-design',
@@ -17,43 +42,6 @@ const sidebars: SidebarsConfig = {
         'docker-debugging',
         'local-database-tests',
         'local-moodle-setup-for-lti',
-        {
-            type: 'category',
-            label: 'Coding and Design Guidelines',
-            link: {
-                type: 'doc',
-                id: 'guidelines/index',
-            },
-            items: [
-                {
-                    type: 'category',
-                    label: 'Client Guidelines',
-                    items: [
-                        'guidelines/client',
-                        'guidelines/client-design',
-                        'guidelines/client-tests',
-                    ],
-                },
-                {
-                    type: 'category',
-                    label: 'Server Guidelines',
-                    items: [
-                        'guidelines/server',
-                        'guidelines/server-tests',
-                        'guidelines/database',
-                        'guidelines/performance',
-                        'guidelines/criteria-builder',
-                    ],
-                },
-                {
-                    type: 'category',
-                    label: 'General Guidelines',
-                    items: [
-                        'guidelines/language',
-                    ],
-                },
-            ],
-        },
     ],
 };
 
