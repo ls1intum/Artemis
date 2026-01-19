@@ -127,8 +127,8 @@
 
     ::ng-deep .iris-citation__summary {
         position: absolute;
-        top: -6px;
-        left: -6px;
+        top: 100%;
+        left: 50%;
         width: 280px;
         max-width: 70vw;
         padding: 8px 10px;
@@ -140,6 +140,7 @@
         line-height: 1.4;
         color: inherit;
         white-space: normal;
+        transform: translate(-50%, -100%);
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
