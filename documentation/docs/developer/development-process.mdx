@@ -1,9 +1,3 @@
----
-id: development-process
-title: Development Process
-sidebar_label: Development Process
----
-
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
@@ -34,7 +28,7 @@ If the feature request is deemed feasible, the development team will create a fe
 
 ### Step 1: Append Feature Proposal Template to Feature Request on GitHub
 
-The Feature Proposal Template outlines the structure of the feature proposal and provides a guideline for the development team to follow.
+The [Feature Proposal Template](https://github.com/ls1intum/Artemis/blob/develop/.github/ISSUE_TEMPLATE/feature-proposal--developer-.md) outlines the structure of the feature proposal and provides a guideline for the development team to follow.
 
 We have developed a GitHub Action that automatically appends the feature proposal template to the issue description once the issue is tagged with 'needs-feature-proposal.' Additionally, when someone is assigned to such an issue, an instructional comment is automatically added.
 This comment reminds the assignee to fill out the feature proposal and provides a link to the relevant documentation for further guidance.
@@ -42,11 +36,6 @@ This comment reminds the assignee to fill out the feature proposal and provides 
 <Callout variant={CalloutVariant.info}>
 The GitHub Action will be skipped for issues that are labeled with "bug".
 </Callout>
-
-```markdown title="Artemis/.github/ISSUE_TEMPLATE/feature-proposal--developer-.md"
-<!-- Feature Proposal Template Content -->
-See: .github/ISSUE_TEMPLATE/feature-proposal--developer-.md
-```
 
 ### Step 2: Requirements Engineering
 
