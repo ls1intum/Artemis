@@ -88,9 +88,9 @@ jobs:
 
                       // If basic checks pass and we have client changes, use AI to check for visual changes
                       let aiValidation = null;
-                      const azureEndpoint = '${{ secrets.AZURE_OPENAI_ENDPOINT }}';
-                      const azureApiKey = '${{ secrets.AZURE_OPENAI_API_KEY }}';
-                      const deploymentName = '${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}';
+                      const azureEndpoint = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}';
+                      const azureApiKey = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}';
+                      const deploymentName = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_DEPLOYMENT }}';
 
                       if (hasClientChanges && azureEndpoint && azureApiKey && deploymentName &&
                           azureEndpoint !== '' && azureApiKey !== '') {
