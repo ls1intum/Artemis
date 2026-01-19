@@ -132,6 +132,34 @@ jobs:
                               .trim();
                       }
 
+                      // Parse AI response robustly - handles quotes, whitespace, variations
+                      function parseAiResponse(text) {
+                          if (!text) return { pass: null, suggestion: '' };
+                          // Normalize: trim, remove surrounding quotes, uppercase for comparison
+                          const normalized = text.trim().replace(/^["'`]+|["'`]+$/g, '').trim();
+                          const upper = normalized.toUpperCase();
+
+                          if (upper === 'PASS' || upper.startsWith('PASS.') || upper.startsWith('PASS!')) {
+                              return { pass: true, suggestion: '' };
+                          }
+                          if (upper.startsWith('FAIL')) {
+                              // Extract suggestion after "FAIL:" or "FAIL " or just "FAIL"
+                              let suggestion = '';
+                              const colonIndex = normalized.indexOf(':');
+                              if (colonIndex !== -1) {
+                                  suggestion = normalized.substring(colonIndex + 1).trim();
+                              } else if (normalized.length > 4) {
+                                  suggestion = normalized.substring(4).trim();
+                              }
+                              // Remove leading punctuation from suggestion
+                              suggestion = suggestion.replace(/^[:\-.\s]+/, '').trim();
+                              return { pass: false, suggestion: sanitizeAiOutput(suggestion) };
+                          }
+                          // Unexpected format
+                          console.log(`Unexpected AI response format: ${text}`);
+                          return { pass: null, suggestion: '' };
+                      }
+
                       // ============================================================
                       // AI CHECK 1: Motivation Quality
                       // ============================================================
@@ -141,10 +169,8 @@ jobs:
                                   'It might be labeled "Motivation", "Motivation and Context", "Why", "Context", or similar. ' +
                                   'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or unrelated content. ' +
                                   'PASS if: there is any real explanation of why this change is needed (brief is OK, imperfect grammar is OK). ' +
-                                  'Examples: ' +
-                                  '1) FAIL: Add a sentence explaining why this change is needed. ' +
-                                  '2) PASS ' +
-                                  '3) FAIL: Describe the problem this PR solves.';
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Add why this change is needed. | FAIL: Describe the problem being solved.';
 
                               console.log('Running motivation quality check...');
                               const result = await callAI(prompt, bodyForAI);
@@ -152,11 +178,14 @@ jobs:
 
                               if (result === null) {
                                   core.warning('Motivation quality check skipped: AI service unavailable');
-                              } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Motivation/Context** section is missing or needs improvement');
-                                  const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
-                                  const suggestion = sanitizeAiOutput(rawSuggestion);
-                                  if (suggestion) aiSuggestions.push(suggestion);
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Motivation/Context** section is missing or needs improvement');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Motivation quality check skipped: unexpected AI response format');
+                                  }
                               }
                           } catch (error) {
                               console.log('Motivation check error:', error.message);
@@ -173,10 +202,8 @@ jobs:
                                   'It might be labeled "Description", "Changes", "What", "Summary", or similar. ' +
                                   'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or no actual changes described. ' +
                                   'PASS if: there is any real description of what was changed (brief is OK, imperfect grammar is OK). ' +
-                                  'Examples: ' +
-                                  '1) PASS ' +
-                                  '2) FAIL: Describe what was actually changed in this PR. ' +
-                                  '3) PASS';
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Describe what was changed. | FAIL: Add details about the implementation.';
 
                               console.log('Running description quality check...');
                               const result = await callAI(prompt, bodyForAI);
@@ -184,11 +211,14 @@ jobs:
 
                               if (result === null) {
                                   core.warning('Description quality check skipped: AI service unavailable');
-                              } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Description** section is missing or needs improvement');
-                                  const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
-                                  const suggestion = sanitizeAiOutput(rawSuggestion);
-                                  if (suggestion) aiSuggestions.push(suggestion);
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Description** section is missing or needs improvement');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Description quality check skipped: unexpected AI response format');
+                                  }
                               }
                           } catch (error) {
                               console.log('Description check error:', error.message);
@@ -205,10 +235,8 @@ jobs:
                                   'It might be labeled "Testing", "Steps for Testing", "Test Plan", "How to Test", "Verification", or similar. ' +
                                   'FAIL if: the section is missing, empty, contains only placeholder text, or has only vague instructions like "test it" or "check everything". ' +
                                   'PASS if: there are specific actions a tester can follow (does not need to be perfect, brief steps are OK). ' +
-                                  'Examples: ' +
-                                  '1) FAIL: Add specific steps like "1. Log in as instructor 2. Click X". ' +
-                                  '2) PASS ' +
-                                  '3) FAIL: Replace vague instructions with concrete actions.';
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Add specific steps to reproduce. | FAIL: Include concrete test actions.';
 
                               console.log('Running testing steps quality check...');
                               const result = await callAI(prompt, bodyForAI);
@@ -216,11 +244,14 @@ jobs:
 
                               if (result === null) {
                                   core.warning('Testing steps quality check skipped: AI service unavailable');
-                              } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Testing instructions** are missing or need more specific steps');
-                                  const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
-                                  const suggestion = sanitizeAiOutput(rawSuggestion);
-                                  if (suggestion) aiSuggestions.push(suggestion);
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Testing instructions** are missing or need more specific steps');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Testing steps quality check skipped: unexpected AI response format');
+                                  }
                               }
                           } catch (error) {
                               console.log('Testing steps check error:', error.message);
@@ -246,10 +277,8 @@ jobs:
                                   'If the changes ARE visual, check if the PR description contains screenshots (look for image links, "Screenshots" section, or similar). ' +
                                   'PASS if: changes are non-visual OR changes are visual and screenshots are present. ' +
                                   'FAIL if: changes are visual but no screenshots are included. ' +
-                                  'Examples: ' +
-                                  '1) PASS ' +
-                                  '2) FAIL: Add before/after screenshots showing the UI changes. ' +
-                                  '3) PASS';
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Add screenshots of the UI changes. | FAIL: Include before/after images.';
 
                               const combinedContent = `PR DESCRIPTION:\n${bodyForAI}\n\nCODE CHANGES:\n${patchSummary}`;
 
@@ -259,11 +288,14 @@ jobs:
 
                               if (result === null) {
                                   core.warning('Visual changes check skipped: AI service unavailable');
-                              } else if (result.toUpperCase().startsWith('FAIL')) {
-                                  issues.push('**Screenshots** are missing but this PR contains visual/UI changes');
-                                  const rawSuggestion = result.substring(result.indexOf(':') + 1).trim();
-                                  const suggestion = sanitizeAiOutput(rawSuggestion);
-                                  if (suggestion) aiSuggestions.push(suggestion);
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Screenshots** are missing but this PR contains visual/UI changes');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Visual changes check skipped: unexpected AI response format');
+                                  }
                               }
                           } catch (error) {
                               console.log('Visual changes check error:', error.message);
