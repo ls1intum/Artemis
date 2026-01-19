@@ -141,7 +141,10 @@ jobs:
                                   'It might be labeled "Motivation", "Motivation and Context", "Why", "Context", or similar. ' +
                                   'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or unrelated content. ' +
                                   'PASS if: there is any real explanation of why this change is needed (brief is OK, imperfect grammar is OK). ' +
-                                  'Reply with PASS if acceptable. Reply with FAIL: followed by one short suggestion if not acceptable.';
+                                  'Examples: ' +
+                                  '1) FAIL: Add a sentence explaining why this change is needed. ' +
+                                  '2) PASS ' +
+                                  '3) FAIL: Describe the problem this PR solves.';
 
                               console.log('Running motivation quality check...');
                               const result = await callAI(prompt, bodyForAI);
@@ -170,7 +173,10 @@ jobs:
                                   'It might be labeled "Description", "Changes", "What", "Summary", or similar. ' +
                                   'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or no actual changes described. ' +
                                   'PASS if: there is any real description of what was changed (brief is OK, imperfect grammar is OK). ' +
-                                  'Reply with PASS if acceptable. Reply with FAIL: followed by one short suggestion if not acceptable.';
+                                  'Examples: ' +
+                                  '1) PASS ' +
+                                  '2) FAIL: Describe what was actually changed in this PR. ' +
+                                  '3) PASS';
 
                               console.log('Running description quality check...');
                               const result = await callAI(prompt, bodyForAI);
@@ -199,7 +205,10 @@ jobs:
                                   'It might be labeled "Testing", "Steps for Testing", "Test Plan", "How to Test", "Verification", or similar. ' +
                                   'FAIL if: the section is missing, empty, contains only placeholder text, or has only vague instructions like "test it" or "check everything". ' +
                                   'PASS if: there are specific actions a tester can follow (does not need to be perfect, brief steps are OK). ' +
-                                  'Reply with PASS if acceptable. Reply with FAIL: followed by one short suggestion if not acceptable.';
+                                  'Examples: ' +
+                                  '1) FAIL: Add specific steps like "1. Log in as instructor 2. Click X". ' +
+                                  '2) PASS ' +
+                                  '3) FAIL: Replace vague instructions with concrete actions.';
 
                               console.log('Running testing steps quality check...');
                               const result = await callAI(prompt, bodyForAI);
@@ -235,8 +244,12 @@ jobs:
                                   'Visual changes include: HTML template changes, CSS/SCSS style changes, component layout changes, adding/removing UI elements. ' +
                                   'Non-visual changes include: TypeScript logic only, variable renames, refactoring, services, imports, test files. ' +
                                   'If the changes ARE visual, check if the PR description contains screenshots (look for image links, "Screenshots" section, or similar). ' +
-                                  'Reply PASS if: changes are non-visual OR changes are visual and screenshots are present. ' +
-                                  'Reply FAIL: followed by a short suggestion if: changes are visual but no screenshots are included.';
+                                  'PASS if: changes are non-visual OR changes are visual and screenshots are present. ' +
+                                  'FAIL if: changes are visual but no screenshots are included. ' +
+                                  'Examples: ' +
+                                  '1) PASS ' +
+                                  '2) FAIL: Add before/after screenshots showing the UI changes. ' +
+                                  '3) PASS';
 
                               const combinedContent = `PR DESCRIPTION:\n${bodyForAI}\n\nCODE CHANGES:\n${patchSummary}`;
 
