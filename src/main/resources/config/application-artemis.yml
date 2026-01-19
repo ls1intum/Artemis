@@ -97,6 +97,7 @@ artemis:
     data-export-creation-time: 0 0 4 * * * # every day at 4am
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
+    vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
 
   data-export:
     days-between-data-exports: 14

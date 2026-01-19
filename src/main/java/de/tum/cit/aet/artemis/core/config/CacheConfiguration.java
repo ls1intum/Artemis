@@ -161,6 +161,7 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
             testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
@@ -255,6 +256,9 @@ public class CacheConfiguration {
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
         config.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
+
+        // Atlas Agent session cache for pending competency operations with 2-hour TTL
+        config.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
         // Configure split brain protection if the cluster was split at some point
         var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
@@ -370,6 +374,13 @@ public class CacheConfiguration {
     private MapConfig initializeRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
         return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    }
+
+    // config for Atlas Agent session caches with 2-hour TTL
+    private MapConfig initializeAtlasSessionMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE)).setTimeToLiveSeconds(2 * 60 * 60); // 2
+                                                                                                                                                                           // hours
     }
 
     /**
