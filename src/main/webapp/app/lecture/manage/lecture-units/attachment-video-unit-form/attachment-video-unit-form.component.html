@@ -52,7 +52,7 @@
                 <div class="mt-2">
                     <div class="d-flex align-items-center gap-2">
                         <button type="button" class="btn btn-sm btn-primary" (click)="fileInput.click()" [disabled]="isUploading()">
-                            <fa-icon [icon]="faVideo" class="me-1" />
+                            <fa-icon [icon]="faFile" class="me-1" />
                             @if (isUploading()) {
                                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploading"></span>
                             } @else if (fileName()) {

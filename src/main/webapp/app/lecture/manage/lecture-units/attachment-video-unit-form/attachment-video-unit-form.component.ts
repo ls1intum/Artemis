@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, 
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faCheck, faExclamationTriangle, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faExclamationTriangle, faFile, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -103,6 +103,7 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faCheck = faCheck;
+    protected readonly faFile = faFile;
     protected readonly faVideo = faVideo;
     protected readonly faExclamationTriangle = faExclamationTriangle;
 

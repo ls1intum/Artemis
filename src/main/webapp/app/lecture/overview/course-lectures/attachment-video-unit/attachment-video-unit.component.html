@@ -55,7 +55,7 @@
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
                     <video id="uploadedVideo" class="rounded" controls preload="auto" playsinline>
-                        <source [src]="videoUrl() | safeResourceUrl" />
+                        <source [attr.src]="videoUrl()" type="video/mp4" />
                         <span jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.notSupported"></span>
                     </video>
                 </div>

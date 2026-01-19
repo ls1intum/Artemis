@@ -62,12 +62,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Checks if the current video is an uploaded video file (not an embedded URL)
      */
     readonly isUploadedVideoFile = computed(() => {
-        const attachment = this.lectureUnit().attachment;
-        if (!attachment?.link) {
+        const videoSource = this.lectureUnit().videoSource;
+
+        if (!videoSource) {
             return false;
         }
-        const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
-        return VIDEO_FILE_EXTENSIONS.includes(fileExtension || '');
+
+        // Check if it's an internal file path (not an external URL like YouTube)
+        const isInternalPath = !videoSource.startsWith('http://') && !videoSource.startsWith('https://');
+
+        if (isInternalPath) {
+            const fileExtension = videoSource.split('.').pop()?.toLowerCase();
+            return VIDEO_FILE_EXTENSIONS.includes(fileExtension || '');
+        }
+
+        return false;
     });
 
     /**
@@ -76,21 +85,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly videoUrl = computed(() => this.computeVideoUrl());
 
     /**
-     * Computes the video URL based on the video source or uploaded video file.
-     * Returns undefined if neither a valid source nor an uploaded video file exists.
+     * Computes the video URL based on the video source.
+     * Returns undefined if no valid video source exists.
      */
     private computeVideoUrl(): string | undefined {
-        // First, check if there's an uploaded video file in the attachment field (legacy)
-        const attachment = this.lectureUnit().attachment;
-        if (attachment?.link) {
-            const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
-            if (VIDEO_FILE_EXTENSIONS.includes(fileExtension || '')) {
-                // Return the attachment link as a playable URL
-                return addPublicFilePrefix(attachment.link);
-            }
-        }
-
-        // Check video source field - could be either an uploaded file path or an embedded URL
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
@@ -114,9 +112,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // Unknown external URL - don't play it for security
             return undefined;
         }
-
-        // It's an internal file path - add the public file prefix to make it accessible
-        return addPublicFilePrefix(source);
+        const unitId = this.lectureUnit().id;
+        return `api/core/files/attachment-video-units/${unitId}/video`;
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
