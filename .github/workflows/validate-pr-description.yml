@@ -91,13 +91,13 @@ jobs:
                           issues.push('No checkboxes are checked in the PR description');
                       }
 
-                      // If basic checks pass and we have client changes, use AI to check for visual changes
+                      // Use AI to validate content quality and check for visual changes
                       let aiValidation = null;
                       const azureEndpoint = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}';
                       const azureApiKey = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}';
                       const deploymentName = '${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_DEPLOYMENT }}';
 
-                      if (hasClientChanges && azureEndpoint && azureApiKey && deploymentName &&
+                      if (azureEndpoint && azureApiKey && deploymentName &&
                           azureEndpoint !== '' && azureApiKey !== '') {
                           try {
                               // Get file patches for client files to help AI determine if changes are visual
@@ -113,6 +113,14 @@ jobs:
                       1. Whether the Motivation/Description/Testing sections have actual content (not just placeholders)
                       2. Whether the changes include VISUAL changes (UI components, styling, layouts, templates) that would require screenshots
                       3. Whether the testing steps are specific and actionable
+                      4. Whether the Motivation and Description sections make sense and relate to the actual code changes
+
+                      Content quality checks (be lenient, only flag obvious issues):
+                      - Flag gibberish, random characters, or nonsensical text (e.g., "asdfasdf", "lorem ipsum", "test test test")
+                      - Flag obvious placeholders (e.g., "TODO", "fill this in", "describe here")
+                      - Flag content that clearly doesn't match the code changes (e.g., motivation talks about "fixing login" but changes are in exam module)
+                      - Do NOT be overly strict - brief but meaningful descriptions are fine
+                      - Do NOT require perfect grammar or extensive detail
 
                       Non-visual client changes that do NOT require screenshots include:
                       - Variable/function renames or refactoring
@@ -138,17 +146,26 @@ jobs:
                         "reasoning": "brief explanation of your assessment"
                       }`;
 
-                              const userPrompt = `PR Description:
+                              const userPrompt = `PR Description (full):
                       ${body.substring(0, 4000)}
+
+                      Motivation section:
+                      ${motivationSection || '(empty)'}
+
+                      Description section:
+                      ${descriptionSection || '(empty)'}
+
+                      Testing steps section:
+                      ${testingSection || '(empty)'}
+
+                      Screenshots section:
+                      ${screenshotsSection || '(empty)'}
 
                       Changed files (${changedFiles.length} total):
                       ${changedFiles.slice(0, 30).join('\n')}
 
                       Client file patches:
-                      ${JSON.stringify(clientPatches, null, 2)}
-
-                      Screenshots section content:
-                      ${screenshotsSection || '(empty)'}`;
+                      ${JSON.stringify(clientPatches, null, 2)}`;
 
                               const response = await fetch(
                                   `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
