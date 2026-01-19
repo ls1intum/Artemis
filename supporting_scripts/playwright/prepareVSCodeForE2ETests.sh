@@ -56,11 +56,6 @@ trap restore EXIT
 
 echo "==> Patching dotenv.config(...) in $config_file"
 
-revert_line="$old_line"
-if grep -Fq "$old_line_commented" "$config_file" && ! grep -Fq "$old_line" "$config_file"; then
-    revert_line="$old_line_commented"
-fi
-
 export OLD_DOTENV_LINE="$old_line"
 export OLD_DOTENV_LINE_COMMENTED="$old_line_commented"
 export NEW_DOTENV_LINE="$new_line"
