@@ -54,8 +54,11 @@ jobs:
                       const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
                       console.log(`Change types - Client: ${hasClientChanges}`);
 
-                      // Strip HTML comments from body for AI analysis
-                      const bodyForAI = body.replace(/<!--[\s\S]*?-->/g, '').trim();
+                      // Strip HTML comments and CodeRabbit summary from body for AI analysis
+                      const bodyForAI = body
+                          .replace(/<!--[\s\S]*?-->/g, '')
+                          .replace(/##\s*Summary by CodeRabbit[\s\S]*$/i, '')
+                          .trim();
 
                       const issues = [];
                       const aiSuggestions = [];
