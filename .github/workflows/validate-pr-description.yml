@@ -45,14 +45,7 @@ jobs:
 
                       const changedFiles = files.map(f => f.filename);
                       const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
-                      const hasServerChanges = changedFiles.some(f => f.startsWith('src/main/java/'));
-                      const hasTestChanges = changedFiles.some(f =>
-                          f.includes('.spec.ts') ||
-                          f.includes('Test.java') ||
-                          f.startsWith('src/test/')
-                      );
-
-                      console.log(`Change types - Client: ${hasClientChanges}, Server: ${hasServerChanges}, Tests: ${hasTestChanges}`);
+                      console.log(`Change types - Client: ${hasClientChanges}`);
 
                       // Extract sections from PR body
                       const extractSection = (header) => {
@@ -70,7 +63,6 @@ jobs:
                       const descriptionSection = extractSection('Description');
                       const testingSection = extractSection('Steps for Testing');
                       const screenshotsSection = extractSection('Screenshots');
-                      const testCoverageSection = extractSection('Test Coverage');
 
                       // Quick pre-checks - fail fast if sections are obviously empty
                       const issues = [];
@@ -92,15 +84,6 @@ jobs:
                       const uncheckedBoxes = (body.match(/- \[ \]/g) || []).length;
                       if (uncheckedBoxes > 0 && checkedBoxes === 0) {
                           issues.push('No checkboxes are checked in the PR description');
-                      }
-
-                      // Check test coverage table if tests were modified
-                      if (hasTestChanges) {
-                          const hasTestCoverageTable = testCoverageSection.includes('|') &&
-                              (testCoverageSection.includes('%') || testCoverageSection.includes('Coverage'));
-                          if (!hasTestCoverageTable) {
-                              issues.push('**Test Coverage** table is missing (required when test files are modified)');
-                          }
                       }
 
                       // If basic checks pass and we have client changes, use AI to check for visual changes
