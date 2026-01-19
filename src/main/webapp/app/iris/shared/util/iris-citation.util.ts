@@ -22,7 +22,10 @@ export function formatMarkdownWithCitations(markdownText: string | undefined, ci
         const keyword = resolveCitationKeyword(citation);
         const label = keyword ? `${type} ${keyword}` : type;
         const safeLabel = escapeHtml(label);
-        return `<span class="iris-citation iris-citation--${typeClass}"><span class="iris-citation__icon" aria-hidden="true"></span><span class="iris-citation__text">${safeLabel}</span></span>`;
+        const summary = citation.summary ? escapeHtml(citation.summary) : '';
+        const summaryMarkup = summary ? `<span class="iris-citation__summary">${summary}</span>` : '';
+        const summaryClass = summary ? ' iris-citation--has-summary' : '';
+        return `<span class="iris-citation iris-citation--${typeClass}${summaryClass}"><span class="iris-citation__icon" aria-hidden="true"></span><span class="iris-citation__text">${safeLabel}</span>${summaryMarkup}</span>`;
     });
 }
 
