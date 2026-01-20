@@ -5,30 +5,31 @@
 
 set -e
 
-TEST_PATHS="$@"
+TEST_PATHS=("$@")
+FAILED=0
 
 echo "=== Running Playwright Tests ==="
 
-if [ -n "$TEST_PATHS" ]; then
-    echo "Running filtered tests: $TEST_PATHS"
+if [ ${#TEST_PATHS[@]} -gt 0 ]; then
+    echo "Running filtered tests: ${TEST_PATHS[*]}"
     
     # Run parallel tests (fast and slow projects)
     echo "--- Running parallel tests ---"
-    PLAYWRIGHT_TEST_TYPE=parallel npx playwright test --project=fast-tests --project=slow-tests $TEST_PATHS || true
+    PLAYWRIGHT_TEST_TYPE=parallel npx playwright test --project=fast-tests --project=slow-tests "${TEST_PATHS[@]}" || FAILED=1
     
     # Run sequential tests
     echo "--- Running sequential tests ---"
-    PLAYWRIGHT_TEST_TYPE=sequential npx playwright test --project=sequential-tests --workers 1 $TEST_PATHS || true
+    PLAYWRIGHT_TEST_TYPE=sequential npx playwright test --project=sequential-tests --workers 1 "${TEST_PATHS[@]}" || FAILED=1
 else
     echo "Running all tests"
     
     # Run parallel tests (fast and slow projects) 
     echo "--- Running parallel tests ---"
-    PLAYWRIGHT_TEST_TYPE=parallel npx playwright test e2e --project=fast-tests --project=slow-tests || true
+    PLAYWRIGHT_TEST_TYPE=parallel npx playwright test e2e --project=fast-tests --project=slow-tests || FAILED=1
     
     # Run sequential tests
     echo "--- Running sequential tests ---"
-    PLAYWRIGHT_TEST_TYPE=sequential npx playwright test e2e --project=sequential-tests --workers 1 || true
+    PLAYWRIGHT_TEST_TYPE=sequential npx playwright test e2e --project=sequential-tests --workers 1 || FAILED=1
 fi
 
 # Merge reports
@@ -37,3 +38,4 @@ npm run merge-junit-reports || true
 npm run merge-coverage-reports || true
 
 echo "=== Tests completed ==="
+exit $FAILED

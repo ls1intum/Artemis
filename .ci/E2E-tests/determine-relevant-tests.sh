@@ -182,15 +182,13 @@ done
 
 # Sort and deduplicate
 if [ ${#RELEVANT_TESTS[@]} -gt 0 ]; then
-    IFS=$'\n' RELEVANT_TESTS_SORTED=($(printf '%s\n' "${RELEVANT_TESTS[@]}" | sort -u))
-    unset IFS
+    mapfile -t RELEVANT_TESTS_SORTED < <(printf '%s\n' "${RELEVANT_TESTS[@]}" | sort -u)
 else
     RELEVANT_TESTS_SORTED=()
 fi
 
 if [ ${#REMAINING_TESTS[@]} -gt 0 ]; then
-    IFS=$'\n' REMAINING_TESTS_SORTED=($(printf '%s\n' "${REMAINING_TESTS[@]}" | sort -u))
-    unset IFS
+    mapfile -t REMAINING_TESTS_SORTED < <(printf '%s\n' "${REMAINING_TESTS[@]}" | sort -u)
 else
     REMAINING_TESTS_SORTED=()
 fi

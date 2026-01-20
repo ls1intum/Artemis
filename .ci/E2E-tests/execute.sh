@@ -25,7 +25,7 @@ if [ "$CONFIGURATION" = "mysql" ]; then
 fi
 
 echo "Compose file:"
-echo $COMPOSE_FILE
+echo "$COMPOSE_FILE"
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME="nginx"
@@ -42,9 +42,9 @@ fi
 cd docker
 
 # Pull the images to avoid using outdated images
-docker compose -f $COMPOSE_FILE pull --quiet --policy always
+docker compose -f "$COMPOSE_FILE" pull --quiet --policy always
 # Run the tests
-docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
+docker compose -f "$COMPOSE_FILE" up --exit-code-from artemis-playwright
 
 exitCode=$?
 cd ..
