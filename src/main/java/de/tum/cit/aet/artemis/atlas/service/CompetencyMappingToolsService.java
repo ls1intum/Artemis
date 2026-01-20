@@ -118,7 +118,7 @@ public class CompetencyMappingToolsService {
     public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            errorResponse("Course not found with ID: " + courseId);
+            return errorResponse("Course not found with ID: " + courseId);
         }
 
         List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
@@ -143,7 +143,7 @@ public class CompetencyMappingToolsService {
     public String getCourseCompetencyRelations(@ToolParam(description = "the ID of the course") Long courseId) {
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            errorResponse("Course not found with ID: " + courseId);
+            return errorResponse("Course not found with ID: " + courseId);
         }
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
@@ -164,12 +164,12 @@ public class CompetencyMappingToolsService {
     public String getLastPreviewedRelation() {
         String sessionId = currentSessionId.get();
         if (sessionId == null) {
-            errorResponse("No active session available");
+            return errorResponse("No active session available");
         }
 
         List<CompetencyRelationDTO> cachedData = atlasAgentService.getCachedRelationData(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
-            errorResponse("No previewed relation data found for this session");
+            return errorResponse("No previewed relation data found for this session");
         }
 
         record Response(String sessionId, List<CompetencyRelationDTO> relations) {
@@ -229,7 +229,7 @@ public class CompetencyMappingToolsService {
             SuggestCompetencyRelationsResponseDTO suggestionsResponse = atlasMLApi.suggestCompetencyRelations(courseId);
 
             if (suggestionsResponse == null || suggestionsResponse.relations() == null || suggestionsResponse.relations().isEmpty()) {
-                errorResponse("No relation suggestions available from ML clustering");
+                return errorResponse("No relation suggestions available from ML clustering");
             }
 
             List<CompetencyRelationDTO> suggestedRelations = new ArrayList<>();
@@ -246,7 +246,7 @@ public class CompetencyMappingToolsService {
             }
 
             if (suggestedRelations.isEmpty()) {
-                errorResponse("No valid relation suggestions found");
+                return errorResponse("No valid relation suggestions found");
             }
 
             record SuggestResponse(int count, List<CompetencyRelationDTO> suggestions) {
@@ -276,7 +276,7 @@ public class CompetencyMappingToolsService {
 
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            errorResponse("Course not found with ID: " + courseId);
+            return errorResponse("Course not found with ID: " + courseId);
         }
 
         Course course = courseOptional.get();
@@ -405,7 +405,7 @@ public class CompetencyMappingToolsService {
      */
     private void storePreviewData(List<CompetencyRelationPreviewDTO> previews, Boolean viewOnly, int relationCount) {
         boolean isViewOnly = viewOnly != null && viewOnly;
-
+        clearAllPreviews();
         if (relationCount == 1) {
             SingleRelationPreviewResponseDTO singlePreview = new SingleRelationPreviewResponseDTO(true, previews.getFirst(), isViewOnly);
             currentSingleRelationPreview.set(singlePreview);
