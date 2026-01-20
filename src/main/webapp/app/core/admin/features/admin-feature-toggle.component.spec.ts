@@ -89,7 +89,7 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const programmingExercise = toggles.find((t) => t.feature === FeatureToggle.ProgrammingExercises);
             expect(programmingExercise?.documentationLink).toBeDefined();
-            expect(programmingExercise?.documentationLink).toContain('ls1intum.github.io/Artemis');
+            expect(programmingExercise?.documentationLink).toContain('docs.artemis.tum.de');
 
             const plagiarismChecks = toggles.find((t) => t.feature === FeatureToggle.PlagiarismChecks);
             expect(plagiarismChecks?.documentationLink).toBeDefined();
@@ -133,7 +133,7 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const iris = profiles.find((p) => p.profile === PROFILE_IRIS);
             expect(iris?.documentationLink).toBeDefined();
-            expect(iris?.documentationLink).toContain('ls1intum.github.io/Artemis');
+            expect(iris?.documentationLink).toContain('docs.artemis.tum.de');
         });
     });
 
@@ -166,7 +166,7 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const atlas = modules.find((m) => m.feature === MODULE_FEATURE_ATLAS);
             expect(atlas?.documentationLink).toBeDefined();
-            expect(atlas?.documentationLink).toContain('ls1intum.github.io/Artemis');
+            expect(atlas?.documentationLink).toContain('docs.artemis.tum.de');
         });
     });
 
