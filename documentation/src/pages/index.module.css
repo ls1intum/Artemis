@@ -22,8 +22,8 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
   margin-top: 1.5rem;
-  margin-bottom: 3rem;
-  padding-bottom: 3rem;
+  margin-bottom: 0;
+  padding-bottom: 0;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -95,4 +95,20 @@
 
 :global([data-theme='dark']) .tileTitle {
   color: #fff;
+}
+
+/* Publications section styling */
+.publicationsSection {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+  max-width: 350px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .publicationsSection {
+    max-width: 100%;
+  }
 }
