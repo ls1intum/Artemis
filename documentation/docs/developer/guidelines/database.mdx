@@ -73,6 +73,28 @@ The recommended default data type for storing values that involve date and time,
 - Before deploying any database changes to a test server, ask for official permission from the project lead. If the changes don't get approved, manual rollbacks can be necessary, which are avoidable.
 - Make sure to add your name to the `changeSet` in your file as well as your formatted time as the `id`. Refer to other changes for further help.
 
+## Data Migration with Java
+
+<Callout variant={CalloutVariant.warning}>
+  This type of migration should only be used if the logic cannot be implemented in SQL as part of a Liquibase changelog. Java migrations are <strong>significantly slower</strong> since they need to load and convert data from the DBMS into Java objects, apply the changes, and then write the new data back to the database.
+</Callout>
+
+### Changelog
+
+The changelog can be found in `src/main/java/config/migration/MigrationRegistry.java`. To create a new change, follow these steps:
+
+1. Get the current time in the format `YYYYMMDD_HHmmss`.
+2. Create a new file in `/entries` named `MigrationEntry<formatted-time>.java` containing a class extending `MigrationEntry`.
+3. Implement the required methods in your class and follow the JavaDoc.
+4. Add the class to the `migrationEntryMap` attribute in the `MigrationRegistry.java` together with the next Integer key inside the constructor.
+
+### Development Best Practices for Java Migrations
+
+- All executed entries are saved in the table `migration_changelog`. If you delete entries, they get executed again.
+- Test your changes locally first, and only commit changes you are confident that work.
+- Before deploying any database changes to a test server, ask for official permission from the project lead. If the changes don't get approved, manual rollbacks can be necessary, which are avoidable.
+- If queries fail due to the authorization object being null, call `SecurityUtils.setAuthorizationObject()` beforehand to set a dummy object.
+
 ## General Guidelines
 
 ### Weekly Database Meeting
