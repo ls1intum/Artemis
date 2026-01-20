@@ -154,7 +154,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void executeLectureChatPipeline_withoutMessages_setsNullUserMessageId() {
+    void executeLectureChatPipeline_withoutMessages_setsNullUserMessageId() throws Exception {
         var irisSession = createSessionForUser("student1");
         var sessionFromDb = (IrisLectureChatSession) irisLectureChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
 
