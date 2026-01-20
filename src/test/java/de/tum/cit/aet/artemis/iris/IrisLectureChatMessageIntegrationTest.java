@@ -226,6 +226,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         assertThat(job.sessionId()).isEqualTo(irisSession.getId());
         assertThat(job.lectureId()).isEqualTo(lecture.getId());
         assertThat(job.courseId()).isEqualTo(lecture.getCourse().getId());
+        assertThat(sessionFromDb.getMessages()).hasSize(1);
         assertThat(job.userMessageId()).isEqualTo(sessionFromDb.getMessages().getLast().getId());
     }
 
