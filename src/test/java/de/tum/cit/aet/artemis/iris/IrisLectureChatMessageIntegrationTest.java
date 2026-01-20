@@ -144,6 +144,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
 
             await().until(pipelineDone::get);
+            verify(irisRequestMockProvider, times(1)).mockLectureChatResponse(any());
         }
         finally {
             userTestRepository.updateMemirisEnabled(user.getId(), false);
