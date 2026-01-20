@@ -433,7 +433,7 @@ Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
 There is a problem with the way you save the associated objects. You must follow this procedure:
 
-1. Save the child entity (e.g., [Feedback](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Feedback.java)) without connection to the parent entity (e.g., [Result](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Result.java))
+1. Save the child entity (e.g., [Feedback](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/domain/Feedback.java)) without connection to the parent entity (e.g., [Result](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/domain/Result.java))
 2. Add back the connection of the child entity to the parent entity.
 3. Save the parent entity.
 4. Always use the returned value after saving the entity, see: `feedback = feedbackRepository.save(feedback);`
