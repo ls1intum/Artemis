@@ -176,7 +176,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         }));
 
         it('should handle API errors gracefully', fakeAsync(() => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
             vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
 
             component.suggestCompetencies();
