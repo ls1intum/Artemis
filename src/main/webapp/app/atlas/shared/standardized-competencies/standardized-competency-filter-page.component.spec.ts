@@ -7,8 +7,8 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/stan
 
 @Component({ template: '' })
 class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
-    constructor() {
-        super();
+    protected override get knowledgeAreaTreeComponent() {
+        return undefined;
     }
 }
 

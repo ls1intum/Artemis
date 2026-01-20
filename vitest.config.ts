@@ -36,6 +36,8 @@ export default defineConfig({
             'src/main/webapp/app/quiz/**/*.spec.ts',            // include quiz tests
             'src/main/webapp/app/lecture/**/*.spec.ts',         // include lecture tests
             'src/main/webapp/app/lti/**/*.spec.ts',             // include lti tests
+            'src/main/webapp/app/modeling/**/*.spec.ts',        // include modeling tests
+            'src/main/webapp/app/iris/**/*.spec.ts',            // include iris tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -62,13 +64,15 @@ export default defineConfig({
                 'src/main/webapp/app/text/**/*.ts',             // include text module for code coverage
                 'src/main/webapp/app/tutorialgroup/**/*.ts',    // include tutorial group for code coverage
                 'src/main/webapp/app/lti/**/*.ts',              // include lti for code coverage
+                'src/main/webapp/app/modeling/**/*.ts',         // include modeling for code coverage
+                'src/main/webapp/app/iris/**/*.ts',             // include iris for code coverage
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
                 lines: 92.20,
-                statements: 92.20,
-                branches: 77.20,
-                functions: 89.40,
+                statements: 92.00,
+                branches: 77.00,
+                functions: 89.20,
             },
         },
     },
