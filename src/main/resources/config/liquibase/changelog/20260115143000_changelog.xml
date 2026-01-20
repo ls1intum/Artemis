@@ -3,7 +3,19 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260115143000-comment-threads" author="starke">
+    <!-- Create table for MySQL/H2 with ENUM type -->
+    <changeSet id="20260115143000-comment-threads-mysql" author="starke">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <not>
+                    <tableExists tableName="comment_thread"/>
+                </not>
+                <or>
+                    <dbms type="mysql"/>
+                    <dbms type="h2"/>
+                </or>
+            </and>
+        </preConditions>
         <createTable tableName="comment_thread">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -12,7 +24,7 @@
             <column name="exercise_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="target_type" type="varchar(50)">
+            <column name="target_type" type="enum('PROBLEM_STATEMENT','TEMPLATE_REPO','SOLUTION_REPO','TEST_REPO','AUXILIARY_REPO')">
                 <constraints nullable="false"/>
             </column>
             <column name="auxiliary_repo_id" type="bigint"/>
@@ -55,7 +67,80 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="20251219133000-comments" author="starke">
+    <!-- Create table for PostgreSQL with text type for enums -->
+    <changeSet id="20260115143000-comment-threads-postgres" author="starke">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <not>
+                    <tableExists tableName="comment_thread"/>
+                </not>
+                <dbms type="postgresql"/>
+            </and>
+        </preConditions>
+        <createTable tableName="comment_thread">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="group_id" type="bigint"/>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_type" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="auxiliary_repo_id" type="bigint"/>
+            <column name="initial_version_id" type="bigint"/>
+            <column name="initial_commit_sha" type="varchar(255)"/>
+            <column name="file_path" type="varchar(500)"/>
+            <column name="initial_file_path" type="varchar(500)"/>
+            <column name="line_number" type="int"/>
+            <column name="initial_line_number" type="int"/>
+            <column name="outdated" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resolved" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comment_thread"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_comment_thread_exercise"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment_thread"
+                                 baseColumnNames="initial_version_id"
+                                 constraintName="fk_comment_thread_initial_version"
+                                 referencedTableName="exercise_version"
+                                 referencedColumnNames="id"/>
+
+        <createIndex tableName="comment_thread" indexName="idx_comment_thread_exercise">
+            <column name="exercise_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment_thread" indexName="idx_comment_thread_group">
+            <column name="group_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment_thread" indexName="idx_comment_thread_target">
+            <column name="target_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Create table for MySQL/H2 with ENUM type -->
+    <changeSet id="20251219133000-comments-mysql" author="starke">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <not>
+                    <tableExists tableName="comment"/>
+                </not>
+                <or>
+                    <dbms type="mysql"/>
+                    <dbms type="h2"/>
+                </or>
+            </and>
+        </preConditions>
         <createTable tableName="comment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -64,7 +149,66 @@
                 <constraints nullable="false"/>
             </column>
             <column name="author_id" type="bigint"/>
-            <column name="type" type="varchar(50)">
+            <column name="type" type="enum('USER','CONSISTENCY_CHECK')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="json"/>
+            <column name="initial_version_id" type="bigint"/>
+            <column name="initial_commit_sha" type="varchar(255)"/>
+            <column name="created_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="datetime(3)"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="thread_id"
+                                 constraintName="fk_comment_thread"
+                                 referencedTableName="comment_thread"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="author_id"
+                                 constraintName="fk_comment_author"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="initial_version_id"
+                                 constraintName="fk_comment_initial_version"
+                                 referencedTableName="exercise_version"
+                                 referencedColumnNames="id"/>
+
+
+        <createIndex tableName="comment" indexName="idx_comment_thread">
+            <column name="thread_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment" indexName="idx_comment_author">
+            <column name="author_id"/>
+        </createIndex>
+
+    </changeSet>
+
+    <!-- Create table for PostgreSQL with text type for enums -->
+    <changeSet id="20251219133000-comments-postgres" author="starke">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <not>
+                    <tableExists tableName="comment"/>
+                </not>
+                <dbms type="postgresql"/>
+            </and>
+        </preConditions>
+        <createTable tableName="comment">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="thread_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="author_id" type="bigint"/>
+            <column name="type" type="text">
                 <constraints nullable="false"/>
             </column>
             <column name="content" type="json"/>
