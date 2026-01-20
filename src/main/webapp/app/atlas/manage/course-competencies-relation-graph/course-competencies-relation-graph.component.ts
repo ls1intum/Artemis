@@ -45,7 +45,7 @@ export class CourseCompetenciesRelationGraphComponent {
 
     constructor() {
         effect(() => {
-            this.nodes.set(
+            return this.nodes.set(
                 this.courseCompetencies().map(
                     (courseCompetency): Node => ({
                         id: courseCompetency.id!.toString(),
@@ -57,28 +57,6 @@ export class CourseCompetenciesRelationGraphComponent {
                     }),
                 ),
             );
-
-            // Trigger graph update when nodes change
-            this.update$.next(true);
-        });
-
-        // Trigger graph update and center when edges (relations) change
-        effect(() => {
-            // Access edges to track changes
-            this.edges();
-
-            // Delay to ensure graph has rendered paths before textPath references them
-            // Multiple updates ensure proper rendering of textPath elements
-            setTimeout(() => {
-                this.update$.next(true);
-            }, 50);
-            setTimeout(() => {
-                this.center$.next(true);
-                this.update$.next(true);
-            }, 150);
-            setTimeout(() => {
-                this.update$.next(true);
-            }, 300);
         });
     }
 

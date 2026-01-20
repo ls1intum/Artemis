@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +23,7 @@ import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/cours
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
 })
-export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
     private readonly messagesContainer = viewChild.required<ElementRef>('messagesContainer');
     private readonly messageInput = viewChild.required<ElementRef<HTMLTextAreaElement>>('messageInput');
 
@@ -81,6 +81,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             this.scrollToBottom();
             this.shouldScrollToBottom.set(false);
         }
+    }
+
+    ngOnDestroy(): void {
+        this.competencyCache.clear();
+        this.relationCache.clear();
     }
 
     protected closeModal(): void {

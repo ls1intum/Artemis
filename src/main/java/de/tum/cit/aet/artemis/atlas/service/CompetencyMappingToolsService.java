@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
@@ -62,7 +64,7 @@ public class CompetencyMappingToolsService {
 
     private final AtlasAgentService atlasAgentService;
 
-    private final de.tum.cit.aet.artemis.atlas.api.AtlasMLApi atlasMLApi;
+    private final AtlasMLApi atlasMLApi;
 
     // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
     private static final ThreadLocal<SingleRelationPreviewResponseDTO> currentSingleRelationPreview = ThreadLocal.withInitial(() -> null);
@@ -70,6 +72,8 @@ public class CompetencyMappingToolsService {
     private static final ThreadLocal<BatchRelationPreviewResponseDTO> currentBatchRelationPreview = ThreadLocal.withInitial(() -> null);
 
     private static final ThreadLocal<RelationGraphPreviewDTO> currentRelationGraphPreview = ThreadLocal.withInitial(() -> null);
+
+    private static final Logger log = LoggerFactory.getLogger(CompetencyMappingToolsService.class);
 
     // ThreadLocal to store the current sessionId for tool calls
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
@@ -114,9 +118,7 @@ public class CompetencyMappingToolsService {
     public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("Course not found with ID: " + courseId));
+            errorResponse("Course not found with ID: " + courseId);
         }
 
         List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
@@ -141,9 +143,7 @@ public class CompetencyMappingToolsService {
     public String getCourseCompetencyRelations(@ToolParam(description = "the ID of the course") Long courseId) {
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("Course not found with ID: " + courseId));
+            errorResponse("Course not found with ID: " + courseId);
         }
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
@@ -164,16 +164,12 @@ public class CompetencyMappingToolsService {
     public String getLastPreviewedRelation() {
         String sessionId = currentSessionId.get();
         if (sessionId == null) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("No active session"));
+            errorResponse("No active session available");
         }
 
         List<CompetencyRelationDTO> cachedData = atlasAgentService.getCachedRelationData(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("No previewed relation data found for this session"));
+            errorResponse("No previewed relation data found for this session");
         }
 
         record Response(String sessionId, List<CompetencyRelationDTO> relations) {
@@ -233,9 +229,7 @@ public class CompetencyMappingToolsService {
             SuggestCompetencyRelationsResponseDTO suggestionsResponse = atlasMLApi.suggestCompetencyRelations(courseId);
 
             if (suggestionsResponse == null || suggestionsResponse.relations() == null || suggestionsResponse.relations().isEmpty()) {
-                record ErrorResponse(String error) {
-                }
-                return toJson(new ErrorResponse("No relation suggestions available from ML clustering"));
+                errorResponse("No relation suggestions available from ML clustering");
             }
 
             List<CompetencyRelationDTO> suggestedRelations = new ArrayList<>();
@@ -252,9 +246,7 @@ public class CompetencyMappingToolsService {
             }
 
             if (suggestedRelations.isEmpty()) {
-                record ErrorResponse(String error) {
-                }
-                return toJson(new ErrorResponse("No valid relation suggestions found"));
+                errorResponse("No valid relation suggestions found");
             }
 
             record SuggestResponse(int count, List<CompetencyRelationDTO> suggestions) {
@@ -262,9 +254,7 @@ public class CompetencyMappingToolsService {
             return toJson(new SuggestResponse(suggestedRelations.size(), suggestedRelations));
         }
         catch (Exception e) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("Failed to get ML-based relation suggestions: " + e.getMessage()));
+            return errorResponse("Failed to get ML-based relation suggestions: " + e.getMessage());
         }
     }
 
@@ -281,16 +271,12 @@ public class CompetencyMappingToolsService {
             @ToolParam(description = "list of relation operations to save") List<CompetencyRelationDTO> relations) {
 
         if (relations == null || relations.isEmpty()) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("No relations provided"));
+            return errorResponse("No relations provided");
         }
 
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            record ErrorResponse(String error) {
-            }
-            return toJson(new ErrorResponse("Course not found with ID: " + courseId));
+            errorResponse("Course not found with ID: " + courseId);
         }
 
         Course course = courseOptional.get();
@@ -300,14 +286,14 @@ public class CompetencyMappingToolsService {
 
         for (CompetencyRelationDTO rel : relations) {
             try {
-                CompetencyPair competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
-                if (competencies == null) {
+                Optional<CompetencyPair> competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
+                if (competencies.isEmpty()) {
                     errors.add("Competency not found for relation");
                     continue;
                 }
 
                 if (rel.id() == null) {
-                    competencyRelationService.createCompetencyRelation(competencies.tail(), competencies.head(), rel.relationType(), course);
+                    competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                     createCount++;
 
                     // Sync with AtlasML - map competency to competency for ML clustering
@@ -315,7 +301,7 @@ public class CompetencyMappingToolsService {
                         atlasMLApi.mapCompetencyToCompetency(rel.headCompetencyId(), rel.tailCompetencyId());
                     }
                     catch (Exception e) {
-                        java.util.logging.Logger.getLogger(getClass().getName()).warning("Failed to sync relation to AtlasML: " + e.getMessage());
+                        log.warn("Failed to sync relation to AtlasML: {}", e.getMessage());
                     }
                 }
                 else {
@@ -326,8 +312,8 @@ public class CompetencyMappingToolsService {
                     }
 
                     CompetencyRelation relation = existing.get();
-                    relation.setHeadCompetency(competencies.head());
-                    relation.setTailCompetency(competencies.tail());
+                    relation.setHeadCompetency(competencies.get().head());
+                    relation.setTailCompetency(competencies.get().tail());
                     relation.setType(rel.relationType());
 
                     competencyRelationRepository.save(relation);
@@ -375,15 +361,15 @@ public class CompetencyMappingToolsService {
      * @param tailId the tail competency ID
      * @return CompetencyPair containing both competencies, or null if either is not found
      */
-    private CompetencyPair fetchCompetencies(Long headId, Long tailId) {
+    private Optional<CompetencyPair> fetchCompetencies(Long headId, Long tailId) {
         Optional<CourseCompetency> headCompetency = courseCompetencyRepository.findById(headId);
         Optional<CourseCompetency> tailCompetency = courseCompetencyRepository.findById(tailId);
 
         if (headCompetency.isEmpty() || tailCompetency.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
 
-        return new CompetencyPair(headCompetency.get(), tailCompetency.get());
+        return Optional.of(new CompetencyPair(headCompetency.get(), tailCompetency.get()));
     }
 
     /**
@@ -397,13 +383,13 @@ public class CompetencyMappingToolsService {
         List<CompetencyRelationPreviewDTO> previews = new ArrayList<>();
 
         for (CompetencyRelationDTO rel : relations) {
-            CompetencyPair competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
-            if (competencies == null) {
+            Optional<CompetencyPair> competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
+            if (competencies.isEmpty()) {
                 return null;
             }
 
-            CompetencyRelationPreviewDTO preview = new CompetencyRelationPreviewDTO(rel.id(), rel.headCompetencyId(), competencies.head().getTitle(), rel.tailCompetencyId(),
-                    competencies.tail().getTitle(), rel.relationType(), viewOnly);
+            CompetencyRelationPreviewDTO preview = new CompetencyRelationPreviewDTO(rel.id(), rel.headCompetencyId(), competencies.get().head().getTitle(), rel.tailCompetencyId(),
+                    competencies.get().tail().getTitle(), rel.relationType(), viewOnly);
             previews.add(preview);
         }
 
@@ -494,6 +480,18 @@ public class CompetencyMappingToolsService {
         catch (JsonProcessingException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
+    }
+
+    /**
+     * Creates a JSON error response with the given message.
+     *
+     * @param message the error message
+     * @return JSON string containing the error
+     */
+    private String errorResponse(String message) {
+        record ErrorResponse(String error) {
+        }
+        return toJson(new ErrorResponse(message));
     }
 
     /**

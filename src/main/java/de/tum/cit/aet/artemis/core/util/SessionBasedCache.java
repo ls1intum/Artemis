@@ -44,6 +44,7 @@ public class SessionBasedCache<T> {
         if (cache == null) {
             return null;
         }
+        // Safe cast: this cache only stores List<T> via the put() method
         return (List<T>) cache.get(sessionId, List.class);
     }
 

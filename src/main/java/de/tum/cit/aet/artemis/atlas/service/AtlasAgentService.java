@@ -211,7 +211,6 @@ public class AtlasAgentService {
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
-            // CompetencyExpertToolsService.clearAllPreviews();
 
             String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
 
@@ -660,7 +659,7 @@ public class AtlasAgentService {
             @Nullable BatchRelationPreviewResponseDTO batchRelationPreview) {
         List<CompetencyRelationPreviewDTO> result = new ArrayList<>();
 
-        if (singleRelationPreview != null && singleRelationPreview.preview()) {
+        if (singleRelationPreview != null && singleRelationPreview.preview() && singleRelationPreview.relation() != null) {
             result.add(singleRelationPreview.relation());
         }
 
