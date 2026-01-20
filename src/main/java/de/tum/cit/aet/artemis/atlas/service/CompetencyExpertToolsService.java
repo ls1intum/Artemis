@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -53,8 +55,12 @@ public class CompetencyExpertToolsService {
 
     /**
      * Mutable wrapper class for competency operations.
+     * Implements Serializable to support distributed caching via Hazelcast.
      */
-    public static class CompetencyOperation {
+    public static class CompetencyOperation implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         @JsonProperty
         private Long competencyId;
