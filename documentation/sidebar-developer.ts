@@ -6,7 +6,31 @@ const sidebars: SidebarsConfig = {
         'setup',
         'development-process',
         'reviewer-guidelines',
-        'database',
+        {
+            type: 'category',
+            label: 'Coding and Design Guidelines',
+            link: {
+                type: 'doc',
+                id: 'guidelines/index',
+            },
+            items: [
+                {
+                    type: 'category',
+                    label: 'Client Guidelines',
+                    items: ['guidelines/client-development', 'guidelines/client-theming', 'guidelines/client-tests'],
+                },
+                {
+                    type: 'category',
+                    label: 'Server Guidelines',
+                    items: ['guidelines/server-development', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
+                },
+                {
+                    type: 'category',
+                    label: 'General Guidelines',
+                    items: ['guidelines/language'],
+                },
+            ],
+        },
         'local-user-management',
         'open-source',
         'system-design',
