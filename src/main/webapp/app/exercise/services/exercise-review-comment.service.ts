@@ -22,7 +22,7 @@ export class ExerciseReviewCommentService {
         return this.http.get<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-threads`, { observe: 'response' });
     }
 
-    createComment(exerciseId: number, threadId: number, comment: CreateComment): Observable<CommentResponseType> {
+    createUserComment(exerciseId: number, threadId: number, comment: CreateComment): Observable<CommentResponseType> {
         return this.http.post<Comment>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/comments`, comment, { observe: 'response' });
     }
 
@@ -31,7 +31,7 @@ export class ExerciseReviewCommentService {
         return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/resolved`, body, { observe: 'response' });
     }
 
-    updateCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {
+    updateUserCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {
         return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, content, { observe: 'response' });
     }
 

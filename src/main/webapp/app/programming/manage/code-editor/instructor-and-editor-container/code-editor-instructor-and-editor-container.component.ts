@@ -35,7 +35,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Observable, Subscription, catchError, map, of, switchMap, take, tap, throwError } from 'rxjs';
+import { Observable, Subscription, catchError, map, of, take, tap } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -400,7 +400,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
 
         this.exerciseReviewCommentService
-            .createComment(exerciseId, event.threadId, createComment)
+            .createUserComment(exerciseId, event.threadId, createComment)
             .pipe(
                 tap((response) => {
                     const createdComment = response.body;
@@ -433,7 +433,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
         this.exerciseReviewCommentService
-            .updateCommentContent(exerciseId, event.commentId, { content: commentContent })
+            .updateUserCommentContent(exerciseId, event.commentId, { content: commentContent })
             .pipe(
                 tap((response) => {
                     const updatedComment = response.body;
@@ -651,6 +651,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
+        const commentContent: UserCommentContent = { contentType: 'USER', text };
+        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
         const createThread: CreateCommentThread = {
             targetType,
             filePath,
@@ -658,25 +660,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             lineNumber,
             initialLineNumber: lineNumber,
             auxiliaryRepositoryId,
+            initialComment: createComment,
         };
-        const commentContent: UserCommentContent = { contentType: 'USER', text };
-        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
 
         this.exerciseReviewCommentService
             .createThread(exerciseId, createThread)
             .pipe(
                 map((response) => response.body),
-                switchMap((thread) => {
+                tap((thread) => {
                     if (!thread?.id) {
-                        return throwError(() => new Error('missingThreadId'));
-                    }
-                    return this.exerciseReviewCommentService.createComment(exerciseId, thread.id, createComment).pipe(map((response) => ({ thread, comment: response.body })));
-                }),
-                tap(({ thread, comment }) => {
-                    if (!thread?.id || !comment) {
                         return;
                     }
-                    const newThread: CommentThread = { ...thread, comments: [comment] };
+                    const newThread: CommentThread = thread.comments ? thread : { ...thread, comments: [] };
                     this.reviewCommentThreads.update((threads) => [...threads, newThread]);
                 }),
                 catchError(() => {
