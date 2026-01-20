@@ -12,7 +12,7 @@ To ensure a transparent and trustworthy environment, we have established differe
 
 2. **Profile Picture**: Members are required to upload an authentic profile picture. Use a clear, professional image and avoid comic-like pictures, memojis, or other non-authentic picture styles. Using a professional and authentic profile picture is essential for establishing credibility and fostering trust within the community. It helps others easily identify and connect with you, which is crucial for effective collaboration. By using a real photo, you present yourself as a serious and committed contributor, which in turn encourages others to take your work and interactions seriously. Avoiding non-authentic images ensures that the focus remains on the substance of your contributions rather than on distractions or misunderstandings that might arise from informal or unprofessional visuals.
 
-3. **Direct Branching and PR Creation**: As a member, you are encourages to create branches and pull requests (PRs) directly within the repository. Please follow the internal branching and code review processes outlined in [guidelines to the development process](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html) and [coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines.html).
+3. **Direct Branching and PR Creation**: As a member, you are encourages to create branches and pull requests (PRs) directly within the repository. Please follow the internal branching and code review processes outlined in [guidelines to the development process](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html) and [coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/).
 
 ### For External Contributors
 
@@ -26,7 +26,7 @@ To ensure a transparent and trustworthy environment, we have established differe
 
 ### References and Best Practices
 
-- You can find our Coding and Design Guidelines [here](https://docs.artemis.cit.tum.de/dev/guidelines.html).
+- You can find our Coding and Design Guidelines [here](https://docs.artemis.tum.de/developer/guidelines/).
 - We align our guidelines with the [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies) which stress the importance of authenticity and transparency in user profiles.
 - For more insights on contributing to open-source projects, we recommend reviewing the [Open Source Guides by GitHub](https://opensource.guide/).
 
