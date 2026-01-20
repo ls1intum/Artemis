@@ -2,7 +2,7 @@
 
 CONFIGURATION=$1
 TEST_FRAMEWORK=$2
-TEST_PATHS=$3  # Optional: space-separated list of test paths to run (e.g., "e2e/exam/ e2e/atlas/")
+TEST_PATHS=$3  # Optional: space-separated list of test paths to run (passed through as-is, e.g., "e2e/exam/ e2e/atlas/")
 DB="mysql"
 
 echo "CONFIGURATION:"

@@ -77,6 +77,7 @@ fi
 echo ""
 
 # Check if we should run all tests (config changes, playwright changes, etc.)
+# Patterns are treated as literal path prefixes (not regex).
 RUN_ALL_TESTS=false
 RUN_ALL_PATTERNS=$(jq -r '.runAllTestsPatterns[]' "$MAPPING_FILE" 2>/dev/null || echo "")
 
