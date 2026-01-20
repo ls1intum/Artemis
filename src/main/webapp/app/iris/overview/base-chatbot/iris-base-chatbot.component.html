@@ -1,4 +1,5 @@
 <!-- client -->
+<script src="../../shared/context-selection/context-selection.component.ts"></script>
 @if (!isEmbeddedChat()) {
     <div class="chat-header">
         <div class="header-start">
@@ -233,29 +234,7 @@
                 <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                 <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                 @if (showContextSelection()) {
-                    <div class="context-selection-container">
-                        <button class="context-selection-box" [class.selected]="selectedContext() === 'course'" (click)="selectContext('course')">
-                            <fa-icon [icon]="faGraduationCap" class="context-icon" />
-                            <div class="context-text">
-                                <span class="context-title" jhiTranslate="artemisApp.iris.chat.contextSelection.entireCourse"></span>
-                                <span class="context-description" jhiTranslate="artemisApp.iris.chat.contextSelection.entireCourseDescription"></span>
-                            </div>
-                        </button>
-                        <button class="context-selection-box" [class.selected]="selectedContext() === 'lecture'" (click)="selectContext('lecture')">
-                            <fa-icon [icon]="faBook" class="context-icon" />
-                            <div class="context-text">
-                                <span class="context-title" jhiTranslate="artemisApp.iris.chat.contextSelection.selectLecture"></span>
-                                <span class="context-description" jhiTranslate="artemisApp.iris.chat.contextSelection.selectLectureDescription"></span>
-                            </div>
-                        </button>
-                        <button class="context-selection-box" [class.selected]="selectedContext() === 'exercise'" (click)="selectContext('exercise')">
-                            <fa-icon [icon]="faCode" class="context-icon" />
-                            <div class="context-text">
-                                <span class="context-title" jhiTranslate="artemisApp.iris.chat.contextSelection.selectExercise"></span>
-                                <span class="context-description" jhiTranslate="artemisApp.iris.chat.contextSelection.selectExerciseDescription"></span>
-                            </div>
-                        </button>
-                    </div>
+                    <jhi-context-selection [courseId]="courseId()" [(selected)]="selectedContext" [(selectedLecture)]="selectedLecture" [(selectedExercise)]="selectedExercise" />
                 }
             </div>
         }

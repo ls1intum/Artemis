@@ -1,0 +1,91 @@
+<div class="context-selection-container">
+    @switch (currentView()) {
+        @case ('main') {
+            @for (option of resolvedOptions(); track option.type) {
+                <button class="context-selection-box" [class.selected]="selected() === option.type" (click)="onOptionClick(option.type)">
+                    <fa-icon [icon]="option.icon" class="context-icon" />
+                    <div class="context-text">
+                        @if (option.type === 'lecture' && selectedLecture()) {
+                            <span class="context-title">{{ selectedLecture()!.title }}</span>
+                            <span class="context-description" jhiTranslate="artemisApp.iris.chat.contextSelection.lectureSelected"></span>
+                        } @else if (option.type === 'exercise' && selectedExercise()) {
+                            <span class="context-title">{{ selectedExercise()!.title }}</span>
+                            <span class="context-description" jhiTranslate="artemisApp.iris.chat.contextSelection.exerciseSelected"></span>
+                        } @else {
+                            <span class="context-title" [jhiTranslate]="option.titleKey"></span>
+                            <span class="context-description" [jhiTranslate]="option.descriptionKey"></span>
+                        }
+                    </div>
+                </button>
+            }
+        }
+        @case ('lecture-selection') {
+            <div class="selection-view">
+                <div class="selection-header">
+                    <button class="back-button" (click)="goBack()">
+                        <fa-icon [icon]="faArrowLeft" />
+                    </button>
+                    <h4 jhiTranslate="artemisApp.iris.chat.contextSelection.selectLecture"></h4>
+                </div>
+                <jhi-search-filter (newSearchEvent)="onSearch($event)" />
+                <div class="selection-list">
+                    @if (isLoading()) {
+                        <div class="loading-indicator">
+                            <span jhiTranslate="artemisApp.iris.chat.contextSelection.loading"></span>
+                        </div>
+                    } @else if (filteredLectures().length === 0) {
+                        <div class="empty-state">
+                            <span jhiTranslate="artemisApp.iris.chat.contextSelection.noLectures"></span>
+                        </div>
+                    } @else {
+                        @for (lecture of filteredLectures(); track lecture.id) {
+                            <button class="context-selection-box" [class.selected]="selectedLecture()?.id === lecture.id" (click)="selectLecture(lecture)">
+                                <fa-icon [icon]="faBook" class="context-icon" />
+                                <div class="context-text">
+                                    <span class="context-title">{{ lecture.title }}</span>
+                                    @if (lecture.startDate) {
+                                        <span class="context-description">{{ lecture.startDate | artemisDate }}</span>
+                                    }
+                                </div>
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        }
+        @case ('exercise-selection') {
+            <div class="selection-view">
+                <div class="selection-header">
+                    <button class="back-button" (click)="goBack()">
+                        <fa-icon [icon]="faArrowLeft" />
+                    </button>
+                    <h4 jhiTranslate="artemisApp.iris.chat.contextSelection.selectExercise"></h4>
+                </div>
+                <jhi-search-filter (newSearchEvent)="onSearch($event)" />
+                <div class="selection-list">
+                    @if (isLoading()) {
+                        <div class="loading-indicator">
+                            <span jhiTranslate="artemisApp.iris.chat.contextSelection.loading"></span>
+                        </div>
+                    } @else if (filteredExercises().length === 0) {
+                        <div class="empty-state">
+                            <span jhiTranslate="artemisApp.iris.chat.contextSelection.noExercises"></span>
+                        </div>
+                    } @else {
+                        @for (exercise of filteredExercises(); track exercise.id) {
+                            <button class="context-selection-box" [class.selected]="selectedExercise()?.id === exercise.id" (click)="selectExercise(exercise)">
+                                <fa-icon [icon]="faCode" class="context-icon" />
+                                <div class="context-text">
+                                    <span class="context-title">{{ exercise.title }}</span>
+                                    @if (exercise.dueDate) {
+                                        <span class="context-description">{{ exercise.dueDate | artemisDate }}</span>
+                                    }
+                                </div>
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

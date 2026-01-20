@@ -144,7 +144,12 @@
                     "selectLecture": "Vorlesung auswählen",
                     "selectLectureDescription": "Fokus auf eine bestimmte Vorlesung",
                     "selectExercise": "Aufgabe auswählen",
-                    "selectExerciseDescription": "Hilfe zu einer bestimmten Aufgabe erhalten"
+                    "selectExerciseDescription": "Hilfe zu einer bestimmten Aufgabe erhalten",
+                    "lectureSelected": "Vorlesung ausgewählt",
+                    "exerciseSelected": "Aufgabe ausgewählt",
+                    "noLectures": "Keine Vorlesungen verfügbar",
+                    "noExercises": "Keine Aufgaben verfügbar",
+                    "loading": "Wird geladen..."
                 }
             },
             "tutorSuggestion": {

@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
-
-export type ContextType = 'course' | 'lecture' | 'exercise';
+import { ContextType } from 'app/iris/shared/context-selection/context-selection.component';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-course-chatbot',
@@ -15,6 +16,9 @@ export class CourseChatbotComponent {
     private readonly chatService = inject(IrisChatService);
 
     readonly courseId = input<number>();
+    readonly selectedContext = signal<ContextType>('course');
+    readonly selectedLecture = signal<Lecture | undefined>(undefined);
+    readonly selectedExercise = signal<Exercise | undefined>(undefined);
 
     constructor() {
         effect(() => {
@@ -24,28 +28,5 @@ export class CourseChatbotComponent {
                 this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
             }
         });
-    }
-
-    /**
-     * Handles the context selection event from the base chatbot component.
-     * @param context The selected context type
-     */
-    onContextSelected(context: ContextType): void {
-        const courseId = this.courseId();
-        if (courseId === undefined) {
-            return;
-        }
-
-        switch (context) {
-            case 'course':
-                this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
-                break;
-            case 'lecture':
-                //Show list of lectures
-                break;
-            case 'exercise':
-                //Show list of exercises
-                break;
-        }
     }
 }

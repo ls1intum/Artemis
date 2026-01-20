@@ -144,7 +144,12 @@
                     "selectLecture": "Select Lecture",
                     "selectLectureDescription": "Focus on a specific lecture",
                     "selectExercise": "Select Exercise",
-                    "selectExerciseDescription": "Get help with a specific exercise"
+                    "selectExerciseDescription": "Get help with a specific exercise",
+                    "lectureSelected": "Lecture selected",
+                    "exerciseSelected": "Exercise selected",
+                    "noLectures": "No lectures available",
+                    "noExercises": "No exercises available",
+                    "loading": "Loading..."
                 }
             },
             "tutorSuggestion": {

@@ -1,3 +1,11 @@
 @if (courseId()) {
-    <jhi-iris-base-chatbot [showDeclineButton]="false" [isChatHistoryAvailable]="true" [showContextSelection]="true" (contextSelected)="onContextSelected($event)" />
+    <jhi-iris-base-chatbot
+        [showDeclineButton]="false"
+        [isChatHistoryAvailable]="true"
+        [showContextSelection]="true"
+        [courseId]="courseId()"
+        [(selectedContext)]="selectedContext"
+        [(selectedLecture)]="selectedLecture"
+        [(selectedExercise)]="selectedExercise"
+    />
 }
