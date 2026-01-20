@@ -64,7 +64,6 @@ export class ProblemStatementSyncService {
      * Construct and send a patch for the local content change, from the localChangesQueue.
      * This method is called debounced via the localChangesQueue$ subject.
      * @param content The new content to be sent as a patch
-     * @returns void
      */
     handleLocalChange(content: string) {
         if (!this.exerciseId) {
@@ -84,8 +83,6 @@ export class ProblemStatementSyncService {
     /**
      * Request the newest problem statement content from other active editors (if exists).
      * This ensures that unsaved problem statement from other editors are also synchronized.
-     *
-     * @returns
      */
     requestInitialSync() {
         if (!this.exerciseId) {
@@ -100,7 +97,7 @@ export class ProblemStatementSyncService {
     /**
      * Respond to a request for the full problem statement content.
      * @param content The current problem statement content to send
-     * @returns void
+     * @returns
      */
     private respondWithFullContent(content: string) {
         if (!this.exerciseId) {
@@ -116,7 +113,6 @@ export class ProblemStatementSyncService {
      * Respond to a synchronization message from the websocket subscription for programming exercise problem statements.
      *
      * @param message The synchronization message to process
-     * @returns void
      */
     private handleRemoteMessage(message: ProgrammingExerciseEditorSyncMessage) {
         if (message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {

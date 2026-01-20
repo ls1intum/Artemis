@@ -695,6 +695,11 @@ export class RepositoryFileSyncService {
     /**
      * Renames all tracked baseline and timestamp entries for a file or folder rename.
      * For folders, cascades to all nested paths.
+     * @param target - The repository sync target
+     * @param auxiliaryId - Optional auxiliary repository ID
+     * @param oldFileName - The previous file path
+     * @param newFileName - The new file path
+     * @private
      */
     private renameTrackingEntries(target: ProgrammingExerciseEditorSyncTarget, auxiliaryId: number | undefined, oldFileName: string, newFileName: string) {
         const basePrefix = `${this.exerciseId ?? 'unknown'}-${target}-${auxiliaryId ?? 'none'}::`;
