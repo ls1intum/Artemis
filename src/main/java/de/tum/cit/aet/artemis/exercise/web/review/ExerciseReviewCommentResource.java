@@ -72,6 +72,7 @@ public class ExerciseReviewCommentResource {
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
 
+        validateThreadPayload(createCommentThreadDTO);
         ExerciseVersion initialVersion = loadInitialVersion(createCommentThreadDTO.targetType(), exerciseId);
         String initialCommitSha = exerciseReviewCommentService.resolveLatestCommitSha(createCommentThreadDTO.targetType(), createCommentThreadDTO.auxiliaryRepositoryId(),
                 exerciseId);
@@ -204,6 +205,17 @@ public class ExerciseReviewCommentResource {
         }
         if (!(dto.content() instanceof UserCommentContentDTO)) {
             throw new BadRequestAlertException("Only user comment content can be created via this endpoint", THREAD_ENTITY_NAME, "commentContentNotSupported");
+        }
+    }
+
+    private void validateThreadPayload(CreateCommentThreadDTO dto) {
+        if (dto.initialFilePath() == null || dto.initialLineNumber() == null) {
+            throw new BadRequestAlertException("Initial file path and line number are required", THREAD_ENTITY_NAME, "initialLocationMissing");
+        }
+        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
+            if (dto.filePath() == null || dto.lineNumber() == null) {
+                throw new BadRequestAlertException("File path and line number are required for repository threads", THREAD_ENTITY_NAME, "locationMissing");
+            }
         }
     }
 
