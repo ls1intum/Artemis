@@ -52,7 +52,7 @@ function HomepageHeader() {
                     />
                     <Tile
                         title="Developer"
-                        link="/staff/intro"
+                        link="/developer/intro"
                         icon={faCode}
                     />
                     <Tile

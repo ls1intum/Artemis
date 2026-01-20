@@ -5,6 +5,7 @@ import {
     faBookOpen,
     faBroom,
     faClipboardList,
+    faCubes,
     faDownload,
     faEye,
     faFlag,
@@ -199,6 +200,13 @@ export class AdminSidebarComponent {
                     title: 'Metrics',
                     translation: 'global.menu.admin.sidebar.metrics',
                     testId: 'admin-metrics',
+                },
+                {
+                    routerLink: '/admin/dependencies',
+                    icon: faCubes,
+                    title: 'Dependencies',
+                    translation: 'global.menu.admin.sidebar.dependencies',
+                    testId: 'admin-dependencies',
                 },
                 {
                     routerLink: '/admin/user-statistics',

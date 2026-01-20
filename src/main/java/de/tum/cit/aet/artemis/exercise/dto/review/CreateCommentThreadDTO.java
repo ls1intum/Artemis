@@ -15,5 +15,6 @@ public record CreateCommentThreadDTO(@Schema(description = "Grouping identifier 
         @Schema(description = "Current file path for repository-based threads.") String filePath,
         @Schema(description = "Initial file path captured at thread creation.") String initialFilePath,
         @Schema(description = "Current line number for repository-based threads.") Integer lineNumber,
-        @Schema(description = "Initial line number captured at thread creation.") Integer initialLineNumber) {
+        @Schema(description = "Initial line number captured at thread creation.") Integer initialLineNumber,
+        @Schema(description = "Initial user comment that populates the thread.") @NotNull CreateCommentDTO initialComment) {
 }

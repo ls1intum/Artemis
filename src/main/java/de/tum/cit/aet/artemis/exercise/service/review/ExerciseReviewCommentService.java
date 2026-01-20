@@ -2,11 +2,26 @@ package de.tum.cit.aet.artemis.exercise.service.review;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.Edit;
+import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -16,6 +31,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -257,7 +273,7 @@ public class ExerciseReviewCommentService {
             }
 
             if (thread.getTargetType() == CommentThreadLocationType.PROBLEM_STATEMENT) {
-                GitService.LineMappingResult result = gitService.mapLineInText(previousSnapshot.problemStatement(), currentSnapshot.problemStatement(), thread.getLineNumber());
+                LineMappingResult result = mapLineInText(previousSnapshot.problemStatement(), currentSnapshot.problemStatement(), thread.getLineNumber());
                 if (result.outdated()) {
                     thread.setOutdated(true);
                     updated = true;
@@ -280,7 +296,7 @@ public class ExerciseReviewCommentService {
             }
 
             try {
-                GitService.LineMappingResult result = gitService.mapLine(info.repositoryUri(), thread.getFilePath(), info.oldCommit(), info.newCommit(), thread.getLineNumber());
+                LineMappingResult result = mapLine(info.repositoryUri(), thread.getFilePath(), info.oldCommit(), info.newCommit(), thread.getLineNumber());
                 if (result.outdated()) {
                     thread.setOutdated(true);
                     updated = true;
@@ -338,6 +354,114 @@ public class ExerciseReviewCommentService {
             return Optional.empty();
         }
         return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.repositoryUri()), previous.commitId(), current.commitId()));
+    }
+
+    /**
+     * Maps a line number from an old commit to a new commit for a given file path.
+     * Uses a bare repository and Git diff hunks to determine if the line moved or was modified.
+     *
+     * @param repositoryUri the repository to diff
+     * @param filePath      repository-relative file path
+     * @param oldCommit     base commit hash
+     * @param newCommit     target commit hash
+     * @param oldLine       1-based line number in the old commit
+     * @return mapping result containing the new line or outdated state
+     */
+    public LineMappingResult mapLine(LocalVCRepositoryUri repositoryUri, String filePath, String oldCommit, String newCommit, int oldLine) {
+        if (oldLine <= 0) {
+            return new LineMappingResult(null, true);
+        }
+
+        try (Repository repository = gitService.getBareRepository(repositoryUri, false);
+                ObjectReader reader = repository.newObjectReader();
+                DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+            diffFormatter.setRepository(repository);
+            diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
+            diffFormatter.setDetectRenames(false);
+
+            ObjectId oldTree = repository.resolve(oldCommit + "^{tree}");
+            ObjectId newTree = repository.resolve(newCommit + "^{tree}");
+            if (oldTree == null || newTree == null) {
+                throw new GitException("Cannot resolve commit trees for line mapping");
+            }
+
+            CanonicalTreeParser oldParser = new CanonicalTreeParser();
+            oldParser.reset(reader, oldTree);
+            CanonicalTreeParser newParser = new CanonicalTreeParser();
+            newParser.reset(reader, newTree);
+
+            List<DiffEntry> entries = diffFormatter.scan(oldParser, newParser);
+            for (DiffEntry entry : entries) {
+                String oldPath = entry.getOldPath();
+                String newPath = entry.getNewPath();
+                boolean matchesOld = filePath.equals(oldPath);
+                boolean matchesNew = filePath.equals(newPath);
+                if (!matchesOld && !matchesNew) {
+                    continue;
+                }
+
+                if (entry.getChangeType() == DiffEntry.ChangeType.DELETE) {
+                    return new LineMappingResult(null, true);
+                }
+                if (entry.getChangeType() == DiffEntry.ChangeType.ADD && matchesNew && !matchesOld) {
+                    return new LineMappingResult(null, true);
+                }
+
+                EditList edits = diffFormatter.toFileHeader(entry).toEditList();
+                return mapLineWithEdits(oldLine, edits);
+            }
+
+            return new LineMappingResult(oldLine, false);
+        }
+        catch (IOException ex) {
+            throw new GitException("Cannot map line for file " + filePath, ex);
+        }
+    }
+
+    /**
+     * Maps a line number between two text snapshots using a diff algorithm.
+     *
+     * @param oldText old text snapshot (null treated as empty)
+     * @param newText new text snapshot (null treated as empty)
+     * @param oldLine 1-based line number in the old text
+     * @return mapping result containing the new line or outdated state
+     */
+    public LineMappingResult mapLineInText(@Nullable String oldText, @Nullable String newText, int oldLine) {
+        if (oldLine <= 0) {
+            return new LineMappingResult(null, true);
+        }
+
+        String safeOld = oldText == null ? "" : oldText;
+        String safeNew = newText == null ? "" : newText;
+        RawText oldRaw = new RawText(safeOld.getBytes(StandardCharsets.UTF_8));
+        RawText newRaw = new RawText(safeNew.getBytes(StandardCharsets.UTF_8));
+        EditList edits = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS).diff(RawTextComparator.DEFAULT, oldRaw, newRaw);
+        return mapLineWithEdits(oldLine, edits);
+    }
+
+    private LineMappingResult mapLineWithEdits(int oldLine, EditList edits) {
+        int zeroBasedLine = oldLine - 1;
+        int mappedLine = zeroBasedLine;
+
+        for (Edit edit : edits) {
+            if (zeroBasedLine < edit.getBeginA()) {
+                break;
+            }
+            if (zeroBasedLine >= edit.getEndA()) {
+                int delta = (edit.getEndB() - edit.getBeginB()) - (edit.getEndA() - edit.getBeginA());
+                mappedLine += delta;
+                continue;
+            }
+            int offset = zeroBasedLine - edit.getBeginA();
+            int newHunkLength = edit.getEndB() - edit.getBeginB();
+            int newLine = newHunkLength == 0 ? edit.getBeginB() : edit.getBeginB() + Math.min(offset, newHunkLength - 1);
+            return new LineMappingResult(newLine + 1, true);
+        }
+
+        return new LineMappingResult(mappedLine + 1, false);
+    }
+
+    public record LineMappingResult(@Nullable Integer newLine, boolean outdated) {
     }
 
     private Optional<RepoDiffInfo> mapTestRepo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current) {
