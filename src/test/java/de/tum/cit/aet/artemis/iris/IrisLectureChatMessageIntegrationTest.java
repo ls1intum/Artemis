@@ -177,7 +177,6 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessage_includesLectureUnitsInPipeline() throws Exception {
-        pipelineDone.set(false);
 
         var attachmentUnit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
         var textUnit = lectureUtilService.createTextUnit(lecture);
