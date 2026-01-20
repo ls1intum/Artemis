@@ -3,7 +3,7 @@ Server Tests
 ************
 
 This section covers recommended practices for writing Artemis server tests.
-If you want to write tests for Artemis programming exercises to test students' submissions, check out `Best Practices for Writing Test Cases <https://ls1intum.github.io/Artemis/instructor/exercises/programming-exercise#best-practices-for-writing-test-cases>`_.
+If you want to write tests for Artemis programming exercises to test students' submissions, check out `Best Practices for Writing Test Cases <https://docs.artemis.tum.de/instructor/exercises/programming-exercise#best-practices-for-writing-test-cases>`_.
 
 You can execute server tests with the following commands:
 
