@@ -161,7 +161,8 @@
                     "imprint": "Impressum",
                     "privacy": "Datenschutz",
                     "notifications": "Mitteilungen",
-                    "examRooms": "Prüfungsräume"
+                    "examRooms": "Prüfungsräume",
+                    "dependencies": "Abhängigkeiten"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",

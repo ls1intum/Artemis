@@ -212,6 +212,16 @@
             "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
         },
         "courseInformationSharingDisabled": "Posting is disabled for this course.",
+        "noCourse": "An exam must belong to a course.",
+        "wrongCourseId": "The course ID does not match the course connected to the exam.",
+        "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
+        "negativePoints": "The maximum points for an exam must be greater than 0.",
+        "correctionRoundViolation": "Invalid number of correction rounds: Test exams must have 0 correction rounds, real exams must have 1 or 2 correction rounds.",
+        "attendanceCheckViolation": "Test exams cannot have attendance check enabled.",
+        "examWorkingTimeTooHigh": "The working time is too long. The maximum is 43200 minutes (30 days). Please adjust the start and/or end of working time.",
+        "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
+        "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
+        "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "You are not a super administrator and therefore not allowed to create a super administrator account.",
             "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."
