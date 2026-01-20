@@ -4,4 +4,4 @@ User Registration
 =====================
 
 .. note::
-    This section has been moved to our `new administrator documentation <https://ls1intum.github.io/Artemis/admin/user-registration/>`_.
+    This section has been moved to our `new administrator documentation <https://docs.artemis.tum.de/admin/user-registration/>`_.
