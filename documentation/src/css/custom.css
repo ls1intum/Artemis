@@ -5,7 +5,6 @@
  */
 
 /* Colors taken from the TUM color guidelines https://portal.mytum.de/corporatedesign/index_html/vorlagen/index_farben */
-/* and Artemis dark theme: src/main/webapp/content/scss/themes/_dark-variables.scss */
 :root {
     --ifm-color-primary: var(--tum-color-blue);
     --ifm-color-primary-dark: var(--tum-color-blue-dark);
@@ -36,192 +35,24 @@
     --tum-accent-blue: #64A0C8;
 }
 
-/* ============================================
-   Dark Mode - Based on Artemis Dark Theme
-   Colors from: _dark-variables.scss
-   ============================================ */
+/* Dark mode: use Artemis blue tones */
 [data-theme='dark'] {
-    /* Artemis Dark Theme Base Colors */
-    --artemis-neutral-dark: rgb(24, 26, 24);
-    --artemis-neutral-dark-l-5: #1f211f;
-    --artemis-neutral-dark-l-10: #2a2c2a;
-    --artemis-neutral-dark-l-15: #353735;
-    --artemis-neutral-dark-l-20: #404240;
-    --artemis-body-bg: #303030;
-    --artemis-dark: #353d47;
-    --artemis-blue: #3e8acc;
-    --artemis-blue-light: #5a9ed6;
-    --artemis-blue-lighter: #76b2e0;
-    --artemis-gray-100: #f8f9fa;
-    --artemis-gray-200: #ebebeb;
-    --artemis-gray-400: #ced4da;
-    --artemis-gray-500: #adb5bd;
-    --artemis-gray-600: #888;
-    --artemis-gray-700: #444;
-    --artemis-gray-800: #303030;
-    --artemis-gray-900: #222;
-
-    /* Primary colors - accessible blue for dark mode */
-    --ifm-color-primary: var(--artemis-blue);
+    --ifm-color-primary: #3e8acc;
     --ifm-color-primary-dark: #3579b5;
     --ifm-color-primary-darker: #2d6a9e;
     --ifm-color-primary-darkest: #1f4a6e;
-    --ifm-color-primary-light: var(--artemis-blue-light);
-    --ifm-color-primary-lighter: var(--artemis-blue-lighter);
-    --ifm-color-primary-lightest: #92c6ea;
-
-    /* Background colors */
-    --ifm-background-color: var(--artemis-neutral-dark);
-    --ifm-background-surface-color: var(--artemis-neutral-dark-l-5);
-
-    /* Text colors - white for readability */
-    --ifm-font-color-base: var(--artemis-gray-100);
-    --ifm-font-color-secondary: var(--artemis-gray-500);
-    --ifm-heading-color: var(--artemis-gray-100);
-
-    /* Link colors */
-    --ifm-link-color: var(--artemis-blue);
-    --ifm-link-hover-color: var(--artemis-blue-light);
-
-    /* Navbar */
-    --ifm-navbar-background-color: var(--artemis-dark);
-    --ifm-navbar-link-color: var(--artemis-gray-400);
-    --ifm-navbar-link-hover-color: #fff;
-
-    /* Footer */
-    --ifm-footer-background-color: var(--artemis-neutral-dark);
-    --ifm-footer-color: var(--artemis-gray-100);
-    --ifm-footer-link-color: var(--artemis-gray-400);
-    --ifm-footer-link-hover-color: #fff;
-
-    /* Cards and tiles */
-    --ifm-card-background-color: var(--artemis-neutral-dark-l-5);
-    --ifm-card-border-radius: 8px;
-    --artemis-tile-bg: var(--artemis-neutral-dark-l-10);
-    --artemis-tile-hover-bg: var(--artemis-blue);
-    --artemis-tile-border: var(--artemis-neutral-dark-l-20);
-
-    /* Code blocks */
-    --ifm-code-background: var(--artemis-neutral-dark-l-10);
-    --docusaurus-highlighted-code-line-bg: var(--artemis-neutral-dark-l-15);
-
-    /* Borders */
-    --ifm-toc-border-color: var(--artemis-neutral-dark-l-15);
-    --ifm-hr-border-color: var(--artemis-neutral-dark-l-15);
-
-    /* Sidebar */
-    --doc-sidebar-background: var(--artemis-neutral-dark);
-
-    /* Alerts/Admonitions */
-    --ifm-color-info-dark: #17a2b8;
-    --ifm-color-info-contrast-background: rgba(23, 162, 184, 0.15);
-    --ifm-color-warning-dark: #f39c12;
-    --ifm-color-warning-contrast-background: rgba(243, 156, 18, 0.15);
-    --ifm-color-danger-dark: #e74c3c;
-    --ifm-color-danger-contrast-background: rgba(231, 76, 60, 0.15);
-    --ifm-color-success-dark: #00bc8c;
-    --ifm-color-success-contrast-background: rgba(0, 188, 140, 0.15);
-
-    /* Menu/Sidebar items */
-    --ifm-menu-color: var(--artemis-gray-400);
-    --ifm-menu-color-active: var(--artemis-blue-light);
-    --ifm-menu-color-background-active: var(--artemis-neutral-dark-l-10);
-    --ifm-menu-color-background-hover: var(--artemis-neutral-dark-l-5);
-
-    /* Table of contents */
-    --ifm-toc-link-color: var(--artemis-gray-500);
-
-    /* Breadcrumbs */
-    --ifm-breadcrumb-color-active: var(--artemis-gray-100);
-    --ifm-breadcrumb-item-background-active: var(--artemis-neutral-dark-l-10);
-
-    /* Scrollbar styling for dark mode */
-    scrollbar-color: var(--artemis-gray-600) var(--artemis-neutral-dark-l-5);
+    --ifm-color-primary-light: #5a9ed6;
+    --ifm-color-primary-lighter: #76b2e0;
+    --ifm-color-primary-lightest: #98c6ea;
+    --docusaurus-highlighted-code-line-bg: var(--tum-gray-80);
 }
 
-/* Dark mode scrollbar for webkit browsers */
-[data-theme='dark'] ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-track {
-    background: var(--artemis-neutral-dark-l-5);
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-thumb {
-    background: var(--artemis-gray-600);
-    border-radius: 4px;
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-    background: var(--artemis-gray-500);
-}
-
-/* Dark mode card styling */
-[data-theme='dark'] .card {
-    background-color: var(--artemis-neutral-dark-l-5);
-    border: 1px solid var(--artemis-neutral-dark-l-15);
-}
-
-/* Dark mode table styling */
-[data-theme='dark'] table {
-    border-color: var(--artemis-neutral-dark-l-15);
-}
-
-[data-theme='dark'] table th {
-    background-color: var(--artemis-neutral-dark-l-10);
-}
-
-[data-theme='dark'] table tr:nth-child(even) {
-    background-color: var(--artemis-neutral-dark-l-5);
-}
-
-/* Dark mode blockquote */
-[data-theme='dark'] blockquote {
-    border-left-color: var(--artemis-blue);
-    background-color: var(--artemis-neutral-dark-l-5);
-}
-
-/* Dark mode inline code */
-[data-theme='dark'] code {
-    background-color: var(--artemis-neutral-dark-l-10);
-    border: 1px solid var(--artemis-neutral-dark-l-20);
-}
-
-/* Dark mode pre/code blocks */
-[data-theme='dark'] pre {
-    background-color: var(--artemis-neutral-dark-l-10) !important;
-    border: 1px solid var(--artemis-neutral-dark-l-20);
-}
-
-/* Search bar dark mode */
-[data-theme='dark'] .navbar__search-input {
-    background-color: var(--artemis-neutral-dark-l-10);
-    border: 1px solid var(--artemis-neutral-dark-l-20);
-    color: var(--artemis-gray-100);
-}
-
-[data-theme='dark'] .navbar__search-input::placeholder {
-    color: var(--artemis-gray-500);
-}
-
-/* ============================================
-   Dark Mode - Landing Page / Hero Section
-   ============================================ */
-
-/* Dark blue background for hero section */
+/* Dark mode - Landing page hero section */
 [data-theme='dark'] .hero--primary {
-    --ifm-hero-background-color: #1a2a3a;
-    --ifm-hero-text-color: #fff;
-    background-color: var(--ifm-hero-background-color);
+    background-color: #1a2a3a;
 }
 
-/* White text for hero title and subtitle */
-[data-theme='dark'] .hero__title {
-    color: #fff;
-}
-
+[data-theme='dark'] .hero__title,
 [data-theme='dark'] .hero__subtitle {
     color: #fff;
 }

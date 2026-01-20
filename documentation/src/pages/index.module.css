@@ -73,25 +73,18 @@
   transition: color 0.2s ease;
 }
 
-/* ============================================
-   Dark Mode Tile Styling
-   Based on Artemis dark theme colors
-   ============================================ */
-
-/* Dark mode: greyish tile background */
+/* Dark mode tile styling */
 :global([data-theme='dark']) .tile {
   background-color: #3a3d42;
   border: 1px solid #4a4d52;
 }
 
-/* Dark mode: tiles stay greyish on hover with light blue border accent */
 :global([data-theme='dark']) .tile:hover {
   background-color: #454850;
   border-color: #5a9ed6;
   box-shadow: 0 4px 12px rgba(90, 158, 214, 0.2);
 }
 
-/* Dark mode: lighter blue icons */
 :global([data-theme='dark']) .tileIcon {
   color: #76b2e0;
 }
@@ -100,11 +93,6 @@
   color: #98c6ea;
 }
 
-/* Dark mode: white text */
 :global([data-theme='dark']) .tileTitle {
-  color: #fff;
-}
-
-:global([data-theme='dark']) .tile:hover .tileTitle {
   color: #fff;
 }
