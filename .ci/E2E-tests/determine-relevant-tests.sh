@@ -49,6 +49,7 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
+    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -63,6 +64,7 @@ if [ -z "$CHANGED_FILES" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
+    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -95,6 +97,7 @@ if [ "$RUN_ALL_TESTS" = "true" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
+    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -152,6 +155,7 @@ done
 # Determine remaining tests (all tests minus relevant tests)
 # This is a bit tricky because we need to handle partial overlaps
 REMAINING_TESTS=()
+declare -A IGNORE_PATH_SET
 
 for test_path in "${ALL_TEST_PATHS[@]}"; do
     IS_COVERED=false
@@ -170,9 +174,10 @@ for test_path in "${ALL_TEST_PATHS[@]}"; do
             IS_COVERED=true
             break
         elif [[ "$relevant" == "$test_path"* ]]; then
-            # relevant is a child of test_path - partial coverage
-            # We still need to add remaining to catch other tests in this folder
-            continue
+            # relevant is a child of test_path - avoid duplicate runs
+            IS_COVERED=true
+            IGNORE_PATH_SET["$relevant"]=1
+            break
         fi
     done
     
@@ -192,6 +197,17 @@ if [ ${#REMAINING_TESTS[@]} -gt 0 ]; then
     mapfile -t REMAINING_TESTS_SORTED < <(printf '%s\n' "${REMAINING_TESTS[@]}" | sort -u)
 else
     REMAINING_TESTS_SORTED=()
+fi
+
+IGNORE_PATHS=()
+for ignore_path in "${!IGNORE_PATH_SET[@]}"; do
+    IGNORE_PATHS+=("$ignore_path")
+done
+
+if [ ${#IGNORE_PATHS[@]} -gt 0 ]; then
+    mapfile -t IGNORE_PATHS_SORTED < <(printf '%s\n' "${IGNORE_PATHS[@]}" | sort -u)
+else
+    IGNORE_PATHS_SORTED=()
 fi
 
 echo ""
@@ -230,9 +246,19 @@ for test in "${REMAINING_TESTS_SORTED[@]}"; do
     fi
 done
 
+IGNORE_TESTS_STRING=""
+for test in "${IGNORE_PATHS_SORTED[@]}"; do
+    if [ -n "$IGNORE_TESTS_STRING" ]; then
+        IGNORE_TESTS_STRING="$IGNORE_TESTS_STRING $test"
+    else
+        IGNORE_TESTS_STRING="$test"
+    fi
+done
+
 write_output "RUN_ALL_TESTS" "false"
 write_output "RELEVANT_TESTS" "$RELEVANT_TESTS_STRING"
 write_output "REMAINING_TESTS" "$REMAINING_TESTS_STRING"
+write_output "IGNORE_TESTS" "$IGNORE_TESTS_STRING"
 write_output "RELEVANT_COUNT" "${#RELEVANT_TESTS_SORTED[@]}"
 write_output "REMAINING_COUNT" "${#REMAINING_TESTS_SORTED[@]}"
 
