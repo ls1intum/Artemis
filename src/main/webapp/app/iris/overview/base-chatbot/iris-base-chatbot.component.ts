@@ -144,7 +144,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         const target = event.target as HTMLElement | null;
-        const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
         if (!citation || !messagesElement.contains(citation)) {
             return;
         }
@@ -174,7 +174,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         const target = event.target as HTMLElement | null;
-        const citation = target?.closest('.iris-citation--has-summary') as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
         if (!citation) {
             return;
         }
@@ -183,6 +183,31 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         citation.style.setProperty('--iris-citation-shift', '0px');
+        this.resetCitationGroupSummary(citation);
+    };
+    private readonly handleCitationNavigationClick = (event: MouseEvent) => {
+        const rawTarget = event.target as Node | null;
+        const target = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
+        const navButton = target?.closest('.iris-citation__nav-button') as HTMLElement | null;
+        if (!navButton) {
+            return;
+        }
+        const citationGroup = navButton.closest('.iris-citation-group') as HTMLElement | null;
+        if (!citationGroup) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
+        if (summaryItems.length === 0) {
+            return;
+        }
+        const currentIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
+        const normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
+        const isPrev = navButton.classList.contains('iris-citation__nav-button--prev');
+        const delta = isPrev ? -1 : 1;
+        const nextIndex = (normalizedIndex + delta + summaryItems.length) % summaryItems.length;
+        this.updateCitationGroupSummary(citationGroup, nextIndex);
     };
     public ButtonType = ButtonType;
 
@@ -232,10 +257,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             if (this.hoverMessagesElement) {
                 this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
                 this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
+                this.hoverMessagesElement.removeEventListener('click', this.handleCitationNavigationClick);
             }
             this.hoverMessagesElement = messagesElement;
             messagesElement.addEventListener('mouseover', this.handleCitationMouseOver);
             messagesElement.addEventListener('mouseout', this.handleCitationMouseOut);
+            messagesElement.addEventListener('click', this.handleCitationNavigationClick);
         });
 
         // Handle message scroll on new messages
@@ -318,6 +345,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return htmlForMarkdown(withCitations);
     }
 
+    private updateCitationGroupSummary(citationGroup: HTMLElement, nextIndex: number) {
+        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
+        if (summaryItems.length === 0) {
+            return;
+        }
+        summaryItems.forEach((item, index) => item.classList.toggle('is-active', index === nextIndex));
+        const navCount = citationGroup.querySelector<HTMLElement>('.iris-citation__nav-count');
+        if (navCount) {
+            navCount.textContent = `${nextIndex + 1}/${summaryItems.length}`;
+        }
+    }
+
+    private resetCitationGroupSummary(citationElement: HTMLElement) {
+        const citationGroup = citationElement.classList.contains('iris-citation-group') ? citationElement : citationElement.closest('.iris-citation-group');
+        if (!(citationGroup instanceof HTMLElement)) {
+            return;
+        }
+        this.updateCitationGroupSummary(citationGroup, 0);
+    }
+
     ngAfterViewInit() {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
@@ -328,6 +375,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
             this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
+            this.hoverMessagesElement.removeEventListener('click', this.handleCitationNavigationClick);
         });
     }
 

@@ -319,6 +319,15 @@
                 line-height: 1;
             }
 
+            .iris-citation-group {
+                display: inline-flex;
+                align-items: center;
+                position: relative;
+                padding-right: 10px;
+                --iris-citation-shift: 0px;
+                z-index: 0;
+            }
+
             .iris-citation {
                 display: inline-flex;
                 align-items: center;
@@ -336,8 +345,23 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 position: relative;
-                --iris-citation-shift: 0px;
+                z-index: 1;
+            }
+
+            .iris-citation__count {
+                position: absolute;
+                right: 2px;
+                top: 50%;
+                transform: translate(40%, -50%);
+                background-color: rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(0, 0, 0, 0.12);
+                border-radius: 999px;
+                padding: 1px 6px;
+                font-size: 0.85em;
+                line-height: 1.2;
+                color: rgba(0, 0, 0, 0.65);
                 z-index: 0;
+                pointer-events: none;
             }
 
             .iris-citation__summary {
@@ -362,24 +386,76 @@
                 transition:
                     opacity 120ms ease,
                     visibility 120ms ease;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
             }
 
-            .iris-citation--has-summary:hover {
+            .iris-citation--has-summary:hover,
+            .iris-citation-group--has-summary:hover {
                 z-index: 20;
             }
 
-            .iris-citation--has-summary {
+            .iris-citation--has-summary,
+            .iris-citation-group--has-summary {
                 overflow: visible;
             }
 
-            .iris-citation--has-summary:hover .iris-citation__text {
+            .iris-citation--has-summary:hover .iris-citation__text,
+            .iris-citation-group--has-summary:hover .iris-citation__text {
                 visibility: hidden;
             }
 
-            .iris-citation--has-summary:hover .iris-citation__summary {
+            .iris-citation--has-summary:hover .iris-citation__summary,
+            .iris-citation-group--has-summary:hover .iris-citation__summary {
                 opacity: 1;
                 visibility: visible;
                 pointer-events: auto;
+            }
+
+            .iris-citation__summary-content {
+                display: block;
+                min-height: 1.2em;
+            }
+
+            .iris-citation__summary-item {
+                display: none;
+            }
+
+            .iris-citation__summary-item.is-active {
+                display: block;
+            }
+
+            .iris-citation__nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                border-top: 1px solid rgba(0, 0, 0, 0.08);
+                padding-top: 6px;
+                font-size: 0.9em;
+            }
+
+            .iris-citation__nav-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                background: rgba(0, 0, 0, 0.04);
+                border-radius: 6px;
+                padding: 0 6px;
+                line-height: 1.4;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            .iris-citation__nav-button:hover {
+                background: rgba(0, 0, 0, 0.08);
+            }
+
+            .iris-citation__nav-button:focus-visible {
+                outline: 2px solid rgba(0, 0, 0, 0.25);
+                outline-offset: 1px;
             }
 
             .iris-citation__icon {

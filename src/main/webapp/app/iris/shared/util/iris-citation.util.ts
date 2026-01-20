@@ -1,6 +1,7 @@
 import { IrisCitationDTO } from 'app/iris/shared/entities/iris-citation-dto.model';
 
 const citationRegex = /\[cite:\s*(\d+)]/gi;
+const multiCitationRegex = /(\[cite:\s*\d+](?:\s*\[cite:\s*\d+])+)/gi;
 
 export function formatMarkdownWithCitations(markdownText: string | undefined, citations: IrisCitationDTO[] | undefined): string {
     if (!markdownText) {
@@ -11,20 +12,22 @@ export function formatMarkdownWithCitations(markdownText: string | undefined, ci
     }
 
     const citationsByIndex = new Map(citations.map((citation) => [citation.index, citation]));
-    return markdownText.replace(citationRegex, (match, indexValue) => {
+    const formattedGroups = markdownText.replace(multiCitationRegex, (match) => {
+        const indices = Array.from(match.matchAll(citationRegex), (groupMatch) => Number(groupMatch[1]));
+        const groupCitations = indices.map((index) => citationsByIndex.get(index)).filter((citation): citation is IrisCitationDTO => citation !== undefined);
+        if (groupCitations.length !== indices.length) {
+            return match;
+        }
+        return formatCitationGroup(groupCitations);
+    });
+
+    return formattedGroups.replace(citationRegex, (match, indexValue) => {
         const citation = citationsByIndex.get(Number(indexValue));
         if (!citation) {
             return match;
         }
 
-        const type = (citation.type ?? 'source').toLowerCase();
-        const typeClass = ['slide', 'video', 'faq'].includes(type) ? type : 'source';
-        const keyword = resolveCitationKeyword(citation);
-        const label = keyword ?? type;
-        const safeLabel = escapeHtml(label);
-        const summaryMarkup = formatCitationDetails(citation);
-        const summaryClass = summaryMarkup ? ' iris-citation--has-summary' : '';
-        return `<span class="iris-citation iris-citation--${typeClass}${summaryClass}"><span class="iris-citation__icon" aria-hidden="true"></span><span class="iris-citation__text">${safeLabel}</span>${summaryMarkup}</span>`;
+        return formatSingleCitation(citation);
     });
 }
 
@@ -34,6 +37,53 @@ function resolveCitationKeyword(citation: IrisCitationDTO): string | undefined {
 
 function escapeHtml(value: string): string {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+
+function formatSingleCitation(citation: IrisCitationDTO): string {
+    const type = (citation.type ?? 'source').toLowerCase();
+    const typeClass = ['slide', 'video', 'faq'].includes(type) ? type : 'source';
+    const keyword = resolveCitationKeyword(citation);
+    const label = keyword ?? type;
+    const safeLabel = escapeHtml(label);
+    const summaryMarkup = formatCitationSummaryMarkup(citation);
+    const summaryClass = summaryMarkup ? ' iris-citation--has-summary' : '';
+    return `<span class="iris-citation iris-citation--${typeClass}${summaryClass}"><span class="iris-citation__icon" aria-hidden="true"></span><span class="iris-citation__text">${safeLabel}</span>${summaryMarkup}</span>`;
+}
+
+function formatCitationGroup(citations: IrisCitationDTO[]): string {
+    const primaryCitation = citations[0];
+    const type = (primaryCitation.type ?? 'source').toLowerCase();
+    const typeClass = ['slide', 'video', 'faq'].includes(type) ? type : 'source';
+    const keyword = resolveCitationKeyword(primaryCitation);
+    const label = keyword ?? type;
+    const safeLabel = escapeHtml(label);
+    const summaryMarkup = formatCitationGroupSummary(citations);
+    const summaryClass = summaryMarkup ? ' iris-citation-group--has-summary' : '';
+    const extraCount = citations.length - 1;
+    const countMarkup = extraCount > 0 ? `<span class="iris-citation__count" aria-hidden="true">+${extraCount}</span>` : '';
+    return `<span class="iris-citation-group${summaryClass}"><span class="iris-citation iris-citation--${typeClass}"><span class="iris-citation__icon" aria-hidden="true"></span><span class="iris-citation__text">${safeLabel}</span></span>${countMarkup}${summaryMarkup}</span>`;
+}
+
+function formatCitationSummaryMarkup(citation: IrisCitationDTO): string {
+    const details = formatCitationDetails(citation);
+    if (!details) {
+        return '';
+    }
+    return `<span class="iris-citation__summary">${details}</span>`;
+}
+
+function formatCitationGroupSummary(citations: IrisCitationDTO[]): string {
+    const detailsByCitation = citations.map((citation) => formatCitationDetails(citation));
+    const summaryItems = detailsByCitation.map((details, index) => {
+        const activeClass = index === 0 ? ' is-active' : '';
+        return `<span class="iris-citation__summary-item${activeClass}" data-summary-index="${index}">${details}</span>`;
+    });
+    const hasSummary = detailsByCitation.some((details) => details !== '');
+    if (!hasSummary) {
+        return '';
+    }
+    const nav = `<span class="iris-citation__nav"><span class="iris-citation__nav-button iris-citation__nav-button--prev" aria-label="Previous citation">&lt;</span><span class="iris-citation__nav-count">1/${citations.length}</span><span class="iris-citation__nav-button iris-citation__nav-button--next" aria-label="Next citation">&gt;</span></span>`;
+    return `<span class="iris-citation__summary"><span class="iris-citation__summary-content">${summaryItems.join('')}</span>${nav}</span>`;
 }
 
 function formatCitationDetails(citation: IrisCitationDTO): string {
@@ -68,9 +118,5 @@ function formatCitationDetails(citation: IrisCitationDTO): string {
         addDetail('summary', citation.summary);
     }
 
-    if (details.length === 0) {
-        return '';
-    }
-
-    return `<span class="iris-citation__summary">${details.join('<br>')}</span>`;
+    return details.length === 0 ? '' : details.join('<br>');
 }
