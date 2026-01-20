@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "8.7.2",
+    "version": "8.7.3",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -175,13 +175,14 @@
         "@angular/cli": "21.1.0",
         "@angular/compiler-cli": "21.1.0",
         "@angular/language-service": "21.1.0",
+        "@cyclonedx/cyclonedx-npm": "4.1.2",
         "@sentry/types": "10.34.0",
         "@types/d3-shape": "3.1.8",
         "@types/emoji-js": "3.5.2",
         "@types/jest": "30.0.0",
         "@types/lodash-es": "4.17.12",
         "@types/markdown-it": "14.1.2",
-        "@types/node": "24.10.4",
+        "@types/node": "24.10.9",
         "@types/pako": "2.0.4",
         "@types/papaparse": "5.5.2",
         "@types/turndown": "5.0.6",
@@ -261,6 +262,7 @@
         "vitest:ui": "vitest --ui",
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
-        "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production"
+        "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
+        "sbom:generate": "npx @cyclonedx/cyclonedx-npm --ignore-npm-errors --package-lock-only --omit dev --output-file build/reports/client-sbom.json --output-format JSON --spec-version 1.6 2>/dev/null"
     }
 }
