@@ -23,13 +23,13 @@ There are currently docker containers for:
 
 ## Steps for Updating the Docker Builds used in Artemis
 
-Updating can only be done with access to the account on Dockerhub. If you need access,
+Updating can only be done with access to the account on Docker Hub. If you need access,
 contact Stephan Krusche.
 
 1. Update the dependencies via a pull request in the repository of the docker container.
    Each docker container has its own repository as listed above.
-2. After the PR got merged, go to the build overview on Dockerhub:
-   - Choose the correct repository on [Dockerhub](https://hub.docker.com/orgs/ls1tum/repositories)
+2. After the PR got merged, go to the build overview on Docker Hub:
+   - Choose the correct repository on [Docker Hub](https://hub.docker.com/orgs/ls1tum/repositories)
    - Go to the "Builds" tab of that repository
 3. Wait for a successful build of "latest"
 4. Click "Configure Automated Builds" and create a new build rule for a new tag, following the naming scheme:
@@ -42,7 +42,7 @@ contact Stephan Krusche.
 5. Go back to the repository of the docker container in GitHub and create a new Tag
    - Click "Releases" on the right on the front page of that repository
    - Create a new release with the button called "Draft release" and give it the same name as in step 4
-6. Wait for the build in Dockerhub of the newly created Tag
+6. Wait for the build in Docker Hub of the newly created Tag
 7. Change the docker image used in Artemis to the newly created tag:
    [application.yml](https://github.com/ls1intum/Artemis/blob/develop/src/main/resources/config/application.yml)
 8. If the used docker container should also be changed for already created exercises you have to change
