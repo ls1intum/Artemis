@@ -22,7 +22,7 @@
         @if (this.mastery() !== undefined) {
             <div class="d-flex justify-content-between align-items-baseline flex-wrap mt-2">
                 <span [jhiTranslate]="'artemisApp.competency.mastery'"></span>
-                <span class="right-aligned">{{ this.mastery() }}%</span>
+                <span class="right-aligned">{{ this.mastery() | number: '1.0-0' }}%</span>
                 <ngb-progressbar class="w-100" type="success overflow-visible" [value]="this.mastery() ?? 0" [max]="100" height="0.75rem" />
             </div>
         }
