@@ -22,6 +22,20 @@ RE_IMPORT  = re.compile(r'^\s*import\s+([a-zA-Z0-9_.*]+)\s*;', re.MULTILINE)
 MAPPING_ANNOS = ['GetMapping','PostMapping','PutMapping','PatchMapping','DeleteMapping','RequestMapping']
 RE_METHOD_ANNOT = re.compile(r'@(' + '|'.join(MAPPING_ANNOS) + r')\b[^)]*\)', re.MULTILINE)
 RE_METHOD_SIG = re.compile(r'(public|protected|private)\s+([a-zA-Z0-9_<>, ?\[\].]+)\s+([a-zA-Z0-9_]+)\s*\((.*?)\)\s*\{', re.DOTALL)
+RE_METHOD_HEAD = re.compile(
+    r'(public|protected|private)\s+'
+    r'(?P<ret>[a-zA-Z0-9_<>, ?\[\].]+)\s+'
+    r'(?P<name>[a-zA-Z0-9_]+)\s*\(',
+    re.DOTALL
+)
+RE_ANNOT_BLOCK_AND_METHOD = re.compile(
+    r'(?P<annos>(?:\s*@\w+(?:\([^)]*\))?\s*)+)\s*'
+    r'(?P<sig>(public|protected|private)\s+'
+    r'(?P<ret>[a-zA-Z0-9_<>, ?\[\].]+)\s+'
+    r'(?P<name>[a-zA-Z0-9_]+)\s*'
+    r'\((?P<params>.*?)\)\s*\{)',
+    re.DOTALL
+)
 RE_PARAM = re.compile(
     r'(?P<annos>(@\w+(?:\([^)]*\))?\s*)*)'
     r'(?P<type>[a-zA-Z0-9_<>,\.\[\]]+)'
@@ -59,11 +73,29 @@ def collect_import_map(text: str) -> Dict[str,str]:
         mapping[imp.split('.')[-1]] = imp
     return mapping
 
-def resolve_full_names(simple: List[str], imports: Dict[str,str]) -> List[str]:
+def resolve_full_names(simple: List[str], imports: Dict[str, str], current_pkg: Optional[str]) -> List[str]:
     out = []
     for name in simple:
-        if name in JAVA_FRAMEWORK: out.append(name); continue
-        out.append(imports.get(name, name))
+        if name in JAVA_FRAMEWORK:
+            out.append(name)
+            continue
+
+        # Already fully-qualified
+        if '.' in name:
+            out.append(name)
+            continue
+
+        # Imported
+        if name in imports:
+            out.append(imports[name])
+            continue
+
+        # Same package fallback
+        if current_pkg:
+            out.append(current_pkg + "." + name)
+        else:
+            out.append(name)
+
     return out
 
 def classify_type(fq: str, dto_hints: List[str], entity_hints: List[str]) -> Optional[str]:
@@ -73,15 +105,46 @@ def classify_type(fq: str, dto_hints: List[str], entity_hints: List[str]) -> Opt
     if any(h in low for h in entity_hints): return 'entity'
     return None
 
-def iter_endpoints(text: str) -> List[Tuple[str,str,str]]:
-    eps = []
+def iter_endpoints(text: str) -> List[Tuple[str, str, str, str]]:
+    """
+    Returns tuples: (mapping_anno, method_sig, ret_type, params)
+    mapping_anno: e.g. 'PostMapping', 'PutMapping', ...
+    """
+    eps: List[Tuple[str, str, str, str]] = []
+
     for m in RE_METHOD_ANNOT.finditer(text):
-        win = text[m.end(): m.end()+2000]
-        sm = RE_METHOD_SIG.search(win)
-        if sm:
-            ret_type = sm.group(2).strip()
-            params   = sm.group(4).strip()
-            eps.append((sm.group(0), ret_type, params))
+        mapping_anno = m.group(1)  # GetMapping/PostMapping/...
+
+        search_from = m.end()
+
+        # Find the next method head after this annotation
+        mh = RE_METHOD_HEAD.search(text, pos=search_from)
+        if not mh:
+            continue
+
+        # If another mapping annotation appears before this method head, skip to avoid mismatch
+        next_map = RE_METHOD_ANNOT.search(text, pos=search_from)
+        if next_map and next_map.start() < mh.start():
+            continue
+
+        ret_type = mh.group('ret').strip()
+
+        # Find params by balanced parentheses starting at '(' right after the method head match
+        # mh.end()-1 should be the '('
+        open_paren_idx = mh.end() - 1
+        if open_paren_idx < 0 or text[open_paren_idx] != '(':
+            # Safety fallback
+            continue
+
+        params, close_paren_idx = extract_balanced(text, open_paren_idx)
+
+        # method_sig: just keep a short signature text for debugging
+        sig_start = mh.start()
+        sig_end = min(close_paren_idx + 1, len(text))
+        method_sig = text[sig_start:sig_end]
+
+        eps.append((mapping_anno, method_sig, ret_type, params.strip()))
+
     return eps
 
 def extract_param_types(params_str: str) -> List[Tuple[str,str]]:
@@ -135,6 +198,92 @@ def classify_endpoint(ret_types_fq: List[str],
     if saw_dto:    return 'dto'
     return 'neutral'
 
+def get_current_package(text: str) -> Optional[str]:
+    pm = RE_PACKAGE.search(text)
+    return pm.group(1) if pm else None
+
+def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = ')') -> Tuple[str, int]:
+    """
+    Extract content inside balanced parentheses starting at s[open_idx] == '('.
+    Returns (content_without_outer_parens, index_of_closing_paren).
+    Skips strings and // /* */ comments to avoid false matches.
+    """
+    assert s[open_idx] == open_ch
+    i = open_idx + 1
+    depth = 1
+    out: List[str] = []
+
+    in_str = False
+    str_ch = ''
+    in_line_comment = False
+    in_block_comment = False
+
+    while i < len(s):
+        ch = s[i]
+        nxt = s[i + 1] if i + 1 < len(s) else ''
+
+        # handle comments
+        if in_line_comment:
+            if ch == '\n':
+                in_line_comment = False
+            out.append(ch)
+            i += 1
+            continue
+
+        if in_block_comment:
+            if ch == '*' and nxt == '/':
+                in_block_comment = False
+                out.append(ch); out.append(nxt)
+                i += 2
+                continue
+            out.append(ch)
+            i += 1
+            continue
+
+        # start comments (only if not in string)
+        if not in_str and ch == '/' and nxt == '/':
+            in_line_comment = True
+            out.append(ch); out.append(nxt)
+            i += 2
+            continue
+        if not in_str and ch == '/' and nxt == '*':
+            in_block_comment = True
+            out.append(ch); out.append(nxt)
+            i += 2
+            continue
+
+        # handle strings
+        if in_str:
+            out.append(ch)
+            if ch == '\\' and i + 1 < len(s):  # escape
+                out.append(s[i + 1])
+                i += 2
+                continue
+            if ch == str_ch:
+                in_str = False
+            i += 1
+            continue
+        else:
+            if ch in ('"', "'"):
+                in_str = True
+                str_ch = ch
+                out.append(ch)
+                i += 1
+                continue
+
+        # balance
+        if ch == open_ch:
+            depth += 1
+        elif ch == close_ch:
+            depth -= 1
+            if depth == 0:
+                return ''.join(out), i
+
+        out.append(ch)
+        i += 1
+
+    raise ValueError("Unbalanced parentheses while extracting params")
+
 def main():
     ap = argparse.ArgumentParser(description="Heuristic DTO coverage scanner for Spring REST endpoints.")
     ap.add_argument('--root', required=True, help='Path to project root')
@@ -144,7 +293,7 @@ def main():
     ap.add_argument('--controller-path-hints', default='web/rest,web/api,controller,src/main/java',
                     help='Comma-separated substrings to identify REST controllers; empty scans all *.java')
     ap.add_argument('--dto-package-hints', default='service.dto,dto', help='Comma-separated substrings for DTO packages')
-    ap.add_argument('--entity-package-hints', default='domain,entity,model', help='Comma-separated substrings for Entity packages')
+    ap.add_argument('--entity-package-hints', default='domain,entity', help='Comma-separated substrings for Entity packages')
     args = ap.parse_args()
 
     root = Path(args.root).resolve()
@@ -165,6 +314,7 @@ def main():
         except Exception:
             continue
 
+        current_pkg = get_current_package(text)
         imports = collect_import_map(text)
         endpoints = iter_endpoints(text)
         if not endpoints:
@@ -172,24 +322,22 @@ def main():
 
         module = find_module_name(jfile, root, args.module_strategy, args.base_package)
 
-        for sig, ret_type, params_str in endpoints:
-            ret_full = resolve_full_names(split_generic_parts(ret_type), imports)
+        for mapping_anno, sig, ret_type, params_str in endpoints:
+            ret_full = resolve_full_names(split_generic_parts(ret_type), imports, current_pkg)
 
             body_params_types: List[str] = []
             for annos, ptype in extract_param_types(params_str):
                 if '@RequestBody' not in annos:
                     continue  # only body payloads contribute to classification
-                p_full_all = resolve_full_names(split_generic_parts(ptype), imports)
+                p_full_all = resolve_full_names(split_generic_parts(ptype), imports, current_pkg)
                 rep = next((t for t in reversed(p_full_all) if t not in JAVA_FRAMEWORK), p_full_all[-1] if p_full_all else '')
                 if rep: body_params_types.append(rep)
 
             classification = classify_endpoint(ret_full, body_params_types, dto_hints, entity_hints)
 
-            http_method = 'REQUEST'
-            am = re.search(r'@([A-Za-z]+Mapping)', sig)
-            if am:
-                m = am.group(1).lower()
-                http_method = m.replace('mapping','').upper() if m != 'requestmapping' else 'REQUEST'
+            http_method = mapping_anno.lower().replace('mapping','').upper()
+            if http_method == 'REQUEST':
+                http_method = 'REQUEST'
 
             results.append({
                 'file': str(jfile.relative_to(root).as_posix()),
@@ -197,6 +345,7 @@ def main():
                 'http_method': http_method,
                 'return_type_raw': ret_type,
                 'classification': classification,
+                'request_body_types': ";".join(body_params_types),
             })
 
             per_module.setdefault(module, {'dto':0,'entity':0,'neutral':0,'unknown':0})
@@ -236,7 +385,10 @@ def main():
     json_path.write_text(json.dumps(summary, indent=2), encoding='utf-8')
 
     with csv_path.open('w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=['file','module','http_method','return_type_raw','classification'])
+        w = csv.DictWriter(
+            f,
+            fieldnames=['file','module','http_method','return_type_raw','request_body_types','classification']
+        )
         w.writeheader()
         for row in results:
             w.writerow(row)
