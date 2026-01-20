@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';

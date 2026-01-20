@@ -54,7 +54,7 @@ describe('LearningPathNavOverviewComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

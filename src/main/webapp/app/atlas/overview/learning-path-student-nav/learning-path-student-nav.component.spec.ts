@@ -145,7 +145,7 @@ describe('LearningPathStudentNavComponent', () => {
     it('should navigate with previous button', async () => {
         learningPathNavigationSpy.mockReturnValue(navigationDto);
         const loadRelativeLearningPathNavigationSpy = vi.spyOn(learningPathNavigationService, 'loadRelativeLearningPathNavigation');
-        const isLoadingSuccessor = vi.spyOn(component.isLoadingPredecessor, 'set');
+        const isLoadingPredecessorSpy = vi.spyOn(component.isLoadingPredecessor, 'set');
         fixture.detectChanges();
 
         const nextButton = fixture.nativeElement.querySelector('#previous-button');
@@ -155,8 +155,8 @@ describe('LearningPathStudentNavComponent', () => {
         fixture.detectChanges();
 
         expect(loadRelativeLearningPathNavigationSpy).toHaveBeenCalledExactlyOnceWith(learningPathId, navigationDto.predecessorLearningObject);
-        expect(isLoadingSuccessor).toHaveBeenNthCalledWith(1, true);
-        expect(isLoadingSuccessor).toHaveBeenNthCalledWith(2, false);
+        expect(isLoadingPredecessorSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingPredecessorSpy).toHaveBeenNthCalledWith(2, false);
     });
 
     it('should set current to previous unit on complete button', async () => {
