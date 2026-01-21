@@ -95,7 +95,10 @@
             "viewAdvancedSettings": "Erweiterte Einstellungen anzeigen",
             "closeAdvancedSettings": "Erweiterte Einstellungen schließen",
             "addLtiPlatform": "LTI-Plattformkonfiguration hinzufügen",
-            "editLtiPlatform": "LTI-Plattformkonfiguration bearbeiten"
+            "editLtiPlatform": "LTI-Plattformkonfiguration bearbeiten",
+            "editConfiguration": {
+                "loadError": "Die LTI-Plattformkonfiguration konnte nicht geladen werden. Änderungen können nicht gespeichert werden."
+            }
         },
         "lti13": {
             "launch": {

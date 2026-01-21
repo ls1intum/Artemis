@@ -32,10 +32,10 @@ export class EditLtiConfigurationComponent implements OnInit {
     readonly isSaving = signal(false);
 
     /** Whether we're in edit mode (editing existing configuration) */
-    isEditMode = false;
+    readonly isEditMode = signal(false);
 
     /** Whether loading the configuration failed in edit mode */
-    loadFailed = false;
+    readonly loadFailed = signal(false);
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
@@ -48,14 +48,14 @@ export class EditLtiConfigurationComponent implements OnInit {
         const platformId = this.route.snapshot.paramMap.get('platformId');
         if (platformId) {
             // Edit mode: wait for data before initializing form
-            this.isEditMode = true;
+            this.isEditMode.set(true);
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
                     this.platform = data;
                     this.initializeForm();
                 },
                 error: (error) => {
-                    this.loadFailed = true;
+                    this.loadFailed.set(true);
                     this.alertService.error(error);
                 },
             });
@@ -70,7 +70,7 @@ export class EditLtiConfigurationComponent implements OnInit {
      */
     save() {
         // If we're in edit mode but loading failed, don't allow save
-        if (this.isEditMode && this.loadFailed) {
+        if (this.isEditMode() && this.loadFailed()) {
             this.alertService.error('artemisApp.lti.editConfiguration.loadError');
             return;
         }

@@ -95,7 +95,10 @@
             "viewAdvancedSettings": "View Advanced Settings",
             "closeAdvancedSettings": "Close Advanced Settings",
             "addLtiPlatform": "Add LTI Platform Configuration",
-            "editLtiPlatform": "Edit LTI Platform Configuration"
+            "editLtiPlatform": "Edit LTI Platform Configuration",
+            "editConfiguration": {
+                "loadError": "Failed to load the LTI platform configuration. Cannot save changes."
+            }
         },
         "lti13": {
             "launch": {
