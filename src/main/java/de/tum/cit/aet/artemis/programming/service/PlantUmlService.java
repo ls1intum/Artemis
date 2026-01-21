@@ -5,16 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -37,52 +33,36 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
-    private final Path PATH_TMP_THEME;
-
     private final ResourceLoaderService resourceLoaderService;
 
-    public PlantUmlService(ResourceLoaderService resourceLoaderService, @Value("${artemis.temp-path}") Path tempPath) {
+    private String darkThemeContent;
+
+    private String lightThemeContent;
+
+    public PlantUmlService(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
-        this.PATH_TMP_THEME = tempPath.resolve("artemis-puml-theme");
     }
 
     /**
-     * Initializes themes and sets system properties for PlantUML security when the application is ready.
+     * Loads theme content from resources when the service is initialized.
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
-     *
-     * <p>
-     * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.
-     *
-     * @throws IOException if an I/O error occurs during file deletion
      */
     @PostConstruct
-    public void applicationReady() throws IOException {
-        // Delete on first launch to ensure updates
-        Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));
-        Files.deleteIfExists(PATH_TMP_THEME.resolve(LIGHT_THEME_FILE_NAME));
-        ensureThemes();
-
-        System.setProperty("PLANTUML_SECURITY_PROFILE", "ALLOWLIST");
-        System.setProperty("plantuml.allowlist.path", PATH_TMP_THEME.toAbsolutePath().toString());
+    public void applicationReady() {
+        darkThemeContent = loadThemeContent(DARK_THEME_FILE_NAME);
+        lightThemeContent = loadThemeContent(LIGHT_THEME_FILE_NAME);
     }
 
-    private void ensureThemes() {
-        Stream.of(DARK_THEME_FILE_NAME, LIGHT_THEME_FILE_NAME).forEach(fileName -> {
-            final Path path = PATH_TMP_THEME.resolve(fileName);
-            if (!Files.exists(path)) {
-                log.debug("Storing UML theme to temporary directory");
-                final var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
-                try (var inputStream = themeResource.getInputStream()) {
-                    FileUtils.copyToFile(inputStream, path.toFile());
-                    log.debug("UML theme stored successfully to {}", path);
-                }
-                catch (IOException e) {
-                    log.error("Unable to store UML dark theme", e);
-                    throw new RuntimeException("Unable to store UML dark theme", e); // NOPMD
-                }
-            }
-        });
+    private String loadThemeContent(String fileName) {
+        final var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
+        try (var inputStream = themeResource.getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            log.error("Unable to load PlantUML theme: {}", fileName, e);
+            throw new RuntimeException("Unable to load PlantUML theme: " + fileName, e); // NOPMD
+        }
     }
 
     /**
@@ -130,13 +110,8 @@ public class PlantUmlService {
         }
 
         if (!plantUml.contains("!theme")) {
-            ensureThemes();
-            if (useDarkTheme) {
-                return plantUml.replace("@startuml", "@startuml\n!theme artemisdark from " + PATH_TMP_THEME.toAbsolutePath());
-            }
-            else {
-                return plantUml.replace("@startuml", "@startuml\n!theme artemislight from " + PATH_TMP_THEME.toAbsolutePath());
-            }
+            String themeContent = useDarkTheme ? darkThemeContent : lightThemeContent;
+            return plantUml.replace("@startuml", "@startuml\n" + themeContent);
         }
         return plantUml;
     }

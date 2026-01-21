@@ -251,7 +251,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.0"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.1"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
