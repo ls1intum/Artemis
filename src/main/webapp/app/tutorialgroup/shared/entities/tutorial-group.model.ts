@@ -54,16 +54,17 @@ export class TutorialGroupDetailGroupDTO {
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
         this.sessions = (rawDto.sessions ?? []).map(
-            (session: RawTutorialGroupDetailSessionDTO) =>
+            (rawSessionDto: RawTutorialGroupDetailSessionDTO) =>
                 new TutorialGroupDetailSessionDTO(
-                    dayjs(session.start),
-                    dayjs(session.end),
-                    session.location,
-                    session.isCancelled,
-                    session.locationChanged,
-                    session.timeChanged,
-                    session.dateChanged,
-                    session.attendanceCount,
+                    rawSessionDto.id,
+                    dayjs(rawSessionDto.start),
+                    dayjs(rawSessionDto.end),
+                    rawSessionDto.location,
+                    rawSessionDto.isCancelled,
+                    rawSessionDto.locationChanged,
+                    rawSessionDto.timeChanged,
+                    rawSessionDto.dateChanged,
+                    rawSessionDto.attendanceCount,
                 ),
         );
         this.teachingAssistantName = rawDto.teachingAssistantName;

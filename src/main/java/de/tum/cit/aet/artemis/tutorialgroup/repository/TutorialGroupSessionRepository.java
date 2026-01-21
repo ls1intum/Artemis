@@ -70,6 +70,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO(
+                session.id,
                 session.start,
                 session.end,
                 session.location,

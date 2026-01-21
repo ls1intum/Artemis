@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -39,6 +39,7 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 interface TutorialGroupDetailSession {
+    id: number;
     date: string;
     time: string;
     location: string;
@@ -47,6 +48,12 @@ interface TutorialGroupDetailSession {
     timeChanged: boolean;
     dateChanged: boolean;
     attendance?: string;
+}
+
+export interface DeleteTutorialGroupDetailSessionEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    sessionId: number;
 }
 
 type ListOption = 'all-sessions' | 'future-sessions';
@@ -113,6 +120,7 @@ export class CourseTutorialGroupDetailComponent {
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
     userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().teachingAssistantLogin);
+    deleteSession = output<DeleteTutorialGroupDetailSessionEvent>();
 
     constructor() {
         effect(() => {
@@ -139,6 +147,18 @@ export class CourseTutorialGroupDetailComponent {
                 error: () => {
                     this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
                 },
+            });
+        }
+    }
+
+    deleteSessionWith(sessionId: number) {
+        const courseId = this.course().id;
+        const tutorialGroupId = this.tutorialGroup().id;
+        if (courseId && tutorialGroupId) {
+            this.deleteSession.emit({
+                courseId,
+                tutorialGroupId,
+                sessionId,
             });
         }
     }
@@ -259,6 +279,7 @@ export class CourseTutorialGroupDetailComponent {
     }
 
     private computeSessionDataFrom(session: TutorialGroupDetailSessionDTO, capacity: number | undefined): TutorialGroupDetailSession {
+        const id = session.id;
         const weekdayStringKey = this.computeWeekdayStringKeyUsing(session.start);
         const weekday = this.translateService.instant(weekdayStringKey);
         const date = weekday + ', ' + session.start.format('DD.MM.YYYY');
@@ -276,7 +297,7 @@ export class CourseTutorialGroupDetailComponent {
                 attendance = session.attendanceCount.toString();
             }
         }
-        return { date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };
+        return { id, date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };
     }
 
     private computeWeekdayStringKeyUsing(sessionStart: Dayjs): string {

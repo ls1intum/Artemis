@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupDetailSessionDTO(@NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull String location, boolean isCancelled, boolean locationChanged,
-        boolean timeChanged, boolean dateChanged, @Nullable Integer attendanceCount) {
+public record TutorialGroupDetailSessionDTO(@NotNull long id, @NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull String location, boolean isCancelled,
+        boolean locationChanged, boolean timeChanged, boolean dateChanged, @Nullable Integer attendanceCount) {
 
     /**
      * Builds a {@link TutorialGroupDetailSessionDTO} for a {@link TutorialGroupSession} of which the {@link TutorialGroup} has a {@link TutorialGroupSchedule}. Uses:
@@ -46,7 +46,8 @@ public record TutorialGroupDetailSessionDTO(@NotNull ZonedDateTime start, @NotNu
         ZonedDateTime sessionEnd = rawDto.end().withZoneSameInstant(courseTimeZone);
         boolean sameTime = isCancelled || sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
         boolean sameDay = isCancelled || sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
-        return new TutorialGroupDetailSessionDTO(rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, !sameLocation, !sameTime, !sameDay, rawDto.attendanceCount());
+        return new TutorialGroupDetailSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, !sameLocation, !sameTime, !sameDay,
+                rawDto.attendanceCount());
     }
 
     /**
@@ -58,6 +59,6 @@ public record TutorialGroupDetailSessionDTO(@NotNull ZonedDateTime start, @NotNu
      */
     public static TutorialGroupDetailSessionDTO from(RawTutorialGroupDetailSessionDTO rawDto) {
         boolean isCancelled = rawDto.status() == TutorialGroupSessionStatus.CANCELLED;
-        return new TutorialGroupDetailSessionDTO(rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, false, false, false, rawDto.attendanceCount());
+        return new TutorialGroupDetailSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, false, false, false, rawDto.attendanceCount());
     }
 }

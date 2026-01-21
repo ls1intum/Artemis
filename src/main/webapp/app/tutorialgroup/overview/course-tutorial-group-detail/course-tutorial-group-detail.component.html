@@ -246,7 +246,7 @@
                                     <button class="icon-button">
                                         <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                     </button>
-                                    <button class="icon-button danger">
+                                    <button class="icon-button danger" (click)="deleteSessionWith(session.id)">
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
                                     </button>
                                 </div>

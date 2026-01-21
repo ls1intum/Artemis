@@ -6,18 +6,22 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import {
+    CourseTutorialGroupDetailComponent,
+    DeleteTutorialGroupDetailSessionEvent,
+} from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
     templateUrl: './management-tutorial-group-detail-container.component.html',
-    imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent],
+    imports: [CourseTutorialGroupDetailComponent],
 })
 export class ManagementTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private tutorialGroupService = inject(TutorialGroupsService);
+    private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
     private alertService = inject(AlertService);
     private paramsSubscription: Subscription;
 
@@ -60,5 +64,29 @@ export class ManagementTutorialGroupDetailContainerComponent implements OnInit, 
 
     ngOnDestroy(): void {
         this.paramsSubscription?.unsubscribe();
+    }
+
+    deleteSession(deletionEvent: DeleteTutorialGroupDetailSessionEvent) {
+        const { courseId, tutorialGroupId, sessionId } = deletionEvent;
+        this.isLoading.set(true);
+        this.tutorialGroupSessionApiService
+            .deleteSession(courseId, tutorialGroupId, sessionId, 'response')
+            .pipe(
+                catchError((error: HttpErrorResponse) => {
+                    this.isLoading.set(false);
+                    onError(this.alertService, error);
+                    return of(undefined);
+                }),
+            )
+            .subscribe((response) => {
+                this.isLoading.set(false);
+                if (!response || !this.tutorialGroup) {
+                    return;
+                }
+                this.tutorialGroup = {
+                    ...this.tutorialGroup,
+                    sessions: this.tutorialGroup.sessions.filter((session) => session.id !== sessionId),
+                };
+            });
     }
 }
