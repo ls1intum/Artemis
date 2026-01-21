@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -278,9 +277,10 @@ public class LocalCIResultProcessingService {
             }
 
             if (programmingExerciseParticipation != null) {
-                var mergedResult = resultService.mergeMultipleResultsIntoSingleResult(savedBuildJob.getResults());
-                if (mergedResult != null) { // TODO: Null should happen as soon as something actually fails the build? No, only if everything fails flat out.
-                    programmingMessagingService.notifyUserAboutNewResult(mergedResult, programmingExerciseParticipation);
+                // TODO: For multi-container builds, aggregate feedback from all containers into a single Result
+                // Use the result from processNewProgrammingExerciseResult as it's fully initialized with submission
+                if (result != null) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                 }
                 else {
                     log.error("Result could not be processed for build job: {}", buildJob);
@@ -321,29 +321,27 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * TODO: Modify docs
      * Save a finished build job to the database.
      *
      * @param queueItem   the build job object from the queue
      * @param buildStatus the status of the build job (SUCCESSFUL, FAILED, CANCELLED)
      * @param result      the submission result
      *
-     * @return the saved the build job
+     * @return the saved build job
      */
     private BuildJob addResultToBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
-            var found = buildJobRepository.findByBuildJobIdAndResults(queueItem.id());
+            var found = buildJobRepository.findByBuildJobIdAndResult(queueItem.id());
             BuildJob buildJob;
             if (found.isPresent()) {
                 buildJob = found.get();
-                buildJob.setResults(new ArrayList<>(
-                        buildJob.getResults().stream().map(r -> buildJobRepository.findByResultIdAndLoadFeedbacksAndTestCases(r.getId()).orElseGet(null)).toList()));
+                buildJob.setResult(result);
+                buildJob.setBuildStatus(buildStatus);
             }
             else {
-                buildJob = new BuildJob(queueItem, buildStatus, List.of());
+                buildJob = new BuildJob(queueItem, buildStatus, result);
             }
 
-            buildJob.getResults().add(result);
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {

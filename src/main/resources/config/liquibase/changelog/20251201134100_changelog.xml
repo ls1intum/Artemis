@@ -39,18 +39,6 @@
             <column name="container_id" type="bigint" />
         </addColumn>
 
-        <!-- Add join table for build job and result. -->
-        <createTable tableName="build_job_result">
-            <column name="build_job_id" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_bjr_build_job" references="build_job(id)" />
-            </column>
-            <column name="result_id" type="bigint">
-                <constraints nullable="false" unique="true" foreignKeyName="fk_bjr_result" references="result(id)" />
-            </column>
-        </createTable>
-
-        <!-- TODO: Migrate build_job_id in old table???, not the new column we added... -->
-
         <dropColumn tableName="programming_exercise_build_config"
                     columnName="build_plan_configuration"/>
         <dropColumn tableName="programming_exercise_build_config"

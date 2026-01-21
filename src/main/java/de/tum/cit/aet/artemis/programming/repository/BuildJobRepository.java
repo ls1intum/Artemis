@@ -100,7 +100,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 b.buildJobId
             )
             FROM BuildJob b
-            JOIN b.results r
+            JOIN b.result r
             WHERE b.participationId = :participationId
                 AND r.id IS NOT NULL
             """)
@@ -123,10 +123,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     @Query("""
             SELECT b
             FROM BuildJob b
-            LEFT JOIN FETCH b.results
+            LEFT JOIN FETCH b.result r
+            LEFT JOIN FETCH r.submission
             WHERE b.buildJobId = :id
             """)
-    Optional<BuildJob> findByBuildJobIdAndResults(String id);
+    Optional<BuildJob> findByBuildJobIdAndResult(String id);
 
     @Query("""
             SELECT r
@@ -169,7 +170,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO(
-                ROUND(AVG((b.buildCompletionDate - b.buildStartDate) BY SECOND)),
+                COALESCE(AVG((b.buildCompletionDate - b.buildStartDate) BY SECOND), 0.0),
                 COUNT(b),
                 b.exerciseId
             )
