@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,8 +42,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
@@ -53,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 
 @Profile(PROFILE_LOCALCI)
@@ -86,6 +90,8 @@ public class LocalCIResultProcessingService {
 
     private final ResultService resultService;
 
+    private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
+
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -101,7 +107,8 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ResultService resultService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ResultService resultService,
+            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -113,6 +120,7 @@ public class LocalCIResultProcessingService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.resultService = resultService;
+        this.continuousIntegrationResultService = continuousIntegrationResultService;
     }
 
     /**
@@ -240,11 +248,17 @@ public class LocalCIResultProcessingService {
                 if (participation.getProgrammingExercise() == null) {
                     participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
                 }
-                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
+                // For multi-container builds, aggregate feedback from all containers into a single Result
+                // This also saves the BuildJob to prevent race conditions
+                result = getOrCreateResultForSubmission(participation, buildJob, buildResult, buildException);
 
             }
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+                // Still save the build job even if participation is missing
+                BuildStatus status = determineBuildStatus(buildException);
+                addResultToBuildJob(buildJob, status, null);
             }
         }
         finally {
@@ -256,29 +270,17 @@ public class LocalCIResultProcessingService {
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }
 
-            // save build job to database
-            if (buildException != null) {
-                if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                    savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.CANCELLED, result);
-                }
-                else if (buildException.getCause() instanceof TimeoutException) {
-                    savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.TIMEOUT, result);
-                }
-                else {
-                    log.error("Error while processing build job: {}", buildJob, buildException);
-                    savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.FAILED, result);
-                }
-            }
-            else {
-                savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
-                if (programmingExerciseParticipation != null) {
-                    updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
-                }
+            // Build job is already saved in getOrCreateResultForSubmission or in the else block above
+            // Just update build duration statistics for successful builds
+            if (buildException == null && programmingExerciseParticipation != null) {
+                updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
             }
 
+            // Retrieve the saved build job for logging and error handling
+            savedBuildJob = buildJobRepository.findByBuildJobId(buildJob.id()).orElse(null);
+
             if (programmingExerciseParticipation != null) {
-                // TODO: For multi-container builds, aggregate feedback from all containers into a single Result
-                // Use the result from processNewProgrammingExerciseResult as it's fully initialized with submission
+                // For multi-container builds, feedback from all containers is aggregated into a single Result
                 if (result != null) {
                     programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                 }
@@ -318,6 +320,145 @@ public class LocalCIResultProcessingService {
                 log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
             }
         }
+    }
+
+    /**
+     * Gets the existing Result for this submission or creates a new one.
+     * For multi-container builds, this ensures all containers append their feedback to the same Result.
+     * Also saves the BuildJob-Result association within the synchronized block to prevent race conditions.
+     *
+     * @param participation  the participation
+     * @param buildJob       the build job queue item
+     * @param buildResult    the build result containing feedback from this container
+     * @param buildException the exception that occurred during the build, if any
+     * @return the Result object (new or existing with appended feedback)
+     */
+    private synchronized Result getOrCreateResultForSubmission(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult,
+            Throwable buildException) {
+        // Check if there's already a BuildJob for this submission (different container)
+        List<BuildJob> existingBuildJobs = buildJobRepository.findByParticipationIdAndBuildSubmissionDate(buildJob.participationId(), buildJob.jobTimingInfo().submissionDate());
+
+        BuildStatus buildStatus = determineBuildStatus(buildResult, buildException);
+
+        // If we find an existing build job with a Result, reuse that Result
+        for (BuildJob existingJob : existingBuildJobs) {
+            if (existingJob.getResult() != null && !existingJob.getBuildJobId().equals(buildJob.id())) {
+                log.info("Found existing result {} for submission at {}. Appending feedback from container {}", existingJob.getResult().getId(),
+                        buildJob.jobTimingInfo().submissionDate(), buildJob.containerId());
+
+                Result existingResult = existingJob.getResult();
+
+                // Extract feedbacks from this container's buildResult by creating a temporary result
+                // We can't call processNewProgrammingExerciseResult as it creates and saves a full Result
+                ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+                Result tempResult = ciResultService.createResultFromBuildResult(buildResult, participation);
+
+                // Append the feedbacks from this container to the existing result
+                if (tempResult.getFeedbacks() != null && !tempResult.getFeedbacks().isEmpty()) {
+                    existingResult.addFeedbacks(tempResult.getFeedbacks());
+                    // Update test case counts
+                    existingResult.setTestCaseCount(existingResult.getTestCaseCount() + tempResult.getTestCaseCount());
+                    existingResult.setPassedTestCaseCount(existingResult.getPassedTestCaseCount() + tempResult.getPassedTestCaseCount());
+                    existingResult.setCodeIssueCount(existingResult.getCodeIssueCount() + tempResult.getCodeIssueCount());
+                }
+
+                // Handle build logs for this container (only if build produced logs and wasn't successful)
+                if (buildResult.hasLogs() && !buildResult.isBuildSuccessful()) {
+                    saveBuildLogsForContainer(buildResult, existingResult, buildJob.containerId(), participation.getProgrammingExercise());
+                }
+
+                // Immediately save this BuildJob with the shared Result to prevent race conditions
+                addResultToBuildJob(buildJob, buildStatus, existingResult);
+
+                return existingResult;
+            }
+        }
+
+        // No existing result found, create a new one
+        log.info("Creating new result for build job {} and container {}", buildJob.id(), buildJob.containerId());
+        Result newResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
+        // Update container_id on any build logs that were saved for this result
+        if (newResult != null && newResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
+            updateContainerIdOnBuildLogs(programmingSubmission, buildJob.containerId());
+        }
+
+        // Immediately save this BuildJob with the new Result to prevent race conditions
+        addResultToBuildJob(buildJob, buildStatus, newResult);
+
+        return newResult;
+    }
+
+    /**
+     * Updates the container_id on build log entries for a submission.
+     *
+     * @param submission  the programming submission
+     * @param containerId the container ID
+     */
+    private void updateContainerIdOnBuildLogs(ProgrammingSubmission submission, Long containerId) {
+        List<BuildLogEntry> buildLogs = buildLogEntryService.getLatestBuildLogs(submission);
+        for (BuildLogEntry logEntry : buildLogs) {
+            if (logEntry.getContainerId() == null) {
+                logEntry.setContainerId(containerId);
+            }
+        }
+        buildLogEntryService.saveBuildLogs(buildLogs, submission);
+    }
+
+    /**
+     * Saves build logs for a specific container when appending to an existing result.
+     *
+     * @param buildResult the build result containing logs
+     * @param result      the result to associate logs with
+     * @param containerId the container ID
+     * @param exercise    the programming exercise
+     */
+    private void saveBuildLogsForContainer(BuildResult buildResult, Result result, Long containerId, ProgrammingExercise exercise) {
+        if (result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
+            var buildLogs = buildResult.extractBuildLogs();
+            var programmingLanguage = exercise.getProgrammingLanguage();
+
+            // Remove unnecessary logs and set container ID
+            buildLogs = buildLogEntryService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
+
+            // Set container ID on all log entries
+            for (BuildLogEntry logEntry : buildLogs) {
+                logEntry.setContainerId(containerId);
+            }
+
+            var savedBuildLogs = buildLogEntryService.saveBuildLogs(buildLogs, programmingSubmission);
+
+            // Mark submission as build failed if not already marked
+            if (!programmingSubmission.isBuildFailed()) {
+                programmingSubmission.setBuildFailed(true);
+            }
+
+            // Append to existing logs instead of replacing them
+            List<BuildLogEntry> existingLogs = new ArrayList<>(programmingSubmission.getBuildLogEntries());
+            existingLogs.addAll(savedBuildLogs);
+            programmingSubmission.setBuildLogEntries(existingLogs);
+        }
+    }
+
+    /**
+     * Determines the build status based on the exception.
+     *
+     * @param buildException the exception that occurred during the build
+     * @return the build status
+     */
+    private BuildStatus determineBuildStatus(Throwable buildException) {
+        if (buildException != null) {
+            if (buildException.getCause() instanceof CancellationException && buildException.getMessage().contains("was cancelled")) {
+                return BuildStatus.CANCELLED;
+            }
+            else if (buildException.getCause() instanceof TimeoutException) {
+                return BuildStatus.TIMEOUT;
+            }
+            else {
+                return BuildStatus.FAILED;
+            }
+        }
+        return BuildStatus.SUCCESSFUL;
     }
 
     /**

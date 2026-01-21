@@ -39,6 +39,11 @@
             <column name="container_id" type="bigint" />
         </addColumn>
 
+        <!-- Add container id to build log entries to track which container produced which logs -->
+        <addColumn tableName="build_log_entry">
+            <column name="container_id" type="bigint" />
+        </addColumn>
+
         <dropColumn tableName="programming_exercise_build_config"
                     columnName="build_plan_configuration"/>
         <dropColumn tableName="programming_exercise_build_config"
@@ -66,6 +71,7 @@
             <dropTable tableName="docker_container_config"/>
 
             <dropColumn tableName="build_job" columnName="container_id" />
+            <dropColumn tableName="build_log_entry" columnName="container_id" />
         </rollback>
     </changeSet>
 

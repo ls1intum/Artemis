@@ -255,4 +255,21 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             WHERE b.buildJobId = :buildJobId
             """)
     void incrementRetryCount(@Param("buildJobId") String buildJobId);
+
+    /**
+     * Find all build jobs for a given participation and submission date.
+     * Used for multi-container builds to find existing results to aggregate feedback.
+     *
+     * @param participationId the participation ID
+     * @param submissionDate  the submission date
+     * @return the list of build jobs
+     */
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            LEFT JOIN FETCH b.result
+            WHERE b.participationId = :participationId
+              AND b.buildSubmissionDate = :submissionDate
+            """)
+    List<BuildJob> findByParticipationIdAndBuildSubmissionDate(@Param("participationId") Long participationId, @Param("submissionDate") ZonedDateTime submissionDate);
 }

@@ -94,13 +94,46 @@ public class BuildLogEntryService {
 
     /**
      * Retrieves the latest build logs for a given programming submission.
+     * For multi-container builds, adds separator headers between different containers.
      *
      * @param programmingSubmission submission for which to retrieve the build logs
-     * @return the build log entries
+     * @return the build log entries with container separators
      */
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
+        List<BuildLogEntry> logs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
                 .orElseGet(Collections::emptyList);
+
+        // Check if this is a multi-container build (multiple containers have logs)
+        boolean hasMultipleContainers = logs.stream().map(BuildLogEntry::getContainerId).filter(java.util.Objects::nonNull).distinct().count() > 1;
+
+        if (!hasMultipleContainers) {
+            return logs;
+        }
+
+        // Sort logs by container_id (nulls first for backwards compatibility) and then by time
+        logs.sort(java.util.Comparator.comparing(BuildLogEntry::getContainerId, java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder()))
+                .thenComparing(BuildLogEntry::getTime));
+
+        // Add separator headers between containers
+        List<BuildLogEntry> logsWithSeparators = new ArrayList<>();
+        Long currentContainerId = null;
+
+        for (BuildLogEntry log : logs) {
+            Long logContainerId = log.getContainerId();
+
+            // Add separator when container changes
+            if (currentContainerId == null || !currentContainerId.equals(logContainerId)) {
+                String separator = logContainerId != null ? "=== Container " + logContainerId + ": ===" : "=== Container (unknown): ===";
+                BuildLogEntry separatorEntry = new BuildLogEntry(log.getTime(), separator, programmingSubmission);
+                separatorEntry.setContainerId(logContainerId);
+                logsWithSeparators.add(separatorEntry);
+                currentContainerId = logContainerId;
+            }
+
+            logsWithSeparators.add(log);
+        }
+
+        return logsWithSeparators;
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",

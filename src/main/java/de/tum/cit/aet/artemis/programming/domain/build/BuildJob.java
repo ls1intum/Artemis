@@ -8,7 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -42,8 +42,8 @@ public class BuildJob extends DomainObject {
     @Column(name = "container_id")
     private Long containerId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "result_id")
     private Result result;
 
     @Column(name = "build_agent_address")
