@@ -45,23 +45,23 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Gets the configuration for the course encoded in the route and prepares the form
      */
     ngOnInit() {
+        // Always initialize the form first with empty values
+        this.initializeForm();
+
         const platformId = this.route.snapshot.paramMap.get('platformId');
         if (platformId) {
-            // Edit mode: wait for data before initializing form
+            // Edit mode: load data and patch form values
             this.isEditMode.set(true);
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
                     this.platform = data;
-                    this.initializeForm();
+                    this.patchFormValues();
                 },
                 error: (error) => {
                     this.loadFailed.set(true);
                     this.alertService.error(error);
                 },
             });
-        } else {
-            // Create mode: initialize form immediately with empty values
-            this.initializeForm();
         }
     }
 
@@ -131,15 +131,30 @@ export class EditLtiConfigurationComponent implements OnInit {
 
     private initializeForm() {
         this.platformConfigurationForm = new FormGroup({
-            id: new FormControl(this.platform?.id),
-            registrationId: new FormControl({ value: this.platform?.registrationId, disabled: true }),
-            originalUrl: new FormControl(this.platform?.originalUrl),
-            customName: new FormControl(this.platform?.customName),
-            clientId: new FormControl(this.platform?.clientId),
-            authorizationUri: new FormControl(this.platform?.authorizationUri),
-            tokenUri: new FormControl(this.platform?.tokenUri),
-            jwkSetUri: new FormControl(this.platform?.jwkSetUri),
+            id: new FormControl(null),
+            registrationId: new FormControl({ value: '', disabled: true }),
+            originalUrl: new FormControl(''),
+            customName: new FormControl(''),
+            clientId: new FormControl(''),
+            authorizationUri: new FormControl(''),
+            tokenUri: new FormControl(''),
+            jwkSetUri: new FormControl(''),
         });
+    }
+
+    private patchFormValues() {
+        if (this.platform && this.platformConfigurationForm) {
+            this.platformConfigurationForm.patchValue({
+                id: this.platform.id,
+                registrationId: this.platform.registrationId,
+                originalUrl: this.platform.originalUrl ?? '',
+                customName: this.platform.customName ?? '',
+                clientId: this.platform.clientId,
+                authorizationUri: this.platform.authorizationUri,
+                tokenUri: this.platform.tokenUri,
+                jwkSetUri: this.platform.jwkSetUri,
+            });
+        }
     }
 
     /**
