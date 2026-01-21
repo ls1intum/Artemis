@@ -22,10 +22,10 @@ const config: Config = {
     },
 
     // Set the production url of your site here
-    url: 'https://ls1intum.github.io/',
+    url: 'https://docs.artemis.tum.de',
     // Set the /<baseUrl>/ pathname under which your site is served
-    // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/Artemis/',
+    // For custom domains, use '/'
+    baseUrl: '/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
@@ -62,7 +62,7 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -73,11 +73,11 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Development',
-                        path: 'staff'
+                        label: 'Developer Guide',
+                        path: 'developer'
                     },
                     {
-                        label: 'Admin',
+                        label: 'Admin Guide',
                         path: 'admin'
                     }
                 ],
@@ -111,10 +111,10 @@ const config: Config = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'staff',
-                path: 'docs/staff',
-                routeBasePath: 'staff',
-                sidebarPath: './sidebar-staff.ts',
+                id: 'developer',
+                path: 'docs/developer',
+                routeBasePath: 'developer',
+                sidebarPath: './sidebar-developer.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },

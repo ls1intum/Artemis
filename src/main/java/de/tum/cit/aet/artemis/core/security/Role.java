@@ -6,7 +6,7 @@ package de.tum.cit.aet.artemis.core.security;
 public enum Role {
 
     // NOTE: we will soon rename "USER" to "STUDENT" in the database
-    ADMIN("ADMIN"), INSTRUCTOR("INSTRUCTOR"), EDITOR("EDITOR"), TEACHING_ASSISTANT("TA"), STUDENT("USER"), ANONYMOUS("ANONYMOUS");
+    SUPER_ADMIN("SUPER_ADMIN"), ADMIN("ADMIN"), INSTRUCTOR("INSTRUCTOR"), EDITOR("EDITOR"), TEACHING_ASSISTANT("TA"), STUDENT("USER"), ANONYMOUS("ANONYMOUS");
 
     public static final String ROLE_PREFIX = "ROLE_";
 
