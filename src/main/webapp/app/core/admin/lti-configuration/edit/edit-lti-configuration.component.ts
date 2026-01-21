@@ -31,6 +31,12 @@ export class EditLtiConfigurationComponent implements OnInit {
     /** Whether save is in progress */
     readonly isSaving = signal(false);
 
+    /** Whether we're in edit mode (editing existing configuration) */
+    isEditMode = false;
+
+    /** Whether loading the configuration failed in edit mode */
+    loadFailed = false;
+
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faPlus = faPlus;
@@ -42,14 +48,15 @@ export class EditLtiConfigurationComponent implements OnInit {
         const platformId = this.route.snapshot.paramMap.get('platformId');
         if (platformId) {
             // Edit mode: wait for data before initializing form
+            this.isEditMode = true;
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
                     this.platform = data;
                     this.initializeForm();
                 },
                 error: (error) => {
+                    this.loadFailed = true;
                     this.alertService.error(error);
-                    this.initializeForm(); // Initialize empty form on error
                 },
             });
         } else {
@@ -62,6 +69,11 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Create or update lti platform configuration
      */
     save() {
+        // If we're in edit mode but loading failed, don't allow save
+        if (this.isEditMode && this.loadFailed) {
+            this.alertService.error('artemisApp.lti.editConfiguration.loadError');
+            return;
+        }
         this.isSaving.set(true);
         const platformConfiguration = this.platformConfigurationForm.getRawValue();
         if (this.platform?.id) {
