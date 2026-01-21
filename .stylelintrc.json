@@ -14,7 +14,6 @@
     "alpha-value-notation": "number",
     "media-feature-range-notation": "prefix",
     "selector-pseudo-element-no-unknown": [true, { "ignorePseudoElements": ["ng-deep"] }],
-    "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["global", "local"] }],
     "at-rule-empty-line-before": ["always", {
       "except": ["first-nested", "blockless-after-same-name-blockless"],
       "ignore": ["after-comment", "inside-block"]
