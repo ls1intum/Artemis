@@ -91,7 +91,7 @@ public class PlantUmlService {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the SVG
      */
-    @Cacheable(value = "plantUmlSvg", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "plantUmlSvg", unless = "#result == null || #result.isEmpty() || #result.contains('Syntax Error') || #result.contains('Cannot load')")
     public String generateSvg(final String plantUml, final boolean useDarkTheme) throws IOException {
         var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
         try (final var bos = new ByteArrayOutputStream()) {
