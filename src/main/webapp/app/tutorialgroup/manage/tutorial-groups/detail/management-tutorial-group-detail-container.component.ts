@@ -1,69 +1,64 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
+import { Subject, Subscription, catchError, combineLatest, of, switchMap, tap } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TutorialGroupRowButtonsComponent } from '../tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
-import { ManagementTutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/management-tutorial-group-detail.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
     templateUrl: './management-tutorial-group-detail-container.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, ManagementTutorialGroupDetailComponent, TutorialGroupRowButtonsComponent],
+    imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent],
 })
 export class ManagementTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
+    private route = inject(ActivatedRoute);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
-    private cdr = inject(ChangeDetectorRef);
+    private paramsSubscription: Subscription;
 
     ngUnsubscribe = new Subject<void>();
 
-    isLoading = false;
-    tutorialGroup: TutorialGroup;
-    course: Course;
-    tutorialGroupId: number;
-    isAtLeastInstructor = false;
+    isLoading = signal(false);
+    tutorialGroup?: TutorialGroupDetailGroupDTO;
+    course?: Course;
 
     ngOnInit(): void {
-        this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
+        const tutorialGroupIdParams$ = this.route.params;
+        this.paramsSubscription = combineLatest([this.route.data, tutorialGroupIdParams$])
             .pipe(
-                take(1),
-                switchMap(([params, { course }]) => {
-                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
+                switchMap(([{ course }, tutorialGroupIdParams]) => {
+                    this.isLoading.set(true);
+                    const tutorialGroupId = parseInt(tutorialGroupIdParams.tutorialGroupId, 10);
                     if (course) {
                         this.course = course;
-                        this.isAtLeastInstructor = course.isAtLeastInstructor;
+                        return this.tutorialGroupService.getTutorialGroupDetailGroupDTO(course.id, tutorialGroupId);
                     }
-                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
+                    return of(undefined);
                 }),
-                finalize(() => (this.isLoading = false)),
-                takeUntil(this.ngUnsubscribe),
+                tap({
+                    next: () => {
+                        this.isLoading.set(false);
+                    },
+                }),
+                catchError((error: HttpErrorResponse) => {
+                    this.isLoading.set(false);
+                    onError(this.alertService, error);
+                    return of(undefined);
+                }),
             )
             .subscribe({
                 next: (tutorialGroupResult) => {
-                    this.tutorialGroup = tutorialGroupResult.body!;
+                    this.tutorialGroup = tutorialGroupResult ?? undefined;
                 },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
-    onTutorialGroupDeleted = () => {
-        this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
-    };
-
     ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
+        this.paramsSubscription?.unsubscribe();
     }
 }
