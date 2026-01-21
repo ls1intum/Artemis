@@ -9,6 +9,10 @@ TEST_PATHS=("$@")
 FAILED=0
 IGNORE_ARGS=()
 
+if [ ${#TEST_PATHS[@]} -eq 0 ] && [ -n "$PLAYWRIGHT_TEST_PATHS" ]; then
+    read -r -a TEST_PATHS <<< "$PLAYWRIGHT_TEST_PATHS"
+fi
+
 if [ -n "$PLAYWRIGHT_IGNORE_PATHS" ]; then
     read -r -a IGNORE_PATHS <<< "$PLAYWRIGHT_IGNORE_PATHS"
     for ignore_path in "${IGNORE_PATHS[@]}"; do

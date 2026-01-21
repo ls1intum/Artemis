@@ -175,10 +175,8 @@
     ],
     "runAllTestsPatterns": [
         "src/main/resources/config/",
-        "src/test/playwright/",
         "docker/",
         "build.gradle",
-        "package.json",
         "angular.json"
     ]
 }

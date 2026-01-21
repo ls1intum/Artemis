@@ -82,6 +82,7 @@ jobs:
     outputs:
       phase1_status: ${{ job.status }}
     steps:
+      # workflow_run events do not create check runs, so we set a status manually
       - name: Create pending status
         run: |
           curl -X POST \
@@ -295,6 +296,7 @@ jobs:
           name: workflow-context
           path: workflow-context.txt
 
+      # Add a notice to help navigate back to the triggering build workflow
       - name: Add link to triggering workflow
         run: |
           echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"

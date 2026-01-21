@@ -25,7 +25,7 @@ services:
             SLOW_TEST_TIMEOUT_SECONDS: '${SLOW_TEST_TIMEOUT_SECONDS}'
             FAST_TEST_TIMEOUT_SECONDS: '${FAST_TEST_TIMEOUT_SECONDS}'
             PLAYWRIGHT_TEST_PATHS: '${PLAYWRIGHT_TEST_PATHS:-}'
-                        PLAYWRIGHT_IGNORE_PATHS: '${PLAYWRIGHT_IGNORE_PATHS:-}'
+            PLAYWRIGHT_IGNORE_PATHS: '${PLAYWRIGHT_IGNORE_PATHS:-}'
         command: >
           sh -c '
           cd /app/artemis/src/test/playwright &&
@@ -33,8 +33,10 @@ services:
           chmod +x ./run-tests.sh &&
           npm ci &&
           npm run playwright:setup &&
-                    NODE_OPTIONS="--max-old-space-size=8192" ./run-tests.sh $PLAYWRIGHT_TEST_PATHS;
-          rm -f ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
+                    NODE_OPTIONS="--max-old-space-size=8192" npm run playwright:test:filtered &&
+                    if [ -f ./test-reports/results-parallel.xml ] || [ -f ./test-reports/results-sequential.xml ]; then
+                            rm ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
+                    fi
           '
         volumes:
             - ..:/app/artemis

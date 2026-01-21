@@ -26,7 +26,7 @@ if [ "$CONFIGURATION" = "mysql" ]; then
 fi
 
 echo "Compose file:"
-echo "$COMPOSE_FILE"
+echo $COMPOSE_FILE
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME="nginx"
@@ -48,12 +48,12 @@ else
   export PLAYWRIGHT_IGNORE_PATHS=""
 fi
 
-cd docker
+cd docker || { echo "ERROR: Failed to change to docker directory" >&2; exit 1; }
 
 # Pull the images to avoid using outdated images
-docker compose -f "$COMPOSE_FILE" pull --quiet --policy always
+docker compose -f $COMPOSE_FILE pull --quiet --policy always
 # Run the tests
-docker compose -f "$COMPOSE_FILE" up --exit-code-from artemis-playwright
+docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
 
 exitCode=$?
 cd ..

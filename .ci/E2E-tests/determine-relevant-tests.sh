@@ -83,6 +83,10 @@ echo ""
 RUN_ALL_TESTS=false
 RUN_ALL_PATTERNS=$(jq -r '.runAllTestsPatterns[]' "$MAPPING_FILE" 2>/dev/null || echo "")
 
+# Track when changes are limited to Playwright test specs vs. test infrastructure.
+ONLY_PLAYWRIGHT_TEST_CHANGES=true
+PLAYWRIGHT_INFRA_CHANGE=false
+
 for pattern in $RUN_ALL_PATTERNS; do
     while IFS= read -r file; do
         if [[ "$file" == "$pattern"* ]]; then
@@ -93,7 +97,22 @@ for pattern in $RUN_ALL_PATTERNS; do
     done <<< "$CHANGED_FILES"
 done
 
-if [ "$RUN_ALL_TESTS" = "true" ]; then
+# Determine relevant test paths based on changed files
+declare -A RELEVANT_TEST_SET
+
+while IFS= read -r file; do
+    if [[ "$file" == "src/test/playwright/"* ]]; then
+        if [[ "$file" == "src/test/playwright/e2e/"* ]]; then
+            RELEVANT_TEST_SET["${file#src/test/playwright/}"]=1
+        else
+            PLAYWRIGHT_INFRA_CHANGE=true
+        fi
+    else
+        ONLY_PLAYWRIGHT_TEST_CHANGES=false
+    fi
+done <<< "$CHANGED_FILES"
+
+if [ "$RUN_ALL_TESTS" = "true" ] || [ "$PLAYWRIGHT_INFRA_CHANGE" = "true" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
@@ -102,9 +121,6 @@ if [ "$RUN_ALL_TESTS" = "true" ]; then
     write_output "REMAINING_COUNT" "0"
     exit 0
 fi
-
-# Determine relevant test paths based on changed files
-declare -A RELEVANT_TEST_SET
 
 # Add always-run tests
 ALWAYS_RUN_TESTS=$(jq -r '.alwaysRunTests[]' "$MAPPING_FILE" 2>/dev/null || echo "")
@@ -152,39 +168,47 @@ for test in "${!RELEVANT_TEST_SET[@]}"; do
     RELEVANT_TESTS+=("$test")
 done
 
+SKIP_REMAINING_TESTS=false
+if [ "$ONLY_PLAYWRIGHT_TEST_CHANGES" = "true" ] && [ "$PLAYWRIGHT_INFRA_CHANGE" = "false" ]; then
+    SKIP_REMAINING_TESTS=true
+fi
+
 # Determine remaining tests (all tests minus relevant tests)
 # This is a bit tricky because we need to handle partial overlaps
+# IGNORE_PATH_SET tracks child paths already executed in Phase 1.
 REMAINING_TESTS=()
 declare -A IGNORE_PATH_SET
 
-for test_path in "${ALL_TEST_PATHS[@]}"; do
-    IS_COVERED=false
-    
-    for relevant in "${RELEVANT_TESTS[@]}"; do
-        # Check if this test path is covered by a relevant test
-        # A test path is covered if:
-        # 1. It equals a relevant path
-        # 2. It starts with a relevant path (e.g., e2e/exam/ covers e2e/exam/*)
-        # 3. A relevant path starts with it (more specific test path covers general)
-        if [ "$test_path" = "$relevant" ]; then
-            IS_COVERED=true
-            break
-        elif [[ "$test_path" == "$relevant"* ]]; then
-            # relevant is a parent of test_path
-            IS_COVERED=true
-            break
-        elif [[ "$relevant" == "$test_path"* ]]; then
-            # relevant is a child of test_path - avoid duplicate runs
-            IS_COVERED=true
-            IGNORE_PATH_SET["$relevant"]=1
-            break
+if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
+    for test_path in "${ALL_TEST_PATHS[@]}"; do
+        IS_COVERED=false
+        
+        for relevant in "${RELEVANT_TESTS[@]}"; do
+            # Check if this test path is covered by a relevant test
+            # A test path is covered if:
+            # 1. It equals a relevant path
+            # 2. It starts with a relevant path (e.g., e2e/exam/ covers e2e/exam/*)
+            # 3. A relevant path starts with it (more specific test path covers general)
+            if [ "$test_path" = "$relevant" ]; then
+                IS_COVERED=true
+                break
+            elif [[ "$test_path" == "$relevant"* ]]; then
+                # relevant is a parent of test_path
+                IS_COVERED=true
+                break
+            elif [[ "$relevant" == "$test_path"* ]]; then
+                # relevant is a child of test_path - avoid duplicate runs
+                IS_COVERED=true
+                IGNORE_PATH_SET["$relevant"]=1
+                break
+            fi
+        done
+        
+        if [ "$IS_COVERED" = "false" ]; then
+            REMAINING_TESTS+=("$test_path")
         fi
     done
-    
-    if [ "$IS_COVERED" = "false" ]; then
-        REMAINING_TESTS+=("$test_path")
-    fi
-done
+fi
 
 # Sort and deduplicate
 if [ ${#RELEVANT_TESTS[@]} -gt 0 ]; then
