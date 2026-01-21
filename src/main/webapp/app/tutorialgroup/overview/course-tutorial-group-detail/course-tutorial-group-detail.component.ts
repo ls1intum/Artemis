@@ -6,7 +6,20 @@ import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/cour
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBuildingColumns, faCalendar, faCheck, faCircleExclamation, faClock, faFlag, faMapPin, faQuestion, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBuildingColumns,
+    faCalendar,
+    faCheck,
+    faCircleExclamation,
+    faClock,
+    faFlag,
+    faMapPin,
+    faPenToSquare,
+    faQuestion,
+    faTag,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { SelectButton } from 'primeng/selectbutton';
@@ -67,6 +80,8 @@ export class CourseTutorialGroupDetailComponent {
     protected readonly faBuildingColumns = faBuildingColumns;
     protected readonly faQuestion = faQuestion;
     protected readonly faCheck = faCheck;
+    protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faTrash = faTrash;
     protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
 
     private translateService = inject(TranslateService);

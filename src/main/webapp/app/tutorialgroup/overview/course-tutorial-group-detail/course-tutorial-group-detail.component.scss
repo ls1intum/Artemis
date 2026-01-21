@@ -163,4 +163,23 @@
         border-radius: 0.25rem;
         background-color: var(--warning);
     }
+
+    .session-actions {
+        display: flex;
+        gap: 0.5rem;
+
+        button {
+            background: none;
+            border: none;
+            padding: 0;
+
+            &.danger {
+                color: var(--danger);
+            }
+
+            &:hover {
+                opacity: 0.8;
+            }
+        }
+    }
 }

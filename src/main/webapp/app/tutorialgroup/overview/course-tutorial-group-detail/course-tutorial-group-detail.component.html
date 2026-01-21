@@ -199,6 +199,9 @@
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.location"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
+                    @if (allowManagementActions()) {
+                        <th>Actions</th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -237,6 +240,18 @@
                             />
                         </td>
                         <td>{{ session.attendance }}</td>
+                        @if (allowManagementActions()) {
+                            <td>
+                                <div class="session-actions">
+                                    <button class="icon-button">
+                                        <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
+                                    </button>
+                                    <button class="icon-button danger">
+                                        <fa-icon [icon]="faTrash" aria-hidden="true" />
+                                    </button>
+                                </div>
+                            </td>
+                        }
                     </tr>
                 }
             </tbody>
