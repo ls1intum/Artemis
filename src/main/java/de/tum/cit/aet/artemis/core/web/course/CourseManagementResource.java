@@ -6,11 +6,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +25,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
-import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -48,7 +45,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
  * REST controller for managing courses by tutors, editors and instructors.
@@ -98,26 +94,6 @@ public class CourseManagementResource {
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
         this.courseLoadService = courseLoadService;
-    }
-
-    /**
-     * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
-     *
-     * @param clientId the client ID of the LTI platform used to filter the courses.
-     * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
-     */
-    @GetMapping("courses/for-lti-dashboard")
-    @EnforceAtLeastInstructor
-    @Conditional(LtiEnabled.class)
-    public ResponseEntity<Set<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
-
-        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
-
-        Set<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(OnlineCourseDTO::from).collect(Collectors.toSet());
-
-        return ResponseEntity.ok(onlineCourseDTOS);
     }
 
     /**

@@ -3310,7 +3310,7 @@ public class CourseTestService {
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
         String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
 
-        String jsonResponse = request.get("/api/core/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
+        String jsonResponse = request.get("/api/lti/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
         List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<>() {
             // This empty block is necessary to provide type information for JSON deserialization
         });
