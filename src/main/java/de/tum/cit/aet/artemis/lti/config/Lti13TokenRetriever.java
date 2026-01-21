@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
-
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
@@ -13,7 +11,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -45,7 +43,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  */
 @Component
 @Lazy
-@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
+@Conditional(LtiEnabled.class)
 public class Lti13TokenRetriever {
 
     private final OAuth2JWKSService oAuth2JWKSService;

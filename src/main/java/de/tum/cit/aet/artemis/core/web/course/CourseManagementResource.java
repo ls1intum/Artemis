@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
  * REST controller for managing courses by tutors, editors and instructors.
@@ -105,15 +108,14 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/for-lti-dashboard")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
+    @Conditional(LtiEnabled.class)
+    public ResponseEntity<Set<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
 
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
 
-        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(),
-                c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId(), c.getStartDate(), c.getEndDate(), c.getDescription(), c.getNumberOfStudents()))
-                .toList();
+        Set<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(OnlineCourseDTO::from).collect(Collectors.toSet());
 
         return ResponseEntity.ok(onlineCourseDTOS);
     }
