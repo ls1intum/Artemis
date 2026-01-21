@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -50,12 +52,15 @@ public class DataExportExamCreationService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     public DataExportExamCreationService(Optional<StudentExamApi> studentExamApi, DataExportExerciseCreationService dataExportExerciseCreationService, Optional<ExamApi> examApi,
-            GradingScaleRepository gradingScaleRepository) {
+            GradingScaleRepository gradingScaleRepository, ExerciseRepository exerciseRepository) {
         this.studentExamApi = studentExamApi;
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.examApi = examApi;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -70,8 +75,9 @@ public class DataExportExamCreationService {
             return;
         }
 
-        StudentExamApi api = studentExamApi.get();
-        Map<Course, List<StudentExam>> studentExamsPerCourse = api.findStudentExamsByCourseForUserId(userId);
+        // Fetch basic student exam data with exercises. Participation data (submissions, results, feedbacks)
+        // is fetched separately per exercise in createStudentExamExport to avoid overly complex queries.
+        Map<Course, List<StudentExam>> studentExamsPerCourse = studentExamApi.get().findStudentExamsByCourseForUserId(userId);
 
         for (var entry : studentExamsPerCourse.entrySet()) {
             for (var studentExam : entry.getValue()) {
@@ -97,16 +103,21 @@ public class DataExportExamCreationService {
      * @param examWorkingDir the directory in which the information about the exam should be stored
      */
     private void createStudentExamExport(StudentExam studentExam, Path examWorkingDir) throws IOException {
+        var userId = studentExam.getUser().getId();
         for (var exercise : studentExam.getExercises()) {
             // since the behavior is undefined if multiple student exams for the same exam and student combination exist, the exercise can be null
             if (exercise == null) {
                 continue;
             }
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
+            // Fetch exercise with participation data. The returned exercise has eager-loaded
+            // relationships (exerciseGroup, exam, course) via @ManyToOne default eager fetching.
+            Exercise exerciseWithParticipations = fetchExerciseWithParticipations(exercise, userId);
+
+            if (exerciseWithParticipations instanceof ProgrammingExercise programmingExercise) {
                 dataExportExerciseCreationService.createProgrammingExerciseExport(programmingExercise, examWorkingDir, studentExam.getUser());
             }
             else {
-                dataExportExerciseCreationService.createNonProgrammingExerciseExport(exercise, examWorkingDir, studentExam.getUser());
+                dataExportExerciseCreationService.createNonProgrammingExerciseExport(exerciseWithParticipations, examWorkingDir, studentExam.getUser());
             }
         }
         // leave out the results if the results are not published yet to avoid leaking information through the data export
@@ -114,6 +125,23 @@ public class DataExportExamCreationService {
             addExamScores(studentExam, examWorkingDir);
         }
         addGeneralExamInformation(studentExam, examWorkingDir);
+    }
+
+    /**
+     * Fetches the exercise with participations and all required data for the data export.
+     * The query explicitly fetches the exerciseGroup, exam, and course relationships needed
+     * for exam exercises to access the course.
+     * For programming exercises, this includes test cases in feedbacks.
+     * For other exercises, this includes submissions, results, and feedbacks.
+     *
+     * @param exercise the exercise for which to fetch data (used to get the exercise ID and type)
+     * @param userId   the id of the user whose participations to fetch
+     * @return the exercise with participations, or the original exercise if not found
+     */
+    private Exercise fetchExerciseWithParticipations(Exercise exercise, long userId) {
+        return exercise instanceof ProgrammingExercise
+                ? exerciseRepository.findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(exercise.getId(), userId).orElse(exercise)
+                : exerciseRepository.findByIdWithStudentParticipationSubmissionsResultsAndFeedbacks(exercise.getId(), userId).orElse(exercise);
     }
 
     /**

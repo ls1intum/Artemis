@@ -331,6 +331,53 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Finds an exercise with participations, submissions, results, and feedbacks for a specific student.
+     * Used for data export of non-programming exercises.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the exercise with the student's participations
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsAndFeedbacks(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * Finds an exercise with participations, submissions, results, feedbacks, and test cases for a specific student.
+     * Used for data export of programming exercises where test case information is needed.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the exercise with the student's participations including test cases
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 

@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -149,6 +150,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationTestRepository;
+
     @BeforeEach
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
@@ -158,9 +162,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion 8 times, because the last test includes 8 modeling
-        // exercises, because each test adds modeling exercises
-        for (int i = 0; i < 8; i++) {
+        // mock apollon conversion 9 times, because the last test includes 8 modeling
+        // exercises, and one additional test creates an exam with a modeling exercise
+        for (int i = 0; i < 9; i++) {
             mockApollonConversion();
         }
     }
@@ -346,8 +350,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
                 URI.create(programmingExerciseTestService.getDefaultStudentRepositoryUri()));
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
-        var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+        // Fetch participations separately (matching the refactored data export flow)
+        var participations = studentParticipationTestRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsAndFeedbacks(studentExam.getExercises().getFirst().getId(),
+                userForExport.getId());
+        var submission = participations.getFirst().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
@@ -640,5 +646,41 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setFilePath("path");
         return dataExportRepository.save(dataExport);
+    }
+
+    /**
+     * Tests that the student exam query correctly loads the exerciseGroup and exam relationships for exam exercises.
+     * This test verifies the fix for a NullPointerException that occurred when calling
+     * exercise.getCourseViaExerciseGroupOrCourseMember() because exerciseGroup.exam was not eagerly fetched.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentExamQueryLoadsExerciseGroupAndExamRelationships() throws Exception {
+        var exam = prepareExamDataForDataExportCreation("eagerfetch");
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Fetch student exams using the simplified query (which now properly loads exerciseGroup and exam)
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByUserId(userForExport.getId());
+
+        assertThat(studentExams).isNotEmpty();
+
+        for (StudentExam studentExam : studentExams) {
+            // Only check exercises for the exam we created in this test
+            if (!studentExam.getExam().getId().equals(exam.getId())) {
+                continue;
+            }
+
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise.isExamExercise()) {
+                    // This would throw NullPointerException before the fix if exerciseGroup.exam was not loaded
+                    assertThat(exercise.getExerciseGroup()).as("ExerciseGroup should be loaded for exam exercise").isNotNull();
+                    assertThat(exercise.getExerciseGroup().getExam()).as("Exam should be loaded on ExerciseGroup").isNotNull();
+
+                    // This is the actual method that was failing in production - it should not throw NPE
+                    Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                    assertThat(course).as("Course should be accessible via exerciseGroup -> exam -> course").isNotNull();
+                }
+            }
+        }
     }
 }
