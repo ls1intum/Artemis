@@ -1,6 +1,6 @@
 # Contribution Guidelines for Artemis
 
-Read the [setup guide](https://docs.artemis.cit.tum.de/dev/setup.html) on how to set up your local development environment.
+Read the [setup guide](https://docs.artemis.tum.de/developer/setup) on how to set up your local development environment.
 
 ## Identity and Transparency
 
