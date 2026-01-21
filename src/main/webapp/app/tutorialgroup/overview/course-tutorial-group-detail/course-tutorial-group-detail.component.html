@@ -43,6 +43,11 @@
                     data-testid="group-channel-link"
                 ></a>
             }
+            @if (allowManagementActions()) {
+                <button pButton class="p-button-primary p-button-sm" data-testid="registrations-button">Registrations</button>
+                <button pButton class="p-button-primary p-button-sm" data-testid="edit-button">Edit</button>
+                <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button">Delete</button>
+            }
         }
     </div>
     <hr />
@@ -172,6 +177,10 @@
     </div>
     <div class="list-controls-row">
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
+        <div class="spacer"></div>
+        @if (allowManagementActions()) {
+            <button pButton class="p-button-primary p-button-sm" data-testid="new-session-button">New Session</button>
+        }
         <p-selectbutton
             [options]="sessionListOptions()"
             [ngModel]="selectedSessionListOption()"

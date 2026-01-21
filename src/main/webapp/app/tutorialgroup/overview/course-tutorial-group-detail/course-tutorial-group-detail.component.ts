@@ -80,6 +80,7 @@ export class CourseTutorialGroupDetailComponent {
     activatedRoute = inject(ActivatedRoute);
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
+    allowManagementActions = input<boolean>(false);
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));

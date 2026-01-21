@@ -114,13 +114,17 @@
 
     .list-controls-row {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 0.5rem;
 
         h2 {
             font-size: 1.5rem;
             font-weight: 500;
             margin: 0;
+        }
+
+        .spacer {
+            flex: 1;
         }
     }
 
