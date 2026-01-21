@@ -217,6 +217,9 @@
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "You are not a super administrator and therefore not allowed to create a super administrator account.",
             "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."
+        },
+        "PlagiarismAnswerPost": {
+            "postIdMissing": "The answer post must be associated with a post."
         }
     }
 }

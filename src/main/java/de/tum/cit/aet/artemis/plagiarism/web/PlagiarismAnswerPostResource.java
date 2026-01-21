@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 
 /**
@@ -41,21 +43,23 @@ public class PlagiarismAnswerPostResource {
     }
 
     /**
-     * POST /courses/{courseId}/answer-posts : Create a new answer post
+     * POST /courses/{courseId}/answer-posts: Create a new answer post
      *
-     * @param courseId   id of the course the post belongs to
-     * @param answerPost answer post to create
+     * @param courseId      id of course the post belongs to
+     * @param answerPostDto answer post to create
      * @return ResponseEntity with status 201 (Created) containing the created answer post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course, or post-validity fail
      */
     @PostMapping("courses/{courseId}/answer-posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
-        log.debug("POST createAnswerPost invoked for course {} with post {}", courseId, answerPost.getContent());
+    public ResponseEntity<PlagiarismAnswerPostCreationResponseDTO> createAnswerPost(@PathVariable Long courseId, @RequestBody PlagiarismAnswerPostCreationDTO answerPostDto)
+            throws URISyntaxException {
+        log.debug("POST createAnswerPost invoked for course {} with post {}", courseId, answerPostDto.content());
         long start = System.nanoTime();
-        AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPost);
+        AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPostDto.toEntity());
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/plagiarism/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
+        return ResponseEntity.created(new URI("/api/plagiarism/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId()))
+                .body(PlagiarismAnswerPostCreationResponseDTO.of(createdAnswerPost));
     }
 
     /**
