@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.7.2"
+version = "8.7.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -179,7 +179,10 @@ configurations.configureEach {
     exclude group: "org.apfloat", module: "apfloat"
     exclude group: "xom", module: "xom"
 
+    // the following two outdated commons libraries should not be used anymore due to security vulnerabilities
+    // there are newer versions available: commons-configuration2 and commons-lang3 which are actively maintained
     exclude group: "commons-configuration", module: "commons-configuration"
+    exclude group: "commons-lang", module: "commons-lang"
 }
 
 dependencies {
@@ -248,7 +251,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.0"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.1"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
