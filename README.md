@@ -59,7 +59,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
     * **[Adaptive learning](https://docs.artemis.tum.de/instructor/adaptive-learning)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives.
     * **[Learning analytics](https://docs.artemis.tum.de/instructor/learning-analytics)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
     * **[Learning paths](https://docs.artemis.tum.de/student/adaptive-learning)**: Based on the competency model and students' individual progress, Artemis creates learning paths that guide students through the course content.
-13. **[Iris](https://github.com/ls1intum/edutelligence/tree/main/iris)**: Artemis integrates Iris, a LLM based virtual assistant that supports students and instructors with common questions and tasks.
+13. **[Iris](https://github.com/ls1intum/edutelligence/tree/main/iris)**: Artemis integrates Iris, a LLM-based virtual assistant that supports students and instructors with common questions and tasks.
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
 14. **[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generative AI. 
@@ -180,7 +180,7 @@ Artemis uses these external tools for user management and the configuration of p
 
 ### Administration setup
 
-If needed, you can configure self service [user registration](https://docs.artemis.tum.de/admin/user-registration).
+If needed, you can configure self-service [user registration](https://docs.artemis.tum.de/admin/user-registration).
 
 ### Building for production
 
