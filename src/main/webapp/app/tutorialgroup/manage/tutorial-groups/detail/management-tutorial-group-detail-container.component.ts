@@ -5,14 +5,17 @@ import { onError } from 'app/shared/util/global.utils';
 import { catchError, map, of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import {
     CourseTutorialGroupDetailComponent,
     DeleteTutorialGroupDetailSessionEvent,
+    DeleteTutorialGroupEvent,
 } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
@@ -20,9 +23,11 @@ import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSes
     imports: [CourseTutorialGroupDetailComponent],
 })
 export class ManagementTutorialGroupDetailContainerComponent {
+    private router = inject(Router);
     private route = inject(ActivatedRoute);
     private tutorialGroupService = inject(TutorialGroupsService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
     private tutorialGroupId = this.getTutorialGroupIdSignal();
 
@@ -60,9 +65,9 @@ export class ManagementTutorialGroupDetailContainerComponent {
         this.tutorialGroupSessionApiService
             .deleteSession(courseId, tutorialGroupId, sessionId, 'response')
             .pipe(
-                catchError((error: HttpErrorResponse) => {
+                catchError((_) => {
                     this.isLoading.set(false);
-                    onError(this.alertService, error);
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.sessionDeletion');
                     return of(undefined);
                 }),
             )
@@ -76,6 +81,24 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     ...tutorialGroup,
                     sessions: tutorialGroup.sessions.filter((session) => session.id !== sessionId),
                 });
+            });
+    }
+
+    deleteGroup(deletionEvent: DeleteTutorialGroupEvent) {
+        const { courseId, tutorialGroupId } = deletionEvent;
+        this.isLoading.set(true);
+        this.tutorialGroupApiService
+            .delete(courseId, tutorialGroupId, 'response')
+            .pipe(
+                catchError((_) => {
+                    this.isLoading.set(false);
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.groupDeletion');
+                    return of(undefined);
+                }),
+            )
+            .subscribe((response) => {
+                this.router.navigate(['../'], { relativeTo: this.route });
+                this.isLoading.set(false);
             });
     }
 

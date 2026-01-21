@@ -310,7 +310,11 @@
                     "noAttendanceDataAvailable": "No data available",
                     "noUpcomingSession": "No upcoming session"
                 },
-                "createOneToOneChatError": "Error while creating tutor chat. Please try again."
+                "createOneToOneChatError": "Error while creating tutor chat. Please try again.",
+                "managementActionErrorAlert": {
+                    "sessionDeletion": "Error while deleting session. Please try again.",
+                    "groupDeletion": "Error while deleting group. Please try again."
+                }
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",

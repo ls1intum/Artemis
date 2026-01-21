@@ -56,6 +56,11 @@ export interface DeleteTutorialGroupDetailSessionEvent {
     sessionId: number;
 }
 
+export interface DeleteTutorialGroupEvent {
+    courseId: number;
+    tutorialGroupId: number;
+}
+
 type ListOption = 'all-sessions' | 'future-sessions';
 
 @Component({
@@ -121,6 +126,7 @@ export class CourseTutorialGroupDetailComponent {
     groupChannelLink = computed(() => this.computeGroupChannelLink());
     userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().teachingAssistantLogin);
     deleteSession = output<DeleteTutorialGroupDetailSessionEvent>();
+    deleteGroup = output<DeleteTutorialGroupEvent>();
 
     constructor() {
         effect(() => {
@@ -151,7 +157,7 @@ export class CourseTutorialGroupDetailComponent {
         }
     }
 
-    deleteSessionWith(sessionId: number) {
+    deleteTutorialGroupSession(sessionId: number) {
         const courseId = this.course().id;
         const tutorialGroupId = this.tutorialGroup().id;
         if (courseId && tutorialGroupId) {
@@ -159,6 +165,17 @@ export class CourseTutorialGroupDetailComponent {
                 courseId,
                 tutorialGroupId,
                 sessionId,
+            });
+        }
+    }
+
+    deleteTutorialGroup() {
+        const courseId = this.course().id;
+        const tutorialGroupId = this.tutorialGroup().id;
+        if (courseId) {
+            this.deleteGroup.emit({
+                courseId,
+                tutorialGroupId,
             });
         }
     }

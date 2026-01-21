@@ -310,7 +310,11 @@
                     "noAttendanceDataAvailable": "Keine Daten verfügbar",
                     "noUpcomingSession": "Keine bevorstehende Session"
                 },
-                "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut."
+                "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut.",
+                "managementActionErrorAlert": {
+                    "sessionDeletion": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
+                    "groupDeletion": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut."
+                }
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",

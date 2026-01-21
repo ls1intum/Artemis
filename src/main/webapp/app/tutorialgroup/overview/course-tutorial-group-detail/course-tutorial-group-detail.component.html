@@ -46,7 +46,7 @@
             @if (allowManagementActions()) {
                 <button pButton class="p-button-primary p-button-sm" data-testid="registrations-button">Registrations</button>
                 <button pButton class="p-button-primary p-button-sm" data-testid="edit-button">Edit</button>
-                <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button">Delete</button>
+                <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button" (click)="deleteTutorialGroup()">Delete</button>
             }
         }
     </div>
@@ -246,7 +246,7 @@
                                     <button class="icon-button">
                                         <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                     </button>
-                                    <button class="icon-button danger" (click)="deleteSessionWith(session.id)">
+                                    <button class="icon-button danger" (click)="deleteTutorialGroupSession(session.id)">
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
                                     </button>
                                 </div>
