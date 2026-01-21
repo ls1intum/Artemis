@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, Signal, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription, catchError, combineLatest, of, switchMap, tap } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,52 +19,39 @@ import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSes
     templateUrl: './management-tutorial-group-detail-container.component.html',
     imports: [CourseTutorialGroupDetailComponent],
 })
-export class ManagementTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
+export class ManagementTutorialGroupDetailContainerComponent {
     private route = inject(ActivatedRoute);
     private tutorialGroupService = inject(TutorialGroupsService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
     private alertService = inject(AlertService);
-    private paramsSubscription: Subscription;
-
-    ngUnsubscribe = new Subject<void>();
+    private tutorialGroupId = this.getTutorialGroupIdSignal();
 
     isLoading = signal(false);
-    tutorialGroup?: TutorialGroupDetailGroupDTO;
-    course?: Course;
+    tutorialGroup = signal<TutorialGroupDetailGroupDTO | undefined>(undefined);
+    course = this.getCourseSignal();
 
-    ngOnInit(): void {
-        const tutorialGroupIdParams$ = this.route.params;
-        this.paramsSubscription = combineLatest([this.route.data, tutorialGroupIdParams$])
-            .pipe(
-                switchMap(([{ course }, tutorialGroupIdParams]) => {
-                    this.isLoading.set(true);
-                    const tutorialGroupId = parseInt(tutorialGroupIdParams.tutorialGroupId, 10);
-                    if (course) {
-                        this.course = course;
-                        return this.tutorialGroupService.getTutorialGroupDetailGroupDTO(course.id, tutorialGroupId);
-                    }
-                    return of(undefined);
-                }),
-                tap({
-                    next: () => {
+    constructor() {
+        effect(() => {
+            const courseId = this.course()?.id;
+            const tutorialGroupId = this.tutorialGroupId();
+            if (!courseId || !tutorialGroupId) {
+                return;
+            }
+            this.isLoading.set(true);
+            this.tutorialGroupService
+                .getTutorialGroupDetailGroupDTO(courseId, tutorialGroupId)
+                .pipe(
+                    catchError((error: HttpErrorResponse) => {
                         this.isLoading.set(false);
-                    },
-                }),
-                catchError((error: HttpErrorResponse) => {
+                        onError(this.alertService, error);
+                        return of(undefined);
+                    }),
+                )
+                .subscribe((tutorialGroupResult) => {
                     this.isLoading.set(false);
-                    onError(this.alertService, error);
-                    return of(undefined);
-                }),
-            )
-            .subscribe({
-                next: (tutorialGroupResult) => {
-                    this.tutorialGroup = tutorialGroupResult ?? undefined;
-                },
-            });
-    }
-
-    ngOnDestroy(): void {
-        this.paramsSubscription?.unsubscribe();
+                    this.tutorialGroup.set(tutorialGroupResult ?? undefined);
+                });
+        });
     }
 
     deleteSession(deletionEvent: DeleteTutorialGroupDetailSessionEvent) {
@@ -80,13 +68,30 @@ export class ManagementTutorialGroupDetailContainerComponent implements OnInit, 
             )
             .subscribe((response) => {
                 this.isLoading.set(false);
-                if (!response || !this.tutorialGroup) {
+                const tutorialGroup = this.tutorialGroup();
+                if (!response || !tutorialGroup) {
                     return;
                 }
-                this.tutorialGroup = {
-                    ...this.tutorialGroup,
-                    sessions: this.tutorialGroup.sessions.filter((session) => session.id !== sessionId),
-                };
+                this.tutorialGroup.set({
+                    ...tutorialGroup,
+                    sessions: tutorialGroup.sessions.filter((session) => session.id !== sessionId),
+                });
             });
+    }
+
+    private getTutorialGroupIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.route.params.pipe(
+                map((params) => {
+                    const tutorialGroupId = params?.['tutorialGroupId'];
+                    return tutorialGroupId !== undefined ? Number(tutorialGroupId) : undefined;
+                }),
+            ),
+            { initialValue: undefined },
+        );
+    }
+
+    private getCourseSignal(): Signal<Course | undefined> {
+        return toSignal(this.route.data.pipe(map((data) => data['course'] as Course | undefined)), { initialValue: undefined });
     }
 }

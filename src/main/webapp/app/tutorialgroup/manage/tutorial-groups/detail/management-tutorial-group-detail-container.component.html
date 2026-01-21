@@ -1,6 +1,8 @@
 <div>
-    @if (tutorialGroup && course) {
-        <jhi-course-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" [allowManagementActions]="true" (deleteSession)="deleteSession($event)" />
+    @let courseToPass = course();
+    @let groupToPass = tutorialGroup();
+    @if (courseToPass && groupToPass) {
+        <jhi-course-tutorial-group-detail [tutorialGroup]="groupToPass" [course]="courseToPass" [allowManagementActions]="true" (deleteSession)="deleteSession($event)" />
     }
     @if (isLoading()) {
         <div class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center z-3">
