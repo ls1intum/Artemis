@@ -23,7 +23,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
 ## Main features and modules
 
 1. **[Exercises](https://docs.artemis.tum.de/instructor/exercises/intro)** with automatic and manual assessment. Instructors have many configuration options.
-    * **[Team exercises](https://docs.artemis.tum.de/instructor/exercises/team-exercise)**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
+    * **[Team exercises](https://docs.artemis.tum.de/instructor/exercises/team-exercise)**: Instructors can configure team exercises with real-time collaboration and dedicated tutors per team.
     * **Multiple submissions**: Students can participate in exercises multiple times. Instructors can configure the number of submissions and the submission deadline.
     * **Practice mode**: Students can practice exercises as often as they want. 
 2. **[Programming exercises](https://docs.artemis.tum.de/instructor/exercises/programming-exercise)** with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration) for `any programming language`. 
