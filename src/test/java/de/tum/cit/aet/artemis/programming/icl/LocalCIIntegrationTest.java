@@ -354,7 +354,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
             return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
         });
@@ -367,7 +367,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         localCIMissingJobService.retryMissingJobs();
 
         // job for participation should be retried so retry count should be 1 and status QUEUED
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
             if (buildJobOptional.isEmpty()) {
                 return false;
