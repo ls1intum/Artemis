@@ -22,6 +22,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.AfterEach;
@@ -152,6 +155,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationTestRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @BeforeEach
     void initTestCase() throws IOException {
@@ -658,6 +664,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     void testStudentExamQueryLoadsExerciseGroupAndExamRelationships() throws Exception {
         var exam = prepareExamDataForDataExportCreation("eagerfetch");
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Clear persistence context to ensure entities are loaded fresh from the database,
+        // not from the first-level cache populated during test data preparation
+        entityManager.clear();
 
         // Fetch student exams using the simplified query (which now properly loads exerciseGroup and exam)
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByUserId(userForExport.getId());
