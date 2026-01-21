@@ -74,6 +74,7 @@
 }
 
 /* Dark mode tile styling */
+/* stylelint-disable selector-pseudo-class-no-unknown */
 :global([data-theme='dark']) .tile {
   background-color: #3a3d42;
   border: 1px solid #4a4d52;
@@ -96,6 +97,7 @@
 :global([data-theme='dark']) .tileTitle {
   color: #fff;
 }
+/* stylelint-enable selector-pseudo-class-no-unknown */
 
 /* Publications section styling */
 .publicationsSection {
