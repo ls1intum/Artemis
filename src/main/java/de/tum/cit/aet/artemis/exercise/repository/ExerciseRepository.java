@@ -378,6 +378,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
+    /**
+     * Fetches an exercise by id with its exercise group, exam, and course relationships eagerly loaded.
+     * This is used as a fallback when a student has no participation in the exercise.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return the exercise with exercise group, exam, and course relationships loaded
+     */
+    @Query("""
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+            WHERE e.id = :exerciseId
+            """)
+    Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 

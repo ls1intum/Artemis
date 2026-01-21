@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -133,15 +134,25 @@ public class DataExportExamCreationService {
      * for exam exercises to access the course.
      * For programming exercises, this includes test cases in feedbacks.
      * For other exercises, this includes submissions, results, and feedbacks.
+     * If the user has no participation, returns the exercise with an empty participations set.
      *
      * @param exercise the exercise for which to fetch data (used to get the exercise ID and type)
      * @param userId   the id of the user whose participations to fetch
-     * @return the exercise with participations, or the original exercise if not found
+     * @return the exercise with participations (empty if user has none)
      */
     private Exercise fetchExerciseWithParticipations(Exercise exercise, long userId) {
-        return exercise instanceof ProgrammingExercise
-                ? exerciseRepository.findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(exercise.getId(), userId).orElse(exercise)
-                : exerciseRepository.findByIdWithStudentParticipationSubmissionsResultsAndFeedbacks(exercise.getId(), userId).orElse(exercise);
+        Optional<Exercise> exerciseWithParticipations = exercise instanceof ProgrammingExercise
+                ? exerciseRepository.findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(exercise.getId(), userId)
+                : exerciseRepository.findByIdWithStudentParticipationSubmissionsResultsAndFeedbacks(exercise.getId(), userId);
+
+        if (exerciseWithParticipations.isPresent()) {
+            return exerciseWithParticipations.get();
+        }
+
+        // No participation found for this user - fetch exercise with relationships and empty participations
+        Exercise exerciseWithoutParticipations = exerciseRepository.findByIdWithExerciseGroupExamAndCourse(exercise.getId()).orElse(exercise);
+        exerciseWithoutParticipations.setStudentParticipations(new HashSet<>());
+        return exerciseWithoutParticipations;
     }
 
     /**
