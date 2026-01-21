@@ -87,10 +87,10 @@
                         @if (message.relationGraphPreview) {
                             <div class="relation-graph-preview-container mt-2 border rounded">
                                 <div style="height: 400px">
-                                    @if (getCompetenciesForMessage(message) && getRelationsForMessage(message)) {
+                                    @if (message.graphCompetencies && message.graphRelations) {
                                         <jhi-course-competencies-relation-graph
-                                            [courseCompetencies]="getCompetenciesForMessage(message)!"
-                                            [relations]="getRelationsForMessage(message)!"
+                                            [courseCompetencies]="message.graphCompetencies"
+                                            [relations]="message.graphRelations"
                                             [(selectedRelationId)]="selectedRelationId"
                                         />
                                     }
@@ -107,15 +107,15 @@
                                         >
                                             @if (message.relationCreated) {
                                                 @if (isRelationUpdateOperation(message)) {
-                                                    {{ 'artemisApp.agent.chat.updated' | artemisTranslate }}
+                                                    <span jhiTranslate="artemisApp.agent.chat.updated"></span>
                                                 } @else {
-                                                    {{ 'artemisApp.agent.chat.mapped' | artemisTranslate }}
+                                                    <span jhiTranslate="artemisApp.agent.chat.mapped"></span>
                                                 }
                                             } @else {
                                                 @if (isRelationUpdateOperation(message)) {
-                                                    {{ 'artemisApp.agent.chat.update' | artemisTranslate }}
+                                                    <span jhiTranslate="artemisApp.agent.chat.update"></span>
                                                 } @else {
-                                                    {{ 'artemisApp.agent.chat.map' | artemisTranslate }}
+                                                    <span jhiTranslate="artemisApp.agent.chat.map"></span>
                                                 }
                                             }
                                         </button>

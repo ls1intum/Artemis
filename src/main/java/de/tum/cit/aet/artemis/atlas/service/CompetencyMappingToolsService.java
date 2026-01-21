@@ -22,11 +22,11 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphEdgeDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
@@ -182,7 +182,7 @@ public class CompetencyMappingToolsService {
      * Supports both single and batch operations.
      *
      * IMPORTANT: This method stores preview data in ThreadLocal for deterministic extraction.
-     * The LLM can respond naturally while the backend extracts structured data separately.
+     * The LLM can respond naturally while the server side extracts structured data separately.
      *
      * @param courseId  the ID of the course
      * @param relations list of relation operations (single or multiple)
@@ -426,8 +426,8 @@ public class CompetencyMappingToolsService {
      * @return the graph preview DTO with complete context
      */
     private RelationGraphPreviewDTO buildGraphPreview(Long courseId, List<CompetencyRelationPreviewDTO> previews, Boolean viewOnly) {
-        List<RelationGraphNodeDTO> nodes = new ArrayList<>();
-        List<RelationGraphEdgeDTO> edges = new ArrayList<>();
+        List<CompetencyGraphNodeDTO> nodes = new ArrayList<>();
+        List<CompetencyGraphEdgeDTO> edges = new ArrayList<>();
         Set<Long> competencyIds = new HashSet<>();
 
         // Collect relation IDs being updated (to exclude from existing relations)
@@ -446,8 +446,8 @@ public class CompetencyMappingToolsService {
             if (!updatedRelationIds.contains(relation.getId())) {
                 competencyIds.add(relation.getHeadCompetency().getId());
                 competencyIds.add(relation.getTailCompetency().getId());
-                edges.add(new RelationGraphEdgeDTO("edge-" + relation.getId(), String.valueOf(relation.getHeadCompetency().getId()),
-                        String.valueOf(relation.getTailCompetency().getId()), relation.getType().name()));
+                edges.add(new CompetencyGraphEdgeDTO("edge-" + relation.getId(), String.valueOf(relation.getHeadCompetency().getId()),
+                        String.valueOf(relation.getTailCompetency().getId()), relation.getType()));
             }
         }
 
@@ -458,13 +458,13 @@ public class CompetencyMappingToolsService {
                 competencyIds.add(preview.tailCompetencyId());
 
                 String edgeId = preview.relationId() != null ? "edge-" + preview.relationId() : "edge-new-" + preview.headCompetencyId() + "-" + preview.tailCompetencyId();
-                edges.add(new RelationGraphEdgeDTO(edgeId, String.valueOf(preview.headCompetencyId()), String.valueOf(preview.tailCompetencyId()), preview.relationType().name()));
+                edges.add(new CompetencyGraphEdgeDTO(edgeId, String.valueOf(preview.headCompetencyId()), String.valueOf(preview.tailCompetencyId()), preview.relationType()));
             }
         }
 
         List<CourseCompetency> competencies = courseCompetencyRepository.findAllById(competencyIds);
         for (CourseCompetency competency : competencies) {
-            nodes.add(new RelationGraphNodeDTO(String.valueOf(competency.getId()), competency.getTitle()));
+            nodes.add(new CompetencyGraphNodeDTO(String.valueOf(competency.getId()), competency.getTitle(), null, null, null));
         }
 
         return new RelationGraphPreviewDTO(nodes, edges, viewOnly != null && viewOnly);

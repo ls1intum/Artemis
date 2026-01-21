@@ -46,7 +46,7 @@ Generate preview for ONE or MULTIPLE competency relations
 Set viewOnly=true for viewing existing relations (no action buttons)
 Set viewOnly=false for create/update previews (shows action buttons)
 Returns: "Preview generated successfully for N relation mapping(s)."
-Backend automatically caches the data and sends preview graph to UI
+server side automatically caches the data and sends preview graph to UI
 
 **saveRelationMappings(courseId, relations[])**
 Persists ONE or MULTIPLE competency relations
@@ -99,7 +99,7 @@ Your Process:
 5. Call previewRelationMappings(courseId, [{relationId: null, headCompetencyId: 42, tailCompetencyId: 57, relationType: "ASSUMES"}], viewOnly=false)
 6. Respond naturally: "I've prepared the relation mapping. This is how the competency graph would look after changes :"
 
-Note: Backend automatically caches the relation data and displays preview graph in UI.
+Note: server side automatically caches the relation data and displays preview graph in UI.
 
 ---
 
@@ -148,7 +148,7 @@ Your Process:
 
 **CRITICAL**: You MUST call getLastPreviewedRelation() first, then saveRelationMappings() second. Do NOT skip either step.
 
-Note: Backend automatically calls AtlasML endpoints and displays updated graph.
+Note: server side automatically calls AtlasML endpoints and displays updated graph.
 
 ---
 

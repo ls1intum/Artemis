@@ -1,4 +1,4 @@
-import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 export interface ChatMessage {
     id: string;
@@ -19,6 +19,9 @@ export interface ChatMessage {
     batchRelationCreated?: boolean; // For batch relation creation completion
     planPending?: boolean;
     planApproved?: boolean;
+    // Pre-computed graph data for stable rendering
+    graphCompetencies?: CourseCompetency[];
+    graphRelations?: CompetencyRelationDTO[];
 }
 
 export interface CompetencyPreview {
@@ -49,7 +52,7 @@ export interface RelationGraphEdge {
     id: string;
     source: string;
     target: string;
-    label: string; // relation type
+    relationType: CompetencyRelationType;
 }
 
 export interface RelationGraphPreview {

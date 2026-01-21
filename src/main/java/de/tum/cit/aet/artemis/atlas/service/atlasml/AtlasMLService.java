@@ -221,11 +221,11 @@ public class AtlasMLService {
             return isSuccessful;
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.warn("Failed to map competency to competency with HTTP error: {}", e.getMessage());
+            log.error("Failed to map competency to competency with HTTP error: {}", e.getMessage());
             return false;
         }
         catch (ResourceAccessException e) {
-            log.warn("Failed to map competency to competency due to connection issue: {}", e.getMessage());
+            log.error("Failed to map competency to competency due to connection issue: {}", e.getMessage());
             return false;
         }
         catch (Exception e) {

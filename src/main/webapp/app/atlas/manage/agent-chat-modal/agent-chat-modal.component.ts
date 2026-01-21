@@ -48,6 +48,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     // Message validation
     readonly MAX_MESSAGE_LENGTH = 8000;
+    readonly INPUT_FOCUS_DELAY_MS = 10;
 
     currentMessageLength = computed(() => this.currentMessage().length);
     isMessageTooLong = computed(() => this.currentMessageLength() > this.MAX_MESSAGE_LENGTH);
@@ -73,7 +74,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngAfterViewInit(): void {
-        setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+        setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
     }
 
     ngAfterViewChecked(): void {
@@ -83,14 +84,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         }
     }
 
-    ngOnDestroy(): void {
-        this.competencyCache.clear();
-        this.relationCache.clear();
-    }
-
     protected closeModal(): void {
-        this.competencyCache.clear();
-        this.relationCache.clear();
         this.activeModal.close();
     }
 
@@ -124,13 +118,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.competencyChanged.emit();
                 }
 
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
             error: () => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
                 // Restore focus to input after error
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
     }
@@ -210,12 +204,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
                 this.competencyChanged.emit();
 
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             })
             .catch(() => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.competencyProcessFailure'), false);
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             });
     }
 
@@ -248,14 +242,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.competencyChanged.emit();
 
                 // Restore focus to input
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
             error: () => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.failure.relationMappingFailed'), false);
 
                 // Restore focus to input
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
     }
@@ -279,12 +273,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.competencyChanged.emit();
                 }
 
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
             error: () => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
     }
@@ -333,9 +327,43 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         if (relationGraphPreview) {
             message.relationGraphPreview = relationGraphPreview;
+            // Pre-compute graph data for stable rendering with ngx-graph
+            // Pass message.id to ensure unique edge IDs across multiple graph instances
+            message.graphCompetencies = this.convertNodesToCompetencies(relationGraphPreview.nodes);
+            message.graphRelations = this.convertEdgesToRelations(relationGraphPreview.edges, message.id);
         }
 
         this.finalizeMessage(message, isUser);
+    }
+
+    /**
+     * Converts graph nodes to CourseCompetency objects.
+     */
+    private convertNodesToCompetencies(nodes: { id: string; label: string }[]): CourseCompetency[] {
+        return nodes.map((node) => {
+            const competency = new Competency();
+            competency.id = Number(node.id);
+            competency.title = node.label;
+            return competency;
+        });
+    }
+
+    /**
+     * Converts graph edges to CompetencyRelationDTO objects.
+     * Generates unique IDs per graph instance to avoid SVG ID collisions when multiple graphs are rendered.
+     */
+    private convertEdgesToRelations(edges: { id: string; source: string; target: string; relationType: CompetencyRelationType }[], messageId: string): CompetencyRelationDTO[] {
+        return edges.map((edge) => {
+            // Combine message ID with edge ID to ensure uniqueness across graph instances
+            const relationId = this.hashStringToPositiveInt(messageId + edge.id);
+
+            return {
+                id: relationId,
+                headCompetencyId: Number(edge.source),
+                tailCompetencyId: Number(edge.target),
+                relationType: edge.relationType,
+            };
+        });
     }
 
     /**
@@ -414,70 +442,61 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         }
     }
 
-    private competencyCache = new Map<string, CourseCompetency[]>();
-    private relationCache = new Map<string, CompetencyRelationDTO[]>();
-
     /**
-     * Gets competencies for a message with caching to avoid repeated conversions.
+     * Gets competencies for a message by converting graph nodes to CourseCompetency objects.
      */
     protected getCompetenciesForMessage(message: ChatMessage): CourseCompetency[] | null {
         if (!message.relationGraphPreview?.nodes) {
             return null;
         }
 
-        const cacheKey = message.id;
-        if (!this.competencyCache.has(cacheKey)) {
-            const competencies = message.relationGraphPreview.nodes.map((node) => {
-                const competency = new Competency();
-                competency.id = parseInt(node.id, 10);
-                competency.title = node.label;
-                return competency;
-            });
-            this.competencyCache.set(cacheKey, competencies);
-        }
-
-        return this.competencyCache.get(cacheKey)!;
+        return message.relationGraphPreview.nodes.map((node) => {
+            const competency = new Competency();
+            competency.id = Number(node.id);
+            competency.title = node.label;
+            return competency;
+        });
     }
 
     /**
-     * Gets relations for a message with caching to avoid repeated conversions.
+     * Gets relations for a message by converting graph edges to CompetencyRelationDTO objects.
+     * Uses a hash-based ID generation to ensure stable, unique IDs for ngx-graph.
      */
     protected getRelationsForMessage(message: ChatMessage): CompetencyRelationDTO[] | null {
         if (!message.relationGraphPreview?.edges) {
             return null;
         }
 
-        const cacheKey = message.id;
-        if (!this.relationCache.has(cacheKey)) {
-            const relations = message.relationGraphPreview.edges.map((edge, index) => {
-                // Parse edge ID: can be "edge-123" or "edge-new-123-456"
-                let relationId: number | undefined = undefined;
-                if (edge.id.startsWith('edge-new-')) {
-                    // New relation without DB ID - use a temporary negative ID to avoid conflicts
-                    // This ensures the graph component can generate proper edge IDs
-                    relationId = -(index + 1);
-                } else if (edge.id.startsWith('edge-')) {
-                    // Existing relation with DB ID
-                    const idStr = edge.id.substring(5); // Remove "edge-" prefix
-                    const parsed = parseInt(idStr, 10);
-                    relationId = isNaN(parsed) ? -(index + 1) : parsed;
-                }
+        return message.relationGraphPreview.edges.map((edge) => {
+            // Generate a stable numeric ID from the edge ID string
+            // This ensures consistent IDs across renders for ngx-graph
+            const relationId = this.hashStringToPositiveInt(edge.id);
 
-                // Validate relation type against known enum values
-                const validRelationTypes = Object.values(CompetencyRelationType);
-                const relationType = validRelationTypes.includes(edge.label as CompetencyRelationType) ? (edge.label as CompetencyRelationType) : CompetencyRelationType.ASSUMES;
+            // Validate relation type against known enum values
+            const validRelationTypes = Object.values(CompetencyRelationType);
+            const relationType = validRelationTypes.includes(edge.relationType) ? edge.relationType : CompetencyRelationType.ASSUMES;
 
-                return {
-                    id: relationId,
-                    headCompetencyId: parseInt(edge.source, 10),
-                    tailCompetencyId: parseInt(edge.target, 10),
-                    relationType,
-                };
-            });
-            this.relationCache.set(cacheKey, relations);
+            return {
+                id: relationId,
+                headCompetencyId: Number(edge.source),
+                tailCompetencyId: Number(edge.target),
+                relationType,
+            };
+        });
+    }
+
+    /**
+     * Generates a stable positive integer hash from a string.
+     * Used to create consistent numeric IDs for ngx-graph edges.
+     */
+    private hashStringToPositiveInt(str: string): number {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = (hash << 5) - hash + char;
+            hash = hash & hash; // Convert to 32-bit integer
         }
-
-        return this.relationCache.get(cacheKey)!;
+        return Math.abs(hash);
     }
 
     /**
