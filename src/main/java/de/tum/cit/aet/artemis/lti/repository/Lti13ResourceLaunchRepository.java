@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.lti.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 
 import java.util.Collection;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 
-@Profile(PROFILE_LTI)
+@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
 @Lazy
 @Repository
 public interface Lti13ResourceLaunchRepository extends ArtemisJpaRepository<LtiResourceLaunch, Long> {

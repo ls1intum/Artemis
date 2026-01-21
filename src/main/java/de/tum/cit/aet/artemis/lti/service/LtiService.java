@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,8 +13,8 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -41,7 +41,7 @@ import tech.jhipster.security.RandomUtil;
 
 @Lazy
 @Service
-@Profile(PROFILE_LTI)
+@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
 public class LtiService {
 
     @Value("${artemis.lti.trustExternalLTISystems:false}")

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 
 import java.util.Map;
 import java.util.Objects;
@@ -14,8 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ import com.hazelcast.core.HazelcastInstance;
  */
 @Component
 @Lazy
-@Profile(PROFILE_LTI)
+@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
 public class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);

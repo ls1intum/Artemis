@@ -41,6 +41,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     ngOnInit() {
         const platformId = this.route.snapshot.paramMap.get('platformId');
         if (platformId) {
+            // Edit mode: wait for data before initializing form
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
                     this.platform = data;
@@ -48,10 +49,13 @@ export class EditLtiConfigurationComponent implements OnInit {
                 },
                 error: (error) => {
                     this.alertService.error(error);
+                    this.initializeForm(); // Initialize empty form on error
                 },
             });
+        } else {
+            // Create mode: initialize form immediately with empty values
+            this.initializeForm();
         }
-        this.initializeForm();
     }
 
     /**

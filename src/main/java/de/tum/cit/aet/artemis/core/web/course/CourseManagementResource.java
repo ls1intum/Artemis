@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.web.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -106,7 +105,6 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/for-lti-dashboard")
     @EnforceAtLeastInstructor
-    @Profile(PROFILE_LTI)
     public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());

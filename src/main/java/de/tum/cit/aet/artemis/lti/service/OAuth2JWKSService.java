@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -32,7 +32,7 @@ import com.nimbusds.jose.jwk.RSAKey;
  */
 @Lazy
 @Service
-@Profile(PROFILE_LTI)
+@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
 public class OAuth2JWKSService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;

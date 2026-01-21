@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
@@ -22,7 +22,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
-@Profile(PROFILE_LTI)
+@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
 @Component
 @Lazy
 public class CustomLti13Configurer extends Lti13Configurer {

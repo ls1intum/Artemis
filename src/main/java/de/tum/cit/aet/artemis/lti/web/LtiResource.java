@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 
 import java.text.ParseException;
 import java.util.List;
@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -49,7 +49,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller to handle LTI13 launches.
  */
-@Profile(PROFILE_LTI)
+@ConditionalOnProperty(value = LTI_ENABLED_PROPERTY_NAME, havingValue = "true")
 @Lazy
 @RestController
 @RequestMapping("api/lti/")
@@ -92,7 +92,6 @@ public class LtiResource {
      */
     @PutMapping("courses/{courseId}/online-course-configuration")
     @EnforceAtLeastInstructor
-    @Profile(PROFILE_LTI)
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
             @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);

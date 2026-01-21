@@ -454,6 +454,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_SHARING = "sharing";
 
     /**
+     * The name of the module feature used for LTI functionality.
+     */
+    public static final String MODULE_FEATURE_LTI = "lti";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -517,6 +522,11 @@ public final class Constants {
      * The name of the property used to enable or disable nebula functionalities.
      */
     public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
+
+    /**
+     * The name of the property used to enable or disable LTI functionality.
+     */
+    public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
