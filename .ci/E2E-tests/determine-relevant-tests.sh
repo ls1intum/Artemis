@@ -200,7 +200,6 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
                 # relevant is a child of test_path - avoid duplicate runs
                 IS_COVERED=true
                 IGNORE_PATH_SET["$relevant"]=1
-                break
             fi
         done
         
