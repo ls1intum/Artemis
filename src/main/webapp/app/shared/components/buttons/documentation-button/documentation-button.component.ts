@@ -46,7 +46,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
 export class DocumentationButtonComponent {
     private translateService = inject(TranslateService);
 
-    readonly BASE_URL = 'https://ls1intum.github.io/Artemis/';
+    readonly BASE_URL = 'https://docs.artemis.tum.de/';
     readonly faCircleInfo = faCircleInfo;
     readonly DocumentationLinks = DocumentationLinks;
 

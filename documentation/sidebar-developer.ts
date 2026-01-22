@@ -4,6 +4,8 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
+        'development-process',
+        'reviewer-guidelines',
         {
             type: 'category',
             label: 'Coding and Design Guidelines',
@@ -29,9 +31,11 @@ const sidebars: SidebarsConfig = {
                 },
             ],
         },
+        'local-user-management',
         'open-source',
         'system-design',
         'test-servers',
+        'builds-and-dependencies',
         'e2e-testing-playwright',
         'spring-ai',
         'jenkins-localvc',
@@ -41,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'docker-debugging',
         'local-database-tests',
         'local-moodle-setup-for-lti',
+        'weaviate-setup',
     ],
 };
 
