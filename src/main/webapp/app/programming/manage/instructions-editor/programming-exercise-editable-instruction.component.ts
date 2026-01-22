@@ -227,11 +227,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.instructionChange.emit(problemStatement);
             // Trigger preview update when showPreview is enabled
             this.generateHtmlSubject.next();
+            // Only queue local change if we're not applying a remote update
+            // This prevents circular updates when syncing with other editors
+            if (!this.isApplyingRemoteUpdate) {
+                this.problemStatementSyncService.queueLocalChange(problemStatement);
+            }
         }
-        if (!this.isApplyingRemoteUpdate) {
-            this.problemStatementSyncService.queueLocalChange(problemStatement);
-        }
-        this.instructionChange.emit(problemStatement);
     }
 
     /**
