@@ -74,7 +74,7 @@
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
                     "versionControlTitle": "Versionskontrolle",
                     "versionControlMessage": "Lege fest, welche Features für die Versionskontrolle erlaubt sein sollen.",
-                    "versionControlDocumentationLink": "Für weitere Informationen, lese bitte die <a target=\"_blank\" href=\"https://ls1intum.github.io/Artemis/instructor/exercises/programming-exercise#generate-programming-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
+                    "versionControlDocumentationLink": "Für weitere Informationen, lese bitte die <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise#generate-programming-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
                     "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
